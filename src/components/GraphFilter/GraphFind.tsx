@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormControl, FormGroup, InputGroup, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -14,6 +14,7 @@ import { CyData, NodeType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from 'types/GraphFilter';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 
@@ -54,10 +55,10 @@ const inputWidth = {
 };
 
 // reduce toolbar padding from 20px to 10px to save space
-const thinGroupStyle = {
+const thinGroupStyle = style({
   paddingLeft: '10px',
   paddingRight: '10px'
-};
+});
 
 export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindState> {
   static contextTypes = {
@@ -111,90 +112,78 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   }
 
   render() {
+    const isFindValid: boolean = !(this.props.findValue.length > 0 && this.state.errorMessage.length > 0);
+    const isHideValid: boolean = !(this.props.hideValue.length > 0 && this.state.errorMessage.length > 0);
+
     return (
-      <>
-        <FormGroup style={{ flexDirection: 'row', alignItems: 'flex-start', ...thinGroupStyle }}>
-          <span className={'form-inline'}>
-            <InputGroup>
-              <TourStopContainer info={GraphTourStops.Find}>
-                <FormControl
-                  id="graph_find"
-                  name="graph_find"
-                  autoComplete="on"
-                  type="text"
-                  style={{ ...inputWidth }}
-                  inputRef={ref => {
-                    this.findInputRef = ref;
-                  }}
-                  onChange={this.updateFind}
-                  defaultValue={this.state.findInputValue}
-                  onKeyPress={this.checkSubmitFind}
-                  placeholder="Find..."
-                />
-              </TourStopContainer>
-              {this.props.findValue && (
-                <OverlayTrigger
-                  key="ot_clear_find"
-                  placement="top"
-                  trigger={['hover', 'focus']}
-                  delayShow={1000}
-                  overlay={<Tooltip id="tt_clear_find">Clear Find...</Tooltip>}
-                >
-                  <InputGroup.Button>
-                    <Button onClick={this.clearFind}>
-                      <KialiIcon.Close />
-                    </Button>
-                  </InputGroup.Button>
-                </OverlayTrigger>
-              )}
-              <FormControl
-                id="graph_hide"
-                name="graph_hide"
-                autoComplete="on"
-                type="text"
-                style={{ ...inputWidth }}
-                inputRef={ref => {
-                  this.hideInputRef = ref;
-                }}
-                onChange={this.updateHide}
-                defaultValue={this.state.hideInputValue}
-                onKeyPress={this.checkSubmitHide}
-                placeholder="Hide..."
-              />
-              {this.props.hideValue && (
-                <OverlayTrigger
-                  key="ot_clear_hide"
-                  placement="top"
-                  trigger={['hover', 'focus']}
-                  delayShow={1000}
-                  overlay={<Tooltip id="tt_clear_hide">Clear Hide...</Tooltip>}
-                >
-                  <InputGroup.Button>
-                    <Button onClick={this.clearHide}>
-                      <KialiIcon.Close />
-                    </Button>
-                  </InputGroup.Button>
-                </OverlayTrigger>
-              )}
-            </InputGroup>
-            <OverlayTrigger
-              key={'ot_graph_find_help'}
-              placement="top"
-              overlay={<Tooltip id={'tt_graph_find_help'}>Find/Hide Help...</Tooltip>}
-            >
-              <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-                <KialiIcon.Help className={defaultIconStyle} />
-              </Button>
-            </OverlayTrigger>
+      <TourStopContainer info={GraphTourStops.Find}>
+        <Form style={{ float: 'left' }} isHorizontal={true}>
+          <span className={thinGroupStyle}>
+            <TextInput
+              id="graph_find"
+              name="graph_find"
+              ref={ref => {
+                this.findInputRef = ref;
+              }}
+              style={{ ...inputWidth }}
+              type="text"
+              autoComplete="on"
+              isValid={isFindValid}
+              onChange={this.updateFind}
+              defaultValue={this.state.findInputValue}
+              onKeyPress={this.checkSubmitFind}
+              placeholder="Find..."
+            />
+            {this.props.findValue && (
+              <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
+                <Button variant={ButtonVariant.control} onClick={this.clearFind}>
+                  <KialiIcon.Close />
+                </Button>
+              </Tooltip>
+            )}
+            <TextInput
+              id="graph_hide"
+              name="graph_hide"
+              ref={ref => {
+                this.hideInputRef = ref;
+              }}
+              style={{ ...inputWidth }}
+              autoComplete="on"
+              isValid={isHideValid}
+              type="text"
+              onChange={this.updateHide}
+              defaultValue={this.state.hideInputValue}
+              onKeyPress={this.checkSubmitHide}
+              placeholder="Hide..."
+            />
+            {this.props.hideValue && (
+              <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                <Button variant={ButtonVariant.control} onClick={this.clearHide}>
+                  <KialiIcon.Close />
+                </Button>
+              </Tooltip>
+            )}
+            {this.props.showFindHelp ? (
+              <GraphHelpFind onClose={this.toggleFindHelp}>
+                <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
+                  <KialiIcon.Help className={defaultIconStyle} />
+                </Button>
+              </GraphHelpFind>
+            ) : (
+              <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
+                <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
+                  <KialiIcon.Help className={defaultIconStyle} />
+                </Button>
+              </Tooltip>
+            )}
+            {this.state.errorMessage && (
+              <div>
+                <span style={{ color: 'red' }}>{this.state.errorMessage}</span>
+              </div>
+            )}
           </span>
-          {this.state.errorMessage && (
-            <div>
-              <span style={{ color: 'red' }}>{this.state.errorMessage}</span>
-            </div>
-          )}
-        </FormGroup>
-        {this.props.showFindHelp && <GraphHelpFind onClose={this.toggleFindHelp} />}{' '}
-      </>
+        </Form>
+      </TourStopContainer>
     );
   }
 
@@ -202,19 +191,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.props.toggleFindHelp();
   };
 
-  private updateFind = event => {
-    if ('' === event.target.value) {
+  private updateFind = val => {
+    if ('' === val) {
       this.clearFind();
     } else {
-      this.setState({ findInputValue: event.target.value, errorMessage: '' });
+      this.setState({ findInputValue: val, errorMessage: '' });
     }
   };
 
-  private updateHide = event => {
-    if ('' === event.target.value) {
+  private updateHide = val => {
+    if ('' === val) {
       this.clearHide();
     } else {
-      this.setState({ hideInputValue: event.target.value, errorMessage: '' });
+      this.setState({ hideInputValue: val, errorMessage: '' });
     }
   };
 
@@ -247,15 +236,23 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   };
 
   private clearFind = () => {
-    // note, we don't use findInputRef.current because <FormControl> deals with refs differently than <input>
+    // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.findInputRef.value = '';
+    const htmlInputElement: HTMLInputElement = document.getElementById('graph_find') as HTMLInputElement;
+    if (htmlInputElement !== null) {
+      htmlInputElement.value = '';
+    }
     this.setState({ findInputValue: '', errorMessage: '' });
     this.props.setFindValue('');
   };
 
   private clearHide = () => {
-    // note, we don't use hideInputRef.current because <FormControl> deals with refs differently than <input>
+    // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.hideInputRef.value = '';
+    const htmlInputElement: HTMLInputElement = document.getElementById('graph_hide') as HTMLInputElement;
+    if (htmlInputElement !== null) {
+      htmlInputElement.value = '';
+    }
     this.setState({ hideInputValue: '', errorMessage: '' });
     this.props.setHideValue('');
   };
@@ -273,6 +270,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 
     const cy = this.props.cyData.cyRef;
     const selector = this.parseValue(this.props.hideValue);
+
     cy.startBatch();
     if (this.hiddenElements) {
       // make visible old hide-hits
@@ -339,8 +337,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       console.debug('Skip Find: cy not set.');
       return;
     }
+
     const cy = this.props.cyData.cyRef;
     const selector = this.parseValue(this.props.findValue);
+
     cy.startBatch();
     // unhighlight old find-hits
     cy.elements('*.find').removeClass('find');

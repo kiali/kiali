@@ -1,9 +1,9 @@
 import * as React from 'react';
-import Draggable from 'react-draggable';
-import { Button, Nav, NavItem, TabContainer, TabContent, TabPane, Table, TablePfProvider } from 'patternfly-react';
+import ReactResizeDetector from 'react-resize-detector';
+import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
+import { ICell, Table, TableBody, TableHeader, TableVariant, cellWidth } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import * as resolve from 'table-resolver';
-import { KialiIcon } from 'config/KialiIcon';
+import SimpleTabs from 'components/Tab/SimpleTabs';
 
 export interface GraphHelpFindProps {
   onClose: () => void;
@@ -11,196 +11,29 @@ export interface GraphHelpFindProps {
 }
 
 export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
-  headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
-  cellFormat = (value, { column }) => {
-    const props = column.cell.props;
-    const className = props ? props.align : '';
-
-    return <Table.Cell className={className}>{value}</Table.Cell>;
-  };
-
-  edgeColumns = () => {
-    return {
-      columns: [
-        {
-          property: 'c',
-          header: {
-            label: 'Expression',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        },
-        {
-          property: 'n',
-          header: {
-            label: 'Notes',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        }
-      ]
-    };
-  };
-
-  exampleColumns = () => {
-    return {
-      columns: [
-        {
-          property: 'e',
-          header: {
-            label: 'Expression',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        },
-        {
-          property: 'd',
-          header: {
-            label: 'Description',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        }
-      ]
-    };
-  };
-
-  nodeColumns = () => {
-    return {
-      columns: [
-        {
-          property: 'c',
-          header: {
-            label: 'Expression',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        },
-        {
-          property: 'n',
-          header: {
-            label: 'Notes',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        }
-      ]
-    };
-  };
-
-  noteColumns = () => {
-    return {
-      columns: [
-        {
-          property: 't',
-          header: {
-            label: 'Usage Note',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'textleft'
-            }
-          }
-        }
-      ]
-    };
-  };
-
-  operatorColumns = () => {
-    return {
-      columns: [
-        {
-          property: 'o',
-          header: {
-            label: 'Operator',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
-          }
-        },
-        {
-          property: 'd',
-          header: {
-            label: 'Description',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-left'
-            }
-          }
-        }
-      ]
-    };
+  private onResize = () => {
+    this.forceUpdate();
   };
 
   render() {
-    const className = this.props.className ? this.props.className : '';
     const width = '600px';
-    const maxWidth = '602px';
-    const contentWidth = 'calc(100vw - 50px - var(--pf-c-page__sidebar--md--Width))'; // 50px prevents full coverage
-    const contentStyle = style({
-      width: contentWidth,
+    const maxWidth = '604px';
+    const popoverStyle = style({
+      width: width,
       maxWidth: maxWidth,
       height: '550px',
-      right: '0',
-      top: '10px',
-      zIndex: 9999,
-      position: 'absolute',
       overflow: 'hidden',
       overflowX: 'auto',
       overflowY: 'auto'
     });
-    const headerStyle = style({
-      width: width
-    });
-    const bodyStyle = style({
-      width: width
-    });
     const prefaceStyle = style({
-      width: '100%',
-      height: '77px',
-      padding: '10px',
-      resize: 'none',
+      fontSize: '12px',
       color: '#fff',
-      backgroundColor: '#003145'
+      backgroundColor: '#003145',
+      width: '540px',
+      height: '71px',
+      padding: '5px',
+      resize: 'none'
     });
     const preface =
       'You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts ' +
@@ -208,241 +41,196 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       'together. Uncheck the "Compress Hidden" display option for hidden elements to retain their space.';
 
     return (
-      <Draggable handle="#helpheader" bounds="#root">
-        <div className={`modal-content ${className} ${contentStyle}`}>
-          <div id="helpheader" className={`modal-header ${headerStyle}`}>
-            <Button className="close" bsClass="" onClick={this.props.onClose}>
-              <KialiIcon.Close />
-            </Button>
-            <span className="modal-title">Help: Graph Find/Hide</span>
-          </div>
-          <div className={`modal-body ${bodyStyle}`}>
-            <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
-            <TabContainer id="basic-tabs" defaultActiveKey="notes">
-              <>
-                <Nav bsClass="nav nav-tabs nav-tabs-pf" style={{ paddingLeft: '10px' }}>
-                  <NavItem eventKey="notes">
-                    <div>Usage Notes</div>
-                  </NavItem>
-                  <NavItem eventKey="operators">
-                    <div>Operators</div>
-                  </NavItem>
-                  <NavItem eventKey="nodes">
-                    <div>Nodes</div>
-                  </NavItem>
-                  <NavItem eventKey="edges">
-                    <div>Edges</div>
-                  </NavItem>
-                  <NavItem eventKey="examples">
-                    <div>Examples</div>
-                  </NavItem>
-                </Nav>
-                <TabContent>
-                  <TabPane eventKey="notes" mountOnEnter={true} unmountOnExit={true}>
-                    <TablePfProvider
-                      striped={true}
-                      bordered={true}
-                      hover={true}
-                      dataTable={true}
-                      columns={this.noteColumns().columns}
-                    >
-                      <Table.Header headerRows={resolve.headerRows(this.noteColumns())} />
-                      <Table.Body
-                        rowKey="id"
-                        rows={[
-                          { id: 't00', t: 'Expressions can not combine "AND" with "OR".' },
-                          { id: 't05', t: 'Parentheses are not supported (or needed).' },
-                          {
-                            id: 't10',
-                            t: 'The "name" operand expands internally to an "OR" expression (an "AND" when negated).'
-                          },
-                          { id: 't30', t: 'Expressions can not combine node and edge criteria.' },
-                          {
-                            id: 't45',
-                            t:
-                              'Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'
-                          },
-                          {
-                            id: 't70',
-                            t: `Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`
-                          },
-                          {
-                            id: 't80',
-                            t: 'Abbrevations: namespace|ns, service|svc, workload|wl (e.g. is wlnode)'
-                          },
-                          {
-                            id: 't90',
-                            t:
-                              'Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'
-                          },
-                          {
-                            id: 't100',
-                            t: 'Hiding nodes will automatically hide connected edges.'
-                          },
-                          {
-                            id: 't110',
-                            t: 'Hiding edges will automatically hide nodes left with no visible edges.'
-                          }
-                        ]}
-                      />
-                    </TablePfProvider>
-                  </TabPane>
-                  <TabPane eventKey="operators" mountOnEnter={true} unmountOnExit={true}>
-                    <TablePfProvider
-                      striped={true}
-                      bordered={true}
-                      hover={true}
-                      dataTable={true}
-                      columns={this.operatorColumns().columns}
-                    >
-                      <Table.Header headerRows={resolve.headerRows(this.operatorColumns())} />
-                      <Table.Body
-                        rowKey="id"
-                        rows={[
-                          { id: 'o0', o: '! | not <unary expression>', d: `negation` },
-                          { id: 'o1', o: '=', d: `equals` },
-                          { id: 'o2', o: '!=', d: `not equals` },
-                          { id: 'o3', o: 'endswith | $=', d: `ends with, strings only` },
-                          { id: 'o4', o: '!endswith | !$=', d: `not ends with, strings only` },
-                          { id: 'o5', o: 'startswith | ^=', d: `starts with, strings only` },
-                          { id: 'o6', o: '!startswith | !^=', d: `not starts with, strings only` },
-                          { id: 'o7', o: 'contains | *=', d: 'contains, strings only' },
-                          { id: 'o8', o: '!contains | !*=', d: 'not contains, strings only' },
-                          { id: 'o9', o: '>', d: `greater than` },
-                          { id: 'o10', o: '>=', d: `greater than or equals` },
-                          { id: 'o11', o: '<', d: `less than` },
-                          { id: 'o12', o: '<=', d: `less than or equals` }
-                        ]}
-                      />
-                    </TablePfProvider>
-                  </TabPane>
-                  <TabPane eventKey="nodes" mountOnEnter={true} unmountOnExit={true}>
-                    <TablePfProvider
-                      striped={true}
-                      bordered={true}
-                      hover={true}
-                      dataTable={true}
-                      columns={this.nodeColumns().columns}
-                    >
-                      <Table.Header headerRows={resolve.headerRows(this.nodeColumns())} />
-                      <Table.Body
-                        rowKey="id"
-                        rows={[
-                          { id: 'nc00', c: 'grpcin <op> <number>', n: 'unit: requests per second' },
-                          { id: 'nc10', c: 'grpcout <op> <number>', n: 'unit: requests per second' },
-                          { id: 'nc12', c: 'httpin <op> <number>', n: 'unit: requests per second' },
-                          { id: 'nc13', c: 'httpout <op> <number>', n: 'unit: requests per second' },
-                          {
-                            id: 'nc15',
-                            c: 'name <op> <string>',
-                            n: 'tests against app label, service name and workload name'
-                          },
-                          { id: 'nc20', c: 'namespace <op> <namespaceName>' },
-                          { id: 'nc25', c: 'node <op> <nodeType>', n: 'nodeType: app | service | workload | unknown' },
-                          { id: 'nc30', c: 'service <op> <serviceName>' },
-                          { id: 'nc40', c: 'version <op> <string>' },
-                          { id: 'nc50', c: 'tcpin <op> <number>', n: 'unit: bytes per second' },
-                          { id: 'nc60', c: 'tcpout <op> <number>', n: 'unit: bytes per second' },
-                          { id: 'nc70', c: 'workload <op> <workloadName>' },
-                          { id: 'nc90', c: 'circuitbreaker' },
-                          { id: 'nc100', c: 'outside', n: 'is outside of requested namespaces' },
-                          { id: 'nc110', c: 'sidecar' },
-                          { id: 'nc130', c: 'serviceentry' },
-                          { id: 'nc135', c: 'trafficsource', n: `has only outgoing edges` },
-                          { id: 'nc150', c: 'unused', n: `will auto-enable 'unused nodes' display option` },
-                          { id: 'nc160', c: 'virtualservice' }
-                        ]}
-                      />
-                    </TablePfProvider>
-                  </TabPane>
-                  <TabPane eventKey="edges" mountOnEnter={true} unmountOnExit={true}>
-                    <TablePfProvider
-                      striped={true}
-                      bordered={true}
-                      hover={true}
-                      dataTable={true}
-                      columns={this.edgeColumns().columns}
-                    >
-                      <Table.Header headerRows={resolve.headerRows(this.edgeColumns())} />
-                      <Table.Body
-                        rowKey="id"
-                        rows={[
-                          { id: 'ec00', c: 'grpc <op> <number>', n: 'unit: requests per second' },
-                          { id: 'ec10', c: '%grpcerr <op> <number>', n: 'range: [0..100]' },
-                          { id: 'ec20', c: '%grpctraffic <op> <number>', n: 'range: [0..100]' },
-                          { id: 'ec23', c: 'http <op> <number>', n: 'unit: requests per second' },
-                          { id: 'ec24', c: '%httperr <op> <number>', n: 'range: [0..100]' },
-                          { id: 'ec25', c: '%httptraffic <op> <number>', n: 'range: [0..100]' },
-                          { id: 'ec30', c: 'protocol <op> <protocol>', n: 'grpc, http, tcp, etc..' },
-                          {
-                            id: 'ec40',
-                            c: 'responsetime <op> <number>',
-                            n: `unit: millis, will auto-enable 'response time' edge labels`
-                          },
-                          { id: 'ec50', c: 'tcp <op> <number>', n: 'unit: requests per second' },
-                          { id: 'ec60', c: 'mtls', n: `will auto-enable 'security' display option` },
-                          { id: 'ec70', c: 'traffic', n: 'any traffic for any protocol' }
-                        ]}
-                      />
-                    </TablePfProvider>
-                  </TabPane>
-                  <TabPane eventKey="examples">
-                    <TablePfProvider
-                      striped={true}
-                      bordered={true}
-                      hover={true}
-                      dataTable={true}
-                      columns={this.exampleColumns().columns}
-                    >
-                      <Table.Header headerRows={resolve.headerRows(this.exampleColumns())} />
-                      <Table.Body
-                        rowKey="id"
-                        rows={[
-                          {
-                            id: 'e00',
-                            e: 'name = reviews',
-                            d: `"by name": nodes with app label, service name or workload name equal to 'reviews'`
-                          },
-                          {
-                            id: 'e10',
-                            e: 'name not contains rev',
-                            d: `"by name": nodes with app label, service name and workload name not containing 'rev'`
-                          },
-                          {
-                            id: 'e20',
-                            e: 'app startswith product',
-                            d: `nodes with app label starting with 'product'`
-                          },
-                          {
-                            id: 'e30',
-                            e: 'app != details and version=v1',
-                            d: `nodes with app label not equal to 'details' and with version equal to 'v1'`
-                          },
-                          { id: 'e40', e: '!sc', d: `nodes without a sidecar` },
-                          { id: 'e50', e: 'httpin > 0.5', d: `nodes with incoming http rate > 0.5 rps` },
-                          { id: 'e60', e: 'tcpout >= 1000', d: `nodes with outgoing tcp rates >= 1000 bps` },
-                          { id: 'e65', e: '!traffic', d: 'edges with no traffic' },
-                          { id: 'e70', e: 'http > 0.5', d: `edges with http rate > 0.5 rps` },
-                          {
-                            id: 'e80',
-                            e: 'rt > 500',
-                            d: `edges with response time > 500ms. (requires response time edge labels)`
-                          },
-                          {
-                            id: 'e90',
-                            e: '%httptraffic >= 50.0',
-                            d: `edges with >= 50% of the outgoing http request traffic of the parent`
-                          }
-                        ]}
-                      />
-                    </TablePfProvider>
-                  </TabPane>
-                </TabContent>
-              </>
-            </TabContainer>
-          </div>
-        </div>
-      </Draggable>
+      <>
+        <ReactResizeDetector
+          refreshMode={'debounce'}
+          refreshRate={100}
+          skipOnMount={true}
+          handleWidth={true}
+          handleHeight={true}
+          onResize={this.onResize}
+        />
+        <Popover
+          className={popoverStyle}
+          position={PopoverPosition.auto}
+          isVisible={true}
+          hideOnOutsideClick={false}
+          shouldClose={this.props.onClose}
+          headerContent={
+            <div>
+              <span>Graph Find/Hide</span>
+            </div>
+          }
+          bodyContent={
+            <div>
+              <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
+              <SimpleTabs id="graph_find_help_tabs" defaultTab={0}>
+                <Tab eventKey={0} title="Usage Notes">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.noteColumns()}
+                    rows={this.noteRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+                <Tab eventKey={1} title="Operators">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.operatorColumns()}
+                    rows={this.operatorRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+                <Tab eventKey={2} title="Nodes">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.nodeColumns()}
+                    rows={this.nodeRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+                <Tab eventKey={3} title="Edges">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.edgeColumns()}
+                    rows={this.edgeRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+                <Tab eventKey={4} title="Examples">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.exampleColumns()}
+                    rows={this.exampleRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+              </SimpleTabs>
+            </div>
+          }
+        >
+          <>{this.props.children}</>
+        </Popover>
+      </>
     );
   }
+
+  private edgeColumns = (): ICell[] => {
+    return [{ title: 'Expression' }, { title: 'Notes' }];
+  };
+  private edgeRows = (): string[][] => {
+    return [
+      ['grpc <op> <number>', 'unit: requests per second'],
+      ['%grpcerr <op> <number>', 'range: [0..100]'],
+      ['%grpctraffic <op> <number>', 'range: [0..100]'],
+      ['http <op> <number>', 'unit: requests per second'],
+      ['%httperr <op> <number>', 'range: [0..100]'],
+      ['%httptraffic <op> <number>', 'range: [0..100]'],
+      ['protocol <op> <protocol>', 'grpc, http, tcp, etc..'],
+      ['responsetime <op> <number>', `unit: millis, will auto-enable 'response time' edge labels`],
+      ['tcp <op> <number>', 'unit: requests per second'],
+      ['mtls', `will auto-enable 'security' display option`],
+      ['traffic', 'any traffic for any protocol']
+    ];
+  };
+
+  private exampleColumns = (): ICell[] => {
+    return [{ title: 'Expression' }, { title: 'Description' }];
+  };
+  private exampleRows = (): string[][] => {
+    return [
+      ['name = reviews', `"by name": nodes with app label, service name or workload name equal to 'reviews'`],
+      ['name not contains rev', `"by name": nodes with app label, service name and workload name not containing 'rev'`],
+      ['app startswith product', `nodes with app label starting with 'product'`],
+      ['app != details and version=v1', `nodes with app label not equal to 'details' and with version equal to 'v1'`],
+      ['!sc', `nodes without a sidecar`],
+      ['httpin > 0.5', `nodes with incoming http rate > 0.5 rps`],
+      ['tcpout >= 1000', `nodes with outgoing tcp rates >= 1000 bps`],
+      ['!traffic', 'edges with no traffic'],
+      ['http > 0.5', `edges with http rate > 0.5 rps`],
+      ['rt > 500', `edges with response time > 500ms. (requires response time edge labels)`],
+      ['%httptraffic >= 50.0', `edges with >= 50% of the outgoing http request traffic of the parent`]
+    ];
+  };
+
+  private nodeColumns = (): ICell[] => {
+    return [{ title: 'Expression' }, { title: 'Notes' }];
+  };
+  private nodeRows = (): string[][] => {
+    return [
+      ['grpcin <op> <number>', 'unit: requests per second'],
+      ['grpcout <op> <number>', 'unit: requests per second'],
+      ['httpin <op> <number>', 'unit: requests per second'],
+      ['httpout <op> <number>', 'unit: requests per second'],
+      ['name <op> <string>', 'tests against app label, service name and workload name'],
+      ['namespace <op> <namespaceName>'],
+      ['node <op> <nodeType>', 'nodeType: app | service | workload | unknown'],
+      ['service <op> <serviceName>'],
+      ['version <op> <string>'],
+      ['tcpin <op> <number>', 'unit: bytes per second'],
+      ['tcpout <op> <number>', 'unit: bytes per second'],
+      ['workload <op> <workloadName>'],
+      ['circuitbreaker'],
+      ['outside', 'is outside of requested namespaces'],
+      ['sidecar'],
+      ['serviceentry'],
+      ['trafficsource', `has only outgoing edges`],
+      ['unused', `will auto-enable 'unused nodes' display option`],
+      ['virtualservice']
+    ];
+  };
+
+  private noteColumns = (): ICell[] => {
+    return [{ title: 'Usage Note', transforms: [cellWidth(10) as any], props: { style: { align: 'text-left' } } }];
+  };
+  private noteRows = (): string[][] => {
+    return [
+      ['Expressions can not combine "AND" with "OR".'],
+      ['Parentheses are not supported (or needed).'],
+      ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
+      ['Expressions can not combine node and edge criteria.'],
+      ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
+      [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],
+      ['Abbrevations: namespace|ns, service|svc, workload|wl (e.g. is wlnode)'],
+      ['Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'],
+      ['Hiding nodes will automatically hide connected edges.'],
+      ['Hiding edges will automatically hide nodes left with no visible edges.']
+    ];
+  };
+
+  private operatorColumns = (): ICell[] => {
+    return [{ title: 'Operator' }, { title: 'Description' }];
+  };
+  private operatorRows = (): string[][] => {
+    return [
+      ['! | not <unary expression>', `negation`],
+      ['=', `equals`],
+      ['!=', `not equals`],
+      ['endswith | $=', `ends with, strings only`],
+      ['!endswith | !$=', `not ends with, strings only`],
+      ['startswith | ^=', `starts with, strings only`],
+      ['!startswith | !^=', `not starts with, strings only`],
+      ['contains | *=', 'contains, strings only'],
+      ['!contains | !*=', 'not contains, strings only'],
+      ['>', `greater than`],
+      ['>=', `greater than or equals`],
+      ['<', `less than`],
+      ['<=', `less than or equals`]
+    ];
+  };
 }
