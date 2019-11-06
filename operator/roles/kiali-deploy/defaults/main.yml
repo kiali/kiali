@@ -12,6 +12,8 @@ kiali_defaults:
   istio_component_namespaces: {}
   istio_namespace: ""
 
+  additional_display_details: []
+
   api:
     namespaces:
       exclude:

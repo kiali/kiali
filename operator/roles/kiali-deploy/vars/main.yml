@@ -17,6 +17,13 @@ kiali_vars:
   istio_component_namespaces: "{{ istio_component_namespaces | default(kiali_defaults.istio_component_namespaces) }}"
   istio_namespace: "{{ istio_namespace | default(kiali_defaults.istio_namespace) }}"
 
+  additional_display_details: |
+    {%- if additional_display_details is defined and additional_display_details is iterable -%}
+    {{ additional_display_details }}
+    {%- else -%}
+    {{ kiali_defaults.additional_display_details }}
+    {%- endif -%}
+
   api: |
     {%- if api is defined and api is iterable -%}
     {{ kiali_defaults.api | combine(api, recursive=True) }}

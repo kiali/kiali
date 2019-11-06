@@ -7,6 +7,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -97,6 +98,9 @@ type Workload struct {
 
 	// Runtimes and associated dashboards
 	Runtimes []kmodel.Runtime `json:"runtimes"`
+
+	// Additional details to display, such as configured annotations
+	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
 }
 
 type Workloads []*Workload
@@ -116,21 +120,25 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
+func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *meta_v1.ObjectMeta) {
 	conf := config.Get()
-	workload.Name = d.Name
-	workload.Type = "Deployment"
-	workload.Labels = map[string]string{}
-	if d.Spec.Template.Labels != nil {
-		workload.Labels = d.Spec.Template.Labels
+	workload.Name = meta.Name
+	if tplMeta != nil && tplMeta.Labels != nil {
+		workload.Labels = tplMeta.Labels
+		/** Check the labels app and version required by Istio in template Pods*/
+		_, workload.AppLabel = tplMeta.Labels[conf.IstioLabels.AppLabelName]
+		_, workload.VersionLabel = tplMeta.Labels[conf.IstioLabels.VersionLabelName]
+	} else {
+		workload.Labels = map[string]string{}
 	}
+	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
+	workload.ResourceVersion = meta.ResourceVersion
+	workload.AdditionalDetails = GetAdditionalDetails(conf, meta.Annotations)
+}
 
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(d.CreationTimestamp.Time)
-	workload.ResourceVersion = d.ResourceVersion
+func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
+	workload.Type = "Deployment"
+	workload.parseObjectMeta(&d.ObjectMeta, &d.Spec.Template.ObjectMeta)
 	if d.Spec.Replicas != nil {
 		workload.DesiredReplicas = *d.Spec.Replicas
 	}
@@ -139,20 +147,8 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 }
 
 func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
-	conf := config.Get()
-	workload.Name = r.Name
 	workload.Type = "ReplicaSet"
-	workload.Labels = map[string]string{}
-	if r.Spec.Template.Labels != nil {
-		workload.Labels = r.Spec.Template.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
-	workload.ResourceVersion = r.ResourceVersion
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
 	}
@@ -161,20 +157,8 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 }
 
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
-	conf := config.Get()
-	workload.Name = r.Name
 	workload.Type = "ReplicationController"
-	workload.Labels = map[string]string{}
-	if r.Spec.Template.Labels != nil {
-		workload.Labels = r.Spec.Template.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
-	workload.ResourceVersion = r.ResourceVersion
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
 	}
@@ -183,34 +167,16 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 }
 
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
-	workload.Name = dc.Name
 	workload.Type = "DeploymentConfig"
-	workload.Labels = map[string]string{}
-	if dc.Spec.Template.Labels != nil {
-		workload.Labels = dc.Spec.Template.Labels
-	}
-	workload.CreatedAt = formatTime(dc.CreationTimestamp.Time)
-	workload.ResourceVersion = dc.ResourceVersion
+	workload.parseObjectMeta(&dc.ObjectMeta, &dc.Spec.Template.ObjectMeta)
 	workload.DesiredReplicas = dc.Spec.Replicas
 	workload.CurrentReplicas = dc.Status.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
 }
 
 func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
-	conf := config.Get()
-	workload.Name = s.Name
 	workload.Type = "StatefulSet"
-	workload.Labels = map[string]string{}
-	if s.Spec.Template.Labels != nil {
-		workload.Labels = s.Spec.Template.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(s.CreationTimestamp.Time)
-	workload.ResourceVersion = s.ResourceVersion
+	workload.parseObjectMeta(&s.ObjectMeta, &s.Spec.Template.ObjectMeta)
 	if s.Spec.Replicas != nil {
 		workload.DesiredReplicas = *s.Spec.Replicas
 	}
@@ -219,20 +185,8 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 }
 
 func (workload *Workload) ParsePod(pod *core_v1.Pod) {
-	conf := config.Get()
-	workload.Name = pod.Name
 	workload.Type = "Pod"
-	workload.Labels = map[string]string{}
-	if pod.Labels != nil {
-		workload.Labels = pod.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(pod.CreationTimestamp.Time)
-	workload.ResourceVersion = pod.ResourceVersion
+	workload.parseObjectMeta(&pod.ObjectMeta, &pod.ObjectMeta)
 
 	var podReplicas, podAvailableReplicas int32
 	podReplicas = 1
@@ -255,20 +209,8 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 }
 
 func (workload *Workload) ParseJob(job *batch_v1.Job) {
-	conf := config.Get()
-	workload.Name = job.Name
 	workload.Type = "Job"
-	workload.Labels = map[string]string{}
-	if job.Labels != nil {
-		workload.Labels = job.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(job.CreationTimestamp.Time)
-	workload.ResourceVersion = job.ResourceVersion
+	workload.parseObjectMeta(&job.ObjectMeta, &job.ObjectMeta)
 	// Job controller does not use replica parameters as other controllers
 	// this is a workaround to use same values from Workload perspective
 	workload.DesiredReplicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
@@ -277,20 +219,8 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 }
 
 func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
-	conf := config.Get()
-	workload.Name = cnjb.Name
 	workload.Type = "CronJob"
-	workload.Labels = map[string]string{}
-	if cnjb.Labels != nil {
-		workload.Labels = cnjb.Labels
-	}
-
-	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-
-	workload.CreatedAt = formatTime(cnjb.CreationTimestamp.Time)
-	workload.ResourceVersion = cnjb.ResourceVersion
+	workload.parseObjectMeta(&cnjb.ObjectMeta, &cnjb.ObjectMeta)
 
 	// We don't have the information of this controller
 	// We will infer the number of replicas as the number of pods without succeed state
@@ -371,4 +301,19 @@ func (workload *Workload) HasIstioSidecar() bool {
 	}
 	// Need to check each pod
 	return workload.Pods.HasIstioSidecar()
+}
+
+func GetAdditionalDetails(conf *config.Config, annotations map[string]string) []AdditionalItem {
+	items := []AdditionalItem{}
+	for _, itemConfig := range conf.AdditionalDisplayDetails {
+		if itemConfig.Annotation != "" {
+			if value, ok := annotations[itemConfig.Annotation]; ok {
+				items = append(items, AdditionalItem{
+					Title: itemConfig.Title,
+					Value: value,
+				})
+			}
+		}
+	}
+	return items
 }

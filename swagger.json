@@ -3167,6 +3167,20 @@
     }
   },
   "definitions": {
+    "AdditionalItem": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Address": {
       "type": "object",
       "properties": {
@@ -4840,6 +4854,13 @@
     "ServiceDetails": {
       "type": "object",
       "properties": {
+        "additionalDetails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdditionalItem"
+          },
+          "x-go-name": "AdditionalDetails"
+        },
         "apiDocumentation": {
           "$ref": "#/definitions/ApiDocumentation"
         },
@@ -5486,6 +5507,14 @@
         "availableReplicas"
       ],
       "properties": {
+        "additionalDetails": {
+          "description": "Additional details to display, such as configured annotations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdditionalItem"
+          },
+          "x-go-name": "AdditionalDetails"
+        },
         "appLabel": {
           "description": "Define if Pods related to this Workload has the label App",
           "type": "boolean",

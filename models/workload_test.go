@@ -14,7 +14,22 @@ import (
 
 func TestParseDeploymentToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+		config.AdditionalDisplayItem{
+			Annotation: "annotation-2",
+			Title:      "Annotation 2",
+		},
+		config.AdditionalDisplayItem{
+			Annotation: "annotation-1",
+			Title:      "Annotation 1",
+		},
+		config.AdditionalDisplayItem{
+			Annotation: "annotation-4",
+			Title:      "Annotation 4",
+		},
+	}
+	config.Set(cfg)
 
 	w := Workload{}
 	w.ParseDeployment(fakeDeployment())
@@ -27,11 +42,23 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Len(w.AdditionalDetails, 2)
+	assert.Equal("Annotation 2", w.AdditionalDetails[0].Title)
+	assert.Equal("value-annot-2", w.AdditionalDetails[0].Value)
+	assert.Equal("Annotation 1", w.AdditionalDetails[1].Title)
+	assert.Equal("value-annot-1", w.AdditionalDetails[1].Value)
 }
 
 func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+		config.AdditionalDisplayItem{
+			Annotation: "annotation",
+			Title:      "Annotation",
+		},
+	}
+	config.Set(cfg)
 
 	w := Workload{}
 	w.ParseReplicaSet(fakeReplicaSet())
@@ -44,11 +71,21 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Len(w.AdditionalDetails, 1)
+	assert.Equal("Annotation", w.AdditionalDetails[0].Title)
+	assert.Equal("value-annot", w.AdditionalDetails[0].Value)
 }
 
 func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+		config.AdditionalDisplayItem{
+			Annotation: "annotation",
+			Title:      "Annotation",
+		},
+	}
+	config.Set(cfg)
 
 	w := Workload{}
 	w.ParseReplicationController(fakeReplicationController())
@@ -61,11 +98,21 @@ func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Len(w.AdditionalDetails, 1)
+	assert.Equal("Annotation", w.AdditionalDetails[0].Title)
+	assert.Equal("value-annot", w.AdditionalDetails[0].Value)
 }
 
 func TestParseDeploymentConfigToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+		config.AdditionalDisplayItem{
+			Annotation: "annotation",
+			Title:      "Annotation",
+		},
+	}
+	config.Set(cfg)
 
 	w := Workload{}
 	w.ParseDeploymentConfig(fakeDeploymentConfig())
@@ -77,11 +124,21 @@ func TestParseDeploymentConfigToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Len(w.AdditionalDetails, 1)
+	assert.Equal("Annotation", w.AdditionalDetails[0].Title)
+	assert.Equal("value-annot", w.AdditionalDetails[0].Value)
 }
 
 func TestParsePodToWorkload(t *testing.T) {
 	assert := assert.New(t)
-	config.Set(config.NewConfig())
+	cfg := config.NewConfig()
+	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
+		config.AdditionalDisplayItem{
+			Annotation: "annotation",
+			Title:      "Annotation",
+		},
+	}
+	config.Set(cfg)
 
 	w := Workload{}
 	w.ParsePod(fakePod())
@@ -94,6 +151,9 @@ func TestParsePodToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Len(w.AdditionalDetails, 1)
+	assert.Equal("Annotation", w.AdditionalDetails[0].Title)
+	assert.Equal("value-annot", w.AdditionalDetails[0].Value)
 }
 
 func TestParsePodsToWorkload(t *testing.T) {
@@ -136,6 +196,11 @@ func fakeDeployment() *apps_v1.Deployment {
 			Name:              "reviews-v1",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
+			Annotations: map[string]string{
+				"annotation-1": "value-annot-1",
+				"annotation-2": "value-annot-2",
+				"annotation-3": "value-annot-3",
+			},
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
@@ -163,6 +228,7 @@ func fakeReplicaSet() *apps_v1.ReplicaSet {
 			Name:              "reviews-v1",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
+			Annotations:       map[string]string{"annotation": "value-annot"},
 		},
 		Spec: apps_v1.ReplicaSetSpec{
 			Template: core_v1.PodTemplateSpec{
@@ -190,6 +256,7 @@ func fakeReplicationController() *core_v1.ReplicationController {
 			Name:              "reviews-v1",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
+			Annotations:       map[string]string{"annotation": "value-annot"},
 		},
 		Spec: core_v1.ReplicationControllerSpec{
 			Template: &core_v1.PodTemplateSpec{
@@ -216,6 +283,7 @@ func fakeDeploymentConfig() *osapps_v1.DeploymentConfig {
 			Name:              "reviews-v1",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
+			Annotations:       map[string]string{"annotation": "value-annot"},
 		},
 		Spec: osapps_v1.DeploymentConfigSpec{
 			Template: &core_v1.PodTemplateSpec{
@@ -244,6 +312,7 @@ func fakePod() *core_v1.Pod {
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
 			Labels:            map[string]string{"foo": "bar", "version": "v1"},
+			Annotations:       map[string]string{"annotation": "value-annot"},
 		},
 		Status: core_v1.PodStatus{
 			Phase: "Running",
