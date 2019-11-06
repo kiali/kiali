@@ -110,7 +110,7 @@ func getService(servicePort int32, portName string) v1.Service {
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Port: servicePort,
 					Name: portName,
 				},
@@ -124,7 +124,7 @@ func getService(servicePort int32, portName string) v1.Service {
 
 func getDeployment(containerPort int32) []apps_v1.Deployment {
 	return []apps_v1.Deployment{
-		apps_v1.Deployment{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Labels: map[string]string{
 					"dep": "one",
@@ -134,9 +134,9 @@ func getDeployment(containerPort int32) []apps_v1.Deployment {
 				Template: v1.PodTemplateSpec{
 					Spec: v1.PodSpec{
 						Containers: []v1.Container{
-							v1.Container{
+							{
 								Ports: []v1.ContainerPort{
-									v1.ContainerPort{
+									{
 										Name:          "http-container",
 										ContainerPort: containerPort,
 									},
