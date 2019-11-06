@@ -21,6 +21,7 @@ export interface Workload {
   pods: Pod[];
   services: Service[];
   runtimes: Runtime[];
+  additionalDetails: AdditionalItem[];
 }
 
 export const emptyWorkload: Workload = {
@@ -36,7 +37,8 @@ export const emptyWorkload: Workload = {
   availableReplicas: 0,
   pods: [],
   services: [],
-  runtimes: []
+  runtimes: [],
+  additionalDetails: []
 };
 
 export const WorkloadType = {
@@ -77,4 +79,9 @@ export interface Runtime {
 export interface DashboardRef {
   template: string;
   title: string;
+}
+
+export interface AdditionalItem {
+  title: string;
+  value: string;
 }

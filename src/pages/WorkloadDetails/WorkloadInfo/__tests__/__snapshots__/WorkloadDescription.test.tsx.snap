@@ -1,5 +1,152 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`WorkloadDescription should render with additional details 1`] = `
+<Grid
+  gutter="md"
+>
+  <GridItem
+    span={6}
+  >
+    <Card
+      style={
+        Object {
+          "height": "100%",
+        }
+      }
+    >
+      <CardBody>
+        <Title
+          headingLevel="h3"
+          size="2xl"
+        >
+           
+          Workload Overview
+           
+        </Title>
+        <Stack>
+          <StackItem
+            id="labels"
+          >
+            <Text
+              component="h3"
+            >
+               
+              Labels
+               
+            </Text>
+            <Labels
+              labels={Object {}}
+            />
+          </StackItem>
+          <StackItem
+            id="type"
+          >
+            <Text
+              component="h3"
+            >
+               Type 
+            </Text>
+            N/A
+          </StackItem>
+          <StackItem
+            id="created-at"
+          >
+            <Text
+              component="h3"
+            >
+               Created at 
+            </Text>
+            <LocalTime
+              time=""
+            />
+          </StackItem>
+          <StackItem
+            id="resource-version"
+          >
+            <Text
+              component="h3"
+            >
+               Resource Version 
+            </Text>
+          </StackItem>
+          <StackItem
+            id="additional-details-0"
+            key="additional-details-0"
+          >
+            <Text
+              component="h3"
+            >
+               
+              SHA-256
+               
+            </Text>
+            2a1525fff0cc8e1dfee38ab6f41e57effa2051d7
+          </StackItem>
+          <StackItem
+            id="additional-details-1"
+            key="additional-details-1"
+          >
+            <Text
+              component="h3"
+            >
+               
+              URL
+               
+            </Text>
+            <a
+              href="https://my-service.com"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              https://my-service.com
+            </a>
+          </StackItem>
+        </Stack>
+      </CardBody>
+    </Card>
+  </GridItem>
+  <GridItem
+    span={6}
+  >
+    <Card
+      style={
+        Object {
+          "height": "100%",
+        }
+      }
+    >
+      <CardBody>
+        <Title
+          headingLevel="h3"
+          size="2xl"
+        >
+           
+          Health Overview
+           
+        </Title>
+        <Stack>
+          <StackItem
+            className="stack_service_details"
+            id="health"
+          >
+            <Text
+              component="h3"
+            >
+               Health
+            </Text>
+            <HealthIndicator
+              id=""
+              mode={0}
+              tooltipPlacement="left"
+            />
+          </StackItem>
+        </Stack>
+      </CardBody>
+    </Card>
+  </GridItem>
+</Grid>
+`;
+
 exports[`WorkloadDescription should render with runtimes 1`] = `
 <Grid
   gutter="md"
@@ -31,7 +178,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               component="h3"
             >
                
-              Template Labels
+              Labels
                
             </Text>
             <Labels
@@ -46,7 +193,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             >
                Type 
             </Text>
-            Deployment
+            N/A
           </StackItem>
           <StackItem
             id="created-at"
@@ -57,7 +204,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
                Created at 
             </Text>
             <LocalTime
-              time="42"
+              time=""
             />
           </StackItem>
           <StackItem
@@ -68,7 +215,6 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             >
                Resource Version 
             </Text>
-            42
           </StackItem>
           <StackItem
             id="runtimes"
@@ -129,7 +275,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
                Health
             </Text>
             <HealthIndicator
-              id="myworkload"
+              id=""
               mode={0}
               tooltipPlacement="left"
             />

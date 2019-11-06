@@ -100,7 +100,8 @@ export const Service: ServiceDetailsInfo = {
   workloads: workloads,
   destinationRules: { items: [], permissions: { create: true, update: true, delete: true } },
   validations: {},
-  apiDocumentation: { type: '', hasSpec: false }
+  apiDocumentation: { type: '', hasSpec: false },
+  additionalDetails: []
 };
 
 describe('#Mock Service', () => {

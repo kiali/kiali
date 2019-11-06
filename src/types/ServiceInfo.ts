@@ -9,6 +9,7 @@ import {
   VirtualServices
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
+import { AdditionalItem } from './Workload';
 
 export interface Endpoints {
   addresses?: EndpointAddress[];
@@ -59,6 +60,7 @@ export interface ServiceDetailsInfo {
   errorTraces?: number;
   validations: Validations;
   apiDocumentation: ApiDocumentation;
+  additionalDetails: AdditionalItem[];
 }
 
 const higherThan = [
