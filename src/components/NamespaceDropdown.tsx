@@ -140,6 +140,9 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
   }
 
   private onToggle = isOpen => {
+    if (isOpen) {
+      this.props.refresh();
+    }
     this.setState({
       isOpen
     });
