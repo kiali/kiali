@@ -9,20 +9,22 @@ type AlertToastProps = AlertProps & {
   style?: React.CSSProperties;
   ttlms?: number;
 
-  onClose: () => void;
-  onTtl: () => void;
+  onClose?: () => void;
+  onTtl?: () => void;
 };
 
 export default class AlertToast extends React.Component<AlertToastProps> {
   ttlTimer: NodeJS.Timeout | undefined;
 
   componentDidMount() {
-    this.ttlTimer = setInterval(
-      () => {
-        this.props.onTtl();
-      },
-      this.props.ttlms ? this.props.ttlms : DEFAULT_TTLMS
-    );
+    if (this.props.onTtl) {
+      this.ttlTimer = setInterval(
+        () => {
+          this.props.onTtl!();
+        },
+        this.props.ttlms ? this.props.ttlms : DEFAULT_TTLMS
+      );
+    }
   }
 
   componentWillUnmount() {
@@ -31,6 +33,9 @@ export default class AlertToast extends React.Component<AlertToastProps> {
     }
   }
 
+  private getAction = () => {
+    return this.props.onClose ? <AlertActionCloseButton onClose={this.props.onClose} /> : <></>;
+  };
   render() {
     return (
       <Alert
@@ -38,7 +43,7 @@ export default class AlertToast extends React.Component<AlertToastProps> {
         key={this.props.message.id}
         variant={this.props.variant}
         title={this.props.message.content}
-        action={<AlertActionCloseButton onClose={this.props.onClose} />}
+        action={this.getAction()}
       />
     );
   }
