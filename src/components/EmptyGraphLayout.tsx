@@ -1,13 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import {
-  Button,
-  EmptyState,
-  EmptyStateTitle,
-  EmptyStateIcon,
-  EmptyStateInfo,
-  EmptyStateAction
-} from 'patternfly-react';
+import { Button, EmptyState, EmptyStateBody, EmptyStateIcon, EmptyStateVariant, Title } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
@@ -16,6 +9,7 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
 import { KialiAppAction } from '../actions/KialiAppAction';
+import { KialiIcon } from '../config/KialiIcon';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
@@ -43,7 +37,8 @@ type EmptyGraphLayoutProps = {
 
 const emptyStateStyle = style({
   height: '98%',
-  marginRight: 5,
+  marginRight: 'auto',
+  marginLeft: 'auto',
   marginBottom: 10,
   marginTop: 10
 });
@@ -97,28 +92,34 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   render() {
     if (this.props.isError) {
       return (
-        <EmptyState className={emptyStateStyle}>
-          <EmptyStateIcon name="error-circle-o" />
-          <EmptyStateTitle>Error loading Graph</EmptyStateTitle>
-          <EmptyStateInfo>{this.props.error}</EmptyStateInfo>
+        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <EmptyStateIcon icon={KialiIcon.Error} />
+          <Title headingLevel="h5" size="lg">
+            Error loading Graph
+          </Title>
+          <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>Loading Graph</EmptyStateTitle>
+        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size="lg">
+            Loading Graph
+          </Title>
         </EmptyState>
       );
     }
 
     if (this.props.namespaces.length === 0) {
       return (
-        <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>No namespace is selected</EmptyStateTitle>
-          <EmptyStateInfo>
+        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size="lg">
+            No namespace is selected
+          </Title>
+          <EmptyStateBody>
             There is currently no namespace selected, please select one using the Namespace selector.
-          </EmptyStateInfo>
+          </EmptyStateBody>
         </EmptyState>
       );
     }
@@ -127,9 +128,11 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (isGraphEmpty) {
       return (
-        <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>Empty Graph</EmptyStateTitle>
-          <EmptyStateInfo>
+        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size="lg">
+            Empty Graph
+          </Title>
+          <EmptyStateBody>
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
             service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
             the service mesh has yet to see request traffic.
@@ -142,16 +145,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
                 You can enable 'Unused nodes' to display service mesh nodes that have yet to see any request traffic.
               </>
             )}
-          </EmptyStateInfo>
-          <EmptyStateAction>
-            <Button
-              bsStyle="primary"
-              bsSize="large"
-              onClick={this.props.isDisplayingUnusedNodes ? this.props.action : this.props.displayUnusedNodes}
-            >
-              {(this.props.isDisplayingUnusedNodes && <>Refresh</>) || <>Display unused nodes</>}
-            </Button>
-          </EmptyStateAction>
+          </EmptyStateBody>
+          <Button
+            onClick={this.props.isDisplayingUnusedNodes ? this.props.action : this.props.displayUnusedNodes}
+            variant="primary"
+          >
+            {(this.props.isDisplayingUnusedNodes && <>Refresh</>) || <>Display unused nodes</>}
+          </Button>
         </EmptyState>
       );
     } else {
