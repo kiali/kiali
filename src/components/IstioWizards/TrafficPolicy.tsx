@@ -8,11 +8,13 @@ import { HTTPCookie, LoadBalancerSettings } from '../../types/IstioObjects';
 
 export const DISABLE = 'DISABLE';
 export const ISTIO_MUTUAL = 'ISTIO_MUTUAL';
+export const SIMPLE = 'SIMPLE';
+export const MUTUAL = 'MUTUAL';
 export const ROUND_ROBIN = 'ROUND_ROBIN';
 
 export const loadBalancerSimple: string[] = [ROUND_ROBIN, 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
 
-export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, 'SIMPLE'];
+export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, SIMPLE, MUTUAL];
 
 type ReduxProps = {
   meshWideStatus: string;
@@ -20,6 +22,9 @@ type ReduxProps = {
 
 type Props = ReduxProps & {
   mtlsMode: string;
+  clientCertificate: string;
+  privateKey: string;
+  caCertificates: string;
   hasLoadBalancer: boolean;
   loadBalancer: LoadBalancerSettings;
   onTrafficPolicyChange: (valid: boolean, trafficPolicy: TrafficPolicyState) => void;
@@ -35,6 +40,9 @@ export enum ConsistentHashType {
 export type TrafficPolicyState = {
   tlsModified: boolean;
   mtlsMode: string;
+  clientCertificate: string;
+  privateKey: string;
+  caCertificates: string;
   addLoadBalancer: boolean;
   simpleLB: boolean;
   consistentHashType: ConsistentHashType;
@@ -45,6 +53,9 @@ const durationRegex = /^[0-9]*(\.[0-9]+)?s?$/;
 
 enum TrafficPolicyForm {
   TLS,
+  TLS_CLIENT_CERTIFICATE,
+  TLS_PRIVATE_KEY,
+  TLS_CA_CERTIFICATES,
   LB_SWITCH,
   LB_SIMPLE,
   LB_SELECT,
@@ -70,6 +81,9 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
     this.state = {
       tlsModified: false,
       mtlsMode: props.mtlsMode,
+      clientCertificate: props.clientCertificate,
+      privateKey: props.privateKey,
+      caCertificates: props.caCertificates,
       addLoadBalancer: props.hasLoadBalancer,
       simpleLB: props.loadBalancer && props.loadBalancer.simple !== undefined && props.loadBalancer.simple !== null,
       consistentHashType: consistentHashType,
@@ -158,7 +172,58 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
             tlsModified: true,
             mtlsMode: value
           },
-          () => this.props.onTrafficPolicyChange(true, this.state)
+          () =>
+            this.props.onTrafficPolicyChange(
+              this.state.mtlsMode === MUTUAL
+                ? this.state.clientCertificate.length > 0 && this.state.privateKey.length > 0
+                : true,
+              this.state
+            )
+        );
+        break;
+      case TrafficPolicyForm.TLS_CLIENT_CERTIFICATE:
+        this.setState(
+          {
+            tlsModified: true,
+            clientCertificate: value
+          },
+          () =>
+            this.props.onTrafficPolicyChange(
+              this.state.mtlsMode === MUTUAL &&
+                this.state.clientCertificate.length > 0 &&
+                this.state.privateKey.length > 0,
+              this.state
+            )
+        );
+        break;
+      case TrafficPolicyForm.TLS_PRIVATE_KEY:
+        this.setState(
+          {
+            tlsModified: true,
+            privateKey: value
+          },
+          () =>
+            this.props.onTrafficPolicyChange(
+              this.state.mtlsMode === MUTUAL &&
+                this.state.clientCertificate.length > 0 &&
+                this.state.privateKey.length > 0,
+              this.state
+            )
+        );
+        break;
+      case TrafficPolicyForm.TLS_CA_CERTIFICATES:
+        this.setState(
+          {
+            tlsModified: true,
+            caCertificates: value
+          },
+          () =>
+            this.props.onTrafficPolicyChange(
+              this.state.mtlsMode === MUTUAL &&
+                this.state.clientCertificate.length > 0 &&
+                this.state.privateKey.length > 0,
+              this.state
+            )
         );
         break;
       case TrafficPolicyForm.LB_SWITCH:
@@ -296,6 +361,44 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
             ))}
           </FormSelect>
         </FormGroup>
+        {this.state.mtlsMode === MUTUAL && (
+          <>
+            <FormGroup
+              label="Client Certificate"
+              fieldId="clientCertificate"
+              isValid={this.state.clientCertificate.length > 0}
+              helperTextInvalid="Client Certificate must be non empty"
+            >
+              <TextInput
+                value={this.state.clientCertificate}
+                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_CLIENT_CERTIFICATE, value)}
+                id="clientCertificate"
+                name="clientCertificate"
+              />
+            </FormGroup>
+            <FormGroup
+              label="Private Key"
+              fieldId="privateKey"
+              isValid={this.state.privateKey.length > 0}
+              helperTextInvalid="Private Key must be non empty"
+            >
+              <TextInput
+                value={this.state.privateKey}
+                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_PRIVATE_KEY, value)}
+                id="privateKey"
+                name="privateKey"
+              />
+            </FormGroup>
+            <FormGroup label="CA Certificates" fieldId="caCertificates">
+              <TextInput
+                value={this.state.caCertificates}
+                onChange={value => this.onFormChange(TrafficPolicyForm.TLS_CA_CERTIFICATES, value)}
+                id="caCertificates"
+                name="caCertificates"
+              />
+            </FormGroup>
+          </>
+        )}
         <FormGroup label="Add LoadBalancer" fieldId="advanced-lbSwitch">
           <Switch
             id="advanced-lbSwitch"

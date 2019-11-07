@@ -251,11 +251,11 @@ export interface OutlierDetection {
 
 export interface TLSSettings {
   mode: string;
-  clientCertificate?: string;
-  privateKey?: string;
-  caCertificates?: string;
-  subjectAltNames?: string[];
-  sni?: string;
+  clientCertificate?: string | null;
+  privateKey?: string | null;
+  caCertificates?: string | null;
+  subjectAltNames?: string[] | null;
+  sni?: string | null;
 }
 
 export interface TrafficPolicy {

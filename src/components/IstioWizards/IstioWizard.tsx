@@ -59,6 +59,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       trafficPolicy: {
         tlsModified: false,
         mtlsMode: DISABLE,
+        clientCertificate: '',
+        privateKey: '',
+        caCertificates: '',
         addLoadBalancer: false,
         simpleLB: false,
         consistentHashType: ConsistentHashType.HTTP_HEADER_NAME,
@@ -87,7 +90,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
           break;
       }
       const initVsHosts = getInitHosts(this.props.virtualServices);
-      const initMtlsMode = getInitTlsMode(this.props.destinationRules);
+      const [initMtlsMode, initClientCertificate, initPrivateKey, initCaCertificates] = getInitTlsMode(
+        this.props.destinationRules
+      );
       const initLoadBalancer = getInitLoadBalancer(this.props.destinationRules);
       let initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
       if (initLoadBalancer && initLoadBalancer.consistentHash) {
@@ -102,6 +107,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       const trafficPolicy: TrafficPolicyState = {
         tlsModified: initMtlsMode !== '',
         mtlsMode: initMtlsMode !== '' ? initMtlsMode : DISABLE,
+        clientCertificate: initClientCertificate,
+        privateKey: initPrivateKey,
+        caCertificates: initCaCertificates,
         addLoadBalancer: initLoadBalancer !== undefined,
         simpleLB: initLoadBalancer !== undefined && initLoadBalancer.simple !== undefined,
         consistentHashType: initConsistentHashType,
@@ -235,6 +243,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     this.setState(prevState => {
       // At the moment this callback only updates the valid of the loadbalancer
       // tls is always true, but I maintain it on the structure for consistency
+      prevState.valid.tls = valid;
       prevState.valid.lb = valid;
       return {
         valid: prevState.valid,
@@ -378,6 +387,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
             <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
             <TrafficPolicyContainer
               mtlsMode={this.state.trafficPolicy.mtlsMode}
+              clientCertificate={this.state.trafficPolicy.clientCertificate}
+              privateKey={this.state.trafficPolicy.privateKey}
+              caCertificates={this.state.trafficPolicy.caCertificates}
               hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
               loadBalancer={this.state.trafficPolicy.loadBalancer}
               nsWideStatus={this.props.tlsStatus}

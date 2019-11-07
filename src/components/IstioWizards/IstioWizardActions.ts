@@ -18,7 +18,7 @@ import {
 import { serverConfig } from '../../config';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { GatewaySelectorState } from './GatewaySelector';
-import { ConsistentHashType, TrafficPolicyState } from './TrafficPolicy';
+import { ConsistentHashType, MUTUAL, TrafficPolicyState } from './TrafficPolicy';
 
 export const WIZARD_WEIGHTED_ROUTING = 'weighted_routing';
 export const WIZARD_MATCHING_ROUTING = 'matching_routing';
@@ -375,8 +375,16 @@ export const buildIstioConfig = (
     };
     if (wState.trafficPolicy.tlsModified) {
       wizardDR.spec.trafficPolicy.tls = {
-        mode: wState.trafficPolicy.mtlsMode
+        mode: wState.trafficPolicy.mtlsMode,
+        clientCertificate: null,
+        privateKey: null,
+        caCertificates: null
       };
+      if (wState.trafficPolicy.mtlsMode === MUTUAL) {
+        wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
+        wizardDR.spec.trafficPolicy.tls.privateKey = wState.trafficPolicy.privateKey;
+        wizardDR.spec.trafficPolicy.tls.caCertificates = wState.trafficPolicy.caCertificates;
+      }
     }
     if (wState.trafficPolicy.addLoadBalancer) {
       if (wState.trafficPolicy.simpleLB) {
@@ -501,15 +509,20 @@ export const getInitSuspendedRoutes = (
   return routes;
 };
 
-export const getInitTlsMode = (destinationRules: DestinationRules): string => {
+export const getInitTlsMode = (destinationRules: DestinationRules): [string, string, string, string] => {
   if (
     destinationRules.items.length === 1 &&
     destinationRules.items[0].spec.trafficPolicy &&
     destinationRules.items[0].spec.trafficPolicy.tls
   ) {
-    return destinationRules.items[0].spec.trafficPolicy.tls.mode || '';
+    return [
+      destinationRules.items[0].spec.trafficPolicy.tls.mode || '',
+      destinationRules.items[0].spec.trafficPolicy.tls.clientCertificate || '',
+      destinationRules.items[0].spec.trafficPolicy.tls.privateKey || '',
+      destinationRules.items[0].spec.trafficPolicy.tls.caCertificates || ''
+    ];
   }
-  return '';
+  return ['', '', '', ''];
 };
 
 export const getInitLoadBalancer = (destinationRules: DestinationRules): LoadBalancerSettings | undefined => {
