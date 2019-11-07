@@ -87,11 +87,10 @@
     "json-beautify": "1.0.1",
     "lodash": "4.17.13",
     "logfmt": "1.2.1",
-    "marked": "0.7.0",
     "moment": "2.24.0",
     "patternfly": "3.59.3",
     "patternfly-react": "2.31.1",
-    "rapidoc": "5.0.5",
+    "rapidoc": "5.3.1",
     "react": "16.9.0",
     "react-ace": "6.4.0",
     "react-bootstrap": "0.32.4",
@@ -103,7 +102,7 @@
     "react-redux": "7.1.0",
     "react-resize-detector": "3.4.0",
     "react-router-dom": "5.0.1",
-    "react-scripts": "3.1.1",
+    "react-scripts": "3.2.0",
     "redux": "4.0.1",
     "redux-persist": "5.10.0",
     "redux-persist-transform-filter": "0.0.18",
@@ -143,13 +142,7 @@
     "typescript": "3.5.3"
   },
   "resolutions": {
-    "@typescript-eslint/parser": "1.11.0",
-    "@typescript-eslint/eslint-plugin": "1.11.0",
-    "handlebars": "4.0.14",
-    "js-yaml": "3.13.1",
-    "hoist-non-react-statics": "3.3.0",
-    "caniuse-lite": "1.0.30000974",
-    "marked": "0.7.0"
+    "hoist-non-react-statics": "3.3.0"
   },
   "engines": {
     "node": ">=10.0.0 && <11",
