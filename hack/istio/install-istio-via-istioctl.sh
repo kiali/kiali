@@ -168,7 +168,11 @@ Valid command line arguments:
        The username for the Kiali secret - this is the name to use when logging into Kiali.
        Default: admin
   -s|--set <name=value>:
-       Sets a name/value pair for a custom install setting.
+       Sets a name/value pair for a custom install setting. Some examples you may want to use:
+       --set installPackagePath=/git/clone/istio.io/installer
+       --set values.kiali.tag=v1.9
+       --set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi
+       --set telemetry.components.telemetry.k8s.resources.requests.cpu=50m
   -h|--help:
        this message
 HELPMSG
@@ -263,9 +267,24 @@ if [ "${KIALI_TAG}" != "" ]; then
   _KIALI_TAG_ARG="--set values.kiali.tag=${KIALI_TAG}"
 fi
 
-MANIFEST_CONFIG_SETTINGS_TO_APPLY="--set values.kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set values.tracing.enabled=${DASHBOARDS_ENABLED} --set values.grafana.enabled=${DASHBOARDS_ENABLED} --set values.global.mtls.enabled=${MTLS} --set values.global.controlPlaneSecurityEnabled=${MTLS} --set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED} ${CNI_OPTIONS} ${CUSTOM_INSTALL_SETTINGS}"
+for s in \
+   "--set values.kiali.enabled=${KIALI_ENABLED}" \
+   "${_KIALI_TAG_ARG}" \
+   "--set values.tracing.enabled=${DASHBOARDS_ENABLED}" \
+   "--set values.grafana.enabled=${DASHBOARDS_ENABLED}" \
+   "--set values.global.mtls.enabled=${MTLS}" \
+   "--set values.global.controlPlaneSecurityEnabled=${MTLS}" \
+   "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
+   "${CNI_OPTIONS}" \
+   "--set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi" \
+   "--set telemetry.components.telemetry.k8s.resources.requests.cpu=50m" \
+   "${CUSTOM_INSTALL_SETTINGS}"
+do
+  MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
+done
 
-#MANIFEST_CONFIG_SETTINGS_TO_APPLY="${CNI_OPTIONS} ${CUSTOM_INSTALL_SETTINGS}"
+echo "CONFIG_PROFILE=${CONFIG_PROFILE}"
+echo "MANIFEST_CONFIG_SETTINGS_TO_APPLY=${MANIFEST_CONFIG_SETTINGS_TO_APPLY}"
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
@@ -279,7 +298,6 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   fi
 else
   echo Installing Istio...
-  echo ${ISTIOCTL} manifest apply --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   ${ISTIOCTL} manifest apply --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
