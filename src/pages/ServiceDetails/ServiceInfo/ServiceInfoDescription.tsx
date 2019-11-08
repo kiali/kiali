@@ -23,8 +23,8 @@ import ValidationList from '../../../components/Validations/ValidationList';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
-import { formatTextOrLink } from 'helpers/TextFormatting';
 import { AdditionalItem } from 'types/Workload';
+import { TextOrLink } from 'components/TextOrLink';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -102,7 +102,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
                       <Text component={TextVariants.h3}> {additionalItem.title} </Text>
-                      {formatTextOrLink(additionalItem.value, 64)}
+                      <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
                   );
                 })}

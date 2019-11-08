@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { shallow, mount } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 import WorkloadDescription from '../WorkloadDescription';
 import { emptyWorkload } from '../../../../types/Workload';
@@ -39,10 +39,7 @@ describe('WorkloadDescription', () => {
         }
       ]
     };
-    const wrapper = shallow(
-      <WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />
-    );
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    const wrapper = mount(<WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />);
     expect(wrapper.find('a').getElements()[0].props.href).toEqual('https://my-service.com');
   });
 });

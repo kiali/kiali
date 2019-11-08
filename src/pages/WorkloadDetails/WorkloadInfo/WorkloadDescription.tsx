@@ -17,7 +17,7 @@ import {
   TextVariants,
   Title
 } from '@patternfly/react-core';
-import { formatTextOrLink } from 'helpers/TextFormatting';
+import { TextOrLink } from 'components/TextOrLink';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -78,7 +78,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
                       <Text component={TextVariants.h3}> {additionalItem.title} </Text>
-                      {formatTextOrLink(additionalItem.value, 64)}
+                      <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
                   );
                 })}
