@@ -9,6 +9,7 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
+import { RenderHeader } from '../../components/Nav/Page';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import PfTitle from '../../components/Pf/PfTitle';
@@ -348,9 +349,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   render() {
     return (
       <>
-        <BreadcrumbView location={this.props.location} />
-        <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
-        {this.renderActions()}
+        <RenderHeader>
+          <BreadcrumbView location={this.props.location} />
+          <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
+          {this.renderActions()}
+        </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

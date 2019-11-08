@@ -73,7 +73,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     }
 
     return (
-      <Grid>
+      <Grid style={{ padding: '20px' }}>
         <GridItem span={12}>
           <Card>
             <CardBody>

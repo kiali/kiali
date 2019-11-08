@@ -10,6 +10,7 @@ import { AppHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
+import { RenderHeader } from '../../components/Nav/Page';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
@@ -259,9 +260,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     return (
       <>
-        <BreadcrumbView location={this.props.location} />
-        <PfTitle location={this.props.location} istio={istioSidecar} />
-        {this.renderActions()}
+        <RenderHeader>
+          <BreadcrumbView location={this.props.location} />
+          <PfTitle location={this.props.location} istio={istioSidecar} />
+          {this.renderActions()}
+        </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

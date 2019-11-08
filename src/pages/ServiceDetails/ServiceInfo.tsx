@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
+import { Grid, GridItem } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import { ServiceDetailsInfo, validationToSeverity } from '../../types/ServiceInfo';
@@ -133,9 +133,9 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
         Virtual Services ({vsItems.length})
         {validationChecks.hasVirtualServiceChecks
           ? getValidationIcon(
-              (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
-              'virtualservice'
-            )
+            (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
+            'virtualservice'
+          )
           : undefined}
       </>
     );
@@ -145,9 +145,9 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
         Destination Rules ({drItems.length})
         {validationChecks.hasDestinationRuleChecks
           ? getValidationIcon(
-              (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
-              'destinationrule'
-            )
+            (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
+            'destinationrule'
+          )
           : undefined}
       </>
     );
@@ -174,48 +174,44 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           />
         </GridItem>
         <GridItem span={12}>
-          <Card>
-            <CardBody>
-              <ParameterizedTabs
-                id="service-tabs"
-                onSelect={tabValue => {
-                  this.setState({ currentTab: tabValue });
-                }}
-                tabMap={paramToTab}
-                tabName={tabName}
-                defaultTab={defaultTab}
-                activeTab={this.state.currentTab}
-              >
-                <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>
-                    <ServiceInfoWorkload
-                      service={this.props.serviceDetails}
-                      workloads={workloads}
-                      namespace={this.props.namespace}
-                    />
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-                <Tab eventKey={1} title={vsTabTitle}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
-                    <ServiceInfoVirtualServices
-                      service={this.props.serviceDetails}
-                      virtualServices={vsItems}
-                      validations={validations!.virtualservice}
-                    />
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-                <Tab eventKey={2} title={drTabTitle}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
-                    <ServiceInfoDestinationRules
-                      service={this.props.serviceDetails}
-                      destinationRules={drItems}
-                      validations={validations!.destinationrule}
-                    />
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-              </ParameterizedTabs>
-            </CardBody>
-          </Card>
+          <ParameterizedTabs
+            id="service-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+          >
+            <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
+              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>
+                <ServiceInfoWorkload
+                  service={this.props.serviceDetails}
+                  workloads={workloads}
+                  namespace={this.props.namespace}
+                />
+              </ErrorBoundaryWithMessage>
+            </Tab>
+            <Tab eventKey={1} title={vsTabTitle}>
+              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
+                <ServiceInfoVirtualServices
+                  service={this.props.serviceDetails}
+                  virtualServices={vsItems}
+                  validations={validations!.virtualservice}
+                />
+              </ErrorBoundaryWithMessage>
+            </Tab>
+            <Tab eventKey={2} title={drTabTitle}>
+              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
+                <ServiceInfoDestinationRules
+                  service={this.props.serviceDetails}
+                  destinationRules={drItems}
+                  validations={validations!.destinationrule}
+                />
+              </ErrorBoundaryWithMessage>
+            </Tab>
+          </ParameterizedTabs>
         </GridItem>
       </Grid>
     );

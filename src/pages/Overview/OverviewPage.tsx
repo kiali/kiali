@@ -32,6 +32,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import OverviewToolbarContainer, { OverviewToolbar, OverviewType, OverviewDisplayMode } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
+import { RenderHeader } from '../../components/Nav/Page';
 import OverviewCardContentCompact from './OverviewCardContentCompact';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -305,16 +306,18 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     const filteredNamespaces = Filters.filterBy(this.state.namespaces, FilterSelected.getSelected());
     return (
       <>
-        <Breadcrumb style={{ marginTop: '10px' }}>
-          <BreadcrumbItem isActive={true}>Namespaces</BreadcrumbItem>
-        </Breadcrumb>
-        <OverviewToolbarContainer
-          onRefresh={this.load}
-          onError={FilterHelper.handleError}
-          sort={this.sort}
-          displayMode={this.state.displayMode}
-          setDisplayMode={this.setDisplayMode}
-        />
+        <RenderHeader>
+          <Breadcrumb style={{ marginTop: '10px' }}>
+            <BreadcrumbItem isActive={true}>Namespaces</BreadcrumbItem>
+          </Breadcrumb>
+          <OverviewToolbarContainer
+            onRefresh={this.load}
+            onError={FilterHelper.handleError}
+            sort={this.sort}
+            displayMode={this.state.displayMode}
+            setDisplayMode={this.setDisplayMode}
+          />
+        </RenderHeader>
         {filteredNamespaces.length > 0 ? (
           <Grid className={gridStyle}>
             {filteredNamespaces.map(ns => (

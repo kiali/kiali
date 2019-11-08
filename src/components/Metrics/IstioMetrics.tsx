@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { Dashboard, DashboardModel, ExternalLink } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
@@ -155,22 +155,28 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     const expandedChart = urlParams.get('expand') || undefined;
 
     return (
-      <div>
-        {this.renderOptionsBar()}
-        <Dashboard
-          dashboard={this.state.dashboard}
-          labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-          expandedChart={expandedChart}
-          expandHandler={this.expandHandler}
-          labelPrettifier={MetricsHelper.prettyLabelValues}
-        />
-      </div>
+      <Grid style={{ padding: '20px' }}>
+        <GridItem span={12}>
+          <Card>
+            <CardBody>
+              {this.renderOptionsBar()}
+              <Dashboard
+                dashboard={this.state.dashboard}
+                labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                expandedChart={expandedChart}
+                expandHandler={this.expandHandler}
+                labelPrettifier={MetricsHelper.prettyLabelValues}
+              />
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 
   renderOptionsBar() {
     return (
-      <Toolbar style={{ padding: 10 }}>
+      <Toolbar>
         <ToolbarGroup>
           <ToolbarItem>
             <MetricsSettingsDropdown

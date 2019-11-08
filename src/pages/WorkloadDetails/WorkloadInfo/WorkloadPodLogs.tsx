@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
@@ -55,12 +55,13 @@ const logsTextarea = style({
 });
 
 const toolbarRight = style({
-  right: '20px',
+  right: '50px',
   position: 'absolute'
 });
 
 const displayFlex = style({
-  display: 'flex'
+  display: 'flex',
+  marginTop: '5px'
 });
 
 const toolbarMargin = style({
@@ -137,58 +138,64 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     return (
       <>
         {this.state.containerInfo && (
-          <>
-            <Toolbar className={toolbarMargin}>
-              <ToolbarGroup>
-                <ToolbarItem className={displayFlex}>
-                  <ToolbarDropdown
-                    id={'wpl_pods'}
-                    nameDropdown="Pod"
-                    tooltip="Display logs for the selected pod"
-                    handleSelect={key => this.setPod(key)}
-                    value={this.state.podValue}
-                    label={this.props.pods[this.state.podValue!].name}
-                    options={this.podOptions!}
+          <Grid style={{ padding: '20px' }}>
+            <GridItem span={12}>
+              <Card>
+                <CardBody>
+                  <Toolbar className={toolbarMargin}>
+                    <ToolbarGroup>
+                      <ToolbarItem className={displayFlex}>
+                        <ToolbarDropdown
+                          id={'wpl_pods'}
+                          nameDropdown="Pod"
+                          tooltip="Display logs for the selected pod"
+                          handleSelect={key => this.setPod(key)}
+                          value={this.state.podValue}
+                          label={this.props.pods[this.state.podValue!].name}
+                          options={this.podOptions!}
+                        />
+                      </ToolbarItem>
+                      <ToolbarItem className={displayFlex}>
+                        <ToolbarDropdown
+                          id={'wpl_containers'}
+                          nameDropdown="&nbsp;&nbsp;&nbsp;Container"
+                          tooltip="Display logs for the selected pod container"
+                          handleSelect={key => this.setContainer(key)}
+                          value={this.state.containerInfo.container}
+                          label={this.state.containerInfo.container}
+                          options={this.state.containerInfo.containerOptions!}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup className={toolbarRight}>
+                      <ToolbarItem className={displayFlex}>
+                        <ToolbarDropdown
+                          id={'wpl_tailLines'}
+                          nameDropdown="Tail"
+                          handleSelect={key => this.setTailLines(Number(key))}
+                          value={this.state.tailLines}
+                          label={TailLinesOptions[this.state.tailLines]}
+                          options={TailLinesOptions}
+                          tooltip={'Show up to last N log lines'}
+                        />
+                      </ToolbarItem>
+                      <ToolbarItem>
+                        <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
+                      </ToolbarItem>
+                      <ToolbarItem>
+                        <RefreshButtonContainer disabled={!this.state.podLogs} handleRefresh={this.handleRefresh} />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                  </Toolbar>
+                  <textarea
+                    className={logsTextarea}
+                    readOnly={true}
+                    value={this.state.podLogs ? this.state.podLogs.logs : 'Loading logs...'}
                   />
-                </ToolbarItem>
-                <ToolbarItem className={displayFlex}>
-                  <ToolbarDropdown
-                    id={'wpl_containers'}
-                    nameDropdown="&nbsp;&nbsp;&nbsp;Container"
-                    tooltip="Display logs for the selected pod container"
-                    handleSelect={key => this.setContainer(key)}
-                    value={this.state.containerInfo.container}
-                    label={this.state.containerInfo.container}
-                    options={this.state.containerInfo.containerOptions!}
-                  />
-                </ToolbarItem>
-              </ToolbarGroup>
-              <ToolbarGroup className={toolbarRight}>
-                <ToolbarItem className={displayFlex}>
-                  <ToolbarDropdown
-                    id={'wpl_tailLines'}
-                    nameDropdown="Tail"
-                    handleSelect={key => this.setTailLines(Number(key))}
-                    value={this.state.tailLines}
-                    label={TailLinesOptions[this.state.tailLines]}
-                    options={TailLinesOptions}
-                    tooltip={'Show up to last N log lines'}
-                  />
-                </ToolbarItem>
-                <ToolbarItem>
-                  <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
-                </ToolbarItem>
-                <ToolbarItem>
-                  <RefreshButtonContainer disabled={!this.state.podLogs} handleRefresh={this.handleRefresh} />
-                </ToolbarItem>
-              </ToolbarGroup>
-            </Toolbar>
-            <textarea
-              className={logsTextarea}
-              readOnly={true}
-              value={this.state.podLogs ? this.state.podLogs.logs : 'Loading logs...'}
-            />
-          </>
+                </CardBody>
+              </Card>
+            </GridItem>
+          </Grid>
         )}
         {this.state.loadingPodLogsError && <div>{this.state.loadingPodLogsError}</div>}
       </>

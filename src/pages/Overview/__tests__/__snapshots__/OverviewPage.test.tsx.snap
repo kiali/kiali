@@ -2,26 +2,28 @@
 
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
-  <Component
-    style={
-      Object {
-        "marginTop": "10px",
+  <RenderHeader>
+    <Component
+      style={
+        Object {
+          "marginTop": "10px",
+        }
       }
-    }
-  >
-    <BreadcrumbItem
-      isActive={true}
     >
-      Namespaces
-    </BreadcrumbItem>
-  </Component>
-  <Connect(OverviewToolbar)
-    displayMode={1}
-    onError={[Function]}
-    onRefresh={[Function]}
-    setDisplayMode={[Function]}
-    sort={[Function]}
-  />
+      <BreadcrumbItem
+        isActive={true}
+      >
+        Namespaces
+      </BreadcrumbItem>
+    </Component>
+    <Connect(OverviewToolbar)
+      displayMode={1}
+      onError={[Function]}
+      onRefresh={[Function]}
+      setDisplayMode={[Function]}
+      sort={[Function]}
+    />
+  </RenderHeader>
   <div
     style={
       Object {

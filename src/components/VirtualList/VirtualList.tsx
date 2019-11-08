@@ -97,6 +97,7 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
           height:
             '90%' /* important note: the scrollable container should have some sort of fixed height, or it should be wrapped in container that is smaller than ReactVirtualized__VirtualGrid container and has overflow visible if using the Window Scroller. See WindowScroller.example.css */,
           overflowX: 'unset',
+          padding: '20px',
           overflowY: 'unset',
           scrollBehavior: 'smooth',
           WebkitOverflowScrolling: 'touch',

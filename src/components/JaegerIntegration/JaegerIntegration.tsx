@@ -4,6 +4,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { JaegerSearchOptions, JaegerURLSearch } from './RouteHelper';
 import JaegerTracesIframe from './JaegerTracesIframe';
+import { RenderHeader } from '../Nav/Page';
 
 interface JaegerIntegrationProps {
   disableSelectorNs?: boolean;
@@ -31,15 +32,17 @@ export class JaegerIntegration extends React.Component<JaegerIntegrationProps, J
     const { serviceSelected, tagsValue, disableSelectorNs } = this.props;
 
     return (
-      <div style={{ marginTop: '10px' }}>
-        <JaegerToolbar
-          updateURL={this.updateURL}
-          serviceSelected={serviceSelected}
-          tagsValue={tagsValue}
-          disableSelectorNs={disableSelectorNs}
-        />
+      <>
+        <RenderHeader>
+          <JaegerToolbar
+            updateURL={this.updateURL}
+            serviceSelected={serviceSelected}
+            tagsValue={tagsValue}
+            disableSelectorNs={disableSelectorNs}
+          />
+        </RenderHeader>
         <JaegerTracesIframe url={this.state.url} />
-      </div>
+      </>
     );
   }
 }

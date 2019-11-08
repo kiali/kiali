@@ -132,7 +132,7 @@ describe('Metrics for a service', () => {
       mockServiceDashboard({ title: 'foo', aggregations: [], charts: [], externalLinks: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('GridItem')).toHaveLength(0);
+          expect(mounted!.find('GridItem')).toHaveLength(1);
         })
         .catch(err => done.fail(err))
     ];
@@ -171,7 +171,7 @@ describe('Metrics for a service', () => {
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('GridItem')).toHaveLength(4);
+          expect(mounted!.find('GridItem')).toHaveLength(5);
         })
         .catch(err => done.fail(err))
     ];
@@ -230,7 +230,7 @@ describe('Inbound Metrics for a workload', () => {
       mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [], externalLinks: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('GridItem')).toHaveLength(0);
+          expect(mounted!.find('GridItem')).toHaveLength(1);
         })
         .catch(err => done.fail(err))
     ];
@@ -269,7 +269,7 @@ describe('Inbound Metrics for a workload', () => {
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('GridItem')).toHaveLength(4);
+          expect(mounted!.find('GridItem')).toHaveLength(5);
         })
         .catch(err => done.fail(err))
     ];

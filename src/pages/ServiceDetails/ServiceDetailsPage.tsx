@@ -9,6 +9,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Validations } from '../../types/IstioObjects';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
+import { RenderHeader } from '../../components/Nav/Page';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
@@ -449,9 +450,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        <BreadcrumbView location={this.props.location} />
-        <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
-        {this.renderActions()}
+        <RenderHeader>
+          <BreadcrumbView location={this.props.location} />
+          <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
+          {this.renderActions()}
+        </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
