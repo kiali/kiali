@@ -38,3 +38,309 @@ spec:
   - name: v1alpha1
     served: true
     storage: true
+  validation:
+    openAPIV3Schema:
+      type: object
+      properties:
+        spec:
+          type: object
+          properties:
+            installation_tag:
+              type: string
+            istio_component_namespaces:
+              type: object
+            istio_namespace:
+              type: string
+            api:
+              type: object
+              properties:
+                namespaces:
+                  type: object
+                  properties:
+                    exclude:
+                      type: array
+                      items:
+                        type: string
+                label_selector:
+                  type: string
+            apidocs:
+              type: object
+              properties:
+                annotations:
+                  type: object
+                  properties:
+                    api_spec_annotation_name:
+                      type: string
+                    api_type_annotation_name:
+                      type: string
+            auth:
+              type: object
+              properties:
+                strategy:
+                  type: string
+                ldap:
+                  type: object
+                  properties:
+                    ldap_base:
+                      type: string
+                    ldap_bind_dn:
+                      type: string
+                    ldap_group_filter:
+                      type: string
+                    ldap_host:
+                      type: string
+                    ldap_insecure_skip_verify:
+                      type: boolean
+                    ldap_mail_id_key:
+                      type: string
+                    ldap_member_of_key:
+                      type: string
+                    ldap_port:
+                      type: number
+                    ldap_role_filter:
+                      type: string
+                    ldap_search_filter:
+                      type: string
+                    ldap_use_ssl:
+                      type: boolean
+                    ldap_user_filter:
+                      type: string
+                    ldap_user_id_key:
+                      type: string
+            deployment:
+              type: object
+              properties:
+                accessible_namespaces:
+                  type: array
+                  items:
+                    type: string
+                additional_service_yaml:
+                  type: object
+                affinity:
+                  type: object
+                  properties:
+                    node:
+                      type: object
+                    pod:
+                      type: object
+                    pod_anti:
+                      type: object
+                image_name:
+                  type: string
+                image_pull_policy:
+                  type: string
+                  enum:
+                  - Always
+                  - Never
+                  - IfNotPresent
+                image_pull_secrets:
+                  type: array
+                  items:
+                    type: string
+                image_version:
+                  type: string
+                ingress_enabled:
+                  type: boolean
+                namespace:
+                  type: string
+                secret_name:
+                  type: string
+                service_type:
+                  type: string
+                  enum:
+                  - NodePort
+                  - ClusterIP
+                  - LoadBalancer
+                  - ExternalName
+                tolerations:
+                  type: array
+                  items:
+                    type: object
+                verbose_mode:
+                  type: number
+                  minimum: 0
+                version_label:
+                  type: string
+                view_only_mode:
+                  type: boolean
+            external_services:
+              type: object
+              properties:
+                grafana:
+                  type: object
+                  properties:
+                    auth:
+                      type: object
+                      properties:
+                        ca_file:
+                          type: string
+                        insecure_skip_verify:
+                          type: boolean
+                        password:
+                          type: string
+                        token:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - basic
+                          - bearer
+                          - none
+                        use_kiali_token:
+                          type: boolean
+                        username:
+                          type: string
+                    dashboards:
+                      type: array
+                      items:
+                        type: object
+                    enabled:
+                      type: boolean
+                    in_cluster_url:
+                      type: string
+                    url:
+                      type: string
+                istio:
+                  type: object
+                  properties:
+                    istio_identity_domain:
+                      type: string
+                    istio_sidecar_annotation:
+                      type: string
+                    url_service_version:
+                      type: string
+                prometheus:
+                  type: object
+                  properties:
+                    auth:
+                      type: object
+                      properties:
+                        ca_file:
+                          type: string
+                        insecure_skip_verify:
+                          type: boolean
+                        password:
+                          type: string
+                        token:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - basic
+                          - bearer
+                          - none
+                        use_kiali_token:
+                          type: boolean
+                        username:
+                          type: string
+                    custom_metrics_url:
+                      type: string
+                    url:
+                      type: string
+                tracing:
+                  type: object
+                  properties:
+                    auth:
+                      type: object
+                      properties:
+                        ca_file:
+                          type: string
+                        insecure_skip_verify:
+                          type: boolean
+                        password:
+                          type: string
+                        token:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - basic
+                          - bearer
+                          - none
+                        use_kiali_token:
+                          type: boolean
+                        username:
+                          type: string
+                    enabled:
+                      type: boolean
+                    in_cluster_url:
+                      type: string
+                    namespace:
+                      type: string
+                    port:
+                      type: number
+                      minimum: 1
+                      maximum: 65535
+                    service:
+                      type: string
+                    url:
+                      type: string
+            identity:
+              type: object
+              properties:
+                cert_file:
+                  type: string
+                private_key_file:
+                  type: string
+            istio_labels:
+              type: object
+              properties:
+                app_label_name:
+                  type: string
+                version_label_name:
+                  type: string
+            kubernetes_config:
+              type: object
+              properties:
+                burst:
+                  type: number
+                cache_duration:
+                  type: number
+                cache_enabled:
+                  type: boolean
+                cache_istio_types:
+                  type: array
+                  items:
+                    type: string
+                cache_namespaces:
+                  type: array
+                  items:
+                    type: string
+                cache_token_namespace_duration:
+                  type: number
+                excluded_workloads:
+                  type: array
+                  items:
+                    type: string
+                qps:
+                  type: number
+            login_token:
+              type: object
+              properties:
+                expiration_seconds:
+                  type: number
+                signing_key:
+                  type: string
+            server:
+              type: object
+              properties:
+                address:
+                  type: string
+                audit_log:
+                  type: boolean
+                cors_allow_all:
+                  type: boolean
+                gzip_enabled:
+                  type: boolean
+                metrics_enabled:
+                  type: boolean
+                metrics_port:
+                  type: number
+                  minimum: 1
+                  maximum: 65535
+                port:
+                  type: number
+                  minimum: 1
+                  maximum: 65535
+                web_root:
+                  type: string
