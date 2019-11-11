@@ -37,7 +37,7 @@ class RefreshButton extends React.Component<Props> {
           onClick={this.handleRefresh}
           isDisabled={this.getDisabled()}
           aria-label="Action"
-          variant="plain"
+          variant="primary"
         >
           <SyncAltIcon />
         </Button>
