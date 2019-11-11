@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 	khttp "github.com/kiali/k-charted/http"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
@@ -26,7 +25,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build apps
 	appList, err := business.App.GetAppList(namespace)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -48,11 +47,7 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build app
 	appDetails, err := business.App.GetApp(namespace, app)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 

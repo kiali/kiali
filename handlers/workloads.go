@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
@@ -30,7 +29,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build workloads
 	workloadList, err := business.Workload.GetWorkloadList(namespace)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -53,11 +52,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build workload
 	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, true)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -136,11 +131,7 @@ func PodDetails(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build pod
 	podDetails, err := business.Workload.GetPod(namespace, pod)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -188,11 +179,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	// Fetch pod logs
 	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &podLogOptions)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 

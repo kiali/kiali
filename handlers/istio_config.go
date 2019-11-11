@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 func IstioConfigList(w http.ResponseWriter, r *http.Request) {
@@ -70,8 +69,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -223,14 +221,8 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if errors.IsNotFound(err) {
-		RespondWithError(w, http.StatusNotFound, err.Error())
-		return
-	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		return
-	} else if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	if err != nil {
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -258,12 +250,8 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, objectSubtype, object)
 	if err != nil {
-		log.Error(err)
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
+		return
 	} else {
 		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object)
 		RespondWithCode(w, http.StatusOK)
@@ -297,14 +285,8 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	jsonPatch := string(body)
 	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, jsonPatch)
 
-	if errors.IsNotFound(err) {
-		RespondWithError(w, http.StatusNotFound, err.Error())
-		return
-	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		return
-	} else if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	if err != nil {
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -338,14 +320,8 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, body)
-	if errors.IsNotFound(err) {
-		RespondWithError(w, http.StatusNotFound, err.Error())
-		return
-	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		return
-	} else if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	if err != nil {
+		handleErrorResponse(w, err)
 		return
 	}
 

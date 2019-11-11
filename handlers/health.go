@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
@@ -125,13 +124,7 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 
 func handleHealthResponse(w http.ResponseWriter, health interface{}, err error) {
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 	} else {
 		RespondWithJSON(w, http.StatusOK, health)
 	}
