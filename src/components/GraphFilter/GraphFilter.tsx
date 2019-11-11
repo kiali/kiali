@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormGroup, Toolbar } from 'patternfly-react';
+import { Button, ButtonVariant, Toolbar, ToolbarGroup } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { connect } from 'react-redux';
@@ -27,7 +27,6 @@ import Namespace, { namespacesFromString, namespacesToString } from '../../types
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
-import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 
@@ -50,9 +49,12 @@ type GraphFilterProps = ReduxProps & {
   onRefresh: () => void;
 };
 
-// align with separator start / Graph breadcrumb
-const alignLeftStyle = style({
-  marginLeft: '-30px'
+const toolbarStyle = style({
+  marginBottom: '10px'
+});
+
+const rightToolbarStyle = style({
+  marginLeft: 'auto'
 });
 
 const marginLeftRight = style({
@@ -150,10 +152,12 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     const edgeLabelModeKey: string = _.findKey(EdgeLabelMode, val => val === this.props.edgeLabelMode)!;
     return (
       <>
-        <Toolbar>
-          <FormGroup className={alignLeftStyle} style={{ ...ThinStyle, display: 'flex' }}>
+        <Toolbar className={toolbarStyle}>
+          <div style={{ display: 'flex' }}>
             {this.props.node ? (
-              <Button onClick={this.handleNamespaceReturn}>Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}</Button>
+              <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
+                Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}
+              </Button>
             ) : (
               <TourStopContainer info={GraphTourStops.GraphType}>
                 <ToolbarDropdown
@@ -181,15 +185,15 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
             <TourStopContainer info={GraphTourStops.Display}>
               <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
             </TourStopContainer>
-          </FormGroup>
+          </div>
           <GraphFindContainer />
-          <Toolbar.RightContent style={{ ...AlignRightStyle, display: 'flex' }}>
+          <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
             <GraphRefreshContainer
               id="graph_refresh_container"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
             />
-          </Toolbar.RightContent>
+          </ToolbarGroup>
         </Toolbar>
       </>
     );
