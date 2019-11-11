@@ -28,9 +28,6 @@ ISTIO_EGRESSGATEWAY_ENABLED="true"
 CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
 CONFIG_PROFILE="default" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 
-## TODO: This should not be needed when 1.4 is officially released, but we need it for beta2
-CNI_OPTIONS="${CNI_OPTIONS} --set values.istio_cni.enabled=true --force"
-
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
