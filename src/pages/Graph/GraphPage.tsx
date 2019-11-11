@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
-import { Breadcrumb, Button, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Breadcrumb, BreadcrumbItem, Button, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, PollIntervalInMs, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
@@ -97,6 +97,10 @@ type ReduxProps = {
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
 
 const NUMBER_OF_DATAPOINTS = 30;
+
+const breadcrumbStyle = style({
+  marginTop: '10px'
+});
 
 const containerStyle = style({
   minHeight: '350px',
@@ -302,33 +306,30 @@ export class GraphPage extends React.Component<GraphPageProps> {
     return (
       <>
         <FlexView className={conStyle} column={true}>
-          <div>
-            <Breadcrumb title={true}>
-              <Breadcrumb.Item active={true}>
-                {this.props.node && this.props.node.nodeType !== NodeType.UNKNOWN
-                  ? `Graph for ${this.props.node.nodeType}: ${this.getTitle(this.props.node)}`
-                  : 'Graph'}
-                <OverlayTrigger
-                  key={'graph-tour-help-ot'}
-                  placement="right"
-                  overlay={<Tooltip id={'graph-tour-help-tt'}>Graph help tour...</Tooltip>}
-                >
-                  <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleHelp}>
+          <div className={breadcrumbStyle}>
+            <Breadcrumb>
+              <BreadcrumbItem isActive={true}>
+                <Title headingLevel="h4" size="xl">
+                  {this.props.node && this.props.node.nodeType !== NodeType.UNKNOWN
+                    ? `Graph for ${this.props.node.nodeType}: ${this.getTitle(this.props.node)}`
+                    : 'Graph'}
+                </Title>
+                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
+                  <Button variant="link" style={{ paddingLeft: '6px' }} onClick={this.toggleHelp}>
                     <KialiIcon.Help className={defaultIconStyle} />
                   </Button>
-                </OverlayTrigger>
-              </Breadcrumb.Item>
-              {this.props.graphTimestamp > 0 && (
-                <span className={'pull-right'}>
-                  {new Date(graphStart).toLocaleDateString(undefined, timeDisplayOptions)}
-                  {' ... '}
-                  {new Date(graphEnd).toLocaleDateString(undefined, timeDisplayOptions)}
-                </span>
-              )}
+                </Tooltip>
+              </BreadcrumbItem>
             </Breadcrumb>
+            {this.props.graphTimestamp > 0 && (
+              <span className={'pull-right'}>
+                {new Date(graphStart).toLocaleDateString(undefined, timeDisplayOptions)}
+                {' ... '}
+                {new Date(graphEnd).toLocaleDateString(undefined, timeDisplayOptions)}
+              </span>
+            )}
           </div>
           <div>
-            {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
             <GraphFilterContainer disabled={this.props.isLoading} onRefresh={this.handleRefreshClick} />
           </div>
           <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
