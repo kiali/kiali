@@ -10,6 +10,7 @@ import { Workload } from '../../types/Workload';
 import { Grid, GridItem, Tab } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import Validation from '../../components/Validations/Validation';
+import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -73,6 +74,10 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     return validationChecks;
   }
 
+  errorBoundaryMessage(resourceName: string) {
+    return `One of the ${resourceName} associated to this workload has an invalid format`;
+  }
+
   render() {
     const workload = this.props.workload;
     const pods = workload.pods || [];
@@ -128,19 +133,23 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             activeTab={this.state.currentTab}
           >
             <Tab title={podTabTitle} eventKey={0}>
-              <WorkloadPods
-                namespace={this.props.namespace}
-                workload={this.props.workload.name}
-                pods={pods}
-                validations={this.props.validations!.pod}
-              />
+              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Pods')}>
+                <WorkloadPods
+                  namespace={this.props.namespace}
+                  workload={this.props.workload.name}
+                  pods={pods}
+                  validations={this.props.validations!.pod}
+                />
+              </ErrorBoundaryWithMessage>
             </Tab>
-            <Tab title={'Services (' + services.length + ')'} eventKey={1}>
-              <WorkloadServices
-                services={services}
-                workload={this.props.workload.name}
-                namespace={this.props.namespace}
-              />
+            <Tab title={`Services (${services.length})`} eventKey={1}>
+              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Services')}>
+                <WorkloadServices
+                  services={services}
+                  workload={this.props.workload.name}
+                  namespace={this.props.namespace}
+                />
+              </ErrorBoundaryWithMessage>
             </Tab>
           </ParameterizedTabs>
         </GridItem>
