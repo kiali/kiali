@@ -180,4 +180,10 @@ func (c *kialiCacheImpl) Stop() {
 		close(c.stopChan)
 		c.stopChan = nil
 	}
+	defer c.cacheLock.Unlock()
+	c.cacheLock.Lock()
+	log.Infof("Clearing Kiali Cache")
+	for ns := range c.nsCache {
+		delete(c.nsCache, ns)
+	}
 }
