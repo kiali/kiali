@@ -57,12 +57,19 @@ export interface ObjectValidation {
   objectType: string;
   valid: boolean;
   checks: ObjectCheck[];
+  references?: ObjectReference[];
 }
 
 export interface ObjectCheck {
   message: string;
   severity: ValidationTypes;
   path: string;
+}
+
+export interface ObjectReference {
+  objectType: string;
+  name: string;
+  namespace: string;
 }
 
 export interface Reference {

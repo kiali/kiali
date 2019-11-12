@@ -6,7 +6,7 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { ObjectValidation } from '../../types/IstioObjects';
+import { ObjectReference, ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderHeader } from '../../components/Nav/Page';
@@ -21,10 +21,26 @@ import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
-import { Tab, Text, TextVariants } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Grid,
+  GridItem,
+  GutterSize,
+  Stack,
+  StackItem,
+  Tab,
+  Text,
+  TextVariants,
+  Title,
+  TitleLevel,
+  TitleSize
+} from '@patternfly/react-core';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { PfColors } from '../../components/Pf/PfColors';
+import IstioObjectLink from '../../components/Link/IstioObjectLink';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -276,8 +292,16 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
+  objectReferences = (): ObjectReference[] => {
+    const istioValidations: ObjectValidation = this.state.istioValidations || ({} as ObjectValidation);
+    return istioValidations.references || ([] as ObjectReference[]);
+  };
+
   renderEditor = () => {
     const yamlSource = this.fetchYaml();
+    const objectReferences = this.objectReferences();
+    const refPresent = objectReferences.length > 0;
+    const editorSpan = refPresent ? 9 : 12;
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []
@@ -293,22 +317,54 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
     return (
       <div className="container-fluid container-cards-pf">
-        {this.state.istioObjectDetails ? (
-          <AceEditor
-            ref={this.aceEditorRef}
-            mode="yaml"
-            theme="eclipse"
-            onChange={this.onEditorChange}
-            width={'100%'}
-            height={'var(--kiali-yaml-editor-height)'}
-            className={'istio-ace-editor'}
-            readOnly={!this.canUpdate()}
-            setOptions={aceOptions}
-            value={this.state.istioObjectDetails ? yamlSource : undefined}
-            annotations={editorValidations.annotations}
-            markers={editorValidations.markers}
-          />
-        ) : null}
+        <Grid gutter={GutterSize.md}>
+          <GridItem span={editorSpan}>
+            {this.state.istioObjectDetails ? (
+              <AceEditor
+                ref={this.aceEditorRef}
+                mode="yaml"
+                theme="eclipse"
+                onChange={this.onEditorChange}
+                width={'100%'}
+                height={'var(--kiali-yaml-editor-height)'}
+                className={'istio-ace-editor'}
+                readOnly={!this.canUpdate()}
+                setOptions={aceOptions}
+                value={this.state.istioObjectDetails ? yamlSource : undefined}
+                annotations={editorValidations.annotations}
+                markers={editorValidations.markers}
+              />
+            ) : null}
+          </GridItem>
+          {refPresent ? (
+            <GridItem span={3}>
+              <Card>
+                <CardHeader>
+                  <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+                    Validation references
+                  </Title>
+                </CardHeader>
+                <CardBody>
+                  <Stack>
+                    {objectReferences.map((reference, i) => {
+                      return (
+                        <StackItem key={'rel-object-' + i}>
+                          <IstioObjectLink
+                            name={reference.name}
+                            type={reference.objectType}
+                            namespace={reference.namespace}
+                          />
+                        </StackItem>
+                      );
+                    })}
+                  </Stack>
+                </CardBody>
+              </Card>
+            </GridItem>
+          ) : (
+            undefined
+          )}
+        </Grid>
         {this.renderActionButtons()}
       </div>
     );
