@@ -72,20 +72,29 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 	labelSelector := config.Get().API.Namespaces.LabelSelector
 
 	namespaces := []models.Namespace{}
+	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
 		projects, err2 := in.k8s.GetProjects(labelSelector)
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift / kube-project
-			namespaces = models.CastProjectCollection(projects)
+			if queryAllNamespaces {
+				namespaces = models.CastProjectCollection(projects)
+			} else {
+				filteredProjects := make([]osproject_v1.Project, 0)
+				for _, project := range projects {
+					if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
+						filteredProjects = append(filteredProjects, project)
+					}
+				}
+				namespaces = models.CastProjectCollection(filteredProjects)
+			}
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.
 		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8s for them.
 		// Note that "**" requires cluster role permission to list all namespaces.
 		accessibleNamespaces := config.Get().Deployment.AccessibleNamespaces
-		_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
-
 		if queryAllNamespaces {
 			nss, err := in.k8s.GetNamespaces(labelSelector)
 			if err != nil {
