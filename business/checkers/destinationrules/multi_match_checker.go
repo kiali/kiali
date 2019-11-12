@@ -117,7 +117,7 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 		}
 	}
 	// Matches all the subsets:~
-	return []subset{subset{"~", destinationRulesName}}
+	return []subset{{"~", destinationRulesName}}
 }
 
 func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
@@ -146,8 +146,8 @@ func addError(validations models.IstioValidations, namespace string, destination
 	key0, rrValidation0 := createError("destinationrules.multimatch", namespace, destinationRuleNames[0], true)
 	key1, rrValidation1 := createError("destinationrules.multimatch", namespace, destinationRuleNames[1], true)
 
-	rrValidation0.References[0] = key1
-	rrValidation1.References[0] = key0
+	rrValidation0.References = append(rrValidation0.References, key1)
+	rrValidation1.References = append(rrValidation1.References, key0)
 
 	validations.MergeValidations(models.IstioValidations{key0: rrValidation0})
 	validations.MergeValidations(models.IstioValidations{key1: rrValidation1})
@@ -165,7 +165,7 @@ func createError(errorText, namespace, destinationRuleName string, valid bool) (
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
-		References: make([]models.IstioValidationKey, 1),
+		References: make([]models.IstioValidationKey, 0),
 	}
 
 	return key, rrValidation
