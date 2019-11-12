@@ -14,6 +14,18 @@ type IstioValidationKey struct {
 	Namespace  string `json:"namespace"`
 }
 
+// IstioValidationSummary represents the number of errors/warnings of a set of Istio Validations.
+type IstioValidationSummary struct {
+	// Number of validations with error severity
+	// required: true
+	// example: 2
+	Errors int `json:"errors"`
+	// Number of validations with warning severity
+	// required: true
+	// example: 4
+	Warnings int `json:"warnings"`
+}
+
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
 type IstioValidations map[IstioValidationKey]*IstioValidation
 
@@ -312,6 +324,24 @@ func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioVa
 	}
 
 	return iv
+}
+
+func (iv IstioValidations) SummarizeValidation() IstioValidationSummary {
+	ivs := IstioValidationSummary{}
+	for _, v := range iv {
+		ivs.mergeSummaries(v.Checks)
+	}
+	return ivs
+}
+
+func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
+	for _, c := range cs {
+		if c.Severity == ErrorSeverity {
+			summary.Errors = summary.Errors + 1
+		} else if c.Severity == WarningSeverity {
+			summary.Warnings = summary.Warnings + 1
+		}
+	}
 }
 
 // MarshalJSON implements the json.Marshaler interface.

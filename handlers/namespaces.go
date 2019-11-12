@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/models"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 
@@ -54,4 +56,35 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+//NamespaceValidations the API handler to fetch validations to be displayed.
+// It is related to all the Istio Objects within the namespace
+func NamespaceValidations(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+
+	business, err := getBusiness(r)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var validationSummary models.IstioValidationSummary
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func(namespace string, validationSummary *models.IstioValidationSummary, err *error) {
+		defer wg.Done()
+		istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
+		if errValidations != nil && *err == nil {
+			*err = errValidations
+		} else {
+			*validationSummary = istioConfigValidationResults.SummarizeValidation()
+		}
+	}(namespace, &validationSummary, &err)
+
+	wg.Wait()
+	RespondWithJSON(w, http.StatusOK, validationSummary)
 }
