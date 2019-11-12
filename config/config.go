@@ -165,6 +165,12 @@ type IstioLabels struct {
 	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
+// AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
+type AdditionalDisplayItem struct {
+	Annotation string `yaml:"annotation"`
+	Title      string `yaml:"title"`
+}
+
 // KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
 	Burst int `yaml:"burst,omitempty"`
@@ -247,6 +253,7 @@ type IstioComponentNamespaces map[string]string
 
 // Config defines full YAML configuration.
 type Config struct {
+	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                `yaml:"api,omitempty"`
 	ApiDocumentation         ApiDocumentation         `yaml:"apidocs,omitempty"`
 	Auth                     AuthConfig               `yaml:"auth,omitempty"`

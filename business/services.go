@@ -222,6 +222,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		HasSpec: (apiSpecFromAnnotation != ""),
 	}
 
+	additionalDetails := models.GetAdditionalDetails(conf, svc.ObjectMeta.Annotations)
+
 	wg := sync.WaitGroup{}
 	wg.Add(7)
 	errChan := make(chan error, 6)
@@ -341,7 +343,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		wo = append(wo, wi)
 	}
 
-	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls}
+	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls, AdditionalDetails: additionalDetails}
 	s.SetService(svc)
 	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
 	s.SetEndpoints(eps)

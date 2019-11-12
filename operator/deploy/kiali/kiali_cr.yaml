@@ -386,6 +386,16 @@ spec:
 
 ##########
 #  ---
+#  additional_display_details: []
+#
+# A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
+# Each item in the list is an object with "annotation" and "title" fields to indicate which annotation is to be displayed and how it should be displayed.*
+# For example: 
+#    - annotation: "domain/my-annotation"
+#      title: "My Annotation"
+
+##########
+#  ---
 #  identity:
 #
 # Certificate file used to identify the file server. If set, you must go over https to access Kiali.
