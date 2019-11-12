@@ -6,9 +6,7 @@ from utils.timeout import timeout
 
 WORKLOAD_TO_VALIDATE = 'details-v1'
 WORKLOAD_TYPE = 'Deployment'
-BOOKINFO_WORKLOADS_COUNT = 6
-EXTRA_WORKLOAD_COUNT = 4
-EXTRA_WORKLOADS = set(['details-v2', 'reviews-v4', 'reviews-v5','reviews-v6'])
+EXTRA_WORKLOADS = set(['details-v2', 'reviews-v4'])
 
 METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
 
@@ -45,9 +43,7 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
     # Dictionary that maps Workloads with its own types
     dicWorkloadType = {
       'details-v2': 'Pod',
-      'reviews-v4': 'ReplicaSet',
-      'reviews-v5': 'ReplicationController',
-      'reviews-v6': 'StatefulSet'
+      'reviews-v4': 'ReplicaSet'
     }
 
     for workload in workload_list.get('workloads'):
