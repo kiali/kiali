@@ -1846,7 +1846,7 @@
         }
       }
     },
-    "/namespaces/{namespace}/services/{service}/apispec": {
+    "/namespaces/{namespace}/services/{service}/apispec/{lpath:.*}": {
       "get": {
         "description": "Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec",
         "schemes": [
@@ -3224,9 +3224,9 @@
     "ApiDocumentation": {
       "type": "object",
       "properties": {
-        "hasSpec": {
-          "type": "boolean",
-          "x-go-name": "HasSpec"
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
         },
         "type": {
           "type": "string",
