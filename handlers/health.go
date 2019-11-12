@@ -32,7 +32,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	// Adjust rate interval
 	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
@@ -40,21 +40,21 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	case "app":
 		health, err := business.Health.GetNamespaceAppHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error while fetching app health: "+err.Error())
+			handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "service":
 		health, err := business.Health.GetNamespaceServiceHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error while fetching service health: "+err.Error())
+			handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "workload":
 		health, err := business.Health.GetNamespaceWorkloadHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error while fetching workload health: "+err.Error())
+			handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
@@ -73,7 +73,7 @@ func AppHealth(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
@@ -93,7 +93,7 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 	p.RateInterval = rateInterval
@@ -114,7 +114,7 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 	p.extract(r)
 	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 		return
 	}
 

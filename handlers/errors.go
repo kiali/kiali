@@ -7,20 +7,26 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
+	"strings"
 )
 
 // Helper method to adjust error code in the handler's response
 // It helps for business methods that can respond AccessibleError and NotFound cases
 // Some handlers can use a direct response
-func handleErrorResponse(w http.ResponseWriter, err error) {
-	log.Error(err)
+func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) {
+	errorMsg := err.Error()
+	if len(extraMesg) > 0 {
+		errorMsg = strings.Join(extraMesg, ";")
+	}
+	log.Error(errorMsg)
 	if business.IsAccessibleError(err) {
-		RespondWithError(w, http.StatusForbidden, err.Error())
+		RespondWithError(w, http.StatusForbidden, errorMsg)
 	} else if errors.IsNotFound(err) {
-		RespondWithError(w, http.StatusNotFound, err.Error())
+		RespondWithError(w, http.StatusNotFound, errorMsg)
 	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		errorMsg = statusError.ErrStatus.Message
+		RespondWithError(w, http.StatusInternalServerError, errorMsg)
 	} else {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, errorMsg)
 	}
 }
