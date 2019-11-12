@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
-	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
@@ -28,7 +27,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build services
 	serviceList, err := business.Svc.GetServiceList(namespace)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -119,13 +118,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 

@@ -5,11 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/kiali/kiali/log"
 )
 
 // ThreeScale is Maistra-only. Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
@@ -23,8 +21,7 @@ func ThreeScaleStatus(w http.ResponseWriter, r *http.Request) {
 
 	threeScaleInfo, err := business.ThreeScale.GetThreeScaleInfo()
 	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -41,8 +38,7 @@ func ThreeScaleHandlersList(w http.ResponseWriter, r *http.Request) {
 	// threeScaleHandlers, err := business.ThreeScale
 	threeScaleHandlers, err := business.ThreeScale.GetThreeScaleHandlers()
 	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -93,12 +89,7 @@ func ThreeScaleHandlersUpdate(w http.ResponseWriter, r *http.Request) {
 
 	threeScaleHandlers, err := business.ThreeScale.UpdateThreeScaleHandler(threescaleHandlerName, body)
 	if err != nil {
-		log.Error(err)
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 	conf := config.Get()
@@ -119,12 +110,7 @@ func ThreeScaleHandlersDelete(w http.ResponseWriter, r *http.Request) {
 
 	threeScaleHandlers, err := business.ThreeScale.DeleteThreeScaleHandler(threescaleHandlerName)
 	if err != nil {
-		log.Error(err)
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 	conf := config.Get()
@@ -146,12 +132,7 @@ func ThreeScaleServiceRuleGet(w http.ResponseWriter, r *http.Request) {
 
 	threeScaleRule, err := business.ThreeScale.GetThreeScaleRule(namespace, service)
 	if err != nil {
-		log.Error(err)
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 
@@ -232,12 +213,7 @@ func ThreeScaleServiceRuleDelete(w http.ResponseWriter, r *http.Request) {
 
 	err = business.ThreeScale.DeleteThreeScaleRule(namespace, service)
 	if err != nil {
-		log.Error(err)
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+		handleErrorResponse(w, err)
 		return
 	}
 	conf := config.Get()

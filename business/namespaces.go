@@ -5,10 +5,11 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 
-	"fmt"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -18,6 +19,19 @@ type NamespaceService struct {
 	k8s                    kubernetes.IstioClientInterface
 	hasProjects            bool
 	isAccessibleNamespaces map[string]bool
+}
+
+type AccessibleNamespaceError struct {
+	msg string
+}
+
+func (in *AccessibleNamespaceError) Error() string {
+	return in.msg
+}
+
+func IsAccessibleError(err error) bool {
+	_, isAccessibleError := err.(*AccessibleNamespaceError)
+	return isAccessibleError
 }
 
 func NewNamespaceService(k8s kubernetes.IstioClientInterface) NamespaceService {
@@ -79,13 +93,19 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 			}
 			namespaces = models.CastNamespaceCollection(nss)
 		} else {
-			k8sNamespaces := make([]core_v1.Namespace, len(accessibleNamespaces))
-			for i, ans := range accessibleNamespaces {
+			k8sNamespaces := make([]core_v1.Namespace, 0)
+			for _, ans := range accessibleNamespaces {
 				k8sNs, err := in.k8s.GetNamespace(ans)
 				if err != nil {
-					return nil, err
+					// If a namespace is not found, then we skip it from the list of namespaces
+					if errors.IsNotFound(err) {
+						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
+					} else {
+						return nil, err
+					}
+				} else {
+					k8sNamespaces = append(k8sNamespaces, *k8sNs)
 				}
-				k8sNamespaces[i] = *k8sNs
 			}
 			namespaces = models.CastNamespaceCollection(k8sNamespaces)
 		}
@@ -149,11 +169,11 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	}
 
 	if !in.isAccessibleNamespace(namespace) {
-		return nil, fmt.Errorf("Namespace [%s] is not accessible for Kiali", namespace)
+		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] is not accessible for Kiali"}
 	}
 
 	if in.isExcludedNamespace(namespace) {
-		return nil, fmt.Errorf("Namespace [%s] is excluded for Kiali", namespace)
+		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] is excluded for Kiali"}
 	}
 
 	var result models.Namespace
