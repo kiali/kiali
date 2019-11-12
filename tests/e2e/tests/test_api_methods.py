@@ -43,6 +43,15 @@ def get_pod_id(kiali_client, namespace, pod_name):
 
     return pod_id
 
+def get_kiali_version(kiali_client):
+    try:
+        response = evaluate_response(kiali_client, method_name='getStatus', path={})
+        kiali_version = response.json().get('status')
+    except AssertionError:
+        pytest.fail(response.content)
+
+    return kiali_version
+
 def evaluate_response(kiali_client, method_name, path=None, params=None, data=None, status_code_expected=200, http_method='GET'):
     response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params, data=data, http_method=http_method)
     assert response is not None
@@ -275,21 +284,24 @@ def test_negative_404(kiali_client):
     evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=404)
 
 def test_negative_403(kiali_client):
+    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
+        pytest.skip()
+
     INVALID_PARAMS_APPDETAILS = {'namespace': 'invalid', 'app': 'ratings'}
     INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'rules', 'object': 'promtcp'}
     INVALID_PARAMS_WORKLOADDETAILS = {'namespace': 'invalid', 'workload': 'details-v1'}
-
-    evaluate_response(kiali_client, method_name='appDetails', path=INVALID_PARAMS_APPDETAILS, status_code_expected=403)
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=403)
-    evaluate_response(kiali_client, method_name='workloadDetails', path=INVALID_PARAMS_WORKLOADDETAILS, status_code_expected=403)
-
-def test_negative_500(kiali_client):    
-    INVALID_PARAMS_SERVICEDETAILS = {'namespace': 'invalid', 'service': 'kiali'}
     INVALID_PARAMS_SERVICEHEALTH = {'namespace': 'invalid', 'service': 'kiali'}
     INVALID_PARAMS_APPHEALTH = {'namespace': 'invalid', 'app': 'kiali'}
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'invalid', 'workload': 'details-v1'}
 
+    evaluate_response(kiali_client, method_name='appDetails', path=INVALID_PARAMS_APPDETAILS, status_code_expected=403)
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=403)
+    evaluate_response(kiali_client, method_name='workloadDetails', path=INVALID_PARAMS_WORKLOADDETAILS, status_code_expected=403)
+    evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=403)
+    evaluate_response(kiali_client, method_name='appHealth', path=INVALID_PARAMS_APPHEALTH, status_code_expected=403)
+    evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=403)
+
+def test_negative_500(kiali_client):    
+    INVALID_PARAMS_SERVICEDETAILS = {'namespace': 'invalid', 'service': 'kiali'}
+
     evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=500)
-    evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=500)
-    evaluate_response(kiali_client, method_name='appHealth', path=INVALID_PARAMS_APPHEALTH, status_code_expected=500)
-    evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=500)

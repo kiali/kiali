@@ -43,9 +43,7 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
     # Dictionary that maps Workloads with its own types
     dicWorkloadType = {
       'details-v2': 'Pod',
-      'reviews-v4': 'ReplicaSet',
-      'reviews-v5': 'ReplicationController',
-      'reviews-v6': 'StatefulSet'
+      'reviews-v4': 'ReplicaSet'
     }
 
     for workload in workload_list.get('workloads'):
