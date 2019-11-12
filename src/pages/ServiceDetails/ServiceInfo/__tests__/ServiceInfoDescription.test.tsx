@@ -46,6 +46,7 @@ describe('#ServiceInfoDescription render correctly with data', () => {
         endpoints={endpoints}
         createdAt="2018-04-04T15:11:46Z"
         resourceVersion="1234"
+        additionalDetails={[]}
       />
     );
     expect(wrapper).toBeDefined();

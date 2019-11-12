@@ -13,6 +13,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
     span={12}
   >
     <ServiceInfoDescription
+      additionalDetails={Array []}
       createdAt="2018-06-29T16:43:18+02:00"
       endpoints={
         Array [
@@ -95,6 +96,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
             namespace="istio-system"
             service={
               Object {
+                "additionalDetails": Array [],
                 "apiDocumentation": Object {
                   "hasSpec": true,
                   "type": "rest",
@@ -266,6 +268,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
           <ServiceInfoVirtualServices
             service={
               Object {
+                "additionalDetails": Array [],
                 "apiDocumentation": Object {
                   "hasSpec": true,
                   "type": "rest",
@@ -509,6 +512,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
             }
             service={
               Object {
+                "additionalDetails": Array [],
                 "apiDocumentation": Object {
                   "hasSpec": true,
                   "type": "rest",

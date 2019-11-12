@@ -23,12 +23,15 @@ import ValidationList from '../../../components/Validations/ValidationList';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
+import { AdditionalItem } from 'types/Workload';
+import { TextOrLink } from 'components/TextOrLink';
 
 interface ServiceInfoDescriptionProps {
   name: string;
   namespace: string;
   createdAt: string;
   resourceVersion: string;
+  additionalDetails: AdditionalItem[];
   istioEnabled?: boolean;
   labels?: { [key: string]: string };
   selectors?: { [key: string]: string };
@@ -95,6 +98,14 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   <Text component={TextVariants.h3}> Created at </Text>
                   <LocalTime time={this.props.createdAt} />
                 </StackItem>
+                {this.props.additionalDetails.map((additionalItem, idx) => {
+                  return (
+                    <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
+                      <Text component={TextVariants.h3}> {additionalItem.title} </Text>
+                      <TextOrLink text={additionalItem.value} urlTruncate={64} />
+                    </StackItem>
+                  );
+                })}
               </Stack>
             </CardBody>
           </Card>

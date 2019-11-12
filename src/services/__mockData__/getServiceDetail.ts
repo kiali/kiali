@@ -148,5 +148,6 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
         ]
       }
     }
-  }
+  },
+  additionalDetails: []
 };

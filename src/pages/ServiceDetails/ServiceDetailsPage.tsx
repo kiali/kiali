@@ -54,7 +54,7 @@ interface ParsedSearch {
   name?: string;
 }
 
-const emptyService = {
+const emptyService: ServiceDetailsInfo = {
   istioSidecar: true, // true until proven otherwise (workload with missing sidecar exists)
   service: {
     type: '',
@@ -84,7 +84,8 @@ const emptyService = {
   apiDocumentation: {
     type: '',
     hasSpec: false
-  }
+  },
+  additionalDetails: []
 };
 
 const tabName = 'tab';

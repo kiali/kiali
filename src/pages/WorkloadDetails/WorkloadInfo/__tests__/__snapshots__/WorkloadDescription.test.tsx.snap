@@ -31,7 +31,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               component="h3"
             >
                
-              Template Labels
+              Labels
                
             </Text>
             <Labels
@@ -46,7 +46,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             >
                Type 
             </Text>
-            Deployment
+            N/A
           </StackItem>
           <StackItem
             id="created-at"
@@ -57,7 +57,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
                Created at 
             </Text>
             <LocalTime
-              time="42"
+              time=""
             />
           </StackItem>
           <StackItem
@@ -68,7 +68,6 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             >
                Resource Version 
             </Text>
-            42
           </StackItem>
           <StackItem
             id="runtimes"
@@ -129,7 +128,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
                Health
             </Text>
             <HealthIndicator
-              id="myworkload"
+              id=""
               mode={0}
               tooltipPlacement="left"
             />
