@@ -674,6 +674,11 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 	} else {
 		err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 	}
+
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh
+	if kialiCache != nil && err == nil {
+		kialiCache.Stop()
+	}
 	return err
 }
 
@@ -765,6 +770,10 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 		istioConfigDetail.ServiceRoleBinding.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
+	}
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh
+	if kialiCache != nil && err == nil {
+		kialiCache.Stop()
 	}
 	return istioConfigDetail, err
 

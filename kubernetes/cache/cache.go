@@ -162,6 +162,10 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	return true
 }
 
+// CheckNamespace will
+// - Validate if a namespace is included in the cache
+// - Create and initialize a cache
+// - Validate if a cache is synced
 func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 	if !c.isCached(namespace) {
 		return false
@@ -171,7 +175,7 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 		c.cacheLock.Lock()
 		return c.createCache(namespace)
 	}
-	return true
+	return c.isKubernetesSynced(namespace) && c.isIstioSynced(namespace)
 }
 
 func (c *kialiCacheImpl) Stop() {
@@ -179,5 +183,11 @@ func (c *kialiCacheImpl) Stop() {
 	if c.stopChan != nil {
 		close(c.stopChan)
 		c.stopChan = nil
+	}
+	defer c.cacheLock.Unlock()
+	c.cacheLock.Lock()
+	log.Infof("Clearing Kiali Cache")
+	for ns := range c.nsCache {
+		delete(c.nsCache, ns)
 	}
 }
