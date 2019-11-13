@@ -60,8 +60,8 @@ class Navigation extends React.Component<PropsType, NavigationState> {
     document.title = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali Console';
   }
 
-  isContentScrollable = () => {
-    return !this.props.location.pathname.startsWith('/graph');
+  isGraph = () => {
+    return this.props.location.pathname.startsWith('/graph');
   };
 
   onNavToggleDesktop = () => {
@@ -113,7 +113,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
       <Page header={Header} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenterContainer drawerTitle="Message Center" />
         <PageSection className={flexBoxColumnStyle} variant={'light'}>
-          <RenderPage needScroll={this.isContentScrollable()} />
+          <RenderPage isGraph={this.isGraph()} />
         </PageSection>
       </Page>
     );

@@ -9,6 +9,7 @@ import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { Grid, GridItem, Tab } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import Validation from '../../components/Validations/Validation';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 
@@ -112,48 +113,50 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     );
 
     return (
-      <Grid style={{ margin: '30px' }} gutter={'md'}>
-        <GridItem span={12}>
-          <WorkloadDescription
-            workload={workload}
-            namespace={this.props.namespace}
-            istioEnabled={this.props.istioEnabled}
-            health={this.props.health}
-          />
-        </GridItem>
-        <GridItem span={12}>
-          <ParameterizedTabs
-            id="service-tabs"
-            onSelect={tabValue => {
-              this.setState({ currentTab: tabValue });
-            }}
-            tabMap={paramToTab}
-            tabName={tabName}
-            defaultTab={defaultTab}
-            activeTab={this.state.currentTab}
-          >
-            <Tab title={podTabTitle} eventKey={0}>
-              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Pods')}>
-                <WorkloadPods
-                  namespace={this.props.namespace}
-                  workload={this.props.workload.name}
-                  pods={pods}
-                  validations={this.props.validations!.pod}
-                />
-              </ErrorBoundaryWithMessage>
-            </Tab>
-            <Tab title={`Services (${services.length})`} eventKey={1}>
-              <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Services')}>
-                <WorkloadServices
-                  services={services}
-                  workload={this.props.workload.name}
-                  namespace={this.props.namespace}
-                />
-              </ErrorBoundaryWithMessage>
-            </Tab>
-          </ParameterizedTabs>
-        </GridItem>
-      </Grid>
+      <RenderComponentScroll>
+        <Grid style={{ margin: '30px' }} gutter={'md'}>
+          <GridItem span={12}>
+            <WorkloadDescription
+              workload={workload}
+              namespace={this.props.namespace}
+              istioEnabled={this.props.istioEnabled}
+              health={this.props.health}
+            />
+          </GridItem>
+          <GridItem span={12}>
+            <ParameterizedTabs
+              id="service-tabs"
+              onSelect={tabValue => {
+                this.setState({ currentTab: tabValue });
+              }}
+              tabMap={paramToTab}
+              tabName={tabName}
+              defaultTab={defaultTab}
+              activeTab={this.state.currentTab}
+            >
+              <Tab title={podTabTitle} eventKey={0}>
+                <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Pods')}>
+                  <WorkloadPods
+                    namespace={this.props.namespace}
+                    workload={this.props.workload.name}
+                    pods={pods}
+                    validations={this.props.validations!.pod}
+                  />
+                </ErrorBoundaryWithMessage>
+              </Tab>
+              <Tab title={`Services (${services.length})`} eventKey={1}>
+                <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Services')}>
+                  <WorkloadServices
+                    services={services}
+                    workload={this.props.workload.name}
+                    namespace={this.props.namespace}
+                  />
+                </ErrorBoundaryWithMessage>
+              </Tab>
+            </ParameterizedTabs>
+          </GridItem>
+        </Grid>
+      </RenderComponentScroll>
     );
   }
 }

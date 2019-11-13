@@ -2,6 +2,7 @@ import * as React from 'react';
 import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 
 type AppProps = {
@@ -73,17 +74,19 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     }
 
     return (
-      <Grid style={{ padding: '20px' }}>
-        <GridItem span={12}>
-          <Card>
-            <CardBody>
-              <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
-              <div style={{ marginTop: '2em' }} />
-              <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
-            </CardBody>
-          </Card>
-        </GridItem>
-      </Grid>
+      <RenderComponentScroll>
+        <Grid style={{ padding: '20px' }}>
+          <GridItem span={12}>
+            <Card>
+              <CardBody>
+                <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
+                <div style={{ marginTop: '2em' }} />
+                <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
+      </RenderComponentScroll>
     );
   }
 

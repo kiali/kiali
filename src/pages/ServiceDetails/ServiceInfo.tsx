@@ -13,6 +13,7 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import { Tab } from '@patternfly/react-core';
 import Validation from '../../components/Validations/Validation';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -153,6 +154,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     );
 
     return (
+      <RenderComponentScroll>
       <Grid style={{ margin: '30px' }} gutter={'md'}>
         <GridItem span={12}>
           <ServiceInfoDescription
@@ -215,6 +217,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           </ParameterizedTabs>
         </GridItem>
       </Grid>
+      </RenderComponentScroll>
     );
   }
 }

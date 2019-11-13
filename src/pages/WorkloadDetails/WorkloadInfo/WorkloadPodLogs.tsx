@@ -9,6 +9,7 @@ import { DurationInSeconds } from '../../../types/Common';
 import MetricsDurationContainer from '../../../components/MetricsOptions/MetricsDuration';
 import MetricsDuration from '../../../components/MetricsOptions/MetricsDuration';
 import RefreshButtonContainer from '../../../components/Refresh/RefreshButton';
+import { RenderComponentScroll } from '../../../components/Nav/Page';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -136,7 +137,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
   render() {
     return (
-      <>
+      <RenderComponentScroll>
         {this.state.containerInfo && (
           <Grid style={{ padding: '20px' }}>
             <GridItem span={12}>
@@ -198,7 +199,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
           </Grid>
         )}
         {this.state.loadingPodLogsError && <div>{this.state.loadingPodLogsError}</div>}
-      </>
+      </RenderComponentScroll>
     );
   }
 

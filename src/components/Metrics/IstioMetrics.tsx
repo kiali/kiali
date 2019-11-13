@@ -6,6 +6,7 @@ import { Dashboard, DashboardModel, ExternalLink } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
@@ -155,22 +156,24 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     const expandedChart = urlParams.get('expand') || undefined;
 
     return (
-      <Grid style={{ padding: '20px' }}>
-        <GridItem span={12}>
-          <Card>
-            <CardBody>
-              {this.renderOptionsBar()}
-              <Dashboard
-                dashboard={this.state.dashboard}
-                labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                expandedChart={expandedChart}
-                expandHandler={this.expandHandler}
-                labelPrettifier={MetricsHelper.prettyLabelValues}
-              />
-            </CardBody>
-          </Card>
-        </GridItem>
-      </Grid>
+      <RenderComponentScroll>
+        <Grid style={{ padding: '20px' }}>
+          <GridItem span={12}>
+            <Card>
+              <CardBody>
+                {this.renderOptionsBar()}
+                <Dashboard
+                  dashboard={this.state.dashboard}
+                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                  expandedChart={expandedChart}
+                  expandHandler={this.expandHandler}
+                  labelPrettifier={MetricsHelper.prettyLabelValues}
+                />
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
+      </RenderComponentScroll>
     );
   }
 

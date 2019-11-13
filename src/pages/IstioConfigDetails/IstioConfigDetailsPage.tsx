@@ -9,7 +9,7 @@ import 'brace/theme/eclipse';
 import { ObjectReference, ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
-import { RenderHeader } from '../../components/Nav/Page';
+import { RenderHeader, RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
@@ -440,14 +440,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (this.hasOverview()) {
       tabs.push(
         <Tab key="istio-overview" title="Overview" eventKey={0}>
-          {this.renderOverview()}
+          <RenderComponentScroll>{this.renderOverview()}</RenderComponentScroll>
         </Tab>
       );
     }
 
     tabs.push(
       <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={1}>
-        {this.renderEditor()}
+        <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
       </Tab>
     );
 

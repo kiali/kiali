@@ -2,6 +2,7 @@ import * as React from 'react';
 import AppDescription from './AppInfo/AppDescription';
 import { AppHealth } from '../../types/Health';
 import { App } from '../../types/App';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import './AppInfo.css';
 import { Grid, GridItem } from '@patternfly/react-core';
 
@@ -23,11 +24,13 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     const app = this.props.app;
 
     return (
-      <Grid style={{ margin: '30px' }} gutter={'md'}>
-        <GridItem span={12}>
-          <AppDescription app={app} health={this.props.health} />
-        </GridItem>
-      </Grid>
+      <RenderComponentScroll>
+        <Grid style={{ margin: '30px' }} gutter={'md'}>
+          <GridItem span={12}>
+            <AppDescription app={app} health={this.props.health} />
+          </GridItem>
+        </Grid>
+      </RenderComponentScroll>
     );
   }
 }

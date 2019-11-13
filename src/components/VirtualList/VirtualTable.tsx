@@ -37,7 +37,7 @@ export default class VirtualTable extends React.Component<VirtualTableProps, Vir
   }
 
   updateWindowDimensions = () => {
-    this.setState({ height: window.innerHeight * 0.7 });
+    this.setState({ height: window.innerHeight * 0.6 });
   };
 
   rowRenderer = ({ index, isVisible, key, style, parent }) => {

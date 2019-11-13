@@ -1,4 +1,5 @@
 import { RenderContent } from './RenderContent';
 import { RenderHeader } from './RenderHeader';
+import { RenderComponentScroll } from './RenderComponentScroll';
 
-export { RenderContent, RenderHeader };
+export { RenderComponentScroll, RenderContent, RenderHeader };

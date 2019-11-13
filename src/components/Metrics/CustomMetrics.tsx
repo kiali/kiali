@@ -12,7 +12,7 @@ import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
-
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
@@ -112,7 +112,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
     const expandedChart = urlParams.get('expand') || undefined;
 
     return (
-      <>
+      <RenderComponentScroll>
         {this.renderOptionsBar()}
         <Dashboard
           dashboard={this.state.dashboard}
@@ -120,7 +120,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
         />
-      </>
+      </RenderComponentScroll>
     );
   }
 

@@ -1,581 +1,185 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#ServiceInfo render correctly with data should render serviceInfo with data 1`] = `
-<Grid
-  gutter="md"
-  style={
-    Object {
-      "margin": "30px",
+<RenderComponentScroll>
+  <Grid
+    gutter="md"
+    style={
+      Object {
+        "margin": "30px",
+      }
     }
-  }
->
-  <GridItem
-    span={12}
   >
-    <ServiceInfoDescription
-      additionalDetails={Array []}
-      createdAt="2018-06-29T16:43:18+02:00"
-      endpoints={
-        Array [
-          Object {
-            "addresses": Array [
-              Object {
-                "ip": "172.17.0.20",
-                "kind": "Pod",
-                "name": "reviews-v3-5f5bcb6765-hj46f",
-              },
-              Object {
-                "ip": "172.17.0.21",
-                "kind": "Pod",
-                "name": "reviews-v2-d896b68c-jnxgm",
-              },
-              Object {
-                "ip": "172.17.0.22",
-                "kind": "Pod",
-                "name": "reviews-v1-5d6696bcf7-2sls7",
-              },
-            ],
-            "ports": Array [
-              Object {
-                "name": "http",
-                "port": 9080,
-                "protocol": "TCP",
-              },
-            ],
-          },
-        ]
-      }
-      externalName="my.database.example.com"
-      ip="172.30.196.248"
-      istioEnabled={true}
-      labels={
-        Object {
-          "app": "reviews",
-        }
-      }
-      name="reviews"
-      namespace="istio-system"
-      ports={
-        Array [
-          Object {
-            "name": "http",
-            "port": 9080,
-            "protocol": "TCP",
-          },
-        ]
-      }
-      resourceVersion="2652"
-      type="ClusterIP"
-    />
-  </GridItem>
-  <GridItem
-    span={12}
-  >
-    <ParameterizedTabs
-      activeTab="workloads"
-      defaultTab="workloads"
-      id="service-tabs"
-      onSelect={[Function]}
-      tabMap={
-        Object {
-          "destinationrules": 2,
-          "virtualservices": 1,
-          "workloads": 0,
-        }
-      }
-      tabName="list"
+    <GridItem
+      span={12}
     >
-      <ForwardRef
-        eventKey={0}
-        title="Workloads (0)"
-      >
-        <ErrorBoundaryWithMessage
-          message="One of the Workloads associated to this service has an invalid format"
-        >
-          <ServiceInfoWorkload
-            namespace="istio-system"
-            service={
-              Object {
-                "additionalDetails": Array [],
-                "apiDocumentation": Object {
-                  "hasSpec": true,
-                  "type": "rest",
-                },
-                "destinationRules": Object {
-                  "items": Array [
-                    Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393061",
-                      },
-                      "spec": Object {
-                        "host": "reviews",
-                        "subsets": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v1",
-                            },
-                            "name": "v1",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v2",
-                            },
-                            "name": "v2",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v3",
-                            },
-                            "name": "v3",
-                          },
-                        ],
-                        "trafficPolicy": undefined,
-                      },
-                    },
-                  ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
-                  },
-                },
-                "endpoints": Array [
-                  Object {
-                    "addresses": Array [
-                      Object {
-                        "ip": "172.17.0.20",
-                        "kind": "Pod",
-                        "name": "reviews-v3-5f5bcb6765-hj46f",
-                      },
-                      Object {
-                        "ip": "172.17.0.21",
-                        "kind": "Pod",
-                        "name": "reviews-v2-d896b68c-jnxgm",
-                      },
-                      Object {
-                        "ip": "172.17.0.22",
-                        "kind": "Pod",
-                        "name": "reviews-v1-5d6696bcf7-2sls7",
-                      },
-                    ],
-                    "ports": Array [
-                      Object {
-                        "name": "http",
-                        "port": 9080,
-                        "protocol": "TCP",
-                      },
-                    ],
-                  },
-                ],
-                "health": undefined,
-                "istioSidecar": true,
-                "service": Object {
-                  "createdAt": "2018-06-29T16:43:18+02:00",
-                  "externalName": "my.database.example.com",
-                  "ip": "172.30.196.248",
-                  "labels": Object {
-                    "app": "reviews",
-                  },
-                  "name": "reviews",
-                  "ports": Array [
-                    Object {
-                      "name": "http",
-                      "port": 9080,
-                      "protocol": "TCP",
-                    },
-                  ],
-                  "resourceVersion": "2652",
-                  "type": "ClusterIP",
-                },
-                "validations": Object {
-                  "destinationrule": Object {
-                    "reviews": Object {
-                      "checks": Array [
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[0]/version",
-                          "severity": "error",
-                        },
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[1]/version",
-                          "severity": "error",
-                        },
-                      ],
-                      "name": "details",
-                      "objectType": "destinationrule",
-                      "valid": false,
-                    },
-                  },
-                },
-                "virtualServices": Object {
-                  "items": Array [
-                    Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393057",
-                      },
-                      "spec": Object {
-                        "gateways": undefined,
-                        "hosts": Array [
-                          "reviews",
-                        ],
-                        "http": Array [
-                          Object {
-                            "route": Array [
-                              Object {
-                                "destination": Object {
-                                  "host": "reviews",
-                                  "subset": "v1",
-                                },
-                              },
-                            ],
-                          },
-                        ],
-                        "tcp": undefined,
-                      },
-                    },
-                  ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
-                  },
-                },
-                "workloads": Array [],
-              }
-            }
-            workloads={Array []}
-          />
-        </ErrorBoundaryWithMessage>
-      </ForwardRef>
-      <ForwardRef
-        eventKey={1}
-        title={
-          <React.Fragment>
-            Virtual Services (
-            1
-            )
-          </React.Fragment>
-        }
-      >
-        <ErrorBoundaryWithMessage
-          message="One of the Virtual Services associated to this service has an invalid format"
-        >
-          <ServiceInfoVirtualServices
-            service={
-              Object {
-                "additionalDetails": Array [],
-                "apiDocumentation": Object {
-                  "hasSpec": true,
-                  "type": "rest",
-                },
-                "destinationRules": Object {
-                  "items": Array [
-                    Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393061",
-                      },
-                      "spec": Object {
-                        "host": "reviews",
-                        "subsets": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v1",
-                            },
-                            "name": "v1",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v2",
-                            },
-                            "name": "v2",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v3",
-                            },
-                            "name": "v3",
-                          },
-                        ],
-                        "trafficPolicy": undefined,
-                      },
-                    },
-                  ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
-                  },
-                },
-                "endpoints": Array [
-                  Object {
-                    "addresses": Array [
-                      Object {
-                        "ip": "172.17.0.20",
-                        "kind": "Pod",
-                        "name": "reviews-v3-5f5bcb6765-hj46f",
-                      },
-                      Object {
-                        "ip": "172.17.0.21",
-                        "kind": "Pod",
-                        "name": "reviews-v2-d896b68c-jnxgm",
-                      },
-                      Object {
-                        "ip": "172.17.0.22",
-                        "kind": "Pod",
-                        "name": "reviews-v1-5d6696bcf7-2sls7",
-                      },
-                    ],
-                    "ports": Array [
-                      Object {
-                        "name": "http",
-                        "port": 9080,
-                        "protocol": "TCP",
-                      },
-                    ],
-                  },
-                ],
-                "health": undefined,
-                "istioSidecar": true,
-                "service": Object {
-                  "createdAt": "2018-06-29T16:43:18+02:00",
-                  "externalName": "my.database.example.com",
-                  "ip": "172.30.196.248",
-                  "labels": Object {
-                    "app": "reviews",
-                  },
-                  "name": "reviews",
-                  "ports": Array [
-                    Object {
-                      "name": "http",
-                      "port": 9080,
-                      "protocol": "TCP",
-                    },
-                  ],
-                  "resourceVersion": "2652",
-                  "type": "ClusterIP",
-                },
-                "validations": Object {
-                  "destinationrule": Object {
-                    "reviews": Object {
-                      "checks": Array [
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[0]/version",
-                          "severity": "error",
-                        },
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[1]/version",
-                          "severity": "error",
-                        },
-                      ],
-                      "name": "details",
-                      "objectType": "destinationrule",
-                      "valid": false,
-                    },
-                  },
-                },
-                "virtualServices": Object {
-                  "items": Array [
-                    Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393057",
-                      },
-                      "spec": Object {
-                        "gateways": undefined,
-                        "hosts": Array [
-                          "reviews",
-                        ],
-                        "http": Array [
-                          Object {
-                            "route": Array [
-                              Object {
-                                "destination": Object {
-                                  "host": "reviews",
-                                  "subset": "v1",
-                                },
-                              },
-                            ],
-                          },
-                        ],
-                        "tcp": undefined,
-                      },
-                    },
-                  ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
-                  },
-                },
-                "workloads": Array [],
-              }
-            }
-            virtualServices={
-              Array [
+      <ServiceInfoDescription
+        additionalDetails={Array []}
+        createdAt="2018-06-29T16:43:18+02:00"
+        endpoints={
+          Array [
+            Object {
+              "addresses": Array [
                 Object {
-                  "metadata": Object {
-                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                    "name": "reviews",
-                    "resourceVersion": "393057",
-                  },
-                  "spec": Object {
-                    "gateways": undefined,
-                    "hosts": Array [
-                      "reviews",
-                    ],
-                    "http": Array [
-                      Object {
-                        "route": Array [
-                          Object {
-                            "destination": Object {
-                              "host": "reviews",
-                              "subset": "v1",
-                            },
-                          },
-                        ],
-                      },
-                    ],
-                    "tcp": undefined,
-                  },
+                  "ip": "172.17.0.20",
+                  "kind": "Pod",
+                  "name": "reviews-v3-5f5bcb6765-hj46f",
                 },
-              ]
-            }
-          />
-        </ErrorBoundaryWithMessage>
-      </ForwardRef>
-      <ForwardRef
-        eventKey={2}
-        title={
-          <React.Fragment>
-            Destination Rules (
-            1
-            )
-            <span
-              className="f1uxujqj"
-            >
-               
-              <Validation
-                severity="error"
-              />
-            </span>
-          </React.Fragment>
-        }
-      >
-        <ErrorBoundaryWithMessage
-          message="One of the Destination Rules associated to this service has an invalid format"
-        >
-          <ServiceInfoDestinationRules
-            destinationRules={
-              Array [
                 Object {
-                  "metadata": Object {
-                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                    "name": "reviews",
-                    "resourceVersion": "393061",
+                  "ip": "172.17.0.21",
+                  "kind": "Pod",
+                  "name": "reviews-v2-d896b68c-jnxgm",
+                },
+                Object {
+                  "ip": "172.17.0.22",
+                  "kind": "Pod",
+                  "name": "reviews-v1-5d6696bcf7-2sls7",
+                },
+              ],
+              "ports": Array [
+                Object {
+                  "name": "http",
+                  "port": 9080,
+                  "protocol": "TCP",
+                },
+              ],
+            },
+          ]
+        }
+        externalName="my.database.example.com"
+        ip="172.30.196.248"
+        istioEnabled={true}
+        labels={
+          Object {
+            "app": "reviews",
+          }
+        }
+        name="reviews"
+        namespace="istio-system"
+        ports={
+          Array [
+            Object {
+              "name": "http",
+              "port": 9080,
+              "protocol": "TCP",
+            },
+          ]
+        }
+        resourceVersion="2652"
+        type="ClusterIP"
+      />
+    </GridItem>
+    <GridItem
+      span={12}
+    >
+      <ParameterizedTabs
+        activeTab="workloads"
+        defaultTab="workloads"
+        id="service-tabs"
+        onSelect={[Function]}
+        tabMap={
+          Object {
+            "destinationrules": 2,
+            "virtualservices": 1,
+            "workloads": 0,
+          }
+        }
+        tabName="list"
+      >
+        <ForwardRef
+          eventKey={0}
+          title="Workloads (0)"
+        >
+          <ErrorBoundaryWithMessage
+            message="One of the Workloads associated to this service has an invalid format"
+          >
+            <ServiceInfoWorkload
+              namespace="istio-system"
+              service={
+                Object {
+                  "additionalDetails": Array [],
+                  "apiDocumentation": Object {
+                    "hasSpec": true,
+                    "type": "rest",
                   },
-                  "spec": Object {
-                    "host": "reviews",
-                    "subsets": Array [
+                  "destinationRules": Object {
+                    "items": Array [
                       Object {
-                        "labels": Object {
-                          "version": "v1",
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393061",
                         },
-                        "name": "v1",
-                      },
-                      Object {
-                        "labels": Object {
-                          "version": "v2",
+                        "spec": Object {
+                          "host": "reviews",
+                          "subsets": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                              "name": "v1",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                              "name": "v2",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v3",
+                              },
+                              "name": "v3",
+                            },
+                          ],
+                          "trafficPolicy": undefined,
                         },
-                        "name": "v2",
-                      },
-                      Object {
-                        "labels": Object {
-                          "version": "v3",
-                        },
-                        "name": "v3",
                       },
                     ],
-                    "trafficPolicy": undefined,
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
+                    },
                   },
-                },
-              ]
-            }
-            service={
-              Object {
-                "additionalDetails": Array [],
-                "apiDocumentation": Object {
-                  "hasSpec": true,
-                  "type": "rest",
-                },
-                "destinationRules": Object {
-                  "items": Array [
+                  "endpoints": Array [
                     Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393061",
-                      },
-                      "spec": Object {
-                        "host": "reviews",
-                        "subsets": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v1",
-                            },
-                            "name": "v1",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v2",
-                            },
-                            "name": "v2",
-                          },
-                          Object {
-                            "labels": Object {
-                              "version": "v3",
-                            },
-                            "name": "v3",
-                          },
-                        ],
-                        "trafficPolicy": undefined,
-                      },
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.20",
+                          "kind": "Pod",
+                          "name": "reviews-v3-5f5bcb6765-hj46f",
+                        },
+                        Object {
+                          "ip": "172.17.0.21",
+                          "kind": "Pod",
+                          "name": "reviews-v2-d896b68c-jnxgm",
+                        },
+                        Object {
+                          "ip": "172.17.0.22",
+                          "kind": "Pod",
+                          "name": "reviews-v1-5d6696bcf7-2sls7",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
                     },
                   ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
-                  },
-                },
-                "endpoints": Array [
-                  Object {
-                    "addresses": Array [
-                      Object {
-                        "ip": "172.17.0.20",
-                        "kind": "Pod",
-                        "name": "reviews-v3-5f5bcb6765-hj46f",
-                      },
-                      Object {
-                        "ip": "172.17.0.21",
-                        "kind": "Pod",
-                        "name": "reviews-v2-d896b68c-jnxgm",
-                      },
-                      Object {
-                        "ip": "172.17.0.22",
-                        "kind": "Pod",
-                        "name": "reviews-v1-5d6696bcf7-2sls7",
-                      },
-                    ],
+                  "health": undefined,
+                  "istioSidecar": true,
+                  "service": Object {
+                    "createdAt": "2018-06-29T16:43:18+02:00",
+                    "externalName": "my.database.example.com",
+                    "ip": "172.30.196.248",
+                    "labels": Object {
+                      "app": "reviews",
+                    },
+                    "name": "reviews",
                     "ports": Array [
                       Object {
                         "name": "http",
@@ -583,112 +187,510 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
                         "protocol": "TCP",
                       },
                     ],
+                    "resourceVersion": "2652",
+                    "type": "ClusterIP",
                   },
-                ],
-                "health": undefined,
-                "istioSidecar": true,
-                "service": Object {
-                  "createdAt": "2018-06-29T16:43:18+02:00",
-                  "externalName": "my.database.example.com",
-                  "ip": "172.30.196.248",
-                  "labels": Object {
-                    "app": "reviews",
-                  },
-                  "name": "reviews",
-                  "ports": Array [
-                    Object {
-                      "name": "http",
-                      "port": 9080,
-                      "protocol": "TCP",
-                    },
-                  ],
-                  "resourceVersion": "2652",
-                  "type": "ClusterIP",
-                },
-                "validations": Object {
-                  "destinationrule": Object {
-                    "reviews": Object {
-                      "checks": Array [
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[0]/version",
-                          "severity": "error",
-                        },
-                        Object {
-                          "message": "This subset is not found from the host",
-                          "path": "spec/subsets[1]/version",
-                          "severity": "error",
-                        },
-                      ],
-                      "name": "details",
-                      "objectType": "destinationrule",
-                      "valid": false,
-                    },
-                  },
-                },
-                "virtualServices": Object {
-                  "items": Array [
-                    Object {
-                      "metadata": Object {
-                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
-                        "name": "reviews",
-                        "resourceVersion": "393057",
-                      },
-                      "spec": Object {
-                        "gateways": undefined,
-                        "hosts": Array [
-                          "reviews",
-                        ],
-                        "http": Array [
+                  "validations": Object {
+                    "destinationrule": Object {
+                      "reviews": Object {
+                        "checks": Array [
                           Object {
-                            "route": Array [
-                              Object {
-                                "destination": Object {
-                                  "host": "reviews",
-                                  "subset": "v1",
-                                },
-                              },
-                            ],
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[0]/version",
+                            "severity": "error",
+                          },
+                          Object {
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[1]/version",
+                            "severity": "error",
                           },
                         ],
-                        "tcp": undefined,
+                        "name": "details",
+                        "objectType": "destinationrule",
+                        "valid": false,
                       },
                     },
-                  ],
-                  "permissions": Object {
-                    "create": false,
-                    "delete": false,
-                    "update": false,
                   },
-                },
-                "workloads": Array [],
-              }
-            }
-            validations={
-              Object {
-                "reviews": Object {
-                  "checks": Array [
-                    Object {
-                      "message": "This subset is not found from the host",
-                      "path": "spec/subsets[0]/version",
-                      "severity": "error",
+                  "virtualServices": Object {
+                    "items": Array [
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393057",
+                        },
+                        "spec": Object {
+                          "gateways": undefined,
+                          "hosts": Array [
+                            "reviews",
+                          ],
+                          "http": Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                },
+                              ],
+                            },
+                          ],
+                          "tcp": undefined,
+                        },
+                      },
+                    ],
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
                     },
+                  },
+                  "workloads": Array [],
+                }
+              }
+              workloads={Array []}
+            />
+          </ErrorBoundaryWithMessage>
+        </ForwardRef>
+        <ForwardRef
+          eventKey={1}
+          title={
+            <React.Fragment>
+              Virtual Services (
+              1
+              )
+            </React.Fragment>
+          }
+        >
+          <ErrorBoundaryWithMessage
+            message="One of the Virtual Services associated to this service has an invalid format"
+          >
+            <ServiceInfoVirtualServices
+              service={
+                Object {
+                  "additionalDetails": Array [],
+                  "apiDocumentation": Object {
+                    "hasSpec": true,
+                    "type": "rest",
+                  },
+                  "destinationRules": Object {
+                    "items": Array [
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393061",
+                        },
+                        "spec": Object {
+                          "host": "reviews",
+                          "subsets": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                              "name": "v1",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                              "name": "v2",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v3",
+                              },
+                              "name": "v3",
+                            },
+                          ],
+                          "trafficPolicy": undefined,
+                        },
+                      },
+                    ],
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
+                    },
+                  },
+                  "endpoints": Array [
                     Object {
-                      "message": "This subset is not found from the host",
-                      "path": "spec/subsets[1]/version",
-                      "severity": "error",
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.20",
+                          "kind": "Pod",
+                          "name": "reviews-v3-5f5bcb6765-hj46f",
+                        },
+                        Object {
+                          "ip": "172.17.0.21",
+                          "kind": "Pod",
+                          "name": "reviews-v2-d896b68c-jnxgm",
+                        },
+                        Object {
+                          "ip": "172.17.0.22",
+                          "kind": "Pod",
+                          "name": "reviews-v1-5d6696bcf7-2sls7",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
                     },
                   ],
-                  "name": "details",
-                  "objectType": "destinationrule",
-                  "valid": false,
-                },
+                  "health": undefined,
+                  "istioSidecar": true,
+                  "service": Object {
+                    "createdAt": "2018-06-29T16:43:18+02:00",
+                    "externalName": "my.database.example.com",
+                    "ip": "172.30.196.248",
+                    "labels": Object {
+                      "app": "reviews",
+                    },
+                    "name": "reviews",
+                    "ports": Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ],
+                    "resourceVersion": "2652",
+                    "type": "ClusterIP",
+                  },
+                  "validations": Object {
+                    "destinationrule": Object {
+                      "reviews": Object {
+                        "checks": Array [
+                          Object {
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[0]/version",
+                            "severity": "error",
+                          },
+                          Object {
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[1]/version",
+                            "severity": "error",
+                          },
+                        ],
+                        "name": "details",
+                        "objectType": "destinationrule",
+                        "valid": false,
+                      },
+                    },
+                  },
+                  "virtualServices": Object {
+                    "items": Array [
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393057",
+                        },
+                        "spec": Object {
+                          "gateways": undefined,
+                          "hosts": Array [
+                            "reviews",
+                          ],
+                          "http": Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                },
+                              ],
+                            },
+                          ],
+                          "tcp": undefined,
+                        },
+                      },
+                    ],
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
+                    },
+                  },
+                  "workloads": Array [],
+                }
               }
-            }
-          />
-        </ErrorBoundaryWithMessage>
-      </ForwardRef>
-    </ParameterizedTabs>
-  </GridItem>
-</Grid>
+              virtualServices={
+                Array [
+                  Object {
+                    "metadata": Object {
+                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                      "name": "reviews",
+                      "resourceVersion": "393057",
+                    },
+                    "spec": Object {
+                      "gateways": undefined,
+                      "hosts": Array [
+                        "reviews",
+                      ],
+                      "http": Array [
+                        Object {
+                          "route": Array [
+                            Object {
+                              "destination": Object {
+                                "host": "reviews",
+                                "subset": "v1",
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                      "tcp": undefined,
+                    },
+                  },
+                ]
+              }
+            />
+          </ErrorBoundaryWithMessage>
+        </ForwardRef>
+        <ForwardRef
+          eventKey={2}
+          title={
+            <React.Fragment>
+              Destination Rules (
+              1
+              )
+              <span
+                className="f1uxujqj"
+              >
+                 
+                <Validation
+                  severity="error"
+                />
+              </span>
+            </React.Fragment>
+          }
+        >
+          <ErrorBoundaryWithMessage
+            message="One of the Destination Rules associated to this service has an invalid format"
+          >
+            <ServiceInfoDestinationRules
+              destinationRules={
+                Array [
+                  Object {
+                    "metadata": Object {
+                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                      "name": "reviews",
+                      "resourceVersion": "393061",
+                    },
+                    "spec": Object {
+                      "host": "reviews",
+                      "subsets": Array [
+                        Object {
+                          "labels": Object {
+                            "version": "v1",
+                          },
+                          "name": "v1",
+                        },
+                        Object {
+                          "labels": Object {
+                            "version": "v2",
+                          },
+                          "name": "v2",
+                        },
+                        Object {
+                          "labels": Object {
+                            "version": "v3",
+                          },
+                          "name": "v3",
+                        },
+                      ],
+                      "trafficPolicy": undefined,
+                    },
+                  },
+                ]
+              }
+              service={
+                Object {
+                  "additionalDetails": Array [],
+                  "apiDocumentation": Object {
+                    "hasSpec": true,
+                    "type": "rest",
+                  },
+                  "destinationRules": Object {
+                    "items": Array [
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393061",
+                        },
+                        "spec": Object {
+                          "host": "reviews",
+                          "subsets": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                              "name": "v1",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                              "name": "v2",
+                            },
+                            Object {
+                              "labels": Object {
+                                "version": "v3",
+                              },
+                              "name": "v3",
+                            },
+                          ],
+                          "trafficPolicy": undefined,
+                        },
+                      },
+                    ],
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
+                    },
+                  },
+                  "endpoints": Array [
+                    Object {
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.20",
+                          "kind": "Pod",
+                          "name": "reviews-v3-5f5bcb6765-hj46f",
+                        },
+                        Object {
+                          "ip": "172.17.0.21",
+                          "kind": "Pod",
+                          "name": "reviews-v2-d896b68c-jnxgm",
+                        },
+                        Object {
+                          "ip": "172.17.0.22",
+                          "kind": "Pod",
+                          "name": "reviews-v1-5d6696bcf7-2sls7",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
+                    },
+                  ],
+                  "health": undefined,
+                  "istioSidecar": true,
+                  "service": Object {
+                    "createdAt": "2018-06-29T16:43:18+02:00",
+                    "externalName": "my.database.example.com",
+                    "ip": "172.30.196.248",
+                    "labels": Object {
+                      "app": "reviews",
+                    },
+                    "name": "reviews",
+                    "ports": Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ],
+                    "resourceVersion": "2652",
+                    "type": "ClusterIP",
+                  },
+                  "validations": Object {
+                    "destinationrule": Object {
+                      "reviews": Object {
+                        "checks": Array [
+                          Object {
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[0]/version",
+                            "severity": "error",
+                          },
+                          Object {
+                            "message": "This subset is not found from the host",
+                            "path": "spec/subsets[1]/version",
+                            "severity": "error",
+                          },
+                        ],
+                        "name": "details",
+                        "objectType": "destinationrule",
+                        "valid": false,
+                      },
+                    },
+                  },
+                  "virtualServices": Object {
+                    "items": Array [
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                          "name": "reviews",
+                          "resourceVersion": "393057",
+                        },
+                        "spec": Object {
+                          "gateways": undefined,
+                          "hosts": Array [
+                            "reviews",
+                          ],
+                          "http": Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                },
+                              ],
+                            },
+                          ],
+                          "tcp": undefined,
+                        },
+                      },
+                    ],
+                    "permissions": Object {
+                      "create": false,
+                      "delete": false,
+                      "update": false,
+                    },
+                  },
+                  "workloads": Array [],
+                }
+              }
+              validations={
+                Object {
+                  "reviews": Object {
+                    "checks": Array [
+                      Object {
+                        "message": "This subset is not found from the host",
+                        "path": "spec/subsets[0]/version",
+                        "severity": "error",
+                      },
+                      Object {
+                        "message": "This subset is not found from the host",
+                        "path": "spec/subsets[1]/version",
+                        "severity": "error",
+                      },
+                    ],
+                    "name": "details",
+                    "objectType": "destinationrule",
+                    "valid": false,
+                  },
+                }
+              }
+            />
+          </ErrorBoundaryWithMessage>
+        </ForwardRef>
+      </ParameterizedTabs>
+    </GridItem>
+  </Grid>
+</RenderComponentScroll>
 `;

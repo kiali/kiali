@@ -2,7 +2,7 @@ html,
 body,
 #app,
 #content,
-#content-scrollable,
+.content-scrollable,
 .pf-c-page__main-section {
   /*
    * --pf-c-page__header--MinHeight is the height of the masthead
@@ -10,6 +10,7 @@ body,
    */
   --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-c-page__header--MinHeight));
   height: 100%; // so .co-p-has-sidebar, .yaml-editor are full height
+  overflow-y: hidden;
 }
 
 #content {
@@ -18,7 +19,7 @@ body,
   font-size: $font-size-base; // so PatternFly 4's PatternFly 3 shield rules don't override
 }
 
-#content-scrollable {
+.content-scrollable {
   overflow-x: auto;
   overflow-y: auto;
   height: calc(100vh - var(--pf-c-page__header--MinHeight));
@@ -37,6 +38,11 @@ body,
 
 #basic-tabs .pf-c-tabs__list {
   margin-left: 30px;
+}
+
+#basic-tabs .pf-c-tab-content {
+  overflow-y: auto;
+  height: 600px;
 }
 
 #service-tabs .pf-c-tabs__list {
