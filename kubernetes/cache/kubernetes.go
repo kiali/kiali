@@ -31,6 +31,19 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 }
 
+func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
+	isSynced := true
+	if nsCache, exist := c.nsCache[namespace]; exist {
+		isSynced = nsCache[kubernetes.DeploymentType].HasSynced() &&
+			nsCache[kubernetes.ReplicaSetType].HasSynced() &&
+			nsCache[kubernetes.ServiceType].HasSynced() &&
+			nsCache[kubernetes.PodType].HasSynced()
+	} else {
+		isSynced = false
+	}
+	return isSynced
+}
+
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		deps := nsCache[kubernetes.DeploymentType].GetStore().List()

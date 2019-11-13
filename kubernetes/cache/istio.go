@@ -39,6 +39,19 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	}
 }
 
+func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
+	isSynced := true
+	if nsCache, exist := c.nsCache[namespace]; exist {
+		isSynced = nsCache[kubernetes.VirtualServiceType].HasSynced() &&
+			nsCache[kubernetes.DestinationRuleType].HasSynced() &&
+			nsCache[kubernetes.GatewayType].HasSynced() &&
+			nsCache[kubernetes.ServiceentryType].HasSynced()
+	} else {
+		isSynced = false
+	}
+	return isSynced
+}
+
 func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshDuration time.Duration, namespace string) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(cache.NewListWatchFromClient(getter, resourceType, namespace, fields.Everything()),
 		&kubernetes.GenericIstioObject{},
