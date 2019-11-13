@@ -32,7 +32,7 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 }
 
 func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
-	isSynced := true
+	var isSynced bool
 	if nsCache, exist := c.nsCache[namespace]; exist {
 		isSynced = nsCache[kubernetes.DeploymentType].HasSynced() &&
 			nsCache[kubernetes.ReplicaSetType].HasSynced() &&

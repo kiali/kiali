@@ -40,7 +40,7 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 }
 
 func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
-	isSynced := true
+	var isSynced bool
 	if nsCache, exist := c.nsCache[namespace]; exist {
 		isSynced = nsCache[kubernetes.VirtualServiceType].HasSynced() &&
 			nsCache[kubernetes.DestinationRuleType].HasSynced() &&
