@@ -140,6 +140,7 @@ get_status() {
     ${OC} version
     echo "====================================================================="
     echo "Number of worker nodes in cluster: ${OPENSHIFT_WORKER_NODE_COUNT}"
+    echo "Age of cluster: $(${OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
     echo "====================================================================="
     echo "whoami: $(${OC} whoami)"
     echo "====================================================================="
