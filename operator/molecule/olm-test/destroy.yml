@@ -49,11 +49,6 @@
       state: absent
       definition: "{{ lookup('template', kiali_subscription_path) }}"
 
-  - name: Remove Catalog Sources
-    k8s:
-      state: absent
-      definition: "{{ lookup('template', catalog_sources_file_path) }}"
-
   - name: Delete Control Planes Namespaces
     k8s:
       name: "{{ item }}"
