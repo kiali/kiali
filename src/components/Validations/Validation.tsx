@@ -4,7 +4,7 @@ import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import './Validation.css';
-import { PFColorVars } from '../Pf/PfColors';
+import { PFAlertColor } from 'components/Pf/PfColors';
 
 type Props = ValidationDescription & {
   messageColor?: boolean;
@@ -26,19 +26,19 @@ export type ValidationType = {
 
 const ErrorValidation: ValidationType = {
   name: 'Not Valid',
-  color: PFColorVars.DangerColor,
+  color: PFAlertColor.Danger,
   icon: ExclamationCircleIcon
 };
 
 const WarningValidation: ValidationType = {
   name: 'Warning',
-  color: PFColorVars.WarningColor,
+  color: PFAlertColor.Warning,
   icon: ExclamationTriangleIcon
 };
 
 const CorrectValidation: ValidationType = {
   name: 'Valid',
-  color: PFColorVars.SuccessColor,
+  color: PFAlertColor.Success,
   icon: CheckCircleIcon
 };
 

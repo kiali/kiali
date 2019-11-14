@@ -1,5 +1,11 @@
 import { style } from 'typestyle';
-import { PfColors, withAlpha } from '../../../components/Pf/PfColors';
+import {
+  PfColors,
+  withAlpha,
+  getPFAlertColorVals,
+  PFColorVal,
+  PFAlertColorVals
+} from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import {
@@ -18,15 +24,10 @@ import * as Cy from 'cytoscape';
 
 export const DimClass = 'mousedim';
 
-// UX-specified colors, widths, etc
-const ColorDanger = PfColors.Danger; // Same as Health.FAILURE.color
-const ColorHealthy = PfColors.Success; // Same as Health.HEALTHY.color
-const ColorWarning = PfColors.Warning; // Same as Health.DEGRADED.color
-
-const EdgeColor = ColorHealthy;
+let EdgeColor: PFColorVal;
 const EdgeColorDead = PfColors.Black500;
-const EdgeColorDegraded = ColorWarning;
-const EdgeColorFailure = ColorDanger;
+let EdgeColorDegraded: PFColorVal;
+let EdgeColorFailure: PFColorVal;
 const EdgeColorTCPWithTraffic = PfColors.Blue600;
 const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
 const EdgeIconDisabledMTLS = icons.istio.disabledMtls.ascii; // broken lock
@@ -40,8 +41,8 @@ const EdgeWidthSelected = 4;
 const NodeBorderWidth = '1px';
 const NodeBorderWidthSelected = '3px';
 const NodeColorBorder = PfColors.Black400;
-const NodeColorBorderDegraded = ColorWarning;
-const NodeColorBorderFailure = ColorDanger;
+let NodeColorBorderDegraded: string;
+let NodeColorBorderFailure: string;
 const NodeColorBorderHover = PfColors.Blue300;
 const NodeColorBorderSelected = PfColors.Blue300;
 const NodeColorFill = PfColors.White;
@@ -112,6 +113,20 @@ const badgeStyle = style({
 });
 
 export class GraphStyles {
+  static colorsDefined: boolean;
+
+  static defineColors = () => {
+    if (GraphStyles.colorsDefined) {
+      return;
+    }
+    const colorVals: PFAlertColorVals = getPFAlertColorVals();
+    EdgeColor = colorVals.Success;
+    EdgeColorDegraded = colorVals.Warning;
+    EdgeColorFailure = colorVals.Danger;
+    NodeColorBorderDegraded = colorVals.Warning;
+    NodeColorBorderFailure = colorVals.Danger;
+  };
+
   static options() {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
   }
@@ -249,6 +264,8 @@ export class GraphStyles {
   }
 
   static styles(): Cy.Stylesheet[] {
+    GraphStyles.defineColors();
+
     const getCyGlobalData = (ele: Cy.NodeSingular | Cy.EdgeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };

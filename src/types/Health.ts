@@ -1,7 +1,7 @@
 import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon, UnknownIcon } from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
-import { PfColors, PFColorVars } from '../components/Pf/PfColors';
 import { getName } from '../utils/RateIntervals';
+import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
 
 interface HealthItem {
   status: Status;
@@ -38,21 +38,21 @@ export interface Status {
 
 export const FAILURE: Status = {
   name: 'Failure',
-  color: PFColorVars.DangerColor,
+  color: PFAlertColor.Danger,
   priority: 3,
   icon: ExclamationCircleIcon,
   class: 'icon-failure'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
-  color: PFColorVars.WarningColor,
+  color: PFAlertColor.Warning,
   priority: 2,
   icon: ExclamationTriangleIcon,
   class: 'icon-degraded'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
-  color: PFColorVars.SuccessColor,
+  color: PFAlertColor.Success,
   priority: 1,
   icon: CheckCircleIcon,
   class: 'icon-healthy'

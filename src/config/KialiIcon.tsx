@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PfColors } from '../components/Pf/PfColors';
+import { PFAlertColor } from '../components/Pf/PfColors';
 import {
   ApplicationsIcon,
   BundleIcon,
@@ -56,20 +56,20 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Bell: (props: IconProps) => <BellIcon className={props.className} />,
   CircuitBreaker: (props: IconProps) => <BoltIcon className={props.className} />,
   Close: (props: IconProps) => <CloseIcon className={props.className} />,
-  Error: (props: IconProps) => <ErrorCircleOIcon className={props.className} color={PfColors.Danger} />,
+  Error: (props: IconProps) => <ErrorCircleOIcon className={props.className} color={PFAlertColor.Danger} />,
   Help: (props: IconProps) => <HelpIcon className={props.className} />,
-  Info: (props: IconProps) => <InfoAltIcon className={props.className} color={PfColors.Info} />,
+  Info: (props: IconProps) => <InfoAltIcon className={props.className} color={PFAlertColor.Info} />,
   LocalTime: (props: IconProps) => <GlobeAmericasIcon className={props.className} />,
   MissingSidecar: (props: IconProps) => <BlueprintIcon className={props.className} />,
   MtlsLock: (props: IconProps) => <LockIcon className={props.className} />,
   MtlsUnlock: (props: IconProps) => <LockOpenIcon className={props.className} />,
-  Ok: (props: IconProps) => <OkIcon className={props.className} color={PfColors.Success} />,
+  Ok: (props: IconProps) => <OkIcon className={props.className} color={PFAlertColor.Success} />,
   Repository: (props: IconProps) => <RepositoryIcon className={props.className} />,
   Services: (props: IconProps) => <ServiceIcon className={props.className} />,
   Topology: (props: IconProps) => <TopologyIcon className={props.className} />,
   Unknown: (props: IconProps) => <UnknownIcon className={props.className} />,
   VirtualService: (props: IconProps) => <CodeBranchIcon className={props.className} />,
-  Warning: (props: IconProps) => <WarningTriangleIcon className={props.className} color={PfColors.Warning} />,
+  Warning: (props: IconProps) => <WarningTriangleIcon className={props.className} color={PFAlertColor.Warning} />,
   Website: (props: IconProps) => <HomeIcon className={props.className} />,
   Workloads: (props: IconProps) => <BundleIcon className={props.className} />
 };

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { style } from 'typestyle';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
 
-import { PfColors } from '../Pf/PfColors';
+import { PfColors, PFAlertColor } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
 import Graphing, { VCLines, VCLine, VCDataPoint } from 'utils/Graphing';
@@ -79,8 +79,8 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PfColors.Info);
-    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PfColors.Danger);
+    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PFAlertColor.Info);
+    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PFAlertColor.Danger);
     if (thereIsTrafficData(rpsLine)) {
       return (
         <>

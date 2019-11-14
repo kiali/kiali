@@ -5,7 +5,7 @@ import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
 import * as API from '../../services/Api';
 import authenticationConfig from '../../config/AuthenticationConfig';
-import { PFColorVars } from 'components/Pf/PfColors';
+import { PFAlertColor } from 'components/Pf/PfColors';
 
 type SessionTimeoutProps = {
   onLogout: () => void;
@@ -36,7 +36,7 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     return (
       <Modal isOpen={this.props.show} onClose={defaultAction} actions={buttons} title={'Session Timeout'} width={'40%'}>
         <span>
-          <WarningTriangleIcon size={'xl'} color={PFColorVars.WarningColor} />
+          <WarningTriangleIcon size={'xl'} color={PFAlertColor.Warning} />
         </span>
         <span style={{ float: 'right', width: '80%' }} className={'lead'}>
           {this.textForAuthStrategy(authenticationConfig.strategy)}

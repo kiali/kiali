@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { VictoryLegend } from 'victory';
 
-import { PfColors } from '../../components/Pf/PfColors';
+import { PfColors, getPFAlertColorVals } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import * as Legend from 'components/Charts/LegendHelper';
 import { CustomFlyout } from 'components/Charts/CustomFlyout';
@@ -113,11 +113,12 @@ export class RateChart extends React.Component<Props, State> {
 }
 
 export const renderRateChartHttp = (percent2xx: number, percent3xx: number, percent4xx: number, percent5xx: number) => {
+  const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', x: 'rate', y: percent2xx, color: PfColors.Success },
-    { name: '3xx', x: 'rate', y: percent3xx, color: PfColors.Info },
-    { name: '4xx', x: 'rate', y: percent4xx, color: PfColors.DangerBackground }, // 4xx is also an error use close but distinct color
-    { name: '5xx', x: 'rate', y: percent5xx, color: PfColors.Danger }
+    { name: 'OK', x: 'rate', y: percent2xx, color: colorVals.Success },
+    { name: '3xx', x: 'rate', y: percent3xx, color: colorVals.Info },
+    { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.DangerBackground }, // 4xx is also an error use close but distinct color
+    { name: '5xx', x: 'rate', y: percent5xx, color: colorVals.Danger }
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -132,9 +133,10 @@ export const renderRateChartHttp = (percent2xx: number, percent3xx: number, perc
 };
 
 export const renderRateChartGrpc = (percentOK: number, percentErr: number) => {
+  const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', x: 'rate', y: percentOK, color: PfColors.Success },
-    { name: 'Err', x: 'rate', y: percentErr, color: PfColors.Danger }
+    { name: 'OK', x: 'rate', y: percentOK, color: colorVals.Success },
+    { name: 'Err', x: 'rate', y: percentErr, color: colorVals.Danger }
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -158,15 +160,16 @@ export const renderInOutRateChartHttp = (
   percent4xxOut: number,
   percent5xxOut: number
 ) => {
+  const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', dp: [{ x: 'In', y: percent2xxIn }, { x: 'Out', y: percent2xxOut }], color: PfColors.Success },
-    { name: '3xx', dp: [{ x: 'In', y: percent3xxIn }, { x: 'Out', y: percent3xxOut }], color: PfColors.Info },
+    { name: 'OK', dp: [{ x: 'In', y: percent2xxIn }, { x: 'Out', y: percent2xxOut }], color: colorVals.Success },
+    { name: '3xx', dp: [{ x: 'In', y: percent3xxIn }, { x: 'Out', y: percent3xxOut }], color: colorVals.Info },
     {
       name: '4xx',
       dp: [{ x: 'In', y: percent4xxIn }, { x: 'Out', y: percent4xxOut }],
-      color: PfColors.DangerBackground
+      color: colorVals.DangerBackground
     }, // 4xx is also an error use close but distinct color
-    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: PfColors.Danger }
+    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: colorVals.Danger }
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({
@@ -190,9 +193,10 @@ export const renderInOutRateChartGrpc = (
   percentOKOut: number,
   percentErrOut: number
 ) => {
+  const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', dp: [{ x: 'In', y: percentOKIn }, { x: 'Out', y: percentOKOut }], color: PfColors.Success },
-    { name: 'Err', dp: [{ x: 'In', y: percentErrIn }, { x: 'Out', y: percentErrOut }], color: PfColors.Danger }
+    { name: 'OK', dp: [{ x: 'In', y: percentOKIn }, { x: 'Out', y: percentOKOut }], color: colorVals.Success },
+    { name: 'Err', dp: [{ x: 'In', y: percentErrIn }, { x: 'Out', y: percentErrOut }], color: colorVals.Danger }
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({

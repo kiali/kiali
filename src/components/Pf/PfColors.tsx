@@ -89,26 +89,56 @@ export enum PfColors {
   // Kiali colors that use PF colors
   //
   Gray = Black600,
-  GrayBackground = Black150,
-
-  // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
-  Danger = '#C9190B', // --pf-global--danger-color--100
-  DangerBackground = Red400, // --pf-global--danger-color--200
-  Info = '#73BCF7', // --pf-global--info-color--100
-  InfoBackground = Blue600, // --pf-global--info-color--200
-  Success = Green500, // --pf-global--success-color--100
-  SuccessBackground = LightGreen600, // --pf-global--success-color--200
-  Warning = Gold400, // --pf-global--warning-color--100
-  WarningBackground = Gold600 // --pf-global--warning-color--200
+  GrayBackground = Black150
 }
 
-export enum PFColorVars {
-  DangerColor = 'var(--pf-global--danger-color--100)',
-  // Patternfly has a new green that is darker but they have not yet
-  // updated the PF vars for it
-  // SuccessColor = 'var(--pf-global--success-color--100)',
-  SuccessColor = '#3e8635', // computed values like Green500 are not allowed in enum
-  WarningColor = 'var(--pf-global--warning-color--100)'
+// The hex string value of the PF CSS variable
+export type PFColorVal = string;
+
+// Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
+export type PFAlertColorVals = {
+  Danger: PFColorVal;
+  DangerBackground: PFColorVal;
+  Info: PFColorVal;
+  InfoBackground: PFColorVal;
+  Success: PFColorVal;
+  SuccessBackground: PFColorVal;
+  Warning: PFColorVal;
+  WarningBackground: PFColorVal;
+};
+
+let PFAlertColorValsInstance: PFAlertColorVals | undefined;
+
+export const getPFAlertColorVals = (): PFAlertColorVals => {
+  if (!PFAlertColorValsInstance) {
+    const root = document.documentElement;
+    PFAlertColorValsInstance = {
+      Danger: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--100'),
+      DangerBackground: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--200'),
+      Info: getComputedStyle(root).getPropertyValue('--pf-global--info-color--100'),
+      InfoBackground: getComputedStyle(root).getPropertyValue('--pf-global--info-color--200'),
+      // TODO: go back to var when PF vars is properly updated
+      // Success: getComputedStyle(root).getPropertyValue('--pf-global--success-color--100'),
+      Success: '#3e8635',
+      SuccessBackground: getComputedStyle(root).getPropertyValue('--pf-global--success-color--200'),
+      Warning: getComputedStyle(root).getPropertyValue('--pf-global--warning-color--100'),
+      WarningBackground: getComputedStyle(root).getPropertyValue('--pf-global--warning-color--200')
+    };
+  }
+  return PFAlertColorValsInstance;
+};
+
+export enum PFAlertColor {
+  Danger = 'var(${--pf-global--danger-color--100)',
+  DangerBackground = 'var(--pf-global--danger-color--200)',
+  Info = 'var(--pf-global--info-color--100)',
+  InfoBackground = 'var(--pf-global--info-color--200)',
+  // TODO: go back to var when PF vars is properly updated
+  // Success = 'var(--pf-global--success-color--100)',
+  Success = '#3e8635',
+  SuccessBackground = 'var(--pf-global--success-color--200)',
+  Warning = 'var(--pf-global--warning-color--100)',
+  WarningBackground = 'var(--pf-global--warning-color--200)'
 }
 
 export const withAlpha = (color: PfColors, hexAlpha: string) => {
