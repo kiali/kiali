@@ -12,10 +12,6 @@
     with_items:
     - "{{ maistra.cr.control_planes }}"
 
-  - name: Deploy Catalog Sources
-    k8s:
-      definition: "{{ lookup('template', catalog_sources_file_path) }}"
-
   - name: Deploy Elasticsearch Subscription
     k8s:
       definition: "{{ lookup('template', elasticsearch_subscription_path) }}"
@@ -54,9 +50,9 @@
     retries: 2000
     delay: 10
 
-  - name: Pause for 5 minutes to wait Maistra to create Admission Controller via OLM
+  - name: Pause for 2 minutes to wait Maistra to create Admission Controller via OLM
     pause:
-      minutes: 5
+      minutes: 2
     
   - name: Deploy Control Planes
     k8s:

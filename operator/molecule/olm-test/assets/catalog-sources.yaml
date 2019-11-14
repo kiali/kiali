@@ -1,9 +1,0 @@
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: rhd-workshop-packages
-  namespace: openshift-marketplace
-spec:
-  packages: elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator
-  source: redhat-operators
-  targetNamespace: openshift-operators

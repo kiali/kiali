@@ -5,6 +5,6 @@ metadata:
   namespace: openshift-operators
 spec:
   channel: "1.0"
-  source: rhd-workshop-packages
+  source: redhat-operators
   name: servicemeshoperator 
-  sourceNamespace: openshift-operators
+  sourceNamespace: openshift-marketplace

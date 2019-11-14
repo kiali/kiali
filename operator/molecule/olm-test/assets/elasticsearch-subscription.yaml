@@ -5,6 +5,6 @@ metadata:
   namespace: openshift-operators
 spec:
   channel: preview
-  source: rhd-workshop-packages
+  source: redhat-operators
   name: elasticsearch-operator
-  sourceNamespace: openshift-operators
+  sourceNamespace: openshift-marketplace
