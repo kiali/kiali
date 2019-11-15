@@ -466,7 +466,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
-          mountOnEnter={true}
+          mountOnEnter={false}
           unmountOnExit={true}
         >
           {tabsArray}

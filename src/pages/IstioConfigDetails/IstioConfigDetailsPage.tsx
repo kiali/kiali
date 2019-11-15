@@ -480,7 +480,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         tabName={tabName}
         defaultTab={this.defaultTab()}
         activeTab={this.state.currentTab}
-        mountOnEnter={true}
+        mountOnEnter={false}
         unmountOnExit={true}
       >
         {tabs}

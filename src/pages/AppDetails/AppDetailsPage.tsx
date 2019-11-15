@@ -275,7 +275,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
-          mountOnEnter={true}
+          mountOnEnter={false}
           unmountOnExit={true}
         >
           {this.renderTabs()}

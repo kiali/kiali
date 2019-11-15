@@ -69,10 +69,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
+    const aTab = activeTab(tabName, defaultTab);
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.workload !== prevProps.match.params.workload ||
-      this.state.currentTab !== activeTab(tabName, defaultTab) ||
+      this.state.currentTab !== aTab ||
       this.props.duration !== prevProps.duration
     ) {
       this.setState(
@@ -80,7 +81,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           workload: emptyWorkload,
           validations: {},
           istioEnabled: true, // true until proven otherwise
-          currentTab: activeTab(tabName, defaultTab),
+          currentTab: aTab,
           health: undefined
         },
         () => this.doRefresh()
@@ -158,7 +159,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   doRefresh = () => {
     const currentTab = this.state.currentTab;
-
     if (this.state.workload === emptyWorkload || currentTab === 'info') {
       this.setState({ trafficData: null });
       this.fetchWorkload();
@@ -241,7 +241,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         />
       </Tab>
     );
-
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
@@ -364,7 +363,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
-          mountOnEnter={true}
+          mountOnEnter={false}
           unmountOnExit={true}
         >
           {this.renderTabs()}
