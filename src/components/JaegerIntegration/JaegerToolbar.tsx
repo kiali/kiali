@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Form, Expandable, FormGroup, Grid, GridItem, InputGroup, TextInput } from '@patternfly/react-core';
+import { Checkbox, Form, Expandable, FormGroup, Grid, GridItem, InputGroup, TextInput } from '@patternfly/react-core';
 import ServiceDropdown from './ServiceDropdown';
 import LookBack from './LookBack';
 import RightToolbar from './RightToolbar';
@@ -22,6 +22,7 @@ interface JaegerToolbarProps {
   disableSelectorNs?: boolean;
   tagsValue?: string;
   limit?: number;
+  namespaceSelector: boolean;
   serviceSelected?: string;
   updateURL: (url: JaegerSearchOptions) => void;
   disabled?: boolean;
@@ -32,6 +33,7 @@ interface JaegerToolbarState {
   limit: number;
   lookback: string;
   dateTimes: TracesDate;
+  namespaceSelector: boolean;
   minDuration: string;
   maxDuration: string;
   serviceSelected: string;
@@ -58,6 +60,8 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
       limit: Number(HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) || '20'),
       minDuration: HistoryManager.getParam(URLParam.JAEGER_MIN_DURATION) || '',
       maxDuration: HistoryManager.getParam(URLParam.JAEGER_MAX_DURATION) || '',
+      namespaceSelector:
+        HistoryManager.getParam(URLParam.JAEGER_NAMESPACE_SELECTOR) === '1' || this.props.namespaceSelector || false,
       lookback: HistoryManager.getParam(URLParam.JAEGER_LOOKBACK) || String(this.defaultLookback),
       serviceSelected: HistoryManager.getParam(URLParam.JAEGER_SERVICE_SELECTOR) || this.props.serviceSelected || '',
       dateTimes: { start: startDateTime, end: endDateTime },
@@ -90,6 +94,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
       start: toTimestamp.start,
       end: toTimestamp.end,
       serviceSelected: this.state.serviceSelected,
+      namespaceSelector: this.state.namespaceSelector,
       limit: this.state.limit,
       lookback: this.state.lookback,
       minDuration: this.state.minDuration,
@@ -104,6 +109,12 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
     this.setState({
       isExpandedOptions: !this.state.isExpandedOptions
     });
+  };
+
+  onNamespaceSelectorChange = (_, event) => {
+    const target = event.target;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
+    this.setState({ namespaceSelector: value });
   };
 
   render() {
@@ -130,6 +141,18 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
             </>
           )}
           <GridItem span={2}>
+            <div style={{ marginTop: '8px' }}>
+              <Checkbox
+                label="Namespace Selector"
+                isChecked={this.state.namespaceSelector}
+                onChange={this.onNamespaceSelectorChange}
+                aria-label="Set in jaeger the namspace selector to look by service.namespace"
+                id="namespace_selector"
+                name="namespace_selector"
+              />
+            </div>
+          </GridItem>
+          <GridItem span={2}>
             <Form isHorizontal={true} className={disableSelectorNs ? '' : lookbackForm}>
               <FormGroup label={'Lookback'} isRequired={true} fieldId={'lookback_jaeger_form'}>
                 <LookBack
@@ -141,7 +164,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               </FormGroup>
             </Form>
           </GridItem>
-          <GridItem span={disableSelectorNs ? 8 : 6} />
+          <GridItem span={disableSelectorNs ? 6 : 4} />
           <GridItem span={1} id={'request_traces_button'}>
             <RightToolbar disabled={this.state.serviceSelected === ''} onSubmit={this.onRequestTraces} />
           </GridItem>

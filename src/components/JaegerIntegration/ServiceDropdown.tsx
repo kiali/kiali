@@ -61,7 +61,11 @@ export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, S
             const serviceGroup: ServiceGroup = { groupLabel: ns, disabled: false, options: [] };
 
             response.data.services.forEach((service: ServiceOverview) => {
-              serviceGroup.options.push({ value: `${service.name}.${ns}`, label: service.name, disabled: false });
+              serviceGroup.options.push({
+                value: `${service.name}.${ns}`,
+                label: service.name,
+                disabled: false
+              });
             });
             serviceList.push(serviceGroup);
           });

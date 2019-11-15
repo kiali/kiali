@@ -13,6 +13,7 @@ describe('LookBack', () => {
       disabled: false,
       limit: 0,
       requestSearchURL: requestSearchURL,
+      namespaceSelector: true,
       updateURL: updateURL,
       urlJaeger: '',
       serviceSelected: 'details.bookinfo'

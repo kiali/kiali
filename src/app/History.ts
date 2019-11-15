@@ -31,6 +31,7 @@ export enum URLParam {
   JAEGER_MAX_DURATION = 'maxDuration',
   JAEGER_MIN_DURATION = 'minDuration',
   JAEGER_SERVICE_SELECTOR = 'service',
+  JAEGER_NAMESPACE_SELECTOR = 'namespace_selector',
   JAEGER_TAGS = 'tags'
 }
 

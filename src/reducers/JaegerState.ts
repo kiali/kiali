@@ -6,6 +6,7 @@ import { JaegerActions } from '../actions/JaegerActions';
 
 export const INITIAL_JAEGER_STATE: JaegerState | null = {
   jaegerURL: '',
+  namespaceSelector: true,
   enableIntegration: false
 };
 
@@ -29,7 +30,8 @@ const JaegerStateGenerator = (
 
       return updateState(state, {
         jaegerURL: action.payload.jaegerURL,
-        enableIntegration: action.payload.enableIntegration
+        enableIntegration: action.payload.enableIntegration,
+        namespaceSelector: action.payload.namespaceSelector
       });
     default:
       return state;

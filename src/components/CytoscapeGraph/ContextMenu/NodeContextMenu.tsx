@@ -10,6 +10,7 @@ import { NodeType } from 'types/Graph';
 
 type ReduxProps = {
   jaegerIntegration: boolean;
+  namespaceSelector: boolean;
   jaegerURL: string;
 };
 
@@ -80,8 +81,9 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     if (!this.props.jaegerIntegration) {
       const url = new JaegerURLSearch(this.props.jaegerURL, false);
       const options: JaegerSearchOptions = {
-        serviceSelected: `${name}.${this.props.namespace}`,
+        serviceSelected: this.props.namespaceSelector ? `${name}.${this.props.namespace}` : `${name}`,
         limit: 20,
+        namespaceSelector: this.props.namespaceSelector,
         start: '',
         end: '',
         minDuration: '',
@@ -157,7 +159,8 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerIntegration: state.jaegerState ? state.jaegerState.enableIntegration : false,
-  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
+  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : '',
+  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : false
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);

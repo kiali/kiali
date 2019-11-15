@@ -8,6 +8,7 @@ import { RenderHeader } from '../Nav/Page';
 
 interface JaegerIntegrationProps {
   disableSelectorNs?: boolean;
+  namespaceSelector: boolean;
   tagsValue?: string;
   serviceSelected?: string;
   urlJaeger: string;
@@ -29,7 +30,7 @@ export class JaegerIntegration extends React.Component<JaegerIntegrationProps, J
   };
 
   render() {
-    const { serviceSelected, tagsValue, disableSelectorNs } = this.props;
+    const { disableSelectorNs, namespaceSelector, serviceSelected, tagsValue } = this.props;
 
     return (
       <>
@@ -39,6 +40,7 @@ export class JaegerIntegration extends React.Component<JaegerIntegrationProps, J
             serviceSelected={serviceSelected}
             tagsValue={tagsValue}
             disableSelectorNs={disableSelectorNs}
+            namespaceSelector={namespaceSelector}
           />
         </RenderHeader>
         <JaegerTracesIframe url={this.state.url} />
@@ -49,7 +51,8 @@ export class JaegerIntegration extends React.Component<JaegerIntegrationProps, J
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    urlJaeger: state.jaegerState ? state.jaegerState.jaegerURL : ''
+    urlJaeger: state.jaegerState ? state.jaegerState.jaegerURL : '',
+    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
   };
 };
 

@@ -3,7 +3,8 @@ import { JaegerActions } from '../../actions/JaegerActions';
 
 const initialState = {
   jaegerURL: '',
-  enableIntegration: false
+  enableIntegration: false,
+  namespaceSelector: true
 };
 
 describe('JaegerState reducer', () => {
@@ -27,8 +28,11 @@ describe('JaegerState reducer', () => {
     const url = 'https://jaeger-query-istio-system.127.0.0.1.nip.io';
     expectedState.enableIntegration = true;
     expectedState.jaegerURL = url;
-    expect(JaegerState(initialState, JaegerActions.setinfo({ jaegerURL: url, enableIntegration: true }))).toEqual(
-      expectedState
-    );
+    expect(
+      JaegerState(
+        initialState,
+        JaegerActions.setinfo({ jaegerURL: url, enableIntegration: true, namespaceSelector: true })
+      )
+    ).toEqual(expectedState);
   });
 });

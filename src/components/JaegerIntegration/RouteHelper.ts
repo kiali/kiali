@@ -5,6 +5,7 @@ import { HistoryManager, URLParam } from '../../app/History';
 
 export interface JaegerSearchOptions {
   serviceSelected: string;
+  namespaceSelector: boolean;
   limit: number;
   start: string;
   end: string;
@@ -125,7 +126,12 @@ export class JaegerURLSearch {
     this.setParam(URLParam.JAEGER_LOOKBACK, lookback);
     this.setParam(URLParam.JAEGER_MAX_DURATION, searchOptions.maxDuration);
     this.setParam(URLParam.JAEGER_MIN_DURATION, searchOptions.minDuration);
-    this.setParam(URLParam.JAEGER_SERVICE_SELECTOR, searchOptions.serviceSelected);
+    this.addQueryParam(
+      URLParam.JAEGER_SERVICE_SELECTOR,
+      searchOptions.namespaceSelector ? searchOptions.serviceSelected : searchOptions.serviceSelected.split('.')[0]
+    );
+    HistoryManager.setParam(URLParam.JAEGER_SERVICE_SELECTOR, searchOptions.serviceSelected);
+    HistoryManager.setParam(URLParam.JAEGER_NAMESPACE_SELECTOR, searchOptions.namespaceSelector ? '1' : '0');
 
     const logfmtTags = convTagsLogfmt(searchOptions.tags);
     if (logfmtTags) {
