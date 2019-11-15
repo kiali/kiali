@@ -38,8 +38,7 @@ import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/Cytos
 import { PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
-type SummaryPanelStateType = {
-  loading: boolean;
+type SummaryPanelNodeMetricsState = {
   grpcRequestCountIn: Datapoint[] | null;
   grpcRequestCountOut: Datapoint[];
   grpcErrorCountIn: Datapoint[];
@@ -52,12 +51,40 @@ type SummaryPanelStateType = {
   tcpSentOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+};
+
+type SummaryPanelNodeState = SummaryPanelNodeMetricsState & {
+  node: any;
+  loading: boolean;
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;
 };
 
-export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelStateType> {
+const defaultMetricsState: SummaryPanelNodeMetricsState = {
+  grpcRequestCountIn: null,
+  grpcRequestCountOut: [],
+  grpcErrorCountIn: [],
+  grpcErrorCountOut: [],
+  httpRequestCountIn: null,
+  httpRequestCountOut: [],
+  httpErrorCountIn: [],
+  httpErrorCountOut: [],
+  tcpSentIn: [],
+  tcpSentOut: [],
+  tcpReceivedIn: [],
+  tcpReceivedOut: []
+};
+
+const defaultState: SummaryPanelNodeState = {
+  node: null,
+  loading: false,
+  healthLoading: false,
+  metricsLoadError: null,
+  ...defaultMetricsState
+};
+
+export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelNodeState> {
   static readonly panelStyle = {
     height: '100%',
     margin: 0,
@@ -73,25 +100,16 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     super(props);
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
 
-    this.state = {
-      loading: true,
-      grpcRequestCountIn: null,
-      grpcRequestCountOut: [],
-      grpcErrorCountIn: [],
-      grpcErrorCountOut: [],
-      httpRequestCountIn: null,
-      httpRequestCountOut: [],
-      httpErrorCountIn: [],
-      httpErrorCountOut: [],
-      tcpSentIn: [],
-      tcpSentOut: [],
-      tcpReceivedIn: [],
-      tcpReceivedOut: [],
-      healthLoading: false,
-      metricsLoadError: null
-    };
-
+    this.state = { ...defaultState };
     this.mainDivRef = React.createRef<HTMLDivElement>();
+  }
+
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelNodeState) {
+    // if the summaryTarget (i.e. selected node) has changed, then init the state and set to loading. The loading
+    // will actually be kicked off after the render (in componentDidMount/Update).
+    return props.data.summaryTarget !== state.node
+      ? { node: props.data.summaryTarget, loading: true, ...defaultMetricsState }
+      : null;
   }
 
   componentDidMount() {
@@ -101,10 +119,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.setState({
-        grpcRequestCountIn: null,
-        loading: true
-      });
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
       }
@@ -218,7 +232,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
-          grpcRequestCountIn: null
+          ...defaultMetricsState
         });
       });
 

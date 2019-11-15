@@ -32,9 +32,7 @@ import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
 
-type SummaryPanelEdgeState = {
-  loading: boolean;
-  metricsLoadError: string | null;
+type SummaryPanelEdgeMetricsState = {
   reqRates: Datapoint[] | null;
   errRates: Datapoint[];
   rtAvg: Datapoint[];
@@ -46,9 +44,13 @@ type SummaryPanelEdgeState = {
   unit: ResponseTimeUnit;
 };
 
-const defaultSummaryPanelState: SummaryPanelEdgeState = {
-  loading: true,
-  metricsLoadError: null,
+type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
+  edge: any;
+  loading: boolean;
+  metricsLoadError: string | null;
+};
+
+const defaultMetricsState: SummaryPanelEdgeMetricsState = {
   reqRates: null,
   errRates: [],
   rtAvg: [],
@@ -58,6 +60,13 @@ const defaultSummaryPanelState: SummaryPanelEdgeState = {
   tcpSent: [],
   tcpReceived: [],
   unit: 'ms'
+};
+
+const defaultState: SummaryPanelEdgeState = {
+  edge: null,
+  loading: false,
+  metricsLoadError: null,
+  ...defaultMetricsState
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -75,8 +84,16 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   constructor(props: SummaryPanelPropType) {
     super(props);
 
-    this.state = { ...defaultSummaryPanelState };
+    this.state = { ...defaultState };
     this.mainDivRef = React.createRef<HTMLDivElement>();
+  }
+
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelEdgeState) {
+    // if the summaryTarget (i.e. selected edge) has changed, then init the state and set to loading. The loading
+    // will actually be kicked off after the render (in componentDidMount/Update).
+    return props.data.summaryTarget !== state.edge
+      ? { edge: props.data.summaryTarget, loading: true, ...defaultMetricsState }
+      : null;
   }
 
   componentDidMount() {
@@ -85,10 +102,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.setState({
-        loading: true,
-        reqRates: null
-      });
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
       }
@@ -353,7 +366,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       .then(response => {
         const metrics = response.data.metrics;
         const histograms = response.data.histograms;
-        let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultSummaryPanelState;
+        let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultMetricsState;
         if (isGrpc || isHttp) {
           reqRates = this.getNodeDataPoints(metrics.request_count, sourceMetricType, destMetricType, sourceData);
           errRates = this.getNodeDataPoints(metrics.request_error_count, sourceMetricType, destMetricType, sourceData);
@@ -399,7 +412,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
-          reqRates: null
+          ...defaultMetricsState
         });
       });
 

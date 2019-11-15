@@ -24,8 +24,7 @@ import { serverConfig } from '../../config/ServerConfig';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
-type SummaryPanelGroupState = {
-  loading: boolean;
+type SummaryPanelGroupMetricsState = {
   requestCountIn: Datapoint[] | null;
   requestCountOut: Datapoint[];
   errorCountIn: Datapoint[];
@@ -34,9 +33,33 @@ type SummaryPanelGroupState = {
   tcpSentOut: Datapoint[];
   tcpReceivedIn: Datapoint[];
   tcpReceivedOut: Datapoint[];
+};
+
+type SummaryPanelGroupState = SummaryPanelGroupMetricsState & {
+  group: any;
+  loading: boolean;
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;
+};
+
+const defaultMetricsState: SummaryPanelGroupMetricsState = {
+  requestCountIn: null,
+  requestCountOut: [],
+  errorCountIn: [],
+  errorCountOut: [],
+  tcpSentIn: [],
+  tcpSentOut: [],
+  tcpReceivedIn: [],
+  tcpReceivedOut: []
+};
+
+const defaultState: SummaryPanelGroupState = {
+  group: null,
+  loading: false,
+  healthLoading: false,
+  metricsLoadError: null,
+  ...defaultMetricsState
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
@@ -53,21 +76,17 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   constructor(props: SummaryPanelPropType) {
     super(props);
-    this.state = {
-      loading: true,
-      requestCountIn: null,
-      requestCountOut: [],
-      errorCountIn: [],
-      errorCountOut: [],
-      tcpSentIn: [],
-      tcpSentOut: [],
-      tcpReceivedIn: [],
-      tcpReceivedOut: [],
-      healthLoading: false,
-      metricsLoadError: null
-    };
+    this.state = { ...defaultState };
 
     this.mainDivRef = React.createRef<HTMLDivElement>();
+  }
+
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelGroupState) {
+    // if the summaryTarget (i.e. selected group) has changed, then init the state and set to loading. The loading
+    // will actually be kicked off after the render (in componentDidMount/Update).
+    return props.data.summaryTarget !== state.group
+      ? { group: props.data.summaryTarget, loading: true, ...defaultMetricsState }
+      : null;
   }
 
   componentDidMount() {
@@ -77,10 +96,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.setState({
-        requestCountIn: null,
-        loading: true
-      });
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
       }
@@ -204,7 +219,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
-          requestCountIn: null
+          ...defaultMetricsState
         });
       });
 
