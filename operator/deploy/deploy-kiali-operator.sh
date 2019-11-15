@@ -1111,7 +1111,7 @@ spec:
   external_services:
     grafana:
       $(build_spec_value url GRAFANA_URL true)
-    jaeger:
+    tracing:
       $(build_spec_value url JAEGER_URL true)
 EOF
 )
