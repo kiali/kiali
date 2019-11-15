@@ -22,7 +22,7 @@ import { DurationInSeconds } from '../../types/Common';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
-import { Tab } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
@@ -257,7 +257,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         {hasPods ? (
           <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
         ) : (
-          'There are no logs to display because the workload has no pods.'
+          <EmptyState variant={EmptyStateVariant.full}>
+            <Title headingLevel="h5" size="lg">
+              No logs for Workload {this.state.workload.name}
+            </Title>
+            <EmptyStateBody>There are no logs to display because the workload has no pods.</EmptyStateBody>
+          </EmptyState>
         )}
       </Tab>
     );
