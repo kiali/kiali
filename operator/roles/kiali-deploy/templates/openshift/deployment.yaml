@@ -81,6 +81,12 @@ spec:
           mountPath: "/kiali-cert"
         - name: kiali-secret
           mountPath: "/kiali-secret"
+{% if kiali_vars.deployment.resources|length > 0 %}
+        resources:
+          {{ kiali_vars.deployment.resources | to_nice_yaml(indent=0) | trim | indent(10) }}
+{% else %}
+        resources: {}
+{% endif %}
       volumes:
       - name: kiali-configuration
         configMap:

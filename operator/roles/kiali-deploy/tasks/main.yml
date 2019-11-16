@@ -105,6 +105,15 @@
   - kiali_vars.deployment.additional_service_yaml is defined
   - kiali_vars.deployment.additional_service_yaml | length > 0
 
+- name: Replace snake_case with camelCase in deployment.resources
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('resources') %}
+      {{ kiali_vars | combine({'deployment': {'resources': current_cr.spec.deployment.resources }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.resources is defined
+  - kiali_vars.deployment.resources | length > 0
+
 - name: Print some debug information
   vars:
     msg: |

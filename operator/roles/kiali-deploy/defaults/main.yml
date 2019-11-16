@@ -59,6 +59,7 @@ kiali_defaults:
     image_version: ""
     ingress_enabled: true
     namespace: ""
+    resources: {}
     secret_name: "kiali"
     #service_type: "NodePort"
     tolerations: []

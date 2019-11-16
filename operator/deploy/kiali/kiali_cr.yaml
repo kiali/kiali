@@ -203,6 +203,12 @@ spec:
 #    ---
 #    namespace: ""
 #
+# Defines compute resources that are to be given to the Kiali pod's container.
+# The value is a dict as defined by Kubernetes. See the Kubernetes documentation
+# https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container
+#    ---
+#    resources: {}
+#
 # The name of the secret where the Kiali credentials are found.
 # These credentials will be required when logging into Kiali.
 # Only used when auth_strategy is "login".
