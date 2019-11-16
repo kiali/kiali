@@ -7,6 +7,7 @@ import {
   CardBody,
   EmptyState,
   EmptyStateBody,
+  EmptyStateVariant,
   Grid,
   GridItem,
   Title
@@ -337,7 +338,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           </Grid>
         ) : (
           <div style={{ backgroundColor: '#f5f5f5' }}>
-            <EmptyState className={emptyStateStyle}>
+            <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
               <Title headingLevel="h5" size="lg" style={{ marginTop: '50px' }}>
                 No unfiltered namespaces
               </Title>
