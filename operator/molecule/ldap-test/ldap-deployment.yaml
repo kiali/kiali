@@ -19,7 +19,7 @@ spec:
           image: openshift/openldap-2441-centos7:latest
           volumeMounts:
             - name: etc-openldap
-              mountPath: /etc/openldap
+              mountPath: /etc/openldap/slapd.conf
             - name: ldap-data
               mountPath: /var/lib/ldap
           ports:
