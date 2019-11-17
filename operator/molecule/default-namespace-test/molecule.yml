@@ -18,10 +18,11 @@ provisioner:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
         cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/default-namespace-test/kiali-cr.yaml"
-        cr_namespace: istio-system
+        cr_namespace: anothernamespace
         istio:
           control_plane_namespace: istio-system
         kiali:
+          install_namespace: anothernamespace
           accessible_namespaces: ["**"]
           auth_strategy: openshift
           operator_namespace: kiali-operator
@@ -33,7 +34,7 @@ provisioner:
           # That is where this test will deploy the CR (cr_namespace)
           # The default namespace should be where the CR is deployed,
           # and thus will determine where to install Kiali.
-          operator_watch_namespace: istio-system
+          operator_watch_namespace: anothernamespace
           operator_clusterrolebindings: "- clusterrolebindings"
           operator_clusterroles: "- clusterroles"
           image_name: quay.io/kiali/kiali

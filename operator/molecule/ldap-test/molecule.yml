@@ -27,6 +27,7 @@ provisioner:
           service_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/ldap-test/ldap-service.yaml"
           use_ssl: false
         kiali:
+          install_namespace: istio-system
           accessible_namespaces: ["**"]
           auth_strategy: ldap
           operator_namespace: kiali-operator

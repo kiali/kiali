@@ -22,6 +22,7 @@ provisioner:
         istio:
           control_plane_namespace: istio-system
         kiali:
+          install_namespace: istio-system
           accessible_namespaces:
           - "**"
           operator_namespace: kiali-operator
