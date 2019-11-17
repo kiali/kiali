@@ -44,7 +44,7 @@
 
   - name: Create Kiali CR
     k8s:
-      namespace: "{{ kiali.operator_namespace }}"
+      namespace: "{{ cr_namespace }}"
       definition: "{{ lookup('template', cr_file_path) }}"
 
   - name: Asserting that Kiali is Deployed

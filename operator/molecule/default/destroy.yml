@@ -9,7 +9,7 @@
       state: absent
       api_version: kiali.io/v1alpha1
       kind: Kiali
-      namespace: "{{ kiali.operator_namespace }}"
+      namespace: "{{ cr_namespace }}"
       name: "{{ custom_resource.metadata.name }}"
 
   - name: Produce Files with Correct Parameters

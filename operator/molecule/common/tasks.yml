@@ -1,6 +1,6 @@
 - name: Get Kiali CR if present
   set_fact:
-    kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
+    kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=cr_namespace, resource_name=custom_resource.metadata.name) }}"
 
 - name: Get Kiali Operator Pod
   k8s_facts:

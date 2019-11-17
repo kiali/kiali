@@ -19,7 +19,7 @@
       ldap: "{{ ldap | combine({'use_ssl': true}, recursive=True) }}"
   - name: Deploy new Kiali CR
     k8s:
-      namespace: "{{ kiali.operator_namespace }}"
+      namespace: "{{ cr_namespace }}"
       definition: "{{ lookup('template', cr_file_path) }}"
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
   - import_tasks: ../common/wait_for_kiali_running.yml
