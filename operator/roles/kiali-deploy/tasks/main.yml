@@ -120,6 +120,12 @@
 # values accordingly.
 # We determine the default Istio namespace var first, and the rest will use it for their default as appropriate.
 
+- name: Set default deployment namespace to the same namespace where the CR lives
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'namespace': current_cr.metadata.namespace}}, recursive=True) }}"
+  when:
+  - kiali_vars.deployment.namespace is not defined or kiali_vars.deployment.namespace == ""
+
 - name: Set default istio namespace
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_namespace': kiali_vars.deployment.namespace}, recursive=True) }}"
