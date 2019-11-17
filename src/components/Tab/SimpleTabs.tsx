@@ -8,6 +8,7 @@ type SimpleTabsProps = {
   defaultTab: number;
   id: string;
   mountOnEnter?: boolean;
+  style?: React.CSSProperties;
   unmountOnExit?: boolean;
 };
 
@@ -28,6 +29,7 @@ export default class SimpleTabs extends React.Component<SimpleTabsProps, SimpleT
     return (
       <Tabs
         id={this.props.id}
+        style={this.props.style ? this.props.style : {}}
         activeKey={this.state.activeTab}
         onSelect={this.handleTabSelect}
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}

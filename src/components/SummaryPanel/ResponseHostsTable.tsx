@@ -31,9 +31,9 @@ export class ResponseHostsTable extends React.PureComponent<ResponseHostsTablePr
             <table className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr key="table-header">
-                  <th style={{ width: '15%' }}>Code</th>
-                  <th style={{ width: '50%' }}>Host</th>
-                  <th style={{ width: '35%' }}>% Requests</th>
+                  <th style={{ width: '18%' }}>Code</th>
+                  <th style={{ width: '52%' }}>Host</th>
+                  <th style={{ width: '30%' }}>% Req</th>
                 </tr>
               </thead>
               <tbody>

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
@@ -20,9 +19,8 @@ import {
   renderNoTraffic,
   NodeMetricType,
   renderNodeInfo,
-  summaryBodyTabs,
   summaryHeader,
-  summaryNavTabs
+  summaryBodyTabs
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -31,6 +29,8 @@ import { decoratedEdgeData, decoratedNodeData } from '../../components/Cytoscape
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
+import { Tab } from '@patternfly/react-core';
+import SimpleTabs from 'components/Tab/SimpleTabs';
 
 type SummaryPanelEdgeMetricsState = {
   reqRates: Datapoint[] | null;
@@ -150,84 +150,57 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="To" node={dest} />
         {isMtls && <MTLSBlock />}
         {(isGrpc || isHttp) && (
-          <div className={`"panel-body ${summaryBodyTabs}`}>
-            <TabContainer id="basic-tabs" defaultActiveKey="traffic">
-              <div>
-                <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
-                  <NavItem eventKey="traffic">
-                    <div>Traffic</div>
-                  </NavItem>
-                  <NavItem eventKey="flags" title="Response flags by code">
-                    <div>Flags</div>
-                  </NavItem>
-                  <NavItem eventKey="hosts" title="Hosts by code">
-                    <div>Hosts</div>
-                  </NavItem>
-                </Nav>
-                <TabContent style={{ paddingTop: '10px' }}>
-                  <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
-                    {isGrpc && (
-                      <>
-                        <RateTableGrpc
-                          title="GRPC requests per second:"
-                          rate={this.safeRate(edgeData.grpc)}
-                          rateErr={this.safeRate(edgeData.grpcPercentErr)}
-                        />
-                      </>
-                    )}
-                    {isHttp && (
-                      <>
-                        <RateTableHttp
-                          title="HTTP requests per second:"
-                          rate={this.safeRate(edgeData.http)}
-                          rate3xx={this.safeRate(edgeData.http3xx)}
-                          rate4xx={this.safeRate(edgeData.http4xx)}
-                          rate5xx={this.safeRate(edgeData.http5xx)}
-                        />
-                      </>
-                    )}
-                  </TabPane>
-                  <TabPane eventKey="flags" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseFlagsTable
-                      title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                      responses={edgeData.responses}
+          <div className={summaryBodyTabs}>
+            <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+              <Tab title="Traffic" eventKey={0}>
+                {isGrpc && (
+                  <>
+                    <RateTableGrpc
+                      title="GRPC requests per second:"
+                      rate={this.safeRate(edgeData.grpc)}
+                      rateErr={this.safeRate(edgeData.grpcPercentErr)}
                     />
-                  </TabPane>
-                  <TabPane eventKey="hosts" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseHostsTable
-                      title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                      responses={edgeData.responses}
+                  </>
+                )}
+                {isHttp && (
+                  <>
+                    <RateTableHttp
+                      title="HTTP requests per second:"
+                      rate={this.safeRate(edgeData.http)}
+                      rate3xx={this.safeRate(edgeData.http3xx)}
+                      rate4xx={this.safeRate(edgeData.http4xx)}
+                      rate5xx={this.safeRate(edgeData.http5xx)}
                     />
-                  </TabPane>
-                </TabContent>
-              </div>
-            </TabContainer>
+                  </>
+                )}
+              </Tab>
+              <Tab title="Flags" eventKey={1}>
+                <ResponseFlagsTable
+                  title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                  responses={edgeData.responses}
+                />
+              </Tab>
+              <Tab title="Hosts" eventKey={2}>
+                <ResponseHostsTable
+                  title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                  responses={edgeData.responses}
+                />
+              </Tab>
+            </SimpleTabs>
             <hr />
             {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
           </div>
         )}
         {isTcp && (
-          <div className={`"panel-body ${summaryBodyTabs}`}>
-            <TabContainer id="basic-tabs" defaultActiveKey="flags">
-              <div>
-                <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
-                  <NavItem eventKey="flags" title="Response flags by code">
-                    <div>Flags</div>
-                  </NavItem>
-                  <NavItem eventKey="hosts" title="Hosts by code">
-                    <div>Hosts</div>
-                  </NavItem>
-                </Nav>
-                <TabContent style={{ paddingTop: '10px' }}>
-                  <TabPane eventKey="flags" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
-                  </TabPane>
-                  <TabPane eventKey="hosts" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
-                  </TabPane>
-                </TabContent>
-              </div>
-            </TabContainer>
+          <div className={summaryBodyTabs}>
+            <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+              <Tab eventKey={0} title="Flags">
+                <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
+              </Tab>
+              <Tab eventKey={1} title="Hosts">
+                <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
+              </Tab>
+            </SimpleTabs>
             <hr />
             {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
           </div>

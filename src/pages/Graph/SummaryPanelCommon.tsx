@@ -24,12 +24,7 @@ export const summaryHeader: React.CSSProperties = {
 };
 
 export const summaryBodyTabs = style({
-  padding: '0 15px 15px'
-});
-
-export const summaryNavTabs = style({
-  fontSize: '13px',
-  paddingLeft: '1.5em'
+  padding: '10px 15px 0 15px'
 });
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {

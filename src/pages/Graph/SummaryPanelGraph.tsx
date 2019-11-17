@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Tab } from '@patternfly/react-core';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType, NodeType } from '../../types/Graph';
@@ -10,9 +10,8 @@ import {
   shouldRefreshData,
   getFirstDatapoints,
   mergeMetricsResponses,
-  summaryBodyTabs,
   summaryHeader,
-  summaryNavTabs
+  summaryBodyTabs
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics, Datapoint } from '../../types/Metrics';
@@ -22,6 +21,7 @@ import { Paths } from '../../config';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { style } from 'typestyle';
+import SimpleTabs from 'components/Tab/SimpleTabs';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -118,113 +118,98 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           {this.props.namespaces.map(namespace => namespace.name).join(', ')}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
-        <div className={`"panel-body ${summaryBodyTabs}`}>
-          <TabContainer id="basic-tabs" defaultActiveKey="incoming">
-            <div>
-              <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
-                <NavItem eventKey="incoming">
-                  <div>Incoming </div>
-                </NavItem>
-                <NavItem eventKey="outgoing">
-                  <div>Outgoing </div>
-                </NavItem>
-                <NavItem eventKey="total">
-                  <div>Total</div>
-                </NavItem>
-              </Nav>
-              <TabContent style={{ paddingTop: '10px' }}>
-                <TabPane eventKey="incoming" mountOnEnter={true} unmountOnExit={true}>
+        <div className={summaryBodyTabs}>
+          <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
+            <Tab title="Incoming" eventKey={0}>
+              <>
+                {incomingRateGrpc.rate === 0 && incomingRateHttp.rate === 0 && (
                   <>
-                    {incomingRateGrpc.rate === 0 && incomingRateHttp.rate === 0 && (
-                      <>
-                        <KialiIcon.Info /> No incoming traffic.
-                      </>
-                    )}
-                    {incomingRateGrpc.rate > 0 && (
-                      <RateTableGrpc
-                        title="GRPC Traffic (requests per second):"
-                        rate={incomingRateGrpc.rate}
-                        rateErr={incomingRateGrpc.rateErr}
-                      />
-                    )}
-                    {incomingRateHttp.rate > 0 && (
-                      <RateTableHttp
-                        title="HTTP Traffic (requests per second):"
-                        rate={incomingRateHttp.rate}
-                        rate3xx={incomingRateHttp.rate3xx}
-                        rate4xx={incomingRateHttp.rate4xx}
-                        rate5xx={incomingRateHttp.rate5xx}
-                      />
-                    )}
-                    {
-                      // We don't show a sparkline here because we need to aggregate the traffic of an
-                      // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
-                    }
+                    <KialiIcon.Info /> No incoming traffic.
                   </>
-                </TabPane>
-                <TabPane eventKey="outgoing" mountOnEnter={true} unmountOnExit={true}>
+                )}
+                {incomingRateGrpc.rate > 0 && (
+                  <RateTableGrpc
+                    title="GRPC Traffic (requests per second):"
+                    rate={incomingRateGrpc.rate}
+                    rateErr={incomingRateGrpc.rateErr}
+                  />
+                )}
+                {incomingRateHttp.rate > 0 && (
+                  <RateTableHttp
+                    title="HTTP (requests per second):"
+                    rate={incomingRateHttp.rate}
+                    rate3xx={incomingRateHttp.rate3xx}
+                    rate4xx={incomingRateHttp.rate4xx}
+                    rate5xx={incomingRateHttp.rate5xx}
+                  />
+                )}
+                {
+                  // We don't show a sparkline here because we need to aggregate the traffic of an
+                  // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
+                }
+              </>
+            </Tab>
+            <Tab title="Outgoing" eventKey={1}>
+              <>
+                {outgoingRateGrpc.rate === 0 && outgoingRateHttp.rate === 0 && (
                   <>
-                    {outgoingRateGrpc.rate === 0 && outgoingRateHttp.rate === 0 && (
-                      <>
-                        <KialiIcon.Info /> No outgoing traffic.
-                      </>
-                    )}
-                    {outgoingRateGrpc.rate > 0 && (
-                      <RateTableGrpc
-                        title="GRPC Traffic (requests per second):"
-                        rate={outgoingRateGrpc.rate}
-                        rateErr={outgoingRateGrpc.rateErr}
-                      />
-                    )}
-                    {outgoingRateHttp.rate > 0 && (
-                      <RateTableHttp
-                        title="HTTP Traffic (requests per second):"
-                        rate={outgoingRateHttp.rate}
-                        rate3xx={outgoingRateHttp.rate3xx}
-                        rate4xx={outgoingRateHttp.rate4xx}
-                        rate5xx={outgoingRateHttp.rate5xx}
-                      />
-                    )}
-                    {
-                      // We don't show a sparkline here because we need to aggregate the traffic of an
-                      // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
-                    }
+                    <KialiIcon.Info /> No outgoing traffic.
                   </>
-                </TabPane>
-                <TabPane eventKey="total" mountOnEnter={true} unmountOnExit={true}>
+                )}
+                {outgoingRateGrpc.rate > 0 && (
+                  <RateTableGrpc
+                    title="GRPC Traffic (requests per second):"
+                    rate={outgoingRateGrpc.rate}
+                    rateErr={outgoingRateGrpc.rateErr}
+                  />
+                )}
+                {outgoingRateHttp.rate > 0 && (
+                  <RateTableHttp
+                    title="HTTP (requests per second):"
+                    rate={outgoingRateHttp.rate}
+                    rate3xx={outgoingRateHttp.rate3xx}
+                    rate4xx={outgoingRateHttp.rate4xx}
+                    rate5xx={outgoingRateHttp.rate5xx}
+                  />
+                )}
+                {
+                  // We don't show a sparkline here because we need to aggregate the traffic of an
+                  // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
+                }
+              </>
+            </Tab>
+            <Tab title="Total" eventKey={2}>
+              <>
+                {totalRateGrpc.rate === 0 && totalRateHttp.rate === 0 && (
                   <>
-                    {totalRateGrpc.rate === 0 && totalRateHttp.rate === 0 && (
-                      <>
-                        <KialiIcon.Info /> No traffic.
-                      </>
-                    )}
-                    {totalRateGrpc.rate > 0 && (
-                      <RateTableGrpc
-                        title="GRPC Traffic (requests per second):"
-                        rate={totalRateGrpc.rate}
-                        rateErr={totalRateGrpc.rateErr}
-                      />
-                    )}
-                    {totalRateHttp.rate > 0 && (
-                      <RateTableHttp
-                        title="HTTP Traffic (requests per second):"
-                        rate={totalRateHttp.rate}
-                        rate3xx={totalRateHttp.rate3xx}
-                        rate4xx={totalRateHttp.rate4xx}
-                        rate5xx={totalRateHttp.rate5xx}
-                      />
-                    )}
-                    {this.shouldShowRPSChart() && (
-                      <div>
-                        <hr />
-                        {this.renderRpsChart()}
-                      </div>
-                    )}
+                    <KialiIcon.Info /> No traffic.
                   </>
-                </TabPane>
-              </TabContent>
-            </div>
-          </TabContainer>
+                )}
+                {totalRateGrpc.rate > 0 && (
+                  <RateTableGrpc
+                    title="GRPC Traffic (requests per second):"
+                    rate={totalRateGrpc.rate}
+                    rateErr={totalRateGrpc.rateErr}
+                  />
+                )}
+                {totalRateHttp.rate > 0 && (
+                  <RateTableHttp
+                    title="HTTP (requests per second):"
+                    rate={totalRateHttp.rate}
+                    rate3xx={totalRateHttp.rate3xx}
+                    rate4xx={totalRateHttp.rate4xx}
+                    rate5xx={totalRateHttp.rate5xx}
+                  />
+                )}
+                {this.shouldShowRPSChart() && (
+                  <div>
+                    <hr />
+                    {this.renderRpsChart()}
+                  </div>
+                )}
+              </>
+            </Tab>
+          </SimpleTabs>
         </div>
       </div>
     );

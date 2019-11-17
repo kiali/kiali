@@ -25,7 +25,7 @@ export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTablePr
             <tr key="table-header">
               <th>Code</th>
               <th>Flags</th>
-              <th>% Requests</th>
+              <th>% Req</th>
             </tr>
           </thead>
           <tbody>

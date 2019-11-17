@@ -391,7 +391,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     return (
       <>
         <InOutRateTableHttp
-          title="HTTP Traffic (requests per second):"
+          title="HTTP (requests per second):"
           inRate={incoming.rate}
           inRate3xx={incoming.rate3xx}
           inRate4xx={incoming.rate4xx}
