@@ -106,6 +106,12 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                     </StackItem>
                   );
                 })}
+                {this.props.threeScaleServiceRule && this.props.threeScaleServiceRule.threeScaleHandlerName !== '' && (
+                  <StackItem id={'threescale_link'}>
+                    <Text component={TextVariants.h3}> 3scale API handler</Text>
+                    <TextOrLink text={this.props.threeScaleServiceRule.threeScaleHandlerName} />
+                  </StackItem>
+                )}
               </Stack>
             </CardBody>
           </Card>

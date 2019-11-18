@@ -155,7 +155,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     this.setState({
       showWizard: false
     });
-    this.props.onClose(false);
+    this.props.onClose(true);
   };
 
   onCreateUpdate = () => {
