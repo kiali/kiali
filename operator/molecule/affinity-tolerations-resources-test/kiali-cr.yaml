@@ -8,7 +8,7 @@ spec:
     strategy: {{ kiali.auth_strategy }}
   deployment:
     namespace: {{ kiali.install_namespace }}
-    # Note that we start with no affinity or tolerations sections,
+    # Note that we start with no affinity or tolerations or resources sections,
     # so the first time through we just pick up the defaults.
     image_name: {{ kiali.image_name }}
     image_pull_policy: {{ kiali.image_pull_policy }}
