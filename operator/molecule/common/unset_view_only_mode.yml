@@ -1,10 +1,10 @@
 - name: Unset view_only_mode in current Kiali CR
   vars:
-    current_kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
+    current_kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=cr_namespace, resource_name=custom_resource.metadata.name) }}"
   set_fact:
     new_kiali_cr: "{{ current_kiali_cr | combine({'spec': {'deployment': {'view_only_mode': false }}}, recursive=True) }}"
 
 - name: Change Kiali CR with view_only_mode set to false
   k8s:
-    namespace: '{{ kiali.operator_namespace }}'
+    namespace: '{{ cr_namespace }}'
     definition: "{{ new_kiali_cr }}"

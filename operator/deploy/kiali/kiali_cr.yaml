@@ -198,9 +198,10 @@ spec:
 #    ---
 #    ingress_enabled: true
 #
-# The namespace into which Kiali is to be installed.
+# The namespace into which Kiali is to be installed. If this is empty or not defined,
+# the default will be the namespace where the Kiali CR is located.
 #    ---
-#    namespace: "istio-system"
+#    namespace: ""
 #
 # The name of the secret where the Kiali credentials are found.
 # These credentials will be required when logging into Kiali.

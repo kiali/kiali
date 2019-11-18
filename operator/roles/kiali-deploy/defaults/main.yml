@@ -58,7 +58,7 @@ kiali_defaults:
     image_pull_secrets: []
     image_version: ""
     ingress_enabled: true
-    namespace: "istio-system"
+    namespace: ""
     secret_name: "kiali"
     #service_type: "NodePort"
     tolerations: []

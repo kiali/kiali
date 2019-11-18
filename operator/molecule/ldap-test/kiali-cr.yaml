@@ -14,6 +14,7 @@ spec:
       ldap_port: {{ 636 if ldap.use_ssl == True else 389 }}
       ldap_use_ssl: {{ ldap.use_ssl }}
   deployment:
+    namespace: {{ kiali.install_namespace }}
     image_name: {{ kiali.image_name }}
     image_pull_policy: {{ kiali.image_pull_policy }}
     image_version: {{ kiali.image_version }}

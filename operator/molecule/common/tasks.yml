@@ -1,6 +1,6 @@
 - name: Get Kiali CR if present
   set_fact:
-    kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
+    kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=cr_namespace, resource_name=custom_resource.metadata.name) }}"
 
 - name: Get Kiali Operator Pod
   k8s_facts:
@@ -15,14 +15,14 @@
   k8s_facts:
     api_version: v1
     kind: Pod
-    namespace: "{{ istio.control_plane_namespace }}"
+    namespace: "{{ kiali.install_namespace }}"
     label_selectors:
     - app = kiali
   register: kiali_pod
 
 - name: Get Kiali Configmap
   set_fact:
-    kiali_configmap: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=istio.control_plane_namespace, resource_name='kiali') }}"
+    kiali_configmap: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=kiali.install_namespace, resource_name='kiali') }}"
 
 - name: Format Configmap
   set_fact:
@@ -32,7 +32,7 @@
   k8s_facts:
     api_version: apps/v1
     kind: Deployment
-    namespace: "{{ istio.control_plane_namespace }}"
+    namespace: "{{ kiali.install_namespace }}"
     label_selectors:
     - app = kiali
   register: kiali_deployment
@@ -41,7 +41,7 @@
   k8s_facts:
     api_version: v1
     kind: Service
-    namespace: "{{ istio.control_plane_namespace }}"
+    namespace: "{{ kiali.install_namespace }}"
     label_selectors:
     - app = kiali
   register: kiali_service
@@ -50,7 +50,7 @@
   k8s_facts:
     api_version: route.openshift.io/v1
     kind: Route
-    namespace: "{{ istio.control_plane_namespace }}"
+    namespace: "{{ kiali.install_namespace }}"
     label_selectors:
     - app = kiali
   register: kiali_route

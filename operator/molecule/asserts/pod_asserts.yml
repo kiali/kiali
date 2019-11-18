@@ -8,4 +8,4 @@
 - name: Assert Kiali Pod is Running on the correct Namespace
   assert:
     that:
-    - kiali_pod.resources[0].metadata.namespace == istio.control_plane_namespace
+    - kiali_pod.resources[0].metadata.namespace == kiali.install_namespace

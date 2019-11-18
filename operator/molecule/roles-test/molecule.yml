@@ -18,9 +18,11 @@ provisioner:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
         cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
+        cr_namespace: kiali-operator
         istio:
           control_plane_namespace: istio-system
         kiali:
+          install_namespace: istio-system
           accessible_namespaces:
           - istio-system
           auth_strategy: openshift

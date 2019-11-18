@@ -3,7 +3,7 @@
     api_version: kiali.io/v1alpha1
     kind: Kiali
     name: "{{ custom_resource.metadata.name }}"
-    namespace: "{{ kiali.operator_namespace }}"
+    namespace: "{{ cr_namespace }}"
   register: kiali_cr_list
   until:
   - kiali_cr_list | default({}) | json_query('resources[*].status.conditions[?reason==`Successful`].status') | flatten | join == 'True'

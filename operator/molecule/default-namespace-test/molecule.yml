@@ -17,34 +17,31 @@ provisioner:
     group_vars:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
-        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/ldap-test/kiali-cr.yaml"
-        cr_namespace: kiali-operator
+        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/default-namespace-test/kiali-cr.yaml"
+        cr_namespace: anothernamespace
         istio:
           control_plane_namespace: istio-system
-        ldap:
-          namespace: ldap-test
-          deployment_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/ldap-test/ldap-deployment.yaml"
-          service_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/ldap-test/ldap-service.yaml"
-          use_ssl: false
         kiali:
-          install_namespace: istio-system
+          install_namespace: anothernamespace
           accessible_namespaces: ["**"]
-          auth_strategy: ldap
+          auth_strategy: openshift
           operator_namespace: kiali-operator
           operator_image_name: quay.io/kiali/kiali-operator
           operator_version: latest
           #operator_image_name: image-registry.openshift-image-registry.svc:5000/kiali/kiali-operator
           #operator_version: dev
-          operator_watch_namespace: kiali-operator
+          # Notice the operator will watch istio-system.
+          # That is where this test will deploy the CR (cr_namespace)
+          # The default namespace should be where the CR is deployed,
+          # and thus will determine where to install Kiali.
+          operator_watch_namespace: anothernamespace
           operator_clusterrolebindings: "- clusterrolebindings"
           operator_clusterroles: "- clusterroles"
           image_name: quay.io/kiali/kiali
           image_version: latest
-          #image_name: image-registry.openshift-image-registry.svc:5000/kiali/kiali
-          #image_version: dev
           image_pull_policy: Always
 scenario:
-  name: ldap-test
+  name: default-namespace-test
   test_sequence:
   - prepare
   - converge

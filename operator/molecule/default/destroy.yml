@@ -9,7 +9,7 @@
       state: absent
       api_version: kiali.io/v1alpha1
       kind: Kiali
-      namespace: "{{ kiali.operator_namespace }}"
+      namespace: "{{ cr_namespace }}"
       name: "{{ custom_resource.metadata.name }}"
 
   - name: Produce Files with Correct Parameters
@@ -45,7 +45,7 @@
     k8s_facts:
       api_version: v1
       kind: ConfigMap
-      namespace: "{{ istio.control_plane_namespace }}"
+      namespace: "{{ kiali.install_namespace }}"
       name: kiali
     register: doomed_list
     until:
@@ -57,7 +57,7 @@
     k8s_facts:
       api_version: monitoring.kiali.io/v1alpha1
       kind: MonitoringDashboard
-      namespace: "{{ istio.control_plane_namespace }}"
+      namespace: "{{ kiali.install_namespace }}"
     register: doomed_list
     until:
     - doomed_list | default({}) | json_query("resources[*]") | length == 0
@@ -100,3 +100,13 @@
       definition: "{{ namespace }}"
     when:
     - kiali.operator_namespace != istio.control_plane_namespace
+
+  - name: Removing CR namespace if it is different than control plan and operator namespace
+    k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: "{{ cr_namespace }}"
+    when:
+    - cr_namespace != istio.control_plane_namespace
+    - cr_namespace != kiali.operator_namespace

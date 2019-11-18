@@ -42,16 +42,23 @@
     -  "{{ service_account }}"
     -  "{{ operator }}"
 
+  - name: Make sure the CR namespace exists
+    k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: "{{ cr_namespace }}"
+
   - name: Create Kiali CR
     k8s:
-      namespace: "{{ kiali.operator_namespace }}"
+      namespace: "{{ cr_namespace }}"
       definition: "{{ lookup('template', cr_file_path) }}"
 
   - name: Asserting that Kiali is Deployed
     k8s_facts:
       api_version: v1
       kind: Deployment
-      namespace: "{{ istio.control_plane_namespace }}"
+      namespace: "{{ kiali.install_namespace }}"
       label_selectors:
       - app = kiali
     register: kiali_deployment

@@ -7,6 +7,7 @@ spec:
   auth:
     strategy: {{ kiali.auth_strategy }}
   deployment:
+    namespace: {{ kiali.install_namespace }}
     image_name: {{ kiali.image_name }}
     image_pull_policy: {{ kiali.image_pull_policy }}
     image_version: {{ kiali.image_version }}
