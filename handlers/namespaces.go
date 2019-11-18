@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"github.com/kiali/kiali/models"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -58,9 +57,9 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-//NamespaceValidations the API handler to fetch validations to be displayed.
+// NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
 // It is related to all the Istio Objects within the namespace
-func NamespaceValidations(w http.ResponseWriter, r *http.Request) {
+func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 
@@ -73,18 +72,13 @@ func NamespaceValidations(w http.ResponseWriter, r *http.Request) {
 
 	var validationSummary models.IstioValidationSummary
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func(namespace string, validationSummary *models.IstioValidationSummary, err *error) {
-		defer wg.Done()
-		istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
-		if errValidations != nil && *err == nil {
-			*err = errValidations
-		} else {
-			*validationSummary = istioConfigValidationResults.SummarizeValidation()
-		}
-	}(namespace, &validationSummary, &err)
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
+	if errValidations != nil {
+		log.Error(errValidations)
+		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+	} else {
+		validationSummary = istioConfigValidationResults.SummarizeValidation()
+	}
 
-	wg.Wait()
 	RespondWithJSON(w, http.StatusOK, validationSummary)
 }

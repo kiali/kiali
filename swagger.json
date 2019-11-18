@@ -2353,7 +2353,7 @@
     },
     "/namespaces/{namespace}/validations": {
       "get": {
-        "description": "Get validations for all objects in the given namespace",
+        "description": "Get validation summary for all objects in the given namespace",
         "produces": [
           "application/json"
         ],
@@ -2377,7 +2377,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/namespaceValidationsResponse"
+            "$ref": "#/responses/namespaceValidationSummaryResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -6288,7 +6288,7 @@
         "$ref": "#/definitions/MTLSStatus"
       }
     },
-    "namespaceValidationsResponse": {
+    "namespaceValidationSummaryResponse": {
       "description": "Return the validation status of a specific Namespace",
       "schema": {
         "$ref": "#/definitions/IstioValidationSummary"

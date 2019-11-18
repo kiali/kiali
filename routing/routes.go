@@ -795,7 +795,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/validations namespaces namespaceValidations
 		// ---
-		// Get validations for all objects in the given namespace
+		// Get validation summary for all objects in the given namespace
 		//
 		//     Produces:
 		//     - application/json
@@ -803,15 +803,15 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      200: namespaceValidationsResponse
+		//      200: namespaceValidationSummaryResponse
 		//      400: badRequestError
 		//      500: internalError
 		//
 		{
-			"NamespaceHealth",
+			"NamespaceValidationSummary",
 			"GET",
 			"/api/namespaces/{namespace}/validations",
-			handlers.NamespaceValidations,
+			handlers.NamespaceValidationSummary,
 			true,
 		},
 		// swagger:route GET /mesh/tls tls meshTls

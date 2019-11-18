@@ -589,8 +589,8 @@ type NamespaceTlsResponse struct {
 }
 
 // Return the validation status of a specific Namespace
-// swagger:response namespaceValidationsResponse
-type NamespaceValidationsResponse struct {
+// swagger:response namespaceValidationSummaryResponse
+type NamespaceValidationSummaryResponse struct {
 	// in:body
 	Body models.IstioValidationSummary
 }
