@@ -133,7 +133,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, err
 	}
 
-	errChan := make(chan error, 1)
+	errChan := make(chan error, 18)
 
 	var wg sync.WaitGroup
 	wg.Add(18)
