@@ -8,8 +8,6 @@ import {
   EmptyStateIcon,
   Grid,
   GridItem,
-  Stack,
-  StackItem,
   Title
 } from '@patternfly/react-core';
 import { ICell, IRow, Table, TableHeader, TableBody, TableVariant, cellWidth } from '@patternfly/react-table';
@@ -37,7 +35,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
       { title: 'Status' },
       { title: 'Name', transforms: [cellWidth(10) as any] },
       { title: 'Traffic Policy', transforms: [cellWidth(10) as any] },
-      { title: 'Subsets', transforms: [cellWidth(50) as any] },
+      { title: 'Subsets', transforms: [cellWidth(30) as any] },
       { title: 'Host', transforms: [cellWidth(10) as any] },
       { title: 'Created at', transforms: [cellWidth(20) as any] },
       { title: 'Resource version', transforms: [cellWidth(10) as any] },
@@ -164,9 +162,9 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   generateSubsets(subsets: Subset[]) {
     return (
-      <Stack>
+      <>
         {subsets.map(subset => (
-          <StackItem>
+          <>
             <Grid gutter={'md'}>
               <GridItem span={3}>
                 <span>{safeRender(subset.name)}</span>{' '}
@@ -178,9 +176,9 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
                 <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
               </GridItem>
             </Grid>
-          </StackItem>
+          </>
         ))}
-      </Stack>
+      </>
     );
   }
 
