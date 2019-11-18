@@ -25,6 +25,10 @@ import {
   Card,
   CardBody,
   CardHeader,
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateVariant,
+  EmptyStateBody,
   Grid,
   GridItem,
   GutterSize,
@@ -37,13 +41,11 @@ import {
   TitleLevel,
   TitleSize
 } from '@patternfly/react-core';
+import { KialiIcon } from '../../config/KialiIcon';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
-
-import { EmptyState, EmptyStateTitle, EmptyStateIcon, EmptyStateInfo } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 import IstioObjectLink from '../../components/Link/IstioObjectLink';
-
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -69,12 +71,6 @@ const paramToTab: { [key: string]: number } = {
   overview: 0,
   yaml: 1
 };
-const emptyStateStyle = style({
-  height: '98%',
-  marginRight: 5,
-  marginBottom: 10,
-  marginTop: 10
-});
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
@@ -442,13 +438,15 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       // In theory it shouldn't enter here, but we show a nice error page anyway.
 
       return (
-        <EmptyState className={emptyStateStyle}>
-          <EmptyStateIcon name="error-circle-o" />
-          <EmptyStateTitle>Error loading object `{this.props.match.params.object}`</EmptyStateTitle>
-          <EmptyStateInfo>
+        <EmptyState variant={EmptyStateVariant.full}>
+          <EmptyStateIcon icon={KialiIcon.Error} />
+          <Title headingLevel={TitleLevel.h5} size={TitleSize.lg}>
+            Error loading object {this.props.match.params.object}
+          </Title>
+          <EmptyStateBody>
             This might mean the resource is not ready yet or has been deleted and the cluster has not finished
             propagating the changes.
-          </EmptyStateInfo>
+          </EmptyStateBody>
         </EmptyState>
       );
     }
