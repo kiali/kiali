@@ -152,11 +152,14 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 	token := r.Form.Get("access_token")
 	expiresIn := r.Form.Get("expires_in")
+	if token == "" || expiresIn == "" {
+		RespondWithError(w, http.StatusInternalServerError, "Token is empty or invalid.")
+		return false
+	}
 
 	expiresInNumber, err := strconv.Atoi(expiresIn)
-
-	if token == "" || expiresIn == "" || err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Token is empty or invalid.")
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Token is empty or invalid.", err.Error())
 		return false
 	}
 
@@ -164,20 +167,19 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 	business, err := getBusiness(r)
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.")
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error retrieving the OAuth package (getting business layer).", err.Error())
+		return false
 	}
 
 	err = business.OpenshiftOAuth.ValidateToken(token)
-
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusUnauthorized, "Token is not valid or is expired.")
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
 		return false
 	}
 
 	user, err := business.OpenshiftOAuth.GetUserInfo(token)
-
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusUnauthorized, "Token is not valid or is expired.")
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
 		return false
 	}
 
@@ -431,8 +433,9 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 			writeAuthenticateHeader(w, r)
 		}
 	default:
-		log.Errorf("Cannot authenticate users, because strategy <%s> is unknown.", conf.Auth.Strategy)
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Authentication strategy is not configured correctly.")
+		message := fmt.Sprintf("Cannot authenticate users, because strategy <%s> is unknown.", conf.Auth.Strategy)
+		log.Errorf(message)
+		RespondWithError(w, http.StatusInternalServerError, message)
 	}
 }
 
@@ -446,16 +449,14 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
 		business, err := getBusiness(r)
-
 		if err != nil {
-			RespondWithJSONIndent(w, http.StatusInternalServerError, "Error trying to get business layer")
+			RespondWithDetailedError(w, http.StatusInternalServerError, "Error authenticating (getting business layer)", err.Error())
 			return
 		}
 
 		metadata, err := business.OpenshiftOAuth.Metadata()
-
 		if err != nil {
-			RespondWithJSONIndent(w, http.StatusInternalServerError, "Error trying to get OAuth metadata")
+			RespondWithDetailedError(w, http.StatusInternalServerError, "Error trying to get OAuth metadata", err.Error())
 			return
 		}
 
