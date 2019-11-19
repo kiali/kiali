@@ -89,7 +89,6 @@
     "logfmt": "1.2.1",
     "moment": "2.24.0",
     "patternfly": "3.59.3",
-    "patternfly-react": "2.31.1",
     "rapidoc": "5.3.1",
     "react": "16.9.0",
     "react-ace": "6.4.0",
@@ -152,7 +151,6 @@
   "sassIncludes": {
     "src": "src",
     "patternfly": "node_modules/patternfly/dist/sass",
-    "patternflyReact": "node_modules/patternfly-react/dist/sass",
     "patternflyReactExtensions": "node_modules/patternfly-react-extensions/dist/sass",
     "bootstrap": "node_modules/bootstrap-sass/assets/stylesheets",
     "fontAwesome": "node_modules/font-awesome-sass/assets/stylesheets"
