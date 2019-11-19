@@ -203,6 +203,10 @@ spec:
 #    ---
 #    namespace: ""
 #
+# The priorityClassName used to assign the priority of the Kiali pod.
+#    ---
+#    priority_class_name: ""
+#
 # The replica count for the Kiail deployment.
 #    ---
 #    replicas: 1

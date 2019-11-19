@@ -59,6 +59,7 @@ kiali_defaults:
     image_version: ""
     ingress_enabled: true
     namespace: ""
+    priority_class_name: ""
     replicas: 1
     resources: {}
     secret_name: "kiali"
