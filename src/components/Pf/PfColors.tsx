@@ -129,7 +129,7 @@ export const getPFAlertColorVals = (): PFAlertColorVals => {
 };
 
 export enum PFAlertColor {
-  Danger = 'var(${--pf-global--danger-color--100)',
+  Danger = 'var(--pf-global--danger-color--100)',
   DangerBackground = 'var(--pf-global--danger-color--200)',
   Info = 'var(--pf-global--info-color--100)',
   InfoBackground = 'var(--pf-global--info-color--200)',
