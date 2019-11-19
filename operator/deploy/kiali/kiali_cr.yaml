@@ -203,6 +203,14 @@ spec:
 #    ---
 #    namespace: ""
 #
+# Custom annotations to be created on the Kiali pod.
+#    ---
+#    pod_annotations: {}
+#
+# The priorityClassName used to assign the priority of the Kiali pod.
+#    ---
+#    priority_class_name: ""
+#
 # The replica count for the Kiail deployment.
 #    ---
 #    replicas: 1

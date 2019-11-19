@@ -27,8 +27,14 @@ spec:
         prometheus.io/port: "{{ kiali_vars.server.metrics_port }}"
         kiali.io/runtimes: go,kiali
         operator.kiali.io/last-updated: "{{ deployment_last_updated }}"
+{% if kiali_vars.deployment.pod_annotations|length > 0 %}
+        {{ kiali_vars.deployment.pod_annotations | to_nice_yaml(indent=0) | trim | indent(8) }}
+{% endif %}
     spec:
       serviceAccount: kiali-service-account
+{% if kiali_vars.deployment.priority_class_name != "" %}
+      priorityClassName: "{{ kiali_vars.deployment.priority_class_name }}"
+{% endif %}
 {% if kiali_vars.deployment.image_pull_secrets | default([]) | length > 0 %}
       imagePullSecrets:
 {% for n in kiali_vars.deployment.image_pull_secrets %}
