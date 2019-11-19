@@ -17,7 +17,7 @@ provisioner:
     group_vars:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
-        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/affinity-tolerations-test/kiali-cr.yaml"
+        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/affinity-tolerations-resources-test/kiali-cr.yaml"
         cr_namespace: kiali-operator
         istio:
           control_plane_namespace: istio-system
@@ -37,7 +37,7 @@ provisioner:
           image_version: latest
           image_pull_policy: Always
 scenario:
-  name: affinity-tolerations-test
+  name: affinity-tolerations-resources-test
   test_sequence:
   - prepare
   - converge

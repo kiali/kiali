@@ -6,8 +6,8 @@
   tasks:
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/pod_asserts.yml
-  # set affinity and tolerations
-  - import_tasks: set_affinity_tolerations.yml
+  # set affinity and tolerations and resources
+  - import_tasks: set-affinity-tolerations-resources.yml
     vars:
       new_affinity:
         node:
@@ -50,6 +50,13 @@
         key: node.kubernetes.io/unreachable
         operator: Exists
         tolerationSeconds: 777
+      new_resources:
+        requests:
+          memory: "31Mi"
+          cpu: "41m"
+        limits:
+          memory: "32Mi"
+          cpu: "42m"
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
   - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
@@ -59,6 +66,8 @@
     assert:
       that:
       - "{{ kiali_deployment.resources[0].spec.template.spec.tolerations | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.tolerations[0].key == 'node.kubernetes.io/not-ready' }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.tolerations[0].tolerationSeconds == 777 }}"
       fail_msg: "Tolerations were not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.tolerations }}"
   - name: Assert that affinity was applied
     assert:
@@ -67,9 +76,51 @@
       - "{{ kiali_deployment.resources[0].spec.template.spec.affinity.podAffinity | length > 0 }}"
       - "{{ kiali_deployment.resources[0].spec.template.spec.affinity.podAntiAffinity | length > 0 }}"
       fail_msg: "Affinity was not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.affinity }}"
+  - name: Assert that resources was applied
+    assert:
+      that:
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.requests | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.requests.memory == '31Mi' }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.requests.cpu == '41m' }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.limits | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.limits.memory == '32Mi' }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources.limits.cpu == '42m' }}"
+      fail_msg: "Resources was not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources }}"
   - name: Assert that camelCase is retained in additional service yaml
     assert:
       that:
       - "{{ kiali_service.resources[0].spec.externalName is defined }}"
       - "{{ kiali_service.resources[0].spec.externalName == 'my.kiali.example.com' }}"
       fail_msg: "Additional service yaml was not applied successfully: {{ kiali_service.resources[0].spec }}"
+
+  # Reset them all to empty dicts
+  - import_tasks: set-affinity-tolerations-resources.yml
+    vars:
+      new_affinity:
+        node: null
+        pod: null
+        pod_anti: null
+      new_tolerations: null
+      new_resources: null
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  - name: Assert that empty tolerations were applied to the deployment
+    assert:
+      that:
+      - "{{ kiali_deployment.resources[0].spec.template.spec.tolerations is not defined }}"
+      fail_msg: "Empty tolerations were not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec }} [kiali CR={{ kiali_cr }}]"
+  - name: Assert that empty affinity was applied
+    assert:
+      that:
+      - "{{ kiali_deployment.resources[0].spec.template.spec.affinity is not defined }}"
+      fail_msg: "Empty affinity was not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec }} [kiali CR={{ kiali_cr }}]"
+  - name: Assert that empty resources was applied
+    assert:
+      that:
+      # I do not know why, but k8s doesn't remove resources entirely; k8s sets it to an empty dict
+      - "{{ kiali_deployment.resources[0].spec.template.spec.containers[0].resources | length == 0 }}"
+      fail_msg: "Empty resources was not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.containers[0] }} [kiali CR={{ kiali_cr }}]"
