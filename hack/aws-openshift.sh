@@ -484,6 +484,10 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_DOWNLOAD_BASEPATH="$2"
       shift;shift
       ;;
+    -ivc|--ignore-version-check)
+      IGNORE_VERSION_CHECK="$2"
+      shift;shift
+      ;;
     -lp|--local-platform)
       LOCAL_PLATFORM="$2"
       shift;shift
@@ -566,6 +570,10 @@ Valid options that configure the hack script itself and the cluster:
   -dd|--download-dir <dir>
       Directory where the OpenShift binaries are or will be stored when downloaded.
       Default: ${HOME}/openshift
+  -ivc|--ignore-version-check (true|false)
+      If true, this script will continue even if it detects you have installed a different
+      version than the one asked for (--openshift-version).
+      Default: false
   -lp|--local-platform <platform>
       The platform indicator to determine what binaries to download.
       Default: linux (mac if MacOS is detected)
@@ -757,7 +765,9 @@ if [ -f "${OPENSHIFT_INSTALLER_EXE}" ]; then
     infomsg "The version of the installer is: ${_existingVersion}"
     infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
     infomsg "===== WARNING ====="
-    exit 1
+    if [ "${IGNORE_VERSION_CHECK}" != "true" ]; then
+      exit 1
+    fi
   fi
   debug "Existing OpenShift installer version (${_existingVersion}) matches the desired version (${_desiredVersion}; download version ${OPENSHIFT_DOWNLOAD_VERSION})"
 else
@@ -797,7 +807,9 @@ if [ -f "${OC}" ]; then
     infomsg "The version of the oc client is: ${_existingVersion}"
     infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
     infomsg "===== WARNING ====="
-    exit 1
+    if [ "${IGNORE_VERSION_CHECK}" != "true" ]; then
+      exit 1
+    fi
   fi
   debug "Existing OpenShift oc client version (${_existingVersion}) matches the desired version (${_desiredVersion}; download version ${OPENSHIFT_DOWNLOAD_VERSION})"
 else
