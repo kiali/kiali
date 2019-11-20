@@ -41,7 +41,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation namespaceValidations
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -586,6 +586,13 @@ type MeshTlsResponse struct {
 type NamespaceTlsResponse struct {
 	// in:body
 	Body models.MTLSStatus
+}
+
+// Return the validation status of a specific Namespace
+// swagger:response namespaceValidationSummaryResponse
+type NamespaceValidationSummaryResponse struct {
+	// in:body
+	Body models.IstioValidationSummary
 }
 
 //////////////////

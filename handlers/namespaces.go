@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -54,4 +55,30 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+// NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
+// It is related to all the Istio Objects within the namespace
+func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+
+	business, err := getBusiness(r)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var validationSummary models.IstioValidationSummary
+
+	istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
+	if errValidations != nil {
+		log.Error(errValidations)
+		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+	} else {
+		validationSummary = istioConfigValidationResults.SummarizeValidation()
+	}
+
+	RespondWithJSON(w, http.StatusOK, validationSummary)
 }
