@@ -2314,6 +2314,51 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/traces": {
+      "get": {
+        "description": "Endpoint to get a specific trace of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "tracesDetail",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tracesDetailResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/tls": {
       "get": {
         "description": "Get TLS status for the given namespace",
@@ -4020,6 +4065,43 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "KeyValue": {
+      "type": "object",
+      "title": "KeyValue is a key-value pair with typed value.",
+      "properties": {
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "type": {
+          "$ref": "#/definitions/ValueType"
+        },
+        "value": {
+          "type": "object",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
+    "Log": {
+      "description": "Log is a log emitted in a span",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValue"
+          },
+          "x-go-name": "Fields"
+        },
+        "timestamp": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Timestamp"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
     "MTLSStatus": {
       "description": "MTLSStatus describes the current mTLS status of a mesh entity",
       "type": "object",
@@ -4633,6 +4715,29 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Process": {
+      "description": "Process is the process emitting a set of spans",
+      "type": "object",
+      "properties": {
+        "serviceName": {
+          "type": "string",
+          "x-go-name": "ServiceName"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValue"
+          },
+          "x-go-name": "Tags"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
+    "ProcessID": {
+      "type": "string",
+      "title": "ProcessID is a hashed value of the Process struct that is unique within the trace.",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
     "ProtocolTraffic": {
       "description": "ProtocolTraffic supplies all of the traffic information for a single protocol",
       "type": "object",
@@ -4775,19 +4880,25 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Reference": {
-      "description": "Reference holds some information on the pod creator",
+      "description": "Reference is a reference from one span to another",
       "type": "object",
       "properties": {
-        "kind": {
-          "type": "string",
-          "x-go-name": "Kind"
+        "refType": {
+          "$ref": "#/definitions/ReferenceType"
         },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
+        "spanID": {
+          "$ref": "#/definitions/SpanID"
+        },
+        "traceID": {
+          "$ref": "#/definitions/TraceID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
+    "ReferenceType": {
+      "description": "ReferenceType is the reference type of one span to another",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
     },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors",
@@ -5351,6 +5462,80 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Span": {
+      "description": "Span is a span denoting a piece of work in some infrastructure\nWhen converting to UI model, ParentSpanID and Process should be dereferenced into\nReferences and ProcessID, respectively.\nWhen converting to ES model, ProcessID and Warnings should be omitted. Even if\nincluded, ES with dynamic settings off will automatically ignore unneeded fields.",
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Duration"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Flags"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Log"
+          },
+          "x-go-name": "Logs"
+        },
+        "operationName": {
+          "type": "string",
+          "x-go-name": "OperationName"
+        },
+        "parentSpanID": {
+          "$ref": "#/definitions/SpanID"
+        },
+        "process": {
+          "$ref": "#/definitions/Process"
+        },
+        "processID": {
+          "$ref": "#/definitions/ProcessID"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "x-go-name": "References"
+        },
+        "spanID": {
+          "$ref": "#/definitions/SpanID"
+        },
+        "startTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "StartTime"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValue"
+          },
+          "x-go-name": "Tags"
+        },
+        "traceID": {
+          "$ref": "#/definitions/TraceID"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Warnings"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
+    "SpanID": {
+      "description": "SpanID is the id of a span",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
     "Status": {
       "type": "object",
       "title": "Status is a return value for calls that don't return other objects.",
@@ -5605,10 +5790,47 @@
       },
       "x-go-package": "github.com/kiali/kiali/handlers"
     },
+    "Trace": {
+      "description": "Trace is a list of spans",
+      "type": "object",
+      "properties": {
+        "processes": {
+          "x-go-name": "Processes"
+        },
+        "spans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Span"
+          },
+          "x-go-name": "Spans"
+        },
+        "traceID": {
+          "$ref": "#/definitions/TraceID"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Warnings"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
+    "TraceID": {
+      "type": "string",
+      "title": "TraceID is the shared trace ID of all spans in the trace.",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+    },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
       "type": "string",
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/types"
+    },
+    "ValueType": {
+      "type": "string",
+      "title": "ValueType is the type of a value stored in KeyValue struct.",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
     },
     "Workload": {
       "description": "Workload has the details of a workload",
@@ -6478,6 +6700,15 @@
       "description": "HTTP status code 200 and tokenGenerated model in data",
       "schema": {
         "$ref": "#/definitions/TokenResponse"
+      }
+    },
+    "tracesDetailResponse": {
+      "description": "Listing all the information related to a workload",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Trace"
+        }
       }
     },
     "workloadDetails": {

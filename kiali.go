@@ -98,12 +98,6 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	// check if Jaeger is available
-	// we need first discover Jaeger
-	if config.Get().ExternalServices.Tracing.Enabled {
-		status.DiscoverJaeger()
-	}
-
 	// Start listening to requests
 	server := server.NewServer()
 	server.Start()

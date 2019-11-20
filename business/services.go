@@ -190,7 +190,7 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
-func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time, requestToken string) (*models.ServiceDetails, error) {
+func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
 	defer promtimer.ObserveNow(&err)
@@ -327,7 +327,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		// Maybe a future jaeger business layer
 		defer wg.Done()
-		eTraces, err = getErrorTracesFromJaeger(namespace, service, requestToken)
+		eTraces, err = in.businessLayer.Jaeger.jaeger.GetErrorTraces(namespace, service)
 	}()
 
 	wg.Wait()

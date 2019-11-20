@@ -87,7 +87,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakePolicies(), nil)
 	k8s.On("GetAuthorizationDetails", mock.AnythingOfType("string")).Return(&kubernetes.RBACDetails{}, nil)
 
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
 func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *core_v1.PodList) IstioValidationsService {
@@ -112,7 +112,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 
 	mockWorkLoadService(k8s)
 
-	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
 func fakeCombinedIstioDetails() *kubernetes.IstioDetails {

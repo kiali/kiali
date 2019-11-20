@@ -266,7 +266,7 @@ func mockGetIstioConfigList() IstioConfigService {
 	k8s.On("GetQuotaSpecBindings", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecBindings(), nil)
 	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakeGetPolicies(), nil)
 
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
 func fakeGetGateways() []kubernetes.IstioObject {
@@ -586,7 +586,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {

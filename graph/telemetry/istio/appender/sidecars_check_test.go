@@ -213,6 +213,6 @@ func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
 }

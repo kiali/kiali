@@ -421,6 +421,48 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesList
+		// ---
+		// Endpoint to get the traces of a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: tracesDetailResponse
+		//
+		{
+			"TracesList",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/traces",
+			handlers.TraceServiceDetails,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesDetail
+		// ---
+		// Endpoint to get a specific trace of a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: tracesDetailResponse
+		//
+		{
+			"TracesDeatil",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/traces/{traceID}",
+			handlers.TraceDetails,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec services serviceApiDocumentation
 		// ---
 		// Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec
@@ -1003,6 +1045,27 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/jaeger",
 			handlers.GetJaegerInfo,
+			true,
+		},
+		// swagger:route GET /jaeger jaegerInfo
+		// ---
+		// Get the jaeger URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      406: notAcceptableError
+		//      200: jaegerInfoResponse
+		//
+		{
+			"JaegerServices",
+			"GET",
+			"/api/jaeger/services",
+			handlers.GetJaegerServices,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails

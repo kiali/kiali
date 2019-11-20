@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -19,6 +20,7 @@ type Layer struct {
 	Workload       WorkloadService
 	App            AppService
 	Namespace      NamespaceService
+	Jaeger         JaegerService
 	k8s            kubernetes.IstioClientInterface
 	OpenshiftOAuth OpenshiftOAuthService
 	TLS            TLSService
@@ -80,7 +82,13 @@ func Get(token string) (*Layer, error) {
 		prometheusClient = prom
 	}
 
-	return NewWithBackends(k8s, prometheusClient), nil
+	// Create Jaeger client
+	jaegerClient, err := jaeger.NewClient(token)
+	if err != nil {
+		log.Infof("Error in Jaeger Client: " + err.Error())
+	}
+
+	return NewWithBackends(k8s, prometheusClient, jaegerClient), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -91,7 +99,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients
-func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
+func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface, jaegerClient jaeger.ClientInterface) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
@@ -100,6 +108,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
+	temporaryLayer.Jaeger = JaegerService{jaeger: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}

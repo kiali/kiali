@@ -49,7 +49,7 @@ func setupServiceEntries() *business.Layer {
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
 }
 
@@ -254,7 +254,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)

@@ -353,7 +353,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s.On("GetDestinationRules", "bookinfo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
@@ -371,7 +371,7 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 	k8s.On("GetDestinationRules", "foo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)

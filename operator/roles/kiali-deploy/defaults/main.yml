@@ -118,10 +118,7 @@ kiali_defaults:
         username: ""
       enabled: true
       in_cluster_url: ""
-      namespace: ""
       namespace_selector: true
-      port: 16686
-      service: ""
       url: ""
 
   identity: {}

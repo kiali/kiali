@@ -4,16 +4,11 @@ import (
 	"net/url"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/kiali/kiali/appstate"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
-
-// Route names to lookup for discovery
-var tracingLookupRoutes = [...]string{"jaeger-query", "istio-tracing", "tracing"}
 
 var clientFactory kubernetes.ClientFactory
 
@@ -37,147 +32,6 @@ func getClient() (kubernetes.IstioClientInterface, error) {
 	}
 
 	return client, nil
-}
-
-func checkIfQueryBasePath(ns string, service string) (path string, err error) {
-	path = ""
-	client, err := getClient()
-	// Return if there is a problem with the client
-	if err != nil {
-		return path, err
-	}
-	// Get the service
-	svc, err := client.GetService(ns, service)
-	if err != nil {
-		return path, err
-	}
-	labelSelectorService := labels.Set(svc.Spec.Selector).String()
-	deployments, err := client.GetDeploymentsByLabel(ns, labelSelectorService)
-
-	if err != nil {
-		return path, nil
-	}
-
-	switch len(deployments) {
-	case 0:
-		log.Debugf("[TRACING] Kiali didn't found a deployment for service %s", service)
-	case 1:
-		if len(deployments[0].Spec.Template.Spec.Containers) > 0 {
-			for _, v := range deployments[0].Spec.Template.Spec.Containers[0].Env {
-				if v.Name == "QUERY_BASE_PATH" {
-					path = v.Value
-					break
-				}
-			}
-		}
-	default:
-		log.Debugf("[TRACING] Kiali found 2 or + deployments for service %s", service)
-	}
-
-	return path, nil
-}
-
-func getPathURL(endpoint string) (path string) {
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return ""
-	}
-	return u.Path
-}
-
-func discoverTracingService() (service string, port int32) {
-	client, err := getClient()
-	tracingConfig := config.Get().ExternalServices.Tracing
-
-	//  Return if there is a problem with the client
-	if err != nil {
-		log.Debugf("[TRACING] Service discovery failed: %v", err)
-		return
-	}
-	// Check for each service in list
-	for _, name := range tracingLookupRoutes {
-		service = name
-		// Try to discover the service
-		serv, err := client.GetService(tracingConfig.Namespace, service)
-		// If there is no error and the service is not nil that means that we found tracing
-		if serv != nil && err == nil {
-			// Discover the port where service is serving. Defautl port, Jaeger default port.
-			port = tracingConfig.Port
-			if len(serv.Spec.Ports) > 0 {
-				port = serv.Spec.Ports[0].Port
-			}
-
-			log.Debugf("[TRACING] Discovered Service and Port:  %s, %d", service, port)
-			break
-		} else {
-			// No service found set to empty for the last iteration
-			service = ""
-		}
-	}
-	return
-}
-
-func discoverTracingPath() (path string) {
-	tracingConfig := appstate.JaegerConfig
-	// We had the service so we can check the Path
-	path, err := checkIfQueryBasePath(tracingConfig.Namespace, tracingConfig.Service)
-	if err != nil {
-		log.Debugf("[TRACING] Error checking the query base path")
-	}
-	return
-}
-
-func discoverURLTracingService() (url string) {
-	// Try to discover the URL . Openshift Client
-	url, _ = discoverServiceURL(appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Service)
-
-	if url == "" {
-		return
-	}
-
-	// Trim the string to format correctly the url with the path
-	url = strings.TrimSuffix(url, "/") + "/" + appstate.JaegerConfig.Path
-	appstate.JaegerEnabled = true
-	return
-}
-
-func DiscoverJaeger() string {
-	// Kiali has all the configuration
-	if appstate.JaegerEnabled {
-		return appstate.JaegerConfig.URL
-	}
-
-	// Get the configuration
-	tracingConfig := config.Get().ExternalServices.Tracing
-
-	// There is not a service in the configuration we need discover the service
-	if tracingConfig.Service == "" {
-		tracingConfig.Service, tracingConfig.Port = discoverTracingService()
-		appstate.JaegerConfig = tracingConfig
-	}
-
-	//There is an endpoint in the configuration discovery QUERY_BASE_PATH by endpoint defined
-	if tracingConfig.URL != "" {
-		// User assumes configuration
-		appstate.JaegerEnabled = true
-		// Get Path from the URL (User could set the QUERY_BASE_PATH in the URL)
-		tracingConfig.Path = getPathURL(tracingConfig.URL)
-		appstate.JaegerConfig = tracingConfig
-	}
-
-	// Discover QUERY_BASE_PATH by deployment
-	if tracingConfig.Service != "" && tracingConfig.Path == "" {
-		tracingConfig.Path = discoverTracingPath()
-		appstate.JaegerConfig = tracingConfig
-	}
-
-	//There is not an endpoint, go discover for Openshift
-	if tracingConfig.Service != "" && tracingConfig.URL == "" {
-		tracingConfig.URL = discoverURLTracingService()
-		appstate.JaegerConfig = tracingConfig
-	}
-
-	return appstate.JaegerConfig.URL
 }
 
 // DiscoverGrafana will return the Grafana URL if it has been configured,

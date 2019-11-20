@@ -207,9 +207,14 @@ type p8sResponseVersion struct {
 }
 
 func jaegerVersion() (*ExternalServiceInfo, error) {
+	jaegerConfig := config.Get().ExternalServices.Tracing
+
+	if !jaegerConfig.Enabled {
+		return nil, nil
+	}
 	product := ExternalServiceInfo{}
 	product.Name = "Jaeger"
-	product.Url = DiscoverJaeger()
+	product.Url = config.Get().ExternalServices.Tracing.URL
 
 	return &product, nil
 }
