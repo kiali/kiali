@@ -28,7 +28,7 @@ import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
-import { Pod, PodLogs } from '../types/IstioObjects';
+import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 
@@ -116,6 +116,10 @@ export const getMeshTls = () => {
 
 export const getNamespaceTls = (namespace: string) => {
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), {}, {});
+};
+
+export const getNamespaceValidations = (namespace: string) => {
+  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {});
 };
 
 export const getIstioConfig = (namespace: string, objects: string[], validate: boolean) => {

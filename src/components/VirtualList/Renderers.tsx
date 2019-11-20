@@ -5,7 +5,7 @@ import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
 import { IstioTypes, Resource, TResource, hasMissingSidecar, Renderer } from './Config';
 import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
-import { ValidationSummary } from '../Validations/ValidationSummary';
+import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { WorkloadListItem } from '../../types/Workload';
 import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
@@ -141,7 +141,7 @@ export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (item:
   return (
     <td role="gridcell" key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name}>
       {validation ? (
-        <ValidationSummary id={item.name + '-config-validation'} validations={[validation]} size="medium" />
+        <ValidationObjectSummary id={item.name + '-config-validation'} validations={[validation]} />
       ) : (
         <>N/A</>
       )}

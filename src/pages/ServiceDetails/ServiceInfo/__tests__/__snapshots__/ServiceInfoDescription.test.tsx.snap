@@ -301,7 +301,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             <Text
               component="h3"
             >
-              <ValidationSummary
+              <ValidationObjectSummary
                 id="reviews-config-validation"
                 validations={Array []}
               />

@@ -77,6 +77,11 @@ export interface Reference {
   kind: string;
 }
 
+export interface ValidationStatus {
+  errors: number;
+  warnings: number;
+}
+
 export interface ContainerInfo {
   name: string;
   image: string;

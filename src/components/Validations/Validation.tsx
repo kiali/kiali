@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
@@ -68,7 +68,11 @@ class Validation extends React.Component<Props> {
 
   iconStyle() {
     const iconStyle = this.props.iconStyle || {};
+    const defaultStyle: CSSProperties = {
+      verticalAlign: '-0.125em'
+    };
     Object.assign(iconStyle, this.severityColor());
+    Object.assign(iconStyle, defaultStyle);
     return iconStyle;
   }
 
@@ -79,16 +83,13 @@ class Validation extends React.Component<Props> {
     if (hasMessage) {
       return (
         <div className="validation">
-          <div style={{ float: 'left', margin: '2px 0.6em 0 0' }}>
-            <IconComponent style={this.iconStyle()} />
-          </div>
           <Text component={TextVariants.p} style={this.textStyle()}>
-            {this.props.message}
+            <IconComponent style={this.iconStyle()} /> {this.props.message}
           </Text>
         </div>
       );
     } else {
-      return <IconComponent style={this.severityColor()} />;
+      return <IconComponent style={this.iconStyle()} />;
     }
   }
 }

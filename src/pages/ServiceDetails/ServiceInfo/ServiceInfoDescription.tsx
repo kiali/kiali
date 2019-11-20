@@ -18,7 +18,7 @@ import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
 import { style } from 'typestyle';
-import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
+import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import ValidationList from '../../../components/Validations/ValidationList';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
@@ -54,11 +54,7 @@ const ExternalNameType = 'ExternalName';
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
   getPortOver(portId: number) {
-    return (
-      <div style={{ float: 'left', fontSize: '12px', padding: '3px 0.6em 0 0' }}>
-        <ValidationList checks={this.getPortChecks(portId)} />
-      </div>
-    );
+    return <ValidationList checks={this.getPortChecks(portId)} />;
   }
 
   getPortChecks(portId: number): ObjectCheck[] {
@@ -169,7 +165,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 </StackItem>
                 <StackItem id={'ports'}>
                   <Text component={TextVariants.h3}>
-                    <ValidationSummary
+                    <ValidationObjectSummary
                       id={this.props.name + '-config-validation'}
                       validations={this.props.validations ? [this.props.validations] : []}
                     />
@@ -178,8 +174,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   <ul className={listStyle}>
                     {(this.props.ports || []).map((port, i) => (
                       <li key={'port_' + i}>
-                        {this.hasIssue(i) ? this.getPortOver(i) : undefined}
-                        {port.protocol} {port.name} ({port.port})
+                        {this.hasIssue(i) ? this.getPortOver(i) : undefined} {port.protocol} {port.name} ({port.port})
                       </li>
                     ))}
                   </ul>

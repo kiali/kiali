@@ -90,6 +90,7 @@ const conf = {
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,
+      namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/validations`,
       meshTls: () => 'api/mesh/tls',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,

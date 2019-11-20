@@ -15,7 +15,7 @@ import { NetworkIcon } from '@patternfly/react-icons';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
-import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
+import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
 import Labels from '../../../components/Label/Labels';
 import { safeRender } from '../../../utils/SafeRender';
@@ -117,9 +117,10 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
         cells: [
           {
             title: (
-              <ValidationSummary
+              <ValidationObjectSummary
                 id={vsIdx + '-config-validation'}
                 validations={this.hasValidations(destinationRule) ? [this.validation(destinationRule)] : []}
+                style={{ verticalAlign: '-0.5em' }}
               />
             )
           },

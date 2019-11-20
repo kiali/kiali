@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ObjectValidation, Pod } from '../../../types/IstioObjects';
-import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 import Labels from '../../../components/Label/Labels';
 import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import LocalTime from '../../../components/Time/LocalTime';
@@ -13,9 +12,11 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Title
+  Title,
+  TooltipPosition
 } from '@patternfly/react-core';
 import { CogsIcon } from '@patternfly/react-icons';
+import ValidationList from '../../../components/Validations/ValidationList';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -68,15 +69,15 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
 
     let rows: IRow[] = [];
     (this.props.pods || []).map((pod, podIdx) => {
-      const validations: ObjectValidation[] = [];
+      let validation: ObjectValidation = {} as ObjectValidation;
       if (this.props.validations[pod.name]) {
-        validations.push(this.props.validations[pod.name]);
+        validation = this.props.validations[pod.name];
       }
 
       rows.push({
         cells: [
           {
-            title: <ValidationSummary id={podIdx + '-config-validation'} validations={validations} definition={true} />
+            title: <ValidationList tooltipPosition={TooltipPosition.auto} checks={validation.checks} />
           },
           { title: <>{pod.name}</> },
           { title: <LocalTime time={pod.createdAt || ''} /> },

@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
-import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
+import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import { ServiceDetailsInfo } from '../../../types/ServiceInfo';
 
 interface ServiceInfoVirtualServicesProps {
@@ -113,9 +113,10 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
         cells: [
           {
             title: (
-              <ValidationSummary
+              <ValidationObjectSummary
                 id={vsIdx + '-config-validation'}
                 validations={this.hasValidations(virtualService) ? [this.validation(virtualService)] : []}
+                style={{ verticalAlign: '-0.5em' }}
               />
             )
           },
