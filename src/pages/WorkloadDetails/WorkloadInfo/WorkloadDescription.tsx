@@ -48,6 +48,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
       workload &&
       ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
         0;
+    const runtimes = workload.runtimes.map(r => r.name).filter(name => name !== '');
     return workload ? (
       <Grid gutter="md">
         <GridItem span={6}>
@@ -82,12 +83,11 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                     </StackItem>
                   );
                 })}
-                {workload.runtimes.length > 0 && (
+                {runtimes.length > 0 && (
                   <StackItem id="runtimes">
                     <Text component={TextVariants.h3}> Runtimes</Text>
-                    {workload.runtimes
-                      .filter(r => r.name !== '')
-                      .map((rt, idx) => this.renderLogo(rt.name, idx))
+                    {runtimes
+                      .map((rt, idx) => this.renderLogo(rt, idx))
                       .reduce(
                         (list: JSX.Element[], elem) =>
                           list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
