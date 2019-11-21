@@ -39,7 +39,7 @@ import { PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
 type SummaryPanelNodeMetricsState = {
-  grpcRequestCountIn: Datapoint[] | null;
+  grpcRequestCountIn: Datapoint[];
   grpcRequestCountOut: Datapoint[];
   grpcErrorCountIn: Datapoint[];
   grpcErrorCountOut: Datapoint[];
@@ -62,11 +62,11 @@ type SummaryPanelNodeState = SummaryPanelNodeMetricsState & {
 };
 
 const defaultMetricsState: SummaryPanelNodeMetricsState = {
-  grpcRequestCountIn: null,
+  grpcRequestCountIn: [],
   grpcRequestCountOut: [],
   grpcErrorCountIn: [],
   grpcErrorCountOut: [],
-  httpRequestCountIn: null,
+  httpRequestCountIn: [],
   httpRequestCountOut: [],
   httpErrorCountIn: [],
   httpErrorCountOut: [],
@@ -437,7 +437,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         </>
       );
     }
-    if (this.state.loading && !this.state.grpcRequestCountIn) {
+    if (this.state.loading) {
       return <strong>Loading charts...</strong>;
     }
     if (this.state.metricsLoadError) {
