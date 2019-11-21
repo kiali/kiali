@@ -134,7 +134,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       return (
         <div className="panel-heading label-collection" style={summaryHeader}>
           <strong>{prefix}</strong> {renderTitle(nodeData)}
-          <br />
           {renderNodeInfo(nodeData)}
         </div>
       );
@@ -146,8 +145,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     return (
       <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <HeadingBlock prefix="From" node={source} />
-        <HeadingBlock prefix="To" node={dest} />
+        <HeadingBlock prefix="" node={source} />
+        <HeadingBlock prefix="" node={dest} />
         {isMtls && <MTLSBlock />}
         {(isGrpc || isHttp) && (
           <div className={summaryBodyTabs}>

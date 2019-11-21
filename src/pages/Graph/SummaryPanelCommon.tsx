@@ -23,6 +23,11 @@ export const summaryHeader: React.CSSProperties = {
   backgroundColor: PfColors.White
 };
 
+export const summaryLabels = style({
+  marginTop: '5px',
+  marginBottom: '5px'
+});
+
 export const summaryBodyTabs = style({
   padding: '10px 15px 0 15px'
 });
@@ -152,12 +157,15 @@ export const renderNodeInfo = (nodeData: DecoratedGraphNodeData) => {
   const hasVersion = hasNamespace && nodeData.version;
   return (
     <>
-      <div style={{ paddingBottom: '3px', paddingTop: '3px' }}>
+      <div className={`label-collection ${summaryLabels}`}>
         {hasNamespace && <Badge>Namespace: {nodeData.namespace}</Badge>}
         {hasVersion && (
-          <Badge>
-            {serverConfig.istioLabels.versionLabelName}: {nodeData.version!}
-          </Badge>
+          <>
+            <br />
+            <Badge style={{ marginTop: '2px' }}>
+              {serverConfig.istioLabels.versionLabelName}: {nodeData.version!}
+            </Badge>
+          </>
         )}
       </div>
     </>

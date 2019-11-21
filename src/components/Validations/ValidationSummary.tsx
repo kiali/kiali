@@ -13,8 +13,9 @@ interface Props {
 }
 
 const tooltipListStyle = style({
+  textAlign: 'left',
   border: 0,
-  padding: '0 0 0 0',
+  padding: '0 0 0 1em',
   margin: '0 0 0 0'
 });
 
@@ -56,14 +57,13 @@ export class ValidationSummary extends React.PureComponent<Props> {
     const validation = severityToValidation[this.severity()];
     return (
       <>
-        <Text component={TextVariants.h4}>
-          <strong>{validation.name}</strong>
+        <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.h4}>
+          Istio Config Validation
         </Text>
+        <Text style={{ textAlign: 'left', textEmphasis: 'strong', paddingLeft: '1em' }}>{validation.name}</Text>
         <div className={tooltipListStyle}>
           {this.severitySummary().map(cat => (
-            <div className={tooltipListStyle} key={cat}>
-              {cat}
-            </div>
+            <div key={cat}>{cat}</div>
           ))}
         </div>
       </>

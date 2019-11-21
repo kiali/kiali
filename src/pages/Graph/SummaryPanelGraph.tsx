@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Tooltip, TooltipPosition, Badge } from '@patternfly/react-core';
+import { style } from 'typestyle';
+import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType, NodeType } from '../../types/Graph';
@@ -16,24 +18,55 @@ import {
 import { Response } from '../../services/Api';
 import { Metrics, Datapoint } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { Paths } from '../../config';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { style } from 'typestyle';
 import SimpleTabs from 'components/Tab/SimpleTabs';
+import { ValidationStatus } from 'types/IstioObjects';
+import Namespace from 'types/Namespace';
+import ValidationSummary from 'components/Validations/ValidationSummary';
 
-type SummaryPanelGraphState = {
-  loading: boolean;
-  reqRates: Datapoint[] | null;
+type SummaryPanelGraphMetricsState = {
+  reqRates: Datapoint[];
   errRates: Datapoint[];
   tcpSent: Datapoint[];
   tcpReceived: Datapoint[];
   metricsLoadError: string | null;
 };
 
+// TODO replace with real type
+type ValidationsMap = Map<string, ValidationStatus>;
+
+type SummaryPanelGraphState = SummaryPanelGraphMetricsState & {
+  graph: any;
+  loading: boolean;
+  validationsLoading: boolean;
+  validationsMap: ValidationsMap;
+};
+
+const defaultMetricsState: SummaryPanelGraphMetricsState = {
+  reqRates: [],
+  errRates: [],
+  tcpSent: [],
+  tcpReceived: [],
+  metricsLoadError: null
+};
+
+const defaultState: SummaryPanelGraphState = {
+  graph: null,
+  loading: false,
+  validationsLoading: false,
+  validationsMap: new Map<string, ValidationStatus>(),
+  ...defaultMetricsState
+};
+
 const topologyStyle = style({
   margin: '0 1em'
+});
+
+const linksStyle = style({
+  margin: '0.5em 0 0.25em 1em'
 });
 
 export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
@@ -46,38 +79,35 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   };
 
   private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
-    this.state = {
-      loading: true,
-      reqRates: null,
-      errRates: [],
-      tcpSent: [],
-      tcpReceived: [],
-      metricsLoadError: null
-    };
+    this.state = { ...defaultState };
+  }
+
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelGraphState) {
+    // if the summaryTarget (i.e. graph) has changed, then init the state and set to loading. The loading
+    // will actually be kicked off after the render (in componentDidMount/Update).
+    return props.data.summaryTarget !== state.graph
+      ? { node: props.data.summaryTarget, loading: true, ...defaultMetricsState }
+      : null;
   }
 
   componentDidMount() {
     if (this.shouldShowRPSChart()) {
-      this.updateRpsChart(this.props);
+      this.updateRpsChart();
     }
+    this.updateValidations();
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
-    if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.setState({
-        reqRates: null,
-        loading: true
-      });
-    }
-
     if (shouldRefreshData(prevProps, this.props)) {
       if (this.shouldShowRPSChart()) {
-        this.updateRpsChart(this.props);
+        this.updateRpsChart();
       }
+      this.updateValidations();
     }
   }
 
@@ -114,8 +144,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
-          <strong>Namespace{this.props.namespaces.length > 1 ? 's' : ''}: </strong>
-          {this.props.namespaces.map(namespace => namespace.name).join(', ')}
+          {this.renderNamespacesSummary()}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
         <div className={summaryBodyTabs}>
@@ -234,13 +263,136 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     };
   };
 
+  private renderNamespacesSummary = () => (
+    <>
+      {this.props.namespaces.map(namespace => this.renderNamespace(namespace.name))}
+      <Tooltip key="ns_apps" content={<>Go to applications for selected namespaces</>}>
+        <Link
+          key="appsLink"
+          to={`/${Paths.APPLICATIONS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+        >
+          <KialiIcon.Applications className={linksStyle} />
+        </Link>
+      </Tooltip>
+      <Tooltip key="ns_services" content={<>Go to services for selected namespaces</>}>
+        <Link
+          key="servicesLink"
+          to={`/${Paths.SERVICES}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+        >
+          <KialiIcon.Services className={linksStyle} />
+        </Link>
+      </Tooltip>
+      <Tooltip key="ns_wls" content={<>Go to workloads for selected namespaces</>}>
+        <Link
+          key="workloadsLink"
+          to={`/${Paths.WORKLOADS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+        >
+          <KialiIcon.Workloads className={linksStyle} />
+        </Link>
+      </Tooltip>{' '}
+      <Tooltip key="ns_config" content={<>Go to Istio configurations for selected namespaces</>}>
+        <Link key="configsLink" to={`/${Paths.ISTIO}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}>
+          <KialiIcon.IstioConfig className={linksStyle} />
+        </Link>
+      </Tooltip>{' '}
+    </>
+  );
+
+  private renderNamespace = (ns: string) => {
+    const validation = this.state.validationsMap[ns];
+    return (
+      <>
+        <span>
+          <Tooltip position={TooltipPosition.top} content={<>Namespace</>}>
+            <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
+              NS
+            </Badge>
+          </Tooltip>
+          {ns}
+          {!!validation && (
+            <ValidationSummary
+              id={'ns-val-' + ns}
+              errors={validation.errors}
+              warnings={validation.warnings}
+              style={{ marginLeft: '5px' }}
+            />
+          )}
+        </span>
+        <br />
+      </>
+    );
+  };
+
+  private renderTopologySummary = (
+    numSvc: number,
+    numWorkloads: number,
+    numApps: number,
+    numVersions: number,
+    numEdges: number
+  ) => (
+    <>
+      <br />
+      <strong>Current Graph:</strong>
+      <br />
+      {numApps > 0 && (
+        <>
+          <KialiIcon.Applications className={topologyStyle} />
+          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
+          {numVersions > 0 && `(${numVersions} versions)`}
+          <br />
+        </>
+      )}
+      {numSvc > 0 && (
+        <>
+          <KialiIcon.Services className={topologyStyle} />
+          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
+          <br />
+        </>
+      )}
+      {numWorkloads > 0 && (
+        <>
+          <KialiIcon.Workloads className={topologyStyle} />
+          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
+          <br />
+        </>
+      )}
+      {numEdges > 0 && (
+        <>
+          <KialiIcon.Topology className={topologyStyle} />
+          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
+        </>
+      )}
+    </>
+  );
+
+  private renderRpsChart = () => {
+    if (this.state.loading) {
+      return <strong>Loading chart...</strong>;
+    } else if (this.state.metricsLoadError) {
+      return (
+        <div>
+          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
+          {this.state.metricsLoadError}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <RpsChart label="HTTP - Total Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />
+        <TcpChart label="TCP - Total Traffic" receivedRates={this.state.tcpReceived} sentRates={this.state.tcpSent} />
+      </>
+    );
+  };
+
   private shouldShowRPSChart() {
     // TODO we omit the rps chart when dealing with multiple namespaces. There is no backend
     // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
     return this.props.namespaces.length === 1;
   }
 
-  private updateRpsChart = (props: SummaryPanelPropType) => {
+  private updateRpsChart = () => {
+    const props: SummaryPanelPropType = this.props;
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
       queryTime: props.queryTime,
@@ -283,95 +435,41 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
-          reqRates: null
+          ...defaultMetricsState
         });
       });
 
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private renderTopologySummary = (
-    numSvc: number,
-    numWorkloads: number,
-    numApps: number,
-    numVersions: number,
-    numEdges: number
-  ) => (
-    <div>
-      <Link
-        key="appsLink"
-        to={`/${Paths.APPLICATIONS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
-      >
-        {' applications'}
-      </Link>
-      <Link
-        key="servicesLink"
-        to={`/${Paths.SERVICES}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
-      >
-        {', services'}
-      </Link>
-      <Link
-        key="workloadsLink"
-        to={`/${Paths.WORKLOADS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
-      >
-        {', workloads'}
-      </Link>
-      <br />
-      <br />
-      <strong>Current Graph:</strong>
-      <br />
-      {numApps > 0 && (
-        <>
-          <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
-          <br />
-        </>
-      )}
-      {numSvc > 0 && (
-        <>
-          <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          <br />
-        </>
-      )}
-      {numWorkloads > 0 && (
-        <>
-          <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          <br />
-        </>
-      )}
-      {numEdges > 0 && (
-        <>
-          <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </>
-      )}
-    </div>
-  );
-
-  private renderRpsChart = () => {
-    if (this.state.loading && !this.state.reqRates) {
-      return <strong>Loading chart...</strong>;
-    } else if (this.state.metricsLoadError) {
-      return (
-        <div>
-          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
-          {this.state.metricsLoadError}
-        </div>
-      );
-    }
-
-    return (
-      <>
-        <RpsChart
-          label="HTTP - Total Request Traffic"
-          dataRps={this.state.reqRates!}
-          dataErrors={this.state.errRates}
-        />
-        <TcpChart label="TCP - Total Traffic" receivedRates={this.state.tcpReceived} sentRates={this.state.tcpSent} />
-      </>
-    );
+  private updateValidations = () => {
+    const newValidationsMap = new Map<string, ValidationStatus>();
+    _.chunk(this.props.namespaces, 10).forEach(chunk => {
+      this.validationSummaryPromises
+        .registerChained('validationSummaryChunks', undefined, () =>
+          this.fetchValidationsChunk(chunk, newValidationsMap)
+        )
+        .then(() => {
+          this.setState({ validationsMap: newValidationsMap });
+        });
+    });
   };
+
+  fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap) {
+    return Promise.all(
+      chunk.map(ns => {
+        return API.getNamespaceValidations(ns.name).then(rs => ({ validation: rs.data, ns: ns }));
+      })
+    )
+      .then(results => {
+        results.forEach(result => {
+          validationsMap[result.ns.name] = result.validation;
+        });
+      })
+      .catch(err => {
+        if (!err.isCanceled) {
+          console.log(`SummaryPanelGraph: Error fetching validation status: ${API.getErrorString(err)}`);
+        }
+      });
+  }
 }

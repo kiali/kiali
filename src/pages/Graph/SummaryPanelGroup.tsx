@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Badge, PopoverPosition } from '@patternfly/react-core';
+import { Badge } from '@patternfly/react-core';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -12,9 +12,9 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   renderNoTraffic,
-  summaryHeader
+  summaryHeader,
+  summaryLabels
 } from './SummaryPanelCommon';
-import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics, Datapoint } from '../../types/Metrics';
@@ -121,22 +121,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     return (
       <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
-        <div className="panel-heading" style={summaryHeader}>
-          {this.state.healthLoading ? (
-            // Remove glitch while health is being reloaded
-            <span style={{ width: 18, height: 17, display: 'inline-block' }} />
-          ) : (
-            this.state.health && (
-              <HealthIndicator
-                id="graph-health-indicator"
-                mode={DisplayMode.SMALL}
-                health={this.state.health}
-                tooltipPlacement={PopoverPosition.left}
-              />
-            )
-          )}
-          <span> {renderTitle(nodeData)}</span>
-          <div className="label-collection" style={{ paddingTop: '3px' }}>
+        <div className={`panel-heading ${summaryHeader}`}>
+          {renderTitle(nodeData, this.state.health)}
+          <div className={`label-collection ${summaryLabels}`}>
             <Badge>namespace: {namespace}</Badge>
             {this.renderVersionBadges()}
           </div>
@@ -212,7 +199,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.log('SummaryPanelGroup: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelGroup: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
@@ -227,14 +214,17 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderVersionBadges = () => {
-    return this.props.data.summaryTarget
-      .children(`node[${CyNode.version}]`)
-      .toArray()
-      .map((c, _i) => (
-        <Badge>
-          {serverConfig.istioLabels.versionLabelName}: value={c.data(CyNode.version)}
-        </Badge>
-      ));
+    const versions = this.props.data.summaryTarget.children(`node[${CyNode.version}]`).toArray();
+    return (
+      <>
+        {versions.length > 0 && <br />}
+        {versions.map((c, _i) => (
+          <Badge style={{ marginTop: '2px', marginRight: '1px' }}>
+            {serverConfig.istioLabels.versionLabelName}: value={c.data(CyNode.version)}
+          </Badge>
+        ))}
+      </>
+    );
   };
 
   private renderBadgeSummary = group => {

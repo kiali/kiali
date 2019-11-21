@@ -29,13 +29,11 @@ import {
   mergeMetricsResponses,
   summaryHeader
 } from './SummaryPanelCommon';
-import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
 type SummaryPanelNodeMetricsState = {
@@ -311,20 +309,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     return (
       <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
-          {this.state.healthLoading ? (
-            // Remove glitch while health is being reloaded
-            <span style={{ width: 18, height: 17, display: 'inline-block' }} />
-          ) : (
-            this.state.health && (
-              <HealthIndicator
-                id="graph-health-indicator"
-                mode={DisplayMode.SMALL}
-                health={this.state.health}
-                tooltipPlacement={PopoverPosition.left}
-              />
-            )
-          )}
-          <span> {renderTitle(nodeData)}</span>
+          {renderTitle(nodeData, this.state.health)}
           {renderNodeInfo(nodeData)}
           {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
         </div>

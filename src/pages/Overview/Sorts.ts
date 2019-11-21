@@ -80,6 +80,36 @@ export const sortFields: SortField<NamespaceInfo>[] = [
       // default comparison fallback
       return a.name.localeCompare(b.name);
     }
+  },
+  {
+    id: 'config',
+    title: 'Istio Config',
+    isNumeric: false,
+    param: 'ic',
+    compare: (a: NamespaceInfo, b: NamespaceInfo) => {
+      if (a.validations && b.validations) {
+        if (a.validations.errors === b.validations.errors) {
+          if (a.validations.warnings === b.validations.warnings) {
+            return a.name.localeCompare(b.name);
+          } else if (a.validations.warnings > b.validations.warnings) {
+            return -1;
+          } else {
+            return 1;
+          }
+        } else if (a.validations.errors > b.validations.errors) {
+          return -1;
+        } else {
+          return 1;
+        }
+      } else if (a.validations) {
+        return -1;
+      } else if (b.validations) {
+        return 1;
+      }
+
+      // default comparison fallback
+      return a.name.localeCompare(b.name);
+    }
   }
 ];
 

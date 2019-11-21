@@ -3,15 +3,45 @@ import { Link } from 'react-router-dom';
 import { NodeType, DecoratedGraphNodeData, GraphNodeData } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { Tooltip, Badge, PopoverPosition } from '@patternfly/react-core';
+import { Health } from 'types/Health';
+import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
 
 const getTitle = (nodeData: DecoratedGraphNodeData) => {
-  if (nodeData.nodeType === NodeType.UNKNOWN) {
-    return 'Traffic Source';
+  switch (nodeData.nodeType) {
+    case NodeType.APP:
+      return (
+        <Tooltip content={<>Application</>}>
+          <Badge className="virtualitem_badge_definition">A</Badge>
+        </Tooltip>
+      );
+    case NodeType.SERVICE:
+      return !!nodeData.isServiceEntry ? (
+        <Tooltip
+          content={
+            <>{nodeData.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry'}</>
+          }
+        >
+          <Badge className="virtualitem_badge_definition">SE</Badge>
+        </Tooltip>
+      ) : (
+        <Tooltip content={<>Service</>}>
+          <Badge className="virtualitem_badge_definition">S</Badge>
+        </Tooltip>
+      );
+    case NodeType.WORKLOAD:
+      return (
+        <Tooltip content={<>Workload</>}>
+          <Badge className="virtualitem_badge_definition">W</Badge>
+        </Tooltip>
+      );
+    default:
+      return (
+        <Tooltip content={<>Unknown</>}>
+          <Badge className="virtualitem_badge_definition">U</Badge>
+        </Tooltip>
+      );
   }
-  if (nodeData.nodeType === NodeType.SERVICE && nodeData.isServiceEntry !== undefined) {
-    return nodeData.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry';
-  }
-  return nodeData.nodeType.charAt(0).toUpperCase() + nodeData.nodeType.slice(1);
 };
 
 const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
@@ -80,13 +110,25 @@ export const RenderLink = (props: RenderLinkProps) => {
   );
 };
 
-export const renderTitle = (nodeData: DecoratedGraphNodeData) => {
+export const renderTitle = (nodeData: DecoratedGraphNodeData, health?: Health) => {
   const link = getLink(nodeData);
 
   return (
-    <>
-      <strong>{getTitle(nodeData)}:</strong> {link} {nodeData.isInaccessible && <KialiIcon.MtlsLock />}
-    </>
+    <span>
+      <span style={{ paddingRight: '0.5em' }}>
+        {getTitle(nodeData)}
+        {link}
+      </span>
+      {nodeData.isInaccessible && <KialiIcon.MtlsLock />}
+      {health && (
+        <HealthIndicator
+          id="graph-health-indicator"
+          mode={DisplayMode.SMALL}
+          health={health}
+          tooltipPlacement={PopoverPosition.left}
+        />
+      )}
+    </span>
   );
 };
 
