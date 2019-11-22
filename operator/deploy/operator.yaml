@@ -17,6 +17,9 @@ spec:
       labels:
         app: kiali-operator
         version: ${OPERATOR_VERSION_LABEL}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8383"
     spec:
       serviceAccountName: kiali-operator
       containers:
