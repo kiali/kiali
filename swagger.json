@@ -2314,6 +2314,30 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/spans": {
+      "get": {
+        "description": "Endpoint to get Jaeger spans for a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "getSpans",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tracesResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/traces": {
       "get": {
         "description": "Endpoint to get a specific trace of a given service",

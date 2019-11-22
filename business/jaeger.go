@@ -33,7 +33,15 @@ func (in *JaegerService) GetJaegerServices() (services []string, code int, err e
 	return client.GetJaegerServices()
 }
 
-func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (traces []*jaegerModels.Trace, code int, err error) {
+func (in *JaegerService) GetJaegerSpans(namespace, service, startMicros, endMicros string) ([]jaeger.Span, error) {
+	client, err := in.client()
+	if err != nil {
+		return nil, err
+	}
+	return client.GetSpans(namespace, service, startMicros, endMicros)
+}
+
+func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (traces []jaegerModels.Trace, code int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, 0, err
@@ -41,7 +49,7 @@ func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (t
 	return client.GetTraces(ns, srv, query)
 }
 
-func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace []*jaegerModels.Trace, code int, err error) {
+func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace []jaegerModels.Trace, code int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, 0, err
