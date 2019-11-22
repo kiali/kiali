@@ -1,32 +1,28 @@
 import * as React from 'react';
-import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { Button } from '@patternfly/react-core';
 import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
-
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import history, { HistoryManager, URLParam } from '../../app/History';
+import { HistoryManager, URLParam } from '../../app/History';
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
-import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { PollIntervalInMs, DurationInSeconds } from '../../types/Common';
+import { RefreshIntervalInMs, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
-
 import NamespaceInfo from './NamespaceInfo';
 import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import TimeRangeContainer from 'components/Time/TimeRange';
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  refreshInterval: PollIntervalInMs;
-  setRefreshInterval: (refresh: PollIntervalInMs) => void;
+  refreshInterval: RefreshIntervalInMs;
+  setRefreshInterval: (refresh: RefreshIntervalInMs) => void;
 };
 
 type Props = ReduxProps & {
@@ -48,6 +44,16 @@ const overviewTypes = {
   service: 'Services'
 };
 
+// TODO Use Object.fromEntries when available
+const sortTypes = (function() {
+  let o = {};
+  Sorts.sortFields.forEach(sortType => {
+    let id: string = sortType.id;
+    Object.assign(o, { [id]: sortType.title });
+  });
+  return o;
+})();
+
 export type OverviewType = keyof typeof overviewTypes;
 
 type State = {
@@ -64,13 +70,6 @@ export class OverviewToolbar extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    // Let URL override current redux state at construction time
-    const urlParams = new URLSearchParams(history.location.search);
-    const urlPollInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL, urlParams);
-    if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
-      props.setRefreshInterval(urlPollInterval);
-    }
-    HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
     this.state = {
       isSortAscending: FilterHelper.isCurrentSortAscending(),
@@ -79,18 +78,14 @@ export class OverviewToolbar extends React.Component<Props, State> {
     };
   }
 
-  componentDidUpdate(prevProps: Props) {
-    // ensure redux state and URL are aligned
-    HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
-
+  componentDidUpdate() {
     const urlSortField = FilterHelper.currentSortField(Sorts.sortFields);
     const urlIsSortAscending = FilterHelper.isCurrentSortAscending();
-    if (!this.paramsAreSynced(urlSortField, urlIsSortAscending) || this.props.duration !== prevProps.duration) {
+    if (!this.paramsAreSynced(urlSortField, urlIsSortAscending)) {
       this.setState({
         sortField: urlSortField,
         isSortAscending: urlIsSortAscending
       });
-      this.props.onRefresh();
     }
   }
 
@@ -137,31 +132,17 @@ export class OverviewToolbar extends React.Component<Props, State> {
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
         rightToolbar={[
-          <DurationDropdownContainer
-            id="overview-duration"
-            key={'DurationDropdown'}
-            disabled={false}
-            tooltip={'Time range for overview data'}
-          />,
-          <RefreshContainer
-            id="overview-refresh"
-            key={'Refresh'}
-            handleRefresh={this.props.onRefresh}
-            hideLabel={true}
-          />
+          <TimeRangeContainer id="overview-time-range" disabled={false} handleRefresh={this.props.onRefresh} />
         ]}
       >
         <>
-          <FormSelect
-            aria-label={'Sort_Selector'}
+          <ToolbarDropdown
+            id="sort_selector"
+            handleSelect={this.changeSortField}
             value={this.state.sortField.id}
-            onChange={this.changeSortField}
-            style={{ width: 'auto' }}
-          >
-            {Sorts.sortFields.map(sortType => (
-              <FormSelectOption key={sortType.id} value={sortType.id} label={sortType.title} />
-            ))}
-          </FormSelect>
+            label={sortTypes[this.state.overviewType]}
+            options={sortTypes}
+          />
           <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }}>
             {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
           </Button>
@@ -206,7 +187,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setRefreshInterval: (refreshInterval: PollIntervalInMs) => {
+    setRefreshInterval: (refreshInterval: RefreshIntervalInMs) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     }
   };

@@ -18,7 +18,8 @@ export enum URLParam {
   GRAPH_TYPE = 'graphType',
   NAMESPACES = 'namespaces',
   OVERVIEW_TYPE = 'otype',
-  POLL_INTERVAL = 'pi',
+  POLL_INTERVAL = 'pi', // deprecated
+  REFRESH_INTERVAL = 'refresh', // replaces pi
   QUANTILES = 'quantiles',
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',

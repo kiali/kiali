@@ -15,9 +15,9 @@ const conf = {
     /** Duration default in 1 minute */
     defaultDuration: 1 * UNIT_TIME.MINUTE,
     /** By default refresh is 15 seconds */
-    defaultPollInterval: 15 * MILLISECONDS,
+    defaultRefreshInterval: 15 * MILLISECONDS,
     /** Options in refresh */
-    pollInterval: {
+    refreshInterval: {
       0: 'Pause',
       10000: 'Every 10s',
       15000: 'Every 15s',

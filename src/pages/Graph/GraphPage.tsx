@@ -7,7 +7,7 @@ import FlexView from 'react-flexview';
 import { Breadcrumb, BreadcrumbItem, Button, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
-import { DurationInSeconds, PollIntervalInMs, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
@@ -27,8 +27,7 @@ import {
   edgeLabelModeSelector,
   graphDataSelector,
   graphTypeSelector,
-  meshWideMTLSEnabledSelector,
-  refreshIntervalSelector
+  meshWideMTLSEnabledSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -44,6 +43,7 @@ import TourStopContainer, { TourInfo, getNextTourStop } from 'components/Tour/To
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
 import GraphTour, { GraphTourStops } from './GraphHelpTour';
+import { getErrorString } from 'services/Api';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -68,7 +68,6 @@ type ReduxProps = {
   isPageVisible: boolean;
   layout: Layout;
   node?: NodeParamsType;
-  pollInterval: PollIntervalInMs;
   showLegend: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
@@ -148,8 +147,7 @@ const timeDisplayOptions = {
 };
 
 export class GraphPage extends React.Component<GraphPageProps> {
-  private pollTimeoutRef?: number;
-  private pollPromise?: CancelablePromise<any>;
+  private loadPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
 
@@ -231,12 +229,8 @@ export class GraphPage extends React.Component<GraphPageProps> {
     // is preferable?  We could also move the logic from the constructor, but that
     // would break our pattern of redux/url handling in the components).
     if (!store.getState().graph.node) {
-      this.scheduleNextPollingInterval(0);
+      this.loadGraphDataFromBackend();
     }
-  }
-
-  componentWillUnmount() {
-    this.removePollingIntervalTimer();
   }
 
   componentDidUpdate(prev: GraphPageProps) {
@@ -265,9 +259,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
       prev.showUnusedNodes !== curr.showUnusedNodes ||
       GraphPage.isNodeChanged(prev.node, curr.node)
     ) {
-      this.scheduleNextPollingInterval(0);
-    } else if (prev.pollInterval !== curr.pollInterval) {
-      this.scheduleNextPollingIntervalFromProps();
+      this.loadGraphDataFromBackend();
     }
 
     if (prev.layout.name !== curr.layout.name || prev.graphData !== curr.graphData || activeNamespacesChanged) {
@@ -279,21 +271,11 @@ export class GraphPage extends React.Component<GraphPageProps> {
     }
   }
 
-  handleRefreshClick = () => {
-    this.scheduleNextPollingInterval(0);
-  };
-
-  toggleHelp = () => {
-    if (this.props.showLegend) {
-      this.props.toggleLegend();
+  componentWillUnmount() {
+    if (this.loadPromise) {
+      this.loadPromise.cancel();
     }
-    if (this.props.activeTour) {
-      this.props.endTour();
-    } else {
-      const firstStop = getNextTourStop(GraphTour, -1, 'forward');
-      this.props.startTour({ info: GraphTour, stop: firstStop });
-    }
-  };
+  }
 
   render() {
     const graphEnd: TimeInMilliseconds = this.props.graphTimestamp * 1000;
@@ -330,7 +312,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
             )}
           </div>
           <div>
-            <GraphFilterContainer disabled={this.props.isLoading} onRefresh={this.handleRefreshClick} />
+            <GraphFilterContainer disabled={this.props.isLoading} onRefresh={this.handleRefresh} />
           </div>
           <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
             <ErrorBoundary
@@ -347,7 +329,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
               )}
               <TourStopContainer info={GraphTourStops.Graph}>
                 <CytoscapeGraphContainer
-                  refresh={this.handleRefreshClick}
+                  refresh={this.handleRefresh}
                   containerClassName={cytoscapeGraphContainerStyle}
                   ref={refInstance => this.setCytoscapeGraph(refInstance)}
                   isMTLSEnabled={this.props.mtlsEnabled}
@@ -380,6 +362,22 @@ export class GraphPage extends React.Component<GraphPageProps> {
     );
   }
 
+  private handleRefresh = () => {
+    this.loadGraphDataFromBackend();
+  };
+
+  private toggleHelp = () => {
+    if (this.props.showLegend) {
+      this.props.toggleLegend();
+    }
+    if (this.props.activeTour) {
+      this.props.endTour();
+    } else {
+      const firstStop = getNextTourStop(GraphTour, -1, 'forward');
+      this.props.startTour({ info: GraphTour, stop: firstStop });
+    }
+  };
+
   private getTitle(node: NodeParamsType) {
     if (node.nodeType === NodeType.APP) {
       let title = node.app;
@@ -402,6 +400,9 @@ export class GraphPage extends React.Component<GraphPageProps> {
   }
 
   private loadGraphDataFromBackend = () => {
+    if (this.loadPromise) {
+      this.loadPromise.cancel();
+    }
     const promise = this.props.fetchGraphData(
       this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       this.props.duration,
@@ -412,54 +413,17 @@ export class GraphPage extends React.Component<GraphPageProps> {
       this.props.showUnusedNodes,
       this.props.node
     );
-    this.pollPromise = makeCancelablePromise(promise);
-
-    this.pollPromise.promise
+    this.loadPromise = makeCancelablePromise(promise);
+    this.loadPromise.promise
       .then(() => {
-        this.props.setLastRefreshAt(Date.now());
-        this.scheduleNextPollingIntervalFromProps();
+        // nothing currently on success
       })
       .catch(error => {
         if (!error.isCanceled) {
-          this.scheduleNextPollingIntervalFromProps();
+          AlertUtils.addError(`Failed to load graph data: ${getErrorString(error)}`);
         }
       });
   };
-
-  private scheduleNextPollingIntervalFromProps() {
-    if (this.props.pollInterval > 0) {
-      this.scheduleNextPollingInterval(this.props.pollInterval);
-    } else {
-      this.removePollingIntervalTimer();
-    }
-  }
-
-  private scheduleNextPollingInterval(pollInterval: number) {
-    // Remove any pending timeout to avoid having multiple requests at once
-    this.removePollingIntervalTimer();
-
-    if (pollInterval === 0) {
-      this.loadGraphDataFromBackend();
-    } else {
-      // We are using setTimeout instead of setInterval because we have more control over it
-      // e.g. If a request takes much time, the next interval will fire up anyway and is
-      // possible that it will take much time as well. Instead wait for it to timeout/error to
-      // try again.
-      this.pollTimeoutRef = window.setTimeout(this.loadGraphDataFromBackend, pollInterval);
-    }
-  }
-
-  private removePollingIntervalTimer() {
-    if (this.pollTimeoutRef) {
-      clearTimeout(this.pollTimeoutRef);
-      this.pollTimeoutRef = undefined;
-    }
-
-    if (this.pollPromise) {
-      this.pollPromise.cancel();
-      this.pollPromise = undefined;
-    }
-  }
 
   private notifyError = (error: Error, _componentStack: string) => {
     AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
@@ -480,7 +444,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
   layout: state.graph.layout,
   node: state.graph.node,
-  pollInterval: refreshIntervalSelector(state),
   showLegend: state.graph.filterState.showLegend,
   showSecurity: state.graph.filterState.showSecurity,
   showServiceNodes: state.graph.filterState.showServiceNodes,

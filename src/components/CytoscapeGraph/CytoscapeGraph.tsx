@@ -45,7 +45,7 @@ import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
+import { DurationInSeconds, RefreshIntervalInMs } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
@@ -63,7 +63,7 @@ type ReduxProps = {
   graphType: GraphType;
   layout: Layout;
   node?: NodeParamsType;
-  refreshInterval: PollIntervalInMs;
+  refreshInterval: RefreshIntervalInMs;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;

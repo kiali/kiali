@@ -43,12 +43,13 @@ import { computePrometheusRateParams } from '../../services/Prometheus';
 import OverviewCardLinks from './OverviewCardLinks';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { meshWideMTLSStatusSelector } from '../../store/Selectors';
+import { meshWideMTLSStatusSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
+import { DurationInSeconds, RefreshIntervalInMs } from 'types/Common';
 
 const gridStyle = style({ backgroundColor: '#f5f5f5', paddingBottom: '20px', marginTop: '20px' });
 const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '20px' });
@@ -67,8 +68,10 @@ type State = {
 };
 
 type ReduxProps = {
+  duration: DurationInSeconds;
   meshStatus: string;
   navCollapse: boolean;
+  refreshInterval: RefreshIntervalInMs;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -87,7 +90,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   componentDidUpdate(prevProps: OverviewProps) {
-    if (prevProps.navCollapse !== this.props.navCollapse) {
+    if (prevProps.duration !== this.props.duration || prevProps.navCollapse !== this.props.navCollapse) {
       // Reload to avoid graphical glitches with charts
       // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
       this.load();
@@ -439,8 +442,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  duration: durationSelector(state),
   meshStatus: meshWideMTLSStatusSelector(state),
-  navCollapse: state.userSettings.interface.navCollapse
+  navCollapse: state.userSettings.interface.navCollapse,
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);

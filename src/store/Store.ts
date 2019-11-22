@@ -2,7 +2,7 @@ import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
 import {
   DurationInSeconds,
-  PollIntervalInMs,
+  RefreshIntervalInMs,
   TimeInSeconds,
   UserName,
   RawDate,
@@ -100,7 +100,7 @@ export interface InterfaceSettings {
 
 export interface UserSettings {
   interface: InterfaceSettings;
-  refreshInterval: PollIntervalInMs;
+  refreshInterval: RefreshIntervalInMs;
   duration: DurationInSeconds;
 }
 

@@ -6,7 +6,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 
 export const perPageOptions: number[] = [5, 10, 15];
 const defaultDuration = 600;
-const defaultPollInterval = config.toolbar.defaultPollInterval;
+const defaultRefreshInterval = config.toolbar.defaultRefreshInterval;
 
 export const handleError = (error: string) => {
   AlertUtils.add(error);
@@ -84,12 +84,12 @@ export const currentDuration = (): number => {
   return HistoryManager.getDuration() || defaultDuration;
 };
 
-export const currentPollInterval = (): number => {
-  const pi = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL);
-  if (pi === undefined) {
-    return defaultPollInterval;
+export const currentRefreshInterval = (): number => {
+  const refreshInterval = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL);
+  if (refreshInterval === undefined) {
+    return defaultRefreshInterval;
   }
-  return pi;
+  return refreshInterval;
 };
 
 export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> => {

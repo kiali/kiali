@@ -14,8 +14,8 @@ const data = [
   },
   {
     id: 'metrics_filter_poll_interval',
-    default: config.toolbar.defaultPollInterval,
-    options: config.toolbar.pollInterval
+    default: config.toolbar.defaultRefreshInterval,
+    options: config.toolbar.refreshInterval
   },
   { id: 'graph_filter_layouts', default: 'cola', options: config.toolbar.graphLayouts }
 ];

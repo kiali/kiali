@@ -5,7 +5,6 @@ import * as _ from 'lodash';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-
 import { KialiAppState } from '../../store/Store';
 import {
   activeNamespacesSelector,
@@ -14,12 +13,9 @@ import {
   showUnusedNodesSelector
 } from '../../store/Selectors';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
-
 import { GraphType, NodeParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
-
 import GraphFindContainer from './GraphFind';
-import GraphRefreshContainer from './GraphRefresh';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
@@ -29,6 +25,7 @@ import { GraphActions } from '../../actions/GraphActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
+import TimeRangeContainer from 'components/Time/TimeRange';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -188,8 +185,8 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
           </div>
           <GraphFindContainer />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
-            <GraphRefreshContainer
-              id="graph_refresh_container"
+            <TimeRangeContainer
+              id="graph_time_range"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
             />

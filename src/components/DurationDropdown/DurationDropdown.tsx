@@ -35,7 +35,7 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
         id={this.props.id}
         disabled={this.props.disabled}
         handleSelect={key => this.props.setDuration(Number(key))}
-        value={this.props.duration}
+        value={String(this.props.duration)}
         label={this.props.durations[this.props.duration]}
         options={this.props.durations}
         tooltip={this.props.tooltip}

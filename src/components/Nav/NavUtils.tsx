@@ -1,6 +1,6 @@
 import { NodeType, NodeParamsType, GraphType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
-import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
+import { DurationInSeconds, RefreshIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { isKioskMode } from '../../utils/SearchParamUtils';
@@ -12,7 +12,7 @@ export type GraphUrlParams = {
   graphLayout: Layout;
   graphType: GraphType;
   node?: NodeParamsType;
-  refreshInterval: PollIntervalInMs;
+  refreshInterval: RefreshIntervalInMs;
   showServiceNodes: boolean;
   showUnusedNodes: boolean;
 };
@@ -23,7 +23,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
   q += `&${URLParam.GRAPH_TYPE}=${params.graphType}`;
   q += `&${URLParam.DURATION}=${params.duration}`;
-  q += `&${URLParam.POLL_INTERVAL}=${params.refreshInterval}`;
+  q += `&${URLParam.REFRESH_INTERVAL}=${params.refreshInterval}`;
   q += `&${URLParam.UNUSED_NODES}=${params.showUnusedNodes}`;
   return q;
 };
