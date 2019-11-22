@@ -152,3 +152,31 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
+
+// ServiceSpans is the API handler to fetch Jaeger spans of a specific service
+func ServiceSpans(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	queryParams := r.URL.Query()
+
+	requestToken, err := getToken(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
+		return
+	}
+
+	q := business.TracingQuery{
+		Namespace:    params["namespace"],
+		Service:      params["service"],
+		RequestToken: requestToken,
+		StartMicros:  queryParams.Get("startMicros"),
+		EndMicros:    queryParams.Get("endMicros"),
+	}
+
+	traces, err := business.GetSpans(&q)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, traces)
+}
