@@ -132,7 +132,12 @@ export class OverviewToolbar extends React.Component<Props, State> {
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
         rightToolbar={[
-          <TimeRangeContainer id="overview-time-range" disabled={false} handleRefresh={this.props.onRefresh} />
+          <TimeRangeContainer
+            key="overview-time-range"
+            id="overview-time-range"
+            disabled={false}
+            handleRefresh={this.props.onRefresh}
+          />
         ]}
       >
         <>
