@@ -110,7 +110,7 @@ class Refresh extends React.PureComponent<Props, State> {
     }
     let refresherRef: number | undefined = undefined;
     if (this.props.refreshInterval > 0) {
-      refresherRef = window.setInterval(this.props.handleRefresh, this.props.refreshInterval);
+      refresherRef = window.setInterval(this.handleRefresh, this.props.refreshInterval);
       this.setState({ refresherRef: refresherRef });
     }
   };
