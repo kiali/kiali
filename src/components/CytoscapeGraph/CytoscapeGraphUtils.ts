@@ -1,6 +1,10 @@
-import { Layout } from '../../types/GraphFilter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import { CytoscapeGlobalScratchNamespace, DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
+import {
+  CytoscapeGlobalScratchNamespace,
+  DecoratedGraphEdgeData,
+  DecoratedGraphNodeData,
+  Layout
+} from '../../types/Graph';
 import { DagreGraph } from './graphs/DagreGraph';
 import * as Cy from 'cytoscape';
 

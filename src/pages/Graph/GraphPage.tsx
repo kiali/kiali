@@ -9,16 +9,15 @@ import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../../types/Graph';
-import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
+import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN, EdgeLabelMode, Layout } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as AlertUtils from '../../utils/AlertUtils';
 import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
 import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
-import GraphFilterContainer from '../../components/GraphFilter/GraphFilter';
-import GraphLegend from '../../components/GraphFilter/GraphLegend';
+import GraphToolbarContainer from './GraphToolbar/GraphToolbar';
+import GraphLegend from './GraphLegend';
 import EmptyGraphLayoutContainer from '../../components/EmptyGraphLayout';
 import SummaryPanel from './SummaryPanel';
 import {
@@ -33,7 +32,7 @@ import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
 import { GraphActions } from '../../actions/GraphActions';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { PfColors } from 'components/Pf/PfColors';
@@ -312,7 +311,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
             )}
           </div>
           <div>
-            <GraphFilterContainer disabled={this.props.isLoading} onRefresh={this.handleRefresh} />
+            <GraphToolbarContainer disabled={this.props.isLoading} onRefresh={this.handleRefresh} />
           </div>
           <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
             <ErrorBoundary
@@ -444,10 +443,10 @@ const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
   layout: state.graph.layout,
   node: state.graph.node,
-  showLegend: state.graph.filterState.showLegend,
-  showSecurity: state.graph.filterState.showSecurity,
-  showServiceNodes: state.graph.filterState.showServiceNodes,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes,
+  showLegend: state.graph.toolbarState.showLegend,
+  showSecurity: state.graph.toolbarState.showSecurity,
+  showServiceNodes: state.graph.toolbarState.showServiceNodes,
+  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
   summaryData: state.graph.summaryData,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
@@ -477,7 +476,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     ),
   graphChanged: bindActionCreators(GraphActions.changed, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
-  toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch),
+  toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
   setLastRefreshAt: bindActionCreators(GlobalActions.setLastRefreshAt, dispatch),
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   startTour: bindActionCreators(TourActions.startTour, dispatch)

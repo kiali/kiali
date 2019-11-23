@@ -1,10 +1,13 @@
-import { EdgeLabelMode } from './GraphFilter';
 import Namespace from './Namespace';
 import { TimeInMilliseconds } from './Common';
 
 export interface CyData {
   updateTimestamp: TimeInMilliseconds;
   cyRef: any;
+}
+
+export interface Layout {
+  name: string;
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
@@ -29,6 +32,13 @@ export interface SummaryPanelPropType {
   duration: number;
   step: number;
   rateInterval: string;
+}
+
+export enum EdgeLabelMode {
+  NONE = 'noEdgeLabels',
+  REQUESTS_PER_SECOND = 'requestsPerSecond',
+  REQUESTS_PERCENTAGE = 'requestsPercentage',
+  RESPONSE_TIME_95TH_PERCENTILE = 'responseTime'
 }
 
 export enum GraphType {

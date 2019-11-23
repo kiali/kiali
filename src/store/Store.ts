@@ -8,8 +8,7 @@ import {
   RawDate,
   TimeInMilliseconds
 } from '../types/Common';
-import { EdgeLabelMode, Layout } from '../types/GraphFilter';
-import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
+import { EdgeLabelMode, Layout, GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
@@ -31,7 +30,7 @@ export interface NamespaceState {
 }
 
 // Various pages are described here with their various sections
-export interface GraphFilterState {
+export interface GraphToolbarState {
   // dropdown props
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
@@ -69,10 +68,10 @@ export interface GraphState {
   graphDataDuration: DurationInSeconds;
   graphDataTimestamp: TimeInSeconds;
   graphData: GraphElements;
-  filterState: GraphFilterState;
   layout: Layout;
   node?: NodeParamsType;
   summaryData: SummaryData | null;
+  toolbarState: GraphToolbarState;
 }
 
 export enum LoginStatus {

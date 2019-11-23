@@ -3,9 +3,8 @@ import { shallow } from 'enzyme';
 
 import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { Layout, EdgeLabelMode } from '../../../types/GraphFilter';
+import { GraphType, Layout, EdgeLabelMode } from '../../../types/Graph';
 import EmptyGraphLayoutContainer from '../../EmptyGraphLayout';
-import { GraphType } from '../../../types/Graph';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 
 jest.mock('../../../services/Api');

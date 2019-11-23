@@ -1,6 +1,5 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { CyData, CytoscapeClickEvent, NodeParamsType } from '../types/Graph';
-import { Layout } from '../types/GraphFilter';
+import { CyData, CytoscapeClickEvent, Layout, NodeParamsType } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 
 export const GraphActions = {

@@ -3,13 +3,13 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { HistoryManager, URLParam } from '../../app/History';
-import { GraphFilterState, KialiAppState } from '../../store/Store';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
-import { GraphType } from '../../types/Graph';
+import { HistoryManager, URLParam } from '../../../app/History';
+import { GraphToolbarState, KialiAppState } from '../../../store/Store';
+import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
+import { GraphType } from '../../../types/Graph';
+import { KialiAppAction } from 'actions/KialiAppAction';
 
-type ReduxProps = Omit<GraphFilterState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
+type ReduxProps = Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
   // Dispatch methods
   toggleCompressOnHide(): void;
   toggleGraphCircuitBreakers(): void;
@@ -191,29 +191,29 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  compressOnHide: state.graph.filterState.compressOnHide,
-  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
-  showMissingSidecars: state.graph.filterState.showMissingSidecars,
-  showNodeLabels: state.graph.filterState.showNodeLabels,
-  showSecurity: state.graph.filterState.showSecurity,
-  showServiceNodes: state.graph.filterState.showServiceNodes,
-  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  showVirtualServices: state.graph.filterState.showVirtualServices
+  compressOnHide: state.graph.toolbarState.compressOnHide,
+  showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
+  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
+  showNodeLabels: state.graph.toolbarState.showNodeLabels,
+  showSecurity: state.graph.toolbarState.showSecurity,
+  showServiceNodes: state.graph.toolbarState.showServiceNodes,
+  showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
+  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
+  showVirtualServices: state.graph.toolbarState.showVirtualServices
 });
 
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    toggleCompressOnHide: bindActionCreators(GraphFilterActions.toggleCompressOnHide, dispatch),
-    toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
-    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
-    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
-    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch),
-    toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
-    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
+    toggleCompressOnHide: bindActionCreators(GraphToolbarActions.toggleCompressOnHide, dispatch),
+    toggleGraphCircuitBreakers: bindActionCreators(GraphToolbarActions.toggleGraphCircuitBreakers, dispatch),
+    toggleGraphMissingSidecars: bindActionCreators(GraphToolbarActions.toggleGraphMissingSidecars, dispatch),
+    toggleGraphNodeLabels: bindActionCreators(GraphToolbarActions.toggleGraphNodeLabel, dispatch),
+    toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(GraphToolbarActions.toggleGraphVirtualServices, dispatch),
+    toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
+    toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch),
+    toggleUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)
   };
 };
 

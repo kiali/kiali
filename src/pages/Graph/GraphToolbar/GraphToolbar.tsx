@@ -5,24 +5,23 @@ import * as _ from 'lodash';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../../store/Store';
+import { KialiAppState } from '../../../store/Store';
 import {
   activeNamespacesSelector,
   edgeLabelModeSelector,
   graphTypeSelector,
   showUnusedNodesSelector
-} from '../../store/Selectors';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
-import { GraphType, NodeParamsType } from '../../types/Graph';
-import { EdgeLabelMode } from '../../types/GraphFilter';
+} from '../../../store/Selectors';
+import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
+import { GraphType, NodeParamsType, EdgeLabelMode } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
-import history, { HistoryManager, URLParam } from '../../app/History';
-import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import Namespace, { namespacesFromString, namespacesToString } from '../../types/Namespace';
-import { NamespaceActions } from '../../actions/NamespaceAction';
-import { GraphActions } from '../../actions/GraphActions';
-import { KialiAppAction } from '../../actions/KialiAppAction';
+import history, { HistoryManager, URLParam } from '../../../app/History';
+import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
+import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
+import { NamespaceActions } from '../../../actions/NamespaceAction';
+import { GraphActions } from '../../../actions/GraphActions';
+import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import TimeRangeContainer from 'components/Time/TimeRange';
@@ -41,7 +40,7 @@ type ReduxProps = {
   setShowUnusedNodes: (unusedNodes: boolean) => void;
 };
 
-type GraphFilterProps = ReduxProps & {
+type GraphToolbarProps = ReduxProps & {
   disabled: boolean;
   onRefresh: () => void;
 };
@@ -58,7 +57,7 @@ const marginLeftRight = style({
   margin: '0 10px 0 10px'
 });
 
-export class GraphFilter extends React.PureComponent<GraphFilterProps> {
+export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
   /**
    *  Key-value pair object representation of GraphType enum.  Values are human-readable versions of enum keys.
    *
@@ -79,7 +78,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     router: () => null
   };
 
-  constructor(props: GraphFilterProps) {
+  constructor(props: GraphToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
     const urlParams = new URLSearchParams(history.location.search);
@@ -153,7 +152,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
           <div style={{ display: 'flex' }}>
             {this.props.node ? (
               <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
-                Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}
+                Back to full {GraphToolbar.GRAPH_TYPES[graphTypeKey]}
               </Button>
             ) : (
               <TourStopContainer info={GraphTourStops.GraphType}>
@@ -162,8 +161,8 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
                   disabled={this.props.disabled}
                   handleSelect={this.setGraphType}
                   value={graphTypeKey}
-                  label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
-                  options={GraphFilter.GRAPH_TYPES}
+                  label={GraphToolbar.GRAPH_TYPES[graphTypeKey]}
+                  options={GraphToolbar.GRAPH_TYPES}
                 />
               </TourStopContainer>
             )}
@@ -174,8 +173,8 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
                   disabled={false}
                   handleSelect={this.setEdgeLabelMode}
                   value={edgeLabelModeKey}
-                  label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
-                  options={GraphFilter.EDGE_LABEL_MODES}
+                  label={GraphToolbar.EDGE_LABEL_MODES[edgeLabelModeKey]}
+                  options={GraphToolbar.EDGE_LABEL_MODES}
                 />
               </TourStopContainer>
             </div>
@@ -222,16 +221,16 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
-    setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
-    setGraphType: bindActionCreators(GraphFilterActions.setGraphType, dispatch),
+    setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
+    setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
-    setShowUnusedNodes: bindActionCreators(GraphFilterActions.setShowUnusedNodes, dispatch)
+    setShowUnusedNodes: bindActionCreators(GraphToolbarActions.setShowUnusedNodes, dispatch)
   };
 };
 
-const GraphFilterContainer = connect(
+const GraphToolbarContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(GraphFilter);
+)(GraphToolbar);
 
-export default GraphFilterContainer;
+export default GraphToolbarContainer;

@@ -4,7 +4,7 @@ import { Button, EmptyState, EmptyStateBody, EmptyStateIcon, EmptyStateVariant, 
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
-import { GraphFilterActions } from '../actions/GraphFilterActions';
+import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
@@ -14,13 +14,13 @@ import { KialiIcon } from '../config/KialiIcon';
 const mapStateToProps = (state: KialiAppState) => {
   return {
     error: state.graph.error,
-    isDisplayingUnusedNodes: state.graph.filterState.showUnusedNodes
+    isDisplayingUnusedNodes: state.graph.toolbarState.showUnusedNodes
   };
 };
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    displayUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
+    displayUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)
   };
 };
 

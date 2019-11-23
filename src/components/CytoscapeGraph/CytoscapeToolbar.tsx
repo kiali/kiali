@@ -7,10 +7,9 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
-
 import { PfColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { Layout } from '../../types/GraphFilter';
+import { Layout } from '../../types/Graph';
 import { ColaGraph } from './graphs/ColaGraph';
 import { CoseGraph } from './graphs/CoseGraph';
 import { DagreGraph } from './graphs/DagreGraph';
@@ -18,7 +17,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { HistoryManager, URLParam } from '../../app/History';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 
@@ -200,12 +199,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
 
 const mapStateToProps = (state: KialiAppState) => ({
   layout: state.graph.layout,
-  showLegend: state.graph.filterState.showLegend
+  showLegend: state.graph.toolbarState.showLegend
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
-  toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
+  toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch)
 });
 
 const CytoscapeToolbarContainer = connect(

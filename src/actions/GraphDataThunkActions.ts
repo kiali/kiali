@@ -2,12 +2,11 @@ import { ThunkDispatch } from 'redux-thunk';
 
 import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
-import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
+import { EdgeLabelMode, GraphType, GroupByType, NodeParamsType } from '../types/Graph';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { KialiAppAction } from './KialiAppAction';
 import { GraphDataActions } from './GraphDataActions';
 import * as AlertUtils from '../utils/AlertUtils';
-import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 

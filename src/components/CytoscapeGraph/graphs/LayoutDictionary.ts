@@ -1,7 +1,7 @@
 import { ColaGraph } from './ColaGraph';
 import { CoseGraph } from './CoseGraph';
 import { DagreGraph } from './DagreGraph';
-import { Layout } from '../../../types/GraphFilter';
+import { Layout } from '../../../types/Graph';
 
 const LayoutMap = {
   cola: ColaGraph.getLayout(),

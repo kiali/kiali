@@ -26,19 +26,19 @@ const namespaceFilter = (state: KialiAppState) => state.namespaces.filter;
 
 export const namespaceFilterSelector = createIdentitySelector(namespaceFilter);
 
-const edgeLabelMode = (state: KialiAppState) => state.graph.filterState.edgeLabelMode;
+const edgeLabelMode = (state: KialiAppState) => state.graph.toolbarState.edgeLabelMode;
 
 export const edgeLabelModeSelector = createIdentitySelector(edgeLabelMode);
 
-const findValue = (state: KialiAppState) => state.graph.filterState.findValue;
+const findValue = (state: KialiAppState) => state.graph.toolbarState.findValue;
 
 export const findValueSelector = createIdentitySelector(findValue);
 
-const graphType = (state: KialiAppState) => state.graph.filterState.graphType;
+const graphType = (state: KialiAppState) => state.graph.toolbarState.graphType;
 
 export const graphTypeSelector = createIdentitySelector(graphType);
 
-const hideValue = (state: KialiAppState) => state.graph.filterState.hideValue;
+const hideValue = (state: KialiAppState) => state.graph.toolbarState.hideValue;
 
 export const hideValueSelector = createIdentitySelector(hideValue);
 
@@ -54,7 +54,7 @@ const lastRefreshAt = (state: KialiAppState) => state.globalState.lastRefreshAt;
 
 export const lastRefreshAtSelector = createIdentitySelector(lastRefreshAt);
 
-const showUnusedNodes = (state: KialiAppState) => state.graph.filterState.showUnusedNodes;
+const showUnusedNodes = (state: KialiAppState) => state.graph.toolbarState.showUnusedNodes;
 
 export const showUnusedNodesSelector = createIdentitySelector(showUnusedNodes);
 

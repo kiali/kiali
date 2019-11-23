@@ -1,5 +1,4 @@
-import { NodeType, NodeParamsType, GraphType } from '../../types/Graph';
-import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType } from '../../types/Graph';
 import { DurationInSeconds, RefreshIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';

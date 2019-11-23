@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-
 import { GraphFind } from '../GraphFind';
-import { EdgeLabelMode } from 'types/GraphFilter';
+import { EdgeLabelMode } from 'types/Graph';
 
 const testHandler = () => {
   console.log('handled');

@@ -3,9 +3,8 @@ import { GraphActions } from '../actions/GraphActions';
 import { GraphDataActions } from '../actions/GraphDataActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
-import { EdgeLabelMode } from '../types/GraphFilter';
-import { GraphType } from '../types/Graph';
-import { GraphFilterActions } from '../actions/GraphFilterActions';
+import { EdgeLabelMode, GraphType } from '../types/Graph';
+import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
 
@@ -20,7 +19,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   layout: DagreGraph.getLayout(),
   node: undefined,
   summaryData: null,
-  filterState: {
+  toolbarState: {
     compressOnHide: true,
     edgeLabelMode: EdgeLabelMode.NONE,
     findValue: '',
@@ -102,21 +101,21 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       });
     // Filter actions
     //
-    case getType(GraphFilterActions.setEdgelLabelMode):
+    case getType(GraphToolbarActions.setEdgelLabelMode):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
+        toolbarState: updateState(state.toolbarState, {
           edgeLabelMode: action.payload
         })
       });
-    case getType(GraphFilterActions.setFindValue):
+    case getType(GraphToolbarActions.setFindValue):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
+        toolbarState: updateState(state.toolbarState, {
           findValue: action.payload
         })
       });
-    case getType(GraphFilterActions.setGraphType):
+    case getType(GraphToolbarActions.setGraphType):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
+        toolbarState: updateState(state.toolbarState, {
           graphType: action.payload
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
@@ -125,70 +124,70 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
-    case getType(GraphFilterActions.setHideValue):
+    case getType(GraphToolbarActions.setHideValue):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
+        toolbarState: updateState(state.toolbarState, {
           hideValue: action.payload
         })
       });
-    case getType(GraphFilterActions.setShowUnusedNodes):
+    case getType(GraphToolbarActions.setShowUnusedNodes):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
+        toolbarState: updateState(state.toolbarState, {
           showUnusedNodes: action.payload
         })
       });
-    case getType(GraphFilterActions.toggleCompressOnHide):
+    case getType(GraphToolbarActions.toggleCompressOnHide):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          compressOnHide: !state.filterState.compressOnHide
+        toolbarState: updateState(state.toolbarState, {
+          compressOnHide: !state.toolbarState.compressOnHide
         })
       });
-    case getType(GraphFilterActions.toggleFindHelp):
+    case getType(GraphToolbarActions.toggleFindHelp):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showFindHelp: !state.filterState.showFindHelp
+        toolbarState: updateState(state.toolbarState, {
+          showFindHelp: !state.toolbarState.showFindHelp
         })
       });
-    case getType(GraphFilterActions.toggleGraphNodeLabel):
+    case getType(GraphToolbarActions.toggleGraphNodeLabel):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showNodeLabels: !state.filterState.showNodeLabels
+        toolbarState: updateState(state.toolbarState, {
+          showNodeLabels: !state.toolbarState.showNodeLabels
         })
       });
-    case getType(GraphFilterActions.toggleGraphCircuitBreakers):
+    case getType(GraphToolbarActions.toggleGraphCircuitBreakers):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showCircuitBreakers: !state.filterState.showCircuitBreakers
+        toolbarState: updateState(state.toolbarState, {
+          showCircuitBreakers: !state.toolbarState.showCircuitBreakers
         })
       });
-    case getType(GraphFilterActions.toggleGraphVirtualServices):
+    case getType(GraphToolbarActions.toggleGraphVirtualServices):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showVirtualServices: !state.filterState.showVirtualServices
+        toolbarState: updateState(state.toolbarState, {
+          showVirtualServices: !state.toolbarState.showVirtualServices
         })
       });
-    case getType(GraphFilterActions.toggleGraphMissingSidecars):
+    case getType(GraphToolbarActions.toggleGraphMissingSidecars):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showMissingSidecars: !state.filterState.showMissingSidecars
+        toolbarState: updateState(state.toolbarState, {
+          showMissingSidecars: !state.toolbarState.showMissingSidecars
         })
       });
-    case getType(GraphFilterActions.toggleGraphSecurity):
+    case getType(GraphToolbarActions.toggleGraphSecurity):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showSecurity: !state.filterState.showSecurity
+        toolbarState: updateState(state.toolbarState, {
+          showSecurity: !state.toolbarState.showSecurity
         })
       });
-    case getType(GraphFilterActions.toggleLegend):
+    case getType(GraphToolbarActions.toggleLegend):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showLegend: !state.filterState.showLegend
+        toolbarState: updateState(state.toolbarState, {
+          showLegend: !state.toolbarState.showLegend
         })
       });
-    case getType(GraphFilterActions.toggleServiceNodes):
+    case getType(GraphToolbarActions.toggleServiceNodes):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showServiceNodes: !state.filterState.showServiceNodes
+        toolbarState: updateState(state.toolbarState, {
+          showServiceNodes: !state.toolbarState.showServiceNodes
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
         graphData: INITIAL_GRAPH_STATE.graphData,
@@ -196,16 +195,16 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
-    case getType(GraphFilterActions.toggleTrafficAnimation):
+    case getType(GraphToolbarActions.toggleTrafficAnimation):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showTrafficAnimation: !state.filterState.showTrafficAnimation
+        toolbarState: updateState(state.toolbarState, {
+          showTrafficAnimation: !state.toolbarState.showTrafficAnimation
         })
       });
-    case getType(GraphFilterActions.toggleUnusedNodes):
+    case getType(GraphToolbarActions.toggleUnusedNodes):
       return updateState(state, {
-        filterState: updateState(state.filterState, {
-          showUnusedNodes: !state.filterState.showUnusedNodes
+        toolbarState: updateState(state.toolbarState, {
+          showUnusedNodes: !state.toolbarState.showUnusedNodes
         })
       });
     default:

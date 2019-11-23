@@ -3,16 +3,15 @@ import { Button, Tooltip, ButtonVariant, TextInput, Form } from '@patternfly/rea
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../../store/Store';
-import { findValueSelector, hideValueSelector, edgeLabelModeSelector } from '../../store/Selectors';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import GraphHelpFind from '../../pages/Graph/GraphHelpFind';
-import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
-import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
-import { CyData, NodeType } from '../../types/Graph';
-import { Layout, EdgeLabelMode } from 'types/GraphFilter';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { KialiAppState } from '../../../store/Store';
+import { findValueSelector, hideValueSelector, edgeLabelModeSelector } from '../../../store/Selectors';
+import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
+import { KialiAppAction } from '../../../actions/KialiAppAction';
+import GraphHelpFind from '../../../pages/Graph/GraphHelpFind';
+import { CyNode, CyEdge } from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { Layout, EdgeLabelMode, CyData, NodeType } from '../../../types/Graph';
+import * as AlertUtils from '../../../utils/AlertUtils';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
@@ -679,25 +678,25 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  compressOnHide: state.graph.filterState.compressOnHide,
+  compressOnHide: state.graph.toolbarState.compressOnHide,
   cyData: state.graph.cyData,
   edgeLabelMode: edgeLabelModeSelector(state),
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
-  showFindHelp: state.graph.filterState.showFindHelp,
-  showSecurity: state.graph.filterState.showSecurity,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes
+  showFindHelp: state.graph.toolbarState.showFindHelp,
+  showSecurity: state.graph.toolbarState.showSecurity,
+  showUnusedNodes: state.graph.toolbarState.showUnusedNodes
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
-    setFindValue: bindActionCreators(GraphFilterActions.setFindValue, dispatch),
-    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
-    setHideValue: bindActionCreators(GraphFilterActions.setHideValue, dispatch),
-    toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch),
-    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
+    setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
+    setFindValue: bindActionCreators(GraphToolbarActions.setFindValue, dispatch),
+    toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
+    setHideValue: bindActionCreators(GraphToolbarActions.setHideValue, dispatch),
+    toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
+    toggleUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)
   };
 };
 

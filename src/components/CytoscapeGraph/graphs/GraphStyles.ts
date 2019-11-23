@@ -6,9 +6,9 @@ import {
   PFColorVal,
   PFAlertColorVals
 } from '../../../components/Pf/PfColors';
-import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import {
+  EdgeLabelMode,
   GraphType,
   NodeType,
   CytoscapeGlobalScratchNamespace,

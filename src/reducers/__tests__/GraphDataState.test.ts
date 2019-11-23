@@ -2,8 +2,7 @@ import graphDataState from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphDataActions } from '../../actions/GraphDataActions';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { EdgeLabelMode } from '../../types/GraphFilter';
-import { GraphType } from '../../types/Graph';
+import { EdgeLabelMode, GraphType } from '../../types/Graph';
 import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 
 describe('GraphDataState', () => {
@@ -13,7 +12,13 @@ describe('GraphDataState', () => {
       error: undefined,
       isLoading: false,
       isError: false,
-      filterState: {
+      graphDataTimestamp: 0,
+      graphDataDuration: 0,
+      graphData: {},
+      layout: DagreGraph.getLayout(),
+      node: undefined,
+      summaryData: null,
+      toolbarState: {
         compressOnHide: true,
         edgeLabelMode: EdgeLabelMode.NONE,
         findValue: '',
@@ -29,13 +34,7 @@ describe('GraphDataState', () => {
         showTrafficAnimation: false,
         showUnusedNodes: false,
         showVirtualServices: true
-      },
-      graphDataTimestamp: 0,
-      graphDataDuration: 0,
-      graphData: {},
-      layout: DagreGraph.getLayout(),
-      node: undefined,
-      summaryData: null
+      }
     });
   });
 

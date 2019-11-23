@@ -1,7 +1,7 @@
 import { GlobalAction } from './GlobalActions';
 import { GraphAction } from './GraphActions';
 import { GraphDataAction } from './GraphDataActions';
-import { GraphFilterAction } from './GraphFilterActions';
+import { GraphToolbarAction } from './GraphToolbarActions';
 import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
 import { MessageCenterAction } from './MessageCenterActions';
@@ -15,7 +15,7 @@ export type KialiAppAction =
   | GlobalAction
   | GraphAction
   | GraphDataAction
-  | GraphFilterAction
+  | GraphToolbarAction
   | HelpDropdownAction
   | LoginAction
   | MessageCenterAction

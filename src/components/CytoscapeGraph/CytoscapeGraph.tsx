@@ -34,12 +34,13 @@ import {
   CytoscapeMouseInEvent,
   CytoscapeMouseOutEvent,
   DecoratedGraphElements,
+  EdgeLabelMode,
   GraphType,
+  Layout,
   NodeParamsType,
   NodeType,
   UNKNOWN
 } from '../../types/Graph';
-import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
 import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
@@ -969,14 +970,14 @@ const mapStateToProps = (state: KialiAppState) => ({
   layout: state.graph.layout,
   node: state.graph.node,
   refreshInterval: refreshIntervalSelector(state),
-  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
-  showMissingSidecars: state.graph.filterState.showMissingSidecars,
-  showNodeLabels: state.graph.filterState.showNodeLabels,
-  showSecurity: state.graph.filterState.showSecurity,
-  showServiceNodes: state.graph.filterState.showServiceNodes,
-  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  showVirtualServices: state.graph.filterState.showVirtualServices
+  showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
+  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
+  showNodeLabels: state.graph.toolbarState.showNodeLabels,
+  showSecurity: state.graph.toolbarState.showSecurity,
+  showServiceNodes: state.graph.toolbarState.showServiceNodes,
+  showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
+  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
+  showVirtualServices: state.graph.toolbarState.showVirtualServices
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
