@@ -114,6 +114,23 @@ func TestMountInfo(t *testing.T) {
 			},
 			invalid: false,
 		},
+		{
+			name: "CIFS mounted at /with/a-hyphen",
+			s:    "454 29 0:87 / /with/a-hyphen rw,relatime shared:255 - cifs //remote-storage/Path rw,vers=3.1.1,cache=strict,username=user,uid=1000,forceuid,gid=0,noforcegid,addr=127.0.0.1,file_mode=0755,dir_mode=0755,soft,nounix,serverino,mapposix,echo_interval=60,actimeo=1",
+			mount: &MountInfo{
+				MountId:        454,
+				ParentId:       29,
+				MajorMinorVer:  "0:87",
+				Root:           "/",
+				MountPoint:     "/with/a-hyphen",
+				Options:        map[string]string{"rw": "", "relatime": ""},
+				OptionalFields: map[string]string{"shared": "255"},
+				FSType:         "cifs",
+				Source:         "//remote-storage/Path",
+				SuperOptions:   map[string]string{"rw": "", "vers": "3.1.1", "cache": "strict", "username": "user", "uid": "1000", "forceuid": "", "gid": "0", "noforcegid": "", "addr": "127.0.0.1", "file_mode": "0755", "dir_mode": "0755", "soft": "", "nounix": "", "serverino": "", "mapposix": "", "echo_interval": "60", "actimeo": "1"},
+			},
+			invalid: false,
+		},
 	}
 
 	for i, test := range tests {

@@ -22,8 +22,7 @@ import (
 
 func TestGetStats(t *testing.T) {
 	tests := []struct {
-		invalid bool
-		stat    *iscsi.Stats
+		stat *iscsi.Stats
 	}{
 		{
 			stat: &iscsi.Stats{

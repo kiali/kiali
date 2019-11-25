@@ -1,3 +1,5 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
 approvers:
 - caesarxuchao
 - deads2k
@@ -13,3 +15,5 @@ reviewers:
 - soltysh
 - sttts
 - yliaog
+labels:
+- sig/api-machinery

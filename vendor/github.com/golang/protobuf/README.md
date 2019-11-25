@@ -1,4 +1,4 @@
-# Go support for Protocol Buffers - Google's data interchange format
+# Go support for Protocol Buffers
 
 [![Build Status](https://travis-ci.org/golang/protobuf.svg?branch=master)](https://travis-ci.org/golang/protobuf)
 [![GoDoc](https://godoc.org/github.com/golang/protobuf?status.svg)](https://godoc.org/github.com/golang/protobuf)
@@ -83,19 +83,15 @@ be:
 
 - Relative to the import path:
 
-```shell
-  protoc --go_out=. inputs/x.proto
-  # writes ./github.com/golang/protobuf/p/x.pb.go
-```
+	protoc --go_out=. inputs/x.proto
+	# writes ./github.com/golang/protobuf/p/x.pb.go
 
   (This can work well with `--go_out=$GOPATH`.)
 
 - Relative to the input file:
 
-```shell
-protoc --go_out=paths=source_relative:. inputs/x.proto
-# generate ./inputs/x.pb.go
-```
+	protoc --go_out=paths=source_relative:. inputs/x.proto
+	# generate ./inputs/x.pb.go
 
 ## Generated code ##
 
@@ -161,6 +157,9 @@ Consider file test.proto, containing
 	  required string label = 1;
 	  optional int32 type = 2 [default=77];
 	  repeated int64 reps = 3;
+	  optional group OptionalGroup = 4 {
+	    required string RequiredField = 5;
+	  }
 	}
 ```
 
@@ -177,10 +176,13 @@ To create and play with a Test object from the example package,
 	)
 
 	func main() {
-		test := &example.Test{
+		test := &example.Test {
 			Label: proto.String("hello"),
 			Type:  proto.Int32(17),
 			Reps:  []int64{1, 2, 3},
+			Optionalgroup: &example.Test_OptionalGroup {
+				RequiredField: proto.String("good bye"),
+			},
 		}
 		data, err := proto.Marshal(test)
 		if err != nil {

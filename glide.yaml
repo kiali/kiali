@@ -3,17 +3,13 @@ import:
 - package: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - package: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: v2.2.7
 - package: github.com/gorilla/mux
   version: ^1.6.1
 - package: k8s.io/client-go
-  version: v8.0.0
+  version: kubernetes-1.14.6
 - package: k8s.io/apimachinery
-  version: kubernetes-1.11.1
-- package: github.com/golang/protobuf
-  version: v1.2.0
-- package: github.com/gogo/protobuf
-  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7 # From vendor/k8s.io/api/Godeps/Godeps.json
+  version: kubernetes-1.14.6
 - package: github.com/prometheus/client_golang
   version: v0.9.2
 - package: github.com/prometheus/common
@@ -24,14 +20,10 @@ import:
   version: v3.2.0
 - package: github.com/hashicorp/go-version
   version: 23480c0665776210b5fbbac6eaaee40e3e6a96b7
-- package: github.com/hashicorp/golang-lru
-  version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
-- package: github.com/hashicorp/golang-lru/simplelru
-  version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
 - package: github.com/openshift/api
-  version: release-3.11
+  version: release-4.2
 - package: github.com/openshift/client-go
-  version: release-3.11
+  version: release-4.2
 - package: k8s.io/kube-openapi
   version: 91cfa479c814065e420cee7ed227db0f63a5854e
 - package: github.com/kiali/k-charted

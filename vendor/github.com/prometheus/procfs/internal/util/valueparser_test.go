@@ -28,6 +28,19 @@ func TestValueParser(t *testing.T) {
 		fn   func(t *testing.T, vp *util.ValueParser)
 	}{
 		{
+			name: "ok Int",
+			v:    "10",
+			ok:   true,
+			fn: func(t *testing.T, vp *util.ValueParser) {
+				want := 10
+				got := vp.Int()
+
+				if diff := cmp.Diff(want, got); diff != "" {
+					t.Fatalf("unexpected integer (-want +got):\n%s", diff)
+				}
+			},
+		},
+		{
 			name: "bad PInt64",
 			v:    "hello",
 			fn: func(_ *testing.T, vp *util.ValueParser) {
