@@ -207,7 +207,7 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1-12345",
 				CreationTimestamp: meta_v1.NewTime(t1),
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "Deployment",
 					Name:       "duplicated-v1",
@@ -525,7 +525,7 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1-3618568057",
 				CreationTimestamp: meta_v1.NewTime(t1),
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "Deployment",
 					Name:       "details-v1",
@@ -560,7 +560,7 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 				Name:              "details-v1-3618568057-dnkjp",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "ReplicaSet",
 					Name:       "details-v1-3618568057",
@@ -569,12 +569,12 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					core_v1.Container{Name: "details", Image: "whatever"},
-					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
 				InitContainers: []core_v1.Container{
-					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
@@ -593,7 +593,7 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
-			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+			OwnerReferences: []meta_v1.OwnerReference{{
 				Controller: &controller,
 				Kind:       "ReplicaSet",
 				Name:       "details-v1-3618568057",
@@ -602,12 +602,12 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 		},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
-				core_v1.Container{Name: "details", Image: "whatever"},
-				core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+				{Name: "details", Image: "whatever"},
+				{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 			},
 			InitContainers: []core_v1.Container{
-				core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-				core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				{Name: "enable-core-dump", Image: "alpine"},
 			},
 		},
 	}
@@ -632,7 +632,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 				Name:              "duplicated-v1-3618568057-1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "StatefulSet",
 					Name:       "duplicated-v1",
@@ -641,12 +641,12 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					core_v1.Container{Name: "details", Image: "whatever"},
-					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
 				InitContainers: []core_v1.Container{
-					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
@@ -655,7 +655,7 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 				Name:              "duplicated-v1-3618568057-3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "StatefulSet",
 					Name:       "duplicated-v1",
@@ -664,12 +664,12 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					core_v1.Container{Name: "details", Image: "whatever"},
-					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
 				InitContainers: []core_v1.Container{
-					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
@@ -696,12 +696,12 @@ func FakePodsNoController() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					core_v1.Container{Name: "details", Image: "whatever"},
-					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
 				InitContainers: []core_v1.Container{
-					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
@@ -721,7 +721,7 @@ func FakePodsFromDaemonSet() []core_v1.Pod {
 				Name:              "daemon-pod",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
 					Kind:       "DaemonSet",
 					Name:       "daemon-controller",
@@ -730,12 +730,12 @@ func FakePodsFromDaemonSet() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					core_v1.Container{Name: "details", Image: "whatever"},
-					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
 				InitContainers: []core_v1.Container{
-					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},

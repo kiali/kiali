@@ -16,15 +16,15 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.NewConfig()
 	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation-2",
 			Title:      "Annotation 2",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation-1",
 			Title:      "Annotation 1",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation-4",
 			Title:      "Annotation 4",
 		},
@@ -53,7 +53,7 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.NewConfig()
 	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
@@ -80,7 +80,7 @@ func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.NewConfig()
 	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
@@ -107,7 +107,7 @@ func TestParseDeploymentConfigToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.NewConfig()
 	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},
@@ -133,7 +133,7 @@ func TestParsePodToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	cfg := config.NewConfig()
 	cfg.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "annotation",
 			Title:      "Annotation",
 		},

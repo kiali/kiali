@@ -20,19 +20,19 @@ func TestPodFullyParsing(t *testing.T) {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{"apps": "details", "version": "v1"},
-			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+			OwnerReferences: []meta_v1.OwnerReference{{
 				Kind: "ReplicaSet",
 				Name: "details-v1-3618568057",
 			}},
 			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
 		Spec: core_v1.PodSpec{
 			Containers: []core_v1.Container{
-				core_v1.Container{Name: "details", Image: "whatever"},
-				core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+				{Name: "details", Image: "whatever"},
+				{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 			},
 			InitContainers: []core_v1.Container{
-				core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-				core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				{Name: "enable-core-dump", Image: "alpine"},
 			},
 		}}
 
@@ -41,7 +41,7 @@ func TestPodFullyParsing(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
+	assert.Equal([]Reference{{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
 	assert.Equal("istio-proxy", pod.IstioContainers[0].Name)
 	assert.Equal("docker.io/istio/proxy:0.7.1", pod.IstioContainers[0].Image)
@@ -61,7 +61,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{"apps": "details", "version": "v1"},
-			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+			OwnerReferences: []meta_v1.OwnerReference{{
 				Kind: "ReplicaSet",
 				Name: "details-v1-3618568057",
 			}},
@@ -73,7 +73,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
+	assert.Equal([]Reference{{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
 	assert.Equal("istio-proxy", pod.IstioContainers[0].Name)
 	assert.Equal("", pod.IstioContainers[0].Image)

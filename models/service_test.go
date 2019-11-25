@@ -221,12 +221,12 @@ func fakePods() []core_v1.Pod {
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
 
 	return []core_v1.Pod{
-		core_v1.Pod{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "reviews-v1-1234",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{"apps": "reviews", "version": "v1"}}},
-		core_v1.Pod{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "reviews-v2-1234",
 				CreationTimestamp: meta_v1.NewTime(t2),

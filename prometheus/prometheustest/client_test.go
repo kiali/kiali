@@ -418,7 +418,7 @@ func mockRange(api *PromAPIMock, query string, ret model.SampleValue) {
 	matrix := model.Matrix{
 		&model.SampleStream{
 			Metric: metric,
-			Values: []model.SamplePair{model.SamplePair{Timestamp: 0, Value: ret}}}}
+			Values: []model.SamplePair{{Timestamp: 0, Value: ret}}}}
 	mockQueryRange(api, query, &matrix)
 }
 
@@ -431,7 +431,7 @@ func mockWithRange(api *PromAPIMock, qRange prom_v1.Range, query string, ret mod
 	matrix := model.Matrix{
 		&model.SampleStream{
 			Metric: metric,
-			Values: []model.SamplePair{model.SamplePair{Timestamp: 0, Value: ret}}}}
+			Values: []model.SamplePair{{Timestamp: 0, Value: ret}}}}
 	api.On(
 		"QueryRange",
 		mock.AnythingOfType("*context.emptyCtx"),
