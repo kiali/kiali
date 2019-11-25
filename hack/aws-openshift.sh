@@ -417,6 +417,9 @@ DEFAULT_CONTROL_PLANE_NAMESPACE="istio-system"
 # Default namespace where bookinfo is to be installed
 DEFAULT_BOOKINFO_NAMESPACE="bookinfo"
 
+# Temporarily ignore the version check by default since the current installer/client releases do not report correct versions
+IGNORE_VERSION_CHECK="true"
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
