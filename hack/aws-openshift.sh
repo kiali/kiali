@@ -29,6 +29,10 @@ infomsg() {
   echo "HACK: $1"
 }
 
+warnmsg() {
+  echo "HACK: $1" >&2
+}
+
 debug() {
   if [ "$_VERBOSE" == "true" ]; then
     infomsg "DEBUG: $1"
@@ -762,12 +766,12 @@ if [ -f "${OPENSHIFT_INSTALLER_EXE}" ]; then
   _existingVersion=$(${OPENSHIFT_INSTALLER_EXE} version | head -n 1 | sed ${SEDOPTIONS} 's/^.*v\([0-9.]*\).*/\1/')
   _desiredVersion=$(echo -n ${OPENSHIFT_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^\([0-9.]*\).*/\1/')
   if [ "${_existingVersion}" != "${_desiredVersion}" ]; then
-    infomsg "===== WARNING ====="
-    infomsg "You already have the OpenShift installer but it does not match the version you want."
-    infomsg "This appears incorrect: ${OPENSHIFT_INSTALLER_EXE}"
-    infomsg "The version of the installer is: ${_existingVersion}"
-    infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
-    infomsg "===== WARNING ====="
+    warnmsg "===== WARNING ====="
+    warnmsg "You already have the OpenShift installer but it does not match the version you want."
+    warnmsg "This appears incorrect: ${OPENSHIFT_INSTALLER_EXE}"
+    warnmsg "The version of the installer is: ${_existingVersion}"
+    warnmsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
+    warnmsg "===== WARNING ====="
     if [ "${IGNORE_VERSION_CHECK}" != "true" ]; then
       exit 1
     fi
@@ -804,12 +808,12 @@ if [ -f "${OC}" ]; then
   _existingVersion=$(${OC} version --client | head -n 1 | sed ${SEDOPTIONS} 's/^[^0-9]*\([0-9.]*\).*/\1/')
   _desiredVersion=$(echo -n ${OPENSHIFT_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^\([0-9.]*\).*/\1/')
   if [ "${_existingVersion}" != "${_desiredVersion}" ]; then
-    infomsg "===== WARNING ====="
-    infomsg "You already have the OpenShift oc client but it does not match the version you want."
-    infomsg "This appears incorrect: ${OC}"
-    infomsg "The version of the oc client is: ${_existingVersion}"
-    infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
-    infomsg "===== WARNING ====="
+    warnmsg "===== WARNING ====="
+    warnmsg "You already have the OpenShift oc client but it does not match the version you want."
+    warnmsg "This appears incorrect: ${OC}"
+    warnmsg "The version of the oc client is: ${_existingVersion}"
+    warnmsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
+    warnmsg "===== WARNING ====="
     if [ "${IGNORE_VERSION_CHECK}" != "true" ]; then
       exit 1
     fi
