@@ -17,6 +17,7 @@
 ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
+ISTIO_NAMESPACE="istio-system"
 RATE=1
 AUTO_INJECTION="true"
 
@@ -30,6 +31,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -id|--istio-dir)
       ISTIO_DIR="$2"
+      shift;shift
+      ;;
+    -in|--istio-namespace)
+      ISTIO_NAMESPACE="$2"
       shift;shift
       ;;
     -c|--client-exe)
@@ -65,6 +70,7 @@ while [[ $# -gt 0 ]]; do
 Valid command line arguments:
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected or manually injected (default: true).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
+  -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo
@@ -185,19 +191,19 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n istio-system
+  $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
   if [[ "$CLIENT_EXE" = *"oc" ]]; then
-    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n istio-system)
+    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_SYSTEM})
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
     # for now, we only support minikube k8s environments
     if minikube status > /dev/null 2>&1 ; then
       INGRESS_HOST=$(minikube ip)
-      INGRESS_PORT=$($CLIENT_EXE -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+      INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
       echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
     fi
