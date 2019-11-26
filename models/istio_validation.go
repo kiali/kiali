@@ -214,8 +214,8 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: ErrorSeverity,
 	},
 	"service.deployment.port.mismatch": {
-		Message:  "Service port and deployment port do not match",
-		Severity: ErrorSeverity,
+		Message:  "Deployment exposing same port as Service not found",
+		Severity: WarningSeverity,
 	},
 	"validation.unable.cross-namespace": {
 		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
