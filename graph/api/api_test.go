@@ -37,12 +37,12 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	k8s.On("GetNamespaces").Return(
 		&core_v1.NamespaceList{
 			Items: []core_v1.Namespace{
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "bookinfo",
 					},
 				},
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "tutorial",
 					},
@@ -53,12 +53,12 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	fmt.Println("!!! Set up standard mock")
 	k8s.On("GetProjects").Return(
 		[]osproject_v1.Project{
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "bookinfo",
 				},
 			},
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "tutorial",
 				},
@@ -90,22 +90,22 @@ func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheust
 	k8s.On("GetNamespaces").Return(
 		&core_v1.NamespaceList{
 			Items: []core_v1.Namespace{
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "bookinfo",
 					},
 				},
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "tutorial",
 					},
 				},
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "istio-system",
 					},
 				},
-				core_v1.Namespace{
+				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "istio-telemetry",
 					},
@@ -115,22 +115,22 @@ func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheust
 
 	k8s.On("GetProjects").Return(
 		[]osproject_v1.Project{
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "bookinfo",
 				},
 			},
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "tutorial",
 				},
 			},
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "istio-system",
 				},
 			},
-			osproject_v1.Project{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "istio-telemetry",
 				},

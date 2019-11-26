@@ -88,22 +88,22 @@ func TestServiceRoleOnlyLocalNamespace(t *testing.T) {
 
 func getFourServices() []core_v1.Service {
 	return []core_v1.Service{
-		core_v1.Service{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service1",
 			},
 		},
-		core_v1.Service{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service2",
 			},
 		},
-		core_v1.Service{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service21",
 			},
 		},
-		core_v1.Service{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service22",
 			},

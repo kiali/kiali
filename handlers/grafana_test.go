@@ -11,7 +11,7 @@ import (
 )
 
 var dashboardsConfig = []config.GrafanaDashboardConfig{
-	config.GrafanaDashboardConfig{
+	{
 		Name: "My Dashboard",
 	},
 }
@@ -22,7 +22,7 @@ var anError = map[string]string{
 
 func genDashboard(path string) []map[string]interface{} {
 	return []map[string]interface{}{
-		map[string]interface{}{
+		{
 			"url": path,
 		},
 	}

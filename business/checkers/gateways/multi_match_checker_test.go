@@ -21,7 +21,7 @@ func TestCorrectGateways(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}}
+	gws := [][]kubernetes.IstioObject{{gwObject}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -48,7 +48,7 @@ func TestCaseMatching(t *testing.T) {
 			"app": "canidae",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}}
+	gws := [][]kubernetes.IstioObject{{gwObject}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -103,7 +103,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}, []kubernetes.IstioObject{gwObject2}}
+	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -147,7 +147,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}, []kubernetes.IstioObject{gwObject2, gwObject3}}
+	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2, gwObject3}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -187,7 +187,7 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 			"app": "monotreme",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}}
+	gws := [][]kubernetes.IstioObject{{gwObject}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -216,7 +216,7 @@ func TestNoMatchOnSubdomainHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}}
+	gws := [][]kubernetes.IstioObject{{gwObject}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -242,7 +242,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}, []kubernetes.IstioObject{gwObject2}}
+	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
@@ -272,7 +272,7 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 			"app": "real",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject, gwObjectIdentical}}
+	gws := [][]kubernetes.IstioObject{{gwObject, gwObjectIdentical}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
