@@ -118,7 +118,7 @@
     "@types/enzyme": "3.10.3",
     "@types/jest": "23.3.10",
     "@types/lodash": "4.14.123",
-    "@types/node": "11.11.4",
+    "@types/node": "12.12.14",
     "@types/react": "16.9.2",
     "@types/react-dom": "16.8.5",
     "@types/react-redux": "7.1.2",
@@ -144,7 +144,7 @@
     "hoist-non-react-statics": "3.3.0"
   },
   "engines": {
-    "node": ">=10.0.0 && <11",
+    "node": ">=10.0.0 && <13",
     "npm": ">=6.0.0 ",
     "yarn": ">=1.0.0 "
   },

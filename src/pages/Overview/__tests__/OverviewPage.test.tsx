@@ -27,7 +27,7 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
           } catch (e) {
             reject(e);
           }
-        }, 1);
+        }, 2);
       });
     });
   });
@@ -40,6 +40,11 @@ const mockNamespaces = (names: string[]): Promise<void> => {
 const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
   return mockAPIToPromise('getNamespaceAppHealth', obj, false);
 };
+
+// Ignore other calls
+mockAPIToPromise('getNamespaceMetrics', null, false);
+mockAPIToPromise('getNamespaceTls', null, false);
+mockAPIToPromise('getNamespaceValidations', null, false);
 
 let mounted: ReactWrapper<any, any> | null;
 
