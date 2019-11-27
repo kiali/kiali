@@ -22,8 +22,10 @@ CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 # The default is the VERSION itself.
 VERSION_LABEL ?= ${VERSION}
 
-# The minimum Go version that must be used to build the app.
-GO_VERSION_KIALI = 1.8.3
+# The go commands and the minimum Go version that must be used to build the app.
+GO ?= go
+GOFMT ?= $(shell eval $$(${GO} env); echo $$GOROOT)/bin/gofmt
+GO_VERSION_KIALI = 1.13.4
 
 # Identifies the container image that will be built and deployed.
 IMAGE_ORG ?= kiali
@@ -78,52 +80,52 @@ git-init:
 
 ## go-check: Check if the go version installed is supported by Kiali
 go-check:
-	@hack/check_go_version.sh "${GO_VERSION_KIALI}"
+	@GO=${GO} hack/check_go_version.sh "${GO_VERSION_KIALI}"
 
 ## build: Runs `make go-check` internally and build Kiali binary
 build: go-check
 	@echo Building...
-	${GO_BUILD_ENVVARS} go build \
+	${GO_BUILD_ENVVARS} ${GO} build \
 		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 ## install: Install missing dependencies. Runs `go install` internally
 install:
 	@echo Installing...
-	${GO_BUILD_ENVVARS} go install \
+	${GO_BUILD_ENVVARS} ${GO} install \
 		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 ## format: Format all the files excluding vendor. Runs `gofmt` internally
 format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
-			gofmt -w $$gofile; \
+			${GOFMT} -w $$gofile; \
 	done
 
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test:
 	@echo Building executable for system tests with code coverage enabled
-	go test -c -covermode=count -coverpkg $(shell go list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
+	${GO} test -c -covermode=count -coverpkg $(shell ${GO} list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") \
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 ## build-test: Run tests and installing test dependencies, excluding third party tests under vendor. Runs `go test -i` internally
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
-	go test -i $(shell go list ./... | grep -v -e /vendor/)
+	${GO} test -i $(shell ${GO} list ./... | grep -v -e /vendor/)
 
 ## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
-	go test $(shell go list ./... | grep -v -e /vendor/)
+	${GO} test $(shell ${GO} list ./... | grep -v -e /vendor/)
 
 ## test-debug: Run tests in debug mode, excluding third party tests under vendor. Runs `go test -v` internally
 test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
-	go test -v $(shell go list ./... | grep -v -e /vendor/)
+	${GO} test -v $(shell ${GO} list ./... | grep -v -e /vendor/)
 
 ## test-race: Run tests with race detection, excluding third party tests under vendor. Runs `go test -race` internally
 test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
-	go test -race $(shell go list ./... | grep -v -e /vendor/)
+	${GO} test -race $(shell ${GO} list ./... | grep -v -e /vendor/)
 
 ## test-e2e-setup: Setup Python environment for running test suite
 test-e2e-setup:
@@ -251,7 +253,7 @@ operator-create: docker-build-operator
 	IMAGE_ORG=${IMAGE_ORG} OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-create
 
 .ensure-oc-exists:
-	@$(eval OC ?= $(shell which oc 2>/dev/null || which istiooc 2>/dev/null || which kubectl))
+	@$(eval OC ?= $(shell which oc 2>/dev/null || which kubectl))
 
 .ensure-operator-is-running: .ensure-oc-exists
 	@${OC} get pods -l app=kiali-operator -n kiali-operator 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null ;\

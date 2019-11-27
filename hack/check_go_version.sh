@@ -9,6 +9,7 @@
 #
 
 USAGE="$0 GO_MIN_VERSION"
+GO=${GO:-go}
 
 die() {
     printf >&2 "fatal: %s\n" "$@"
@@ -75,12 +76,12 @@ check_at_least_version() {
 
 # Check that the go binary exist and is in the path
 
-type go >/dev/null 2>&1 || die_upgrade "go is not installed or not in the PATH!"
+type $GO >/dev/null 2>&1 || die_upgrade "$GO is not installed or not in the PATH!"
 
 # Check the go binary version
 
-VERS_STR=$(go version 2>&1) || die "'go version' failed with output: $VERS_STR"
+VERS_STR=$($GO version 2>&1) || die "'$GO version' failed with output: $VERS_STR"
 
-GO_CUR_VERSION=$(expr "$VERS_STR" : ".*go version go\([^ ]*\) .*") || die "Invalid 'go version' output: $VERS_STR"
+GO_CUR_VERSION=$(expr "$VERS_STR" : ".*go version go\([^ ]*\) .*") || die "Invalid '$GO version' output: $VERS_STR"
 
-check_at_least_version "$GO_MIN_VERSION" "$GO_CUR_VERSION" "go"
+check_at_least_version "$GO_MIN_VERSION" "$GO_CUR_VERSION" "$GO"
