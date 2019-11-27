@@ -1,0 +1,178 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TraceHeader Attrs Attrs renders as expected when missing props 1`] = `
+<ul
+  className="TraecDiffHeader--traceAttributes"
+>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <strong>
+      <RelativeDate
+        fullMonthName={true}
+        includeTime={true}
+        value={0}
+      />
+    </strong>
+  </li>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <span
+      className="u-tx-muted"
+    >
+      Duration: 
+    </span>
+    <strong>
+      0ms
+    </strong>
+  </li>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <span
+      className="u-tx-muted"
+    >
+      Spans: 
+    </span>
+     
+    <strong>
+      0
+    </strong>
+  </li>
+</ul>
+`;
+
+exports[`TraceHeader Attrs renders as expected when provided props 1`] = `
+<ul
+  className="TraecDiffHeader--traceAttributes"
+>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <strong>
+      <RelativeDate
+        fullMonthName={true}
+        includeTime={true}
+        value={0.15}
+      />
+    </strong>
+  </li>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <span
+      className="u-tx-muted"
+    >
+      Duration: 
+    </span>
+    <strong>
+      0.7ms
+    </strong>
+  </li>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+    <span
+      className="u-tx-muted"
+    >
+      Spans: 
+    </span>
+     
+    <strong>
+      50
+    </strong>
+  </li>
+</ul>
+`;
+
+exports[`TraceHeader EmptyAttrs renders as expected 1`] = `
+<ul
+  className="TraecDiffHeader--traceAttributes"
+>
+  <li
+    className="TraecDiffHeader--traceAttr"
+  >
+     
+  </li>
+</ul>
+`;
+
+exports[`TraceHeader renders as expected 1`] = `
+<div
+  className="TraecDiffHeader--traceHeader"
+>
+  <h1
+    className="TraecDiffHeader--traceTitle"
+  >
+    <span>
+      <TraceName
+        error={
+          Object {
+            "errorKey": "errorValue",
+          }
+        }
+        key="name"
+        traceName="trace name"
+      />
+       
+      <small
+        className="u-tx-muted ub-pr2"
+        key="id"
+      >
+        trace-i
+      </small>
+      <TraceTimelineLink
+        traceID="trace-id"
+      />
+    </span>
+    <IoChevronDown
+      className="TraecDiffHeader--traceTitleChevron"
+    />
+  </h1>
+  <EmptyAttrs
+    duration={700}
+  />
+</div>
+`;
+
+exports[`TraceHeader renders populated attrs component when props.state === fetchedState.DONE 1`] = `
+<div
+  className="TraecDiffHeader--traceHeader"
+>
+  <h1
+    className="TraecDiffHeader--traceTitle"
+  >
+    <span>
+      <TraceName
+        error={
+          Object {
+            "errorKey": "errorValue",
+          }
+        }
+        key="name"
+        state="FETCH_DONE"
+        traceName="trace name"
+      />
+       
+      <small
+        className="u-tx-muted ub-pr2"
+        key="id"
+      >
+        trace-i
+      </small>
+      <TraceTimelineLink
+        traceID="trace-id"
+      />
+    </span>
+    <IoChevronDown
+      className="TraecDiffHeader--traceTitleChevron"
+    />
+  </h1>
+  <Attrs
+    duration={700}
+    startTime={150}
+    totalSpans={50}
+  />
+</div>
+`;

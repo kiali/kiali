@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ResultItemTitle renders as expected 1`] = `
+<div
+  className="ResultItemTitle"
+>
+  <Checkbox
+    checked={true}
+    className="ResultItemTitle--item ub-flex-none"
+    disabled={false}
+    indeterminate={false}
+    onChange={[Function]}
+    prefixCls="ant-checkbox"
+  />
+  <Link
+    className="ResultItemTitle--item ub-flex-auto"
+    replace={false}
+    to="linkToValue"
+  >
+    <span
+      className="ResultItemTitle--durationBar"
+      style={
+        Object {
+          "width": "10%",
+        }
+      }
+    />
+    <span
+      className="ub-right ub-relative"
+    >
+      0.15ms
+    </span>
+    <h3
+      className="ResultItemTitle--title"
+    >
+      <TraceName
+        state="FETCH_DONE"
+        traceName="traceNameValue"
+      />
+      <small
+        className="ResultItemTitle--idExcerpt"
+      >
+        trace-i
+      </small>
+    </h3>
+  </Link>
+</div>
+`;

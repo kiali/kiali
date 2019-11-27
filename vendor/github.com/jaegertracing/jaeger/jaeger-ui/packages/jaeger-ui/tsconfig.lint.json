@@ -1,0 +1,40 @@
+// Copyright (c) 2019 Uber Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This file is necessary because create-react-app (CRA) requires
+// isolatedModules to be true but for linting we need it to be false. We run
+// tsc-lint from the project root, but packages have their own tsconfig for
+// the lint so the typings from one package doesn't pollute other packages.
+// For that to work, project references are used
+// (https://www.typescriptlang.org/docs/handbook/project-references.html) which
+// requires `composite: true` and `isolatedModules: false`.
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "isolatedModules": false,
+    "composite": true
+  },
+  "files": [
+    "src/actions/jaeger-api.js",
+    "src/api/jaeger.js",
+    "src/components/SearchTracePage/SearchResults/ResultItem.markers.js",
+    "src/model/order-by.js",
+    "src/model/trace-viewer.js",
+    "src/selectors/process.js",
+    "src/selectors/span.js",
+    "src/selectors/trace.js",
+    "src/utils/sort.js",
+    "src/utils/TreeNode.js"
+  ]
+}

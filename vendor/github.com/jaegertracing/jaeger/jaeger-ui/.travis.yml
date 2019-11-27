@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+  - '8'
+cache: yarn
+env:
+  global:
+    # so the yarn installed in before_install will be used
+    - PATH=$HOME/.yarn/bin:$PATH
+matrix:
+  fast_finish: true
+before_install:
+  # update yarn - travis is using an old version
+  # https://yarnpkg.com/en/docs/install#alternatives-stable
+  - curl -o- -L https://yarnpkg.com/install.sh | bash
+install:
+  - yarn install --frozen-lockfile
+script:
+  - yarn lint
+  - yarn coverage
+  - yarn build
+after_success:
+  - yarn global add codecov
+  - codecov

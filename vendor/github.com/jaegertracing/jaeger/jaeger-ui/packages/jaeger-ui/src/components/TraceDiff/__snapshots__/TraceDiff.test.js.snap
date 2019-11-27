@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TraceDiff render renders as expected 1`] = `
+<Fragment>
+  <div
+    key="header"
+  >
+    <TraceDiffHeader
+      a={
+        Object {
+          "id": "trace-id-a",
+          "state": "FETCH_DONE",
+        }
+      }
+      b={
+        Object {
+          "id": "trace-id-b",
+          "state": "FETCH_DONE",
+        }
+      }
+      cohort={
+        Array [
+          Object {
+            "id": "trace-id-a",
+            "state": "FETCH_DONE",
+          },
+          Object {
+            "id": "trace-id-b",
+            "state": "FETCH_DONE",
+          },
+          Object {
+            "id": "trace-id-cohort-0",
+            "state": "FETCH_DONE",
+          },
+          Object {
+            "id": "trace-id-cohort-1",
+            "state": "FETCH_DONE",
+          },
+          Object {
+            "id": "trace-id-cohort-2",
+            "state": "FETCH_DONE",
+          },
+        ]
+      }
+      diffSetA={[Function]}
+      diffSetB={[Function]}
+      key="header"
+    />
+  </div>
+  <div
+    className="TraceDiff--graphWrapper"
+    key="graph"
+    style={
+      Object {
+        "top": 46,
+      }
+    }
+  >
+    <Connect(UnconnectedTraceDiffGraph)
+      a={
+        Object {
+          "id": "trace-id-a",
+          "state": "FETCH_DONE",
+        }
+      }
+      b={
+        Object {
+          "id": "trace-id-b",
+          "state": "FETCH_DONE",
+        }
+      }
+    />
+  </div>
+</Fragment>
+`;

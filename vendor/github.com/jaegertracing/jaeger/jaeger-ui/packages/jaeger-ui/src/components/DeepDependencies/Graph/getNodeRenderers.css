@@ -1,0 +1,62 @@
+/*
+Copyright (c) 2019 Uber Technologies, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.DdgNode--VectorBorder {
+  fill: #fff;
+  stroke: #bbb;
+  stroke-width: 2;
+}
+
+.DdgNode--VectorBorder.is-findMatch {
+  /* This color may be overridden or removed when other coloring rationales are added */
+  stroke: #fadb14;
+}
+
+.DdgNode--VectorBorder.is-focalNode {
+  stroke: #eb2f96;
+}
+
+.DdgNode--VectorBorder.is-pathHovered,
+.DdgNode--VectorBorder.is-hovered {
+  stroke-opacity: 1;
+}
+
+.DdgNode--HtmlEmphasis {
+  border-radius: 100%;
+  bottom: -20px;
+  content: '';
+  left: -20px;
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  z-index: -1;
+  margin: 1px 0 0 1px;
+}
+
+.DdgNode--HtmlEmphasis.is-findMatch {
+  background-image: repeating-linear-gradient(-60deg, #fffb8f, #fff566 3px, #fffb8f 5px);
+  border: 1px dashed rgba(173, 139, 0, 0.5);
+}
+
+.DdgNode--HtmlEmphasis.is-focalNode {
+  background-image: repeating-linear-gradient(30deg, transparent, #eb2f96 3px, transparent 5px);
+  border: 1px dashed #eb2f96;
+}
+
+.DdgNode--VectorFindEmphasis--colorBand {
+  stroke: #fef876;
+  stroke-width: 10;
+}

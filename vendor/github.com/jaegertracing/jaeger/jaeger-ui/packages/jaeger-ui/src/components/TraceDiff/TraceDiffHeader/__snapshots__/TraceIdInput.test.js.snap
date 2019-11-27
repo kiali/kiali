@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TraceIdInput renders as expected 1`] = `
+<Search
+  addonBefore="Select by Trace ID"
+  enterButton={true}
+  inputPrefixCls="ant-input"
+  onSearch={[MockFunction]}
+  prefixCls="ant-input-search"
+/>
+`;

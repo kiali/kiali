@@ -1,0 +1,251 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Header> renders the hops selector if distanceToPathElems is provided 1`] = `
+<header
+  className="DdgHeader"
+>
+  <div
+    className="DdgHeader--paramsHeader"
+  >
+    <NameSelector
+      label="Service:"
+      options={Array []}
+      placeholder="Select a service…"
+      required={true}
+      setValue={[Function]}
+      value={null}
+    />
+  </div>
+  <div
+    className="DdgHeader--controlHeader"
+  >
+    <LayoutSettings />
+    <Component
+      distanceToPathElems={Map {}}
+      handleClick={[Function]}
+      visEncoding="3"
+    />
+    <div
+      className="DdgHeader--findWrapper"
+    >
+      <div
+        className="DdgHeader--uiFind"
+        onClick={[Function]}
+        role="button"
+      >
+        <Icon
+          className="DdgHeader--uiFindSearchIcon"
+          type="search"
+        />
+        <withRouter(Connect(UnconnectedUiFindInput))
+          allowClear={true}
+          forwardedRef={
+            Object {
+              "current": null,
+            }
+          }
+          inputProps={
+            Object {
+              "className": "DdgHeader--uiFindInput",
+            }
+          }
+          trackFindFunction={[Function]}
+        />
+      </div>
+    </div>
+  </div>
+</header>
+`;
+
+exports[`<Header> renders the operation selector if a service is selected 1`] = `
+<header
+  className="DdgHeader"
+>
+  <div
+    className="DdgHeader--paramsHeader"
+  >
+    <NameSelector
+      label="Service:"
+      options={
+        Array [
+          "testService",
+        ]
+      }
+      placeholder="Select a service…"
+      required={true}
+      setValue={[Function]}
+      value="testService"
+    />
+    <NameSelector
+      label="Operation:"
+      options={Array []}
+      placeholder="Select an operation…"
+      required={true}
+      setValue={[Function]}
+      value={null}
+    />
+  </div>
+  <div
+    className="DdgHeader--controlHeader"
+  >
+    <LayoutSettings />
+    <Component
+      handleClick={[Function]}
+    />
+    <div
+      className="DdgHeader--findWrapper"
+    >
+      <div
+        className="DdgHeader--uiFind"
+        onClick={[Function]}
+        role="button"
+      >
+        <Icon
+          className="DdgHeader--uiFindSearchIcon"
+          type="search"
+        />
+        <withRouter(Connect(UnconnectedUiFindInput))
+          allowClear={true}
+          forwardedRef={
+            Object {
+              "current": null,
+            }
+          }
+          inputProps={
+            Object {
+              "className": "DdgHeader--uiFindInput",
+            }
+          }
+          trackFindFunction={[Function]}
+        />
+      </div>
+    </div>
+  </div>
+</header>
+`;
+
+exports[`<Header> renders the operation selector if a service is selected 2`] = `
+<header
+  className="DdgHeader"
+>
+  <div
+    className="DdgHeader--paramsHeader"
+  >
+    <NameSelector
+      label="Service:"
+      options={
+        Array [
+          "testService",
+        ]
+      }
+      placeholder="Select a service…"
+      required={true}
+      setValue={[Function]}
+      value="testService"
+    />
+    <NameSelector
+      label="Operation:"
+      options={
+        Array [
+          "testOperation",
+        ]
+      }
+      placeholder="Select an operation…"
+      required={true}
+      setValue={[Function]}
+      value="testOperation"
+    />
+  </div>
+  <div
+    className="DdgHeader--controlHeader"
+  >
+    <LayoutSettings />
+    <Component
+      handleClick={[Function]}
+    />
+    <div
+      className="DdgHeader--findWrapper"
+    >
+      <div
+        className="DdgHeader--uiFind"
+        onClick={[Function]}
+        role="button"
+      >
+        <Icon
+          className="DdgHeader--uiFindSearchIcon"
+          type="search"
+        />
+        <withRouter(Connect(UnconnectedUiFindInput))
+          allowClear={true}
+          forwardedRef={
+            Object {
+              "current": null,
+            }
+          }
+          inputProps={
+            Object {
+              "className": "DdgHeader--uiFindInput",
+            }
+          }
+          trackFindFunction={[Function]}
+        />
+      </div>
+    </div>
+  </div>
+</header>
+`;
+
+exports[`<Header> renders with minimal props 1`] = `
+<header
+  className="DdgHeader"
+>
+  <div
+    className="DdgHeader--paramsHeader"
+  >
+    <NameSelector
+      label="Service:"
+      options={Array []}
+      placeholder="Select a service…"
+      required={true}
+      setValue={[Function]}
+      value={null}
+    />
+  </div>
+  <div
+    className="DdgHeader--controlHeader"
+  >
+    <LayoutSettings />
+    <Component
+      handleClick={[Function]}
+    />
+    <div
+      className="DdgHeader--findWrapper"
+    >
+      <div
+        className="DdgHeader--uiFind"
+        onClick={[Function]}
+        role="button"
+      >
+        <Icon
+          className="DdgHeader--uiFindSearchIcon"
+          type="search"
+        />
+        <withRouter(Connect(UnconnectedUiFindInput))
+          allowClear={true}
+          forwardedRef={
+            Object {
+              "current": null,
+            }
+          }
+          inputProps={
+            Object {
+              "className": "DdgHeader--uiFindInput",
+            }
+          }
+          trackFindFunction={[Function]}
+        />
+      </div>
+    </div>
+  </div>
+</header>
+`;

@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CohortTable renders as expected 1`] = `
+Array [
+  <Table
+    bordered={false}
+    className=""
+    dataSource={
+      Array [
+        Object {
+          "data": Object {
+            "traceName": "trace name 0",
+          },
+          "error": "api error",
+          "id": "trace-id-0",
+          "state": "FETCH_ERROR",
+        },
+        Object {
+          "id": "trace-id-1",
+        },
+        Object {
+          "id": "trace-id-2",
+        },
+      ]
+    }
+    indentSize={20}
+    key="table"
+    loading={false}
+    locale={Object {}}
+    pagination={false}
+    prefixCls="ant-table"
+    rowKey="id"
+    rowSelection={
+      Object {
+        "getCheckboxProps": [Function],
+        "hideDefaultSelections": true,
+        "onChange": [Function],
+        "selectedRowKeys": Array [
+          "trace-id-0",
+        ],
+        "type": "radio",
+      }
+    }
+    showHeader={true}
+    size="middle"
+    useFixedHeader={false}
+  >
+    <Column
+      dataIndex="id"
+      key="traceID"
+      render={[Function]}
+      title=""
+    />
+    <Column
+      dataIndex="data.traceName"
+      key="traceName"
+      render={[Function]}
+      sortOrder="descend"
+      title="Service & Operation"
+    />
+    <Column
+      dataIndex="data.startTime"
+      key="startTime"
+      render={[Function]}
+      title="Date"
+    />
+    <Column
+      dataIndex="data.duration"
+      key="duration"
+      render={[Function]}
+      title="Duration"
+    />
+    <Column
+      dataIndex="data.spans.length"
+      key="spans"
+      title="Spans"
+    />
+    <Column
+      className="ub-tx-center"
+      dataIndex="data.traceID"
+      key="link"
+      render={[Function]}
+    />
+  </Table>,
+  "",
+]
+`;

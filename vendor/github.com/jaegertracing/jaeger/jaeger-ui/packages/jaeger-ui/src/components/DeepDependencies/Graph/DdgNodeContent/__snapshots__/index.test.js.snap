@@ -1,0 +1,562 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<DdgNodeContent> DdgNodeContent.getNodeRenderer() returns a <DdgNodeContent /> 1`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="the-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+      <div
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "paddingTop": "5px",
+            "width": "30px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="the-operation"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      href="testBaseUrl?density=ppe&maxDuration=100ms&operation=the-operation&service=the-service&showOp=1"
+    >
+      <svg
+        className="DdgNode--SetFocusIcon"
+        height="100"
+        viewBox="0 0 100 100"
+        width="100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g>
+          <path
+            d="M50.0001 -1L61.0557 22.1383H38.9444L50.0001 -1Z"
+            fill="currentColor"
+          />
+          <path
+            d="M49.9999 99L38.9443 75.8617L61.0556 75.8617L49.9999 99Z"
+            fill="currentColor"
+          />
+          <path
+            d="M100 49L76.8617 60.0556L76.8617 37.9444L100 49Z"
+            fill="currentColor"
+          />
+          <path
+            d="M1.57361e-06 49L23.1383 37.9444L23.1383 60.0556L1.57361e-06 49Z"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        Set focus
+      </span>
+    </a>
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
+
+exports[`<DdgNodeContent> DdgNodeContent.getNodeRenderer() returns a focal <DdgNodeContent /> 1`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core is-focalNode"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="the-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+      <div
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "paddingTop": "5px",
+            "width": "30px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="the-operation"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
+
+exports[`<DdgNodeContent> omits the operation if it is null 1`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+      <div
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "paddingTop": "5px",
+            "width": "30px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-operation"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      href="some-url"
+    >
+      <svg
+        className="DdgNode--SetFocusIcon"
+        height="100"
+        viewBox="0 0 100 100"
+        width="100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g>
+          <path
+            d="M50.0001 -1L61.0557 22.1383H38.9444L50.0001 -1Z"
+            fill="currentColor"
+          />
+          <path
+            d="M49.9999 99L38.9443 75.8617L61.0556 75.8617L49.9999 99Z"
+            fill="currentColor"
+          />
+          <path
+            d="M100 49L76.8617 60.0556L76.8617 37.9444L100 49Z"
+            fill="currentColor"
+          />
+          <path
+            d="M1.57361e-06 49L23.1383 37.9444L23.1383 60.0556L1.57361e-06 49Z"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        Set focus
+      </span>
+    </a>
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
+
+exports[`<DdgNodeContent> omits the operation if it is null 2`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      href="some-url"
+    >
+      <svg
+        className="DdgNode--SetFocusIcon"
+        height="100"
+        viewBox="0 0 100 100"
+        width="100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g>
+          <path
+            d="M50.0001 -1L61.0557 22.1383H38.9444L50.0001 -1Z"
+            fill="currentColor"
+          />
+          <path
+            d="M49.9999 99L38.9443 75.8617L61.0556 75.8617L49.9999 99Z"
+            fill="currentColor"
+          />
+          <path
+            d="M100 49L76.8617 60.0556L76.8617 37.9444L100 49Z"
+            fill="currentColor"
+          />
+          <path
+            d="M1.57361e-06 49L23.1383 37.9444L23.1383 60.0556L1.57361e-06 49Z"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        Set focus
+      </span>
+    </a>
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
+
+exports[`<DdgNodeContent> renders correctly when isFocalNode = true and focalNodeUrl = null 1`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+      <div
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "paddingTop": "5px",
+            "width": "30px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-operation"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      href="some-url"
+    >
+      <svg
+        className="DdgNode--SetFocusIcon"
+        height="100"
+        viewBox="0 0 100 100"
+        width="100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g>
+          <path
+            d="M50.0001 -1L61.0557 22.1383H38.9444L50.0001 -1Z"
+            fill="currentColor"
+          />
+          <path
+            d="M49.9999 99L38.9443 75.8617L61.0556 75.8617L49.9999 99Z"
+            fill="currentColor"
+          />
+          <path
+            d="M100 49L76.8617 60.0556L76.8617 37.9444L100 49Z"
+            fill="currentColor"
+          />
+          <path
+            d="M1.57361e-06 49L23.1383 37.9444L23.1383 60.0556L1.57361e-06 49Z"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        Set focus
+      </span>
+    </a>
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
+
+exports[`<DdgNodeContent> renders correctly when isFocalNode = true and focalNodeUrl = null 2`] = `
+<div
+  className="DdgNodeContent"
+  onMouseOut={[Function]}
+  onMouseOver={[Function]}
+>
+  <div
+    className="DdgNodeContent--core is-focalNode"
+    style={
+      Object {
+        "height": "100px",
+        "transform": "translate(25px, 25px) scale(1.5)",
+        "width": "100px",
+      }
+    }
+  >
+    <div
+      className="DdgNodeContent--labelWrapper"
+    >
+      <h4
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "marginTop": "10px",
+            "width": "20px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-service"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </h4>
+      <div
+        className="DdgNodeContent--label"
+        style={
+          Object {
+            "paddingTop": "5px",
+            "width": "30px",
+          }
+        }
+      >
+        <BreakableText
+          className="BreakableText"
+          text="some-operation"
+          wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+        />
+      </div>
+    </div>
+  </div>
+  <div
+    className="DdgNodeContent--actionsWrapper"
+  >
+    <a
+      className="DdgNodeContent--actionsItem"
+      onClick={[Function]}
+      role="button"
+    >
+      <NewWindowIcon
+        isLarge={false}
+      />
+      <span
+        className="DdgNodeContent--actionsItemText"
+      >
+        View traces
+      </span>
+    </a>
+  </div>
+</div>
+`;
