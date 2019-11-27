@@ -3634,6 +3634,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
     },
+    "Fields": {
+      "description": "To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff",
+      "type": "object",
+      "title": "Fields stores a set of fields in a data structure like a Trie.",
+      "properties": {
+        "Map": {
+          "description": "Map stores a set of fields in a data structure like a Trie.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set,\nor a string representing a sub-field or item. The string will follow one of these four formats:\n'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map\n'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item\n'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list\n'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values\nIf a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager/internal",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Fields"
+          }
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -4021,6 +4036,37 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ManagedFieldsEntry": {
+      "description": "ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource\nthat the fieldset applies to.",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the version of this resource that this field set\napplies to. The format is \"group/version\" just like the top-level\nAPIVersion field. It is necessary to track the version of a field\nset because it cannot be automatically converted.",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "fields": {
+          "$ref": "#/definitions/Fields"
+        },
+        "manager": {
+          "description": "Manager is an identifier of the workflow managing these fields.",
+          "type": "string",
+          "x-go-name": "Manager"
+        },
+        "operation": {
+          "$ref": "#/definitions/ManagedFieldsOperationType"
+        },
+        "time": {
+          "$ref": "#/definitions/Time"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "ManagedFieldsOperationType": {
+      "type": "string",
+      "title": "ManagedFieldsOperationType is the type of operation which lead to a ManagedFieldsEntry being created.",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Matrix": {
       "type": "array",
       "title": "Matrix is a list of time series.",
@@ -4351,6 +4397,14 @@
           },
           "x-go-name": "Labels"
         },
+        "managedFields": {
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\nThis field is alpha and can be changed or removed without notice.\n\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ManagedFieldsEntry"
+          },
+          "x-go-name": "ManagedFields"
+        },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
           "type": "string",
@@ -4386,7 +4440,7 @@
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "OwnerReference": {
-      "description": "OwnerReference contains enough information to let you identify an owning\nobject. Currently, an owning object must be in the same namespace, so there\nis no namespace field.",
+      "description": "OwnerReference contains enough information to let you identify an owning\nobject. An owning object must be in the same namespace as the dependent, or\nbe cluster-scoped, so there is no namespace field.",
       "type": "object",
       "properties": {
         "apiVersion": {
@@ -5313,7 +5367,7 @@
           "x-go-name": "Code"
         },
         "continue": {
-          "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nlist may not be possible if the server configuration has changed or more than a few minutes have\npassed. The resourceVersion field returned when using this continue value will be identical to\nthe value in the first response.",
+          "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nconsistent list may not be possible if the server configuration has changed or more than a few\nminutes have passed. The resourceVersion field returned when using this continue value will be\nidentical to the value in the first response, unless you have received this token from an error\nmessage.",
           "type": "string",
           "x-go-name": "Continue"
         },

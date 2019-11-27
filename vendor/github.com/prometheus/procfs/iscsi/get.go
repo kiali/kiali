@@ -192,7 +192,7 @@ func (fs FS) GetRBDMatch(rbdNumber string, poolImage string) (*RBD, error) {
 	}
 
 	for systemRbdNumber, systemRbdPath := range systemRbds {
-		var systemPool, systemImage string = "", ""
+		var systemPool, systemImage string
 		systemPoolPath := filepath.Join(systemRbdPath, "pool")
 		if _, err := os.Stat(systemPoolPath); os.IsNotExist(err) {
 			continue

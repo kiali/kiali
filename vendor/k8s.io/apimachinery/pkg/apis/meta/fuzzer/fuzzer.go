@@ -25,9 +25,9 @@ import (
 
 	"github.com/google/gofuzz"
 
+	apitesting "k8s.io/apimachinery/pkg/api/apitesting"
+	"k8s.io/apimachinery/pkg/api/apitesting/fuzzer"
 	"k8s.io/apimachinery/pkg/api/resource"
-	apitesting "k8s.io/apimachinery/pkg/api/testing"
-	"k8s.io/apimachinery/pkg/api/testing/fuzzer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1beta1 "k8s.io/apimachinery/pkg/apis/meta/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -216,10 +216,7 @@ func v1FuzzerFuncs(codecs runtimeserializer.CodecFactory) []interface{} {
 			}
 		},
 		func(j *metav1.Initializers, c fuzz.Continue) {
-			c.FuzzNoCustom(j)
-			if len(j.Pending) == 0 {
-				j.Pending = nil
-			}
+			j = nil
 		},
 		func(j *metav1.ListMeta, c fuzz.Continue) {
 			j.ResourceVersion = strconv.FormatUint(c.RandUint64(), 10)
@@ -274,6 +271,12 @@ func v1FuzzerFuncs(codecs runtimeserializer.CodecFactory) []interface{} {
 				}
 
 				sort.Slice(j.MatchExpressions, func(a, b int) bool { return j.MatchExpressions[a].Key < j.MatchExpressions[b].Key })
+			}
+		},
+		func(j *metav1.ManagedFieldsEntry, c fuzz.Continue) {
+			c.FuzzNoCustom(j)
+			if j.Fields != nil && len(j.Fields.Map) == 0 {
+				j.Fields = nil
 			}
 		},
 	}
