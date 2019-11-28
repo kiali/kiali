@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"

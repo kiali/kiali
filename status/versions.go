@@ -214,7 +214,7 @@ func jaegerVersion() (*ExternalServiceInfo, error) {
 	}
 	product := ExternalServiceInfo{}
 	product.Name = "Jaeger"
-	product.Url = config.Get().ExternalServices.Tracing.URL
+	product.Url = jaegerConfig.URL
 
 	return &product, nil
 }

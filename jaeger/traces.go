@@ -3,7 +3,6 @@ package jaeger
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/config"
 	"net/http"
 	"net/url"
 	"path"
@@ -11,6 +10,7 @@ import (
 
 	jaegerModels "github.com/jaegertracing/jaeger/model/json"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 

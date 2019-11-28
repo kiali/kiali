@@ -1,7 +1,6 @@
 package business
 
 import (
-	"github.com/kiali/kiali/jaeger/jaegertest"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/jaeger/jaegertest"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
