@@ -22,3 +22,7 @@ func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (t
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace []*jaegerModels.Trace, code int, err error) {
 	return in.jaeger.GetTraceDetail(traceID)
 }
+
+func (in *JaegerService) GetErrorTraces(ns string, srv string) (errorTraces int, err error) {
+	return in.jaeger.GetErrorTraces(ns, srv)
+}
