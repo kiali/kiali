@@ -1,5 +1,5 @@
-hash: 98b0344f4c4e6617207b12b055e8cfa3f4a4d735e5b211a289f6365fd822ea36
-updated: 2019-11-25T14:37:13.428571864-06:00
+hash: 9c7fdf7686616f5feded8c69a11c0aba2bd9e901b7efb1aaa265d0495fd9a31c
+updated: 2019-11-28T10:07:41.032551477+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -42,6 +42,8 @@ imports:
   version: 20f1fb78b0740ba8c3cb143a61e86ba5c8669768
   subpackages:
   - simplelru
+- name: github.com/jaegertracing/jaeger
+  version: 8c89e641eacafc5315de3c6486d398d6ce0d441c
 - name: github.com/json-iterator/go
   version: ab8a2e0c74be9d3be70b3184d9acc634935ded82
 - name: github.com/jtblin/go-ldap-client
@@ -100,7 +102,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 6d489fc7f1d9cd890a250f3ea3431b1744b9623f
+  version: 1d896f760190977cbbe89c133358f960e9261d5c
   subpackages:
   - internal/fs
   - internal/util

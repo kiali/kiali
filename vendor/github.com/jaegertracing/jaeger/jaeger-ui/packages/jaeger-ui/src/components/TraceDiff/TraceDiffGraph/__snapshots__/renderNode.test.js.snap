@@ -1,0 +1,701 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`drawNode diffNode renders as expected when props.a and props.b are the same 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-same"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-same"
+            rowSpan={2}
+          >
+            100
+          </td>
+          <td
+            className="DiffNode--labelCell is-same"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--labelCell is-same"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-same"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-same"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-same"
+          rowSpan={2}
+        >
+          100
+        </td>
+        <td
+          className="DiffNode--labelCell is-same"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--labelCell is-same"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;
+
+exports[`drawNode diffNode renders as expected when props.a is 0 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-changed is-added"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-added"
+            rowSpan={1}
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              +
+            </span>
+            100
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-added"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-added"
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              +
+            </span>
+            100
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              %
+            </span>
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-added"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-changed is-added"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-changed is-added"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-added"
+          rowSpan={1}
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            +
+          </span>
+          100
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-added"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-added"
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            +
+          </span>
+          100
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            %
+          </span>
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-added"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;
+
+exports[`drawNode diffNode renders as expected when props.a is less than props.b 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-changed is-more"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-more"
+            rowSpan={1}
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              +
+            </span>
+            50
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-more"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-more"
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              +
+            </span>
+            50
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              %
+            </span>
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-more"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-changed is-more"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-changed is-more"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-more"
+          rowSpan={1}
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            +
+          </span>
+          50
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-more"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-more"
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            +
+          </span>
+          50
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            %
+          </span>
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-more"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;
+
+exports[`drawNode diffNode renders as expected when props.a is more than props.b 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-changed is-less"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-less"
+            rowSpan={1}
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              -
+            </span>
+            100
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-less"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-less"
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              -
+            </span>
+            50
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              %
+            </span>
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-less"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-changed is-less"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-changed is-less"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-less"
+          rowSpan={1}
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            -
+          </span>
+          100
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-less"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-less"
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            -
+          </span>
+          50
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            %
+          </span>
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-less"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;
+
+exports[`drawNode diffNode renders as expected when props.b is 0 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-changed is-removed"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-removed"
+            rowSpan={1}
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              -
+            </span>
+            100
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-removed"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--metricCell is-changed is-removed"
+          >
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              -
+            </span>
+            100
+            <span
+              className="DiffNode--metricSymbol"
+            >
+              %
+            </span>
+          </td>
+          <td
+            className="DiffNode--labelCell is-changed is-removed"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-changed is-removed"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-changed is-removed"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-removed"
+          rowSpan={1}
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            -
+          </span>
+          100
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-removed"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--metricCell is-changed is-removed"
+        >
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            -
+          </span>
+          100
+          <span
+            className="DiffNode--metricSymbol"
+          >
+            %
+          </span>
+        </td>
+        <td
+          className="DiffNode--labelCell is-changed is-removed"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;
+
+exports[`drawNode diffNode renders as expected when props.isUiFindMatch is true 1`] = `
+<Popover
+  content={
+    <table
+      className="DiffNode is-same"
+    >
+      <tbody
+        className="DiffNode--body"
+      >
+        <tr>
+          <td
+            className="DiffNode--metricCell is-same"
+            rowSpan={2}
+          >
+            100
+          </td>
+          <td
+            className="DiffNode--labelCell is-same"
+          >
+            <strong>
+              serviceName
+            </strong>
+            <CopyIcon
+              className="DiffNode--copyIcon"
+              copyText="serviceName operationName"
+              icon="copy"
+              placement="left"
+              tooltipTitle="Copy label"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            className="DiffNode--labelCell is-same"
+          >
+            operationName
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  }
+  mouseEnterDelay={0.25}
+  mouseLeaveDelay={0.1}
+  overlayClassName="DiffNode--popover is-same"
+  overlayStyle={Object {}}
+  placement="top"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="hover"
+>
+  <table
+    className="DiffNode is-same"
+  >
+    <tbody
+      className="DiffNode--body"
+    >
+      <tr>
+        <td
+          className="DiffNode--metricCell is-same"
+          rowSpan={2}
+        >
+          100
+        </td>
+        <td
+          className="DiffNode--labelCell is-same"
+        >
+          <strong>
+            serviceName
+          </strong>
+          <CopyIcon
+            className="DiffNode--copyIcon"
+            copyText="serviceName operationName"
+            icon="copy"
+            placement="left"
+            tooltipTitle="Copy label"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td
+          className="DiffNode--labelCell is-same"
+        >
+          operationName
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</Popover>
+`;

@@ -1,0 +1,32 @@
+# Everything is the default except coverage.status.patch.default.only_pulls
+coverage:
+  status:
+    project:
+      default:
+        # basic
+        target: auto
+        threshold: null
+        base: auto
+        # advanced
+        branches: null
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: null
+        paths: null
+    patch:
+      default:
+        # basic
+        target: auto
+        threshold: null
+        base: auto
+        # advanced
+        branches: null
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        # the main change:
+        only_pulls: true
+        flags: null
+        paths: null

@@ -1,0 +1,991 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TraceDiffHeader handles absent a & b 1`] = `
+<header
+  className="TraecDiffHeader"
+>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      A
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        selectTrace={[Function]}
+        selection={Object {}}
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader />
+    </div>
+  </Popover>
+  <div
+    className="TraecDiffHeader--labelItem"
+  >
+    <h2
+      className="u-tx-muted ub-mx3 ub-my0"
+    >
+      VS
+    </h2>
+  </div>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      B
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        selectTrace={[Function]}
+        selection={Object {}}
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader />
+    </div>
+  </Popover>
+</header>
+`;
+
+exports[`TraceDiffHeader handles absent a 1`] = `
+<header
+  className="TraecDiffHeader"
+>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      A
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-2": Object {
+              "label": "B",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader />
+    </div>
+  </Popover>
+  <div
+    className="TraecDiffHeader--labelItem"
+  >
+    <h2
+      className="u-tx-muted ub-mx3 ub-my0"
+    >
+      VS
+    </h2>
+  </div>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      B
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        current="cohort-id-2"
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-2": Object {
+              "label": "B",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader
+        duration={200}
+        error="error 2"
+        startTime={200}
+        state="FETCH_DONE"
+        totalSpans={2}
+        traceID="cohort-id-2"
+        traceName="cohort-trace-name-2"
+      />
+    </div>
+  </Popover>
+</header>
+`;
+
+exports[`TraceDiffHeader handles absent b 1`] = `
+<header
+  className="TraecDiffHeader"
+>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      A
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        current="cohort-id-1"
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-1": Object {
+              "label": "A",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader
+        duration={100}
+        error="error 1"
+        startTime={100}
+        state="FETCH_DONE"
+        totalSpans={1}
+        traceID="cohort-id-1"
+        traceName="cohort-trace-name-1"
+      />
+    </div>
+  </Popover>
+  <div
+    className="TraecDiffHeader--labelItem"
+  >
+    <h2
+      className="u-tx-muted ub-mx3 ub-my0"
+    >
+      VS
+    </h2>
+  </div>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      B
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-1": Object {
+              "label": "A",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader />
+    </div>
+  </Popover>
+</header>
+`;
+
+exports[`TraceDiffHeader renders as expected 1`] = `
+<header
+  className="TraecDiffHeader"
+>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      A
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        current="cohort-id-1"
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-1": Object {
+              "label": "A",
+            },
+            "cohort-id-2": Object {
+              "label": "B",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader
+        duration={100}
+        error="error 1"
+        startTime={100}
+        state="FETCH_DONE"
+        totalSpans={1}
+        traceID="cohort-id-1"
+        traceName="cohort-trace-name-1"
+      />
+    </div>
+  </Popover>
+  <div
+    className="TraecDiffHeader--labelItem"
+  >
+    <h2
+      className="u-tx-muted ub-mx3 ub-my0"
+    >
+      VS
+    </h2>
+  </div>
+  <div
+    className="TraecDiffHeader--labelItem-darkened"
+  >
+    <h1
+      className="ub-m0"
+    >
+      B
+    </h1>
+  </div>
+  <Popover
+    content={
+      <CohortTable
+        cohort={
+          Array [
+            Object {
+              "data": Object {
+                "duration": 0,
+                "startTime": 0,
+                "traceName": "cohort-trace-name-0",
+              },
+              "error": "error 0",
+              "id": "cohort-id-0",
+              "state": "FETCH_ERROR",
+            },
+            Object {
+              "data": Object {
+                "duration": 100,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-1-span-0",
+                  },
+                ],
+                "startTime": 100,
+                "traceName": "cohort-trace-name-1",
+              },
+              "error": "error 1",
+              "id": "cohort-id-1",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 200,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-2-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-2-span-2",
+                  },
+                ],
+                "startTime": 200,
+                "traceName": "cohort-trace-name-2",
+              },
+              "error": "error 2",
+              "id": "cohort-id-2",
+              "state": "FETCH_DONE",
+            },
+            Object {
+              "data": Object {
+                "duration": 300,
+                "spans": Array [
+                  Object {
+                    "spanID": "trace-3-span-1",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-2",
+                  },
+                  Object {
+                    "spanID": "trace-3-span-3",
+                  },
+                ],
+                "startTime": 300,
+                "traceName": "cohort-trace-name-3",
+              },
+              "error": "error 3",
+              "id": "cohort-id-3",
+              "state": "FETCH_DONE",
+            },
+          ]
+        }
+        current="cohort-id-2"
+        selectTrace={[Function]}
+        selection={
+          Object {
+            "cohort-id-1": Object {
+              "label": "A",
+            },
+            "cohort-id-2": Object {
+              "label": "B",
+            },
+          }
+        }
+      />
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    onVisibleChange={[Function]}
+    overlayClassName="TraceDiffHeader--popover"
+    overlayStyle={Object {}}
+    placement="bottomLeft"
+    prefixCls="ant-popover"
+    title={
+      <TraceIdInput
+        selectTrace={[Function]}
+      />
+    }
+    transitionName="zoom-big"
+    trigger="click"
+    visible={false}
+  >
+    <div
+      className="ub-flex u-flex-1"
+    >
+      <TraceHeader
+        duration={200}
+        error="error 2"
+        startTime={200}
+        state="FETCH_DONE"
+        totalSpans={2}
+        traceID="cohort-id-2"
+        traceName="cohort-trace-name-2"
+      />
+    </div>
+  </Popover>
+</header>
+`;

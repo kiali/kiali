@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<FileLoader /> matches the snapshot 1`] = `
+<Dragger
+  accept=".json"
+  multiple={true}
+>
+  <p
+    className="ant-upload-drag-icon"
+  >
+    <Icon
+      type="file-add"
+    />
+  </p>
+  <p
+    className="ant-upload-text"
+  >
+    Click or drag files to this area.
+  </p>
+  <p
+    className="ant-upload-hint"
+  >
+    JSON files containing one or more traces are supported.
+  </p>
+</Dragger>
+`;

@@ -1,0 +1,32 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "es2016",
+    "lib": ["es2017", "dom", "dom.iterable", "webworker"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    // TODO(tiffon): Make plexus a project reference #348 is mergeds
+    "packages/plexus/demo",
+    "packages/plexus/src",
+    // easier to add `./typings` here than deal with typeRoots, paths, etc.
+    "typings"
+  ],
+  "exclude": ["./packages/plexus/src/LayoutManager/layout.worker.bundled.js"],
+  "references": [
+    {
+      "path": "packages/jaeger-ui/tsconfig.lint.json"
+    }
+  ]
+}

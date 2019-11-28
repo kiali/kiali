@@ -1,0 +1,78 @@
+{
+  "private": true,
+  "name": "jaeger-ui-monorepo",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaegertracing/jaeger-ui.git"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "1.12.0",
+    "@typescript-eslint/parser": "1.12.0",
+    "@typescript-eslint/typescript-estree": "1.12.0",
+    "babel-eslint": "10.0.1",
+    "eslint": "5.14.1",
+    "eslint-config-airbnb": "17.1.0",
+    "eslint-config-prettier": "4.0.0",
+    "eslint-config-react-app": "3.0.7",
+    "eslint-plugin-flowtype": "^3.4.2",
+    "eslint-plugin-import": "2.16.0",
+    "eslint-plugin-jsx-a11y": "6.2.1",
+    "eslint-plugin-react": "7.12.4",
+    "husky": "1.3.1",
+    "isomorphic-fetch": "2.2.1",
+    "jsdom": "13.2.0",
+    "lerna": "3.13.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "1.18.2",
+    "rxjs-compat": "6.4.0",
+    "typescript": "3.5.3"
+  },
+  "resolutions": {
+    "**/cheerio/parse5": "4.0.0",
+    "**/fstream": "1.0.12",
+    "**/handlebars": "4.1.2",
+    "**/js-yaml": "3.13.1",
+    "**/lodash": "4.17.11",
+    "**/node-gyp/tar": "2.2.2",
+    "**/prettier": "1.18.2"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/customize-cra",
+      "**/customize-cra/**",
+      "**/react-scripts",
+      "**/react-scripts/**",
+      "**/react-app-rewired",
+      "**/react-app-rewired/**"
+    ]
+  },
+  "scripts": {
+    "build": "lerna run build",
+    "check-license": "./scripts/check-license.sh",
+    "coverage": "lerna run coverage",
+    "eslint": "eslint --cache 'scripts/*.{js,ts,tsx}' 'packages/*/src/**/*.{js,ts,tsx}' 'packages/*/*.{js,ts,tsx}'",
+    "lint": "npm-run-all -ln --parallel prettier-lint tsc-lint eslint check-license",
+    "prepare": "lerna run --stream --sort prepublishOnly",
+    "prettier": "prettier --write '{.,scripts}/*.{js,json,md,ts,tsx}' 'packages/*/{src,demo/src}/**/!(layout.worker.bundled|react-vis).{css,js,json,md,ts,tsx}' 'packages/*/*.{css,js,json,md,ts,tsx}'",
+    "prettier-lint": "prettier --list-different '{.,scripts}/*.{js,json,md,ts,tsx}' 'packages/*/{src,demo/src}/**/!(layout.worker.bundled|react-vis).{css,js,json,md,ts,tsx}' 'packages/*/*.{css,js,json,md,ts,tsx}'",
+    "test": "lerna run test",
+    "tsc-lint": "tsc --build",
+    "tsc-lint-debug": "tsc --listFiles",
+    "start": "cd packages/jaeger-ui && yarn start"
+  },
+  "prettier": {
+    "printWidth": 110,
+    "proseWrap": "never",
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm-run-all -ln --parallel lint test"
+    }
+  }
+}

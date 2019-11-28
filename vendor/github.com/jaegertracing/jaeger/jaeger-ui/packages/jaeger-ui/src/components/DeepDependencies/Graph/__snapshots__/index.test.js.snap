@@ -1,0 +1,136 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Graph /> render renders provided edges and vertices 1`] = `
+<Digraph
+  className=""
+  classNamePrefix="plexus"
+  edges={
+    Array [
+      Object {
+        "from": "key0",
+        "to": "key1",
+      },
+      Object {
+        "from": "key1",
+        "to": "key2",
+      },
+    ]
+  }
+  layers={
+    Array [
+      Object {
+        "key": "nodes/find-emphasis/html",
+        "layerType": "html",
+        "renderNode": [Function],
+      },
+      Object {
+        "key": "nodes/find-emphasis/vector-color-band",
+        "layerType": "svg",
+        "renderNode": null,
+      },
+      Object {
+        "key": "nodes/vector-border",
+        "layerType": "svg",
+        "renderNode": [Function],
+        "setOnContainer": [Function],
+      },
+      Object {
+        "defs": Array [
+          Object {
+            "localId": "arrow",
+          },
+          Object {
+            "localId": "arrow-hovered",
+            "setOnEntry": Object {
+              "className": "Ddg--Arrow is-pathHovered",
+            },
+          },
+        ],
+        "edges": true,
+        "key": "edges",
+        "layerType": "svg",
+        "markerEndId": "arrow",
+        "setOnContainer": Array [
+          [Function],
+          Object {
+            "className": "Ddg--Edges",
+          },
+        ],
+        "setOnEdge": Object {
+          "className": "Ddg--Edge",
+        },
+      },
+      Object {
+        "key": "nodes/content",
+        "layerType": "html",
+        "measurable": true,
+        "measureNode": [Function],
+        "renderNode": [Function],
+      },
+    ]
+  }
+  layoutManager={
+    LayoutManager {
+      "_handleUpdate": [Function],
+      "coordinator": Coordinator {
+        "_handleVizWorkerError": [Function],
+        "_handleVizWorkerMessage": [Function],
+        "_handleVizWorkerMessageError": [Function],
+        "busyWorkers": Array [],
+        "callback": [Function],
+        "currentLayout": null,
+        "idleWorkers": Array [],
+        "nextWorkerId": 0,
+      },
+      "layoutId": 0,
+      "options": Object {
+        "nodesep": 0.55,
+        "rankdir": "TB",
+        "ranksep": 1.5,
+        "shape": "circle",
+        "splines": "polyline",
+        "useDotEdges": true,
+      },
+      "pendingResult": null,
+    }
+  }
+  measurableNodesKey="nodes/content"
+  minimap={true}
+  minimapClassName="u-miniMap"
+  vertices={
+    Array [
+      Object {
+        "key": "key0",
+      },
+      Object {
+        "key": "key1",
+      },
+      Object {
+        "key": "key2",
+      },
+      Object {
+        "key": "key3",
+      },
+      Object {
+        "key": "key4",
+      },
+      Object {
+        "key": "key5",
+      },
+      Object {
+        "key": "key6",
+      },
+      Object {
+        "key": "key7",
+      },
+      Object {
+        "key": "key8",
+      },
+      Object {
+        "key": "key9",
+      },
+    ]
+  }
+  zoom={true}
+/>
+`;

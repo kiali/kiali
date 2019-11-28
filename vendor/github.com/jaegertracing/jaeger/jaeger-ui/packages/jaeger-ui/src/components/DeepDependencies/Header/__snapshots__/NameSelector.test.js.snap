@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<NameSelector> renders with is-invalid when required and without a value 1`] = `
+<Popover
+  content={
+    <FilteredList
+      cancel={[Function]}
+      options={
+        Array [
+          "a",
+          "b",
+          "c",
+        ]
+      }
+      setValue={[Function]}
+      value={null}
+    />
+  }
+  mouseEnterDelay={0.1}
+  mouseLeaveDelay={0.1}
+  onVisibleChange={[Function]}
+  overlayClassName="NameSelector--overlay u-rm-popover-content-padding"
+  overlayStyle={Object {}}
+  placement="bottomLeft"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="click"
+  visible={false}
+>
+  <h2
+    className="NameSelector is-invalid"
+  >
+    <BreakableText
+      className="NameSelector--value"
+      text="This is the placeholder"
+      wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+    />
+    <IoChevronDown
+      className="NameSelector--chevron"
+    />
+  </h2>
+</Popover>
+`;
+
+exports[`<NameSelector> renders without exploding 1`] = `
+<Popover
+  content={
+    <FilteredList
+      cancel={[Function]}
+      options={
+        Array [
+          "a",
+          "b",
+          "c",
+        ]
+      }
+      setValue={[Function]}
+      value={null}
+    />
+  }
+  mouseEnterDelay={0.1}
+  mouseLeaveDelay={0.1}
+  onVisibleChange={[Function]}
+  overlayClassName="NameSelector--overlay u-rm-popover-content-padding"
+  overlayStyle={Object {}}
+  placement="bottomLeft"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="click"
+  visible={false}
+>
+  <h2
+    className="NameSelector is-invalid"
+  >
+    <BreakableText
+      className="NameSelector--value"
+      text="This is the placeholder"
+      wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+    />
+    <IoChevronDown
+      className="NameSelector--chevron"
+    />
+  </h2>
+</Popover>
+`;
+
+exports[`<NameSelector> renders without is-invalid when not required and without a value 1`] = `
+<Popover
+  content={
+    <FilteredList
+      cancel={[Function]}
+      options={
+        Array [
+          "a",
+          "b",
+          "c",
+        ]
+      }
+      setValue={[Function]}
+      value={null}
+    />
+  }
+  mouseEnterDelay={0.1}
+  mouseLeaveDelay={0.1}
+  onVisibleChange={[Function]}
+  overlayClassName="NameSelector--overlay u-rm-popover-content-padding"
+  overlayStyle={Object {}}
+  placement="bottomLeft"
+  prefixCls="ant-popover"
+  transitionName="zoom-big"
+  trigger="click"
+  visible={false}
+>
+  <h2
+    className="NameSelector"
+  >
+    <BreakableText
+      className="NameSelector--value"
+      text="This is the placeholder"
+      wordRegexp={/\\\\W\\*\\\\w\\+\\\\W\\*/g}
+    />
+    <IoChevronDown
+      className="NameSelector--chevron"
+    />
+  </h2>
+</Popover>
+`;

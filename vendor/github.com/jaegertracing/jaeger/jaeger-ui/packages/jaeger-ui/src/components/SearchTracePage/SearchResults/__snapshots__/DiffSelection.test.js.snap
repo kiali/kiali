@@ -1,0 +1,124 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DiffSelection renders a trace as expected 1`] = `
+<div
+  className="DiffSelection is-non-empty ub-mb3"
+>
+  <div
+    className="DiffSelection--selectedItems"
+  >
+    <ResultItemTitle
+      disableComparision={false}
+      duration={0}
+      durationPercent={0}
+      error={[Error: error-0]}
+      isInDiffCohort={true}
+      key="trace-id-0"
+      linkTo="/trace/trace-id-0"
+      state="FETCH_DONE"
+      targetBlank={true}
+      toggleComparison={[Function]}
+      traceID="trace-id-0"
+      traceName="trace-name-0"
+    />
+  </div>
+  <div
+    className="DiffSelection--message"
+  >
+    <Button
+      block={false}
+      className="ub-right"
+      disabled={true}
+      ghost={false}
+      htmlType="button"
+      loading={false}
+      prefixCls="ant-btn"
+      type="primary"
+    >
+      Compare Traces
+    </Button>
+    <h2
+      className="ub-m0"
+    >
+      1
+       Selected for comparison
+    </h2>
+  </div>
+</div>
+`;
+
+exports[`DiffSelection renders multiple traces as expected 1`] = `
+<div
+  className="DiffSelection is-non-empty ub-mb3"
+>
+  <div
+    className="DiffSelection--selectedItems"
+  >
+    <ResultItemTitle
+      disableComparision={false}
+      duration={0}
+      durationPercent={0}
+      error={[Error: error-0]}
+      isInDiffCohort={true}
+      key="trace-id-0"
+      linkTo="/trace/trace-id-0"
+      state="FETCH_DONE"
+      targetBlank={true}
+      toggleComparison={[Function]}
+      traceID="trace-id-0"
+      traceName="trace-name-0"
+    />
+    <ResultItemTitle
+      disableComparision={false}
+      durationPercent={0}
+      error={[Error: error-1]}
+      isInDiffCohort={true}
+      key="trace-id-1"
+      linkTo="/trace/trace-id-1"
+      state="FETCH_DONE"
+      targetBlank={true}
+      toggleComparison={[Function]}
+      traceID="trace-id-1"
+    />
+    <ResultItemTitle
+      disableComparision={false}
+      durationPercent={0}
+      error={[Error: error-2]}
+      isInDiffCohort={true}
+      key="trace-id-2"
+      linkTo="/trace/trace-id-2"
+      state="FETCH_ERROR"
+      targetBlank={true}
+      toggleComparison={[Function]}
+      traceID="trace-id-2"
+    />
+  </div>
+  <div
+    className="DiffSelection--message"
+  >
+    <Link
+      replace={false}
+      to="/trace/trace-id-0...trace-id-1?cohort=trace-id-0&cohort=trace-id-1"
+    >
+      <Button
+        block={false}
+        className="ub-right"
+        disabled={false}
+        ghost={false}
+        htmlType="button"
+        loading={false}
+        prefixCls="ant-btn"
+        type="primary"
+      >
+        Compare Traces
+      </Button>
+    </Link>
+    <h2
+      className="ub-m0"
+    >
+      2
+       Selected for comparison
+    </h2>
+  </div>
+</div>
+`;
