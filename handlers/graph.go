@@ -69,16 +69,16 @@ func handlePanic(w http.ResponseWriter) {
 	code := http.StatusInternalServerError
 	if r := recover(); r != nil {
 		var message string
-		switch r.(type) {
+		switch err := r.(type) {
 		case string:
-			message = r.(string)
+			message = err
 		case error:
-			message = r.(error).Error()
+			message = err.Error()
 		case func() string:
-			message = r.(func() string)()
+			message = err()
 		case graph.Response:
-			message = r.(graph.Response).Message
-			code = r.(graph.Response).Code
+			message = err.Message
+			code = err.Code
 		default:
 			message = fmt.Sprintf("%v", r)
 		}

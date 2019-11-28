@@ -24,7 +24,7 @@ VERSION_LABEL ?= ${VERSION}
 
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
-GOFMT ?= $(shell eval $$(${GO} env); echo $$GOROOT)/bin/gofmt
+GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
 GO_VERSION_KIALI = 1.13.4
 
 # Identifies the container image that will be built and deployed.
@@ -337,7 +337,7 @@ ocp-kiali-create: .prepare-ocp-vars openshift-undeploy
 
 ## lint-install: Installs golangci-lint
 lint-install:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $$(go env GOPATH)/bin v1.17.1
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.21.0
 
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
