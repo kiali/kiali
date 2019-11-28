@@ -183,7 +183,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
 
 const mapStateToProps = (_: KialiAppState) => ({});
 
-const CustomMetricsContainer = withRouter<RouteComponentProps<{}> & CustomMetricsProps>(
+const CustomMetricsContainer = withRouter<RouteComponentProps<{}> & CustomMetricsProps, any>(
   connect(mapStateToProps)(CustomMetrics)
 );
 

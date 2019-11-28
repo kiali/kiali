@@ -227,7 +227,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 
 const mapStateToProps = (_: KialiAppState) => ({});
 
-const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps>(
+const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
   connect(mapStateToProps)(IstioMetrics)
 );
 
