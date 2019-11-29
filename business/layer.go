@@ -83,12 +83,11 @@ func Get(token string) (*Layer, error) {
 	}
 
 	// Create Jaeger client
-	jaegerClient, err := jaeger.NewClient(token)
-	if err != nil {
-		log.Infof("Error in Jaeger Client: " + err.Error())
+	jaegerLoader := func() (jaeger.ClientInterface, error) {
+		return jaeger.NewClient(token)
 	}
 
-	return NewWithBackends(k8s, prometheusClient, jaegerClient), nil
+	return NewWithBackends(k8s, prometheusClient, jaegerLoader), nil
 }
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
@@ -99,7 +98,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients
-func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface, jaegerClient jaeger.ClientInterface) *Layer {
+func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface, jaegerClient func() (jaeger.ClientInterface, error)) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
@@ -108,7 +107,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
-	temporaryLayer.Jaeger = JaegerService{jaeger: jaegerClient, businessLayer: temporaryLayer}
+	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
