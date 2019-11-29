@@ -38,38 +38,43 @@ import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
 
+const emptyWizardState = (serviceName: string): WizardState => {
+  return {
+    showWizard: false,
+    showAdvanced: false,
+    workloads: [],
+    rules: [],
+    suspendedRoutes: [],
+    valid: {
+      mainWizard: true,
+      vsHosts: true,
+      tls: true,
+      lb: true,
+      gateway: true
+    },
+    advancedOptionsValid: true,
+    vsHosts: [serviceName],
+    trafficPolicy: {
+      tlsModified: false,
+      mtlsMode: DISABLE,
+      clientCertificate: '',
+      privateKey: '',
+      caCertificates: '',
+      addLoadBalancer: false,
+      simpleLB: false,
+      consistentHashType: ConsistentHashType.HTTP_HEADER_NAME,
+      loadBalancer: {
+        simple: ROUND_ROBIN
+      }
+    },
+    gateway: undefined
+  };
+};
+
 class IstioWizard extends React.Component<WizardProps, WizardState> {
   constructor(props: WizardProps) {
     super(props);
-    this.state = {
-      showWizard: false,
-      showAdvanced: false,
-      workloads: [],
-      rules: [],
-      suspendedRoutes: [],
-      valid: {
-        mainWizard: true,
-        vsHosts: true,
-        tls: true,
-        lb: true,
-        gateway: true
-      },
-      advancedOptionsValid: true,
-      vsHosts: [props.serviceName],
-      trafficPolicy: {
-        tlsModified: false,
-        mtlsMode: DISABLE,
-        clientCertificate: '',
-        privateKey: '',
-        caCertificates: '',
-        addLoadBalancer: false,
-        simpleLB: false,
-        consistentHashType: ConsistentHashType.HTTP_HEADER_NAME,
-        loadBalancer: {
-          simple: ROUND_ROBIN
-        }
-      }
-    };
+    this.state = emptyWizardState(props.serviceName);
   }
 
   componentDidUpdate(prevProps: WizardProps) {
@@ -151,11 +156,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     return true;
   };
 
-  onClose = () => {
-    this.setState({
-      showWizard: false
-    });
-    this.props.onClose(true);
+  onClose = (changed: boolean) => {
+    this.setState(emptyWizardState(this.props.serviceName));
+    this.props.onClose(changed);
   };
 
   onCreateUpdate = () => {
@@ -221,11 +224,11 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
             MessageType.SUCCESS
           );
         }
-        this.props.onClose(true);
+        this.onClose(true);
       })
       .catch(error => {
         AlertUtils.addError('Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.', error);
-        this.props.onClose(true);
+        this.onClose(true);
       });
   };
 
@@ -319,14 +322,14 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
             : ''
         }
         isOpen={this.state.showWizard}
-        onClose={this.onClose}
+        onClose={() => this.onClose(false)}
         onKeyPress={e => {
           if (e.key === 'Enter' && this.isValid(this.state)) {
             this.onCreateUpdate();
           }
         }}
         actions={[
-          <Button key="cancel" variant="secondary" onClick={this.onClose}>
+          <Button key="cancel" variant="secondary" onClick={() => this.onClose(false)}>
             Cancel
           </Button>,
           <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onCreateUpdate}>
