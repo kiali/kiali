@@ -31,6 +31,10 @@ export const EXACT = 'exact';
 export const PREFIX = 'prefix';
 export const REGEX = 'regex';
 
+// Pseudo operator
+export const PRESENCE = 'is present';
+export const ANYTHING = '^.*$';
+
 const opOptions: string[] = [EXACT, PREFIX, REGEX];
 
 const placeholderText = {
@@ -63,6 +67,7 @@ class MatchBuilder extends React.Component<Props, State> {
   };
 
   render() {
+    const renderOpOptions: string[] = this.props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
     return (
       <InputGroup>
         <Dropdown
@@ -93,7 +98,7 @@ class MatchBuilder extends React.Component<Props, State> {
         <Dropdown
           toggle={<DropdownToggle onToggle={this.onOperatorToggle}>{this.props.operator}</DropdownToggle>}
           isOpen={this.state.isOperatorDropdown}
-          dropdownItems={opOptions.map((op, index) => (
+          dropdownItems={renderOpOptions.map((op, index) => (
             <DropdownItem
               key={op + '_' + index}
               value={op}
@@ -107,12 +112,14 @@ class MatchBuilder extends React.Component<Props, State> {
             </DropdownItem>
           ))}
         />
-        <TextInput
-          id="match-value-id"
-          value={this.props.matchValue}
-          onChange={this.props.onMatchValueChange}
-          placeholder={placeholderText[this.props.category]}
-        />
+        {this.props.operator !== PRESENCE && (
+          <TextInput
+            id="match-value-id"
+            value={this.props.matchValue}
+            onChange={this.props.onMatchValueChange}
+            placeholder={placeholderText[this.props.category]}
+          />
+        )}
         <Button disabled={!this.props.isValid} onClick={this.props.onAddMatch}>
           Add Match
         </Button>
