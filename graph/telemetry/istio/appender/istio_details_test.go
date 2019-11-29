@@ -66,7 +66,7 @@ func TestCBAll(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -128,7 +128,7 @@ func TestCBSubset(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -197,7 +197,7 @@ func TestVS(t *testing.T) {
 		vService.DeepCopyIstioObject(),
 	}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))

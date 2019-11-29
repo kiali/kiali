@@ -22,7 +22,7 @@ func TestServiceListParsing(t *testing.T) {
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	conf := config.NewConfig()
 	config.Set(conf)
-	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
+	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 
 	serviceList, _ := svc.GetServiceList("Namespace")
 

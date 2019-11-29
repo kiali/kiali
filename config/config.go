@@ -123,11 +123,7 @@ type TracingConfig struct {
 	Auth              Auth   `yaml:"auth"`
 	Enabled           bool   `yaml:"enabled"` // Enable autodiscover and Jaeger in Kiali
 	InClusterURL      string `yaml:"in_cluster_url"`
-	Namespace         string `yaml:"namespace"`
 	NamespaceSelector bool   `yaml:"namespace_selector"`
-	Path              string `yaml:"-"` // Path stores the value of QUERY_BASE_PATH, not configurable in ConfigMap
-	Port              int32  `yaml:"port"`
-	Service           string `yaml:"service"`
 	URL               string `yaml:"url"`
 }
 
@@ -328,10 +324,10 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:           true,
-				Namespace:         "istio-system",
+				Enabled:           false,
 				NamespaceSelector: true,
-				Port:              16686,
+				InClusterURL:      "https://tracing.istio-system.svc:16686",
+				URL:               "http://tracing.istio-system:16686",
 			},
 		},
 		IstioLabels: IstioLabels{

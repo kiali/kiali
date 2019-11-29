@@ -19,7 +19,7 @@ import (
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(k8s, prom)
+	layer := NewWithBackends(k8s, prom, nil)
 	return AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
 

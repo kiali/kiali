@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"errors"
-	"github.com/kiali/kiali/business"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -31,6 +31,58 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, code, info)
 }
 
+func GetJaegerServices(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	services, code, err := business.Jaeger.GetJaegerServices()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, code, err.Error())
+		return
+	}
+	RespondWithJSON(w, code, services)
+}
+
+func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	traces, code, err := business.Jaeger.GetJaegerTraces(namespace, service, r.URL.RawQuery)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, code, err.Error())
+		return
+	}
+	RespondWithJSON(w, code, traces)
+
+}
+
+func TraceDetails(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	traceID := params["traceID"]
+	traces, code, err := business.Jaeger.GetJaegerTraceDetail(traceID)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, code, err.Error())
+		return
+	}
+	RespondWithJSON(w, code, traces)
+
+}
+
 func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
 
@@ -38,7 +90,7 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		return nil, http.StatusNoContent, nil
 	}
 
-	externalUrl := status.DiscoverJaeger()
+	externalUrl := jaegerConfig.URL
 	if externalUrl == "" {
 		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
 	}
@@ -47,20 +99,14 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL in cluster is not set in Kiali configuration")
 	}
 
-	internalURL, err := business.GetJaegerInternalURL("/api/services")
-	if err != nil {
-		return nil, http.StatusServiceUnavailable, errors.New("wrong format for Jaeger URL: " + err.Error())
-	}
-	apiURL := internalURL.String()
-
 	// Be sure to copy config.Auth and not modify the existing
 	auth := jaegerConfig.Auth
 	if auth.UseKialiToken {
 		auth.Token = requestToken
 	}
 
-	if ha, err := canAccessURL(apiURL, &auth); !ha {
-		return nil, http.StatusServiceUnavailable, err
+	if ha, err := canAccessURL(jaegerConfig.InClusterURL, &auth); !ha {
+		return nil, http.StatusServiceUnavailable, errors.New("Kiali can't access to Jaeger " + err.Error())
 	}
 
 	info := &models.JaegerInfo{

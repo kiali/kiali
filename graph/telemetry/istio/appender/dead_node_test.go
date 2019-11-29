@@ -102,7 +102,7 @@ func setupWorkloads() *business.Layer {
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	return businessLayer
 }
 

@@ -31,7 +31,7 @@ func TestGetServiceHealth(t *testing.T) {
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
@@ -57,7 +57,7 @@ func TestGetAppHealth(t *testing.T) {
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReview(), nil)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
@@ -89,7 +89,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
@@ -119,7 +119,7 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
@@ -145,7 +145,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
@@ -167,7 +167,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	_, _ = hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 
@@ -189,7 +189,7 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	k8s.MockServices("tutorial", []string{"reviews", "httpbin"})
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
 	health, err := hs.GetNamespaceServiceHealth("tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 

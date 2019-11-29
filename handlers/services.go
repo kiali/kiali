@@ -104,13 +104,8 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, service)
 		}()
 	}
-	requestToken, err := getToken(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
-		return
-	}
 
-	serviceDetails, err := business.Svc.GetService(namespace, service, rateInterval, queryTime, requestToken)
+	serviceDetails, err := business.Svc.GetService(namespace, service, rateInterval, queryTime)
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations
