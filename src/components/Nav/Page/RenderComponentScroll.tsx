@@ -16,7 +16,8 @@ export class RenderComponentScroll extends React.Component<{}, { height: number 
   }
 
   updateWindowDimensions = () => {
-    this.setState({ height: window.innerHeight * 0.8 });
+    // 76px (header) + 115px (breadcrumb + title) + 40px (tabs)
+    this.setState({ height: window.innerHeight - 231 });
   };
 
   render() {

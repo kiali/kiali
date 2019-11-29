@@ -3,7 +3,17 @@ import { DestinationRule, ObjectValidation } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
-import { Card, CardBody, Grid, GridItem, Stack, StackItem, Text, TextVariants, TooltipPosition } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Text,
+  TextVariants,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { ServiceIcon } from '@patternfly/react-icons';
@@ -76,7 +86,12 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
             <>
               <Text component={TextVariants.h2}>Subsets</Text>
               {hasSubsets ? (
-                <Table variant={TableVariant.compact} cells={this.columnsSubsets()} rows={this.rowsSubset()}>
+                <Table
+                  aria-label={'DestinationRule SubSets table'}
+                  variant={TableVariant.compact}
+                  cells={this.columnsSubsets()}
+                  rows={this.rowsSubset()}
+                >
                   <TableHeader />
                   <TableBody />
                 </Table>

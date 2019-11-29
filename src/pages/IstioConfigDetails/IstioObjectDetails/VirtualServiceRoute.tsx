@@ -195,7 +195,12 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
             />
           </div>
         )}
-        <Table variant={TableVariant.compact} cells={this.columns()} rows={this.rows(route, i)}>
+        <Table
+          aria-label={'VirtualService Route table'}
+          variant={TableVariant.compact}
+          cells={this.columns()}
+          rows={this.rows(route, i)}
+        >
           <TableHeader />
           <TableBody />
         </Table>

@@ -90,7 +90,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
           { title: <Labels key={'labels' + podIdx} labels={pod.labels} /> },
           { title: pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : '' },
           { title: pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : '' },
-          { title: pod.status }
+          { title: <span style={{ whiteSpace: 'nowrap' }}>{pod.status}</span> }
         ]
       });
       return rows;

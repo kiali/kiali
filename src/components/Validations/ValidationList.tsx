@@ -6,7 +6,6 @@ import { highestSeverity } from '../../types/ServiceInfo';
 
 type Props = {
   checks?: ObjectCheck[];
-  showValid?: boolean;
   tooltipPosition?: TooltipPosition;
 };
 
@@ -25,17 +24,12 @@ class ValidationList extends React.Component<Props> {
         aria-label={'Validations list'}
         position={this.props.tooltipPosition || TooltipPosition.left}
         enableFlip={true}
-        content={this.content()}
+        content={isValid ? 'Valid' : this.content()}
       >
         <Validation severity={severity} />
       </Tooltip>
     );
-
-    if (!isValid || (isValid && this.props.showValid)) {
-      return tooltip;
-    } else {
-      return '';
-    }
+    return tooltip;
   }
 }
 
