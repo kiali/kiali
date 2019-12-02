@@ -19,16 +19,26 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
-	for _, dr := range refdMtls {
-		refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
-	}
-
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
+		drSameHosts := sameHostDestinationRules(dr, refdMtls)
+
+		// Continue if there aren't DestinationRules enabling mTLS non-locally
+		// and pointing to same host as dr.
+		if len(drSameHosts) == 0 {
+			continue
+		}
+
+		// Invalid if there isn't trafficPolicy specified or trafficPolicy doesn't specify TLSSettings
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
 			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace)
+
+			refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
+			for _, dr := range refdMtls {
+				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
+			}
+
 			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
 
 			if _, exists := validations[key]; !exists {
@@ -53,6 +63,31 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []kubernetes.IstioObj
 		}
 	}
 	return mtlsDrs
+}
+
+func sameHostDestinationRules(dr kubernetes.IstioObject, mdrs []kubernetes.IstioObject) []kubernetes.IstioObject {
+	var drHost kubernetes.Host
+	shdrs := make([]kubernetes.IstioObject, 0, len(mdrs))
+
+	if host, ok := dr.GetSpec()["host"]; ok {
+		if dHost, ok := host.(string); ok {
+			drHost = kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+		}
+	}
+
+	for _, mdr := range mdrs {
+		if host, ok := mdr.GetSpec()["host"]; ok {
+			if dHost, ok := host.(string); ok {
+				mdrHost := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				if mdrHost.Service == "*.local" ||
+					(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
+					shdrs = append(shdrs, mdr)
+				}
+			}
+		}
+	}
+
+	return shdrs
 }
 
 func hasTrafficPolicy(dr kubernetes.IstioObject) bool {

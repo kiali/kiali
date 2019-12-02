@@ -192,6 +192,47 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicy(t *testing.T) {
 	testValidationsNotAdded(t, destinationRules, mTLSDetails)
 }
 
+// Context: Namespace-wide mTLS enabled
+// Context: DestinationRule doesn't specify trafficPolicy and host is from other namespace
+// It doesn't return any validation
+func TestCrossNamespaceProtection(t *testing.T) {
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []kubernetes.IstioObject{
+			// Namespace-wide DR enabling mTLS communication
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
+		},
+	}
+
+	destinationRules := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("other", "reviews", "reviews.other.svc.cluster.local")),
+	}
+
+	testValidationsNotAdded(t, destinationRules, mTLSDetails)
+}
+
+// Context: Namespace-wide mTLS enabled
+// Context: DestinationRule doesn't specify trafficPolicy and host is from a ServiceEntry
+// It doesn't return any validation
+func TestCrossNamespaceServiceEntryProtection(t *testing.T) {
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []kubernetes.IstioObject{
+			// Namespace-wide DR enabling mTLS communication
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
+		},
+	}
+
+	destinationRules := []kubernetes.IstioObject{
+		// Subject DR that specify trafficPolicy and mTLS options
+		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("other", "service-entry-dr", "wikipedia.org")),
+	}
+
+	testValidationsNotAdded(t, destinationRules, mTLSDetails)
+}
+
 func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
