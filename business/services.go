@@ -111,7 +111,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
-	validations := in.getServiceValidations(svcs, deployments)
+	validations := in.getServiceValidations(svcs, deployments, pods)
 	// Convert each k8s service into our model
 	for i, item := range svcs {
 		sPods := kubernetes.FilterPodsForService(&item, pods)
@@ -441,10 +441,11 @@ func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.Servic
 	return &sdl, nil
 }
 
-func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment) models.IstioValidations {
+func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {
 	validations := checkers.ServiceChecker{
 		Services:    services,
 		Deployments: deployments,
+		Pods:        pods,
 	}.Check()
 
 	return validations

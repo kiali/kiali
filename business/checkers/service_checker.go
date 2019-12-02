@@ -1,10 +1,12 @@
 package checkers
 
 import (
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/business/checkers/services"
 	"github.com/kiali/kiali/models"
-	apps_v1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 )
 
 const ServiceCheckerType = "service"
@@ -12,6 +14,7 @@ const ServiceCheckerType = "service"
 type ServiceChecker struct {
 	Services    []v1.Service
 	Deployments []apps_v1.Deployment
+	Pods        []core_v1.Pod
 }
 
 func (sc ServiceChecker) Check() models.IstioValidations {
@@ -28,7 +31,7 @@ func (sc ServiceChecker) runSingleChecks(service v1.Service) models.IstioValidat
 	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), service.GetObjectMeta().GetNamespace(), ServiceCheckerType)
 
 	enabledCheckers := []Checker{
-		services.PortMappingChecker{Service: service, Deployments: sc.Deployments},
+		services.PortMappingChecker{Service: service, Deployments: sc.Deployments, Pods: sc.Pods},
 	}
 
 	for _, checker := range enabledCheckers {

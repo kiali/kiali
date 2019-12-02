@@ -50,6 +50,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 
 	var istioDetails kubernetes.IstioDetails
 	var services []core_v1.Service
+	var pods []core_v1.Pod
 	var workloads models.WorkloadList
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
@@ -59,9 +60,10 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	wg.Add(6) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	if service != "" {
-		// These resources are not used if no service is targetted
-		wg.Add(1)
+		// These resources are not used if no service is targeted
+		wg.Add(2)
 		go in.fetchDeployments(&deployments, namespace, errChan, &wg)
+		go in.fetchPods(&pods, namespace, errChan, &wg)
 	}
 
 	// We fetch without target service as some validations will require full-namespace details
@@ -83,7 +85,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	objectCheckers := in.getAllObjectCheckers(namespace, istioDetails, services, workloads, gatewaysPerNamespace, mtlsDetails, rbacDetails)
 
 	if service != "" {
-		objectCheckers = append(objectCheckers, in.getServiceCheckers(namespace, services, deployments)...)
+		objectCheckers = append(objectCheckers, in.getServiceCheckers(namespace, services, deployments, pods)...)
 	}
 
 	// Get group validations for same kind istio objects
@@ -95,9 +97,9 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	return validations, nil
 }
 
-func (in *IstioValidationsService) getServiceCheckers(namespace string, services []core_v1.Service, deployments []apps_v1.Deployment) []ObjectChecker {
+func (in *IstioValidationsService) getServiceCheckers(namespace string, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) []ObjectChecker {
 	return []ObjectChecker{
-		checkers.ServiceChecker{Services: services, Deployments: deployments},
+		checkers.ServiceChecker{Services: services, Deployments: deployments, Pods: pods},
 	}
 }
 
@@ -318,6 +320,29 @@ func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment
 			}
 		} else {
 			*rValue = deployments
+		}
+	}
+}
+
+func (in *IstioValidationsService) fetchPods(rValue *[]core_v1.Pod, namespace string, errChan chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if len(errChan) == 0 {
+		var err error
+		var pods []core_v1.Pod
+		// Check if namespace is cached
+		// Namespace access is checked in the upper call
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			pods, err = kialiCache.GetPods(namespace, "")
+		} else {
+			pods, err = in.k8s.GetPods(namespace, "")
+		}
+		if err != nil {
+			select {
+			case errChan <- err:
+			default:
+			}
+		} else {
+			*rValue = pods
 		}
 	}
 }
