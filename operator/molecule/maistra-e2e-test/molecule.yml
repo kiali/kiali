@@ -29,14 +29,14 @@ provisioner:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
           maistra:
-            image: docker.io/maistra/istio-ubi8-operator:1.0.0
+            image: docker.io/maistra/istio-ubi8-operator:1.0.2
             namespace: istio-operator
             cni:
-              image: docker.io/maistra/istio-cni-ubi8:1.0.0
+              image: docker.io/maistra/istio-cni-ubi8:1.0.2
           kiali:
             namespace: kiali-operator
             hub: quay.io/kiali/kiali-operator
-            tag: v1.0.5
+            tag: v1.10.0
             watch_namespace: ""
             clusterrolebindings: ""
             clusterroles: ""
@@ -49,7 +49,7 @@ provisioner:
             - "istio-system2"
             global:
               hub: docker.io/maistra
-              tag: 1.0.0
+              tag: 1.0.2
               image_pull_policy: Always
             oauthproxy:
               image: ose-oauth-proxy
@@ -57,7 +57,7 @@ provisioner:
             kiali:
               hub: quay.io/kiali
               image: kiali
-              tag: v1.0.5
+              tag: v1.10.0
             threescale:
               hub: quay.io/3scale
               tag: v1.0.0
