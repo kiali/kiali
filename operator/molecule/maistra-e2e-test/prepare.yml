@@ -96,3 +96,8 @@
     when: item.kind == "RedHatTutorial" 
     with_items:
     - "{{ kiali.test_mesh.installations }}"
+
+
+  - name: Pause for 5 minutes to wait all meshes to be created
+    pause:
+      minutes: 5
