@@ -5,8 +5,7 @@
     role_namespace_obj: "{{ lookup('k8s', namespace=role_namespace, kind='Namespace', resource_name=role_namespace, api_version='v1') }}"
   include_tasks: process-resource.yml
   loop:
-  - role
-  - role-viewer
+  - "{{ 'role-viewer' if kiali_vars.deployment.view_only_mode == True else 'role' }}"
   - rolebinding
   loop_control:
     loop_var: process_resource_item

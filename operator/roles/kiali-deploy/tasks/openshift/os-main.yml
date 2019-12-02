@@ -6,8 +6,7 @@
   loop:
   - serviceaccount
   - configmap
-  - role
-  - role-viewer
+  - "{{ 'role-viewer' if kiali_vars.deployment.view_only_mode == True else 'role' }}"
   - rolebinding
   - deployment
   - service
@@ -29,7 +28,7 @@
   - is_openshift == True
   - kiali_vars.deployment.ingress_enabled == True
 
-- name: Delete Route on Kubernetes if disabled
+- name: Delete Route on OpenShift if disabled
   k8s:
     state: absent
     api_version: "route.openshift.io/v1"

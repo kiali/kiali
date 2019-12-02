@@ -20,7 +20,7 @@
     - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} envsubst
     - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_IMAGE_NAME={{ kiali.operator_image_name}} OPERATOR_IMAGE_VERSION={{ kiali.operator_version }} OPERATOR_IMAGE_PULL_POLICY={{ kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ kiali.operator_watch_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" envsubst
+    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" OPERATOR_ROLE_CREATE="{{ kiali.operator_role_create | default('- create') }}" OPERATOR_ROLE_DELETE="{{ kiali.operator_role_delete | default('- delete') }}" OPERATOR_ROLE_PATCH="{{ kiali.operator_role_patch | default('- patch') }}" envsubst
     register: template
 
   - name: Parse Template Yaml Files

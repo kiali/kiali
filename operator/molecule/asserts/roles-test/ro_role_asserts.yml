@@ -7,7 +7,7 @@
   register: roles
   with_nested:
   - "{{ kiali.accessible_namespaces }}"
-  - ['kiali', 'kiali-viewer']
+  - kiali-viewer
 
 - name: Assert that namespaces have the correct roles
   assert:

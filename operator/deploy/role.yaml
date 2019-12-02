@@ -180,31 +180,31 @@ rules:
   - security.istio.io
   resources: ["*"]
   verbs:
-  - create
-  - delete
+  ${OPERATOR_ROLE_CREATE}
+  ${OPERATOR_ROLE_DELETE}
   - get
   - list
-  - patch
+  ${OPERATOR_ROLE_PATCH}
   - watch
 - apiGroups: ["authentication.maistra.io"]
   resources:
   - servicemeshpolicies
   verbs:
-  - create
-  - delete
+  ${OPERATOR_ROLE_CREATE}
+  ${OPERATOR_ROLE_DELETE}
   - get
   - list
-  - patch
+  ${OPERATOR_ROLE_PATCH}
   - watch
 - apiGroups: ["rbac.maistra.io"]
   resources:
   - servicemeshrbacconfigs
   verbs:
-  - create
-  - delete
+  ${OPERATOR_ROLE_CREATE}
+  ${OPERATOR_ROLE_DELETE}
   - get
   - list
-  - patch
+  ${OPERATOR_ROLE_PATCH}
   - watch
 - apiGroups: ["apps.openshift.io"]
   resources:
