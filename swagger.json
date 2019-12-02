@@ -2324,13 +2324,28 @@
           "http",
           "https"
         ],
-        "operationId": "getSpans",
+        "operationId": "spansList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
-            "$ref": "#/responses/tracesResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+            "$ref": "#/responses/spansResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -5487,7 +5502,6 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Span": {
-      "description": "Span is a span denoting a piece of work in some infrastructure\nWhen converting to UI model, ParentSpanID and Process should be dereferenced into\nReferences and ProcessID, respectively.\nWhen converting to ES model, ProcessID and Warnings should be omitted. Even if\nincluded, ES with dynamic settings off will automatically ignore unneeded fields.",
       "type": "object",
       "properties": {
         "duration": {
@@ -5545,6 +5559,11 @@
         "traceID": {
           "$ref": "#/definitions/TraceID"
         },
+        "traceSize": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TraceSize"
+        },
         "warnings": {
           "type": "array",
           "items": {
@@ -5553,7 +5572,7 @@
           "x-go-name": "Warnings"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/kiali/kiali/jaeger"
     },
     "SpanID": {
       "description": "SpanID is the id of a span",
@@ -6696,6 +6715,15 @@
         }
       }
     },
+    "spansResponse": {
+      "description": "Listing all the information related to a Span",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Span"
+        }
+      }
+    },
     "statusInfo": {
       "description": "HTTP status code 200 and statusInfo model in data",
       "schema": {
@@ -6727,7 +6755,7 @@
       }
     },
     "tracesDetailResponse": {
-      "description": "Listing all the information related to a workload",
+      "description": "Listing all the information related to a Trace",
       "schema": {
         "type": "array",
         "items": {

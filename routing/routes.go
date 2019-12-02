@@ -421,7 +421,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/spans getSpans
+		// swagger:route GET /namespaces/{namespace}/services/{service}/spans spansList
 		// ---
 		// Endpoint to get Jaeger spans for a given service
 		//
@@ -432,8 +432,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		// 		500: internalError
-		//		404: notFoundError
-		//		200: tracesResponse
+		//		200: spansResponse
 		{
 			"ServiceSpans",
 			"GET",
@@ -441,8 +440,6 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceSpans,
 			true,
 		},
-		// QUESTION / TODO: Do we still need TracesList or not? I think we will always display spans list, not traces list
-
 		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesList
 		// ---
 		// Endpoint to get the traces of a given service
