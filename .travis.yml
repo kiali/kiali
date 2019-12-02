@@ -6,7 +6,7 @@
 language: go
 
 go:
-- 1.13.4
+- 1.12.13
 
 notifications:
   irc:

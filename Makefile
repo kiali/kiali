@@ -25,7 +25,7 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
-GO_VERSION_KIALI = 1.13.4
+GO_VERSION_KIALI = 1.12.13
 
 # Identifies the container image that will be built and deployed.
 IMAGE_ORG ?= kiali
@@ -166,7 +166,7 @@ dep-update:
 ## swagger-install: Install swagger from github
 swagger-install:
 	@echo "Installing swagger binary to ${GOPATH}/bin..."
-	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.21.0/swagger_linux_amd64 -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
+	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.19.0/swagger_linux_amd64 -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
 
 ## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
 swagger-validate:
@@ -342,4 +342,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run --skip-files "doc\.go" --tests
+	GL_DEBUG=linters_output GOPACKAGESPRINTGOLISTERRORS=1 golangci-lint run -v --skip-files "doc\.go" --tests
