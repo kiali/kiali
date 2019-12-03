@@ -82,7 +82,7 @@ See the link:./LICENSE[LICENSE file].
 These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run Kiali on OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below]. To run Kiali on Kubernetes after you built it, it is assumed you have a running Kubernetes environment available to you.
 
 [NOTE]
-Currently, Kiali releases are built using Go 1.12.13. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.13.4 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
+Currently, Kiali releases are built using Go 1.12.13. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.12.13 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
 
 To build Kiali:
 
