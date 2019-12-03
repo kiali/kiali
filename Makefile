@@ -342,4 +342,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	GL_DEBUG=linters_output GOPACKAGESPRINTGOLISTERRORS=1 golangci-lint run -v --skip-files "doc\.go" --tests
+	golangci-lint run --skip-files "doc\.go" --tests --timeout 5m
