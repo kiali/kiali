@@ -15,6 +15,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 // The supported vendors
@@ -204,7 +205,7 @@ func NewOptions(r *net_http.Request) Options {
 		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
 			namespaceMap[namespaceToken] = NamespaceInfo{
 				Name:     namespaceToken,
-				Duration: resolveNamespaceDuration(creationTime, time.Duration(duration), queryTime),
+				Duration: getSafeNamespaceDuration(namespaceToken, creationTime, time.Duration(duration), queryTime),
 				IsIstio:  config.IsIstioNamespace(namespaceToken),
 			}
 		} else {
@@ -285,25 +286,31 @@ func getAccessibleNamespaces(token string) map[string]time.Time {
 	return namespaceMap
 }
 
-// resolveNamespaceDuration determines if, given queryTime, the requestedRange won't lead to
-// querying data before nsCreationTime. If this is the case, resolveNamespaceDuration returns
-// and adjusted range. Else, the original requestedRange is returned.
-func resolveNamespaceDuration(nsCreationTime time.Time, requestedRange time.Duration, queryTime int64) time.Duration {
-	var referenceTime time.Time
-	resolvedBound := requestedRange
+// getSafeNamespaceDuration returns a safe duration for the query. If queryTime-requestedDuration > namespace
+// creation time just return the requestedDuration.  Otherwise reduce the duration as needed to ensure the
+// namespace existed for the entire time range.  An error is generated if no safe duration exists (i.e. the
+// queryTime precedes the namespace).
+func getSafeNamespaceDuration(ns string, nsCreationTime time.Time, requestedDuration time.Duration, queryTime int64) time.Duration {
+	var endTime time.Time
+	safeDuration := requestedDuration
 
 	if !nsCreationTime.IsZero() {
 		if queryTime != 0 {
-			referenceTime = time.Unix(queryTime, 0)
+			endTime = time.Unix(queryTime, 0)
 		} else {
-			referenceTime = time.Now()
+			endTime = time.Now()
 		}
 
-		nsLifetime := referenceTime.Sub(nsCreationTime)
-		if nsLifetime < resolvedBound {
-			resolvedBound = nsLifetime
+		nsLifetime := endTime.Sub(nsCreationTime)
+		if nsLifetime <= 0 {
+			BadRequest(fmt.Sprintf("Namespace [%s] did not exist at requested queryTime [%v]", ns, endTime))
+		}
+
+		if nsLifetime < safeDuration {
+			safeDuration = nsLifetime
+			log.Debugf("Reducing requestedDuration [%v] to safeDuration [%v]", requestedDuration, safeDuration)
 		}
 	}
 
-	return resolvedBound
+	return safeDuration
 }
