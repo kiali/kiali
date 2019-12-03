@@ -94,7 +94,7 @@ spec:
 #  auth:
 #
 # Determines what authentication strategy to use when users log into Kiali.
-# Options are "login", "anonymous", "openshift", "token".
+# Options are "login", "anonymous", "openshift", "token", "ldap".
 # Choose "login" to use a username and password that will be stored in a secret.
 # Choose "anonymous" to allow full access to Kiali without requiring any credentials.
 # Choose "token" to allow access to Kiali using service account tokens, which controls

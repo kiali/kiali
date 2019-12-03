@@ -215,27 +215,28 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	err := r.ParseForm()
 
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error parsing form data from client", err.Error())
 		return false
 	}
 
 	token := r.Form.Get("token")
 
 	if token == "" {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Token is empty.")
+		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
 		return false
 	}
 
 	business, err := business.Get(token)
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.")
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		return false
 	}
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
 	_, err = business.Namespace.GetNamespaces()
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusUnauthorized, "Token is not valid or is expired: "+err.Error())
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
 		return false
 	}
 
@@ -250,7 +251,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return false
 	}
 
@@ -259,7 +260,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  timeExpire,
 		HttpOnly: true,
-		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -408,6 +409,30 @@ func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	return http.StatusUnauthorized, ""
 }
 
+func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
+	} else {
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return http.StatusInternalServerError, ""
+		}
+
+		_, err = business.Namespace.GetNamespaces()
+		if err == nil {
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", claims.Subject)
+			return http.StatusOK, claims.SessionId
+		}
+
+		log.Warning("Token error: ", err)
+	}
+
+	return http.StatusUnauthorized, ""
+}
+
 func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
 	// If header exists return the value, must be 1 to use the API from Kiali
 	// Otherwise an empty string is returned and WWW-Authenticate will be Basic
@@ -441,7 +466,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			statusCode = checkKialiSession(w, r)
 			token = aHandler.saToken
 		case config.AuthStrategyToken:
-			statusCode, token = checkOpenshiftSession(w, r)
+			statusCode, token = checkTokenSession(w, r)
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
