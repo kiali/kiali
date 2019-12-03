@@ -4,6 +4,8 @@ import { LabelDisplayName, AllPromLabelsValues, PromLabel, SingleLabelValues } f
 import { TimeSeries } from '../../common/types/Metrics';
 import { Aggregator, MetricsQuery, DashboardQuery } from '../../common/types/MetricsOptions';
 import { DashboardRef, Runtime } from '../../common/types/Runtimes';
+import { toVCDatapoints, toVCLine, toOverlay } from './utils/victoryChartsUtils';
+import { Overlay, OverlayInfo } from './types/Overlay';
 
 export {
   Dashboard,
@@ -20,5 +22,10 @@ export {
   MetricsQuery,
   DashboardQuery,
   DashboardRef,
-  Runtime
+  Runtime,
+  toVCDatapoints,
+  toVCLine,
+  toOverlay,
+  Overlay,
+  OverlayInfo
 };

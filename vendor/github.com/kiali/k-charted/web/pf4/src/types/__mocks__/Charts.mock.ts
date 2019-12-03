@@ -1,5 +1,5 @@
 import { ChartModel, SpanValue } from '../../../../common/types/Dashboards';
-import { TimeSeries } from '../../../../common/types/Metrics';
+import { TimeSeries, Datapoint } from '../../../../common/types/Metrics';
 import seedrandom from 'seedrandom';
 import { LabelsInfo } from '../../../../common/utils/timeSeriesUtils';
 
@@ -80,6 +80,10 @@ export const generateRandomHistogramChart = (title: string, spans: SpanValue, se
     spans: spans,
     histogram: histo
   };
+};
+
+export const generateRandomForOverlay = (): Datapoint[] => {
+  return genSingle(0, 50).map(pair => [pair[0], pair[1] / 100]);
 };
 
 export const empty: ChartModel = {

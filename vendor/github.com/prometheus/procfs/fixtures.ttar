@@ -554,7 +554,7 @@ power management:
 Mode: 444
 # ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Path: fixtures/proc/crypto
-Lines: 971
+Lines: 972
 name         : ccm(aes)
 driver       : ccm_base(ctr(aes-aesni),cbcmac(aes-aesni))
 module       : ccm
@@ -588,6 +588,7 @@ refcnt       : 1
 selftest     : passed
 internal     : no
 type         : kpp
+async        : yes
 
 name         : ecb(arc4)
 driver       : ecb(arc4)-generic

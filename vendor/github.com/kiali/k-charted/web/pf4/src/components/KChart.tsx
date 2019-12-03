@@ -1,31 +1,21 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { Button, Text, TextContent, TextVariants } from '@patternfly/react-core';
-import { Chart, ChartArea, ChartBar, ChartLine, ChartGroup, ChartLegend, ChartThemeColor, ChartAxis } from '@patternfly/react-charts';
+import { ChartArea, ChartBar, ChartLine } from '@patternfly/react-charts';
 import { ExpandArrowsAltIcon, InfoAltIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
-import { format as d3Format } from 'd3-format';
 
 import { ChartModel } from '../../../common/types/Dashboards';
-import { getFormatter } from '../../../common/utils/formatter';
-import { VictoryChartInfo } from '../types/VictoryChartInfo';
-import { buildLegend } from '../utils/victoryChartsUtils';
-import { createContainer } from './Container';
-
-const { VictoryPortal, VictoryLabel } = require('victory');
+import { VCLines, VCDataPoint } from '../types/VictoryChartInfo';
+import { Overlay } from '../types/Overlay';
+import ChartWithLegend from './ChartWithLegend';
 
 type KChartProps = {
   chart: ChartModel;
-  data: VictoryChartInfo;
-  chartHeight?: number;
+  data: VCLines;
   expandHandler?: () => void;
+  onClick?: (datum: VCDataPoint) => void;
+  overlay?: Overlay;
 };
-
-type State = {
-  width: number;
-};
-
-const defaultChartHeight = 300;
-const defaultLegendHeight = 45;
 
 const expandBlockStyle: React.CSSProperties = {
   marginBottom: '-1.5em',
@@ -36,7 +26,7 @@ const expandBlockStyle: React.CSSProperties = {
 
 const emptyMetricsStyle = style({
   width: '100%',
-  height: defaultChartHeight + defaultLegendHeight,
+  height: 345,
   textAlign: 'center',
   $nest: {
     '& > p': {
@@ -55,31 +45,7 @@ const emptyMetricsStyle = style({
   }
 });
 
-class KChart extends React.Component<KChartProps, State> {
-  containerRef = React.createRef<HTMLDivElement>();
-
-  constructor(props: KChartProps) {
-    super(props);
-    this.state = { width: 0 };
-  }
-
-  handleResize = () => {
-    if (this.containerRef.current) {
-      this.setState({ width: this.containerRef.current.clientWidth });
-    }
-  };
-
-  componentDidMount() {
-    setTimeout(() => {
-      this.handleResize();
-      window.addEventListener('resize', this.handleResize);
-    });
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
-  }
-
+class KChart extends React.Component<KChartProps, {}> {
   onExpandHandler = () => {
     this.props.expandHandler!();
   }
@@ -101,58 +67,45 @@ class KChart extends React.Component<KChartProps, State> {
       return this.renderEmpty();
     }
 
-    const legend = buildLegend(this.props.data.rawLegend, this.state.width);
-    const height = this.props.chartHeight || defaultChartHeight;
-    const scaleInfo = this.scaledAxisInfo(this.props.data);
-    const seriesBuilder =
-      (this.props.chart.chartType === 'area') ? (serie, idx) => (<ChartArea key={'serie-' + idx} data={serie} />) :
-      (this.props.chart.chartType === 'bar')  ? (serie, idx) => (<ChartBar key={'serie-' + idx} data={serie} />) :
-                                                (serie, idx) => (<ChartLine key={'serie-' + idx} data={serie} />);
+    let fill = false;
+    let stroke = true;
+    let seriesComponent = (<ChartLine/>);
+    if (this.props.chart.chartType === 'area') {
+      fill = true;
+      stroke = false;
+      seriesComponent = (<ChartArea/>);
+    } else if (this.props.chart.chartType === 'bar') {
+      fill = true;
+      stroke = false;
+      seriesComponent = (<ChartBar/>);
+    }
+
     const groupOffset = this.props.chart.chartType === 'bar' ? 7 : 0;
     const minDomain = this.props.chart.min === undefined ? undefined : { y: this.props.chart.min };
     const maxDomain = this.props.chart.max === undefined ? undefined : { y: this.props.chart.max };
 
     return (
-      <div ref={this.containerRef}>
+      <>
         <TextContent>
           <Text component={TextVariants.h4} style={{textAlign: 'center'}}>{this.props.chart.name}</Text>
         </TextContent>
-        <div className="area-chart-overflow">
-          <Chart
-            height={height}
-            width={this.state.width}
-            containerComponent={createContainer()}
-            themeColor={ChartThemeColor.multi}
-            scale={{x: 'time'}}
-            minDomain={minDomain}
-            maxDomain={maxDomain}>
-            <ChartGroup offset={groupOffset}>{this.props.data.series.map(seriesBuilder)}</ChartGroup>
-            <ChartAxis
-              tickCount={scaleInfo.count}
-              style={{ tickLabels: {fontSize: 12, padding: 2} }}
-            />
-            <ChartAxis
-              tickLabelComponent={<VictoryPortal><VictoryLabel/></VictoryPortal>}
-              dependentAxis={true}
-              tickFormat={getFormatter(d3Format, this.props.chart.unit)}
-              style={{ tickLabels: {fontSize: 12, padding: 2} }}
-            />
-          </Chart>
-        </div>
-        <ChartLegend
-          x={50}
-          data={legend.items}
-          height={legend.height}
-          themeColor={ChartThemeColor.multi}
-          width={this.state.width}
-          itemsPerRow={legend.itemsPerRow}
+        <ChartWithLegend
+          data={this.props.data}
+          seriesComponent={seriesComponent}
+          fill={fill}
+          stroke={stroke}
+          groupOffset={groupOffset}
+          overlay={this.props.overlay}
+          unit={this.props.chart.unit}
+          moreChartProps={{ minDomain: minDomain, maxDomain: maxDomain }}
+          onClick={this.props.onClick}
         />
-      </div>
+      </>
     );
   }
 
-  private isEmpty(data: VictoryChartInfo): boolean {
-    return !data.series.some(s => s.length !== 0);
+  private isEmpty(data: VCLines): boolean {
+    return !data.some(s => s.datapoints.length !== 0);
   }
 
   private renderEmpty() {
@@ -183,25 +136,6 @@ class KChart extends React.Component<KChartProps, State> {
         </div>
       </div>
     );
-  }
-
-  private scaledAxisInfo(data: VictoryChartInfo) {
-    const ticks = Math.max(...(data.series.map(s => s.length)));
-    if (this.state.width < 500) {
-      return {
-        count: Math.min(5, ticks),
-        format: '%H:%M'
-      };
-    } else if (this.state.width < 700) {
-      return {
-        count: Math.min(10, ticks),
-        format: '%H:%M'
-      };
-    }
-    return {
-      count: Math.min(15, ticks),
-      format: '%H:%M:%S'
-    };
   }
 }
 
