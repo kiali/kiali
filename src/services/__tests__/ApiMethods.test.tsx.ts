@@ -77,7 +77,7 @@ describe('#Test Methods return a Promise', () => {
   };
 
   it('#login', () => {
-    const result = API.login({ username: 'admin', password: 'admin' });
+    const result = API.login({ username: 'admin', password: 'admin', token: '' });
     evaluatePromise(result);
   });
 

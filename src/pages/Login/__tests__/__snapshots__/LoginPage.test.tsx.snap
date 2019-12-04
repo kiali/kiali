@@ -28,6 +28,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
 >
   <LoginForm
     helperText={<React.Fragment />}
+    isLoginButtonDisabled={false}
     isValidPassword={true}
     isValidUsername={true}
     onChangePassword={[Function]}
