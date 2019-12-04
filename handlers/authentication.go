@@ -240,11 +240,22 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
+	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
+	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	tokenSubject := "token" // Set a default value
+
+	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(token, &jwt.StandardClaims{})
+	if err == nil {
+		tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
+		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+	}
+
+	// Build the Kiali token
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
 	tokenClaims := config.IanaClaims{
 		SessionId: token,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   "token",
+			Subject:   tokenSubject,
 			ExpiresAt: timeExpire.Unix(),
 			Issuer:    config.AuthStrategyTokenIssuer,
 		},
@@ -264,7 +275,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 	http.SetCookie(w, &tokenCookie)
 
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: "token"})
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
 	return true
 }
 
