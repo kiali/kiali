@@ -1,12 +1,12 @@
-sudo: required
-
-services:
-- docker
+# sudo: required
+#
+# services:
+# - docker
 
 language: go
 
 go:
-- 1.12.1
+- 1.12.13
 
 notifications:
   irc:

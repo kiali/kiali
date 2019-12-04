@@ -29,8 +29,8 @@ NAMESPACE ?= istio-system
 SERVICE_TYPE ?= ClusterIP
 VERBOSE_MODE ?= 3
 
-# Find the client executable (either istiooc or oc or kubectl)
-OC ?= $(shell which oc 2>/dev/null || which istiooc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
+# Find the client executable (either oc or kubectl)
+OC ?= $(shell which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
 
 # Determine if Maistra/Service Mesh is deployed. If not, assume we are working with upstream Istio implementation.
 IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
