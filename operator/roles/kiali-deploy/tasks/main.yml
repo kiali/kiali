@@ -264,21 +264,23 @@
     msg: "AUTH STRATEGY={{ kiali_vars.auth.strategy }}"
 - name: Confirm auth strategy is valid for OpenShift environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', 'ldap' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', 'ldap', 'token' or 'anonymous'"
   when:
   - is_openshift == True
   - kiali_vars.auth.strategy != 'login'
   - kiali_vars.auth.strategy != 'anonymous'
   - kiali_vars.auth.strategy != 'openshift'
   - kiali_vars.auth.strategy != 'ldap'
+  - kiali_vars.auth.strategy != 'token'
 - name: Confirm auth strategy is valid for Kubernetes environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'ldap' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'ldap', 'token' or 'anonymous'"
   when:
   - is_k8s == True
   - kiali_vars.auth.strategy != 'login'
   - kiali_vars.auth.strategy != 'anonymous'
   - kiali_vars.auth.strategy != 'ldap'
+  - kiali_vars.auth.strategy != 'token'
 - name: Confirm ldap configuration when auth strategy is 'ldap'
   fail:
     msg: "Invalid configuration for LDAP! The mandatory parameters should be provided like `ldap_host', 'ldap_port', 'ldap_bind_dn', and 'ldap_base'"

@@ -1,0 +1,19 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  # prepare the test token
+  - import_tasks: prepare-token.yml
+    vars:
+      sa_namespace: "{{ istio.control_plane_namespace }}"
+
+  # test Kiali access via token
+  - import_tasks: ../asserts/token-test/assert-token-access.yml
+    vars:
+      test_token: "{{ test_token }}"
+      sa_namespace: "{{ istio.control_plane_namespace }}"

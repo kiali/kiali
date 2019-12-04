@@ -1,0 +1,25 @@
+# This will obtain a namespace's default service account token that will be used to login for this test
+
+- name: Get default service account from namespace [{{ sa_namespace }}]
+  k8s_facts:
+    api_version: v1
+    kind: ServiceAccount
+    name: default
+    namespace: "{{ sa_namespace }}"
+  register: sa_default
+
+- name: Determine the name of the secret that contains the token
+  set_fact:
+    test_token_secret_name: "{{ sa_default.resources[0].secrets | selectattr('name', 'match', 'default-token-.*') | map(attribute='name') | list | first }}"
+
+- name: Get secret [{{ test_token_secret_name }}] containing the service account token
+  k8s_facts:
+    api_version: v1
+    kind: Secret
+    name: "{{ test_token_secret_name }}"
+    namespace: "{{ sa_namespace }}"
+  register: test_token_secret
+
+- name: Extract the service account token from the secret
+  set_fact:
+    test_token: "{{ test_token_secret.resources[0].data.token | b64decode }}"

@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/ldap"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const (
@@ -210,6 +211,74 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	return true
 }
 
+func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	err := r.ParseForm()
+
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error parsing form data from client", err.Error())
+		return false
+	}
+
+	token := r.Form.Get("token")
+
+	if token == "" {
+		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
+		return false
+	}
+
+	business, err := business.Get(token)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		return false
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	_, err = business.Namespace.GetNamespaces()
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+		return false
+	}
+
+	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
+	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	tokenSubject := "token" // Set a default value
+
+	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(token, &jwt.StandardClaims{})
+	if err == nil {
+		tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
+		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+	}
+
+	// Build the Kiali token
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	tokenClaims := config.IanaClaims{
+		SessionId: token,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   tokenSubject,
+			ExpiresAt: timeExpire.Unix(),
+			Issuer:    config.AuthStrategyTokenIssuer,
+		},
+	}
+	tokenString, err := config.GetSignedTokenString(tokenClaims)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    tokenString,
+		Expires:  timeExpire,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
+	return true
+}
+
 func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
@@ -351,6 +420,30 @@ func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	return http.StatusUnauthorized, ""
 }
 
+func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
+	} else {
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return http.StatusInternalServerError, ""
+		}
+
+		_, err = business.Namespace.GetNamespaces()
+		if err == nil {
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", claims.Subject)
+			return http.StatusOK, claims.SessionId
+		}
+
+		log.Warning("Token error: ", err)
+	}
+
+	return http.StatusUnauthorized, ""
+}
+
 func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
 	// If header exists return the value, must be 1 to use the API from Kiali
 	// Otherwise an empty string is returned and WWW-Authenticate will be Basic
@@ -383,6 +476,8 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyLogin:
 			statusCode = checkKialiSession(w, r)
 			token = aHandler.saToken
+		case config.AuthStrategyToken:
+			statusCode, token = checkTokenSession(w, r)
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
@@ -425,6 +520,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		if !performKialiAuthentication(w, r) {
 			writeAuthenticateHeader(w, r)
 		}
+	case config.AuthStrategyToken:
+		performTokenAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
 	case config.AuthStrategyLDAP:

@@ -94,13 +94,18 @@ spec:
 #  auth:
 #
 # Determines what authentication strategy to use when users log into Kiali.
-# Options are "login", "anonymous", "openshift".
+# Options are "login", "anonymous", "openshift", "token", "ldap".
 # Choose "login" to use a username and password that will be stored in a secret.
 # Choose "anonymous" to allow full access to Kiali without requiring any credentials.
+# Choose "token" to allow access to Kiali using service account tokens, which controls
+#  access based on RBAC roles assigned to the service account.
 # Choose "openshift" to use the OpenShift OAuth login which controls access based on
-# the individual's  RBAC roles in OpenShift. Not valid for non-OpenShift environments.
+#  the individual's  RBAC roles in OpenShift. Not valid for non-OpenShift environments.
 # Choose "ldap" to enable LDAP based authentication. There are additional configurations for
-# LDAP auth strategy that are required. See below for the additional LDAP configuration section.
+#  LDAP auth strategy that are required. See below for the additional LDAP configuration section.
+# When empty, its value will default to "openshift" on OpenShift and "login" on Kubernetes.
+#    ---
+#    strategy: ""
 #    ---
 #    ldap:
 #      ldap_base: ""
@@ -122,10 +127,6 @@ spec:
 #      ldap_use_ssl: false
 #      ldap_user_filter: "(cn=%s)"
 #      ldap_user_id_key: "cn"
-#
-# When empty, its value will default to "openshift" on OpenShift and "login" on Kubernetes.
-#    ---
-#    strategy: ""
 
 ##########
 #  ---
