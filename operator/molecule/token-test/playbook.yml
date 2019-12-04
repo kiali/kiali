@@ -16,3 +16,4 @@
   - import_tasks: ../asserts/token-test/assert-token-access.yml
     vars:
       test_token: "{{ test_token }}"
+      sa_namespace: "{{ istio.control_plane_namespace }}"

@@ -44,7 +44,7 @@
     - kiali_output.json.token is defined
     - kiali_output.json.token != ""
     - kiali_output.json.username is defined
-    - kiali_output.json.username != ""
+    - kiali_output.json.username == "{{ sa_namespace }}:default"
 - set_fact:
     login_bearer_token: "Bearer {{ kiali_output.json.token }}"
 
