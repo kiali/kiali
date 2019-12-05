@@ -28,6 +28,7 @@ type PrometheusConfig struct {
 // help them interact with the system.
 type PublicConfig struct {
 	InstallationTag          string                          `json:"installationTag,omitempty"`
+	IstioIdentityDomain      string                          `json:"istioIdentityDomain,omitempty"`
 	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
 	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
@@ -44,6 +45,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	config := config.Get()
 	publicConfig := PublicConfig{
 		InstallationTag:          config.InstallationTag,
+		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,
 		IstioComponentNamespaces: config.IstioComponentNamespaces,
 		IstioLabels:              config.IstioLabels,
