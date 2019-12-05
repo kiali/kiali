@@ -18,6 +18,12 @@
 #
 ##############################################################################
 
+DEFAULT_K8S_CPU="4"
+DEFAULT_K8S_DISK="40g"
+DEFAULT_K8S_DRIVER="virtualbox"
+DEFAULT_K8S_MEMORY="16384"
+DEFAULT_K8S_VERSION="v1.14.2"
+
 debug() {
   if [ "$_VERBOSE" == "true" ]; then
     echo "DEBUG: $1"
@@ -108,6 +114,26 @@ while [[ $# -gt 0 ]]; do
       fi
       shift
       ;;
+    -kc|--kubernetes-cpu)
+      K8S_CPU="$2"
+      shift;shift
+      ;;
+    -kd|--kubernetes-disk)
+      K8S_DISK="$2"
+      shift;shift
+      ;;
+    -kdr|--kubernetes-driver)
+      K8S_DRIVER="$2"
+      shift;shift
+      ;;
+    -km|--kubernetes-memory)
+      K8S_MEMORY="$2"
+      shift;shift
+      ;;
+    -kv|--kubernetes-version)
+      K8S_VERSION="$2"
+      shift;shift
+      ;;
     -v|--verbose)
       _VERBOSE=true
       shift
@@ -118,6 +144,26 @@ while [[ $# -gt 0 ]]; do
 $0 [option...] command
 
 Valid options:
+  -kc|--kubernetes-cpu
+      The number of CPUs to give to Kubernetes at startup.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_K8S_CPU}
+  -kd|--kubernetes-disk
+      The amount of disk space to give to Kubernetes at startup.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_K8S_DISK}
+  -kdr|--kubernetes-driver
+      The hypervisor to use. Examples of valid values: virtualbox, hyperkit, kvm2, none.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_K8S_DRIVER}
+  -km|--kubernetes-memory
+      The amount of memory to give to Kubernetes at startup.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_K8S_MEMORY}
+  -kv|--kubernetes-version
+      The version of Kubernetes to start.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_K8S_VERSION}
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -145,6 +191,19 @@ HELPMSG
   esac
 done
 
+# Prepare some env vars
+K8S_CPU=${K8S_CPU:-${DEFAULT_K8S_CPU}}
+K8S_DISK=${K8S_DISK:-${DEFAULT_K8S_DISK}}
+K8S_DRIVER=${K8S_DRIVER:-${DEFAULT_K8S_DRIVER}}
+K8S_VERSION=${K8S_VERSION:-${DEFAULT_K8S_VERSION}}
+K8S_MEMORY=${K8S_MEMORY:-${DEFAULT_K8S_MEMORY}}
+
+debug "K8S_CPU=$K8S_CPU"
+debug "K8S_DISK=$K8S_DISK"
+debug "K8S_DRIVER=$K8S_DRIVER"
+debug "K8S_MEMORY=$K8S_MEMORY"
+debug "K8S_VERSION=$K8S_VERSION"
+
 # If minikube is not in PATH, abort.
 if ! which minikube > /dev/null 2>&1 ; then
   echo 'You do not have minikube installed in your $PATH. Aborting.'
@@ -155,8 +214,8 @@ debug "This script is located at $(pwd)"
 debug "minikube is located at $(which minikube)"
 
 if [ "$_CMD" = "up" ]; then
-  echo 'Starting minikube with 8gig RAM and 40gig disk space (disk space for docker images)'
-  minikube start --cpus=3 --memory=8216 --disk-size=40g --vm-driver=virtualbox
+  echo 'Starting minikube...'
+  minikube start --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION}
   echo 'Enabling the ingress addon'
   minikube addons enable ingress
 
@@ -182,7 +241,7 @@ elif [ "$_CMD" = "dashboard" ]; then
 elif [ "$_CMD" = "port-forward" ]; then
   ensure_minikube_is_running
   echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
-  echo 'To access Kiali, point your browser to http://localhost:20001/kiali/console'
+  echo 'To access Kiali, point your browser to https://localhost:20001/kiali/console'
   kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then
@@ -193,7 +252,7 @@ elif [ "$_CMD" = "ingress" ]; then
 elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
-  ./istio/install-istio-kiali-via-helm.sh -c kubectl
+  ./istio/install-istio-via-istioctl.sh -c kubectl
 
 elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running

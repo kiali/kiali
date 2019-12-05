@@ -25,8 +25,12 @@ KIALI_ENABLED="false"
 KIALI_CREATE_SECRET="false"
 DASHBOARDS_ENABLED="false"
 ISTIO_EGRESSGATEWAY_ENABLED="true"
-CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
 CONFIG_PROFILE="default" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
+
+# If OpenShift, install CNI
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
+fi
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -319,10 +323,12 @@ else
     echo "  oc adm policy add-scc-to-group privileged system:serviceaccounts -n <target-namespace>"
     echo "  oc adm policy add-scc-to-group anyuid system:serviceaccounts -n <target-namespace>"
     echo "===== IMPORTANT ====="
-  fi
 
-  # make sure CNI is enabled, this should return "true"
-  if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
-    echo "WARNING: CNI IS NOT ENABLED BUT SHOULD HAVE BEEN"
+    # Since we are on OpenShift, make sure CNI is enabled
+    if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
+      echo "===== WARNING ====="
+      echo "CNI IS NOT ENABLED BUT SHOULD HAVE BEEN"
+      echo "===== WARNING ====="
+    fi
   fi
 fi
