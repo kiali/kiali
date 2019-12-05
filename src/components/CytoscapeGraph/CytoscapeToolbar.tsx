@@ -37,6 +37,9 @@ const buttonStyle = style({
   backgroundColor: PfColors.White,
   marginRight: '1px'
 });
+const selectedTopologyButtonStyle = style({
+  color: PfColors.Blue300
+});
 const cytoscapeToolbarStyle = style({
   padding: '7px 10px'
 });
@@ -68,14 +71,26 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
       <Toolbar className={cytoscapeToolbarStyle}>
         <ToolbarItem>
           <Tooltip content="Zoom In">
-            <Button id="toolbar_zoom_in" className={buttonStyle} variant="plain" onClick={this.zoomIn}>
+            <Button
+              id="toolbar_zoom_in"
+              aria-label="Zoom In"
+              className={buttonStyle}
+              variant="plain"
+              onClick={this.zoomIn}
+            >
               <SearchPlusIcon />
             </Button>
           </Tooltip>
         </ToolbarItem>
         <ToolbarItem>
           <Tooltip content="Zoom Out">
-            <Button id="toolbar_zoom_out" className={buttonStyle} variant="plain" onClick={this.zoomOut}>
+            <Button
+              id="toolbar_zoom_out"
+              aria-label="Zoom Out"
+              className={buttonStyle}
+              variant="plain"
+              onClick={this.zoomOut}
+            >
               <SearchMinusIcon />
             </Button>
           </Tooltip>
@@ -84,6 +99,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
           <Tooltip content="Zoom to Fit">
             <Button
               id="toolbar_graph_fit"
+              aria-label="Zoom to Fit"
               className={[cytoscapeToolbarPadStyle, buttonStyle].join(' ')}
               variant="plain"
               onClick={this.fit}
@@ -97,6 +113,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
           <Tooltip content={'Layout default ' + DagreGraph.getLayout().name}>
             <Button
               id="toolbar_layout_default"
+              aria-label="Graph Layout Default Style"
               className={buttonStyle}
               variant="plain"
               onClick={() => {
@@ -104,7 +121,11 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               }}
               isActive={this.props.layout.name === DagreGraph.getLayout().name}
             >
-              <TopologyIcon />
+              <TopologyIcon
+                className={
+                  this.props.layout.name === DagreGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
+                }
+              />
             </Button>
           </Tooltip>
         </ToolbarItem>
@@ -114,6 +135,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
             <Tooltip content={'Layout 1 ' + CoseGraph.getLayout().name}>
               <Button
                 id="toolbar_layout1"
+                aria-label="Graph Layout Style 1"
                 className={buttonStyle}
                 variant="plain"
                 onClick={() => {
@@ -121,7 +143,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
                 }}
                 isActive={this.props.layout.name === CoseGraph.getLayout().name}
               >
-                <TopologyIcon /> 1
+                <TopologyIcon
+                  className={
+                    this.props.layout.name === CoseGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
+                  }
+                />{' '}
+                1
               </Button>
             </Tooltip>
           </ToolbarItem>
@@ -131,6 +158,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
           <Tooltip content={'Layout 2 ' + ColaGraph.getLayout().name}>
             <Button
               id="toolbar_layout2"
+              aria-label="Graph Layout Style 2"
               className={buttonStyle}
               variant="plain"
               onClick={() => {
@@ -138,7 +166,12 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               }}
               isActive={this.props.layout.name === ColaGraph.getLayout().name}
             >
-              <TopologyIcon /> 2
+              <TopologyIcon
+                className={
+                  this.props.layout.name === ColaGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
+                }
+              />{' '}
+              2
             </Button>
           </Tooltip>
         </ToolbarItem>
@@ -148,6 +181,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
             <Button
               variant="primary"
               id="toolbar_toggle_legend"
+              aria-label="Show Legend"
               onClick={this.props.toggleLegend}
               isActive={this.props.showLegend}
               className={cytoscapeToolbarPadStyle}
