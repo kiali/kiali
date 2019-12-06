@@ -59,6 +59,26 @@ print_all_gateway_urls() {
   done
 }
 
+check_insecure_registry() {
+  local _registry="$(minikube ip):5000"
+  pgrep -a dockerd | grep "[-]-insecure-registry.*${_registry}" > /dev/null 2>&1
+  if [ "$?" != "0" ]; then
+    grep "OPTIONS=.*--insecure-registry.*${_registry}" /etc/sysconfig/docker > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+      grep "insecure-registries.*${_registry}" /etc/docker/daemon.json > /dev/null 2>&1
+      if [ "$?" != "0" ]; then
+        echo "WARNING: You must tell Docker about the insecure image registry (e.g. --insecure-registry ${_registry})."
+      else
+        debug "/etc/docker/daemon.json has the insecure-registry setting. This is good."
+      fi
+    else
+      debug "/etc/sysconfig/docker has defined the insecure-registry setting. This is good."
+    fi
+  else
+    debug "Docker daemon is running with --insecure-registry setting. This is good."
+  fi
+}
+
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -66,11 +86,11 @@ _CMD=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    up)
+    up|start)
       _CMD="up"
       shift
       ;;
-    down)
+    down|stop)
       _CMD="down"
       shift
       ;;
@@ -168,8 +188,8 @@ Valid options:
       Enable logging of debug messages from this script.
 
 The command must be either:
-  up:           starts the minikube cluster
-  down:         stops the minikube cluster
+  up:           starts the minikube cluster (alias: start)
+  down:         stops the minikube cluster (alias: stop)
   status:       gets the status of the minikube cluster
   delete:       completely removes the minikube cluster VM destroying all state
   docker:       information on the minikube docker environment
@@ -218,6 +238,8 @@ if [ "$_CMD" = "up" ]; then
   minikube start --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION}
   echo 'Enabling the ingress addon'
   minikube addons enable ingress
+  echo 'Enabling the image registry'
+  minikube addons enable registry
 
 elif [ "$_CMD" = "down" ]; then
   ensure_minikube_is_running
@@ -226,6 +248,7 @@ elif [ "$_CMD" = "down" ]; then
 
 elif [ "$_CMD" = "status" ]; then
   ensure_minikube_is_running
+  check_insecure_registry
   echo 'Status report for minikube'
   minikube status
 
