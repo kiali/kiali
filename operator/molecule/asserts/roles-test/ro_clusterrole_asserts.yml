@@ -2,17 +2,13 @@
   k8s_facts:
    api_version: rbac.authorization.k8s.io/v1
    kind: ClusterRole
-   name: "{{ item }}"
+   name: kiali-viewer
   register: clusterroles
-  loop:
-  - kiali
-  - kiali-viewer
 
 - name: Assert that cluster roles exist
   assert:
-    that: "{{ item.resources | length == 1 }}"
-  with_items:
-  - "{{ clusterroles.results }}"
+    that: "{{ clusterroles.resources | length == 1 }}"
+    fail_msg: "The kiali-viewer cluster role does not exist"
 
 - name: Get cluster role binding
   k8s_facts:

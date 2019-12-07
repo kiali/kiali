@@ -99,6 +99,13 @@
 #    to the value of OPERATOR_IMAGE_VERSION env var value.
 #    Default: See above for how the default value is determined
 #
+# OPERATOR_VIEW_ONLY_MODE
+#    Setting this to true will ensure the operator only has the necessary permissions to deploy Kiali with
+#    view_only_mode=true. If Kiali is also to be deployed via this deploy script, Kiali will be put into
+#    view_only_mode. If the operator is later told to deploy Kiali with view_only_mode set to false, the
+#    operator will be unable to do so.
+#    Default: "false"
+#
 # OPERATOR_WATCH_NAMESPACE
 #    The namespace in which the operator looks for the Kiali CR.
 #    Default: The configured OPERATOR_NAMESPACE
@@ -298,6 +305,10 @@ while [[ $# -gt 0 ]]; do
       OPERATOR_VERSION_LABEL="$2"
       shift;shift
       ;;
+    -ovom|--operator-view-only-mode)
+      OPERATOR_VIEW_ONLY_MODE="$2"
+      shift;shift
+      ;;
     -own|--operator-watch-namespace)
       OPERATOR_WATCH_NAMESPACE="$2"
       shift;shift
@@ -369,6 +380,12 @@ Valid options for the operator installation:
       A Kubernetes label named "version" will be set on the Kiali operator resources.
       The value of this label is determined by this setting.
       Default: Determined by the operator image version being installed
+  -ovom|--operator-view-only-mode
+      Setting this to true will ensure the operator only has the necessary permissions to deploy Kiali with
+      view_only_mode=true. If Kiali is also to be deployed via this deploy script, Kiali will be put into
+      view_only_mode. If the operator is later told to deploy Kiali with view_only_mode set to false, the
+      operator will be unable to do so.
+      Default: "false"
   -own|--operator-watch-namespace
       The namespace in which the operator looks for the Kiali CR.
       Default: The configured operator namespace (-on)
@@ -498,9 +515,13 @@ export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
 export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
 export OPERATOR_SKIP_WAIT="${OPERATOR_SKIP_WAIT:-false}"
 export OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL:-$OPERATOR_IMAGE_VERSION}"
+export OPERATOR_VIEW_ONLY_MODE="${OPERATOR_VIEW_ONLY_MODE:-false}"
 export OPERATOR_WATCH_NAMESPACE="${OPERATOR_WATCH_NAMESPACE:-$OPERATOR_NAMESPACE}"
 export OPERATOR_ROLE_CLUSTERROLEBINDINGS="# The operator does not have permission to manage cluster role bindings"
 export OPERATOR_ROLE_CLUSTERROLES="# The operator does not have permission to manage cluster roles"
+export OPERATOR_ROLE_CREATE="# The operator does not have permission to create"
+export OPERATOR_ROLE_DELETE="# The operator does not have permission to delete"
+export OPERATOR_ROLE_PATCH="# The operator does not have permission to patch"
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
 # After return, $downloader will be a command to stream a URL's content to stdout.
@@ -748,6 +769,13 @@ if [ "${ACCESSIBLE_NAMESPACES}" == "**" ]; then
   OPERATOR_ROLE_CLUSTERROLES="- clusterroles"
 fi
 
+# If Kiali operator is allowed to disable view_only_mode then give it the proper permissions
+if [ "${OPERATOR_VIEW_ONLY_MODE}" == "false" ]; then
+  OPERATOR_ROLE_CREATE="- create"
+  OPERATOR_ROLE_DELETE="- delete"
+  OPERATOR_ROLE_PATCH="- patch"
+fi
+
 echo "=== OPERATOR SETTINGS ==="
 echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
 echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
@@ -759,6 +787,9 @@ echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_WATCH_NAMESPACE=$OPERATOR_WATCH_NAMESPACE
 echo OPERATOR_ROLE_CLUSTERROLES=$OPERATOR_ROLE_CLUSTERROLES
 echo OPERATOR_ROLE_CLUSTERROLEBINDINGS=$OPERATOR_ROLE_CLUSTERROLEBINDINGS
+echo OPERATOR_ROLE_CREATE=$OPERATOR_ROLE_CREATE
+echo OPERATOR_ROLE_DELETE=$OPERATOR_ROLE_DELETE
+echo OPERATOR_ROLE_PATCH=$OPERATOR_ROLE_PATCH
 echo "=== OPERATOR SETTINGS ==="
 
 # Give the user an opportunity to tell us if they want to uninstall the operator if they did not set the envar yet.
@@ -1112,6 +1143,7 @@ spec:
     $(build_spec_value image_version KIALI_IMAGE_VERSION)
     $(build_spec_value namespace NAMESPACE)
     $(build_spec_value secret_name SECRET_NAME)
+    $(build_spec_value view_only_mode OPERATOR_VIEW_ONLY_MODE)
   external_services:
     grafana:
       $(build_spec_value url GRAFANA_URL true)

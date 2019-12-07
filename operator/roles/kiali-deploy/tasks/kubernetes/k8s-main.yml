@@ -6,8 +6,7 @@
   loop:
   - serviceaccount
   - configmap
-  - role
-  - role-viewer
+  - "{{ 'role-viewer' if kiali_vars.deployment.view_only_mode == True else 'role' }}"
   - rolebinding
   - deployment
   - service

@@ -17,31 +17,32 @@ provisioner:
     group_vars:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
-        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
+        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/only-view-only-mode-test/kiali-cr.yaml"
         cr_namespace: kiali-operator
         istio:
           control_plane_namespace: istio-system
         kiali:
           install_namespace: istio-system
           accessible_namespaces:
-          - "**"
+          - istio-system
+          auth_strategy: openshift
           operator_namespace: kiali-operator
           operator_image_name: quay.io/kiali/kiali-operator
           operator_version: latest
-          operator_watch_namespace: ""
+          #operator_image_name: image-registry.openshift-image-registry.svc:5000/kiali/kiali-operator
+          #operator_version: dev
+          operator_watch_namespace: kiali-operator
           operator_clusterrolebindings: "- clusterrolebindings"
           operator_clusterroles: "- clusterroles"
-          operator_role_create: "- create"
-          operator_role_delete: "- delete"
-          operator_role_patch: "- patch"
-          auth_strategy: openshift
+          # This test will not enable create/delete/patch permissions for the operator - it can only support view-only-mode
+          operator_role_create: "# no create"
+          operator_role_delete: "# no delete"
+          operator_role_patch: "# no patch"
           image_name: quay.io/kiali/kiali
-          label_selector: ""
           image_version: latest
-          # Because when the version is set to Latest, it needs to be Always
           image_pull_policy: Always
 scenario:
-  name: default
+  name: only-view-only-mode-test
   test_sequence:
   - prepare
   - converge

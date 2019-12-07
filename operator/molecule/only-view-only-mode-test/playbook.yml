@@ -1,0 +1,17 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/configmap_asserts.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  # view only mode is on - see the viewer (read-only) role is now in effect
+  - import_tasks: ../asserts/roles-test/ro_role_asserts.yml
+  # change to accessible_namespaces=** which switches to cluster roles
+  # see the viewer (read-only) cluster role is now in effect
+  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../asserts/roles-test/ro_clusterrole_asserts.yml
