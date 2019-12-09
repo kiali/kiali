@@ -86,7 +86,7 @@ OPERATOR_WATCH_NAMESPACE ?= kiali-operator
 OPERATOR_INSTALL_KIALI ?= false
 
 # When installing Kiali to a remote cluster via make, here are some configuration settings for it.
-ACCESSIBLE_NAMESPACES ?= "**"
+ACCESSIBLE_NAMESPACES ?= **
 ifeq ($(IS_MINIKUBE),true)
 AUTH_STRATEGY ?= login
 else

@@ -6,6 +6,7 @@ spec:
   auth:
     strategy: $AUTH_STRATEGY
   deployment:
+    accessible_namespaces: [ "${ACCESSIBLE_NAMESPACES}" ]
     image_name: $KIALI_IMAGE_NAME
     image_pull_policy: $KIALI_IMAGE_PULL_POLICY
     image_version: $KIALI_IMAGE_VERSION
