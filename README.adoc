@@ -137,6 +137,8 @@ If you wish to push and deploy Kiali to an installed and running Kubernetes (via
 
 In order to deploy on Minikube using the below instructions, and to be able to access the deployed services, you must ensure you have the Registry and Ingress addons. To do this, ensure you run `minikube addons enable registry` and `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
 
+If you are using `docker`, make sure the endpoint for your OpenShift image registry or Kubernetes image registry is configured as an insecure registry in your docker daemon config.
+
 === Building the Container Image
 
 Create the Kiali container images through the "container-build" make target:
