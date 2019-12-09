@@ -124,6 +124,8 @@ spec:
                   type: boolean
                 namespace:
                   type: string
+                resources:
+                  type: object
                 secret_name:
                   type: string
                 service_type:
