@@ -29,11 +29,11 @@ Kiali also includes an integration with Jaeger Tracing to provide distributed tr
 
 This README is targeted mainly toward Kiali developers. If you are not a developer but want to learn more about Kiali, you will find the link:https://www.kiali.io[Kiali documentation] more helpful. For some instructions on running Kiali without having to git clone this repository or build anything, please see the link:https://www.kiali.io/documentation/getting-started[Getting Started] page.
 
-==== Testing on a OpenShift 4.1 Cluster
+==== Testing on a OpenShift 4.x Cluster
 
-There are two hack scripts available to start a OpenShift 4.1 cluster - one to install in a local link:https://github.com/kiali/kiali/blob/master/hack/crc-openshift.sh[CRC VM] and one to install in an link:https://github.com/kiali/kiali/blob/master/hack/aws-openshift.sh[AWS environment].
+To install a OpenShift 4.x cluster in AWS, use this link:https://github.com/kiali/kiali/blob/master/hack/aws-openshift.sh[hack script].
 
-Run the hack script with `--help` for usage details. Here is a brief synopsis on how to use the AWS hack script:
+Run the hack script with `--help` for usage details. Here is a brief synopsis:
 
 * `aws-openshift.sh -kuca true create` : Create an AWS cluster that includes Service Mesh, Kiali, Jaeger, ElasticSearch
 * `aws-openshift.sh status` : Provides details about your AWS cluster
@@ -51,22 +51,10 @@ Here's a way you can work with AWS to do Kiali development:
 * If you want to build and deploy your own Kiali:
 ** First must uninstall the one that was installed when you created the cluster. To do this, run `aws-openshift.sh k-uninstall`
 ** Next build Kiali and the Kiali operator normally (see below for details on that)
-** Push the dev builds of your Kiali and Kiali operator into the AWS cluster's image registry via `make ocp-push`
-** Create the new Kiali Operator in your AWS cluster via `make ocp-operator-create`
-** Create the new Kiali in your AWS cluster via `make ocp-kiali-create`
+** Push the dev builds of your Kiali and Kiali operator into the AWS cluster's image registry via `make cluster-push`.
+** Create the new Kiali Operator in your AWS cluster via `make operator-create`
+** Create the new Kiali in your AWS cluster via `make kiali-create`
 ** At this point, your dev build of Kiali should be starting up. Wait for it to come up and then you can access the Kiali UI normally.
-
-==== Testing on a Local OpenShift 3.11 Cluster
-
-If you have git cloned this repository, you can try to use our hack script to quickly install OpenShift 3.11, Maistra (Istio), and Kiali like this:
-
-```
-hack/cluster-openshift.sh --kiali-enabled true up
-```
-
-If you do not already have an Istio-enabled application to test with, you can install one using the link:hack/istio/README.adoc[Bookinfo Demo install script] provided here as a convenience.
-
-There are other demo applications to choose from as well: link:./DEMOS.adoc[see some examples].
 
 === Container Image
 
@@ -79,7 +67,7 @@ See the link:./LICENSE[LICENSE file].
 == Building
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run Kiali on OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below]. To run Kiali on Kubernetes after you built it, it is assumed you have a running Kubernetes environment available to you.
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman], and (4) make. If you are using `podman` instead of `docker`, pass the environment variable `DORP=podman` when executing `make`. To run Kiali in a cluster after you build it, it is assumed you have a running OpenShift or Minikube environment available to you.
 
 [NOTE]
 Currently, Kiali releases are built using Go 1.12.13. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.12.13 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
@@ -138,41 +126,42 @@ make test
 [NOTE]
 If you want to quickly get up and running to play with Kiali and do not wish to git clone the repository or build anything, see https://www.kiali.io/gettingstarted for instructions.
 
-=== Running on OpenShift
+[NOTE]
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/installation/[Maistra] which is a variant of Istio. If you choose to use Istio, make sure to follow the link:https://istio.io/docs/setup/platform-setup/openshift/[OpenShift preparation steps]. Also, check the link:https://kiali.io/documentation/getting-started/#_kiali_version_requirements[version requirements] on our website to read notes about Istio and Maistra compatibility. There is a link:https://github.com/kiali/kiali/tree/master/hack/istio/install-istio-via-istioctl.sh[install-istio-via-istioctl.sh hack script] that can install Istio for you.
 
-==== Setting up OpenShift
+=== Running on OpenShift or Kubernetes/Minikube
 
-The following section assumes that the user has link:https://github.com/openshift/origin[OpenShift] installed.
+By default, the make targets used to push and deploy Kiali images will assume you have an OpenShift 4.x cluster installed and running and that `oc` is found in your $PATH.
 
-==== Building the Container Image
+If you wish to push and deploy Kiali to an installed and running Kubernetes (via Minikube) environment, pass the environment variable `IS_MINIKUBE=true` to the `make` commands and make sure `kubectl` is found in your $PATH.
 
-Create the Kiali container image through the "docker-build" make target:
+In order to deploy on Minikube using the below instructions, and to be able to access the deployed services, you must ensure you have the Registry and Ingress addons. To do this, ensure you run `minikube addons enable registry` and `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
+
+If you are using `docker`, make sure the endpoint for your OpenShift image registry or Kubernetes image registry is configured as an insecure registry in your docker daemon config.
+
+=== Building the Container Image
+
+Create the Kiali container images through the "container-build" make target:
 
 [source,shell]
 ----
 cd ${GOPATH}/src/github.com/kiali/kiali
-make docker-build
+make container-build
 ----
 
 This builds the Kiali operator image, too.
 
-==== Deploying Kiali operator and Kiali to OpenShift
+=== Pushing Kiali operator and Kiali images to your cluster
 
-[NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/installation/[Maistra] which is a variant of Istio. If you choose to use Istio, make sure to follow the link:https://istio.io/docs/setup/platform-setup/openshift/[OpenShift preparation steps]. Also, check the link:https://kiali.io/documentation/getting-started/#_kiali_version_requirements[version requirements] on our website to read notes about Istio and Maistra compatibility.
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/kiali/kiali
+make cluster-push
+----
 
-[NOTE]
-The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in.
+This actually invokes the `container-build` target as well, so you technically do not have to run `make container-build` as a separate step.
 
-[NOTE]
-The Makefile used in these commands is the link:./operator/Makefile[Operator Makefile] in the link:./operator[operator] directory. The legacy make targets in the main Makefile are still there for those developers that are used to using them - those legacy targets simply delegate to the Operator Makefile now.
-
-===== Deploying Kiali Operator to OpenShift
-
-[NOTE]
-This command only works if running with OpenShift 3.11. If you are using OpenShift 4.x in either CRC or AWS, see the earlier instructions above. But in short, you need to push the images first via `ocp-push` and then use the target `ocp-operator-create` rather than `operator-create`.
-
-You need to first install the Kiali operator. This needs to be done only one time. After the operator is deployed, you can deploy and remove Kiali any number of times using the steps described below.
+=== Deploying Kiali operator to your cluster
 
 [source,shell]
 ----
@@ -180,14 +169,9 @@ cd ${GOPATH}/src/github.com/kiali/kiali/operator
 make operator-create
 ----
 
-The main Makefile has the same target which delegates to the above.
+Deploying the Kiali operator needs to be done only one time. After the operator is deployed, you can deploy and remove Kiali any number of times using the steps described below.
 
-===== Deploying Kiali to OpenShift
-
-[NOTE]
-This command only works if running with OpenShift 3.11. If you are using OpenShift 4.x in either CRC or AWS, see the earlier instructions above. But in short, you need to push the images first via `ocp-push` and then use the target `ocp-kiali-create` rather than `kiali-create`.
-
-Now you can deploy Kiali. This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created also.
+=== Deploying Kiali to your cluster
 
 [source,shell]
 ----
@@ -195,9 +179,9 @@ cd ${GOPATH}/src/github.com/kiali/kiali/operator
 make kiali-create
 ----
 
-The main Makefile legacy target `openshift-deploy` delegates to the above.
+This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created if needed (i.e. when the authentication strategy is set to `login`).
 
-==== Removing Kiali from OpenShift
+=== Removing Kiali from your cluster
 
 If you want to remove Kiali, you can do so via the operator by executing the `kiali-delete` target. This target will also remove the secret.
 
@@ -207,32 +191,28 @@ cd ${GOPATH}/src/github.com/kiali/kiali/operator
 make kiali-delete
 ----
 
-The main Makefile legacy target `openshift-undeploy` delegates to the above.
-
-If you want to quickly purge your OpenShift environment of all Kiali resources, you can run the `purge-kiali` target instead. This does not use the operator, instead it purges all Kiali resources using the oc/kubectl command.
+If you want to purge your cluster of all Kiali resources without going through the operator to do it, you can run the `kiali-purge` target instead. This does not use the operator, instead it purges all Kiali resources using the oc/kubectl command.
 
 [source,shell]
 ----
 cd ${GOPATH}/src/github.com/kiali/kiali/operator
-make purge-kiali
+make kiali-purge
 ----
 
-==== Reloading Kiali image in OpenShift
+=== Reloading Kiali image
 
 [NOTE]
-To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build openshift-reload-image` to quickly get your new Kiali build into your running OpenShift.
+To easily facilitate development, this allows you to do `make clean build cluster-push-kiali kiali-reload-image` to quickly get your new Kiali build into your running cluster.
 
 If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
 
 [source,shell]
 ----
 cd ${GOPATH}/src/github.com/kiali/kiali
-make openshift-reload-image
+make kiali-reload-image
 ----
 
-==== Removing Kiali operator from OpenShift
-
-You can remove the Kiali operator by running this make command. Note: after this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator.
+=== Removing Kiali operator from your cluster
 
 [source,shell]
 ----
@@ -240,69 +220,8 @@ cd ${GOPATH}/src/github.com/kiali/kiali/operator
 make operator-delete
 ----
 
-There is no analogous target in the main Makefile.
-
-=== Running on Kubernetes
-
-==== Setting up Kubernetes
-
-The following section assumes that the user has link:https://github.com/kubernetes/kubernetes[Kubernetes] installed.
-
-==== Building the Container Image
-
-Create the Kiali container image through the "docker-build" make target:
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make docker-build
-----
-
-This builds the Kiali operator image, too.
-
-Note that if you are using minikube, you can build the container images and push them directly into the minikube docker daemon using the alternative make target `minikube-docker`:
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make minikube-docker
-----
-
-==== Deploying and Removing Kiali to/from Kubernetes
-
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.1*. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/getting_started/[Maistra] but you can use the link:https://istio.io/docs/setup/kubernetes/install[upstream Istio instructions].
-
-[NOTE]
-The following make targets assume that the `kubectl` command is available in the user's PATH.
-
-[NOTE]
-In order to deploy on Kubernetes and to be able to access the deployed service, you must ensure you have Ingress support. If you are using minikube, you need to run `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
-
-The same commands documented above that explain how to deploy and remove Kiali operator and Kiali from OpenShift also apply to any Kubernetes environment. So these will work - see above for details about these commands.
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
-make operator-create
-make kiali-create
-make kiali-delete
-make purge-kiali
-make operator-delete
-----
-
-==== Reloading Kiali image in Kubernetes
-
-[NOTE]
-To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build k8s-reload-image` to quickly get your new Kiali build into your running Kubernetes.
-
-If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make k8s-reload-image
-----
+After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator again.
 
 === Running Standalone
 

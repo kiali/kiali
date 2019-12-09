@@ -4,6 +4,7 @@
   vars:
     deployment:
       image_version: dev
+      namespace: istio-system
 
     # The Ansible SDK creates a "_kiali_io_kiali" variable that
     # mimics the Kiali CR but maintains camelCase in key names.

@@ -144,8 +144,8 @@ endif
 	CONTAINER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
-	  OPERATOR_IMAGE_NAME="$(QUAY_OPERATOR_NAME)" \
-	  make docker-build container-push
+	  OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
+	  make container-build container-push
 ifneq ($(IS_SNAPSHOT),y)
    # Create or update vX.Y tags (without the patch number)
    # docker.io/kiali
