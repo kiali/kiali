@@ -7,7 +7,8 @@ clean:
 	@echo Cleaning...
 	@rm -f kiali
 	@rm -rf ${GOPATH}/bin/kiali
-	@rm -rf ${GOPATH}/pkg/*
+	@[ -d "${GOPATH}/pkg/*" ] && chmod -R +rw "${GOPATH}/pkg/*" || true
+	@rm -rf "${GOPATH}/pkg/*"
 	@rm -rf ${OUTDIR}/docker
 
 ## clean-all: Runs `make clean` internally and remove the _output dir
