@@ -67,7 +67,7 @@ See the link:./LICENSE[LICENSE file].
 == Building
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. If you are using `podman` instead of `docker`, pass the environment variable `DORP=podman` run executing `make`. To run Kiali on OpenShift after you build it, it is assumed you have a running OpenShift or Minikube environment available to you.
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman], and (4) make. If you are using `podman` instead of `docker`, pass the environment variable `DORP=podman` when executing `make`. To run Kiali in a cluster after you build it, it is assumed you have a running OpenShift or Minikube environment available to you.
 
 [NOTE]
 Currently, Kiali releases are built using Go 1.12.13. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.12.13 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
@@ -127,9 +127,9 @@ make test
 If you want to quickly get up and running to play with Kiali and do not wish to git clone the repository or build anything, see https://www.kiali.io/gettingstarted for instructions.
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/installation/[Maistra] which is a variant of Istio. If you choose to use Istio, make sure to follow the link:https://istio.io/docs/setup/platform-setup/openshift/[OpenShift preparation steps]. Also, check the link:https://kiali.io/documentation/getting-started/#_kiali_version_requirements[version requirements] on our website to read notes about Istio and Maistra compatibility. There is a link:https://github.com/kiali/kiali/hack/install-istio-via-istioctl.sh[install-istio-via-istioctl.sh hack script] that can install Istio for you.
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/installation/[Maistra] which is a variant of Istio. If you choose to use Istio, make sure to follow the link:https://istio.io/docs/setup/platform-setup/openshift/[OpenShift preparation steps]. Also, check the link:https://kiali.io/documentation/getting-started/#_kiali_version_requirements[version requirements] on our website to read notes about Istio and Maistra compatibility. There is a link:https://github.com/kiali/kiali/tree/master/hack/istio/install-istio-via-istioctl.sh[install-istio-via-istioctl.sh hack script] that can install Istio for you.
 
-=== Running on OpenShift or Kubernetes/Minikube)
+=== Running on OpenShift or Kubernetes/Minikube
 
 By default, the make targets used to push and deploy Kiali images will assume you have an OpenShift 4.x cluster installed and running and that `oc` is found in your $PATH.
 
@@ -181,7 +181,7 @@ make kiali-create
 
 This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created if needed (i.e. when the authentication strategy is set to `login`).
 
-=== Removing Kiali from OpenShift
+=== Removing Kiali from your cluster
 
 If you want to remove Kiali, you can do so via the operator by executing the `kiali-delete` target. This target will also remove the secret.
 
