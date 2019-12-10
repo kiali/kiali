@@ -24,6 +24,7 @@ func getServices(client http.Client, endpoint *url.URL) (services []string, code
 	var jaegerResponse struct {
 		Data []string `json:"data"`
 	}
+
 	if err = json.Unmarshal([]byte(resp), &jaegerResponse); err != nil {
 		log.Errorf("Error Unmarshal Jaeger Response fetching Services: %s", err)
 		return

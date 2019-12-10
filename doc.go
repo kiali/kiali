@@ -581,7 +581,7 @@ type GrafanaInfoResponse struct {
 // swagger:response jaegerInfoResponse
 type JaegerInfoResponse struct {
 	// in: body
-	Body models.JaegerInfo
+	Body jaeger.JaegerInfo
 }
 
 // Return the information necessary to handle login
