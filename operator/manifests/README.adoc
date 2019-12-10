@@ -303,7 +303,7 @@ annotations:
 spec:
   deployment:
     namespace: ${CONTROL_PLANE_NAMESPACE}
-    verbose_mode: "4"
+    verbose_mode: 4
 EOF
 ```
 
