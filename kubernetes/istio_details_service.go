@@ -71,6 +71,8 @@ func (in *IstioClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, s
 		return in.maistraAuthenticationApi, ApiMaistraAuthenticationVersion
 	} else if apiGroup == MaistraRbacGroupVersion.Group {
 		return in.maistraRbacApi, ApiMaistraRbacVersion
+	} else if apiGroup == SecurityGroupVersion.Group {
+		return in.istioSecurityApi, ApiSecurityVersion
 	}
 	return nil, ""
 }
@@ -190,6 +192,30 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 	in.rbacResources = &rbacResources
 
 	return *in.rbacResources
+}
+
+func (in *IstioClient) hasSecurityResource(resource string) bool {
+	return in.getSecurityResources()[resource]
+}
+
+func (in *IstioClient) getSecurityResources() map[string]bool {
+	if in.securityResources != nil {
+		return *in.securityResources
+	}
+
+	securityResources := map[string]bool{}
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/security.istio.io/v1beta1").Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				securityResources[resource.Name] = true
+			}
+		}
+	}
+	in.securityResources = &securityResources
+
+	return *in.securityResources
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
@@ -871,6 +897,52 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 		return nil, fmt.Errorf("%s doesn't return a ServiceRoleBinding object", namespace)
 	}
 	s := serviceRoleBinding.DeepCopyIstioObject()
+	s.SetTypeMeta(typeMeta)
+	return s, nil
+}
+
+func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject, error) {
+	// In case AuthorizationPolciies aren't present on Istio, return empty array.
+	if !in.hasSecurityResource(authorizationpolicies) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(authorizationpolicies).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[authorizationpolicies],
+		APIVersion: ApiSecurityVersion,
+	}
+	authorizationPoliciesList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a AuthorizationPoliciesList list", namespace)
+	}
+
+	authorizationPolicies := make([]IstioObject, 0)
+	for _, sr := range authorizationPoliciesList.GetItems() {
+		s := sr.DeepCopyIstioObject()
+		s.SetTypeMeta(typeMeta)
+		authorizationPolicies = append(authorizationPolicies, s)
+	}
+	return authorizationPolicies, nil
+}
+
+func (in *IstioClient) GetAuthorizationPolicy(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(authorizationpolicies).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[authorizationpolicies],
+		APIVersion: ApiSecurityVersion,
+	}
+	authorizationPolicy, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a AuthorizationPolicy object", namespace)
+	}
+	s := authorizationPolicy.DeepCopyIstioObject()
 	s.SetTypeMeta(typeMeta)
 	return s, nil
 }

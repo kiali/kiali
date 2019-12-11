@@ -96,6 +96,11 @@ const (
 	serviceMeshRbacConfigType     = "ServiceMeshRbacConfig"
 	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
+	// Authorization Policies
+	authorizationpolicies         = "authorizationpolicies"
+	authorizationpoliciesType     = "AuthorizationPolicy"
+	authorizationpoliciesTypeList = "AuthorizationPolicyList"
+
 	// Config - Rules
 
 	rules        = "rules"
@@ -159,6 +164,12 @@ var (
 		Version: "v1",
 	}
 	ApiMaistraRbacVersion = MaistraRbacGroupVersion.Group + "/" + MaistraRbacGroupVersion.Version
+
+	SecurityGroupVersion = schema.GroupVersion{
+		Group:   "security.istio.io",
+		Version: "v1beta1",
+	}
+	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
 
 	networkingTypes = []struct {
 		objectKind     string
@@ -226,6 +237,16 @@ var (
 		{
 			objectKind:     serviceMeshPolicyType,
 			collectionKind: serviceMeshPolicyTypeList,
+		},
+	}
+
+	securityTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     authorizationpoliciesType,
+			collectionKind: authorizationpoliciesTypeList,
 		},
 	}
 
@@ -336,6 +357,9 @@ var (
 		serviceroles:           serviceroleType,
 		servicerolebindings:    servicerolebindingType,
 		serviceMeshRbacConfigs: serviceMeshRbacConfigType,
+
+		// Authorization Policies
+		authorizationpolicies: authorizationpoliciesType,
 	}
 )
 

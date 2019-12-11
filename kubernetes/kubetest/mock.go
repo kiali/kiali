@@ -391,6 +391,16 @@ func (o *K8SClientMock) GetServiceRoleBinding(namespace string, policyName strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetAuthorizationPolicies(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetAuthorizationPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.RBACDetails, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*kubernetes.RBACDetails), args.Error(1)
