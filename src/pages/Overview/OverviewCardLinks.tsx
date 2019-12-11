@@ -20,40 +20,63 @@ const iconStyle = style({
 class OverviewCardLinks extends React.Component<Props> {
   render() {
     const tooltipProps = { distance: 10, entryDelay: 100, exitDelay: 100 };
-    return (
-      <div style={{ marginTop: '10px' }}>
-        <Tooltip key="ot_graph" content={<>Go to graph</>} {...tooltipProps}>
-          <Link
-            to={`/graph/namespaces?namespaces=${this.props.name}&graphType=${this.toGraphType(
-              this.props.overviewType
-            )}`}
-            className={iconStyle}
-          >
-            <TopologyIcon />
-          </Link>
-        </Tooltip>
+    let links: React.ReactNodeArray = [];
+
+    // Link to the graph page
+    links.push(
+      <Tooltip key="ot_graph" content={<>Go to graph</>} {...tooltipProps}>
+        <Link
+          to={`/graph/namespaces?namespaces=${this.props.name}&graphType=${this.toGraphType(this.props.overviewType)}`}
+          className={iconStyle}
+        >
+          <TopologyIcon />
+        </Link>
+      </Tooltip>
+    );
+
+    // Link to the apps list
+    if (this.props.overviewType !== 'app') {
+      links.push(
         <Tooltip key="ot_apps" content={<>Go to applications</>} {...tooltipProps}>
           <Link to={`/${Paths.APPLICATIONS}?namespaces=` + this.props.name} className={iconStyle}>
             <ApplicationsIcon />
           </Link>
         </Tooltip>
+      );
+    }
+
+    // Link to the workloads list
+    if (this.props.overviewType !== 'workload') {
+      links.push(
         <Tooltip key="ot_workloads" content={<>Go to workloads</>} {...tooltipProps}>
           <Link to={`/${Paths.WORKLOADS}?namespaces=` + this.props.name} className={iconStyle}>
             <BundleIcon />
           </Link>
         </Tooltip>
+      );
+    }
+
+    // Link to the services list
+    if (this.props.overviewType !== 'service') {
+      links.push(
         <Tooltip key="ot_services" content={<>Go to services</>} {...tooltipProps}>
           <Link to={`/${Paths.SERVICES}?namespaces=` + this.props.name} className={iconStyle}>
             <ServiceIcon />
           </Link>
         </Tooltip>
-        <Tooltip key="ot_istio" content={<>Go to Istio config</>} {...tooltipProps}>
-          <Link to={`/${Paths.ISTIO}?namespaces=` + this.props.name} className={iconStyle}>
-            <PficonTemplateIcon />
-          </Link>
-        </Tooltip>
-      </div>
+      );
+    }
+
+    // Link to the Istio Config list
+    links.push(
+      <Tooltip key="ot_istio" content={<>Go to Istio config</>} {...tooltipProps}>
+        <Link to={`/${Paths.ISTIO}?namespaces=` + this.props.name} className={iconStyle}>
+          <PficonTemplateIcon />
+        </Link>
+      </Tooltip>
     );
+
+    return <div style={{ marginTop: '10px' }}>{links}</div>;
   }
 
   private toGraphType = (overviewType: OverviewType): string => {
