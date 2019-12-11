@@ -2,12 +2,11 @@ import * as React from 'react';
 import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
 import { DestinationWeight, HTTPRoute, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
 import DetailObject from '../../../components/Details/DetailObject';
-import { Link } from 'react-router-dom';
-import { ServiceIcon } from '@patternfly/react-icons';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
 import { ChartBullet } from '@patternfly/react-charts/dist/js/components/ChartBullet';
 import ValidationList from '../../../components/Validations/ValidationList';
+import { serviceLink } from '../IstioConfigDetailsPage';
 
 interface VirtualServiceRouteProps {
   name: string;
@@ -68,7 +67,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
           const destination = routeItem.destination;
           cells = [
             { title: validation },
-            { title: this.serviceLink(this.props.namespace, destination.host, isValid) },
+            { title: serviceLink(this.props.namespace, destination.host, isValid) },
             { title: destination.subset || '-' },
             { title: destination.port ? destination.port.number || '-' : '-' },
             { title: routeItem.weight ? routeItem.weight : '-' }
@@ -88,23 +87,6 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     );
 
     return rows;
-  }
-
-  serviceLink(namespace: string, host: string, isValid: boolean): any {
-    if (!host) {
-      return '-';
-    }
-    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
-    if (host.indexOf('.') > -1 || !isValid) {
-      return host;
-    } else {
-      return (
-        <Link to={'/namespaces/' + namespace + '/services/' + host}>
-          {host + ' '}
-          <ServiceIcon />
-        </Link>
-      );
-    }
   }
 
   validation(): ObjectValidation {

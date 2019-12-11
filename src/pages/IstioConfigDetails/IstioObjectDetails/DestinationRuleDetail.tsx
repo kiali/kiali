@@ -2,7 +2,6 @@ import * as React from 'react';
 import { DestinationRule, ObjectValidation } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
-import { Link } from 'react-router-dom';
 import {
   Card,
   CardBody,
@@ -16,10 +15,10 @@ import {
 } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
-import { ServiceIcon } from '@patternfly/react-icons';
 import { checkForPath } from '../../../types/ServiceInfo';
 import ValidationList from '../../../components/Validations/ValidationList';
 import Labels from '../../../components/Label/Labels';
+import { serviceLink } from '../IstioConfigDetailsPage';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -105,23 +104,6 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
     );
   }
 
-  serviceLink(namespace: string, host: string, isValid: boolean): any {
-    if (!host) {
-      return '-';
-    }
-    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
-    if (host.indexOf('.') > -1 || !isValid) {
-      return host;
-    } else {
-      return (
-        <Link to={'/namespaces/' + namespace + '/services/' + host}>
-          {host + ' '}
-          <ServiceIcon />
-        </Link>
-      );
-    }
-  }
-
   rawConfig() {
     const destinationRule = this.props.destinationRule;
     const globalStatus = this.globalStatus();
@@ -145,7 +127,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
                 {destinationRule.spec.host && (
                   <>
                     <Text component={TextVariants.h3}>Host</Text>
-                    {this.serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
+                    {serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
                   </>
                 )}
               </StackItem>

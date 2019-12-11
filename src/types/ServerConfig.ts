@@ -4,6 +4,7 @@ export type IstioLabelKey = 'appLabelName' | 'versionLabelName';
 
 export interface ServerConfig {
   installationTag?: string;
+  istioIdentityDomain: string;
   istioNamespace: string;
   istioComponentNamespaces?: Map<string, string>;
   istioLabels: { [key in IstioLabelKey]: string };

@@ -15,6 +15,7 @@ import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 import { Rule } from './MatchingRouting/Rules';
 import {
   buildIstioConfig,
+  fqdnServiceName,
   getInitGateway,
   getInitHosts,
   getInitLoadBalancer,
@@ -38,7 +39,7 @@ import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
 
-const emptyWizardState = (serviceName: string): WizardState => {
+const emptyWizardState = (fqdnServiceName: string): WizardState => {
   return {
     showWizard: false,
     showAdvanced: false,
@@ -53,7 +54,7 @@ const emptyWizardState = (serviceName: string): WizardState => {
       gateway: true
     },
     advancedOptionsValid: true,
-    vsHosts: [serviceName],
+    vsHosts: [fqdnServiceName],
     trafficPolicy: {
       tlsModified: false,
       mtlsMode: DISABLE,
@@ -74,7 +75,7 @@ const emptyWizardState = (serviceName: string): WizardState => {
 class IstioWizard extends React.Component<WizardProps, WizardState> {
   constructor(props: WizardProps) {
     super(props);
-    this.state = emptyWizardState(props.serviceName);
+    this.state = emptyWizardState(fqdnServiceName(props.serviceName, props.namespace));
   }
 
   componentDidUpdate(prevProps: WizardProps) {
@@ -138,7 +139,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
         vsHosts:
           initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
             ? initVsHosts
-            : [this.props.serviceName],
+            : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
         trafficPolicy: trafficPolicy
       });
     }
@@ -157,7 +158,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
   };
 
   onClose = (changed: boolean) => {
-    this.setState(emptyWizardState(this.props.serviceName));
+    this.setState(emptyWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)));
     this.props.onClose(changed);
   };
 

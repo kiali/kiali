@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Prompt, RouteComponentProps } from 'react-router-dom';
+import { Link, Prompt, RouteComponentProps } from 'react-router-dom';
 import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
@@ -16,7 +16,7 @@ import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
-import { Paths } from '../../config';
+import { Paths, serverConfig } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
@@ -46,6 +46,7 @@ import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { PfColors } from '../../components/Pf/PfColors';
 import IstioObjectLink from '../../components/Link/IstioObjectLink';
+import { ServiceIcon } from '@patternfly/react-icons';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -70,6 +71,32 @@ const tabName = 'list';
 const paramToTab: { [key: string]: number } = {
   overview: 0,
   yaml: 1
+};
+
+export const serviceLink = (namespace: string, host: string, isValid: boolean): any => {
+  if (!host) {
+    return '-';
+  }
+  // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
+  const isFqdn = host.endsWith('.' + serverConfig.istioIdentityDomain);
+  if (!isValid || !isFqdn) {
+    return host;
+  } else {
+    let linkNamespace = namespace;
+    let linkService = host;
+    if (isFqdn) {
+      // FQDN format: service.namespace.svc.cluster.local
+      const splitFqdn = host.split('.');
+      linkService = splitFqdn[0];
+      linkNamespace = splitFqdn[1];
+    }
+    return (
+      <Link to={'/namespaces/' + linkNamespace + '/services/' + linkService}>
+        {host + ' '}
+        <ServiceIcon />
+      </Link>
+    );
+  }
 };
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {

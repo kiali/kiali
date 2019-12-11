@@ -82,6 +82,10 @@ const SERVICE_UNAVAILABLE = 503;
 
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 
+export const fqdnServiceName = (serviceName: string, namespace: string): string => {
+  return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
+};
+
 const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   const matchRequests: HTTPMatchRequest[] = [];
   const matchHeaders: HTTPMatchRequest = { headers: {} };
@@ -197,7 +201,7 @@ export const buildIstioConfig = (
       }
     },
     spec: {
-      host: wProps.serviceName,
+      host: fqdnServiceName(wProps.serviceName, wProps.namespace),
       subsets: wProps.workloads.map(workload => {
         // Using version
         const versionLabelName = serverConfig.istioLabels.versionLabelName;
@@ -264,7 +268,7 @@ export const buildIstioConfig = (
             route: wState.workloads.map(workload => {
               return {
                 destination: {
-                  host: wProps.serviceName,
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
                   subset: wkdNameVersion[workload.name]
                 },
                 weight: workload.weight
@@ -284,7 +288,7 @@ export const buildIstioConfig = (
           for (let iRoute = 0; iRoute < rule.routes.length; iRoute++) {
             const destW: DestinationWeight = {
               destination: {
-                host: wProps.serviceName,
+                host: fqdnServiceName(wProps.serviceName, wProps.namespace),
                 subset: wkdNameVersion[rule.routes[iRoute]]
               }
             };
@@ -319,7 +323,7 @@ export const buildIstioConfig = (
           const suspendedRoute = wState.suspendedRoutes[i];
           const destW: DestinationWeight = {
             destination: {
-              host: wProps.serviceName,
+              host: fqdnServiceName(wProps.serviceName, wProps.namespace),
               subset: wkdNameVersion[suspendedRoute.workload]
             }
           };
@@ -341,7 +345,7 @@ export const buildIstioConfig = (
         httpRoute.route = [
           {
             destination: {
-              host: wProps.serviceName
+              host: fqdnServiceName(wProps.serviceName, wProps.namespace)
             }
           }
         ];

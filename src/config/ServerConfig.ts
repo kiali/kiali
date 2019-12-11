@@ -44,6 +44,7 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // these will be overwritten on user login.
 let serverConfig: ComputedServerConfig = {
   installationTag: 'Kiali Console',
+  istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioComponentNamespaces: new Map<string, string>(),
   istioLabels: {
