@@ -481,14 +481,39 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 	}
 }
 
+var (
+	// used with checkForbidden - if a caller is in the map, its forbidden warning message was already logged
+	forbiddenCaller map[string]bool = map[string]bool{}
+)
+
 func checkForbidden(caller string, err error, context string) bool {
 	// Some checks return 'forbidden' errors if user doesn't have cluster permissions
 	// On this case we log it internally but we don't consider it as an internal error
 	if errors.IsForbidden(err) {
-		if context == "" {
-			log.Warningf("%s validation failed due to insufficient permissions. Error: %s", caller, err)
-		} else {
-			log.Warningf("%s validation failed due to insufficient permissions (%s). Error: %s", caller, context, err)
+		// These messages are expected when we do not have cluster permissions. Therefore, we want to
+		// avoid flooding the logs with these forbidden messages when we do not have cluster permissions.
+		// When we do not have cluster permissions, only log the message once per caller.
+		// If we do expect to have cluster permissions, then something is really wrong and
+		// we need to log this caller's message all the time.
+		// We expect to have cluster permissions if accessible namespaces is "**".
+		logTheMessage := true
+		an := config.Get().Deployment.AccessibleNamespaces
+		if !(len(an) == 1 && an[0] == "**") {
+			// We do not expect to have cluster role permissions, so these forbidden errors are expected,
+			// however, we do want to log the message once per caller.
+			if _, ok := forbiddenCaller[caller]; ok {
+				logTheMessage = false
+			} else {
+				forbiddenCaller[caller] = true
+			}
+		}
+
+		if logTheMessage {
+			if context == "" {
+				log.Warningf("%s validation failed due to insufficient permissions. Error: %s", caller, err)
+			} else {
+				log.Warningf("%s validation failed due to insufficient permissions (%s). Error: %s", caller, context, err)
+			}
 		}
 		return true
 	}

@@ -53,14 +53,7 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 		if mps, err = in.k8s.GetMeshPolicies(); err != nil {
 			// This query can return false if Kiali doesn't have cluster permissions
 			// On this case we log internally the error but we return a false with nil
-			// To avoid flooding the logs with this message when it is expected, do not log
-			// the message if we know we do not have cluster role permissions. If we do expect to have
-			// cluster permissions, then something is really wrong and we need to log this message.
-			// We expect to have cluster permissions if accessible namespaces is "**".
-			an := config.Get().Deployment.AccessibleNamespaces
-			if len(an) == 1 && an[0] == "**" {
-				log.Warningf("GetMeshPolicies failed during a TLS validation. You should confirm that Kiali has the proper cluster permissions. Error: %s", err)
-			}
+			checkForbidden("GetMeshPolicies", err, "probably Kiali doesn't have cluster permissions")
 			return false, nil
 		}
 	} else {
