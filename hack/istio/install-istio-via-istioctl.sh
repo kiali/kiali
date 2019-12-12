@@ -28,7 +28,7 @@ ISTIO_EGRESSGATEWAY_ENABLED="true"
 CONFIG_PROFILE="default" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 
 # If OpenShift, install CNI
-if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+if [[ "${CLIENT_EXE_NAME}" = *"oc" ]]; then
   CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
 fi
 
