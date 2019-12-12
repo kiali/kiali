@@ -35,7 +35,7 @@ export class SparklineChart extends React.Component<Props, State> {
     if (props.width === undefined) {
       this.containerRef = React.createRef<HTMLDivElement>();
     }
-    this.state = { width: props.width || 0, hiddenSeries: new Set() };
+    this.state = { width: props.width || 1, hiddenSeries: new Set() };
   }
 
   handleResize = () => {
