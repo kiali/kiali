@@ -6,6 +6,10 @@ OPERATOR_COURIER_VERIFY="true"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -ki|--kiali-image)
+      KIALI_IMAGE="$2"
+      shift;shift
+      ;;
     -nm|--new-manifest)
       NEW_MANIFEST="$(echo ${2} | tr -d '/')"
       shift;shift
@@ -39,6 +43,10 @@ while [[ $# -gt 0 ]]; do
 $0 [option...]
 
 Valid options:
+  -ki|--kiali-image <repository image specifier>
+      If you plan on deploying the Kiali image in a different repository and/or with a different version tag
+      then set the kiali image specifier with this option. If not set, the existing image specifier will be used
+      except its version tag will be changed to the --new-version string.
   -nm|--new-manifest <dir name>
       The name of the directory to contain the new manifest bundle files.
       If not specified, it will reuse the current manifest directory (--old-manifest).
@@ -168,13 +176,18 @@ mv ${OLD_VERSION_CSV_YAML} ${NEW_VERSION_CSV_YAML}
 
 sed -i "s/${OLD_VERSION}/${NEW_VERSION}/g" ${NEW_VERSION_CSV_YAML}
 
-# If an explicit image was specified by the user, use that image specifier in the CSV YAML file
-# TODO in the kiali-ossm there is the relatedImages that lists the kiali image. That isn't really used right now, so don't bother updating it.
-#      If/when we need to update that, we'd need to add a new cmdline option for -ki|kiali-image.
+# If an explicit operator image was specified by the user, use that image specifier in the CSV YAML file
 
 if [ ! -z "${OPERATOR_IMAGE}" ]; then
   sed -i "s|image: .*kiali.*operator.*|image: ${OPERATOR_IMAGE}|g" ${NEW_VERSION_CSV_YAML}
   sed -i "s|containerImage: .*kiali.*operator.*|containerImage: ${OPERATOR_IMAGE}|g" ${NEW_VERSION_CSV_YAML}
+fi
+
+# If an explicit kiali image was specified by the user, use that image specifier in the CSV YAML file
+
+if [ ! -z "${KIALI_IMAGE}" ]; then
+  # skip lines that refer to the operator image - we don't want to change those
+  sed -E -i "/.*kiali.*-operator.*/ n; s~(value:|image:)(.*/.*kiali.*:.*)~\1 ${KIALI_IMAGE}~g" ${NEW_VERSION_CSV_YAML}
 fi
 
 # Update the "replaces" metadata so the CSV indicates it is replacing the old version
