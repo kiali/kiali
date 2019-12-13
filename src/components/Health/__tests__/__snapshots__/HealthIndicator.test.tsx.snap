@@ -108,7 +108,9 @@ exports[`HealthIndicator renders healthy 1`] = `
       "bottom",
     ]
   }
+  id=""
   isAppLauncher={false}
+  isContentLeftAligned={false}
   isVisible={false}
   maxWidth="18.75rem"
   position="auto"

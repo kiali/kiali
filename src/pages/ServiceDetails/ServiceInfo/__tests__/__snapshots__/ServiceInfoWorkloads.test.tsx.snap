@@ -7,10 +7,8 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
   >
     <Card>
       <CardBody>
-        <Table
+        <Component
           aria-label="list_workloads"
-          borders={true}
-          canSelectAll={true}
           cells={
             Array [
               Object {
@@ -45,14 +43,6 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
               },
             ]
           }
-          className=""
-          contentId="expanded-content"
-          dropdownDirection="down"
-          dropdownPosition="right"
-          expandId="expandable-toggle"
-          gridBreakPoint="grid-md"
-          role="grid"
-          rowLabeledBy="simple-node"
           rows={
             Array [
               Object {
@@ -178,7 +168,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
         >
           <TableHeader />
           <TableBody />
-        </Table>
+        </Component>
       </CardBody>
     </Card>
   </GridItem>

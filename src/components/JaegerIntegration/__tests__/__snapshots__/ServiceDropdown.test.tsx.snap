@@ -10,6 +10,7 @@ exports[`NamespaceDropdown renders ServiceDropdown correctly without custom 1`] 
   onBlur={[Function]}
   onChange={[MockFunction]}
   onFocus={[Function]}
+  validated="default"
   value=""
 >
   <FormSelectOption

@@ -36,7 +36,9 @@ exports[`GraphLegend test should render correctly 1`] = `
             "bottom",
           ]
         }
+        id=""
         isAppLauncher={false}
+        isContentLeftAligned={false}
         isVisible={false}
         maxWidth="18.75rem"
         position="top"

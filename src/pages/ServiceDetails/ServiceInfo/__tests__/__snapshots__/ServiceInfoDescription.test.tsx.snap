@@ -177,7 +177,9 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                       "bottom",
                     ]
                   }
+                  id=""
                   isAppLauncher={false}
+                  isContentLeftAligned={false}
                   isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
@@ -225,7 +227,9 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                       "bottom",
                     ]
                   }
+                  id=""
                   isAppLauncher={false}
+                  isContentLeftAligned={false}
                   isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
@@ -273,7 +277,9 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                       "bottom",
                     ]
                   }
+                  id=""
                   isAppLauncher={false}
+                  isContentLeftAligned={false}
                   isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
