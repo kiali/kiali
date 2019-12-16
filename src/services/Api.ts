@@ -31,6 +31,7 @@ import { TLSStatus } from '../types/TLSStatus';
 import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
 import { GrafanaInfo } from '../types/GrafanaInfo';
+import { Span, TracingQuery } from 'types/Tracing';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -510,4 +511,8 @@ export const updateThreeScaleServiceRule = (namespace: string, service: string, 
 
 export const deleteThreeScaleServiceRule = (namespace: string, service: string) => {
   return newRequest<string>(HTTP_VERBS.DELETE, urls.threeScaleServiceRule(namespace, service), {}, {});
+};
+
+export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), params, {});
 };

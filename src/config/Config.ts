@@ -105,6 +105,7 @@ const conf = {
       serviceMetrics: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/metrics`,
       serviceDashboard: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/dashboard`,
+      serviceSpans: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/spans`,
       status: 'api/status',
       threeScale: 'api/threescale',
       threeScaleHandler: (handlerName: string) => `api/threescale/handlers/${handlerName}`,
