@@ -108,6 +108,29 @@ func TestMultiHostMatchValidShortFormat(t *testing.T) {
 	assert.Nil(validation)
 }
 
+func TestMultiHostMatchValidShortFormatDiffNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host2.bookinfo"),
+	}
+
+	validations := MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+	assert.NotEmpty(validation.Checks)
+	assert.Equal(models.Unknown, validation.Checks[0].Severity)
+}
+
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

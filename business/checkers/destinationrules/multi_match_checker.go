@@ -12,6 +12,7 @@ const DestinationRulesCheckerType = "destinationrule"
 type MultiMatchChecker struct {
 	DestinationRules []kubernetes.IstioObject
 	ServiceEntries   map[string][]string
+	Namespaces       models.Namespaces
 }
 
 type subset struct {
@@ -31,7 +32,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			destinationRulesName := dr.GetObjectMeta().Name
 			destinationRulesNamespace := dr.GetObjectMeta().Namespace
 			if dHost, ok := host.(string); ok {
-				fqdn := getHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				fqdn := m.getHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
 				if fqdn.Namespace != dr.GetObjectMeta().Namespace && !strings.HasPrefix(fqdn.Service, "*") && fqdn.Namespace != "" {
 					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
@@ -79,17 +80,17 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func getHost(dHost, namespace, cluster string) kubernetes.Host {
+func (m MultiMatchChecker) getHost(dHost, namespace, cluster string) kubernetes.Host {
 	hParts := strings.Split(dHost, ".")
 	// It might be a service entry or a 2-format host specification
 	if len(hParts) == 2 {
 		// It is subject of validation when object is within the namespace
 		// Otherwise is considered as a service entry
-		if hParts[1] == namespace {
+		if hParts[1] == namespace || m.Namespaces.Includes(hParts[1]) {
 			return kubernetes.Host{
-				Service: hParts[0],
+				Service:   hParts[0],
 				Namespace: hParts[1],
-				Cluster: cluster,
+				Cluster:   cluster,
 			}
 		}
 	}

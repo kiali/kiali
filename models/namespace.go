@@ -26,6 +26,8 @@ type Namespace struct {
 	CreationTimestamp time.Time `json:"-"`
 }
 
+type Namespaces []Namespace
+
 func CastNamespaceCollection(ns []core_v1.Namespace) []Namespace {
 	namespaces := make([]Namespace, len(ns))
 	for i, item := range ns {
@@ -58,4 +60,13 @@ func CastProject(p osproject_v1.Project) Namespace {
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 
 	return namespace
+}
+
+func (nss Namespaces) Includes(namespace string) bool {
+	for _, ns := range nss {
+		if ns.Name == namespace {
+			return true
+		}
+	}
+	return false
 }
