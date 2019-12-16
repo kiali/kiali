@@ -86,7 +86,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
         }
         tabName="list"
       >
-        <ForwardRef
+        <Tab
           eventKey={0}
           title="Workloads (0)"
         >
@@ -252,8 +252,8 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               workloads={Array []}
             />
           </ErrorBoundaryWithMessage>
-        </ForwardRef>
-        <ForwardRef
+        </Tab>
+        <Tab
           eventKey={1}
           title={
             <React.Fragment>
@@ -453,8 +453,8 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               }
             />
           </ErrorBoundaryWithMessage>
-        </ForwardRef>
-        <ForwardRef
+        </Tab>
+        <Tab
           eventKey={2}
           title={
             <React.Fragment>
@@ -688,7 +688,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               }
             />
           </ErrorBoundaryWithMessage>
-        </ForwardRef>
+        </Tab>
       </ParameterizedTabs>
     </GridItem>
   </Grid>

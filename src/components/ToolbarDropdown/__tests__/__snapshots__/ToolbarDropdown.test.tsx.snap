@@ -8,37 +8,21 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
   >
     graph_filter_interval_duration
   </Text>
-  <Select
+  <Component
     aria-label="graph_filter_interval_duration"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="graph_filter_interval_duration"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="graph_filter_interval_duration"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Last 1m"
     selections={60}
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -55,6 +39,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -71,6 +56,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -87,6 +73,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -103,6 +90,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -119,6 +107,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -135,6 +124,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -149,7 +139,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     >
       Last 6h
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;
 
@@ -161,37 +151,21 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
   >
     metrics_filter_poll_interval
   </Text>
-  <Select
+  <Component
     aria-label="metrics_filter_poll_interval"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="metrics_filter_poll_interval"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="metrics_filter_poll_interval"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Every 15s"
     selections={15000}
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -208,6 +182,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -224,6 +199,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -240,6 +216,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -256,6 +233,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -272,6 +250,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -288,6 +267,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -302,7 +282,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
     >
       Every 15m
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;
 
@@ -314,37 +294,21 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
   >
     graph_filter_layouts
   </Text>
-  <Select
+  <Component
     aria-label="graph_filter_layouts"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="graph_filter_layouts"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="graph_filter_layouts"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Cola"
     selections="cola"
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -361,6 +325,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -377,6 +342,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -391,7 +357,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
     >
       Dagre
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;
 
@@ -403,37 +369,21 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
   >
     graph_filter_interval_duration
   </Text>
-  <Select
+  <Component
     aria-label="graph_filter_interval_duration"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="graph_filter_interval_duration"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="graph_filter_interval_duration"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Last 1m"
     selections={60}
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -450,6 +400,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -466,6 +417,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -482,6 +434,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -498,6 +451,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -514,6 +468,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -530,6 +485,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -544,7 +500,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     >
       Last 6h
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;
 
@@ -556,37 +512,21 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
   >
     metrics_filter_poll_interval
   </Text>
-  <Select
+  <Component
     aria-label="metrics_filter_poll_interval"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="metrics_filter_poll_interval"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="metrics_filter_poll_interval"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Every 15s"
     selections={15000}
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -603,6 +543,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -619,6 +560,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -635,6 +577,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -651,6 +594,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -667,6 +611,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -683,6 +628,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -697,7 +643,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     >
       Every 15m
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;
 
@@ -709,37 +655,21 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
   >
     graph_filter_layouts
   </Text>
-  <Select
+  <Component
     aria-label="graph_filter_layouts"
-    ariaLabelClear="Clear all"
-    ariaLabelRemove="Remove"
-    ariaLabelToggle="Options menu"
-    ariaLabelTypeAhead=""
     ariaLabelledBy="graph_filter_layouts"
     className="fhxf3qu"
-    createText="Create"
-    direction="down"
     id="graph_filter_layouts"
-    isCreatable={false}
     isDisabled={false}
     isExpanded={false}
-    isGrouped={false}
-    isPlain={false}
-    maxHeight=""
-    noResultsFoundText="No results found"
-    onClear={[Function]}
-    onCreateOption={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
     placeholderText="Cola"
     selections="cola"
-    toggleIcon={null}
-    toggleId={null}
-    variant="single"
-    width=""
   >
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -756,6 +686,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -772,6 +703,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     </SelectOption>
     <SelectOption
       className=""
+      component="button"
       index={0}
       isChecked={false}
       isDisabled={false}
@@ -786,6 +718,6 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     >
       Dagre
     </SelectOption>
-  </Select>
+  </Component>
 </Fragment>
 `;

@@ -95,6 +95,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
       isValid={true}
       onChange={[MockFunction]}
       type="text"
+      validated="default"
       value=""
     />
   </FormGroup>

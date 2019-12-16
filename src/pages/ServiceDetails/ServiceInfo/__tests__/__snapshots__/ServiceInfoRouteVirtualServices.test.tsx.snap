@@ -7,10 +7,8 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
   >
     <Card>
       <CardBody>
-        <Table
+        <Component
           aria-label="list_virtual_services"
-          borders={true}
-          canSelectAll={true}
           cells={
             Array [
               Object {
@@ -45,14 +43,6 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
               },
             ]
           }
-          className=""
-          contentId="expanded-content"
-          dropdownDirection="down"
-          dropdownPosition="right"
-          expandId="expandable-toggle"
-          gridBreakPoint="grid-md"
-          role="grid"
-          rowLabeledBy="simple-node"
           rows={
             Array [
               Object {
@@ -98,7 +88,7 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
         >
           <TableHeader />
           <TableBody />
-        </Table>
+        </Component>
       </CardBody>
     </Card>
   </GridItem>
