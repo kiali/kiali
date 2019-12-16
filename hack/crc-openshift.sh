@@ -4,7 +4,6 @@
 # crc-openshift.sh
 #
 # Run this script to start/stop an OpenShift 4 cluster.
-# This can also optionally install Maistra/Istio.
 #
 # This script takes one command whose value is one of the following:
 #        start: starts the OpenShift environment
@@ -14,9 +13,6 @@
 #          ssh: logs into the CRC VM via ssh so you can probe in the VM
 #       routes: outputs all known route URLs
 #     services: outputs all known service endpoints (excluding internal openshift services)
-#   sm-install: installs service mesh into the cluster
-# sm-uninstall: removes all service mesh components
-#   bi-install: installs bookinfo demo into the cluster
 #
 # This script accepts several options - see --help for details.
 #
@@ -114,6 +110,10 @@ get_status() {
     echo "Version from oc command [${CRC_OC}]"
     ${CRC_OC} version
     echo "====================================================================="
+    echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
+    echo "====================================================================="
+    echo "whoami: $(${CRC_OC} whoami)"
+    echo "====================================================================="
     echo "Status from oc command [${CRC_OC}]"
     ${CRC_OC} status
     echo "====================================================================="
@@ -138,18 +138,6 @@ get_status() {
     echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
     echo "====================================================================="
   fi
-}
-
-check_istio_app() {
-  local expected="$1"
-  apps=$(${CRC_OC} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
-  for app in ${apps[@]}
-  do
-    if [[ "$expected" == "$app" ]]; then
-      return 0
-    fi
-  done
-  return 1
 }
 
 get_registry_names() {
@@ -239,95 +227,24 @@ print_all_service_endpoints() {
   done
 }
 
-install_service_mesh() {
-  local create_smcp="$1"
-  infomsg "Installing the operators..."
-  cat <<EOM | ${CRC_OC} apply -f -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: servicemeshoperator
-  namespace: openshift-operators
-spec:
-  channel: '1.0'
-  installPlanApproval: Automatic
-  name: servicemeshoperator
-  source: redhat-openshift-operators
-  sourceNamespace: openshift-marketplace
-EOM
-  if [ "${create_smcp}" == "true" ] ; then
-
-    infomsg "Waiting for the operator CRDs to come online"
-    for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io elasticsearches.logging.openshift.io
-    do
-      echo -n "Waiting for $crd ..."
-      while ! ${CRC_OC} get crd $crd > /dev/null 2>&1
-      do
-        sleep 2
-        echo -n '.'
-      done
-      echo "done."
-    done
-
-    infomsg "Waiting for operator Deployments to start..."
-    for op in elasticsearch-operator jaeger-operator kiali-operator istio-operator
-    do
-      echo -n "Waiting for ${op} to be ready..."
-      readyReplicas="0"
-      while [ "$?" != "0" -o "$readyReplicas" == "0" ]
-      do
-        sleep 1
-        echo -n '.'
-        readyReplicas="$(${CRC_OC} get deployment ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
-      done
-      echo "done."
-    done
-
-    infomsg "Creating istio-system namespace."
-    ${CRC_OC} create namespace istio-system
-    infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
-    if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
-      ${CRC_OC} create -n istio-system -f ${MAISTRA_SMCP_YAML}
-    else
-      debug "Using example SMCP/SMMR"
-      rm -f /tmp/maistra-smcp.yaml
-      get_downloader
-      eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.0/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_minimal.yaml"
-      ${CRC_OC} create -n istio-system -f /tmp/maistra-smcp.yaml
-    fi
-  else
-    infomsg "The operators should be available but the Maistra SMCP CR will not be created."
-  fi
-}
-
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.0.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.2.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.2.0"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.2.8"
 
-# The default virtual CPUs assigned to the CRC VM
-DEFAULT_CRC_CPUS="5"
+# The default virtual CPUs assigned to the CRC VM (CRC requires a minimum of 4)
+DEFAULT_CRC_CPUS="4"
 
 # The default memory (in GB) assigned to the CRC VM
-DEFAULT_CRC_MEMORY="20"
+DEFAULT_CRC_MEMORY="16"
 
 # The default virtual disk size (in GB) assigned to the CRC VM
 DEFAULT_CRC_VIRTUAL_DISK_SIZE="30"
-
-# set the default openshift address here so that it can be used for the usage text
-# This is the IP address where OpenShift will bind its master.
-# This should be a valid IP address for the machine where OpenShift is installed.
-# TODO: Today, this is not used with CRC. Leaving this here in case a future version of CRC lets you configure this
-if which ip > /dev/null 2>&1 ; then
-  DEFAULT_OPENSHIFT_IP_ADDRESS=`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`
-else
-  DEFAULT_OPENSHIFT_IP_ADDRESS="127.0.0.1"
-fi
 
 # process command line args to override environment
 _CMD=""
@@ -362,22 +279,6 @@ while [[ $# -gt 0 ]]; do
       _CMD="services"
       shift
       ;;
-    sm-install)
-      _CMD="sm-install"
-      shift
-      ;;
-    sm-uninstall)
-      _CMD="sm-uninstall"
-      shift
-      ;;
-    bi-install)
-      _CMD="bi-install"
-      shift
-      ;;
-    -a|--address)
-      OPENSHIFT_IP_ADDRESS="$2"
-      shift;shift
-      ;;
     -b|--bin-dir)
       OPENSHIFT_BIN_PATH="$2"
       shift;shift
@@ -410,21 +311,9 @@ while [[ $# -gt 0 ]]; do
       CRC_VIRTUAL_DISK_SIZE="$2"
       shift;shift
       ;;
-    -ie|--istio-enabled)
-      ISTIO_ENABLED="$2"
-      shift;shift
-      ;;
-    -smcp|--maistra-smcp-yaml)
-      MAISTRA_SMCP_YAML="$2"
-      shift;shift
-      ;;
     -kuca|--kiali-user-cluster-admin)
       KIALI_USER_IS_CLUSTER_ADMIN="$2"
       shift;shift
-      ;;
-    -nw|--no-wait-for-istio)
-      WAIT_FOR_ISTIO=false
-      shift
       ;;
     -p|--pull-secret-file)
       PULL_SECRET_ARG="-p $2"
@@ -440,11 +329,6 @@ while [[ $# -gt 0 ]]; do
 $0 [option...] command
 
 Valid options:
-  -a|--address <address>
-      The public IP or named address bound to by the OpenShift cluster.
-      THIS IS NOT USED TODAY
-      Default: ${DEFAULT_OPENSHIFT_IP_ADDRESS}
-      Used only for the 'start' command.
   -b|--bin-dir <dir>
       Directory where the OpenShift binaries are or will be stored when downloaded.
       Default: ${HOME}/bin
@@ -475,26 +359,9 @@ Valid options:
       Default: ${DEFAULT_CRC_VIRTUAL_DISK_SIZE}
       Used only for the 'start' command.
   -h|--help : this message
-  -ie|--istio-enabled (true|false)
-      When set to true, Maistra/Istio will be installed in OpenShift.
-      Default: false
-      Used only for the 'start' command.
-  -smcp|--maistra-smcp-yaml <file or url>
-      Points to the YAML file that defines the ServiceMeshControlPlane custom resource which declares what to install.
-      If not defined, a basic one will be used.
-      Default: Not set (a basic SMCP will be generated by this script)
-      Used only for the 'start' command.
   -kuca|--kiali-user-cluster-admin (true|false)
       Determines if the "kiali" OpenShift user is to be given cluster admin rights.
       Default: not set - you will be prompted during startup
-      Used only for the 'start' command.
-  -nj|--no-jaeger
-      When specified, this script will remove Jaeger and Elasticsearch installations from the
-      cluster after start-up.
-      Used only for the 'start' command.
-  -nw|--no-wait-for-istio
-      When specified, this script will not wait for Maistra/Istio to be up and running before exiting.
-      This will also be ignored when --istio-enabled is false.
       Used only for the 'start' command.
   -p|--pull-secret-file <filename>
       Specifies the file containing your Image pull secret.
@@ -507,16 +374,13 @@ Valid options:
 
 The command must be one of:
 
-  * start: Starts the CRC VM with OpenShift and optionally installs Maistra/Istio.
+  * start: Starts the CRC VM with OpenShift 4.x.
   * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
   * delete: Stops the CRC VM and removes all persistent data. 'start' will then bring up a clean CRC VM.
   * status: Information about the CRC VM and the OpenShift cluster running inside it.
   * ssh: Provides a command line prompt with root access inside the CRC VM.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
-  * sm-install: Installs Service Mesh into the cluster.
-  * sm-uninstall: Removes Service Mesh from the cluster.
-  * bi-install: Installs Bookinfo demo into the cluster.
 
 HELPMSG
       exit 1
@@ -544,14 +408,6 @@ fi
 # This is where you want the OpenShift binaries to go
 OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 
-# This is the IP address where OpenShift will bind its master.
-# This should be a valid IP address for the machine where OpenShift is installed.
-# TODO: Today, this is not used with CRC. Leaving this here in case a future version of CRC lets you configure this
-if [ ! "$OPENSHIFT_IP_ADDRESS" ] ; then
-  OPENSHIFT_IP_ADDRESS=${DEFAULT_OPENSHIFT_IP_ADDRESS}
-fi
-
-# The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
 DEFAULT_OS_PLATFORM=linux
 DETECTED_OS_PLATFORM=`uname | tr '[:upper:]' '[:lower:]'`
@@ -568,12 +424,6 @@ CRC_KUBEADMIN_PASSWORD_FILE="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOW
 CRC_KUBECONFIG="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/kubeconfig"
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC="${CRC_ROOT_DIR}/bin/oc"
-
-# If ISTIO_ENABLED=true, then a version of Maistra/Istio will be installed for you.
-ISTIO_ENABLED="${ISTIO_ENABLED:-false}"
-
-# By default, wait for Maistra/Istio to be up and running before the script ends.
-WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
 
 # VM configuration
 CRC_CPUS=${CRC_CPUS:-${DEFAULT_CRC_CPUS}}
@@ -629,11 +479,7 @@ debug "ENVIRONMENT:
   CRC_ROOT_DIR=$CRC_ROOT_DIR
   CRC_VIRTUAL_DISK_SIZE=$CRC_VIRTUAL_DISK_SIZE
   DOCKER_SUDO=$DOCKER_SUDO
-  ISTIO_ENABLED=$ISTIO_ENABLED
-  MAISTRA_SMCP_YAML=$MAISTRA_SMCP_YAML
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
-  OPENSHIFT_IP_ADDRESS=$OPENSHIFT_IP_ADDRESS
-  OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=$OPENSHIFT_ISTIO_MASTER_PUBLIC_URL
   "
 
 # Fail fast if we don't even have the correct location where the oc client should be
@@ -873,10 +719,8 @@ EOM
   if [ "${KIALI_USER_IS_CLUSTER_ADMIN}" == "true" ]; then
     infomsg "Will assign the cluster-admin role to the kiali user."
     ${CRC_OC} adm policy add-cluster-role-to-user cluster-admin kiali
-    _CREATE_SMCP_RESOURCE="true"
   else
     infomsg "Kiali user will not be assigned the cluster-admin role."
-    _CREATE_SMCP_RESOURCE="true" # still try to install Maistra/Istio, it should work with system:admin logged in
   fi
 
   # Make sure the image registry is exposed via the default route
@@ -885,56 +729,6 @@ EOM
     ${CRC_OC} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
   else
     debug "The image registry operator has exposed the internal image registry"
-  fi
-
-  # Install Maistra
-  ${CRC_OC} get -n istio-system ServiceMeshControlPlane > /dev/null 2>&1
-  if [ "$?" != "0" ]; then
-    if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      install_service_mesh "${_CREATE_SMCP_RESOURCE}"
-    else
-      infomsg "You asked that Maistra not be enabled - neither the operators nor a SMCP CR will be created."
-    fi
-  else
-    if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      infomsg "It appears Maistra has already been installed - will not attempt to do so again."
-    else
-      infomsg "You asked that Maistra not be enabled, but it appears to have already been installed. You might want to uninstall it."
-    fi
-  fi
-
-  # If Maistra/Istio is enabled, it should be installing now - if we need to, wait for it to finish
-  if [ "${ISTIO_ENABLED}" == "true" ] ; then
-    if [ "${WAIT_FOR_ISTIO}" == "true" ]; then
-      infomsg "Wait for Maistra/Istio to fully start this is going to take a while..."
-
-      infomsg "Waiting for Maistra/Istio Deployments to be created."
-      _EXPECTED_APPS=(istio-citadel prometheus istio-galley istio-policy istio-telemetry istio-pilot istio-egressgateway istio-ingressgateway istio-sidecar-injector)
-      for expected in ${_EXPECTED_APPS[@]}
-      do
-        echo -n "Waiting for $expected ..."
-        while ! check_istio_app $expected
-        do
-             sleep 5
-             echo -n '.'
-        done
-        echo "done."
-      done
-
-      infomsg "Waiting for Maistra/Istio Deployments to start..."
-      for app in $(${CRC_OC} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
-      do
-         echo -n "Waiting for ${app} to be ready..."
-         readyReplicas="0"
-         while [ "$?" != "0" -o "$readyReplicas" == "0" ]
-         do
-            sleep 1
-            echo -n '.'
-            readyReplicas="$(${CRC_OC} get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
-         done
-         echo "done."
-      done
-    fi
   fi
 
   # show the status message
@@ -966,97 +760,6 @@ elif [ "$_CMD" = "routes" ]; then
 elif [ "$_CMD" = "services" ]; then
 
   print_all_service_endpoints
-
-elif [ "$_CMD" = "sm-install" ]; then
-
-  install_service_mesh "true"
-
-elif [ "$_CMD" = "sm-uninstall" ]; then
-
-  # remove the SMCP and SMMR CRs which uninstalls all the Service Mesh components
-  ${CRC_OC} delete -n istio-system $(${CRC_OC} get smcp -n istio-system -o name)
-  ${CRC_OC} delete -n istio-system $(${CRC_OC} get smmr -n istio-system -o name)
-
-  # clean up the control plane namespace
-  ${CRC_OC} delete namespace istio-system
-
-  # clean up OLM Subscriptions
-  for sub in servicemeshoperator kiali-ossm jaeger-product elasticsearch-operator
-  do
-    ${CRC_OC} delete subscription -n openshift-operators ${sub}
-  done
-
-  # clean up OLM CatalogSourceConfig
-  ${CRC_OC} delete catalogsourceconfig -n openshift-marketplace hack-redhat-openshift-operators
-
-  # clean up OLM CSVs for all the different operators
-  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep servicemesh)
-  do
-    ${CRC_OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep kiali)
-  do
-    ${CRC_OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep jaeger)
-  do
-    ${CRC_OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep elasticsearch)
-  do
-    ${CRC_OC} delete -n openshift-operators ${csv}
-  done
-
-  # These should have been deleted when the CSV was removed but for some reason are not. Purge them now
-  for r in $(${CRC_OC} get clusterrolebindings -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete ${r}
-  done
-  for r in $(${CRC_OC} get clusterroles -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete ${r}
-  done
-  for r in $(${CRC_OC} get rolebindings -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${CRC_OC} get roles -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${CRC_OC} get sa -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${CRC_OC} get configmaps -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${CRC_OC} get secrets -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${CRC_OC} delete -n openshift-operators ${r}
-  done
-
-  # clean up additional leftover items
-  # see: https://docs.openshift.com/container-platform/4.1/service_mesh/service_mesh_install/removing-ossm.html#ossm-remove-cleanup_removing-ossm
-  ${CRC_OC} delete validatingwebhookconfiguration/openshift-operators.servicemesh-resources.maistra.io
-  ${CRC_OC} delete -n openshift-operators daemonset/istio-node
-  ${CRC_OC} delete clusterrole/istio-admin
-  ${CRC_OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${CRC_OC} delete
-  ${CRC_OC} get crds -o name | grep '.*\.maistra\.io' | xargs -r -n 1 ${CRC_OC} delete
-  ${CRC_OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${CRC_OC} delete
-  ${CRC_OC} get crds -o name | grep '.*\.jaegertracing\.io' | xargs -r -n 1 ${CRC_OC} delete
-  ${CRC_OC} get crds -o name | grep '.*\.logging\.openshift\.io' | xargs -r -n 1 ${CRC_OC} delete
-
-elif [ "$_CMD" = "bi-install" ]; then
-
-  # see: https://maistra.io/docs/examples/bookinfo/
-  BOOKINFO_NAMESPACE="bookinfo"
-  ${CRC_OC} new-project ${BOOKINFO_NAMESPACE}
-  ${CRC_OC} patch -n istio-system --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
-  ${CRC_OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
-  ${CRC_OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
-  infomsg "Bookinfo URL: http://$(${CRC_OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
 
 else
   infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, routes, services, sm-install, sm-uninstall, bi-install"
