@@ -1,16 +1,23 @@
-import { ChartLineProps } from '@patternfly/react-charts';
-
-export interface LegendItem {
-  name: string;
-}
-
 export interface LegendInfo {
   height: number;
   itemsPerRow: number;
-  items: LegendItem[];
 }
 
-export interface VictoryChartInfo {
-  rawLegend: string[];
-  series: ChartLineProps[][];
-}
+export type VCDataPoint = {
+  name: string;
+  x: number | Date;
+  y: number;
+};
+
+export type LegendItem = {
+  name: string;
+  symbol: { fill: string; type?: string };
+};
+
+export type VCLine = {
+  datapoints: VCDataPoint[];
+  color?: string;
+  legendItem: LegendItem;
+};
+
+export type VCLines = VCLine[];

@@ -421,6 +421,25 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/spans spansList
+		// ---
+		// Endpoint to get Jaeger spans for a given service
+		//
+		//		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		// 		500: internalError
+		//		200: spansResponse
+		{
+			"ServiceSpans",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/spans",
+			handlers.ServiceSpans,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesList
 		// ---
 		// Endpoint to get the traces of a given service
@@ -457,7 +476,7 @@ func NewRoutes() (r *Routes) {
 		//      200: tracesDetailResponse
 		//
 		{
-			"TracesDeatil",
+			"TracesDetails",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/traces/{traceID}",
 			handlers.TraceDetails,

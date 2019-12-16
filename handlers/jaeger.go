@@ -62,7 +62,6 @@ func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondWithJSON(w, code, traces)
-
 }
 
 func TraceDetails(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +79,30 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondWithJSON(w, code, traces)
+}
 
+// ServiceSpans is the API handler to fetch Jaeger spans of a specific service
+func ServiceSpans(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	queryParams := r.URL.Query()
+	startMicros := queryParams.Get("startMicros")
+	endMicros := queryParams.Get("endMicros")
+
+	spans, err := business.Jaeger.GetJaegerSpans(namespace, service, startMicros, endMicros)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, spans)
 }
 
 func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {

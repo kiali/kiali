@@ -1,5 +1,5 @@
-hash: 9c7fdf7686616f5feded8c69a11c0aba2bd9e901b7efb1aaa265d0495fd9a31c
-updated: 2019-11-28T10:07:41.032551477+01:00
+hash: 9c18a3e66d1a4e7ecb281d395944a887ef47be97bc29c9f79b69bf7ccffdd750
+updated: 2019-12-03T11:44:40.631124882+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -44,12 +44,14 @@ imports:
   - simplelru
 - name: github.com/jaegertracing/jaeger
   version: 8c89e641eacafc5315de3c6486d398d6ce0d441c
+  subpackages:
+  - model/json
 - name: github.com/json-iterator/go
   version: ab8a2e0c74be9d3be70b3184d9acc634935ded82
 - name: github.com/jtblin/go-ldap-client
   version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
-  version: 343fa7b2aec67148b2c9fd57d641cc051d2891b2
+  version: 5744795e78456a1f6c80582cdf4027ca091ef082
   subpackages:
   - business
   - config
@@ -92,7 +94,7 @@ imports:
   - prometheus/internal
   - prometheus/promhttp
 - name: github.com/prometheus/client_model
-  version: 14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016
+  version: d1d2010b5beead3fa1c5f271a5cf626e40b3ad6e
   subpackages:
   - go
 - name: github.com/prometheus/common
