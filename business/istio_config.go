@@ -290,7 +290,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			} else {
 				// This query can return false if user doesn't have cluster permissions
 				// On this case we log internally the error but we return an empty list
-				log.Warningf("GetMeshPolicies failed during a GetIstioConfigList. Probably Kiali doesn't have cluster permissions. Error: %s", mpErr)
+				checkForbidden("GetMeshPolicies", mpErr, "probably Kiali doesn't have cluster permissions")
 			}
 		}
 	}()
@@ -305,7 +305,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			} else {
 				// This query can return false if user doesn't have cluster permissions
 				// On this case we log internally the error but we return an empty list
-				log.Warningf("GetClusterRbacConfigs failed during a GetIstioConfigList. Probably Kiali doesn't have cluster permissions. Error: %s", crcErr)
+				checkForbidden("GetClusterRbacConfigs", crcErr, "probably Kiali doesn't have cluster permissions")
 			}
 		}
 	}()

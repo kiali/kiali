@@ -53,7 +53,7 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 		if mps, err = in.k8s.GetMeshPolicies(); err != nil {
 			// This query can return false if Kiali doesn't have cluster permissions
 			// On this case we log internally the error but we return a false with nil
-			log.Warningf("GetMeshPolicies failed during a TLS validation. Probably Kiali doesn't have cluster permissions. Error: %s", err)
+			checkForbidden("GetMeshPolicies", err, "probably Kiali doesn't have cluster permissions")
 			return false, nil
 		}
 	} else {
