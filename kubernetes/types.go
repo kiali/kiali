@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kiali/kiali/config"
 	apps_v1 "k8s.io/api/apps/v1"
 	autoscaling_v1 "k8s.io/api/autoscaling/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -567,6 +568,36 @@ func ParseHost(hostName, namespace, cluster string) Host {
 	}
 
 	return host
+}
+
+// GetHost parses hostName and returns a Host struct. It considers Namespaces in the cluster to be more accurate
+// when deciding if the hostName is a ServiceEntry or a service.namespace host definition.
+func GetHost(hostName, namespace, cluster string, clusterNamespaces []string) Host {
+	hParts := strings.Split(hostName, ".")
+	// It might be a service entry or a 2-format host specification
+	if len(hParts) == 2 {
+		// It is subject of validation when object is within the namespace
+		// Otherwise is considered as a service entry
+		if hParts[1] == namespace || includes(clusterNamespaces, hParts[1]) {
+			return Host{
+				Service:       hParts[0],
+				Namespace:     hParts[1],
+				Cluster:       cluster,
+				CompleteInput: true,
+			}
+		}
+	}
+
+	return ParseHost(hostName, namespace, cluster)
+}
+
+func includes(nss []string, namespace string) bool {
+	for _, ns := range nss {
+		if ns == namespace {
+			return true
+		}
+	}
+	return false
 }
 
 // String outputs a full FQDN version of the Host

@@ -36,7 +36,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 										continue
 									}
 									if !n.checkDestination(host, protocol) {
-										fqdn := n.getHost(host, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName)
+										fqdn := kubernetes.GetHost(host, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 										path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination/host", protocol, k, i)
 										if fqdn.Namespace != n.VirtualService.GetObjectMeta().Namespace && fqdn.CompleteInput {
 											validation := models.Build("validation.unable.cross-namespace", path)
@@ -81,7 +81,7 @@ func parseHost(destination interface{}) string {
 }
 
 func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
-	fqdn := n.getHost(sHost, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName)
+	fqdn := kubernetes.GetHost(sHost, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 	if fqdn.Namespace == n.VirtualService.GetObjectMeta().Namespace {
 		// We need to check for namespace equivalent so that two services from different namespaces do not collide
 		for _, service := range n.ServiceNames {
@@ -101,23 +101,4 @@ func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
 		}
 	}
 	return false
-}
-
-func (n NoHostChecker) getHost(dHost, namespace, cluster string) kubernetes.Host {
-	hParts := strings.Split(dHost, ".")
-	// It might be a service entry or a 2-format host specification
-	if len(hParts) == 2 {
-		// It is subject of validation when object is within the namespace
-		// Otherwise is considered as a service entry
-		if hParts[1] == namespace || n.Namespaces.Includes(hParts[1]) {
-			return kubernetes.Host{
-				Service:       hParts[0],
-				Namespace:     hParts[1],
-				Cluster:       cluster,
-				CompleteInput: true,
-			}
-		}
-	}
-
-	return kubernetes.ParseHost(dHost, namespace, cluster)
 }

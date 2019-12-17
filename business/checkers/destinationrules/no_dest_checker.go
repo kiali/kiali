@@ -28,7 +28,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
-			fqdn := n.getHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
+			fqdn := kubernetes.GetHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
 				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace && fqdn.Namespace != "" {
 					validation := models.Build("validation.unable.cross-namespace", "spec/host")
@@ -163,22 +163,4 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		return true
 	}
 	return false
-}
-
-func (m NoDestinationChecker) getHost(dHost, namespace, cluster string) kubernetes.Host {
-	hParts := strings.Split(dHost, ".")
-	// It might be a service entry or a 2-format host specification
-	if len(hParts) == 2 {
-		// It is subject of validation when object is within the namespace
-		// Otherwise is considered as a service entry
-		if hParts[1] == namespace || m.Namespaces.Includes(hParts[1]) {
-			return kubernetes.Host{
-				Service:   hParts[0],
-				Namespace: hParts[1],
-				Cluster:   cluster,
-			}
-		}
-	}
-
-	return kubernetes.ParseHost(dHost, namespace, cluster)
 }

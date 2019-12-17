@@ -70,3 +70,11 @@ func (nss Namespaces) Includes(namespace string) bool {
 	}
 	return false
 }
+
+func (nss Namespaces) GetNames() []string {
+	names := make([]string, len(nss))
+	for _, ns := range nss {
+		names = append(names, ns.Name)
+	}
+	return names
+}

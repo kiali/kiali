@@ -2,7 +2,6 @@ package virtual_services
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -132,29 +131,10 @@ func (s SingleHostChecker) getHosts(virtualService kubernetes.IstioObject) []kub
 			continue
 		}
 
-		targetHosts = append(targetHosts, s.getHost(hostName, namespace, clusterName))
+		targetHosts = append(targetHosts, kubernetes.GetHost(hostName, namespace, clusterName, s.Namespaces.GetNames()))
 	}
 
 	return targetHosts
-}
-
-func (s SingleHostChecker) getHost(dHost, namespace, cluster string) kubernetes.Host {
-	hParts := strings.Split(dHost, ".")
-	// It might be a service entry or a 2-format host specification
-	if len(hParts) == 2 {
-		// It is subject of validation when object is within the namespace
-		// Otherwise is considered as a service entry
-		if hParts[1] == namespace || s.Namespaces.Includes(hParts[1]) {
-			return kubernetes.Host{
-				Service:       hParts[0],
-				Namespace:     hParts[1],
-				Cluster:       cluster,
-				CompleteInput: true,
-			}
-		}
-	}
-
-	return kubernetes.ParseHost(dHost, namespace, cluster)
 }
 
 func hasGateways(virtualService *kubernetes.IstioObject) bool {
