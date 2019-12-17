@@ -87,7 +87,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	)
 
 	validations, valid := NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace: "test-namespace",
 		Namespaces: models.Namespaces{
 			models.Namespace{Name: "test"},
 			models.Namespace{Name: "outside-namespace"},

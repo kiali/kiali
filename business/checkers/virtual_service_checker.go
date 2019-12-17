@@ -10,6 +10,7 @@ const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
 	Namespace        string
+	Namespaces       models.Namespaces
 	DestinationRules []kubernetes.IstioObject
 	VirtualServices  []kubernetes.IstioObject
 }
@@ -43,7 +44,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtual_services.SingleHostChecker{Namespace: in.Namespace, VirtualServices: in.VirtualServices},
+		virtual_services.SingleHostChecker{Namespace: in.Namespace, Namespaces: in.Namespaces, VirtualServices: in.VirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {

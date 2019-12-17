@@ -154,6 +154,101 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	emptyValidationTest(t, validations)
 }
 
+func TestRepeatingSVCNSHost(t *testing.T) {
+	vss := []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews.bookinfo"),
+		buildVirtualService("virtual-2", "reviews.bookinfo"),
+	}
+	validations := SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualService("virtual-2", "reviews.bookinfo"),
+	}
+	validations = SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-2", "reviews.bookinfo"),
+		buildVirtualServiceWithGateway("virtual-3", "reviews", "bookinfo-gateway-auto"),
+	}
+	validations = SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-2", "reviews.bookinfo"),
+	}
+	validations = SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualService("virtual-2", "details.bookinfo"),
+	}
+	validations = SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	noObjectValidationTest(t, validations, "virtual-1")
+	noObjectValidationTest(t, validations, "virtual-2")
+	emptyValidationTest(t, validations)
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-2", "details.bookinfo"),
+	}
+	validations = SingleHostChecker{
+		Namespace: "bookinfo",
+		Namespaces: models.Namespaces{
+			{Name: "bookinfo"},
+		},
+		VirtualServices: vss,
+	}.Check()
+
+	noObjectValidationTest(t, validations, "virtual-1")
+	noObjectValidationTest(t, validations, "virtual-2")
+	emptyValidationTest(t, validations)
+}
+
 func TestRepeatingFQDNHost(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),

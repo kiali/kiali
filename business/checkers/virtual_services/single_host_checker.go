@@ -4,27 +4,23 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SingleHostChecker struct {
 	Namespace       string
+	Namespaces      models.Namespaces
 	VirtualServices []kubernetes.IstioObject
 }
 
-type Host struct {
-	Service   string
-	Namespace string
-	Cluster   string
-}
-
-func (in SingleHostChecker) Check() models.IstioValidations {
+func (s SingleHostChecker) Check() models.IstioValidations {
 	hostCounter := make(map[string]map[string]map[string][]*kubernetes.IstioObject)
 	validations := models.IstioValidations{}
 
-	for _, vs := range in.VirtualServices {
-		for _, host := range getHost(vs) {
+	for _, vs := range s.VirtualServices {
+		for _, host := range s.getHosts(vs) {
 			storeHost(hostCounter, vs, host)
 		}
 	}
@@ -91,7 +87,7 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
-func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioObject, vs kubernetes.IstioObject, host Host) {
+func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioObject, vs kubernetes.IstioObject, host kubernetes.Host) {
 	vsList := []*kubernetes.IstioObject{&vs}
 
 	if hostCounter[host.Cluster] == nil {
@@ -112,18 +108,23 @@ func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioO
 	}
 }
 
-func getHost(virtualService kubernetes.IstioObject) []Host {
+func (s SingleHostChecker) getHosts(virtualService kubernetes.IstioObject) []kubernetes.Host {
+	namespace, clusterName := virtualService.GetObjectMeta().Namespace, virtualService.GetObjectMeta().ClusterName
+	if clusterName == "" {
+		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	hosts := virtualService.GetSpec()["hosts"]
 	if hosts == nil {
-		return []Host{}
+		return []kubernetes.Host{}
 	}
 
 	slice := reflect.ValueOf(hosts)
 	if slice.Kind() != reflect.Slice {
-		return []Host{}
+		return []kubernetes.Host{}
 	}
 
-	targetHosts := make([]Host, 0, slice.Len())
+	targetHosts := make([]kubernetes.Host, 0, slice.Len())
 
 	for hostIdx := 0; hostIdx < slice.Len(); hostIdx++ {
 		hostName, ok := slice.Index(hostIdx).Interface().(string)
@@ -131,34 +132,29 @@ func getHost(virtualService kubernetes.IstioObject) []Host {
 			continue
 		}
 
-		targetHosts = append(targetHosts, formatHostForSearch(hostName, virtualService.GetObjectMeta().Namespace))
+		targetHosts = append(targetHosts, s.getHost(hostName, namespace, clusterName))
 	}
 
 	return targetHosts
 }
 
-// Convert host to Host struct for searching
-// e.g. reviews -> reviews, virtualService.Namespace, svc.cluster.local
-// e.g. reviews.bookinfo.svc.cluster.local -> reviews, bookinfo, svc.cluster.local
-// e.g. *.bookinfo.svc.cluster.local -> *, bookinfo, svc.cluster.local
-// e.g. * -> *, *, *
-func formatHostForSearch(hostName, virtualServiceNamespace string) Host {
-	domainParts := strings.Split(hostName, ".")
-	host := Host{}
-
-	host.Service = domainParts[0]
-	if len(domainParts) > 1 {
-		host.Namespace = domainParts[1]
-
-		if len(domainParts) > 2 {
-			host.Cluster = strings.Join(domainParts[2:], ".")
+func (s SingleHostChecker) getHost(dHost, namespace, cluster string) kubernetes.Host {
+	hParts := strings.Split(dHost, ".")
+	// It might be a service entry or a 2-format host specification
+	if len(hParts) == 2 {
+		// It is subject of validation when object is within the namespace
+		// Otherwise is considered as a service entry
+		if hParts[1] == namespace || s.Namespaces.Includes(hParts[1]) {
+			return kubernetes.Host{
+				Service:       hParts[0],
+				Namespace:     hParts[1],
+				Cluster:       cluster,
+				CompleteInput: true,
+			}
 		}
-	} else {
-		host.Namespace = virtualServiceNamespace
-		host.Cluster = "svc.cluster.local"
 	}
 
-	return host
+	return kubernetes.ParseHost(dHost, namespace, cluster)
 }
 
 func hasGateways(virtualService *kubernetes.IstioObject) bool {

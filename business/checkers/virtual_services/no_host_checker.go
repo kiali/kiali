@@ -111,9 +111,9 @@ func (n NoHostChecker) getHost(dHost, namespace, cluster string) kubernetes.Host
 		// Otherwise is considered as a service entry
 		if hParts[1] == namespace || n.Namespaces.Includes(hParts[1]) {
 			return kubernetes.Host{
-				Service:   hParts[0],
-				Namespace: hParts[1],
-				Cluster:   cluster,
+				Service:       hParts[0],
+				Namespace:     hParts[1],
+				Cluster:       cluster,
 				CompleteInput: true,
 			}
 		}
