@@ -2,13 +2,14 @@
 package status
 
 const (
-	name           = "Kiali"
-	ConsoleVersion = name + " console version"
-	CoreVersion    = name + " core version"
-	CoreCommitHash = name + " core commit hash"
-	State          = name + " state"
-	ClusterMTLS    = "Istio mTLS"
-	StateRunning   = "running"
+	name             = "Kiali"
+	ContainerVersion = name + " container version"
+	ConsoleVersion   = name + " console version"
+	CoreVersion      = name + " core version"
+	CoreCommitHash   = name + " core commit hash"
+	State            = name + " state"
+	ClusterMTLS      = "Istio mTLS"
+	StateRunning     = "running"
 )
 
 // StatusInfo statusInfo

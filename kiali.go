@@ -89,6 +89,7 @@ func main() {
 	status.Put(status.ConsoleVersion, consoleVersion)
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
+	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
 	if webRoot := config.Get().Server.WebRoot; webRoot != "/" {
 		updateBaseURL(webRoot)
@@ -240,6 +241,17 @@ func determineConsoleVersion() string {
 		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
 	}
 	return consoleVersion
+}
+
+// determineContainerVersion will return the version of the image container.
+// It does this by looking at an ENV defined in the Dockerfile when the image is built.
+// If the ENV is not defined, the version is assumed the same as the given default value.
+func determineContainerVersion(defaultVersion string) string {
+	v := os.Getenv("KIALI_CONTAINER_VERSION")
+	if v == "" {
+		return defaultVersion
+	}
+	return v
 }
 
 // configToJS generates env.js file from Kiali config
