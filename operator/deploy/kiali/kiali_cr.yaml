@@ -452,7 +452,6 @@ spec:
 #    cache_duration: 300
 #
 # Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
-# Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
 #    ---
 #    cache_enabled: false
 #
