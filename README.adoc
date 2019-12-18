@@ -414,20 +414,20 @@ WWW-Authenticate: Basic realm="Kiali"
 
 === Running A Locally Built UI Inside the Core
 
-If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the container image via the `docker-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
+If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the container image via the `container-build` or `cluster-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
 
 For example, if your GOPATH directory for the Kiali project is `/source/kiali/kiali` and you have git cloned the Kiali UI repository in `/source/kiali/kiali-ui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core container image via:
 
 [source,shell]
 ----
-CONSOLE_VERSION=local make docker-build
+CONSOLE_VERSION=local make container-build
 ----
 
 If you git cloned the Kiali UI repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core container image via:
 
 [source,shell]
 ----
-CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
+CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make container-build
 ----
 
 === Disabling SSL
