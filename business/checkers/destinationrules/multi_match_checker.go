@@ -24,7 +24,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	// Equality search is: [fqdn.Service][subset] except for ServiceEntry targets which use [host][subset]
-	seenHostSubsets := make(map[string]map[string]string)
+	seenHostSubsets := make(map[string]map[string][]string)
 
 	for _, dr := range m.DestinationRules {
 		if host, ok := dr.GetSpec()["host"]; ok {
@@ -67,10 +67,10 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				}
 				// Nothing threw an error, so add these
 				if _, found := seenHostSubsets[fqdn.Service]; !found {
-					seenHostSubsets[fqdn.Service] = make(map[string]string)
+					seenHostSubsets[fqdn.Service] = make(map[string][]string)
 				}
 				for _, s := range foundSubsets {
-					seenHostSubsets[fqdn.Service][s.Name] = destinationRulesName
+					seenHostSubsets[fqdn.Service][s.Name] = append(seenHostSubsets[fqdn.Service][s.Name], destinationRulesName)
 				}
 			}
 		}
@@ -120,23 +120,29 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 	return []subset{{"~", destinationRulesName}}
 }
 
-func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
+func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string][]string) {
 	// If current subset is ~
 	if len(foundSubsets) == 1 && foundSubsets[0].Name == "~" {
 		// This should match any subset in the same hostname
 		for _, v := range existing {
-			addError(validations, namespace, []string{destinationRulesName, v})
+			for _, e := range v {
+				addError(validations, namespace, []string{destinationRulesName, e})
+			}
 		}
 	}
 
 	// If we have existing subset with ~
-	if ruleName, found := existing["~"]; found {
-		addError(validations, namespace, []string{destinationRulesName, ruleName})
+	if ruleNames, found := existing["~"]; found {
+		for _, ruleName := range ruleNames {
+			addError(validations, namespace, []string{destinationRulesName, ruleName})
+		}
 	}
 
 	for _, s := range foundSubsets {
-		if ruleName, found := existing[s.Name]; found {
-			addError(validations, namespace, []string{destinationRulesName, ruleName})
+		if ruleNames, found := existing[s.Name]; found {
+			for _, ruleName := range ruleNames {
+				addError(validations, namespace, []string{destinationRulesName, ruleName})
+			}
 		}
 	}
 }
