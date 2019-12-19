@@ -42,6 +42,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
       this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
         ? this.props.status[StatusKey.KIALI_CORE_VERSION]
         : `${this.props.status[StatusKey.KIALI_CORE_VERSION]} (${this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
+    const containerVersion = this.props.status[StatusKey.KIALI_CONTAINER_VERSION];
 
     return (
       <AboutModal
@@ -54,16 +55,22 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         <TextContent>
           <TextList component="dl">
             <TextListItem key={'kiali-ui-name'} component="dt">
-              Kiali-ui
+              Kiali UI
             </TextListItem>
             <TextListItem key={'kiali-ui-version'} component="dd">
               {uiVersion!}
             </TextListItem>
             <TextListItem key={'kiali-name'} component="dt">
-              Kiali
+              Kiali Server
             </TextListItem>
             <TextListItem key={'kiali-version'} component="dd">
               {coreVersion!}
+            </TextListItem>
+            <TextListItem key={'kiali-container-name'} component="dt">
+              Kiali Container
+            </TextListItem>
+            <TextListItem key={'kiali-container-version'} component="dd">
+              {containerVersion!}
             </TextListItem>
           </TextList>
           <Title size="xl" style={{ padding: '20px 0px 20px' }}>
