@@ -21,6 +21,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     serviceMeshPolicies: [],
     clusterRbacConfigs: [],
     rbacConfigs: [],
+    authorizationPolicies: [],
     serviceMeshRbacConfigs: [],
     sidecars: [],
     serviceRoles: [],
@@ -54,6 +55,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     testData.serviceRoles.push({ metadata: { name: name + '12' }, spec: {} });
     testData.serviceRoleBindings.push({ metadata: { name: name + '13' }, spec: {} });
     testData.rbacConfigs.push({ metadata: { name: name + '14' }, spec: {} });
+    testData.authorizationPolicies.push({ metadata: { name: name + '15' }, spec: {} });
   });
   return testData;
 };
@@ -94,6 +96,7 @@ describe('IstioConfigListContainer#filterByName', () => {
     expect(filtered.serviceRoles[0].metadata.name).toBe('white12');
     expect(filtered.serviceRoleBindings[0].metadata.name).toBe('white13');
     expect(filtered.rbacConfigs[0].metadata.name).toBe('white14');
+    expect(filtered.authorizationPolicies[0].metadata.name).toBe('white15');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
@@ -118,7 +121,7 @@ describe('IstioConfigListContainer#toIstioItems', () => {
     const istioItems = toIstioItems(unfiltered);
 
     expect(istioItems).toBeDefined();
-    expect(istioItems.length).toBe(45);
+    expect(istioItems.length).toBe(48);
     expect(istioItems[0].gateway).toBeDefined();
     expect(istioItems[0].destinationRule).toBeUndefined();
     expect(istioItems[3].virtualService).toBeDefined();
@@ -136,7 +139,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(45);
+      expect(sorted.length).toBe(48);
 
       const first = sorted[0];
       expect(first.gateway).toBeDefined();
@@ -146,7 +149,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.virtualService).toBeDefined();
       expect(second.virtualService!.metadata.name).toBe('blue1');
 
-      const last = sorted[44];
+      const last = sorted[47];
       expect(last.policy).toBeDefined();
       expect(last.policy!.metadata.name).toBe('white9');
     });
@@ -160,13 +163,13 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     // Descending
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(45);
+      expect(sorted.length).toBe(48);
 
       const first = sorted[0];
       expect(first.policy).toBeDefined();
       expect(first.policy!.metadata.name).toBe('white9');
 
-      const last = sorted[44];
+      const last = sorted[47];
       expect(last.gateway).toBeDefined();
       expect(last.gateway!.metadata.name).toBe('blue0');
     });
@@ -179,17 +182,17 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(45);
+      expect(sorted.length).toBe(48);
 
       const first = sorted[0];
       expect(first.adapter).toBeDefined();
       expect(first.adapter!.metadata.name).toBe('blue5');
 
       const second = sorted[3];
-      expect(second.clusterRbacConfig).toBeDefined();
-      expect(second.clusterRbacConfig!.metadata.name).toBe('blue11');
+      expect(second.authorizationPolicy).toBeDefined();
+      expect(second.authorizationPolicy!.metadata.name).toBe('blue15');
 
-      const last = sorted[44];
+      const last = sorted[47];
       expect(last.virtualService).toBeDefined();
       expect(last.virtualService!.metadata.name).toBe('white1');
     });
@@ -202,7 +205,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(45);
+      expect(sorted.length).toBe(48);
 
       const first = sorted[0];
       expect(first.virtualService).toBeDefined();

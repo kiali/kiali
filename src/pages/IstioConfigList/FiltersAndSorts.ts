@@ -147,6 +147,10 @@ export const istioTypeFilter: FilterType = {
       title: 'RbacConfig'
     },
     {
+      id: 'AuthorizationPolicy',
+      title: 'AuthorizationPolicy'
+    },
+    {
       id: 'ServiceMeshRbacConfig',
       title: 'ServiceMeshRbacConfig'
     },

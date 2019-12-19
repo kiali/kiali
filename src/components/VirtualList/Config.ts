@@ -130,6 +130,7 @@ export const IstioTypes = {
   servicemeshpolicy: { name: 'ServiceMeshPolicy', url: 'servicemeshpolicy', icon: 'SMP' },
   clusterrbacconfig: { name: 'ClusterRbacConfig', url: 'clusterrbacconfigs', icon: 'CRC' },
   rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', icon: 'RC' },
+  authorizationpolicy: { name: 'AuthorizationPolicy', url: 'authorizationpolicy', icon: 'AP' },
   servicemeshrbacconfig: { name: 'ServiceMeshRbacConfig', url: 'servicemeshrbacconfigs', icon: 'SRC' },
   sidecar: { name: 'Sidecar', url: 'sidercars', icon: 'S' },
   servicerole: { name: 'ServiceRole', url: 'serviceroles', icon: 'SR' },

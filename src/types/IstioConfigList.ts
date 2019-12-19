@@ -1,5 +1,6 @@
 import Namespace from './Namespace';
 import {
+  AuthorizationPolicy,
   ClusterRbacConfig,
   DestinationRule,
   DestinationRules,
@@ -41,6 +42,7 @@ export interface IstioConfigItem {
   serviceMeshPolicy?: Policy;
   clusterRbacConfig?: ClusterRbacConfig;
   rbacConfig?: RbacConfig;
+  authorizationPolicy?: AuthorizationPolicy;
   serviceMeshRbacConfig?: ServiceMeshRbacConfig;
   sidecar?: Sidecar;
   serviceRole?: ServiceRole;
@@ -64,6 +66,7 @@ export interface IstioConfigList {
   serviceMeshPolicies: Policy[];
   clusterRbacConfigs: ClusterRbacConfig[];
   rbacConfigs: RbacConfig[];
+  authorizationPolicies: AuthorizationPolicy[];
   serviceMeshRbacConfigs: ServiceMeshRbacConfig[];
   sidecars: Sidecar[];
   serviceRoles: ServiceRole[];
@@ -87,6 +90,7 @@ export const dicIstioType = {
   MeshPolicy: 'meshpolicies',
   ClusterRbacConfig: 'clusterrbacconfigs',
   RbacConfig: 'rbacconfigs',
+  AuthorizationPolicy: 'authorizationpolicies',
   ServiceRole: 'serviceroles',
   ServiceRoleBinding: 'servicerolebindings',
   ServiceMeshPolicy: 'servicemeshpolicies',
@@ -106,6 +110,7 @@ export const dicIstioType = {
   meshpolicies: 'MeshPolicy',
   clusterrbacconfigs: 'ClusterRbacConfig',
   rbacconfigs: 'RbacConfig',
+  authorizationpolicies: 'AuthorizationPolicy',
   sidecars: 'Sidecar',
   serviceroles: 'ServiceRole',
   servicerolebindings: 'ServiceRoleBinding',
@@ -148,6 +153,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     serviceMeshPolicies: unfiltered.serviceMeshPolicies.filter(p => includeName(p.metadata.name, names)),
     clusterRbacConfigs: unfiltered.clusterRbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     rbacConfigs: unfiltered.rbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
+    authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includeName(rc.metadata.name, names)),
     serviceMeshRbacConfigs: unfiltered.serviceMeshRbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
     serviceRoles: unfiltered.serviceRoles.filter(sr => includeName(sr.metadata.name, names)),

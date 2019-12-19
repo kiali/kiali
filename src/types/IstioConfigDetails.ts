@@ -2,6 +2,7 @@ import Namespace from './Namespace';
 import { AceOptions } from 'react-ace';
 import { ResourcePermissions } from './Permissions';
 import {
+  AuthorizationPolicy,
   DestinationRule,
   Gateway,
   IstioAdapter,
@@ -45,6 +46,7 @@ export interface IstioConfigDetails {
   serviceMeshPolicy: Policy;
   clusterRbacConfig: ClusterRbacConfig;
   rbacConfig: RbacConfig;
+  authorizationPolicy: AuthorizationPolicy;
   serviceMeshRbacConfig: ServiceMeshRbacConfig;
   serviceRole: ServiceRole;
   serviceRoleBinding: ServiceRoleBinding;

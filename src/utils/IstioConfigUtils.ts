@@ -50,6 +50,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.clusterRbacConfig;
     } else if (istioObjectDetails.rbacConfig) {
       istioObject = istioObjectDetails.rbacConfig;
+    } else if (istioObjectDetails.authorizationPolicy) {
+      istioObject = istioObjectDetails.authorizationPolicy;
     } else if (istioObjectDetails.serviceMeshRbacConfig) {
       istioObject = istioObjectDetails.serviceMeshRbacConfig;
     } else if (istioObjectDetails.serviceRole) {

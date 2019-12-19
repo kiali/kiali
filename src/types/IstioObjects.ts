@@ -610,6 +610,48 @@ export interface RbacConfigTarget {
   namespaces: string[];
 }
 
+export interface AuthorizationPolicy extends IstioObject {
+  spec: AuthorizationPolicySpec;
+}
+
+export interface AuthorizationPolicySpec {
+  selector?: WorkloadSelector;
+  rules?: AuthorizationPolicyRule[];
+}
+
+export interface AuthorizationPolicyRule {
+  from?: RuleFrom[];
+  to?: RuleTo[];
+  when?: Condition[];
+}
+
+export interface RuleFrom {
+  source: Source;
+}
+
+export interface Source {
+  principals?: string[];
+  requestPrincipals?: string[];
+  namespaces?: string[];
+  ipBlocks?: string[];
+}
+
+export interface RuleTo {
+  operation: Operation;
+}
+
+export interface Operation {
+  hosts?: string[];
+  ports?: string[];
+  methods?: string[];
+  paths?: string[];
+}
+
+export interface Condition {
+  key: string;
+  values: string[];
+}
+
 export interface ServiceRole extends IstioObject {
   spec: ServiceRoleSpec;
 }
