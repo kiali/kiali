@@ -92,6 +92,7 @@ func TestRepeatingSimpleHost(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
 		buildVirtualService("virtual-2", "reviews"),
+		buildVirtualService("virtual-3", "reviews"),
 	}
 
 	validations := SingleHostChecker{
@@ -101,13 +102,16 @@ func TestRepeatingSimpleHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -158,6 +162,7 @@ func TestRepeatingFQDNHost(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "reviews.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	validations := SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -166,13 +171,16 @@ func TestRepeatingFQDNHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -181,6 +189,7 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "*.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-3", "*.bookinfo.svc.cluster.local"),
 	}
 	validations := SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -189,13 +198,16 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -204,6 +216,7 @@ func TestIncludedIntoWildCard(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "reviews.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	validations := SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -212,13 +225,16 @@ func TestIncludedIntoWildCard(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 
@@ -226,6 +242,7 @@ func TestIncludedIntoWildCard(t *testing.T) {
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "*.bookinfo.svc.cluster.local"),
+		buildVirtualService("virtual-3", "reviews.bookinfo.svc.cluster.local"),
 	}
 	validations = SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -234,13 +251,16 @@ func TestIncludedIntoWildCard(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -249,6 +269,7 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "*.bookinfo.svc.cluster.local"),
 		buildVirtualService("virtual-2", "reviews"),
+		buildVirtualService("virtual-3", "reviews"),
 	}
 	validations := SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -257,13 +278,16 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -272,6 +296,7 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 	vss := []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "*"),
 		buildVirtualService("virtual-2", "reviews"),
+		buildVirtualService("virtual-3", "reviews"),
 	}
 	validations := SingleHostChecker{
 		Namespace:       "bookinfo",
@@ -280,13 +305,16 @@ func TestWildcardisMarkedInvalid(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+	presentValidationTest(t, validations, "virtual-3")
 
 	for _, validation := range validations {
 		switch validation.Name {
 		case "virtual-1":
-			presentReference(t, *validation, "virtual-2")
+			presentReferences(t, *validation, []string{"virtual-2", "virtual-3"})
 		case "virtual-2":
-			presentReference(t, *validation, "virtual-1")
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-3"})
+		case "virtual-3":
+			presentReferences(t, *validation, []string{"virtual-1", "virtual-2"})
 		}
 	}
 }
@@ -383,4 +411,14 @@ func presentReference(t *testing.T, validation models.IstioValidation, serviceNa
 
 	assert.True(len(validation.References) > 0)
 	assert.Contains(validation.References, refKey)
+}
+
+func presentReferences(t *testing.T, validation models.IstioValidation, serviceNames []string) {
+	assert := assert.New(t)
+	assert.True(len(validation.References) > 0)
+
+	for _, sn := range serviceNames {
+		refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: sn}
+		assert.Contains(validation.References, refKey)
+	}
 }
