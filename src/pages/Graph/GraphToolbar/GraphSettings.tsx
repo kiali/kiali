@@ -168,7 +168,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         isGrouped={true}
         selections={selection}
       >
-        <SelectGroup label="" key="visibilityLayers">
+        <SelectGroup label="Show" key="visibilityLayers">
           {visibilityLayers.map((item: VisibilityLayersType) => (
             <SelectOption
               isChecked={item.value}
@@ -179,7 +179,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             />
           ))}
         </SelectGroup>
-        <SelectGroup label="Badges" key="badges">
+        <SelectGroup label="Show Badges" key="badges">
           {badges.map((item: VisibilityLayersType) => (
             <SelectOption isChecked={item.value} key={item.id} value={item.labelText} onClick={item.onChange} />
           ))}
