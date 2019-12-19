@@ -23,6 +23,7 @@ DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="virtualbox"
 DEFAULT_K8S_MEMORY="16384"
 DEFAULT_K8S_VERSION="v1.14.2"
+DEFAULT_VM_DRIVER="virtualbox"
 
 debug() {
   if [ "$_VERBOSE" == "true" ]; then
@@ -184,6 +185,10 @@ Valid options:
       The version of Kubernetes to start.
       Only used for the 'up' command.
       Default: ${DEFAULT_K8S_VERSION}
+  -vm|--vm-driver
+      The driver to use for the Minikube vm.
+      Only used for the 'up' command.
+      Default: ${DEFAULT_VM_DRIVER}
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -217,12 +222,14 @@ K8S_DISK=${K8S_DISK:-${DEFAULT_K8S_DISK}}
 K8S_DRIVER=${K8S_DRIVER:-${DEFAULT_K8S_DRIVER}}
 K8S_VERSION=${K8S_VERSION:-${DEFAULT_K8S_VERSION}}
 K8S_MEMORY=${K8S_MEMORY:-${DEFAULT_K8S_MEMORY}}
+VM_DRIVER=${VM_DRIVER:-${VM_DRIVER}}
 
 debug "K8S_CPU=$K8S_CPU"
 debug "K8S_DISK=$K8S_DISK"
 debug "K8S_DRIVER=$K8S_DRIVER"
 debug "K8S_MEMORY=$K8S_MEMORY"
 debug "K8S_VERSION=$K8S_VERSION"
+debug "VM_DRIVER=$VM_DRIVER"
 
 # If minikube is not in PATH, abort.
 if ! which minikube > /dev/null 2>&1 ; then
@@ -235,7 +242,7 @@ debug "minikube is located at $(which minikube)"
 
 if [ "$_CMD" = "up" ]; then
   echo 'Starting minikube...'
-  minikube start --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION}
+  minikube start --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION} --vm-driver=${VM_DRIVER}
   echo 'Enabling the ingress addon'
   minikube addons enable ingress
   echo 'Enabling the image registry'
