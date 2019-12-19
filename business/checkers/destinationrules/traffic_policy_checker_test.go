@@ -20,6 +20,8 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicy(t *testing.T) {
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
@@ -29,7 +31,9 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"),
 	}
 
-	testValidationAdded(t, destinationRules, mTLSDetails)
+	validation := testValidationAdded(t, destinationRules, mTLSDetails)
+	presentReferences(t, *validation, "istio-system", []string{"default"})
+	presentReferences(t, *validation, "bookinfo", []string{"default"})
 }
 
 // Context: MeshPolicy Enabling mTLS
@@ -233,7 +237,7 @@ func TestCrossNamespaceServiceEntryProtection(t *testing.T) {
 	testValidationsNotAdded(t, destinationRules, mTLSDetails)
 }
 
-func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
+func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) *models.IstioValidation {
 	assert := assert.New(t)
 
 	validations := TrafficPolicyChecker{
@@ -254,6 +258,7 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.Equal(models.CheckMessage("destinationrules.trafficpolicy.notlssettings"), validation.Checks[0].Message)
 
 	assert.True(len(validation.References) > 0)
+	return validation
 }
 
 func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
@@ -269,4 +274,14 @@ func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioOb
 
 	assert.False(ok)
 	assert.Nil(validation)
+}
+
+func presentReferences(t *testing.T, validation models.IstioValidation, ns string, serviceNames []string) {
+	assert := assert.New(t)
+	assert.True(len(validation.References) > 0)
+
+	for _, sn := range serviceNames {
+		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn}
+		assert.Contains(validation.References, refKey)
+	}
 }
