@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { IstioTypes, Resource, TResource, hasMissingSidecar, Renderer } from './Config';
+import { hasMissingSidecar, IstioTypes, Renderer, Resource, TResource } from './Config';
 import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { WorkloadListItem } from '../../types/Workload';
@@ -15,8 +15,9 @@ import { Health } from '../../types/Health';
 
 // Links
 
-const getLink = (item: TResource, config: Resource) => {
-  return config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
+const getLink = (item: TResource, config: Resource, query?: string) => {
+  let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
+  return query ? url + '?' + query : url;
 };
 
 const getIstioLink = (item: TResource) => {
@@ -136,12 +137,18 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
   );
 };
 
-export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (item: ServiceListItem | IstioConfigItem) => {
+export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (
+  item: ServiceListItem | IstioConfigItem,
+  config: Resource
+) => {
   const validation = item.validation;
+  const linkQuery: string = item['type'] ? 'list=yaml' : '';
   return (
     <td role="gridcell" key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name}>
       {validation ? (
-        <ValidationObjectSummary id={item.name + '-config-validation'} validations={[validation]} />
+        <Link to={`${getLink(item, config, linkQuery)}`}>
+          <ValidationObjectSummary id={item.name + '-config-validation'} validations={[validation]} />
+        </Link>
       ) : (
         <>N/A</>
       )}

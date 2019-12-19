@@ -50,6 +50,8 @@ import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, RefreshIntervalInMs } from 'types/Common';
+import { Link } from 'react-router-dom';
+import { Paths } from '../../config';
 
 const gridStyle = style({ backgroundColor: '#f5f5f5', paddingBottom: '20px', marginTop: '20px' });
 const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '20px' });
@@ -425,12 +427,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     let status: any = 'N/A';
     if (ns.validations && !this.isNamespaceEmpty(ns)) {
       status = (
-        <ValidationSummary
-          id={'ns-val-' + ns.name}
-          errors={ns.validations.errors}
-          warnings={ns.validations.warnings}
-          style={{ marginLeft: '5px' }}
-        />
+        <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>
+          <ValidationSummary
+            id={'ns-val-' + ns.name}
+            errors={ns.validations.errors}
+            warnings={ns.validations.warnings}
+            style={{ marginLeft: '5px' }}
+          />
+        </Link>
       );
     }
     return (
