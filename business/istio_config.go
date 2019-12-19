@@ -42,6 +42,7 @@ type IstioConfigCriteria struct {
 	IncludeServiceRoles           bool
 	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
+	IncludeAuthorizationPolicies  bool
 }
 
 const (
@@ -63,6 +64,7 @@ const (
 	Sidecars               = "sidecars"
 	ServiceMeshPolicies    = "servicemeshpolicies"
 	ServiceMeshRbacConfigs = "servicemeshrbacconfigs"
+	AuthorizationPolicies  = "authorizationpolicies"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -84,6 +86,7 @@ var resourceTypesToAPI = map[string]string{
 	ServiceRoleBindings:    kubernetes.RbacGroupVersion.Group,
 	ServiceMeshPolicies:    kubernetes.MaistraAuthenticationGroupVersion.Group,
 	ServiceMeshRbacConfigs: kubernetes.MaistraRbacGroupVersion.Group,
+	AuthorizationPolicies:  kubernetes.SecurityGroupVersion.Group,
 }
 
 var apiToVersion = map[string]string{
@@ -93,6 +96,7 @@ var apiToVersion = map[string]string{
 	kubernetes.RbacGroupVersion.Group:                  kubernetes.ApiRbacVersion,
 	kubernetes.MaistraAuthenticationGroupVersion.Group: kubernetes.ApiMaistraAuthenticationVersion,
 	kubernetes.MaistraRbacGroupVersion.Group:           kubernetes.ApiMaistraRbacVersion,
+	kubernetes.SecurityGroupVersion.Group:              kubernetes.ApiSecurityVersion,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -125,6 +129,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		Sidecars:               models.Sidecars{},
 		ServiceRoles:           models.ServiceRoles{},
 		ServiceRoleBindings:    models.ServiceRoleBindings{},
+		AuthorizationPolicies:  models.AuthorizationPolicies{},
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -136,7 +141,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	errChan := make(chan error, 18)
 
 	var wg sync.WaitGroup
-	wg.Add(18)
+	wg.Add(19)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -317,6 +322,17 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				(&istioConfigList.RbacConfigs).Parse(rc)
 			} else {
 				errChan <- rcErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludeAuthorizationPolicies {
+			if ap, apErr := in.k8s.GetAuthorizationPolicies(criteria.Namespace); apErr == nil {
+				(&istioConfigList.AuthorizationPolicies).Parse(ap)
+			} else {
+				errChan <- apErr
 			}
 		}
 	}(errChan)
@@ -560,6 +576,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		} else {
 			err = iErr
 		}
+	case AuthorizationPolicies:
+		if ap, iErr := in.k8s.GetAuthorizationPolicy(namespace, object); iErr == nil {
+			istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
+			istioConfigDetail.AuthorizationPolicy.Parse(ap)
+		} else {
+			err = iErr
+		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -631,6 +654,9 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case ServiceMeshRbacConfigs:
 		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceMeshRbacConfig)
+	case AuthorizationPolicies:
+		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
+		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -759,6 +785,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case RbacConfigs:
 		istioConfigDetail.RbacConfig = &models.RbacConfig{}
 		istioConfigDetail.RbacConfig.Parse(result)
+	case AuthorizationPolicies:
+		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
+		istioConfigDetail.AuthorizationPolicy.Parse(result)
 	case ServiceMeshRbacConfigs:
 		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
 		istioConfigDetail.ServiceMeshRbacConfig.Parse(result)

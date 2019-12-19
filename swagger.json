@@ -3857,6 +3857,9 @@
         "adapter": {
           "$ref": "#/definitions/istioAdapter"
         },
+        "authorizationPolicy": {
+          "$ref": "#/definitions/authorizationPolicy"
+        },
         "clusterRbacConfig": {
           "$ref": "#/definitions/ClusterRbacConfig"
         },
@@ -3934,6 +3937,9 @@
       "properties": {
         "adapters": {
           "$ref": "#/definitions/istioAdapters"
+        },
+        "authorizationPolicies": {
+          "$ref": "#/definitions/authorizationRules"
         },
         "clusterRbacConfigs": {
           "$ref": "#/definitions/ClusterRbacConfigs"
@@ -6156,6 +6162,52 @@
           "x-go-name": "Name"
         }
       },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "authorizationPolicy": {
+      "description": "This is used for returning an AuthorizationPolicy",
+      "type": "object",
+      "title": "AuthorizationPolicy authorizationPolicy",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "type": "object",
+              "x-go-name": "Rules"
+            },
+            "selector": {
+              "type": "object",
+              "x-go-name": "Selector"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "AuthorizationPolicy",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "authorizationRules": {
+      "description": "This is used for returning an array of AuthorizationPolicies",
+      "type": "array",
+      "title": "AuthorizationPolicies authorizationPolicies",
+      "items": {
+        "$ref": "#/definitions/authorizationPolicy"
+      },
+      "x-go-name": "AuthorizationPolicies",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "destinationRule": {

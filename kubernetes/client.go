@@ -97,6 +97,8 @@ type IstioClientInterface interface {
 	GetServiceRoles(namespace string) ([]IstioObject, error)
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
+	GetAuthorizationPolicy(namespace string, name string) (IstioObject, error)
+	GetAuthorizationPolicies(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
@@ -116,6 +118,7 @@ type IstioClient struct {
 	istioNetworkingApi       *rest.RESTClient
 	istioAuthenticationApi   *rest.RESTClient
 	istioRbacApi             *rest.RESTClient
+	istioSecurityApi         *rest.RESTClient
 	maistraAuthenticationApi *rest.RESTClient
 	maistraRbacApi           *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
@@ -132,6 +135,11 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#HasRbacResource() for more details.
 	rbacResources *map[string]bool
+
+	// securityResources private variable will check which resources kiali has access to from security.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#HasSecurityResource() for more details.
+	securityResources *map[string]bool
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -152,6 +160,11 @@ func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
 // GetIstioRbacApi returns the istio rbac rest client
 func (client *IstioClient) GetIstioRbacApi() *rest.RESTClient {
 	return client.istioRbacApi
+}
+
+// GetIstioSecurityApi returns the istio security rest client
+func (client *IstioClient) GetIstioSecurityApi() *rest.RESTClient {
+	return client.istioSecurityApi
 }
 
 // GetToken returns the BearerToken used from the config
@@ -245,7 +258,10 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 			for _, rt := range maistraRbacTypes {
 				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
-
+			}
+			for _, rt := range securityTypes {
+				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
 			}
 
 			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
@@ -254,6 +270,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 			meta_v1.AddToGroupVersion(scheme, RbacGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, MaistraAuthenticationGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, MaistraRbacGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, SecurityGroupVersion)
 			return nil
 		})
 
@@ -283,6 +300,11 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	istioSecurityApi, err := newClientForAPI(config, SecurityGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
 	maistraAuthenticationAPI, err := newClientForAPI(config, MaistraAuthenticationGroupVersion, types)
 	if err != nil {
 		return nil, err
@@ -297,6 +319,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioAuthenticationApi = istioAuthenticationAPI
 	client.istioRbacApi = istioRbacApi
+	client.istioSecurityApi = istioSecurityApi
 	client.maistraAuthenticationApi = maistraAuthenticationAPI
 	client.maistraRbacApi = maistraRbacApi
 	return &client, nil
