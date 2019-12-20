@@ -95,6 +95,60 @@ func TestValidServiceNamespace(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestValidServiceNamespaceInvalid(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		Namespaces: models.Namespaces{
+			models.Namespace{Name: "test-namespace"},
+			models.Namespace{Name: "outside-ns"},
+		},
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.not-a-namespace"),
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), validations[0].Message)
+	assert.Equal("spec/host", validations[0].Path)
+}
+
+func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		Namespaces: models.Namespaces{
+			models.Namespace{Name: "test-namespace"},
+			models.Namespace{Name: "outside-ns"},
+		},
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns"),
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
+	assert.Equal("spec/host", validations[0].Path)
+}
+
 func TestNoValidHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

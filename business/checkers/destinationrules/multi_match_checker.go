@@ -12,6 +12,7 @@ const DestinationRulesCheckerType = "destinationrule"
 type MultiMatchChecker struct {
 	DestinationRules []kubernetes.IstioObject
 	ServiceEntries   map[string][]string
+	Namespaces       models.Namespaces
 }
 
 type subset struct {
@@ -31,7 +32,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			destinationRulesName := dr.GetObjectMeta().Name
 			destinationRulesNamespace := dr.GetObjectMeta().Namespace
 			if dHost, ok := host.(string); ok {
-				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				fqdn := kubernetes.GetHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName, m.Namespaces.GetNames())
 
 				if fqdn.Namespace != dr.GetObjectMeta().Namespace && !strings.HasPrefix(fqdn.Service, "*") && fqdn.Namespace != "" {
 					// Unable to verify if the same host+subset combination is targeted from different namespace DRs

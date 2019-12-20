@@ -76,6 +76,33 @@ func TestNoValidHost(t *testing.T) {
 	assert.Equal("", validations[0].Path)
 }
 
+func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	virtualService := data.AddRoutesToVirtualService("tcp", data.CreateRoute("reviews.outside-namespace", "v1", -1),
+		data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
+	)
+
+	validations, valid := NoHostChecker{
+		Namespace: "test-namespace",
+		Namespaces: models.Namespaces{
+			models.Namespace{Name: "test"},
+			models.Namespace{Name: "outside-namespace"},
+		},
+		ServiceNames:   []string{"details", "other"},
+		VirtualService: virtualService,
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
+}
+
 func TestValidServiceEntryHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

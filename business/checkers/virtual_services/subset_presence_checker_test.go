@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckerWithPodsMatching(t *testing.T) {
+func TestCheckerWithSubsetMatching(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -22,8 +22,11 @@ func TestCheckerWithPodsMatching(t *testing.T) {
 
 	protocols := [3]string{"http", "tcp", "tls"}
 	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{"bookinfo",
-			destinationList, fakeCorrectVersions(protocol)}.Check()
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeCorrectVersions(protocol),
+		}.Check()
 
 		// Well configured object
 		assert.Empty(validations)
@@ -54,8 +57,11 @@ func TestCheckerWithSubsetsMatchingShortHostname(t *testing.T) {
 
 	protocols := [3]string{"http", "tcp", "tls"}
 	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{"bookinfo",
-			destinationList, fakeCorrectVersionsShortHostname(protocol)}.Check()
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeCorrectVersionsShortHostname(protocol),
+		}.Check()
 
 		// Well configured object
 		assert.Empty(validations)
@@ -74,6 +80,41 @@ func fakeCorrectVersionsShortHostname(protocol string) kubernetes.IstioObject {
 	return validVirtualService
 }
 
+func TestCheckerWithSubsetsMatchingSVCNSHostname(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	destinationList := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
+	}
+
+	protocols := [3]string{"http", "tcp", "tls"}
+	for _, protocol := range protocols {
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeCorrectVersionsSVCNSHostname(protocol),
+		}.Check()
+
+		// Well configured object
+		assert.Empty(validations)
+		assert.True(valid)
+	}
+}
+
+func fakeCorrectVersionsSVCNSHostname(protocol string) kubernetes.IstioObject {
+	validVirtualService :=
+		data.AddRoutesToVirtualService(protocol, data.CreateRoute("reviews.bookinfo", "v1", 55),
+			data.AddRoutesToVirtualService(protocol, data.CreateRoute("reviews.bookinfo", "v2", 45),
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews.bookinfo"}),
+			),
+		)
+
+	return validVirtualService
+}
+
 func TestSubsetsNotFound(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -86,8 +127,11 @@ func TestSubsetsNotFound(t *testing.T) {
 
 	protocols := [3]string{"http", "tcp", "tls"}
 	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{"bookinfo",
-			destinationList, fakeWrongSubsets(protocol)}.Check()
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeWrongSubsets(protocol),
+		}.Check()
 
 		// There are no pods no deployments
 		assert.True(valid)
@@ -114,6 +158,49 @@ func fakeWrongSubsets(protocol string) kubernetes.IstioObject {
 	return validVirtualService
 }
 
+func TestSubsetsNotFoundSVCNS(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	destinationList := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "testrule", "reviews.bookinfo"),
+	}
+
+	protocols := [3]string{"http", "tcp", "tls"}
+	for _, protocol := range protocols {
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeWrongSubsetsServiceNamespace(protocol),
+		}.Check()
+
+		// There are no pods no deployments
+		assert.True(valid)
+		assert.NotEmpty(validations)
+		assert.Len(validations, 2)
+		assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[0].Severity, models.WarningSeverity)
+		assert.Equal(validations[0].Path, "spec/"+protocol+"[0]/route[0]/destination")
+
+		assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[1].Severity, models.WarningSeverity)
+		assert.Equal(validations[1].Path, "spec/"+protocol+"[0]/route[1]/destination")
+	}
+}
+
+func fakeWrongSubsetsServiceNamespace(protocol string) kubernetes.IstioObject {
+	validVirtualService :=
+		data.AddRoutesToVirtualService(protocol, data.CreateRoute("reviews.bookinfo", "not-v2", 45),
+			data.AddRoutesToVirtualService(protocol, data.CreateRoute("reviews.bookinfo.svc.cluster.local", "not-v1", 55),
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews.bookinfo"}),
+			),
+		)
+
+	return validVirtualService
+}
+
 func TestVirtualServiceWithoutDestination(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -126,8 +213,11 @@ func TestVirtualServiceWithoutDestination(t *testing.T) {
 
 	protocols := [3]string{"http", "tcp", "tls"}
 	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{"bookinfo",
-			destinationList, fakeNilDestination(protocol)}.Check()
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeNilDestination(protocol),
+		}.Check()
 
 		// There are no pods no deployments
 		assert.False(valid)
@@ -163,8 +253,11 @@ func TestVirtualServiceWithoutSpec(t *testing.T) {
 		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
-	validations, valid := SubsetPresenceChecker{"bookinfo",
-		destinationList, fakeBadSpec()}.Check()
+	validations, valid := SubsetPresenceChecker{
+		Namespace:        "bookinfo",
+		DestinationRules: destinationList,
+		VirtualService:   fakeBadSpec(),
+	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
@@ -186,8 +279,11 @@ func TestWrongDestinationRule(t *testing.T) {
 
 	protocols := [3]string{"http", "tcp", "tls"}
 	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{"bookinfo",
-			destinationList, fakeCorrectVersions(protocol)}.Check()
+		validations, valid := SubsetPresenceChecker{
+			Namespace:        "bookinfo",
+			DestinationRules: destinationList,
+			VirtualService:   fakeCorrectVersions(protocol),
+		}.Check()
 
 		assert.True(valid)
 		assert.NotEmpty(validations)

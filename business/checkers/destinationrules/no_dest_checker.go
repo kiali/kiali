@@ -14,6 +14,7 @@ import (
 
 type NoDestinationChecker struct {
 	Namespace       string
+	Namespaces      models.Namespaces
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
 	ServiceEntries  map[string][]string
@@ -27,7 +28,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
-			fqdn := kubernetes.ParseHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
+			fqdn := kubernetes.GetHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
 				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace && fqdn.Namespace != "" {
 					validation := models.Build("validation.unable.cross-namespace", "spec/host")

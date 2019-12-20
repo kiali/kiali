@@ -13,6 +13,7 @@ const ServiceRoleCheckerType = "servicerole"
 
 type NoServiceChecker struct {
 	Namespace            string
+	Namespaces           models.Namespaces
 	IstioDetails         *kubernetes.IstioDetails
 	Services             []core_v1.Service
 	WorkloadList         models.WorkloadList
@@ -32,11 +33,11 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
-		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, serviceHosts))
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, serviceHosts, in.Namespaces))
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, in.Services, serviceHosts))
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, in.Services, serviceHosts, in.Namespaces))
 	}
 
 	for _, serviceRole := range in.AuthorizationDetails.ServiceRoles {
@@ -46,11 +47,12 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string) models.IstioValidations {
+func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string, clusterNamespaces models.Namespaces) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
 	result, valid := virtual_services.NoHostChecker{
 		Namespace:         namespace,
+		Namespaces:        clusterNamespaces,
 		ServiceNames:      serviceNames,
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
@@ -76,11 +78,13 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 	return models.IstioValidations{key: validations}
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, services []core_v1.Service, serviceHosts map[string][]string) models.IstioValidations {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList,
+	services []core_v1.Service, serviceHosts map[string][]string, clusterNamespaces models.Namespaces) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.GetObjectMeta().Name, destinationRule.GetObjectMeta().Namespace, DestinationRuleCheckerType)
 
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
+		Namespaces:      clusterNamespaces,
 		WorkloadList:    workloads,
 		DestinationRule: destinationRule,
 		Services:        services,
