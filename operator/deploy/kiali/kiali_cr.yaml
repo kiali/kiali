@@ -20,6 +20,16 @@ spec:
 ###################################################################
 
 ##########
+#  ---
+#  additional_display_details: []
+#
+# A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
+# Each item in the list is an object with "annotation" and "title" fields to indicate which annotation is to be displayed and how it should be displayed.*
+# For example:
+#    - annotation: "domain/my-annotation"
+#      title: "My Annotation"
+
+##########
 # Tag used to identify a particular instance/installation of the Kiali server.
 #  ---
 #  installation_tag: ""
@@ -78,11 +88,11 @@ spec:
 ##########
 #  ---
 #  apidocs:
-# 
+#
 # Configure the api documentation
-# Use  api_spec_annotation_name and api_type_annotation_name if you want 
+# Use  api_spec_annotation_name and api_type_annotation_name if you want
 # to customize the annotation names to use on your services
-# 
+#
 #    ---
 #    annotations:
 #      api_spec_annotation_name: "kiali.io/api-spec"
@@ -399,16 +409,6 @@ spec:
 #      in_cluster_url: ""
 #      namespace_selector: true
 #      url: ""
-
-##########
-#  ---
-#  additional_display_details: []
-#
-# A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
-# Each item in the list is an object with "annotation" and "title" fields to indicate which annotation is to be displayed and how it should be displayed.*
-# For example: 
-#    - annotation: "domain/my-annotation"
-#      title: "My Annotation"
 
 ##########
 #  ---
