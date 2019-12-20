@@ -40,6 +40,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	destinationRules := []kubernetes.IstioObject{
 		data.CreateTestDestinationRule("test", "rule1", "host1"),
 		data.CreateTestDestinationRule("test", "rule2", "host1.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule3", "host1"),
 	}
 
 	validations := MultiMatchChecker{
@@ -47,8 +48,16 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
+	assert.Equal(3, len(validations))
+
+	// Rule1 assertions
+	validationAssertion(assert, validations, "rule1", []string{"rule2", "rule3"})
+	validationAssertion(assert, validations, "rule2", []string{"rule1", "rule3"})
+	validationAssertion(assert, validations, "rule3", []string{"rule1", "rule2"})
+}
+
+func validationAssertion(assert *assert.Assertions, validations models.IstioValidations, drName string, refNames []string) {
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: drName}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -56,7 +65,15 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
 
 	assert.NotEmpty(validation.References)
-	assert.Equal("rule1", validation.References[0].Name)
+	for _, refName := range refNames {
+		assert.Contains(validation.References,
+			models.IstioValidationKey{
+				ObjectType: "destinationrule",
+				Namespace:  "test",
+				Name:       refName,
+			},
+		)
+	}
 }
 
 func TestMultiHostMatchInvalidShortFormat(t *testing.T) {
