@@ -26,70 +26,70 @@ kiali_vars:
 
   api: |
     {%- if api is defined and api is iterable -%}
-    {{ kiali_defaults.api | combine(api, recursive=True) }}
+    {{ kiali_defaults.api | combine((api | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.api }}
     {%- endif -%}
 
   apidocs: |
     {%- if apidocs is defined and apidocs is iterable -%}
-    {{ kiali_defaults.apidocs | combine(apidocs, recursive=True) }}
+    {{ kiali_defaults.apidocs | combine((apidocs | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.apidocs }}
     {%- endif -%}
 
   auth: |
     {%- if auth is defined and auth is iterable -%}
-    {{ kiali_defaults.auth | combine(auth, recursive=True) }}
+    {{ kiali_defaults.auth | combine((auth | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.auth }}
     {%- endif -%}
 
   deployment: |
     {%- if deployment is defined and deployment is iterable -%}
-    {{ kiali_defaults.deployment | combine(deployment, recursive=True) }}
+    {{ kiali_defaults.deployment | combine((deployment | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.deployment }}
     {%- endif -%}
 
   external_services: |
     {%- if external_services is defined and external_services is iterable -%}
-    {{ kiali_defaults.external_services | combine(external_services, recursive=True) }}
+    {{ kiali_defaults.external_services | combine((external_services | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.external_services }}
     {%- endif -%}
 
   identity: |
     {%- if identity is defined and identity is iterable -%}
-    {{ kiali_defaults.identity | combine(identity, recursive=True) }}
+    {{ kiali_defaults.identity | combine((identity | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.identity }}
     {%- endif -%}
 
   istio_labels: |
     {%- if istio_labels is defined and istio_labels is iterable -%}
-    {{ kiali_defaults.istio_labels | combine(istio_labels, recursive=True) }}
+    {{ kiali_defaults.istio_labels | combine((istio_labels | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.istio_labels }}
     {%- endif -%}
 
   kubernetes_config: |
     {%- if kubernetes_config is defined and kubernetes_config is iterable -%}
-    {{ kiali_defaults.kubernetes_config | combine(kubernetes_config, recursive=True) }}
+    {{ kiali_defaults.kubernetes_config | combine((kubernetes_config | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.kubernetes_config }}
     {%- endif -%}
 
   login_token: |
     {%- if login_token is defined and login_token is iterable -%}
-    {{ kiali_defaults.login_token | combine(login_token, recursive=True) }}
+    {{ kiali_defaults.login_token | combine((login_token | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.login_token }}
     {%- endif -%}
 
   server: |
     {%- if server is defined and server is iterable -%}
-    {{ kiali_defaults.server | combine(server, recursive=True) }}
+    {{ kiali_defaults.server | combine((server | stripnone), recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.server }}
     {%- endif -%}
