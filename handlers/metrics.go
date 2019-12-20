@@ -42,40 +42,34 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 }
 
 func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMetricsQuery, namespaceInfo *models.Namespace) error {
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		// Only first is taken into consideration
-		q.RateInterval = rateIntervals[0]
+	if ri := queryParams.Get("rateInterval"); ri != "" {
+		q.RateInterval = ri
 	}
-	if rateFuncs, ok := queryParams["rateFunc"]; ok && len(rateFuncs) > 0 {
-		// Only first is taken into consideration
-		if rateFuncs[0] != "rate" && rateFuncs[0] != "irate" {
-			// Bad request
+	if rf := queryParams.Get("rateFunc"); rf != "" {
+		if rf != "rate" && rf != "irate" {
 			return errors.New("bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
 		}
-		q.RateFunc = rateFuncs[0]
+		q.RateFunc = rf
 	}
-	if queryTimes, ok := queryParams["queryTime"]; ok && len(queryTimes) > 0 {
-		if num, err := strconv.ParseInt(queryTimes[0], 10, 64); err == nil {
+	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
+		if num, err := strconv.ParseInt(queryTime, 10, 64); err == nil {
 			q.End = time.Unix(num, 0)
 		} else {
-			// Bad request
 			return errors.New("bad request, cannot parse query parameter 'queryTime'")
 		}
 	}
-	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
-		if num, err := strconv.ParseInt(durations[0], 10, 64); err == nil {
+	if dur := queryParams.Get("duration"); dur != "" {
+		if num, err := strconv.ParseInt(dur, 10, 64); err == nil {
 			duration := time.Duration(num) * time.Second
 			q.Start = q.End.Add(-duration)
 		} else {
-			// Bad request
 			return errors.New("bad request, cannot parse query parameter 'duration'")
 		}
 	}
-	if steps, ok := queryParams["step"]; ok && len(steps) > 0 {
-		if num, err := strconv.Atoi(steps[0]); err == nil {
+	if step := queryParams.Get("step"); step != "" {
+		if num, err := strconv.Atoi(step); err == nil {
 			q.Step = time.Duration(num) * time.Second
 		} else {
-			// Bad request
 			return errors.New("bad request, cannot parse query parameter 'step'")
 		}
 	}
@@ -92,11 +86,10 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 		}
 		q.Quantiles = quantiles
 	}
-	if avgFlags, ok := queryParams["avg"]; ok && len(avgFlags) > 0 {
-		if avgFlag, err := strconv.ParseBool(avgFlags[0]); err == nil {
-			q.Avg = avgFlag
+	if avgStr := queryParams.Get("avg"); avgStr != "" {
+		if avg, err := strconv.ParseBool(avgStr); err == nil {
+			q.Avg = avg
 		} else {
-			// Bad request
 			return errors.New("bad request, cannot parse query parameter 'avg'")
 		}
 	}

@@ -72,10 +72,10 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate interval is needed to fetch request rates based health
-	rateInterval := defaultHealthRateInterval
 	queryParams := r.URL.Query()
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		rateInterval = rateIntervals[0]
+	rateInterval := queryParams.Get("rateInterval")
+	if rateInterval == "" {
+		rateInterval = defaultHealthRateInterval
 	}
 
 	includeValidations := false
