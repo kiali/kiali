@@ -14,35 +14,37 @@ type MissingSidecarProps = {
   style?: React.CSSProperties;
 };
 
-const MissingSidecar = (props: MissingSidecarProps) => {
-  const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = props;
+class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
+  static defaultProps = {
+    text: 'Missing Sidecar',
+    textTooltip: 'Missing Sidecar',
+    tooltip: false,
+    icon: icons.istio.missingSidecar.icon,
+    color: icons.istio.missingSidecar.color
+  };
 
-  const iconComponent = (
-    <span style={style} {...otherProps}>
-      {React.createElement(icon, { style: { color: color } })}
-      {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
-    </span>
-  );
+  render() {
+    const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = this.props;
 
-  if (isIstioNamespace(namespace)) {
-    return <></>;
+    const iconComponent = (
+      <span style={style} {...otherProps}>
+        {React.createElement(icon, { style: { color: color } })}
+        {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
+      </span>
+    );
+
+    if (isIstioNamespace(namespace)) {
+      return <></>;
+    }
+
+    return tooltip ? (
+      <Tooltip content={<>{textTooltip}</>} position={TooltipPosition.right}>
+        {iconComponent}
+      </Tooltip>
+    ) : (
+      iconComponent
+    );
   }
-
-  return tooltip ? (
-    <Tooltip content={<>{textTooltip}</>} position={TooltipPosition.right}>
-      {iconComponent}
-    </Tooltip>
-  ) : (
-    iconComponent
-  );
-};
-
-MissingSidecar.defaultProps = {
-  text: 'Missing Sidecar',
-  textTooltip: 'Missing Sidecar',
-  tooltip: false,
-  icon: icons.istio.missingSidecar.icon,
-  color: icons.istio.missingSidecar.color
-};
+}
 
 export default MissingSidecar;
