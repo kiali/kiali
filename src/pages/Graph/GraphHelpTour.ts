@@ -19,14 +19,14 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Graph: {
     name: 'Graph',
     description:
-      "Single click a node to see its summary and emphasize its end-to-end paths. Double click a node to see a graph focused on that node.\nDouble click an 'external namespace' node to navigate directly to the namespace in the node's text label.",
+      "Click on a node to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label.",
     position: PopoverPosition.auto,
     offset: '0, -350'
   },
   ContextualMenu: {
     name: 'Contextual Menu',
     description:
-      'Right click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
+      'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
     position: PopoverPosition.auto,
     offset: '0, -350'
   },
