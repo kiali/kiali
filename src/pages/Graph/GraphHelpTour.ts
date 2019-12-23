@@ -19,7 +19,14 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Graph: {
     name: 'Graph',
     description:
-      "Single click a node to see its summary and emphasize its end-to-end paths.  Double click a node to see a graph focused on that node.\nDouble click an 'external namespace' node to navigate directly to the namespace in the node's text label.",
+      "Single click a node to see its summary and emphasize its end-to-end paths. Double click a node to see a graph focused on that node.\nDouble click an 'external namespace' node to navigate directly to the namespace in the node's text label.",
+    position: PopoverPosition.auto,
+    offset: '0, -350'
+  },
+  ContextualMenu: {
+    name: 'Contextual Menu',
+    description:
+      'Right click a node to see the contextual menu for the node, such as details, traffic and inbound/outbound metrics.',
     position: PopoverPosition.auto,
     offset: '0, -350'
   },
@@ -55,6 +62,7 @@ const GraphTour: TourInfo = {
     GraphTourStops.Display,
     GraphTourStops.Find,
     GraphTourStops.Graph,
+    GraphTourStops.ContextualMenu,
     GraphTourStops.Layout,
     GraphTourStops.Legend
   ]
