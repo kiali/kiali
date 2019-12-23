@@ -25,8 +25,8 @@ class Boundaries extends React.Component<BoundariesProps, {}> {
     const minElement = <b>{min}</b>;
     const maxElement = <b>{max}</b>;
 
-    let leftBoundary: any = null;
-    let rightBoundary: any = null;
+    let leftBoundary: JSX.Element | null = null;
+    let rightBoundary: JSX.Element | null = null;
 
     if (showBoundaries) {
       if (reversed) {

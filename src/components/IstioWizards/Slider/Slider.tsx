@@ -80,7 +80,7 @@ class Slider extends React.Component<Props, State> {
     this.updateNewValue(newValue - 1);
   };
 
-  onInputChange = (value: any) => {
+  onInputChange = (value: string | number) => {
     const newValue: number = Number(value);
     this.updateNewValue(Number.isNaN(newValue) ? 0 : newValue);
   };
