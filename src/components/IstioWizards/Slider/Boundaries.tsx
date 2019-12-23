@@ -1,7 +1,6 @@
 // Clone of Slider component to workaround issue https://github.com/patternfly/patternfly-react/issues/1221
 
 import React from 'react';
-import PropTypes from 'prop-types';
 
 const Boundaries = props => {
   const { children, min, max, reversed, showBoundaries, slider } = props;
@@ -26,15 +25,6 @@ const Boundaries = props => {
       {children}
     </div>
   );
-};
-
-Boundaries.propTypes = {
-  children: PropTypes.array,
-  min: PropTypes.number,
-  max: PropTypes.number,
-  reversed: PropTypes.bool,
-  showBoundaries: PropTypes.bool,
-  slider: PropTypes.object.isRequired
 };
 
 Boundaries.defaultProps = {

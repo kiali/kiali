@@ -1,5 +1,4 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { isIstioNamespace } from 'config/ServerConfig';
@@ -36,15 +35,6 @@ const MissingSidecar = (props: MissingSidecarProps) => {
   ) : (
     iconComponent
   );
-};
-
-MissingSidecar.propTypes = {
-  text: PropTypes.string,
-  textTooltip: PropTypes.string,
-  tooltip: PropTypes.bool,
-  type: PropTypes.string,
-  name: PropTypes.string,
-  color: PropTypes.string
 };
 
 MissingSidecar.defaultProps = {
