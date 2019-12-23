@@ -26,7 +26,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenu: {
     name: 'Contextual Menu',
     description:
-      'Right click a node to see the contextual menu for the node, such as details, traffic and inbound/outbound metrics.',
+      'Right click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
     position: PopoverPosition.auto,
     offset: '0, -350'
   },
