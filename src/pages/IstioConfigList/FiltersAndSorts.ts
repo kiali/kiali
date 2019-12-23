@@ -91,32 +91,32 @@ export const istioTypeFilter: FilterType = {
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
-      id: 'Gateway',
-      title: 'Gateway'
+      id: 'Adapter',
+      title: 'Adapter'
     },
     {
-      id: 'VirtualService',
-      title: 'VirtualService'
+      id: 'AuthorizationPolicy',
+      title: 'AuthorizationPolicy'
+    },
+    {
+      id: 'ClusterRbacConfig',
+      title: 'ClusterRbacConfig'
     },
     {
       id: 'DestinationRule',
       title: 'DestinationRule'
     },
     {
-      id: 'ServiceEntry',
-      title: 'ServiceEntry'
+      id: 'Gateway',
+      title: 'Gateway'
     },
     {
-      id: 'Rule',
-      title: 'Rule'
+      id: 'MeshPolicy',
+      title: 'MeshPolicy'
     },
     {
-      id: 'Adapter',
-      title: 'Adapter'
-    },
-    {
-      id: 'Template',
-      title: 'Template'
+      id: 'Policy',
+      title: 'Policy'
     },
     {
       id: 'QuotaSpec',
@@ -127,36 +127,24 @@ export const istioTypeFilter: FilterType = {
       title: 'QuotaSpecBinding'
     },
     {
-      id: 'Policy',
-      title: 'Policy'
+      id: 'RbacConfig',
+      title: 'RbacConfig'
     },
     {
-      id: 'MeshPolicy',
-      title: 'MeshPolicy'
+      id: 'Rule',
+      title: 'Rule'
+    },
+    {
+      id: 'ServiceEntry',
+      title: 'ServiceEntry'
     },
     {
       id: 'ServiceMeshPolicy',
       title: 'ServiceMeshPolicy'
     },
     {
-      id: 'ClusterRbacConfig',
-      title: 'ClusterRbacConfig'
-    },
-    {
-      id: 'RbacConfig',
-      title: 'RbacConfig'
-    },
-    {
-      id: 'AuthorizationPolicy',
-      title: 'AuthorizationPolicy'
-    },
-    {
       id: 'ServiceMeshRbacConfig',
       title: 'ServiceMeshRbacConfig'
-    },
-    {
-      id: 'Sidecar',
-      title: 'Sidecar'
     },
     {
       id: 'ServiceRole',
@@ -165,6 +153,18 @@ export const istioTypeFilter: FilterType = {
     {
       id: 'ServiceRoleBinding',
       title: 'ServiceRoleBinding'
+    },
+    {
+      id: 'Sidecar',
+      title: 'Sidecar'
+    },
+    {
+      id: 'Template',
+      title: 'Template'
+    },
+    {
+      id: 'VirtualService',
+      title: 'VirtualService'
     }
   ]
 };
