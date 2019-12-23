@@ -77,11 +77,10 @@ export const serviceLink = (namespace: string, host: string, isValid: boolean): 
   if (!host) {
     return '-';
   }
-  // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
   const isFqdn = host.endsWith('.' + serverConfig.istioIdentityDomain);
-  if (!isValid || !isFqdn) {
-    return host;
-  } else {
+  const isShortName = host.split('.').length === 2;
+  const showLink = isValid && (isFqdn || isShortName);
+  if (showLink) {
     let linkNamespace = namespace;
     let linkService = host;
     if (isFqdn) {
@@ -96,6 +95,8 @@ export const serviceLink = (namespace: string, host: string, isValid: boolean): 
         <ServiceIcon />
       </Link>
     );
+  } else {
+    return host;
   }
 };
 
