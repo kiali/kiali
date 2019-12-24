@@ -11,7 +11,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'health',
-    title: 'Status',
+    title: 'Health',
     isNumeric: false,
     param: 'h',
     compare: (a: NamespaceInfo, b: NamespaceInfo) => {
