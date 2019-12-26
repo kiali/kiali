@@ -327,15 +327,17 @@ export class GraphPage extends React.Component<GraphPageProps> {
                 />
               )}
               <TourStopContainer info={GraphTourStops.Graph}>
-                <CytoscapeGraphContainer
-                  refresh={this.handleRefresh}
-                  containerClassName={cytoscapeGraphContainerStyle}
-                  ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                  isMTLSEnabled={this.props.mtlsEnabled}
-                  focusSelector={focusSelector}
-                  contextMenuNodeComponent={NodeContextMenuContainer}
-                  contextMenuGroupComponent={NodeContextMenuContainer}
-                />
+                <TourStopContainer info={GraphTourStops.ContextualMenu}>
+                  <CytoscapeGraphContainer
+                    refresh={this.handleRefresh}
+                    containerClassName={cytoscapeGraphContainerStyle}
+                    ref={refInstance => this.setCytoscapeGraph(refInstance)}
+                    isMTLSEnabled={this.props.mtlsEnabled}
+                    focusSelector={focusSelector}
+                    contextMenuNodeComponent={NodeContextMenuContainer}
+                    contextMenuGroupComponent={NodeContextMenuContainer}
+                  />
+                </TourStopContainer>
               </TourStopContainer>
               {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
