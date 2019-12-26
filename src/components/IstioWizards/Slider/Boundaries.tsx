@@ -2,7 +2,6 @@
 import React from 'react';
 
 type BoundariesProps = {
-  children: JSX.Element[];
   min: number;
   max: number;
   reversed: boolean;
@@ -12,7 +11,6 @@ type BoundariesProps = {
 
 class Boundaries extends React.Component<BoundariesProps, {}> {
   static defaultProps = {
-    children: [],
     min: 0,
     max: 100,
     reversed: false,
