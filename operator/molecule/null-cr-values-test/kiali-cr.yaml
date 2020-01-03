@@ -1,0 +1,121 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+  # This test is going to set most of the settings to null meaning they should fall back to the defaults
+
+  additional_display_details: null
+  installation_tag: null
+  istio_component_namespaces: null
+  istio_namespace: {{ istio.control_plane_namespace }}
+
+  api:
+    namespaces: null
+
+  apidocs: null
+
+  auth:
+    strategy: {{ kiali.auth_strategy }}
+    ldap: null
+
+  deployment:
+    accessible_namespaces: {{ kiali.accessible_namespaces }}
+    additional_service_yaml: null
+    affinity:
+      node: null
+      pod: null
+      pod_anti: null
+    image_name: {{ kiali.image_name }}
+    image_pull_policy: {{ kiali.image_pull_policy }}
+    image_pull_secrets: null
+    image_version: {{ kiali.image_version }}
+    ingress_enabled: null
+    namespace: {{ kiali.install_namespace }}
+    pod_annotations: null
+    priority_class_name: null
+    replicas: null
+    resources: null
+    secret_name: null
+    service_type: null
+    tolerations: null
+    verbose_mode: null
+    version_label: null
+    view_only_mode: null
+
+  external_services:
+    grafana:
+      auth:
+        ca_file: null
+        insecure_skip_verify: null
+        password: null
+        token: null
+        type: null
+        use_kiali_token: null
+        username: null
+      dashboards: null
+      enabled: null
+      in_cluster_url: null
+      url: null
+
+    istio:
+      istio_identity_domain: null
+      istio_sidecar_annotation: null
+      url_service_version: null
+
+    prometheus:
+      auth:
+        ca_file: null
+        insecure_skip_verify: null
+        password: null
+        token: null
+        type: null
+        use_kiali_token: null
+        username: null
+      custom_metrics_url: null
+      url: null
+
+    tracing:
+      auth:
+        ca_file: null
+        insecure_skip_verify: null
+        password: null
+        token: null
+        type: null
+        use_kiali_token: null
+        username: null
+      enabled: null
+      in_cluster_url: null
+      namespace_selector: null
+      url: null
+
+  identity:
+    cert_file: null
+    private_key_file: null
+
+  istio_labels: null
+
+  kubernetes_config:
+    burst: null
+    cache_duration: null
+    cache_enabled: null
+    cache_istio_types: null
+    cache_namespaces: null
+    cache_token_namespace_duration: null
+    excluded_workloads: null
+    qps: null
+
+  login_token:
+    expiration_seconds: null
+    signing_key: null
+
+  server:
+    address: null
+    audit_log: null
+    cors_allow_all: null
+    gzip_enabled: null
+    metrics_enabled: null
+    metrics_port: null
+    port: null
+    web_root: null
+

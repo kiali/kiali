@@ -1,0 +1,42 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  # Assert that we have defaults since the CR set most settings to null.
+  # The defaults come from the operator's roles/kiali-deploy/defaults/main.yaml
+  # This just checks some of the settings to see that defaults are getting set.
+  - assert:
+      that:
+      - kiali_configmap.installation_tag == ""
+      - kiali_configmap.additional_display_details | length == 0
+      - kiali_configmap.apidocs.annotations.api_spec_annotation_name == "kiali.io/api-spec"
+      - kiali_configmap.apidocs.annotations.api_type_annotation_name == "kiali.io/api-type"
+      - kiali_configmap.auth.ldap.ldap_group_filter == "(cn=%s)"
+      - kiali_configmap.deployment.ingress_enabled == True
+      - kiali_configmap.deployment.replicas == 1
+      - kiali_configmap.deployment.secret_name == "kiali"
+      - kiali_configmap.deployment.verbose_mode == "3"
+      - kiali_configmap.external_services.grafana.auth.password == ""
+      - kiali_configmap.external_services.grafana.auth.type == "none"
+      - kiali_configmap.external_services.grafana.url == ""
+      - kiali_configmap.external_services.istio.istio_identity_domain == "svc.cluster.local"
+      - kiali_configmap.external_services.istio.istio_sidecar_annotation == "sidecar.istio.io/status"
+      - kiali_configmap.external_services.prometheus.auth.password == ""
+      - kiali_configmap.external_services.prometheus.auth.type == "none"
+      - kiali_configmap.external_services.prometheus.url != ""
+      - kiali_configmap.external_services.tracing.auth.password == ""
+      - kiali_configmap.external_services.tracing.auth.type == "none"
+      - kiali_configmap.external_services.tracing.url == ""
+      - kiali_configmap.identity.cert_file is defined
+      - kiali_configmap.identity.private_key_file is defined
+      - kiali_configmap.istio_labels.app_label_name == "app"
+      - kiali_configmap.istio_labels.version_label_name == "version"
+      - kiali_configmap.kubernetes_config.burst == 200
+      - kiali_configmap.kubernetes_config.excluded_workloads | length > 0
+      - kiali_configmap.login_token.signing_key == "kiali"
+      - kiali_configmap.server.metrics_port == 9090
