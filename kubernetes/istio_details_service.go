@@ -180,7 +180,8 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 	}
 
 	rbacResources := map[string]bool{}
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/rbac.istio.io/v1alpha1").Do().Raw()
+	path := fmt.Sprintf("/apis/%s", ApiRbacVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
 		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
@@ -204,7 +205,8 @@ func (in *IstioClient) getSecurityResources() map[string]bool {
 	}
 
 	securityResources := map[string]bool{}
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/security.istio.io/v1beta1").Do().Raw()
+	path := fmt.Sprintf("/apis/%s", ApiSecurityVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
 		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
@@ -902,7 +904,7 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 }
 
 func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject, error) {
-	// In case AuthorizationPolciies aren't present on Istio, return empty array.
+	// In case AuthorizationPolicies aren't present on Istio, return empty array.
 	if !in.hasSecurityResource(authorizationpolicies) {
 		return []IstioObject{}, nil
 	}
