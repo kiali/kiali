@@ -2,6 +2,10 @@ apiVersion: console.openshift.io/v1
 kind: ConsoleLink
 metadata:
   name: kiali-app-link
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
 spec:
   href: {{ kiali_route_url }}
   location: ApplicationMenu
@@ -12,11 +16,15 @@ apiVersion: console.openshift.io/v1
 kind: ConsoleLink
 metadata:
   name: "kiali-namespace-{{ namespace }}-link"
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
 spec:
   href: {{ kiali_route_url }}/{{ kiali_vars.server.web_root }}/console/graph/namespaces?namespaces={{ namespace }}
   location: NamespaceDashboard
   text: Open on Kiali
   namespaceDashboard:
     namespaces:
-      - {{ namespace }}
+    - {{ namespace }}
 {% endfor %}
