@@ -50,12 +50,20 @@
   - is_openshift == True
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
-- name: Process Kiali OAuth client on OpenShift
-  include: openshift/os-oauth.yml
+- name: Get the Kiali Route URL
+  include: openshift/os-get-kiali-route-url.yml
   when:
   - is_openshift == True
 
-- name: Process Kiali Console Links on OpenShift
-  include: openshift/os-consolelinks.yml
+- name: Process OpenShift OAuth client
+  k8s:
+    definition: "{{ lookup('template', 'templates/openshift/oauth.yaml') }}"
+  when:
+  - is_openshift == True
+  - kiali_vars.auth.strategy == "openshift"
+
+- name: Process OpenShift Console Links
+  k8s:
+    definition: "{{ lookup('template', 'templates/openshift/console-links.yaml') }}"
   when:
   - is_openshift == True
