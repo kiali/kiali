@@ -2,6 +2,8 @@ apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
+  annotations:
+    ansible.operator-sdk/verbosity: "3"
 spec:
   auth:
     strategy: $AUTH_STRATEGY
