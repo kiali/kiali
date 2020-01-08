@@ -80,7 +80,7 @@ class Slider extends React.Component<Props, State> {
     this.updateNewValue(newValue - 1);
   };
 
-  onInputChange = value => {
+  onInputChange = (value: string | number) => {
     const newValue: number = Number(value);
     this.updateNewValue(Number.isNaN(newValue) ? 0 : newValue);
   };
@@ -136,6 +136,15 @@ class Slider extends React.Component<Props, State> {
       paddingLeft: 8,
       paddingRight: 8
     });
+    const LockIcon = (
+      <Button
+        className={pinButtonStyle}
+        variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
+        onClick={() => this.props.onLock(!this.props.locked)}
+      >
+        <ThumbTackIcon />
+      </Button>
+    );
 
     return (
       <>
@@ -165,15 +174,7 @@ class Slider extends React.Component<Props, State> {
             <PlusIcon />
           </Button>
           <InputGroupText>{this.props.inputFormat}</InputGroupText>
-          {this.props.showLock && (
-            <Button
-              className={pinButtonStyle}
-              variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
-              onClick={() => this.props.onLock(!this.props.locked)}
-            >
-              <ThumbTackIcon />
-            </Button>
-          )}
+          {this.props.showLock ? LockIcon : <></>}
         </Boundaries>
       </>
     );

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { isIstioNamespace } from 'config/ServerConfig';
@@ -15,44 +14,37 @@ type MissingSidecarProps = {
   style?: React.CSSProperties;
 };
 
-const MissingSidecar = (props: MissingSidecarProps) => {
-  const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = props;
+class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
+  static defaultProps = {
+    text: 'Missing Sidecar',
+    textTooltip: 'Missing Sidecar',
+    tooltip: false,
+    icon: icons.istio.missingSidecar.icon,
+    color: icons.istio.missingSidecar.color
+  };
 
-  const iconComponent = (
-    <span style={style} {...otherProps}>
-      {React.createElement(icon, { style: { color: color } })}
-      {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
-    </span>
-  );
+  render() {
+    const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = this.props;
 
-  if (isIstioNamespace(namespace)) {
-    return <></>;
+    const iconComponent = (
+      <span style={style} {...otherProps}>
+        {React.createElement(icon, { style: { color: color } })}
+        {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
+      </span>
+    );
+
+    if (isIstioNamespace(namespace)) {
+      return <></>;
+    }
+
+    return tooltip ? (
+      <Tooltip content={<>{textTooltip}</>} position={TooltipPosition.right}>
+        {iconComponent}
+      </Tooltip>
+    ) : (
+      iconComponent
+    );
   }
-
-  return tooltip ? (
-    <Tooltip content={<>{textTooltip}</>} position={TooltipPosition.right}>
-      {iconComponent}
-    </Tooltip>
-  ) : (
-    iconComponent
-  );
-};
-
-MissingSidecar.propTypes = {
-  text: PropTypes.string,
-  textTooltip: PropTypes.string,
-  tooltip: PropTypes.bool,
-  type: PropTypes.string,
-  name: PropTypes.string,
-  color: PropTypes.string
-};
-
-MissingSidecar.defaultProps = {
-  text: 'Missing Sidecar',
-  textTooltip: 'Missing Sidecar',
-  tooltip: false,
-  icon: icons.istio.missingSidecar.icon,
-  color: icons.istio.missingSidecar.color
-};
+}
 
 export default MissingSidecar;
