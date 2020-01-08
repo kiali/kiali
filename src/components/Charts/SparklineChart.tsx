@@ -123,6 +123,8 @@ export class SparklineChart extends React.Component<Props, State> {
         padding={padding}
         events={events}
         containerComponent={container}
+        // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
+        domainPadding={{ y: 1 }}
       >
         <ChartAxis tickCount={15} style={hiddenAxisStyle} />
         <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />
