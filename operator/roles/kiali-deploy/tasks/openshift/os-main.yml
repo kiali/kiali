@@ -54,3 +54,8 @@
   include: openshift/os-oauth.yml
   when:
   - is_openshift == True
+
+- name: Process Kiali Console Links on OpenShift
+  include: openshift/os-consolelinks.yml
+  when:
+  - is_openshift == True
