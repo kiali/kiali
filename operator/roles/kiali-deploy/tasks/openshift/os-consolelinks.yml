@@ -42,7 +42,7 @@
   when:
   - is_openshift == True
 
-- name: Process OpenShift OAuth client
+- name: Process OpenShift Console Links
   k8s:
     definition: "{{ lookup('template', 'templates/openshift/console-links.yaml') }}"
   when:
