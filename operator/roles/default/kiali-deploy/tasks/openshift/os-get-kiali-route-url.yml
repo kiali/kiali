@@ -3,7 +3,7 @@
 # Give some time for the route to come up
 
 - name: Detect Kiali route on OpenShift
-  k8s_facts:
+  k8s_info:
     api_version: route.openshift.io/v1
     kind: Route
     name: kiali

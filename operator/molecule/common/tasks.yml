@@ -3,7 +3,7 @@
     kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=cr_namespace, resource_name=custom_resource.metadata.name) }}"
 
 - name: Get Kiali Operator Pod
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ kiali.operator_namespace }}"
@@ -12,7 +12,7 @@
   register: kiali_operator_pod
 
 - name: Get Kiali Pod
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ kiali.install_namespace }}"
@@ -29,7 +29,7 @@
     kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
 
 - name: Get Kiali Deployment
-  k8s_facts:
+  k8s_info:
     api_version: apps/v1
     kind: Deployment
     namespace: "{{ kiali.install_namespace }}"
@@ -38,7 +38,7 @@
   register: kiali_deployment
 
 - name: Get Kiali Service
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Service
     namespace: "{{ kiali.install_namespace }}"
@@ -47,7 +47,7 @@
   register: kiali_service
 
 - name: Get Kiali Route
-  k8s_facts:
+  k8s_info:
     api_version: route.openshift.io/v1
     kind: Route
     namespace: "{{ kiali.install_namespace }}"

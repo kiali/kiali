@@ -6,7 +6,7 @@
     the_labeled_namespace: {}
 
 - name: "Get namespace [{{ the_namespace }}] that is to be labeled"
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Namespace
     name: "{{ the_namespace }}"

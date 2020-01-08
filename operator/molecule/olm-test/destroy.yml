@@ -17,7 +17,7 @@
     - "{{ maistra.cr.control_planes }}"
 
   - name: Wait for ServiceMeshControlPlane to be uninstalled
-    k8s_facts:
+    k8s_info:
       api_version: maistra.io/v1
       kind: ServiceMeshControlPlane
       namespace: "{{ item }}"

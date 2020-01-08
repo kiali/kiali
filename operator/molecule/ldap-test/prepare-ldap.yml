@@ -21,7 +21,7 @@
     definition: "{{ lookup('template', ldap.service_file_path) }}"
 
 - name: Asserting that LDAP is Deployed
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Deployment
     namespace: "{{ ldap.namespace }}"
@@ -33,7 +33,7 @@
   delay: 5
 
 - name: Get the LDAP Service
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Service
     namespace: "{{ ldap.namespace }}"

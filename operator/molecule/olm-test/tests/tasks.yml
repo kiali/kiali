@@ -1,5 +1,5 @@
 - name: Get Kiali Operator Pod
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "openshift-operators"
@@ -8,7 +8,7 @@
   register: kiali_operator_pod
 
 - name: Get Kiali Pod
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ item }}"
@@ -19,7 +19,7 @@
   - "{{ maistra.cr.control_planes }}"
 
 - name: Get Kiali Configmap
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: ConfigMap
     namespace: "{{ item }}"
@@ -30,7 +30,7 @@
   
 
 - name: Get Service Mesh MemberRolls
-  k8s_facts:
+  k8s_info:
     api_version: maistra.io/v1
     kind: ServiceMeshMemberRoll
     namespace: "{{ item }}"
@@ -40,7 +40,7 @@
   - "{{ maistra.cr.control_planes }}"
 
 - name: Get Service Mesh Control Planes
-  k8s_facts:
+  k8s_info:
     api_version: maistra.io/v1
     kind: ServiceMeshControlPlane
     namespace: "{{ item }}"
@@ -69,7 +69,7 @@
 
 
 - name: Get Kiali Roles
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: Role
    namespace: "{{ item[0] }}"
@@ -81,7 +81,7 @@
 
 
 - name: Get Kiali Role Bindings
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: RoleBinding
    namespace: "{{ item[0] }}"

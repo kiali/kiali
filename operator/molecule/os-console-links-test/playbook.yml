@@ -12,7 +12,7 @@
 
   # Test that console links are correct for accessible namespaces of **
   - name: Get app link
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-app-{{ kiali.install_namespace }}"
@@ -54,25 +54,25 @@
 
   # Test that console links are correct across namespaces
   - name: Get app link
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-app-{{ kiali.install_namespace }}"
     register: applink
   - name: Get links from consolelinks1
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks1"
     register: consolelinks1
   - name: Get links from consolelinks2
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks2"
     register: consolelinks2
   - name: Get links from noconsolelinks
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-noconsolelinks"
@@ -106,25 +106,25 @@
 
   # Test that console links are correct - note we removed a namespace from accessible_namespaces so the link should be gone
   - name: Get app link
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-app-{{ kiali.install_namespace }}"
     register: applink
   - name: Get links from consolelinks1
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks1"
     register: consolelinks1
   - name: Get links from consolelinks2
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks2"
     register: consolelinks2
   - name: Get links from noconsolelinks
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-noconsolelinks"
@@ -153,25 +153,25 @@
 
   # Test that console links are correct across namespaces
   - name: Get app link
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-app-{{ kiali.install_namespace }}"
     register: applink
   - name: Get links from consolelinks1
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks1"
     register: consolelinks1
   - name: Get links from consolelinks2
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-consolelinks2"
     register: consolelinks2
   - name: Get links from noconsolelinks
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       name: "kiali-namespace-noconsolelinks"
@@ -199,7 +199,7 @@
       name: "{{ custom_resource.metadata.name }}"
 
   - name: Confirm all the Console Links got deleted
-    k8s_facts:
+    k8s_info:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
       label_selectors:

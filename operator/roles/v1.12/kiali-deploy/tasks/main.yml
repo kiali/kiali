@@ -44,7 +44,7 @@
     is_maistra: "{{ True if 'maistra.io' in api_groups else False }}"
 
 - name: Get information about the operator
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ lookup('env', 'POD_NAMESPACE') }}"
@@ -636,7 +636,7 @@
 # continue even though it means the monitoring dashboards feature will be disabled.
 
 - name: Wait for Monitoring Dashboards CRD to be ready
-  k8s_facts:
+  k8s_info:
     api_version: apiextensions.k8s.io/v1beta1
     kind: CustomResourceDefinition
     name: monitoringdashboards.monitoring.kiali.io

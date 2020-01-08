@@ -55,7 +55,7 @@
       definition: "{{ lookup('template', cr_file_path) }}"
 
   - name: Asserting that Kiali is Deployed
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "{{ kiali.install_namespace }}"

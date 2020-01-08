@@ -72,7 +72,7 @@
       definition: "{{ lookup('template', maistra_operator_file_path) }}"
 
   - name: Asserting that Maistra Operator is deployed
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "{{ operators.maistra.namespace }}"
@@ -94,7 +94,7 @@
     - "{{ maistra.cr.control_planes }}"
 
   - name: Asserting that Kialis are Deployed
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "{{ item }}"

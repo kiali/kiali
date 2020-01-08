@@ -1,5 +1,5 @@
 - name: Asserting that Kiali Pod exists and there is only one
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ kiali.install_namespace }}"

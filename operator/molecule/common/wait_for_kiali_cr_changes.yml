@@ -1,5 +1,5 @@
 - name: Wait for changes to take effect
-  k8s_facts:
+  k8s_info:
     api_version: kiali.io/v1alpha1
     kind: Kiali
     name: "{{ custom_resource.metadata.name }}"

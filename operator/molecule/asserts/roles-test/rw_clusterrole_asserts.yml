@@ -1,5 +1,5 @@
 - name: Get cluster roles
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: ClusterRole
    name: kiali
@@ -11,7 +11,7 @@
     fail_msg: "The kiali cluster role does not exist"
 
 - name: Get cluster role binding
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: ClusterRoleBinding
    name: kiali

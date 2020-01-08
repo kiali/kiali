@@ -1,5 +1,5 @@
 - name: Get roles
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: Role
    namespace: "{{ item[0] }}"
@@ -16,7 +16,7 @@
   - "{{ roles.results }}"
 
 - name: Get role binding
-  k8s_facts:
+  k8s_info:
    api_version: rbac.authorization.k8s.io/v1
    kind: RoleBinding
    namespace: "{{ item[0] }}"

@@ -29,7 +29,7 @@
       definition: "{{ lookup('template', kiali_subscription_path) }}"
 
   - name: Asserting that Kiali Operator is deployed via OLM
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "openshift-operators"
@@ -40,7 +40,7 @@
     delay: 10
 
   - name: Asserting that Maistra Operator is deployed via OLM
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "openshift-operators"
@@ -62,7 +62,7 @@
     - "{{ maistra.cr.control_planes }}"
 
   - name: Asserting that Kialis are Deployed via OLM
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: Deployment
       namespace: "{{ item }}"
