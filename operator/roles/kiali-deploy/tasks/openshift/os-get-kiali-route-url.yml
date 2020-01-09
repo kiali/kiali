@@ -40,9 +40,3 @@
     kiali_route_url: "{{ kiali_route_protocol }}://{{ kiali_route_raw['resources'][0]['status']['ingress'][0]['host'] }}"
   when:
   - is_openshift == True
-
-- name: Process OpenShift Console Links
-  k8s:
-    definition: "{{ lookup('template', 'templates/openshift/console-links.yaml') }}"
-  when:
-  - is_openshift == True
