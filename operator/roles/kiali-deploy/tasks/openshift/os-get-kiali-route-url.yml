@@ -1,5 +1,4 @@
-# All of this is ultimately to obtain the kiali_route_url that is needed by the console links
-# TODO: Extract this into a better named file
+# All of this is ultimately to obtain the kiali_route_url
 
 # Give some time for the route to come up
 
