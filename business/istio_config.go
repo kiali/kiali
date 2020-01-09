@@ -99,6 +99,12 @@ var apiToVersion = map[string]string{
 	kubernetes.SecurityGroupVersion.Group:              kubernetes.ApiSecurityVersion,
 }
 
+// IstioConfig types used in the IstioConfig New Page Form
+var newIstioConfigTypes = []string{
+	kubernetes.Sidecars,
+	kubernetes.Gateways,
+}
+
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
@@ -818,6 +824,36 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 		return models.IstioConfigDetails{}, errors2.NewBadRequest(err.Error())
 	}
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, "", json, true)
+}
+
+func (in *IstioConfigService) GeIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GeIstioConfigPermissions")
+	defer promtimer.ObserveNow(&err)
+
+	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
+
+	if len(namespaces) > 0 {
+		wg := sync.WaitGroup{}
+		wg.Add(len(namespaces) * len(newIstioConfigTypes))
+		for _, ns := range namespaces {
+			resourcePermissions := make(models.ResourcesPermissions, len(newIstioConfigTypes))
+			for _, rs := range newIstioConfigTypes {
+				resourcePermissions[rs] = &models.ResourcePermissions{
+					Create: false,
+					Update: false,
+					Delete: false,
+				}
+				go func(namespace, resource string, permissions *models.ResourcePermissions, wg *sync.WaitGroup) {
+					defer wg.Done()
+					permissions.Create, permissions.Update, permissions.Delete = getPermissions(in.k8s, namespace, resource, "")
+				}(ns, rs, resourcePermissions[rs], &wg)
+			}
+			istioConfigPermissions[ns] = &resourcePermissions
+		}
+		wg.Wait()
+	}
+	return istioConfigPermissions
 }
 
 func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool, bool) {

@@ -178,6 +178,14 @@ func NewRoutes() (r *Routes) {
 			handlers.Config,
 			true,
 		},
+
+		{
+			"IstioConfigPermissions",
+			"GET",
+			"/api/istio/permissions",
+			handlers.IstioConfigPermissions,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace
