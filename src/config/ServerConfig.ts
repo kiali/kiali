@@ -14,7 +14,7 @@ const toDurations = (tupleArray: [number, string][]): Durations => {
   return obj;
 };
 
-let durationsTuples: [number, string][] = [
+const durationsTuples: [number, string][] = [
   [60, 'Last 1m'],
   [300, 'Last 5m'],
   [600, 'Last 10m'],
@@ -29,15 +29,16 @@ let durationsTuples: [number, string][] = [
 ];
 
 const computeValidDurations = (cfg: ComputedServerConfig) => {
+  let filtered = durationsTuples;
   if (cfg.prometheus.storageTsdbRetention) {
     // Make sure we'll keep at least one item
     if (cfg.prometheus.storageTsdbRetention <= durationsTuples[0][0]) {
-      durationsTuples = [durationsTuples[0]];
+      filtered = [durationsTuples[0]];
     } else {
-      durationsTuples = durationsTuples.filter(d => d[0] <= cfg.prometheus.storageTsdbRetention!);
+      filtered = durationsTuples.filter(d => d[0] <= cfg.prometheus.storageTsdbRetention!);
     }
   }
-  cfg.durations = toDurations(durationsTuples);
+  cfg.durations = toDurations(filtered);
 };
 
 // Set some defaults. Mainly used in tests, because
