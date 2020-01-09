@@ -149,8 +149,8 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 	p.RateInterval = defaultHealthRateInterval
 	p.QueryTime = util.Clock.Now()
 	queryParams := r.URL.Query()
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		p.RateInterval = rateIntervals[0]
+	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
+		p.RateInterval = rateInterval
 	}
 	p.Namespace = vars["namespace"]
 }
@@ -173,12 +173,11 @@ func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 	p.baseExtract(r, vars)
 	p.Type = "app"
 	queryParams := r.URL.Query()
-	if healthTypes, ok := queryParams["type"]; ok && len(healthTypes) > 0 {
-		if healthTypes[0] != "app" && healthTypes[0] != "service" && healthTypes[0] != "workload" {
-			// Bad request
+	if healthType := queryParams.Get("type"); healthType != "" {
+		if healthType != "app" && healthType != "service" && healthType != "workload" {
 			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload']"
 		}
-		p.Type = healthTypes[0]
+		p.Type = healthType
 	}
 	return true, ""
 }
