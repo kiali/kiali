@@ -2,8 +2,8 @@ apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
-annotations:
-  ansible.operator-sdk/reconcile-period: "0s"
+  annotations:
+    ansible.operator-sdk/verbosity: "3"
 spec:
 ###################################################################
 # kiali_cr.yaml
