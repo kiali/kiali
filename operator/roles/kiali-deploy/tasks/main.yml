@@ -12,6 +12,7 @@
   set_fact:
     is_openshift: "{{ True if 'route.openshift.io' in api_groups else False }}"
     is_k8s: "{{ False if 'route.openshift.io' in api_groups else True }}"
+    is_maistra: "{{ True if 'maistra.io' in api_groups else False }}"
   when:
   - is_openshift == False
   - is_k8s == False
@@ -171,11 +172,17 @@
   when:
     kiali_vars.external_services.grafana.in_cluster_url == ""
 
-- name: Set default Tracing in_cluster_url
+- name: Set default Tracing in_cluster_url for Maistra
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'in_cluster_url': 'http://tracing.' + kiali_vars.istio_component_namespaces.tracing + ':16686'}}}, recursive=True) }}"
   when:
-    kiali_vars.external_services.tracing.in_cluster_url == ""
+    kiali_vars.external_services.tracing.in_cluster_url == "" and is_maistra
+
+- name: Set default Tracing in_cluster_url
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'in_cluster_url': 'http://tracing.' + kiali_vars.istio_component_namespaces.tracing + '/jaeger'}}}, recursive=True) }}"
+  when:
+    kiali_vars.external_services.tracing.in_cluster_url == "" and is_maistra == False
 
 - name: Set default Istio service that provides version info
   set_fact:
