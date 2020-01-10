@@ -32,7 +32,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
   },
   {
     id: 'istioname',
-    title: 'Istio Name',
+    title: 'Name',
     isNumeric: false,
     param: 'in',
     compare: (a: IstioConfigItem, b: IstioConfigItem) => {
@@ -76,8 +76,8 @@ export const sortFields: SortField<IstioConfigItem>[] = [
 
 export const istioNameFilter: FilterType = {
   id: 'istioname',
-  title: 'Istio Name',
-  placeholder: 'Filter by Istio Name',
+  title: 'Name',
+  placeholder: 'Filter by Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -85,9 +85,9 @@ export const istioNameFilter: FilterType = {
 
 export const istioTypeFilter: FilterType = {
   id: 'istiotype',
-  title: 'Istio Type',
-  placeholder: 'Filter by Istio Type',
-  filterType: 'select',
+  title: 'Type',
+  placeholder: 'Filter by Type',
+  filterType: 'typeahead',
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

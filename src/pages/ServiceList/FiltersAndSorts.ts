@@ -28,7 +28,7 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
   },
   {
     id: 'servicename',
-    title: 'Service Name',
+    title: 'Name',
     isNumeric: false,
     param: 'sn',
     compare: (a, b) => a.name.localeCompare(b.name)
@@ -105,8 +105,8 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
 
 const serviceNameFilter: FilterType = {
   id: 'servicename',
-  title: 'Service Name',
-  placeholder: 'Filter by Service Name',
+  title: 'Name',
+  placeholder: 'Filter by Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []

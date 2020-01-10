@@ -11,7 +11,7 @@ export interface FilterType {
   id: string;
   title: string;
   placeholder: string;
-  filterType: TextInputTypes | 'select';
+  filterType: TextInputTypes | 'select' | 'typeahead';
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;

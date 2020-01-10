@@ -28,7 +28,7 @@ export const sortFields: GenericSortField<AppListItem>[] = [
   },
   {
     id: 'appname',
-    title: 'App Name',
+    title: 'Name',
     isNumeric: false,
     param: 'wn',
     compare: (a, b) => a.name.localeCompare(b.name)
@@ -72,8 +72,8 @@ export const sortFields: GenericSortField<AppListItem>[] = [
 
 const appNameFilter: FilterType = {
   id: 'appname',
-  title: 'App Name',
-  placeholder: 'Filter by App Name',
+  title: 'Name',
+  placeholder: 'Filter by Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
