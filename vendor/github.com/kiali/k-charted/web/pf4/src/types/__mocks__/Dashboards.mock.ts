@@ -1,6 +1,6 @@
 import { DashboardModel } from '../../../../common/types/Dashboards';
 import seedrandom from 'seedrandom';
-import { generateRandomMetricChart, generateRandomMetricChartWithLabels, generateRandomHistogramChart } from './Charts.mock';
+import { generateRandomMetricChart, generateRandomMetricChartWithLabels, generateRandomHistogramChart, generateRandomScatterChart } from './Charts.mock';
 
 export const generateRandomDashboard = (title: string, seed?: string): DashboardModel => {
   if (seed) {
@@ -12,8 +12,9 @@ export const generateRandomDashboard = (title: string, seed?: string): Dashboard
       generateRandomMetricChart('Best animal', ['dogs', 'cats', 'birds'], 4),
       generateRandomMetricChartWithLabels('Best fruit', [{name: 'apples', labels: {color: 'green'}}, {name: 'oranges', labels: {color: 'orange'}}, {name: 'bananas', labels: {color: 'yellow'}}], 4),
       generateRandomHistogramChart('Histogram', 4),
-      generateRandomMetricChart('Best animal++', ['dogs', 'cats', 'birds', 'stunning animal with very very long name that you\'ve never about', 'mermaids', 'escherichia coli', 'wohlfahrtiimonas', 'Chuck Norris'], 6),
-      generateRandomMetricChart('Best fruit++', ['apples', 'oranges', 'bananas', 'peaches', 'peers', 'cherries', 'leetchies', 'pineapple'], 6),
+      generateRandomMetricChart('Best animal++', ['dogs', 'cats', 'birds', 'stunning animal with very very long name that you\'ve never about', 'mermaids', 'escherichia coli', 'wohlfahrtiimonas', 'Chuck Norris'], 4),
+      generateRandomMetricChart('Best fruit++', ['apples', 'oranges', 'bananas', 'peaches', 'peers', 'cherries', 'leetchies', 'pineapple'], 4),
+      generateRandomScatterChart('Best traces++', ['apples', 'oranges', 'bananas', 'peaches', 'peers', 'cherries', 'leetchies', 'pineapple'], 4),
     ],
     aggregations: [],
     externalLinks: []

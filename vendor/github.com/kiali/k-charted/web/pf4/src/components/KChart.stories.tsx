@@ -32,6 +32,11 @@ storiesOf('PF4 KChart', module)
     metric.chartType = 'bar';
     return <KChart chart={metric} data={getDataSupplier(metric, emptyLabels, colors)!()} />;
   })
+  .add('as scatter', () => {
+    reset();
+    metric.chartType = 'scatter';
+    return <KChart chart={metric} data={getDataSupplier(metric, emptyLabels, colors)!()} />;
+  })
   .add('with min=20, max=100', () => {
     reset();
     metric.min = 20;

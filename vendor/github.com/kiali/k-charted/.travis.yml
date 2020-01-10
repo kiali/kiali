@@ -2,7 +2,7 @@ matrix:
   include:
   - language: go
     go:
-    - 1.10.3
+    - 1.12.13
     install:
     - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
     script:
@@ -10,7 +10,7 @@ matrix:
 
   - language: node_js
     node_js:
-    - '10'
+    - '12'
     cache:
       yarn: true
       directories:

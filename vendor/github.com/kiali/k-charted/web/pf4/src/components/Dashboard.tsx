@@ -21,14 +21,15 @@ const expandedChartBackLinkStyle = style({
 });
 
 type Props = {
+  colors?: string[];
   dashboard: DashboardModel;
-  labelValues: AllPromLabelsValues;
   expandedChart?: string;
   expandHandler: (expandedChart?: string) => void;
+  labelValues: AllPromLabelsValues;
   labelPrettifier?: (key: string, value: string) => string;
   onClick?: (chart: ChartModel, datum: VCDataPoint) => void;
-  colors?: string[];
   overlay?: Overlay;
+  timeWindow?: [Date, Date];
 };
 
 type State = {
@@ -96,6 +97,7 @@ export class Dashboard extends React.Component<Props, State> {
         expandHandler={expandHandler}
         overlay={this.props.overlay}
         onClick={onClick}
+        timeWindow={this.props.timeWindow}
       />
     );
   }

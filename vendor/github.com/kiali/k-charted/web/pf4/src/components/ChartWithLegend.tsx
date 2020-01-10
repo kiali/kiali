@@ -4,22 +4,23 @@ import { VictoryLegend, VictoryPortal, VictoryLabel } from 'victory';
 import { format as d3Format } from 'd3-format';
 
 import { getFormatter } from '../../../common/utils/formatter';
-import { VCLines, VCDataPoint, VCLine } from '../types/VictoryChartInfo';
+import { VCLines, VCDataPoint } from '../types/VictoryChartInfo';
 import { Overlay } from '../types/Overlay';
 import { createContainer } from './Container';
-import { buildLegendInfo } from '../utils/victoryChartsUtils';
+import { buildLegendInfo, findClosestDatapoint } from '../utils/victoryChartsUtils';
 
 type Props = {
-  data: VCLines;
-  seriesComponent: React.ReactElement;
-  unit: string;
   chartHeight?: number;
-  groupOffset?: number;
+  data: VCLines;
   fill?: boolean;
-  stroke?: boolean;
+  groupOffset?: number;
   moreChartProps?: ChartProps;
-  overlay?: Overlay;
   onClick?: (datum: VCDataPoint) => void;
+  overlay?: Overlay;
+  seriesComponent: React.ReactElement;
+  stroke?: boolean;
+  timeWindow?: [Date, Date];
+  unit: string;
 };
 
 type State = {
@@ -64,12 +65,13 @@ class ChartWithLegend extends React.Component<Props, State> {
     const overlayRightPadding = showOverlay ? 30 : 0;
 
     const legend = buildLegendInfo(dataWithOverlay, this.state.width);
-    const height = 300 + legend.height;
+    const height = (this.props.chartHeight || 300) + legend.height;
     const padding = { top: 10, bottom: 20, left: 40, right: 10 + overlayRightPadding };
     padding.bottom += legend.height;
 
     const events = this.props.data.map((_, idx) => this.registerEvents(idx, 'serie-' + idx));
     let overlayFactor = 1.0;
+    let useSecondAxis = this.props.overlay !== undefined;
     if (this.props.overlay) {
       events.push(this.registerEvents(overlayIdx, 'overlay'));
       // Normalization for y-axis display to match y-axis domain of the main data
@@ -79,30 +81,33 @@ class ChartWithLegend extends React.Component<Props, State> {
       if (overlayMax !== 0) {
         overlayFactor = mainMax / overlayMax;
       }
+      if (this.props.unit === this.props.overlay.info.unit && overlayFactor > 0.5 && overlayFactor < 2) {
+        // Looks like it's fine to re-use the existing axis
+        useSecondAxis = false;
+        overlayFactor = 1.0;
+      }
     }
     const dataEvents: any[] = [];
     if (this.props.onClick) {
       dataEvents.push({
         target: 'data',
         eventHandlers: {
-          onClick: (event, target) => {
-            const series: VCDataPoint[] = target.data;
-            const pos = event.clientX - padding.left;
-            const size = this.state.width - padding.left - padding.right;
-            const ratio = pos / size;
-            const numFunc = (typeof series[0].x === 'object' ? x => x.getTime() : x => x);
-            const xLength = numFunc(series[series.length - 1].x) - numFunc(series[0].x);
-            const clickedX = numFunc(series[0].x) + ratio * xLength;
-            // Find closest point
-            const closest = series.reduce((p, c) => {
-              if (p === null) {
-                return c;
-              }
-              const dist = Math.abs(clickedX - numFunc(c.x));
-              const prevDist = Math.abs(clickedX - numFunc(p.x));
-              return dist < prevDist ? c : p;
-            });
-            this.props.onClick!(closest);
+          onClick: event => {
+            // We need to get coordinates relative to the SVG
+            const svg = event.target.viewportElement;
+            const pt = svg.createSVGPoint();
+            pt.x = event.clientX;
+            pt.y = event.clientY;
+            const clicked = pt.matrixTransform(svg.getScreenCTM().inverse());
+            const closest = findClosestDatapoint(
+              this.props.data,
+              clicked.x - padding.left,
+              clicked.y - padding.top,
+              this.state.width - padding.left - padding.right,
+              height - padding.top - padding.bottom);
+            if (closest) {
+              this.props.onClick!(closest);
+            }
             return [];
           }
         }
@@ -118,8 +123,13 @@ class ChartWithLegend extends React.Component<Props, State> {
           events={events}
           containerComponent={createContainer()}
           scale={{x: 'time'}}
+          // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
+          domainPadding={{y: 1}}
           {...this.props.moreChartProps}
         >
+          {showOverlay && (
+            <ChartScatter key="overlay" name="overlay" data={this.normalizeOverlay(overlayFactor)} style={{ data: this.props.overlay!.info.dataStyle }} events={dataEvents} />
+          )}
           <ChartGroup offset={groupOffset}>
             {this.props.data.map((serie, idx) => {
               if (this.state.hiddenSeries.has(idx)) {
@@ -134,12 +144,10 @@ class ChartWithLegend extends React.Component<Props, State> {
               });
             })}
           </ChartGroup>
-          {showOverlay && (
-            <ChartScatter key="overlay" name="overlay" data={this.normalizeOverlay(overlayFactor)} style={{ data: this.props.overlay!.info.dataStyle }} events={dataEvents} />
-          )}
           <ChartAxis
             tickCount={scaleInfo.count}
             style={{ tickLabels: {fontSize: 12, padding: 2} }}
+            domain={this.props.timeWindow}
           />
           <ChartAxis
             tickLabelComponent={<VictoryPortal><VictoryLabel/></VictoryPortal>}
@@ -147,7 +155,7 @@ class ChartWithLegend extends React.Component<Props, State> {
             tickFormat={getFormatter(d3Format, this.props.unit)}
             style={{ tickLabels: {fontSize: 12, padding: 2} }}
           />
-          {showOverlay && (
+          {useSecondAxis && (
             <ChartAxis
               dependentAxis={true}
               offsetX={this.state.width - overlayRightPadding}
@@ -171,6 +179,10 @@ class ChartWithLegend extends React.Component<Props, State> {
             height={legend.height}
             width={this.state.width}
             itemsPerRow={legend.itemsPerRow}
+            style={{
+              data: { cursor: 'pointer' },
+              labels: { cursor: 'pointer' }
+            }}
           />
         </Chart>
       </div>

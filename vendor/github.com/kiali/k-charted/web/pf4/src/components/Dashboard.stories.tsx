@@ -3,6 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { getTheme, ChartThemeColor, ChartThemeVariant } from '@patternfly/react-charts';
 import { Dashboard } from './Dashboard';
 import { emptyDashboard, generateRandomDashboard } from '../types/__mocks__/Dashboards.mock';
+import { biggerTimeWindow } from '../types/__mocks__/Charts.mock';
 
 import '@patternfly/react-core/dist/styles/base.css';
 
@@ -17,10 +18,15 @@ storiesOf('PF4 Dashboard', module)
       onClick={(chart, dp) => alert(`${chart.name} - ${dp.name}: [${dp.x}, ${dp.y}]`)}
     />
   ))
-  .add('with gold theme', () => {
+  .add('with gold theme and time window', () => {
     const colors = getTheme(ChartThemeColor.gold, ChartThemeVariant.dark).chart.colorScale;
     return (
-      <Dashboard dashboard={generateRandomDashboard('Dashboard with data', 'dashboard-seed')} labelValues={labels} expandHandler={() => {}} colors={colors} />
+      <Dashboard
+        dashboard={generateRandomDashboard('Dashboard with data', 'dashboard-seed')}
+        labelValues={labels}
+        expandHandler={() => {}} colors={colors}
+        timeWindow={biggerTimeWindow}
+      />
     );
   })
   .add('empty', () => (

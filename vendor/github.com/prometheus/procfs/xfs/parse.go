@@ -381,8 +381,8 @@ func extendedPrecisionStats(us []uint64) (ExtendedPrecisionStats, error) {
 }
 
 func quotaManagerStats(us []uint32) (QuotaManagerStats, error) {
-	if l := len(us); l != 8 {
-		return QuotaManagerStats{}, fmt.Errorf("incorrect number of values for XFS quota stats: %d", l)
+	if l := len(us); l < 8 {
+		return QuotaManagerStats{}, fmt.Errorf("insufficient number of values for XFS quota stats expecting at least 8, got: %d", l)
 	}
 
 	return QuotaManagerStats{
