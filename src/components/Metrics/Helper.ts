@@ -193,3 +193,9 @@ export const prettyLabelValues = (promName: PromLabel, val: string): string => {
   }
   return val;
 };
+
+export const durationToTimeTuple = (duration: DurationInSeconds): [Date, Date] => {
+  const now = new Date();
+  const start = new Date(now.getTime() - duration * 1000);
+  return [start, now];
+};

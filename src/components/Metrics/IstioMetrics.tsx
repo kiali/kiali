@@ -140,7 +140,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   fetchSpans(lastFetchMicros?: number) {
     const doAppend = lastFetchMicros !== undefined;
     const nowMicros = new Date().getTime() * 1000;
-    const frameStart = nowMicros - ((this.options.duration || 600) + 60) * 1000000; // seconds to micros with 1min margin;
+    const frameStart = nowMicros - ((this.options.duration || MetricsDuration.DefaultDuration) + 60) * 1000000; // seconds to micros with 1min margin;
     const opts: TracingQuery = { startMicros: lastFetchMicros ? lastFetchMicros : frameStart };
     API.getServiceSpans(this.props.namespace, this.props.object, opts)
       .then(res => {
@@ -224,6 +224,9 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
                   expandHandler={this.expandHandler}
                   labelPrettifier={MetricsHelper.prettyLabelValues}
                   overlay={overlay}
+                  timeWindow={MetricsHelper.durationToTimeTuple(
+                    this.options.duration || MetricsDuration.DefaultDuration
+                  )}
                 />
               </CardBody>
             </Card>

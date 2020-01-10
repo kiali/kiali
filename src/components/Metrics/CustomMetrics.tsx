@@ -119,6 +119,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
+          timeWindow={MetricsHelper.durationToTimeTuple(this.options.duration || MetricsDuration.DefaultDuration)}
         />
       </RenderComponentScroll>
     );
