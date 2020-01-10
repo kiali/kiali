@@ -15,21 +15,51 @@ package procfs
 
 import (
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-func TestNewNetUnix(t *testing.T) {
+// Whether or not to run tests with inode fixtures.
+const (
+	checkInode   = true
+	noCheckInode = false
+)
+
+func TestNetUnix(t *testing.T) {
 	fs, err := NewFS(procTestFixtures)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to open procfs: %v", err)
 	}
 
-	nu, err := fs.NewNetUnix()
+	got, err := fs.NetUNIX()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to get UNIX socket data: %v", err)
 	}
 
-	lines := []*NetUnixLine{
-		&NetUnixLine{
+	testNetUNIX(t, checkInode, got)
+}
+
+func TestNetUnixNoInode(t *testing.T) {
+	fs, err := NewFS(procTestFixtures)
+	if err != nil {
+		t.Fatalf("failed to open procfs: %v", err)
+	}
+
+	got, err := readNetUNIX(fs.proc.Path("net/unix_without_inode"))
+	if err != nil {
+		t.Fatalf("failed to read UNIX socket data: %v", err)
+	}
+
+	testNetUNIX(t, noCheckInode, got)
+}
+
+func testNetUNIX(t *testing.T, testInode bool, got *NetUNIX) {
+	t.Helper()
+
+	// First verify that the input data matches a prepopulated structure.
+
+	want := []*NetUNIXLine{
+		{
 			KernelPtr: "0000000000000000",
 			RefCount:  2,
 			Flags:     1 << 16,
@@ -38,7 +68,7 @@ func TestNewNetUnix(t *testing.T) {
 			Inode:     3442596,
 			Path:      "/var/run/postgresql/.s.PGSQL.5432",
 		},
-		&NetUnixLine{
+		{
 			KernelPtr: "0000000000000000",
 			RefCount:  10,
 			Flags:     1 << 16,
@@ -47,7 +77,7 @@ func TestNewNetUnix(t *testing.T) {
 			Inode:     10061,
 			Path:      "/run/udev/control",
 		},
-		&NetUnixLine{
+		{
 			KernelPtr: "0000000000000000",
 			RefCount:  7,
 			Flags:     0,
@@ -56,7 +86,7 @@ func TestNewNetUnix(t *testing.T) {
 			Inode:     12392,
 			Path:      "/dev/log",
 		},
-		&NetUnixLine{
+		{
 			KernelPtr: "0000000000000000",
 			RefCount:  3,
 			Flags:     0,
@@ -65,7 +95,7 @@ func TestNewNetUnix(t *testing.T) {
 			Inode:     4787297,
 			Path:      "/var/run/postgresql/.s.PGSQL.5432",
 		},
-		&NetUnixLine{
+		{
 			KernelPtr: "0000000000000000",
 			RefCount:  3,
 			Flags:     0,
@@ -75,105 +105,66 @@ func TestNewNetUnix(t *testing.T) {
 		},
 	}
 
-	if want, have := len(lines), len(nu.Rows); want != have {
-		t.Errorf("want %d parsed net/unix lines, have %d", want, have)
-	}
-	for i, gotLine := range nu.Rows {
-		if i >= len(lines) {
-			continue
-		}
-		line := lines[i]
-		if *line != *gotLine {
-			t.Errorf("%d item: got %v, want %v", i, *gotLine, *line)
+	// Enable the fixtures to be used for multiple tests by clearing the inode
+	// field when appropriate.
+	if !testInode {
+		for i := 0; i < len(want); i++ {
+			want[i].Inode = 0
 		}
 	}
 
-	wantedFlags := "listen"
-	flags := lines[0].Flags.String()
-	if wantedFlags != flags {
-		t.Errorf("unexpected flag str: want %s, got %s", wantedFlags, flags)
-	}
-	wantedFlags = "default"
-	flags = lines[3].Flags.String()
-	if wantedFlags != flags {
-		t.Errorf("unexpected flag str: wanted %s, got %s", wantedFlags, flags)
+	if diff := cmp.Diff(want, got.Rows); diff != "" {
+		t.Fatalf("unexpected /proc/net/unix data (-want +got):\n%s", diff)
 	}
 
-	wantedType := "stream"
-	typ := lines[0].Type.String()
-	if wantedType != typ {
-		t.Errorf("unexpected type str: wanted %s, got %s", wantedType, typ)
+	// Now test the field enumerations and ensure they match up correctly
+	// with the constants used to generate readable strings.
+
+	wantFlags := []NetUNIXFlags{
+		netUnixFlagListen,
+		netUnixFlagListen,
+		netUnixFlagDefault,
+		netUnixFlagDefault,
+		netUnixFlagDefault,
 	}
 
-	wantedType = "seqpacket"
-	typ = lines[1].Type.String()
-	if wantedType != typ {
-		t.Errorf("unexpected type str: want %s, got %s", wantedType, typ)
-	}
-}
-
-func TestNewNetUnixWithoutInode(t *testing.T) {
-	fs, err := NewFS(procTestFixtures)
-	if err != nil {
-		t.Fatal(err)
-	}
-	nu, err := NewNetUnixByPath(fs.proc.Path("net/unix_without_inode"))
-	if err != nil {
-		t.Fatal(err)
+	wantType := []NetUNIXType{
+		netUnixTypeStream,
+		netUnixTypeSeqpacket,
+		netUnixTypeDgram,
+		netUnixTypeStream,
+		netUnixTypeStream,
 	}
 
-	lines := []*NetUnixLine{
-		&NetUnixLine{
-			KernelPtr: "0000000000000000",
-			RefCount:  2,
-			Flags:     1 << 16,
-			Type:      1,
-			State:     1,
-			Path:      "/var/run/postgresql/.s.PGSQL.5432",
-		},
-		&NetUnixLine{
-			KernelPtr: "0000000000000000",
-			RefCount:  10,
-			Flags:     1 << 16,
-			Type:      5,
-			State:     1,
-			Path:      "/run/udev/control",
-		},
-		&NetUnixLine{
-			KernelPtr: "0000000000000000",
-			RefCount:  7,
-			Flags:     0,
-			Type:      2,
-			State:     1,
-			Path:      "/dev/log",
-		},
-		&NetUnixLine{
-			KernelPtr: "0000000000000000",
-			RefCount:  3,
-			Flags:     0,
-			Type:      1,
-			State:     3,
-			Path:      "/var/run/postgresql/.s.PGSQL.5432",
-		},
-		&NetUnixLine{
-			KernelPtr: "0000000000000000",
-			RefCount:  3,
-			Flags:     0,
-			Type:      1,
-			State:     3,
-		},
+	wantState := []NetUNIXState{
+		netUnixStateUnconnected,
+		netUnixStateUnconnected,
+		netUnixStateUnconnected,
+		netUnixStateConnected,
+		netUnixStateConnected,
 	}
 
-	if want, have := len(lines), len(nu.Rows); want != have {
-		t.Errorf("want %d parsed net/unix lines, have %d", want, have)
+	var (
+		gotFlags []NetUNIXFlags
+		gotType  []NetUNIXType
+		gotState []NetUNIXState
+	)
+
+	for _, r := range got.Rows {
+		gotFlags = append(gotFlags, r.Flags)
+		gotType = append(gotType, r.Type)
+		gotState = append(gotState, r.State)
 	}
-	for i, gotLine := range nu.Rows {
-		if i >= len(lines) {
-			continue
-		}
-		line := lines[i]
-		if *line != *gotLine {
-			t.Errorf("%d item: got %v, want %v", i, *gotLine, *line)
-		}
+
+	if diff := cmp.Diff(wantFlags, gotFlags); diff != "" {
+		t.Fatalf("unexpected /proc/net/unix flags (-want +got):\n%s", diff)
+	}
+
+	if diff := cmp.Diff(wantType, gotType); diff != "" {
+		t.Fatalf("unexpected /proc/net/unix types (-want +got):\n%s", diff)
+	}
+
+	if diff := cmp.Diff(wantState, gotState); diff != "" {
+		t.Fatalf("unexpected /proc/net/unix states (-want +got):\n%s", diff)
 	}
 }

@@ -33,3 +33,6 @@ pf4lint:
 go: gobuild golint gotest
 pf3: pf3build pf3lint pf3test
 pf4: pf4build pf4lint pf4test
+
+storybook:
+	cd web/pf4 && yarn storybook

@@ -75,3 +75,19 @@ func TestProcStatusName(t *testing.T) {
 		t.Errorf("want name %s, have %s", want, have)
 	}
 }
+
+func TestProcStatusUIDs(t *testing.T) {
+	p, err := getProcFixtures(t).Proc(26231)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := p.NewStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, have := [4]string{"1000", "1000", "1000", "0"}, s.UIDs; want != have {
+		t.Errorf("want uids %s, have %s", want, have)
+	}
+}

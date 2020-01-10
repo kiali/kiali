@@ -10,10 +10,7 @@ export const CustomFlyout = (props: any) => {
   const extraWidth = squareSize + 5;
   return (
     <>
-      <Flyout
-        {...props}
-        width={width + extraWidth}
-      />
+      <Flyout {...props} width={width + extraWidth} />
       <rect width={squareSize} height={squareSize} x={left} y={top} style={{ fill: datum.color }} />
     </>
   );

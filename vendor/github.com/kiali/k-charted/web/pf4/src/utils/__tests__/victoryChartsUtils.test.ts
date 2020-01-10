@@ -1,4 +1,4 @@
-import { getDataSupplier } from '../victoryChartsUtils';
+import { getDataSupplier, findClosestDatapoint } from '../victoryChartsUtils';
 import { empty, histogram, metric, metricWithLabels, emptyLabels, labelsWithPrettifier } from '../../types/__mocks__/Charts.mock';
 import { ChartModel } from '../..';
 
@@ -56,5 +56,47 @@ describe('Victory Charts Utils', () => {
     expect(res[0].datapoints.map(s => s.name)).toEqual(['OK']);
     expect(res[1].datapoints.map(s => s.name)).toEqual(['No content']);
     expect(res[2].datapoints.map(s => s.name)).toEqual(['foobar']);
+  });
+
+  it('should find closest data point', () => {
+    const lines = [{
+      datapoints: [{ x: 0, y: 0 }, { x: 1, y: 0 }]
+    }, {
+      datapoints: [{ x: 0, y: 1 }, { x: 1, y: 1 }]
+    }] as any;
+    // Remember that screen Y coordinate is reversed compared to domain!
+    let point = findClosestDatapoint(lines, -50, -50, 10, 10);
+    expect(point).toEqual({x: 0, y: 1});
+    point = findClosestDatapoint(lines, 2, 0, 10, 10);
+    expect(point).toEqual({x: 0, y: 1});
+    point = findClosestDatapoint(lines, 7, 3, 10, 10);
+    expect(point).toEqual({x: 1, y: 1});
+    point = findClosestDatapoint(lines, 2, 12, 10, 10);
+    expect(point).toEqual({x: 0, y: 0});
+  });
+
+  it('should not crash while finding closest data point', () => {
+    let point = findClosestDatapoint([], 50, 50, 500, 500);
+    expect(point).toBeUndefined();
+
+    point = findClosestDatapoint([{ datapoints: [{ x: 0, y: 0 }] }] as any, 50, 50, 0, 0);
+    expect(point).toBeUndefined();
+  });
+
+  it('should find closest data point with different axis scales', () => {
+    const lines = [{
+      datapoints: [{ x: 10000, y: 0 }, { x: 20000, y: 0 }]
+    }, {
+      datapoints: [{ x: 10005, y: 1 }, { x: 20005, y: 1 }]
+    }] as any;
+    // Remember that screen Y coordinate is reversed compared to domain!
+    let point = findClosestDatapoint(lines, -50, -50, 10, 10);
+    expect(point).toEqual({x: 10005, y: 1});
+    point = findClosestDatapoint(lines, 2, 0, 10, 10);
+    expect(point).toEqual({x: 10005, y: 1});
+    point = findClosestDatapoint(lines, 7, 3, 10, 10);
+    expect(point).toEqual({x: 20005, y: 1});
+    point = findClosestDatapoint(lines, 2, 12, 10, 10);
+    expect(point).toEqual({x: 10000, y: 0});
   });
 });

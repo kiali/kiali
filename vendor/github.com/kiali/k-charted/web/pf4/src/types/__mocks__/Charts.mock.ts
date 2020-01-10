@@ -8,6 +8,8 @@ const increment = 60;
 
 type MetricMock = { name: string, labels: { [key: string]: string } };
 
+export const biggerTimeWindow: [Date, Date] = [new Date((t0 - 10 * 60) * 1000), new Date((t0 + 10 * 60) * 1000)];
+
 const genSeries = (metrics: MetricMock[]): TimeSeries[] => {
   return metrics.map(m => {
     m.labels.__name__ = m.name;
@@ -35,6 +37,19 @@ export const generateRandomMetricChart = (title: string, names: string[], spans:
   return {
     name: title,
     unit: 'bytes',
+    spans: spans,
+    metric: genSeries(names.map(n => ({ name: n, labels: {}})))
+  };
+};
+
+export const generateRandomScatterChart = (title: string, names: string[], spans: SpanValue, seed?: string): ChartModel => {
+  if (seed) {
+    seedrandom(seed, { global: true });
+  }
+  return {
+    name: title,
+    unit: 'seconds',
+    chartType: 'scatter',
     spans: spans,
     metric: genSeries(names.map(n => ({ name: n, labels: {}})))
   };

@@ -15,28 +15,28 @@ package procfs
 
 import (
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-func TestSoftnet(t *testing.T) {
+func TestNetSoftnet(t *testing.T) {
 	fs, err := NewFS(procTestFixtures)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entries, err := fs.GatherSoftnetStats()
+	want := []SoftnetStat{{
+		Processed:    0x00015c73,
+		Dropped:      0x00020e76,
+		TimeSqueezed: 0xf0000769,
+	}}
+
+	got, err := fs.NetSoftnetStat()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if want, got := uint(0x00015c73), entries[0].Processed; want != got {
-		t.Errorf("want %08x, got %08x", want, got)
-	}
-
-	if want, got := uint(0x00020e76), entries[0].Dropped; want != got {
-		t.Errorf("want %08x, got %08x", want, got)
-	}
-
-	if want, got := uint(0xF0000769), entries[0].TimeSqueezed; want != got {
-		t.Errorf("want %08x, got %08x", want, got)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Fatalf("unexpected softnet stats(-want +got):\n%s", diff)
 	}
 }

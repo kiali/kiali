@@ -1481,56 +1481,49 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@patternfly/patternfly@2.33.5":
-  version "2.33.5"
-  resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-2.33.5.tgz#e8abad22510d32de4933a42d7f567b152ccc0e6d"
-  integrity sha512-/4S19Ln2BY62nUP/Ow+j4gzCKm4e3HYehW92R+iaREaBgatfq55G50QdPsXDvTvLeTp9lS6YfXJlLz7OTIHnhw==
+"@patternfly/patternfly@2.43.1":
+  version "2.43.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-2.43.1.tgz#9961e331ac78f2cf55a73527656503f5555b053e"
+  integrity sha512-dWw4FeQfLHFXva1VmH8Epusu3VX91VrOH+9FVvRDsCEcajsq5Pc5BCF+H9KyQ4eA6EfTEMsW2F0zVWD/7B4RFA==
 
-"@patternfly/react-charts@~5.0.13":
-  version "5.0.13"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-5.0.13.tgz#57467fe8e1d4ae0d63c5d2da22f05b96b09f7974"
-  integrity sha512-uyjBUKfO9QGi7nvcE0pkAwhTTwsEoXHozQ6tgz/wT9QS4q0y+oYam5PlHBPCQ5qVwseX6v/po8Lx6ktK6xMD3A==
+"@patternfly/react-charts@~5.2.2":
+  version "5.2.2"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-5.2.2.tgz#6444cd92500a4b100ba5dd7dd40fe138e7d7fa99"
+  integrity sha512-7q3Iv8xQA3dtACaXJkOk6vHJJJ9jP1ilRLPlKID7TWTpwn4+I+p73r8il7x5fPUrw0aapetmSFiu1/kD995bYA==
   dependencies:
-    "@patternfly/patternfly" "2.33.5"
-    "@patternfly/react-styles" "^3.5.27"
-    "@patternfly/react-tokens" "^2.6.31"
+    "@patternfly/patternfly" "2.43.1"
+    "@patternfly/react-styles" "^3.6.11"
+    "@patternfly/react-tokens" "^2.7.10"
     hoist-non-react-statics "^3.3.0"
     lodash "^4.17.15"
     victory "^33.0.5"
     victory-core "^33.0.1"
     victory-legend "^33.0.1"
 
-"@patternfly/react-core@~3.89.2":
-  version "3.89.3"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-core/-/react-core-3.89.3.tgz#527c6505ab7020867c9ac16b3900f4d8513479bf"
-  integrity sha512-JE+w0GN6XKoeqU8IHnnsVwhQvU3W8GdqKYiBvgFiv7+if/IL7c+JpjXz8qXYTBgkdNBNTuruUazexLCA0F/Rkw==
+"@patternfly/react-core@~3.124.1":
+  version "3.124.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-core/-/react-core-3.124.1.tgz#26cc7021126f1336840a312f42c9af6a7b1b529a"
+  integrity sha512-jKCTyyT3FmAiOMkm/Nt3zHoAyIlrLBKLWOFi+GuC+4PAVyQetK42+Hp8JyrSBPi4q+pfjGjQUngmpkhooGETlg==
   dependencies:
-    "@patternfly/react-icons" "^3.11.0"
-    "@patternfly/react-styles" "^3.5.14"
-    "@patternfly/react-tokens" "^2.6.17"
+    "@patternfly/react-icons" "^3.14.23"
+    "@patternfly/react-styles" "^3.6.11"
+    "@patternfly/react-tokens" "^2.7.10"
     emotion "^9.2.9"
     exenv "^1.2.2"
     focus-trap-react "^4.0.1"
     tippy.js "3.4.1"
 
-"@patternfly/react-icons@^3.11.0":
-  version "3.14.5"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-icons/-/react-icons-3.14.5.tgz#cf68d3da3ac9cacbd96b0bbd1a4b5bc066c06f8b"
-  integrity sha512-RIwUGtrjgY5rA/5eaVE7653ggPIjjHiAy46/vxn6VDIw8f6j15FrsO09ZvImvbLX4w8mpneBy1hx0NBckgfa+A==
+"@patternfly/react-icons@^3.14.23":
+  version "3.14.28"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-icons/-/react-icons-3.14.28.tgz#8addc1d0dce3fdc5528f731e0fdaf98ef966b542"
+  integrity sha512-xrmcaLaHvkixPdTuBfR+vPD2prUYxKq97TGs97lfo0K4g7Wi6lD30zMlmwzonWy1IuOHATiEwf3j7mXAqQXHlQ==
   dependencies:
     "@fortawesome/free-brands-svg-icons" "^5.8.1"
 
-"@patternfly/react-icons@~3.9.5":
-  version "3.9.5"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-icons/-/react-icons-3.9.5.tgz#c21bf16475aad39426abf76198acfa14c0556752"
-  integrity sha512-SFKeEqMXjVZlVl4rl8q4P36R8Bn5e7Log0+g6602/jUO0tX1qdKK5FlGInUZ73AVqYsJ/WdKXDmoI++m/ys3Ew==
-  dependencies:
-    "@fortawesome/free-brands-svg-icons" "^5.8.1"
-
-"@patternfly/react-styles@^3.5.14":
-  version "3.5.22"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.5.22.tgz#12c2ca97a796d6653b2981fc2559103d18f3b3c4"
-  integrity sha512-76g7wc1X+yxQkuVfdt3gP/HdW9FKMzfDg1YNRmVzTOp+tCEMz+ITTCPyr6Y4ysqVJHk+ePOuN6T3103IrC1LRw==
+"@patternfly/react-styles@^3.6.11":
+  version "3.6.11"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.6.11.tgz#43fee9c24469a5e7fca824740c077033f7e532a8"
+  integrity sha512-iJsj+DPKUi5KAbSR7uQ76iJEDfw/254Vbt+zXm686NTgTR9cloVBUx3ww8ni+CPjk0A9kyaf64FfOXrgoIicAg==
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0-beta.48"
     camel-case "^3.0.0"
@@ -1546,34 +1539,10 @@
     resolve-from "^4.0.0"
     typescript "3.4.5"
 
-"@patternfly/react-styles@^3.5.27":
-  version "3.5.27"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.5.27.tgz#a513495932ebe64ecb013d8fb1589d746ac7ea1e"
-  integrity sha512-nDhWOR+7W/oQgIw+4nwvGpoS2OgarfxlIEkFQaNdete6QyKwp2erPxDBNnj2gOGaB/+CKDWvTWD6JPhiuU56ew==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.0.0-beta.48"
-    camel-case "^3.0.0"
-    css "^2.2.3"
-    cssom "^0.3.4"
-    cssstyle "^0.3.1"
-    emotion "^9.2.9"
-    emotion-server "^9.2.9"
-    fbjs-scripts "^0.8.3"
-    fs-extra "^6.0.1"
-    jsdom "^15.1.0"
-    relative "^3.0.2"
-    resolve-from "^4.0.0"
-    typescript "3.4.5"
-
-"@patternfly/react-tokens@^2.6.17":
-  version "2.6.26"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-2.6.26.tgz#0977763118e8cd91ca36381a89497e7e7f10b5ba"
-  integrity sha512-cxlt8v4kJGGnBVT1qcvY5ym6yNXv7WEhXQvjYnz4Lza+W69phT/ko2I45lH2H3dOwxZa8v4iU3O7HSV4+Oq3SQ==
-
-"@patternfly/react-tokens@^2.6.31":
-  version "2.6.31"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-2.6.31.tgz#3fab62e9ccf4d81f6c10edbcf66836264362b3d3"
-  integrity sha512-K9semfLIdf2vECefAbheXPVwZqq8nXY0Hf/VkWh6OBCL6R4FekxajpSBgobeoTQUotmvz5boMngqhkUjE7yChA==
+"@patternfly/react-tokens@^2.7.10":
+  version "2.7.10"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-2.7.10.tgz#5e990e862b2311329066e8d005cdac6cd5e19af3"
+  integrity sha512-7p7L0CwSHVKnN2vu/zNTL0NN6K+tBPfS1Vw1fnynglWomBW2Uqb5lKlkORuySOCa3Zy/WMNmTI9feFrVpCIV+w==
 
 "@reach/router@^1.2.1":
   version "1.2.1"
@@ -4380,6 +4349,11 @@ commander@~2.19.0:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.19.0.tgz#f6198aa84e5b83c46054b94ddedbfed5ee9ff12a"
   integrity sha512-6tvAOO+D6OENvRAh524Dh9jcfKTYDQAqvqezbCW82xj5X0pSrcpxtvRKHLG0yBY6SD7PSDrJaj+0AiOcKVd1Xg==
 
+commander@~2.20.3:
+  version "2.20.3"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
+  integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
+
 common-tags@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/common-tags/-/common-tags-1.8.0.tgz#8e3153e542d4a39e9b10554434afaaf98956a937"
@@ -6621,9 +6595,9 @@ handle-thing@^2.0.0:
   integrity sha512-d4sze1JNC454Wdo2fkuyzCr6aHcbL6PGGuFAz0Li/NcOm1tCHGnWDRmJP85dh9IhQErTc2svWFEX5xHIOo//kQ==
 
 handlebars@^4.1.2:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.1.2.tgz#b6b37c1ced0306b221e094fc7aca3ec23b131b67"
-  integrity sha512-nvfrjqvt9xQ8Z/w0ijewdD/vvWDTOweBUm96NTr66Wfvo1mJenBLwcYmPs3TIBP5ruzYGD7Hx/DaM9RmhroGPw==
+  version "4.5.3"
+  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.5.3.tgz#5cf75bd8714f7605713511a56be7c349becb0482"
+  integrity sha512-3yPecJoJHK/4c6aZhSvxOyG4vJKDshV36VHp0iVCDVh7o9w2vwi3NSnL2MMPj3YdduqaBcu7cGbggJQM0br9xA==
   dependencies:
     neo-async "^2.6.0"
     optimist "^0.6.1"
@@ -12753,7 +12727,15 @@ uglify-js@3.4.x:
     commander "~2.19.0"
     source-map "~0.6.1"
 
-uglify-js@^3.1.4, uglify-js@^3.5.1:
+uglify-js@^3.1.4:
+  version "3.7.3"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.7.3.tgz#f918fce9182f466d5140f24bb0ff35c2d32dcc6a"
+  integrity sha512-7tINm46/3puUA4hCkKYo4Xdts+JDaVC9ZPRcG8Xw9R4nhO/gZgUM3TENq8IF4Vatk8qCig4MzP/c8G4u2BkVQg==
+  dependencies:
+    commander "~2.20.3"
+    source-map "~0.6.1"
+
+uglify-js@^3.5.1:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.6.0.tgz#704681345c53a8b2079fb6cec294b05ead242ff5"
   integrity sha512-W+jrUHJr3DXKhrsS7NUVxn3zqMOFn0hL/Ei6v0anCIMoKC93TjcflTagwIHLW7SfMFfiQuktQyFVCFHGUE0+yg==

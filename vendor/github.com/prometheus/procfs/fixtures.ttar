@@ -189,7 +189,7 @@ Ngid:	0
 Pid:	26231
 PPid:	1
 TracerPid:	0
-Uid:	0	0	0	0
+Uid:	1000	1000	1000	0
 Gid:	0	0	0	0
 FDSize:	128
 Groups:
@@ -1824,6 +1824,27 @@ Mode: 444
 Path: fixtures/proc/net/softnet_stat
 Lines: 1
 00015c73 00020e76 F0000769 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+Mode: 644
+# ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Path: fixtures/proc/net/udp
+Lines: 4
+  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode                                                     
+   0: 00000000:0016 00000000:0000 0A 00000000:00000001 00:00000000 00000000     0        0 2740 1 ffff88003d3af3c0 100 0 0 10 0                      
+   1: 00000000:0016 00000000:0000 0A 00000001:00000000 00:00000000 00000000     0        0 2740 1 ffff88003d3af3c0 100 0 0 10 0                      
+   2: 00000000:0016 00000000:0000 0A 00000001:00000001 00:00000000 00000000     0        0 2740 1 ffff88003d3af3c0 100 0 0 10 0                      
+Mode: 644
+# ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Path: fixtures/proc/net/udp6
+Lines: 3
+  sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode ref pointer drops
+ 1315: 00000000000000000000000000000000:14EB 00000000000000000000000000000000:0000 07 00000000:00000000 00:00000000 00000000   981        0 21040 2 0000000013726323 0
+ 6073: 00000000000000000000000000000000:C781 00000000000000000000000000000000:0000 07 00000000:00000000 00:00000000 00000000  1000        0 11337031 2 00000000b9256fdd 0
+Mode: 444
+# ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Path: fixtures/proc/net/udp_broken
+Lines: 2
+  sl  local_address rem_address   st
+   1: 00000000:0016 00000000:0000 0A
 Mode: 644
 # ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Path: fixtures/proc/net/unix
