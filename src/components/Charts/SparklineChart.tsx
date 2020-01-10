@@ -15,6 +15,8 @@ import { PfColors } from 'components/Pf/PfColors';
 import * as Legend from './LegendHelper';
 import { CustomFlyout } from './CustomFlyout';
 
+import './Charts.css';
+
 type Props = ChartProps & {
   name: string;
   series: VCLines;
