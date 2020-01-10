@@ -326,10 +326,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:           false,
+				Enabled:           true,
 				NamespaceSelector: true,
-				InClusterURL:      "https://tracing.istio-system.svc:16686",
-				URL:               "http://tracing.istio-system:16686",
+				InClusterURL:      "http://tracing.istio-system/jaeger",
 			},
 		},
 		IstioLabels: IstioLabels{
