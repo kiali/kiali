@@ -12,10 +12,13 @@
   set_fact:
     is_openshift: "{{ True if 'route.openshift.io' in api_groups else False }}"
     is_k8s: "{{ False if 'route.openshift.io' in api_groups else True }}"
-    is_maistra: "{{ True if 'maistra.io' in api_groups else False }}"
   when:
   - is_openshift == False
   - is_k8s == False
+
+- name: Determine the Istio implementation
+  set_fact:
+    is_maistra: "{{ True if 'maistra.io' in api_groups else False }}"
 
 # Indicate what kind of cluster we are in (OpenShift or Kubernetes).
 - debug:
