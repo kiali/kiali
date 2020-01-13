@@ -653,3 +653,10 @@ type ThreeScaleGetRuleResponse struct {
 	// in: body
 	Body models.ThreeScaleServiceRule
 }
+
+// Return caller permissions per namespace and Istio Config type
+// swagger:response istioConfigPermissions
+type swaggIstioConfigPermissions struct {
+	// in:body
+	Body models.IstioConfigPermissions
+}
