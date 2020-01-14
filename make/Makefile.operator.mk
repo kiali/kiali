@@ -70,7 +70,7 @@ endif
 	cat ${KIALI_CR_FILE} | \
 ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
-KIALI_EXTERNAL_SERVICES_PASSWORD="$(shell ${OC} get secrets htpasswd -n ${NAMESPACE} -o jsonpath='{.data.rawPassword}' 2>/dev/null || echo '' | base64 --decode)" \
+KIALI_EXTERNAL_SERVICES_PASSWORD="$(shell ${OC} get secrets htpasswd -n ${NAMESPACE} -o jsonpath='{.data.rawPassword}' 2>/dev/null | base64 --decode)" \
 KIALI_IMAGE_NAME="${CLUSTER_KIALI_INTERNAL_NAME}" \
 KIALI_IMAGE_PULL_POLICY="${KIALI_IMAGE_PULL_POLICY}" \
 KIALI_IMAGE_VERSION="${CONTAINER_VERSION}" \
