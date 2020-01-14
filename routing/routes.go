@@ -178,6 +178,25 @@ func NewRoutes() (r *Routes) {
 			handlers.Config,
 			true,
 		},
+		// swagger:route GET /istio/permissions getPermissions
+		// ---
+		// Endpoint to get the caller permissions on new Istio Config objects
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: istioConfigPermissions
+		{
+			"IstioConfigPermissions",
+			"GET",
+			"/api/istio/permissions",
+			handlers.IstioConfigPermissions,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace

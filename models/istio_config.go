@@ -65,3 +65,9 @@ type ResourcePermissions struct {
 	Update bool `json:"update"`
 	Delete bool `json:"delete"`
 }
+
+// ResourcesPermissions holds a map of permission flags per resource
+type ResourcesPermissions map[string]*ResourcePermissions
+
+// IstioConfigPermissions holds a map of ResourcesPermissions per namespace
+type IstioConfigPermissions map[string]*ResourcesPermissions

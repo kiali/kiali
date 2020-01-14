@@ -343,3 +343,21 @@ func audit(r *http.Request, message string) {
 		log.Infof("AUDIT User [%s] Msg [%s]", user, message)
 	}
 }
+
+func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
+	// query params
+	params := r.URL.Query()
+	namespaces := params.Get("namespaces") // csl of namespaces
+
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	istioConfigPermissions := models.IstioConfigPermissions{}
+	if len(namespaces) > 0 {
+		ns := strings.Split(namespaces, ",")
+		istioConfigPermissions = business.IstioConfig.GeIstioConfigPermissions(ns)
+	}
+	RespondWithJSON(w, http.StatusOK, istioConfigPermissions)
+}

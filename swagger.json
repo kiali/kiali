@@ -158,6 +158,27 @@
         }
       }
     },
+    "/istio/permissions": {
+      "get": {
+        "description": "Endpoint to get the caller permissions on new Istio Config objects",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "getPermissions",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigPermissions"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/jaeger": {
       "get": {
         "description": "Get the jaeger URL and other descriptors",
@@ -4001,6 +4022,14 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "IstioConfigPermissions": {
+      "description": "IstioConfigPermissions holds a map of ResourcesPermissions per namespace",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ResourcesPermissions"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "IstioValidation": {
       "type": "object",
       "title": "IstioValidation represents a list of checks associated to an Istio object.",
@@ -4983,6 +5012,14 @@
           "type": "boolean",
           "x-go-name": "Update"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ResourcesPermissions": {
+      "description": "ResourcesPermissions holds a map of permission flags per resource",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ResourcePermissions"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -6622,6 +6659,12 @@
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
         "$ref": "#/definitions/IstioConfigList"
+      }
+    },
+    "istioConfigPermissions": {
+      "description": "Return caller permissions per namespace and Istio Config type",
+      "schema": {
+        "$ref": "#/definitions/IstioConfigPermissions"
       }
     },
     "jaegerInfoResponse": {
