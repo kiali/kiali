@@ -29,14 +29,14 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
   },
   {
     id: 'workloadname',
-    title: 'Name',
+    title: 'Workload Name',
     isNumeric: false,
     param: 'wn',
     compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
     id: 'workloadtype',
-    title: 'Type',
+    title: 'Workload Type',
     isNumeric: false,
     param: 'wt',
     compare: (a, b) => a.type.localeCompare(b.type)
@@ -137,8 +137,8 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
 
 const workloadNameFilter: FilterType = {
   id: 'workloadname',
-  title: 'Name',
-  placeholder: 'Filter by Name',
+  title: 'Workload Name',
+  placeholder: 'Filter by Workload Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
@@ -164,8 +164,8 @@ const versionLabelFilter: FilterType = {
 
 const workloadTypeFilter: FilterType = {
   id: 'workloadtype',
-  title: 'Type',
-  placeholder: 'Filter by Type',
+  title: 'Workload Type',
+  placeholder: 'Filter by Workload Type',
   filterType: 'select',
   action: FILTER_ACTION_APPEND,
   filterValues: [
