@@ -84,7 +84,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFilter[]) => {
 export const healthFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'health',
   title: 'Health',
-  placeholder: 'Filter by Health',
+  placeholder: 'Filter by Application Health',
   filterType: 'select',
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,

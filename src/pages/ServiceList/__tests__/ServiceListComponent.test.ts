@@ -54,7 +54,7 @@ describe('SortField#compare', () => {
 });
 
 describe('ServiceListContainer#sortServices', () => {
-  const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Name')!;
+  const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Service Name')!;
   const services = [makeService('A', -1), makeService('B', -1)];
   it('should sort ascending', done => {
     ServiceListFilters.sortServices(services, sortField, true).then(sorted => {
