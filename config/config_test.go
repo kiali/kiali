@@ -89,6 +89,13 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.NotContains(t, printed, "my-token")
 	assert.NotContains(t, printed, "my-signkey")
 	assert.Contains(t, printed, "12345")
+
+	// Test that the original values are unchanged
+	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
+	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
+	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
+	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
+	assert.Equal(t, "my-password", conf.Server.Credentials.Passphrase)
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
