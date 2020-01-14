@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -59,6 +60,35 @@ func TestEnvVarOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
 	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
+}
+
+func TestSensitiveDataObfuscation(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Username = "my-username"
+	conf.ExternalServices.Grafana.Auth.Password = "my-password"
+	conf.ExternalServices.Grafana.Auth.Token = "my-token"
+	conf.ExternalServices.Prometheus.Auth.Username = "my-username"
+	conf.ExternalServices.Prometheus.Auth.Password = "my-password"
+	conf.ExternalServices.Prometheus.Auth.Token = "my-token"
+	conf.ExternalServices.Tracing.Auth.Username = "my-username"
+	conf.ExternalServices.Tracing.Auth.Password = "my-password"
+	conf.ExternalServices.Tracing.Auth.Token = "my-token"
+	conf.LoginToken.SigningKey = "my-signkey"
+	conf.LoginToken.ExpirationSeconds = 12345
+	conf.Server = Server{
+		Credentials: security.Credentials{
+			Username:   "my-username",
+			Passphrase: "my-password",
+		},
+	}
+
+	printed := fmt.Sprintf("%v", conf)
+
+	assert.NotContains(t, printed, "my-username")
+	assert.NotContains(t, printed, "my-password")
+	assert.NotContains(t, printed, "my-token")
+	assert.NotContains(t, printed, "my-signkey")
+	assert.Contains(t, printed, "12345")
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {

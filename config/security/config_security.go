@@ -11,12 +11,22 @@ type Identity struct {
 	PrivateKeyFile string `yaml:"private_key_file"`
 }
 
+func (i *Identity) Obfuscate() {
+	i.PrivateKeyFile = "xxx"
+}
+
 // Credentials provides information when needing to authenticate to remote endpoints.
 // Credentials are either a username/password or a bearer token, but not both.
 type Credentials struct {
 	Username   string `yaml:",omitempty"`
 	Passphrase string `yaml:",omitempty"`
 	Token      string `yaml:",omitempty"`
+}
+
+func (c *Credentials) Obfuscate() {
+	c.Token = "xxx"
+	c.Passphrase = "xxx"
+	c.Username = "xxx"
 }
 
 // TLS options - SkipCertificateValidation will disable server certificate verification - the client
