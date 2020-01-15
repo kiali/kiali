@@ -35,7 +35,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
-import { RenderHeader } from '../../components/Nav/Page';
+import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
 import OverviewCardContentCompact from './OverviewCardContentCompact';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -53,7 +53,11 @@ import { DurationInSeconds, RefreshIntervalInMs } from 'types/Common';
 import { Link } from 'react-router-dom';
 import { Paths } from '../../config';
 
-const gridStyle = style({ backgroundColor: '#f5f5f5', paddingBottom: '20px', marginTop: '20px' });
+const gridStyle = style({
+  backgroundColor: '#f5f5f5',
+  paddingBottom: '20px',
+  marginTop: '20px'
+});
 const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '20px' });
 
 const emptyStateStyle = style({
@@ -371,23 +375,25 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           />
         </RenderHeader>
         {filteredNamespaces.length > 0 ? (
-          <Grid className={gridStyle}>
-            {filteredNamespaces.map(ns => (
-              <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
-                <Card isCompact={true} className={cardGridStyle}>
-                  <CardHeader>
-                    {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                    {ns.name}
-                  </CardHeader>
-                  <CardBody>
-                    {this.renderStatuses(ns)}
-                    {this.renderIstioConfigStatus(ns)}
-                    <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
-                  </CardBody>
-                </Card>
-              </GridItem>
-            ))}
-          </Grid>
+          <RenderComponentScroll className={gridStyle}>
+            <Grid>
+              {filteredNamespaces.map(ns => (
+                <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
+                  <Card isCompact={true} className={cardGridStyle}>
+                    <CardHeader>
+                      {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
+                      {ns.name}
+                    </CardHeader>
+                    <CardBody>
+                      {this.renderStatuses(ns)}
+                      {this.renderIstioConfigStatus(ns)}
+                      <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
+                    </CardBody>
+                  </Card>
+                </GridItem>
+              ))}
+            </Grid>
+          </RenderComponentScroll>
         ) : (
           <div style={{ backgroundColor: '#f5f5f5' }}>
             <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export class RenderComponentScroll extends React.Component<{}, { height: number }> {
+export class RenderComponentScroll extends React.Component<{ className?: any }, { height: number }> {
   constructor(props) {
     super(props);
     this.state = { height: 0 };
@@ -21,6 +21,13 @@ export class RenderComponentScroll extends React.Component<{}, { height: number 
   };
 
   render() {
-    return <div style={{ height: this.state.height, overflowY: 'auto' }}>{this.props.children}</div>;
+    return (
+      <div
+        style={{ height: this.state.height, overflowY: 'auto' }}
+        className={this.props.className ? this.props.className : undefined}
+      >
+        {this.props.children}
+      </div>
+    );
   }
 }
