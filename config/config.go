@@ -91,6 +91,13 @@ type Auth struct {
 	Username           string `yaml:"username"`
 }
 
+func (a *Auth) Obfuscate() {
+	a.Token = "xxx"
+	a.Password = "xxx"
+	a.Username = "xxx"
+	a.CAFile = "xxx"
+}
+
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
 	Auth             Auth   `yaml:"auth,omitempty"`
@@ -156,6 +163,10 @@ type ExternalServices struct {
 type LoginToken struct {
 	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
 	SigningKey        string `yaml:"signing_key,omitempty"`
+}
+
+func (lt *LoginToken) Obfuscate() {
+	lt.SigningKey = "xxx"
 }
 
 // IstioLabels holds configuration about the labels required by Istio
@@ -394,8 +405,16 @@ func getDefaultStringFromFile(filename string, defaultValue string) (retVal stri
 }
 
 // String marshals the given Config into a YAML string
+// WARNING: do NOT use the result of this function to retrieve any configuration: some fields are obfuscated for security reasons.
 func (conf Config) String() (str string) {
-	str, err := Marshal(&conf)
+	obf := conf
+	obf.ExternalServices.Grafana.Auth.Obfuscate()
+	obf.ExternalServices.Prometheus.Auth.Obfuscate()
+	obf.ExternalServices.Tracing.Auth.Obfuscate()
+	obf.Identity.Obfuscate()
+	obf.Server.Credentials.Obfuscate()
+	obf.LoginToken.Obfuscate()
+	str, err := Marshal(&obf)
 	if err != nil {
 		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
 		log.Debugf(str)
