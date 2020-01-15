@@ -223,6 +223,16 @@ rules:
   - routes
   verbs:
   - get
+- apiGroups: ["console.openshift.io"]
+  resources:
+  - consolelinks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups: ["monitoring.kiali.io"]
   resources:
   - monitoringdashboards
