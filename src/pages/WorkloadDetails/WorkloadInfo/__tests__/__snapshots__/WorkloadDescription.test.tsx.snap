@@ -125,7 +125,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             <Text
               component="h3"
             >
-               Health
+               Overall Health
             </Text>
             <HealthIndicator
               id=""

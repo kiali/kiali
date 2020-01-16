@@ -146,7 +146,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
               </Title>
               <Stack>
                 <StackItem id="health" className={'stack_service_details'}>
-                  <Text component={TextVariants.h3}> Health</Text>
+                  <Text component={TextVariants.h3}> Overall Health</Text>
                   <HealthIndicator
                     id={app.name}
                     health={this.props.health}

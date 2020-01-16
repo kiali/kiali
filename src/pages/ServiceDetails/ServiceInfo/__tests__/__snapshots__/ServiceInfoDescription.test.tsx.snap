@@ -106,7 +106,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             <Text
               component="h3"
             >
-               Health 
+               Overall Health 
             </Text>
             <HealthIndicator
               id="reviews"

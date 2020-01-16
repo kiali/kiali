@@ -121,7 +121,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               </Title>
               <Stack className={'stack_service_details'}>
                 <StackItem id={'health'}>
-                  <Text component={TextVariants.h3}> Health </Text>
+                  <Text component={TextVariants.h3}> Overall Health </Text>
                   <HealthIndicator id={this.props.name} health={this.props.health} mode={DisplayMode.LARGE} />
                 </StackItem>
               </Stack>

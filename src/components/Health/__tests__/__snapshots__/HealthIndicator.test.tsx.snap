@@ -48,7 +48,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Pods Status",
+                "title": "Pod Status",
               },
               Object {
                 "children": Array [

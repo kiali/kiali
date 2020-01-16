@@ -108,7 +108,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               </Title>
               <Stack>
                 <StackItem id="health" className={'stack_service_details'}>
-                  <Text component={TextVariants.h3}> Health</Text>
+                  <Text component={TextVariants.h3}> Overall Health</Text>
                   <HealthIndicator
                     id={workload.name}
                     health={this.props.health}

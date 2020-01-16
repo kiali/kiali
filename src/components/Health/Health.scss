@@ -17,3 +17,7 @@ svg:not(:root).icon-na {
   border-width: 1px;
   text-align: left;
 }
+.health_indicator .pf-c-content ul {
+  margin-bottom: var(--pf-c-content--ul--MarginTop);
+  margin-top: 0;
+}

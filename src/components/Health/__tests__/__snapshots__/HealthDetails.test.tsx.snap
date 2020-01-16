@@ -5,16 +5,30 @@ exports[`HealthDetails renders deployments failure 1`] = `
   key="0"
 >
   <strong>
-    <UnknownIcon
-      className="icon-na"
-      color="#72767b"
-      noVerticalAlign={false}
-      size="sm"
-      title={null}
-    />
-     Error Rate over last 1m: 
+     Error Rate over last 1m
   </strong>
-  No requests
+  <ul
+    style={
+      Object {
+        "listStyleType": "none",
+        "paddingLeft": 12,
+      }
+    }
+  >
+    <li
+      key="0"
+    >
+      <UnknownIcon
+        className="icon-na"
+        color="#72767b"
+        noVerticalAlign={false}
+        size="sm"
+        title={null}
+      />
+       
+      Inbound: No requests
+    </li>
+  </ul>
 </div>
 `;
 
@@ -23,15 +37,29 @@ exports[`HealthDetails renders healthy 1`] = `
   key="0"
 >
   <strong>
-    <UnknownIcon
-      className="icon-na"
-      color="#72767b"
-      noVerticalAlign={false}
-      size="sm"
-      title={null}
-    />
-     Error Rate over last 1m: 
+     Error Rate over last 1m
   </strong>
-  No requests
+  <ul
+    style={
+      Object {
+        "listStyleType": "none",
+        "paddingLeft": 12,
+      }
+    }
+  >
+    <li
+      key="0"
+    >
+      <UnknownIcon
+        className="icon-na"
+        color="#72767b"
+        noVerticalAlign={false}
+        size="sm"
+        title={null}
+      />
+       
+      Inbound: No requests
+    </li>
+  </ul>
 </div>
 `;

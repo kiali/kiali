@@ -14,10 +14,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
     return health.items.map((item, idx) => {
       return (
         <div key={idx}>
-          <strong>
-            {createIcon(item.status)}
-            {' ' + item.title + ': '}
-          </strong>
+          <strong>{' ' + item.title + (item.text && item.text.length > 0 ? ': ' : '')}</strong>
           {item.text}
           {item.children && (
             <ul style={{ listStyleType: 'none', paddingLeft: 12 }}>

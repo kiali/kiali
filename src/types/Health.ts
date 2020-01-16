@@ -145,17 +145,6 @@ export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix
   };
 };
 
-export const getRequestErrorsViolations = (reqIn: ThresholdStatus, reqOut: ThresholdStatus): string => {
-  const violations: string[] = [];
-  if (reqIn.violation) {
-    violations.push(`Inbound errors: ${reqIn.violation}`);
-  }
-  if (reqOut.violation) {
-    violations.push(`Outbound errors: ${reqOut.violation}`);
-  }
-  return violations.join(', ');
-};
-
 export abstract class Health {
   constructor(public items: HealthItem[]) {}
 
@@ -181,7 +170,12 @@ export class ServiceHealth extends Health {
       const item: HealthItem = {
         title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
         status: reqErrorsRatio.status,
-        text: reqErrorsText
+        children: [
+          {
+            text: 'Inbound: ' + reqErrorsText,
+            status: reqErrorsRatio.status
+          }
+        ]
       };
       items.push(item);
     } else {
@@ -223,7 +217,7 @@ export class AppHealth extends Health {
       });
       const podsStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
       const item: HealthItem = {
-        title: 'Pods Status',
+        title: 'Pod Status',
         status: podsStatus,
         children: children
       };
@@ -271,9 +265,15 @@ export class WorkloadHealth extends Health {
         workloadStatus.desiredReplicas
       );
       const item: HealthItem = {
-        title: 'Pods Status',
+        title: 'Pod Status',
         status: podsStatus,
-        text: String(workloadStatus.availableReplicas + ' / ' + workloadStatus.desiredReplicas)
+        children: [
+          {
+            text:
+              workloadStatus.name + ': ' + workloadStatus.availableReplicas + ' / ' + workloadStatus.desiredReplicas,
+            status: podsStatus
+          }
+        ]
       };
       if (podsStatus !== NA && podsStatus !== HEALTHY) {
         item.children = [
