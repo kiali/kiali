@@ -74,8 +74,8 @@ func TestVirtualServiceMixedChecker(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
 	assert.Equal(validation.ObjectType, "virtualservice")
-	assert.False(validation.Valid)
-	assert.Len(validation.Checks, 3)
+	assert.True(validation.Valid)
+	assert.Len(validation.Checks, 2)
 }
 
 func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
@@ -99,8 +99,8 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
 	assert.Equal(validation.ObjectType, "virtualservice")
-	assert.False(validation.Valid)
-	assert.Len(validation.Checks, 3)
+	assert.True(validation.Valid)
+	assert.Len(validation.Checks, 2)
 
 	validation, ok = validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "reviews-multiple"}]
 	assert.True(ok)
@@ -121,22 +121,18 @@ func fakeVirtualServices() kubernetes.IstioObject {
 }
 
 func fakeVirtualServicesMultipleChecks() kubernetes.IstioObject {
-
-	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v4", 55),
-		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v5", 45),
-			data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{}),
-		),
-	).DeepCopyIstioObject()
+	virtualService := data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{})
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55), virtualService)
+	validVirtualService = data.AddRoutesToVirtualService("tcp", data.CreateRoute("reviews", "v2", 55),
+		validVirtualService).DeepCopyIstioObject()
 	delete(validVirtualService.GetSpec(), "hosts") // this isn't valid, but we mock the original testdata
 
 	return validVirtualService
 }
 
 func fakeVirtualServiceMixedChecker() kubernetes.IstioObject {
-	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v4", 155),
-		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
-			data.CreateEmptyVirtualService("reviews-mixed", "bookinfo", []string{}),
-		),
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v4", 05),
+		data.CreateEmptyVirtualService("reviews-mixed", "bookinfo", []string{}),
 	).DeepCopyIstioObject()
 	delete(validVirtualService.GetSpec(), "hosts") // this isn't valid, but we mock the original testdata
 
