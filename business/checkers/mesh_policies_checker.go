@@ -2,6 +2,7 @@ package checkers
 
 import (
 	"github.com/kiali/kiali/business/checkers/meshpolicies"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -26,7 +27,7 @@ func (m MeshPolicyChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (m MeshPolicyChecker) runChecks(meshPolicy kubernetes.IstioObject) models.IstioValidations {
 	meshPolicyName := meshPolicy.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(meshPolicyName, meshPolicy.GetObjectMeta().Namespace, MeshPolicyCheckerType)
+	key, rrValidation := EmptyValidValidation(meshPolicyName, config.Get().IstioNamespace, MeshPolicyCheckerType)
 
 	enabledCheckers := []Checker{
 		meshpolicies.MeshMtlsChecker{MeshPolicy: meshPolicy, MTLSDetails: m.MTLSDetails, IsServiceMesh: false},
