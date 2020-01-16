@@ -1,7 +1,6 @@
 import { SortField } from '../../types/SortFilters';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
-import { TextInputTypes } from '@patternfly/react-core';
+import { FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../types/Filters';
 
 export const getType = (item: IstioConfigItem): string => {
   return item.type === 'adapter'
@@ -78,7 +77,7 @@ export const istioNameFilter: FilterType = {
   id: 'istioname',
   title: 'Istio Name',
   placeholder: 'Filter by Istio Name',
-  filterType: TextInputTypes.text,
+  filterType: FilterTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };
@@ -87,7 +86,7 @@ export const istioTypeFilter: FilterType = {
   id: 'istiotype',
   title: 'Istio Type',
   placeholder: 'Filter by Istio Type',
-  filterType: 'typeahead',
+  filterType: FilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
@@ -173,7 +172,7 @@ export const configValidationFilter: FilterType = {
   id: 'configvalidation',
   title: 'Config',
   placeholder: 'Filter by Config Validation',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

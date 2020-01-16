@@ -9,12 +9,13 @@ import {
   SelectOption,
   SelectVariant,
   TextInput,
+  TextInputTypes,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
   ToolbarSection
 } from '@patternfly/react-core';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterTypes } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
@@ -219,7 +220,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     if (!currentFilterType) {
       return null;
     }
-    if (currentFilterType.filterType === 'typeahead') {
+    if (currentFilterType.filterType === FilterTypes.typeAhead) {
       return (
         <Select
           value={'default'}
@@ -236,7 +237,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           ))}
         </Select>
       );
-    } else if (currentFilterType.filterType === 'select') {
+    } else if (currentFilterType.filterType === FilterTypes.select) {
       return (
         <FormSelect
           value={'default'}
@@ -253,7 +254,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     } else {
       return (
         <TextInput
-          type={currentFilterType.filterType}
+          type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
           aria-label={'filter_imput_value'}
           placeholder={currentFilterType.placeholder}

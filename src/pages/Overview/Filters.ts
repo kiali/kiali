@@ -1,4 +1,10 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterTypeWithFilter, FilterValue } from '../../types/Filters';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FilterTypes,
+  FilterTypeWithFilter,
+  FilterValue
+} from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
@@ -33,7 +39,7 @@ export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'mtls',
   title: 'mTLS status',
   placeholder: 'Filter by mTLS status',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
   filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
@@ -85,7 +91,7 @@ export const healthFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'health',
   title: 'Health',
   placeholder: 'Filter by Application Health',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {

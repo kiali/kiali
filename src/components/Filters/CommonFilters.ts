@@ -1,4 +1,11 @@
-import { FILTER_ACTION_APPEND, FilterType, FILTER_ACTION_UPDATE, FilterValue, ActiveFilter } from '../../types/Filters';
+import {
+  FILTER_ACTION_APPEND,
+  FilterType,
+  FILTER_ACTION_UPDATE,
+  FilterValue,
+  ActiveFilter,
+  FilterTypes
+} from '../../types/Filters';
 import { HEALTHY, DEGRADED, FAILURE, NA, Health } from '../../types/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
 
@@ -17,7 +24,7 @@ export const istioSidecarFilter: FilterType = {
   id: 'istiosidecar',
   title: 'Istio Sidecar',
   placeholder: 'Filter by IstioSidecar Validation',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
@@ -26,7 +33,7 @@ export const healthFilter: FilterType = {
   id: 'health',
   title: 'Health',
   placeholder: 'Filter by Health',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {

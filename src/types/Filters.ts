@@ -6,12 +6,24 @@ export interface FilterValue {
   title: string;
 }
 
+enum NonInputTypes {
+  typeAhead = 'typeahead',
+  select = 'select'
+}
+
+export const FilterTypes = {
+  ...TextInputTypes,
+  ...NonInputTypes
+};
+
+type FilterTypes = NonInputTypes | TextInputTypes;
+
 // FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
   id: string;
   title: string;
   placeholder: string;
-  filterType: TextInputTypes | 'select' | 'typeahead';
+  filterType: FilterTypes;
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;

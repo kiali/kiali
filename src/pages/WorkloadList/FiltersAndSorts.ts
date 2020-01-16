@@ -1,4 +1,4 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterTypes } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { GenericSortField, HealthSortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WithWorkloadHealth } from '../../types/Health';
@@ -148,7 +148,7 @@ const appLabelFilter: FilterType = {
   id: 'applabel',
   title: 'App Label',
   placeholder: 'Filter by App Label Validation',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
@@ -157,7 +157,7 @@ const versionLabelFilter: FilterType = {
   id: 'versionlabel',
   title: 'Version Label',
   placeholder: 'Filter by Version Label Validation',
-  filterType: 'select',
+  filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
 };
@@ -166,7 +166,7 @@ const workloadTypeFilter: FilterType = {
   id: 'workloadtype',
   title: 'Workload Type',
   placeholder: 'Filter by Workload Type',
-  filterType: 'select',
+  filterType: FilterTypes.typeAhead,
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
