@@ -64,11 +64,11 @@ GO_BUILD_ENVVARS = \
 # Determine if we should use Docker OR Podman - value must be one of "docker" or "podman"
 DORP ?= docker
 
-# Set this to true if you want images to be tagged/pushed for minikube as opposed to OpenShift/AWS
-IS_MINIKUBE ?= false
+# Set this to 'minikube' if you want images to be tagged/pushed for minikube as opposed to OpenShift/AWS. Set to 'local' if the image should not be pushed to any remote cluster (requires the cluster to be able to pull from your local image repository).
+CLUSTER_TYPE ?= openshift
 
 # Find the client executable (either oc or kubectl). If minikube, only look for kubectl.
-ifeq ($(IS_MINIKUBE),true)
+ifeq ($(CLUSTER_TYPE),minikube)
 OC ?= $(shell which kubectl 2>/dev/null || echo "MISSING-KUBECTL-FROM-PATH")
 else
 OC ?= $(shell which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
@@ -87,7 +87,7 @@ OPERATOR_INSTALL_KIALI ?= false
 
 # When installing Kiali to a remote cluster via make, here are some configuration settings for it.
 ACCESSIBLE_NAMESPACES ?= **
-ifeq ($(IS_MINIKUBE),true)
+ifneq ($(CLUSTER_TYPE),openshift)
 AUTH_STRATEGY ?= login
 else
 AUTH_STRATEGY ?= openshift

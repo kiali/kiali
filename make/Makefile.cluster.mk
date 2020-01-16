@@ -41,10 +41,22 @@
 		exit 1 ;\
 	 fi
 
-ifeq ($(IS_MINIKUBE),true)
+.prepare-local: .ensure-oc-exists
+	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CONTAINER_NAME})
+	@$(eval CLUSTER_KIALI_TAG ?= ${CONTAINER_NAME}:${CONTAINER_VERSION})
+	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${OPERATOR_CONTAINER_NAME})
+	@$(eval CLUSTER_OPERATOR_TAG ?= ${OPERATOR_CONTAINER_NAME}:${OPERATOR_CONTAINER_VERSION})
+
+ifeq ($(CLUSTER_TYPE),minikube)
 .prepare-cluster: .prepare-minikube
-else
+else ifeq ($(CLUSTER_TYPE),openshift)
 .prepare-cluster: .prepare-ocp
+else ifeq ($(CLUSTER_TYPE),local)
+.prepare-cluster: .prepare-local
+else
+.prepare-cluster:
+	@echo "ERROR: unknown CLUSTER_TYPE [${CLUSTER_TYPE}] - must be one of: openshift, minikube, local"
+	@exit 1
 endif
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster

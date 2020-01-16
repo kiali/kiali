@@ -133,7 +133,9 @@ Before deploying and running Kiali, you must first install and deploy link:https
 
 By default, the make targets used to push and deploy Kiali images will assume you have an OpenShift 4.x cluster installed and running and that `oc` is found in your $PATH.
 
-If you wish to push and deploy Kiali to an installed and running Kubernetes (via Minikube) environment, pass the environment variable `IS_MINIKUBE=true` to the `make` commands and make sure `kubectl` is found in your $PATH.
+If you wish to push and deploy Kiali to an installed and running Kubernetes (via Minikube) environment, pass the environment variable `CLUSTER_TYPE=minikube` to the `make` commands and make sure `kubectl` is found in your $PATH.
+
+If you have neither minikube nor a remote OpenShift cluster, you can pass the environment variable `CLUSTER_TYPE=local` to the `make` commands and make sure you have either `oc` or `kubectl` in your $PATH. This requires your Kubernetes cluster to be able to pull from your local image repository.
 
 In order to deploy on Minikube using the below instructions, and to be able to access the deployed services, you must ensure you have the Registry and Ingress addons. To do this, ensure you run `minikube addons enable registry` and `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
 
