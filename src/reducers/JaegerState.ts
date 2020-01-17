@@ -6,8 +6,9 @@ import { JaegerActions } from '../actions/JaegerActions';
 
 export const INITIAL_JAEGER_STATE: JaegerState | null = {
   jaegerURL: '',
+  integration: false,
   namespaceSelector: true,
-  enableIntegration: false
+  integrationMessage: ''
 };
 
 const JaegerStateGenerator = (
@@ -17,7 +18,7 @@ const JaegerStateGenerator = (
   switch (action.type) {
     case getType(JaegerActions.setEnableIntegration):
       return updateState(state, {
-        enableIntegration: action.payload
+        integration: action.payload
       });
     case getType(JaegerActions.setUrl):
       return updateState(state, {
@@ -30,8 +31,9 @@ const JaegerStateGenerator = (
 
       return updateState(state, {
         jaegerURL: action.payload.jaegerURL,
-        enableIntegration: action.payload.enableIntegration,
-        namespaceSelector: action.payload.namespaceSelector
+        integration: action.payload.integration,
+        namespaceSelector: action.payload.namespaceSelector,
+        integrationMessage: action.payload.integrationMessage
       });
     default:
       return state;

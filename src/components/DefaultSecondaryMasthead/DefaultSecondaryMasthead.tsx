@@ -3,7 +3,7 @@ import { Title } from '@patternfly/react-core';
 import SecondaryMasthead from '../Nav/SecondaryMasthead';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 
-const titleShow = ['applications', 'workloads', 'services', 'istio', 'jaeger'];
+const titleShow = ['applications', 'workloads', 'services', 'istio'];
 export default class DefaultSecondaryMasthead extends React.Component {
   showTitle() {
     const path = window.location.pathname.replace('/console/', '');
@@ -14,10 +14,6 @@ export default class DefaultSecondaryMasthead extends React.Component {
           {path.charAt(0).toUpperCase() + path.slice(1)}
         </Title>
       );
-    }
-
-    if (path === 'jaeger') {
-      return <>Jaeger</>;
     }
 
     return undefined;

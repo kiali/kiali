@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
+import { ExclamationCircleIcon } from '@patternfly/react-icons';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -18,6 +19,7 @@ import { default as DestinationRuleValidator } from './ServiceInfo/types/Destina
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
+import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ApiDocumentation } from '../../components/ApiDocumentation/ApiDocumentation';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
@@ -32,6 +34,10 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
+import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
+import { getQueryJaeger } from '../../components/JaegerIntegration/RouteHelper';
+import RefreshContainer from '../../components/Refresh/Refresh';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -41,6 +47,10 @@ type ServiceDetailsState = {
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
   currentTab: string;
+  traces: JaegerTrace[];
+  errorTraces?: JaegerErrors[];
+  selectedTrace?: JaegerTrace;
+  errorSelectedTrace?: JaegerErrors[];
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
@@ -91,6 +101,8 @@ const emptyService: ServiceDetailsInfo = {
 const tabName = 'tab';
 const defaultTab = 'info';
 const trafficTabName = 'traffic';
+const tracesTabName = 'traces';
+
 const tabIndex: { [tab: string]: number } = {
   info: 0,
   traffic: 1,
@@ -116,7 +128,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           update: false,
           delete: false
         }
-      }
+      },
+      traces: []
     };
   }
 
@@ -182,7 +195,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   doRefresh = () => {
     const currentTab = this.state.currentTab;
 
-    if (currentTab === 'info') {
+    if (currentTab === defaultTab) {
       this.setState({ trafficData: null });
       this.fetchBackend();
     }
@@ -300,6 +313,44 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     });
   };
 
+  fetchTracesData = (cleanTrace: boolean = false, traceId?: string) => {
+    if (cleanTrace) {
+      this.setState({ selectedTrace: undefined });
+    }
+    if (traceId) {
+      fetchTrace(this.props.match.params.namespace, this.props.match.params.service, traceId).then(trace => {
+        let myState = {};
+        if (trace && trace.data) {
+          myState['selectedTrace'] = trace.data[0];
+        }
+        myState['errorSelectedTrace'] = trace ? trace.errors : [{ msg: 'Error Getting Trace ' + traceId }];
+        this.setState(myState);
+      });
+    } else {
+      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, getQueryJaeger()).then(traces => {
+        let myState = {};
+        if (traces && traces.data) {
+          myState['traces'] = traces.data;
+          if (traces.data.length === 0) {
+            myState['selectedTrace'] = undefined;
+          }
+        }
+        myState['errorTraces'] = traces
+          ? traces.errors
+          : [
+              {
+                msg:
+                  'Error Getting Traces of service ' +
+                  this.props.match.params.service +
+                  ' in namespace ' +
+                  this.props.match.params.namespace
+              }
+            ];
+        this.setState(myState);
+      });
+    }
+  };
+
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
     details.destinationRules.items.forEach(destinationRule => {
       const dr = new DestinationRuleValidator(destinationRule);
@@ -323,11 +374,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   renderActions() {
     let component;
     switch (this.state.currentTab) {
-      case 'info':
+      case defaultTab:
         component = <DurationDropdownContainer id="service-info-duration-dropdown" />;
         break;
-      case 'traffic':
+      case trafficTabName:
         component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        break;
+      case tracesTabName:
+        component = <MetricsDuration onChanged={() => this.fetchTracesData()} />;
         break;
       default:
         return undefined;
@@ -339,9 +393,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return (
       <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
         {component}
-        <RefreshButtonContainer handleRefresh={this.doRefresh} />
+        {this.state.currentTab !== tracesTabName ? (
+          <RefreshButtonContainer handleRefresh={this.doRefresh} />
+        ) : (
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.doRefresh} hideLabel={true} />
+        )}
         &nbsp;
-        {this.state.currentTab === 'info' && (
+        {this.state.currentTab === defaultTab && (
           <IstioWizardDropdown
             namespace={this.props.match.params.namespace}
             serviceName={serviceDetails.service.name}
@@ -401,16 +459,29 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
 
     // Conditional Traces tab
-    if (this.props.jaegerUrl !== '') {
+    if (this.props.jaegerIntegration || this.props.jaegerUrl !== '') {
       let jaegerTag: any = undefined;
       if (this.props.jaegerIntegration) {
-        const jaegerTitle: string = errorTraces && errorTraces > 0 ? 'Error Traces (' + errorTraces + ')' : 'Traces';
+        const jaegerTitle =
+          errorTraces && errorTraces > 0 ? (
+            <>
+              Traces <ExclamationCircleIcon color={PfColors.Red200} />{' '}
+            </>
+          ) : (
+            'Traces'
+          );
         jaegerTag = (
           <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key="traces">
             <ServiceTraces
               namespace={this.props.match.params.namespace}
               service={this.props.match.params.service}
               errorTags={errorTraces ? errorTraces > -1 : false}
+              duration={this.props.duration}
+              traces={this.state.traces}
+              errorTraces={this.state.errorTraces}
+              selectedTrace={this.state.selectedTrace}
+              selectedErrorTrace={this.state.errorSelectedTrace}
+              onRefresh={this.fetchTracesData}
             />
           </Tab>
         );
@@ -479,7 +550,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerUrl: state.jaegerState ? state.jaegerState.jaegerURL : '',
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enableIntegration : false
+  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

@@ -28,12 +28,9 @@ export enum URLParam {
   JAEGER_START_TIME = 'start',
   JAEGER_END_TIME = 'end',
   JAEGER_LIMIT_TRACES = 'limit',
-  JAEGER_LOOKBACK = 'lookback',
-  JAEGER_MAX_DURATION = 'maxDuration',
-  JAEGER_MIN_DURATION = 'minDuration',
-  JAEGER_SERVICE_SELECTOR = 'service',
-  JAEGER_NAMESPACE_SELECTOR = 'namespace_selector',
-  JAEGER_TAGS = 'tags'
+  JAEGER_TAGS = 'tags',
+  JAEGER_TRACE_INTERVAL_SELECTED = 'intSelectedTrace',
+  JAEGER_STATUS_CODE = 'statusCode'
 }
 
 export interface URLParamValue {

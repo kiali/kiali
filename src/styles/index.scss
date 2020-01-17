@@ -42,6 +42,5 @@ body {
 @import '_layout';
 
 // Component
-
-@import '../components/JaegerIntegration/_jaegerIntegration';
 @import '../components/VirtualList/_VirtualList';
+@import '../components/JaegerIntegration/JaegerResults/_SpanTable';

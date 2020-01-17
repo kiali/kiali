@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
-import { JaegerSearchOptions, JaegerURLSearch } from '../../JaegerIntegration/RouteHelper';
 import { Paths } from '../../../config';
 import { style } from 'typestyle';
 import { KialiAppState } from '../../../store/Store';
@@ -77,24 +76,9 @@ export class NodeContextMenu extends React.PureComponent<Props> {
   }
 
   getJaegerURL(name?: string) {
-    let tracesUrl = `/jaeger?namespaces=${this.props.namespace}&service=${name}.${this.props.namespace}`;
-    if (!this.props.jaegerIntegration) {
-      const url = new JaegerURLSearch(this.props.jaegerURL, false);
-      const options: JaegerSearchOptions = {
-        serviceSelected: this.props.namespaceSelector ? `${name}.${this.props.namespace}` : `${name}`,
-        limit: 20,
-        namespaceSelector: this.props.namespaceSelector,
-        start: '',
-        end: '',
-        minDuration: '',
-        maxDuration: '',
-        lookback: '3600',
-        tags: ''
-      };
-
-      tracesUrl = url.createRoute(options);
-    }
-    return tracesUrl;
+    return `${this.props.jaegerURL}/search?service=${name}${
+      this.props.namespaceSelector ? `.${this.props.namespace}` : ''
+    }`;
   }
 
   createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
@@ -138,14 +122,9 @@ export class NodeContextMenu extends React.PureComponent<Props> {
             )}
             {type !== Paths.SERVICES &&
               this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
-            {type === Paths.SERVICES &&
-              this.props.jaegerURL !== '' &&
-              this.createMenuItem(
-                this.getJaegerURL(name),
-                'Show Traces',
-                this.props.jaegerIntegration ? '_self' : '_blank',
-                !this.props.jaegerIntegration
-              )}
+            {type === Paths.SERVICES && this.props.jaegerIntegration
+              ? this.createMenuItem(`${detailsPageUrl}?tab=traces`, 'Show Traces')
+              : this.props.jaegerURL && this.createMenuItem(this.getJaegerURL(name), 'Show Traces', '_blank', true)}
           </>
         )}
       </div>
@@ -158,9 +137,9 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enableIntegration : false,
-  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : '',
-  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : false
+  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
+  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
+  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);

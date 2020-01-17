@@ -105,8 +105,9 @@ export interface UserSettings {
 
 export interface JaegerState {
   jaegerURL: string;
-  enableIntegration: boolean;
+  integration: boolean;
   namespaceSelector: boolean;
+  integrationMessage: string;
 }
 
 export interface TourState {

@@ -3,8 +3,9 @@ import { JaegerActions } from '../../actions/JaegerActions';
 
 const initialState = {
   jaegerURL: '',
-  enableIntegration: false,
-  namespaceSelector: true
+  integration: false,
+  namespaceSelector: true,
+  integrationMessage: ''
 };
 
 describe('JaegerState reducer', () => {
@@ -20,18 +21,18 @@ describe('JaegerState reducer', () => {
   });
 
   it('should enable integration', () => {
-    expectedState.enableIntegration = true;
+    expectedState.integration = true;
     expect(JaegerState(initialState, JaegerActions.setEnableIntegration(true))).toEqual(expectedState);
   });
 
   it('should store both url and integration', () => {
     const url = 'https://jaeger-query-istio-system.127.0.0.1.nip.io';
-    expectedState.enableIntegration = true;
+    expectedState.integration = true;
     expectedState.jaegerURL = url;
     expect(
       JaegerState(
         initialState,
-        JaegerActions.setinfo({ jaegerURL: url, enableIntegration: true, namespaceSelector: true })
+        JaegerActions.setinfo({ jaegerURL: url, integration: true, namespaceSelector: true, integrationMessage: '' })
       )
     ).toEqual(expectedState);
   });

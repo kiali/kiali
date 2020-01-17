@@ -123,7 +123,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
   jaegerUrl: state.jaegerState ? state.jaegerState.jaegerURL : '',
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enableIntegration : false
+  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

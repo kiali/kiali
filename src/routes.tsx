@@ -1,7 +1,6 @@
 import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
-import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
@@ -127,7 +126,7 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/' + Paths.JAEGER,
-    component: ServiceJaegerPage
+    component: undefined
   }
 ];
 

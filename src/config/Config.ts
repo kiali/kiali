@@ -33,6 +33,34 @@ const conf = {
       dagre: 'Dagre'
     }
   },
+  /** About Tracing Configuration*/
+  tracing: {
+    configuration: {
+      limitResults: {
+        20: 20,
+        50: 50,
+        100: 100,
+        200: 200,
+        300: 300,
+        400: 400,
+        500: 500
+      },
+      statusCode: {
+        none: 'none',
+        200: '200',
+        400: '400',
+        401: '401',
+        403: '403',
+        404: '404',
+        405: '405',
+        408: '408',
+        500: '500',
+        502: '502',
+        503: '503',
+        504: '504'
+      }
+    }
+  },
   /** About dialog configuration */
   about: {
     project: {
@@ -84,6 +112,11 @@ const conf = {
       istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
       jaeger: 'api/jaeger',
+      jaegerTraces: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/traces`,
+      jaegerTrace: (namespace: string, service: string, idTrace: string) =>
+        `api/namespaces/${namespace}/services/${service}/traces/${idTrace}`,
+      jaegerTraceDetail: (namespace: string, service: string, traceID: string) =>
+        `api/namespaces/${namespace}/services/${service}/traces/${traceID}`,
       logout: 'api/logout',
       namespaces: 'api/namespaces',
       namespacesGraphElements: `api/namespaces/graph`,

@@ -1,0 +1,91 @@
+import * as React from 'react';
+import { ChartWithLegend, makeLegend, VCDataPoint } from '@kiali/k-charted-pf4';
+import { ChartScatter } from '@patternfly/react-charts';
+import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
+import { isErrorTag } from './RouteHelper';
+import { PfColors } from '../Pf/PfColors';
+import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
+
+import jaegerIcon from '../../assets/img/jaeger-icon.svg';
+import * as MetricsHelper from '../Metrics/Helper';
+import MetricsDuration from '../MetricsOptions/MetricsDuration';
+
+interface JaegerScatterProps {
+  traces: JaegerTrace[];
+  onClick: (traceId) => void;
+  fixedTime: boolean;
+  errorTraces?: boolean;
+  errorFetchTraces?: JaegerErrors[];
+}
+
+const ONE_MILLISECOND = 1000000;
+
+const MINIMAL_SIZE = 2;
+
+export class JaegerScatter extends React.Component<JaegerScatterProps> {
+  renderFetchEmtpy = (title, msg) => {
+    return (
+      <EmptyState variant={EmptyStateVariant.full}>
+        <img alt="Jaeger Link" src={jaegerIcon} className={'pf-c-empty-state__icon'} />
+        <Title headingLevel="h5" size="lg">
+          {title}
+        </Title>
+        <EmptyStateBody>{msg}</EmptyStateBody>
+      </EmptyState>
+    );
+  };
+  render() {
+    let tracesRaw: VCDataPoint[] = [];
+    let tracesError: VCDataPoint[] = [];
+
+    this.props.traces.forEach(trace => {
+      let traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
+      let traceItem = {
+        x: new Date(trace.startTime / 1000),
+        y: Number(trace.duration / ONE_MILLISECOND),
+        name: `${trace.traceName !== '' ? trace.traceName : '<trace-without-root-span>'} (${trace.traceID.slice(
+          0,
+          7
+        )})`,
+        color: PfColors.Blue200,
+        unit: 'seconds',
+        id: trace.traceID,
+        size: trace.spans.length + MINIMAL_SIZE
+      };
+      if (traceError) {
+        traceItem.color = PfColors.Red200;
+        tracesError.push(traceItem);
+      } else {
+        tracesRaw.push(traceItem);
+      }
+    });
+    const traces = {
+      datapoints: tracesRaw,
+      color: (({ datum }) => datum.color) as any,
+      legendItem: makeLegend('Traces', PfColors.Blue200)
+    };
+
+    const errorTraces = {
+      datapoints: tracesError,
+      color: (({ datum }) => datum.color) as any,
+      legendItem: makeLegend('Error Traces', PfColors.Red200)
+    };
+
+    return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
+      this.renderFetchEmtpy('Error fetching Traces in Tracing tool', this.props.errorFetchTraces![0].msg)
+    ) : this.props.traces.length > 0 ? (
+      <ChartWithLegend
+        data={[traces, errorTraces]}
+        fill={true}
+        unit="seconds"
+        seriesComponent={<ChartScatter />}
+        timeWindow={
+          this.props.fixedTime ? MetricsHelper.durationToTimeTuple(MetricsDuration.initialDuration()) : undefined
+        }
+        onClick={dp => this.props.onClick(dp.id)}
+      />
+    ) : (
+      this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')
+    );
+  }
+}

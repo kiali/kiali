@@ -49,13 +49,15 @@ class Menu extends React.Component<MenuProps, MenuState> {
       return isRoute;
     });
     return navItems.map(item => {
-      if (item.title === 'Distributed Tracing' && !this.props.jaegerIntegration && this.props.jaegerUrl !== '') {
-        return <ExternalLink key={item.to} href={this.props.jaegerUrl} name="Distributed Tracing" />;
+      if (item.title === 'Distributed Tracing') {
+        return this.props.jaegerUrl !== '' ? (
+          <ExternalLink key={item.to} href={this.props.jaegerUrl} name="Distributed Tracing" />
+        ) : (
+          ''
+        );
       }
 
-      return item.title === 'Distributed Tracing' && this.props.jaegerUrl === '' ? (
-        ''
-      ) : (
+      return (
         <NavItem isActive={activeItem === item} key={item.to}>
           <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
             {item.title}
