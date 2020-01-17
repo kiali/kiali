@@ -5,8 +5,8 @@ import { Health } from '../../types/Health';
 
 type VirtualItemProps = {
   item: TResource;
-  style: any;
-  className: string;
+  style?: any;
+  className?: string;
   index: number;
   config: Resource;
 };

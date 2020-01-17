@@ -157,7 +157,7 @@ class WorkloadListComponent extends FilterComponent.Component<
 
   render() {
     return (
-      <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
+      <VirtualList rows={this.state.listItems}>
         <StatefulFilters
           initialFilters={WorkloadListFilters.availableFilters}
           onFilterChange={this.onFilterChange}

@@ -1,19 +1,16 @@
 import * as React from 'react';
 import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
-import VirtualTable from './VirtualTable';
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { config, Resource, TResource } from './Config';
+import VirtualItem from './VirtualItem';
 
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {
   rows: R[];
-  scrollFilters?: boolean;
-  updateItems: () => void;
 };
 
 type VirtualListState = {
-  scrollableElement: Element | null;
   type: string;
   sortBy: {
     index: number;
@@ -44,7 +41,6 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
       index = conf.columns.findIndex(column => column.param === sortParam);
     }
     this.state = {
-      scrollableElement: null,
       type,
       sortBy: {
         index,
@@ -53,13 +49,6 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
       columns,
       conf
     };
-  }
-
-  componentDidMount() {
-    setTimeout(() => {
-      const scrollableElement = document.getElementById('content-scrollable');
-      this.setState({ scrollableElement });
-    });
   }
 
   onSort = (_event, index, direction) => {
@@ -88,27 +77,20 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
 
     return (
       <div
-        id="content-scrollable"
-        aria-label="Scrollable Table"
-        role="grid"
-        className="pf-c-scrollablegrid"
-        aria-rowcount={rows.length}
         style={{
-          height:
-            '90%' /* important note: the scrollable container should have some sort of fixed height, or it should be wrapped in container that is smaller than ReactVirtualized__VirtualGrid container and has overflow visible if using the Window Scroller. See WindowScroller.example.css */,
-          overflowX: 'unset',
           padding: '20px',
-          overflowY: 'unset',
-          scrollBehavior: 'smooth',
-          WebkitOverflowScrolling: 'touch',
-          position: 'relative'
+          marginBottom: '20px'
         }}
       >
         {this.props.children}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />
+          <tbody>
+            {rows.map((r, i) => {
+              return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
+            })}
+          </tbody>
         </Table>
-        <VirtualTable rows={rows} config={conf} />
       </div>
     );
   }

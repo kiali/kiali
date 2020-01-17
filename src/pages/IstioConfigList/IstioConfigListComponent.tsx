@@ -168,7 +168,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
 
   render() {
     return (
-      <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
+      <VirtualList rows={this.state.listItems}>
         <StatefulFilters
           initialFilters={IstioConfigListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
