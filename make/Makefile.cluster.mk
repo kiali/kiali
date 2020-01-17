@@ -14,7 +14,7 @@
 	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_NAME ?= ${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_NAME}:${OPERATOR_CONTAINER_VERSION})
-	@if [ "${CLUSTER_REPO_INTERNAL}" == "" -o "${CLUSTER_REPO_INTERNAL}" == "<none>" ]; then echo "Cannot determine OCP internal registry hostname"; exit 1; fi
+	@if [ "${CLUSTER_REPO_INTERNAL}" == "" -o "${CLUSTER_REPO_INTERNAL}" == "<none>" ]; then echo "Cannot determine OCP internal registry hostname. Make sure you 'oc login' to your cluster."; exit 1; fi
 	@if [ "${CLUSTER_REPO}" == "" -o "${CLUSTER_REPO}" == "<none>" ]; then echo "Cannot determine OCP external registry hostname. The OpenShift image registry has not been made available for external client access"; exit 1; fi
 	@echo "OCP repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
 	@${OC} get namespace $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1 || \
@@ -33,8 +33,8 @@
 	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_NAME ?= ${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_NAME}:${OPERATOR_CONTAINER_VERSION})
-	@if [ "${CLUSTER_REPO_INTERNAL}" == "" ]; then echo "Cannot determine minikube internal registry hostname"; exit 1; fi
-	@if [ "${CLUSTER_REPO}" == "" ]; then echo "Cannot determine minikube external registry hostname."; exit 1; fi
+	@if [ "${CLUSTER_REPO_INTERNAL}" == "" ]; then echo "Cannot determine minikube internal registry hostname."; exit 1; fi
+	@if [ "${CLUSTER_REPO}" == "" ]; then echo "Cannot determine minikube external registry hostname. Make sure minikube is running."; exit 1; fi
 	@echo "Minikube repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
 	@if ! ${MINIKUBE} addons list | grep -q "registry: enabled"; then \
 	   echo "Minikube does not have the registry addon enabled. Run 'minikube addons enable registry' in order for the make targets to work."; \
@@ -58,6 +58,23 @@ else
 	@echo "ERROR: unknown CLUSTER_TYPE [${CLUSTER_TYPE}] - must be one of: openshift, minikube, local"
 	@exit 1
 endif
+
+## cluster-status: Outputs details of the client and server for the cluster
+cluster-status: .prepare-cluster
+	@echo "==============="
+	@echo "CLUSTER DETAILS"
+	@echo "==============="
+	@echo "Client executable: ${OC}"
+	@echo "==============="
+	${OC} version
+	@echo "==============="
+	${OC} cluster-info
+	@echo "==============="
+	@if [[ "${OC}" = *"oc" ]]; then echo "${OC} whoami -c"; ${OC} whoami -c; echo "==============="; fi
+	@echo "Kiali image as seen from inside the cluster:       ${CLUSTER_KIALI_INTERNAL_NAME}"
+	@echo "Kiali image that will be pushed to the cluster:    ${CLUSTER_KIALI_TAG}"
+	@echo "Operator image as seen from inside the cluster:    ${CLUSTER_OPERATOR_INTERNAL_NAME}"
+	@echo "Operator image that will be pushed to the cluster: ${CLUSTER_OPERATOR_TAG}"
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
 cluster-build-operator: .prepare-cluster container-build-operator
