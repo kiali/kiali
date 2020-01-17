@@ -4125,10 +4125,17 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "JaegerInfo": {
-      "description": "JaegerInfo provides information to access Jaeger UI",
       "type": "object",
       "properties": {
-        "namespace_selector": {
+        "integration": {
+          "type": "boolean",
+          "x-go-name": "Integration"
+        },
+        "integrationMessage": {
+          "type": "string",
+          "x-go-name": "IntegrationMessage"
+        },
+        "namespaceSelector": {
           "type": "boolean",
           "x-go-name": "NamespaceSelector"
         },
@@ -4137,7 +4144,7 @@
           "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "github.com/kiali/kiali/jaeger"
     },
     "KeyValue": {
       "type": "object",

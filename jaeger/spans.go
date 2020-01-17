@@ -37,13 +37,13 @@ func getSpans(client http.Client, endpoint *url.URL, namespace, service, startMi
 	q.Set("limit", strconv.Itoa(tracesLimit))
 
 	u.RawQuery = q.Encode()
-	traces, _, err := queryTraces(client, u)
+	response, _, err := queryTraces(client, u)
 	if err != nil {
 		return []Span{}, err
 	}
 
-	spans := tracesToSpans(traces, service, namespace)
-	if len(traces) == tracesLimit {
+	spans := tracesToSpans(response.Data, service, namespace)
+	if len(response.Data) == tracesLimit {
 		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
 		log.Info("Limit of traces was reached, trying to find more relevant spans...")
 		return findRelevantSpans(client, spans, u, q, service, namespace)
@@ -82,8 +82,8 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	// Query for errors
 	q.Set("tags", "{\"error\":\"true\"}")
 	u.RawQuery = q.Encode()
-	traces, _, _ := queryTraces(client, u)
-	errSpans := tracesToSpans(traces, service, namespace)
+	response, _, _ := queryTraces(client, u)
+	errSpans := tracesToSpans(response.Data, service, namespace)
 	for _, span := range errSpans {
 		spansMap[span.SpanID] = span
 	}
@@ -104,9 +104,9 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	// %.1gms would print for instance 0.00012456 as 0.0001ms
 	q.Set("minDuration", fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000))
 	u.RawQuery = q.Encode()
-	traces, _, _ = queryTraces(client, u)
+	response, _, _ = queryTraces(client, u)
 	// TODO / Question: if limit is reached again we might limit to 99th percentile instead?
-	pct90Spans := tracesToSpans(traces, service, namespace)
+	pct90Spans := tracesToSpans(response.Data, service, namespace)
 	for _, span := range pct90Spans {
 		spansMap[span.SpanID] = span
 	}

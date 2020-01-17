@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"time"
 
-	jaegerModels "github.com/jaegertracing/jaeger/model/json"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
@@ -17,9 +15,17 @@ import (
 type ClientInterface interface {
 	GetJaegerServices() (services []string, code int, err error)
 	GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error)
-	GetTraces(namespace string, service string, rawQuery string) (traces []jaegerModels.Trace, code int, err error)
-	GetTraceDetail(traceId string) (trace []jaegerModels.Trace, code int, err error)
-	GetErrorTraces(ns string, srv string) (errorTraces int, err error)
+	GetJaegerInfo() (*JaegerInfo, int, error)
+	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, code int, err error)
+	GetTraceDetail(traceId string) (trace *JaegerResponse, code int, err error)
+	GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error)
+}
+
+type JaegerInfo struct {
+	URL                string `json:"url"`
+	NamespaceSelector  bool   `json:"namespaceSelector"`
+	Integration        bool   `json:"integration"`
+	IntegrationMessage string `json:"integrationMessage"`
 }
 
 // Client for Jaeger API.
@@ -58,6 +64,13 @@ func NewClient(token string) (*Client, error) {
 	}
 }
 
+// GetJaegerInfo return the information about Jaeger
+// info for Jaeger Service.
+// Returns (*JaegerInfo, int, error)
+func (in *Client) GetJaegerInfo() (*JaegerInfo, int, error) {
+	return getJaegerInfo(in.client, in.endpoint)
+}
+
 // GetNamespaceServicesRequestRates queries Prometheus to fetch request counter rates, over a time interval, limited to
 // requests for services in the namespace.
 // Returns (rates, error)
@@ -74,20 +87,20 @@ func (in *Client) GetSpans(namespace, service, startMicros, endMicros string) ([
 // GetTraces Jaeger to fetch traces of a service
 // requests for traces of a service
 // Returns (traces, code, error)
-func (in *Client) GetTraces(namespace string, service string, rawQuery string) (traces []jaegerModels.Trace, code int, err error) {
+func (in *Client) GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, code int, err error) {
 	return getTraces(in.client, in.endpoint, namespace, service, rawQuery)
 }
 
 // GetTraceDetail jaeger to fetch a specific trace
 // requests for a specific trace detail
 //  Returns (traces, code, error)
-func (in *Client) GetTraceDetail(traceId string) (trace []jaegerModels.Trace, code int, err error) {
+func (in *Client) GetTraceDetail(traceId string) (trace *JaegerResponse, code int, err error) {
 	return getTraceDetail(in.client, in.endpoint, traceId)
 }
 
 // GetErrorTraces jaeger to fetch a traces of a specific service
 // requests for errors traces
 //  Returns (errorTraces, error)
-func (in *Client) GetErrorTraces(ns string, srv string) (errorTraces int, err error) {
-	return getErrorTraces(in.client, in.endpoint, ns, srv)
+func (in *Client) GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error) {
+	return getErrorTraces(in.client, in.endpoint, ns, srv, interval)
 }
