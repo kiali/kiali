@@ -327,7 +327,11 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		// Maybe a future jaeger business layer
 		defer wg.Done()
-		eTraces, err = in.businessLayer.Jaeger.GetErrorTraces(namespace, service, interval)
+		var err2 error
+		eTraces, err2 = in.businessLayer.Jaeger.GetErrorTraces(namespace, service, interval)
+		if err2 != nil {
+			errChan <- err2
+		}
 	}()
 
 	wg.Wait()
