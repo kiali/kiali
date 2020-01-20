@@ -3,9 +3,7 @@
 exports[`DetailObject test doesn't print any alert message 1`] = `
 <div>
   <div>
-    <strong
-      className="text-capitalize"
-    >
+    <strong>
       nodejs
     </strong>
     <ul
@@ -15,9 +13,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
         key="key_sssssssss_k0"
       >
         <div>
-          <strong
-            className="text-capitalize"
-          >
+          <strong>
             destination
           </strong>
           <ul
@@ -30,9 +26,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [host]
                   </span>
                    
@@ -47,9 +41,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [subset]
                   </span>
                    
@@ -61,9 +53,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
               key="key_sssssssss_k2"
             >
               <div>
-                <strong
-                  className="text-capitalize"
-                >
+                <strong>
                   port
                 </strong>
                 <ul
@@ -76,9 +66,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [number]
                         </span>
                          
@@ -93,9 +81,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [name]
                         </span>
                          
@@ -116,9 +102,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
           className="label-collection"
         >
           <span>
-            <span
-              className="text-capitalize"
-            >
+            <span>
               [weight]
             </span>
              
@@ -134,9 +118,7 @@ exports[`DetailObject test doesn't print any alert message 1`] = `
 exports[`DetailObject test doesn't print excluded fields 1`] = `
 <div>
   <div>
-    <strong
-      className="text-capitalize"
-    >
+    <strong>
       nodejs
     </strong>
     <ul
@@ -146,9 +128,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
         key="key_sssssssss_k0"
       >
         <div>
-          <strong
-            className="text-capitalize"
-          >
+          <strong>
             destination
           </strong>
           <ul
@@ -161,9 +141,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [host]
                   </span>
                    
@@ -178,9 +156,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [subset]
                   </span>
                    
@@ -201,9 +177,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
           className="label-collection"
         >
           <span>
-            <span
-              className="text-capitalize"
-            >
+            <span>
               [weight]
             </span>
              
@@ -219,9 +193,7 @@ exports[`DetailObject test doesn't print excluded fields 1`] = `
 exports[`DetailObject test prints a nested list with all attributes in the detail 1`] = `
 <div>
   <div>
-    <strong
-      className="text-capitalize"
-    >
+    <strong>
       nodejs
     </strong>
     <ul
@@ -231,9 +203,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
         key="key_sssssssss_k0"
       >
         <div>
-          <strong
-            className="text-capitalize"
-          >
+          <strong>
             destination
           </strong>
           <ul
@@ -246,9 +216,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [host]
                   </span>
                    
@@ -263,9 +231,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [subset]
                   </span>
                    
@@ -277,9 +243,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
               key="key_sssssssss_k2"
             >
               <div>
-                <strong
-                  className="text-capitalize"
-                >
+                <strong>
                   port
                 </strong>
                 <ul
@@ -292,9 +256,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [number]
                         </span>
                          
@@ -309,9 +271,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [name]
                         </span>
                          
@@ -332,9 +292,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
           className="label-collection"
         >
           <span>
-            <span
-              className="text-capitalize"
-            >
+            <span>
               [weight]
             </span>
              
@@ -350,9 +308,7 @@ exports[`DetailObject test prints a nested list with all attributes in the detai
 exports[`DetailObject test prints an alert message 1`] = `
 <div>
   <div>
-    <strong
-      className="text-capitalize"
-    >
+    <strong>
       nodejs
     </strong>
     <Validation
@@ -367,9 +323,7 @@ exports[`DetailObject test prints an alert message 1`] = `
         key="key_sssssssss_k0"
       >
         <div>
-          <strong
-            className="text-capitalize"
-          >
+          <strong>
             destination
           </strong>
           <ul
@@ -382,9 +336,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [host]
                   </span>
                    
@@ -399,9 +351,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                 className="label-collection"
               >
                 <span>
-                  <span
-                    className="text-capitalize"
-                  >
+                  <span>
                     [subset]
                   </span>
                    
@@ -413,9 +363,7 @@ exports[`DetailObject test prints an alert message 1`] = `
               key="key_sssssssss_k2"
             >
               <div>
-                <strong
-                  className="text-capitalize"
-                >
+                <strong>
                   port
                 </strong>
                 <ul
@@ -428,9 +376,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [number]
                         </span>
                          
@@ -445,9 +391,7 @@ exports[`DetailObject test prints an alert message 1`] = `
                       className="label-collection"
                     >
                       <span>
-                        <span
-                          className="text-capitalize"
-                        >
+                        <span>
                           [name]
                         </span>
                          
@@ -468,9 +412,7 @@ exports[`DetailObject test prints an alert message 1`] = `
           className="label-collection"
         >
           <span>
-            <span
-              className="text-capitalize"
-            >
+            <span>
               [weight]
             </span>
              

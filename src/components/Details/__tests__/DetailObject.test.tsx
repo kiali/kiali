@@ -32,13 +32,13 @@ describe('DetailObject test', () => {
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
 
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[host]</span>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[subset]</span>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[weight]</span>');
+    expect(wrapper.html()).toContain('<span>[host]</span>');
+    expect(wrapper.html()).toContain('<span>[subset]</span>');
+    expect(wrapper.html()).toContain('<span>[weight]</span>');
 
-    expect(wrapper.html()).toContain('<strong class="text-capitalize">port</strong>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[number]</span>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[name]</span>');
+    expect(wrapper.html()).toContain('<strong>port</strong>');
+    expect(wrapper.html()).toContain('<span>[number]</span>');
+    expect(wrapper.html()).toContain('<span>[name]</span>');
   });
 
   it("doesn't print excluded fields", () => {
@@ -49,13 +49,13 @@ describe('DetailObject test', () => {
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
 
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[host]</span>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[subset]</span>');
-    expect(wrapper.html()).toContain('<span class="text-capitalize">[weight]</span>');
+    expect(wrapper.html()).toContain('<span>[host]</span>');
+    expect(wrapper.html()).toContain('<span>[subset]</span>');
+    expect(wrapper.html()).toContain('<span>[weight]</span>');
 
-    expect(wrapper.html()).not.toContain('<strong class="text-capitalize">port</strong>');
-    expect(wrapper.html()).not.toContain('<span class="text-capitalize">[number]</span>');
-    expect(wrapper.html()).not.toContain('<span class="text-capitalize">[name]</span>');
+    expect(wrapper.html()).not.toContain('<strong>port</strong>');
+    expect(wrapper.html()).not.toContain('<span>[number]</span>');
+    expect(wrapper.html()).not.toContain('<span>[name]</span>');
   });
 
   it('prints an alert message', () => {

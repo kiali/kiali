@@ -54,7 +54,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
             this.label(name, value)
           ) : (
             <span>
-              <span className="text-capitalize">{name ? `[${name}]` : name}</span> {value.toString()}
+              <span>{name ? `[${name}]` : name}</span> {value.toString()}
             </span>
           )}
         </div>
@@ -85,7 +85,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
 
     return childrenList.length > 0 ? (
       <div>
-        <strong className="text-capitalize">{name}</strong>
+        <strong>{name}</strong>
         {depth === 0 && !!this.props.validation && this.props.validation.message ? (
           <Validation
             severity={this.props.validation.severity}
