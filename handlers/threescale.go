@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -132,6 +133,12 @@ func ThreeScaleServiceRuleGet(w http.ResponseWriter, r *http.Request) {
 
 	threeScaleRule, err := business.ThreeScale.GetThreeScaleRule(namespace, service)
 	if err != nil {
+		// A NotFound error is a valid business response for this handler, so, we respond the Error but we don't use
+		// handleErrorResponse to avoid unnecessary Error traces in kiali log
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
 		handleErrorResponse(w, err)
 		return
 	}
