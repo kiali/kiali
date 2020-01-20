@@ -130,22 +130,13 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
   };
 
   private setJaegerInfo = (jaegerInfo: JaegerInfo) => {
-    let jaegerState: JaegerState = {
-      jaegerURL: '',
-      integration: false,
-      namespaceSelector: true,
-      integrationMessage: ''
+    const jaegerState: JaegerState = {
+      jaegerURL: jaegerInfo.url,
+      integration: jaegerInfo.integration,
+      namespaceSelector: jaegerInfo.namespaceSelector,
+      integrationMessage: jaegerInfo.integrationMessage
     };
 
-    if (jaegerInfo.url) {
-      jaegerState = {
-        jaegerURL: jaegerInfo.url,
-        // If same protocol enable integration, otherwise new tab is open
-        namespaceSelector: jaegerInfo.namespaceSelector,
-        integration: jaegerInfo.integration,
-        integrationMessage: jaegerInfo.integrationMessage
-      };
-    }
     if (jaegerState.integrationMessage !== '') {
       MessageCenterActions.addMessage(jaegerState.integrationMessage, '', 'jaeger', MessageType.INFO);
     }
