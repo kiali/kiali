@@ -14,6 +14,7 @@ import { VCDataPoint, VCLines } from '../../utils/Graphing';
 import { PfColors } from 'components/Pf/PfColors';
 import * as Legend from './LegendHelper';
 import { CustomFlyout } from './CustomFlyout';
+import { CustomLabel } from './CustomLabel';
 
 import './Charts.css';
 
@@ -96,21 +97,31 @@ export class SparklineChart extends React.Component<Props, State> {
       });
     }
 
-    let container = this.props.containerComponent;
-    if (!container) {
-      const tooltip = <ChartTooltip flyoutComponent={<CustomFlyout />} constrainToVisibleArea={true} />;
-      container = (
-        <ChartVoronoiContainer
-          labels={obj => {
-            if (obj.datum.childName.startsWith(this.props.name + '-scatter')) {
-              return null as any;
-            }
-            return this.props.tooltipFormat ? this.props.tooltipFormat(obj.datum) : obj.datum.y;
-          }}
-          labelComponent={tooltip}
-        />
-      );
-    }
+    // Hack:
+    // At the moment it doesn't seem possible to get all active points (under cursor) during the tooltip generation process. Only a single point is provided by Victory.
+    // So here we are encoding color information within text tooltip ; which will be extracted in our CustomLabel component.
+    // Also, note that the colors index is created on purpose, instead of directly encoding color string.
+    // Because Victory internally will compute tooltip width based on text width, we must reduce the injected text to the miminum.
+    const colors = this.props.series.map(s => s.color);
+    const tooltip = (
+      <ChartTooltip
+        flyoutComponent={<CustomFlyout />}
+        labelComponent={<CustomLabel colors={colors} />}
+        constrainToVisibleArea={true}
+      />
+    );
+    const container = (
+      <ChartVoronoiContainer
+        labels={obj => {
+          if (obj.datum.childName.startsWith(this.props.name + '-scatter')) {
+            return null as any;
+          }
+          const colorIdx = colors.findIndex(c => c === obj.datum.color);
+          return `${colorIdx}@${this.props.tooltipFormat ? this.props.tooltipFormat(obj.datum) : obj.datum.y}`;
+        }}
+        labelComponent={tooltip}
+      />
+    );
     const hiddenAxisStyle = {
       axis: { stroke: 'none' },
       ticks: { stroke: 'none' },
