@@ -203,6 +203,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     if (currentTab === trafficTabName) {
       this.fetchTrafficData();
     }
+
+    if (currentTab === tracesTabName) {
+      this.fetchTracesData();
+    }
   };
 
   fetchBackend = () => {
