@@ -72,7 +72,7 @@ func tracesToSpans(traces []jaegerModels.Trace, service, namespace string) []Spa
 			}
 		}
 	}
-	log.Infof("Found %d spans in the %d traces for service %s", len(spans), len(traces), service)
+	log.Tracef("Found %d spans in the %d traces for service %s", len(spans), len(traces), service)
 	return spans
 }
 
