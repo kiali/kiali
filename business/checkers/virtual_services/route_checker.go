@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/intutil"
 )
@@ -68,19 +67,12 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 
 			if weight, err := intutil.Convert(destinationWeight["weight"]); err == nil && weight < 100 {
 				valid = true
-				path := fmt.Sprintf("spec/%s[%d]/route/weight", kind, routeIdx)
-				validation := buildValidation("virtualservices.route.singleweight", path)
+				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight", kind, routeIdx, 0)
+				validation := models.Build("virtualservices.route.singleweight", path)
 				validations = append(validations, &validation)
 			}
 		}
 	}
 
 	return validations, valid
-}
-
-func buildValidation(checkId string, path string) models.IstioCheck {
-	validation := models.Build(checkId, path)
-	log.Infof("%s Galley should be performing this validation but it isn't. "+
-		"Make sure Galley is fully working.", checkId)
-	return validation
 }
