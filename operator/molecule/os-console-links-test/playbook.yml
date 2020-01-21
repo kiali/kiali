@@ -24,7 +24,7 @@
       that:
       - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
 
-  # change to accessible_namespaces to a fixed list of namespaces
+  # Create some test namespaces
   - k8s:
       state: present
       api_version: v1
@@ -40,6 +40,8 @@
       api_version: v1
       kind: Namespace
       name: noconsolelinks
+
+  # change to accessible_namespaces to a fixed list of namespaces
   - import_tasks: ../common/set_accessible_namespaces_to_list.yml
     vars:
       namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
@@ -56,36 +58,33 @@
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: "{{ kiali.install_namespace }}"
       name: kiali-app-link
     register: applink
   - name: Get links from consolelinks1
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: consolelinks1
       name: kiali-namespace-consolelinks1-link
-    register: consolelink1
+    register: consolelinks1
   - name: Get links from consolelinks2
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: consolelinks2
       name: kiali-namespace-consolelinks2-link
-    register: consolelink2
+    register: consolelinks2
   - name: Get links from noconsolelinks
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: noconsolelinks
+      name: kiali-namespace-noconsolelinks-link
     register: noconsolelinks
 
   - name: Assert that console links are correct
     assert:
       that:
       - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
-      - "{{ consolelink1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
-      - "{{ consolelink2.resources[0].metadata.name == 'kiali-namespace-consolelinks2-link' }}"
+      - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
+      - "{{ consolelinks2.resources[0].metadata.name == 'kiali-namespace-consolelinks2-link' }}"
       - "{{ noconsolelinks.resources | length == 0 }}"
 
   # change to accessible_namespaces by removing consolelinks2 from the list
@@ -105,60 +104,34 @@
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: "{{ kiali.install_namespace }}"
       name: kiali-app-link
     register: applink
   - name: Get links from consolelinks1
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: consolelinks1
       name: kiali-namespace-consolelinks1-link
-    register: consolelink1
+    register: consolelinks1
   - name: Get links from consolelinks2
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: consolelinks2
-    register: consolelink2
+      name: kiali-namespace-consolelinks2-link
+    register: consolelinks2
   - name: Get links from noconsolelinks
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: noconsolelinks
+      name: kiali-namespace-noconsolelinks-link
     register: noconsolelinks
 
   - name: Assert that console links are correct
     assert:
       that:
       - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
-      - "{{ consolelink1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
-      - "{{ consolelink2.resources | length == 0 }}"
+      - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
+      - "{{ consolelinks2.resources | length == 0 }}"
       - "{{ noconsolelinks.resources | length == 0 }}"
-
-  # change to accessible_namespaces back to **
-  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
-  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
-  - import_tasks: ../common/wait_for_kiali_running.yml
-  - import_tasks: ../common/tasks.yml
-  - import_tasks: ../asserts/pod_asserts.yml
-  - import_tasks: ../asserts/accessible_namespaces_contains.yml
-    vars:
-      namespace_list: [ '**' ]
-
-  # Check that console links are back to the way they should be for **
-  - name: Get app link
-    k8s_facts:
-      api_version: console.openshift.io/v1
-      kind: ConsoleLink
-      namespace: "{{ kiali.install_namespace }}"
-      name: kiali-app-link
-    register: applink
-
-  - name: Assert that console links are correct
-    assert:
-      that:
-      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
 
   # Remove the test namespaces we created earlier
   - k8s:
@@ -176,3 +149,48 @@
       api_version: v1
       kind: Namespace
       name: noconsolelinks
+
+  # change to accessible_namespaces back to **
+  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+
+  # Check that console links are as expected for **
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: "{{ kiali.install_namespace }}"
+      name: kiali-app-link
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: kiali-namespace-consolelinks1-link
+    register: consolelinks1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: kiali-namespace-consolelinks2-link
+    register: consolelinks2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: kiali-namespace-noconsolelinks-link
+    register: noconsolelinks
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
+      - "{{ consolelinks1.resources | length == 0 }}"
+      - "{{ consolelinks2.resources | length == 0 }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
