@@ -161,20 +161,8 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "VirtualService doesn't define any valid route protocol",
 		Severity: ErrorSeverity,
 	},
-	"virtualservices.route.numericweight": {
-		Message:  "Weight must be a number",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.route.weightrange": {
-		Message:  "Weight should be between 0 and 100",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.route.weightsum": {
-		Message:  "Weight sum should be 100",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.route.allweightspresent": {
-		Message:  "All routes should have weight",
+	"virtualservices.route.singleweight": {
+		Message:  "The weight is assumed to be 100 because there is only one route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.singlehost": {
