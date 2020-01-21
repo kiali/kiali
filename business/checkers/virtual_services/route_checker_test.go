@@ -34,7 +34,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Len(validations, 1)
 	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.singleweight"))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Equal(validations[0].Path, "spec/http[0]/route/weight")
+	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/weight")
 }
 
 func fakeValidVirtualService() kubernetes.IstioObject {
