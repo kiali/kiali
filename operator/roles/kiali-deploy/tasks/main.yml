@@ -118,6 +118,15 @@
   - kiali_vars.deployment.resources is defined
   - kiali_vars.deployment.resources | length > 0
 
+- name: Replace snake_case with camelCase in deployment.override_ingress_yaml
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('override_ingress_yaml') %}
+      {{ kiali_vars | combine({'deployment': {'override_ingress_yaml': current_cr.spec.deployment.override_ingress_yaml }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.override_ingress_yaml is defined
+  - kiali_vars.deployment.override_ingress_yaml | length > 0
+
 - name: Print some debug information
   vars:
     msg: |

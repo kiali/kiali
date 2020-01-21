@@ -214,6 +214,33 @@ spec:
 #    ---
 #    namespace: ""
 #
+# Because an ingress into a cluster can vary wildly in its desired configuration,
+# this setting provides a way to override complete portions of the ingress resource
+# configuration (Ingress on Kubernetes and Route on OpenShift). It is up to the user
+# to ensure this override YAML configuration is valid and supports the cluster environment
+# since the operator will blindly copy this custom configuration into the resource it
+# creates.
+# This setting is not used if deployment.ingress_enabled is set to 'false'.
+# Note that only 'metadata.annotations' and 'spec' is valid and only they will
+# be used to override those same sections in the created resource. You can define
+# either one or both.
+# Example:
+#   override_ingress_yaml:
+#     metadata:
+#       annotations:
+#         nginx.ingress.kubernetes.io/secure-backends: "true"
+#         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+#     spec:
+#       rules:
+#       - http:
+#           paths:
+#           - path: /kiali
+#             backend:
+#               serviceName: kiali
+#               servicePort: 20001
+#    ---
+#    #override_ingress_yaml:
+#
 # Custom annotations to be created on the Kiali pod.
 #    ---
 #    pod_annotations: {}
