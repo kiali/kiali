@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
-import { DestinationWeight, HTTPRoute, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
+import { HTTPRoute, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
@@ -57,7 +57,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
     rows = rows.concat(
       (route.route || []).map((routeItem, destinationIndex) => {
-        const checks = this.checksFrom(this.validation(), routeItem, routeIndex, destinationIndex);
+        const checks = this.checksFrom(this.validation(), routeIndex, destinationIndex);
         const validation = <ValidationList checks={checks} />;
         const severity = highestSeverity(checks);
         const isValid = severity === ValidationTypes.Correct;
@@ -93,17 +93,10 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     return this.props.validation ? this.props.validation : ({} as ObjectValidation);
   }
 
-  checksFrom(validation: ObjectValidation, routeItem: DestinationWeight, routeIndex: number, destinationIndex: number) {
+  checksFrom(validation: ObjectValidation, routeIndex: number, destinationIndex: number) {
     const checks = checkForPath(
       validation,
-      'spec/' +
-        this.props.kind.toLowerCase() +
-        '[' +
-        routeIndex +
-        ']/route[' +
-        destinationIndex +
-        ']/weight/' +
-        routeItem.weight
+      'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route[' + destinationIndex + ']/weight'
     );
 
     checks.push(
