@@ -214,7 +214,7 @@ spec:
 #    ---
 #    namespace: ""
 #
-# Because an ingress into a cluster can vary wildly in their desired configuration,
+# Because an ingress into a cluster can vary wildly in its desired configuration,
 # this setting provides a way to override complete portions of the ingress resource
 # configuration (Ingress on Kubernetes and Route on OpenShift). It is up to the user
 # to ensure this override YAML configuration is valid and supports the cluster environment
