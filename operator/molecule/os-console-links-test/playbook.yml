@@ -15,7 +15,6 @@
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: "{{ kiali.install_namespace }}"
       name: kiali-app-link
     register: applink
 
@@ -165,7 +164,6 @@
     k8s_facts:
       api_version: console.openshift.io/v1
       kind: ConsoleLink
-      namespace: "{{ kiali.install_namespace }}"
       name: kiali-app-link
     register: applink
   - name: Get links from consolelinks1

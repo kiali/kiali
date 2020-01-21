@@ -62,6 +62,19 @@
   - is_openshift == True
   - kiali_vars.auth.strategy == "openshift"
 
+- name: Delete all ConsoleLinks for namespaces that are no longer accessible
+  k8s:
+    state: absent
+    api_version: console.openshift.io/v1
+    kind: ConsoleLink
+    name: "kiali-namespace-{{ inaccessible_namespace }}-link"
+  loop: "{{ no_longer_accessible_namespaces }}"
+  loop_control:
+    loop_var: inaccessible_namespace
+  when:
+  - is_openshift == True
+  - no_longer_accessible_namespaces is defined
+
 - name: Process OpenShift Console Links
   k8s:
     definition: "{{ lookup('template', 'templates/openshift/console-links.yaml') }}"
