@@ -10,10 +10,19 @@
     vars:
       namespace_list: [ '**' ]
 
-# - name: Test that console links are correct for accessible namespaces of **
-#   assert:
-#     that:
-#     - TODO
+  # Test that console links are correct for accessible namespaces of **
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: "{{ kiali.install_namespace }}"
+      name: kiali-app-link
+    register: applink
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
 
   # change to accessible_namespaces to a fixed list of namespaces
   - k8s:
@@ -42,16 +51,42 @@
     vars:
       namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
 
-# - name: Test that console links are correct for consolelinks1 and consolelinks2 namespaces
-# - name: TODO
-#   assert:
-#     that:
-#     - TODO
+  # Test that console links are correct across namespaces
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: "{{ kiali.install_namespace }}"
+      name: kiali-app-link
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: consolelinks1
+      name: kiali-namespace-consolelinks1-link
+    register: consolelink1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: consolelinks2
+      name: kiali-namespace-consolelinks2-link
+    register: consolelink2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: noconsolelinks
+    register: noconsolelinks
 
-# - name: Test that there are no console links for namespace noconsolelinks
-#   assert:
-#     that:
-#     - TODO
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
+      - "{{ consolelink1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
+      - "{{ consolelink2.resources[0].metadata.name == 'kiali-namespace-consolelinks2-link' }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
 
   # change to accessible_namespaces by removing consolelinks2 from the list
   - import_tasks: ../common/set_accessible_namespaces_to_list.yml
@@ -65,15 +100,41 @@
     vars:
       namespace_list: [ 'istio-system', 'consolelinks1' ]
 
-# - name: Check that consolelinks1 namespace still has console links
-#   assert:
-#     that:
-#     - TODO
+  # Test that console links are correct - note we removed a namespace from accessible_namespaces so the link should be gone
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: "{{ kiali.install_namespace }}"
+      name: kiali-app-link
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: consolelinks1
+      name: kiali-namespace-consolelinks1-link
+    register: consolelink1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: consolelinks2
+    register: consolelink2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: noconsolelinks
+    register: noconsolelinks
 
-# - name: Check that consolelinks2 namespace no longer has console links since it was removed from accessible namespaces
-#   assert:
-#     that:
-#     - TODO
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
+      - "{{ consolelink1.resources[0].metadata.name == 'kiali-namespace-consolelinks1-link' }}"
+      - "{{ consolelink2.resources | length == 0 }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
 
   # change to accessible_namespaces back to **
   - import_tasks: ../common/set_accessible_namespaces_to_all.yml
@@ -85,11 +146,19 @@
     vars:
       namespace_list: [ '**' ]
 
-# - name: Check that console links are back to the way they should be for **
-#
-#   assert:
-#     that:
-#     - TODO
+  # Check that console links are back to the way they should be for **
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      namespace: "{{ kiali.install_namespace }}"
+      name: kiali-app-link
+    register: applink
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-link' }}"
 
   # Remove the test namespaces we created earlier
   - k8s:
