@@ -1,0 +1,109 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+
+# - name: Test that console links are correct for accessible namespaces of **
+#   assert:
+#     that:
+#     - TODO
+
+  # change to accessible_namespaces to a fixed list of namespaces
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: consolelinks1
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: consolelinks2
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: noconsolelinks
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+
+# - name: Test that console links are correct for consolelinks1 and consolelinks2 namespaces
+# - name: TODO
+#   assert:
+#     that:
+#     - TODO
+
+# - name: Test that there are no console links for namespace noconsolelinks
+#   assert:
+#     that:
+#     - TODO
+
+  # change to accessible_namespaces by removing consolelinks2 from the list
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1' ]
+
+# - name: Check that consolelinks1 namespace still has console links
+#   assert:
+#     that:
+#     - TODO
+
+# - name: Check that consolelinks2 namespace no longer has console links since it was removed from accessible namespaces
+#   assert:
+#     that:
+#     - TODO
+
+  # change to accessible_namespaces back to **
+  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+
+# - name: Check that console links are back to the way they should be for **
+#
+#   assert:
+#     that:
+#     - TODO
+
+  # Remove the test namespaces we created earlier
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: consolelinks1
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: consolelinks2
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: noconsolelinks
