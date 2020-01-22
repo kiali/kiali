@@ -50,7 +50,36 @@
   - is_openshift == True
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
-- name: Process Kiali OAuth client on OpenShift
-  include: openshift/os-oauth.yml
+- name: Get the Kiali Route URL
+  include: openshift/os-get-kiali-route-url.yml
+  when:
+  - is_openshift == True
+
+- name: Process OpenShift OAuth client
+  k8s:
+    definition: "{{ lookup('template', 'templates/openshift/oauth.yaml') }}"
+  when:
+  - is_openshift == True
+  - kiali_vars.auth.strategy == "openshift"
+
+- name: Delete all ConsoleLinks for namespaces that are no longer accessible
+  k8s:
+    state: absent
+    api_version: console.openshift.io/v1
+    kind: ConsoleLink
+    name: "kiali-namespace-{{ inaccessible_namespace }}"
+  loop: "{{ no_longer_accessible_namespaces }}"
+  loop_control:
+    loop_var: inaccessible_namespace
+  when:
+  - is_openshift == True
+  - no_longer_accessible_namespaces is defined
+
+- name: Process OpenShift Console Links
+  k8s:
+    definition: "{{ lookup('template', 'templates/openshift/console-links.yaml') }}"
+  vars:
+    # When accessible_namespaces=**, the kiali.io/member-of label is not set, but maistra.io/member-of are always present
+    namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace', label_selector=('maistra.io/member-of=' + kiali_vars.istio_namespace)) | default({}) | json_query('[].metadata.name') if '**' in all_accessible_namespaces else all_accessible_namespaces }}"
   when:
   - is_openshift == True

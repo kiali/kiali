@@ -162,6 +162,7 @@
   with_items:
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='OAuthClient', resource_name='kiali-' + kiali_vars.deployment.namespace, api_version='oauth.openshift.io/v1') if is_openshift == True else [] }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Route', resource_name='kiali', api_version='route.openshift.io/v1') if is_openshift == True else [] }}"
+  - "{{ query('k8s', kind='ConsoleLink', label_selector='kiali.io/home=' + kiali_vars.deployment.namespace)}}"
   loop_control:
     loop_var: os_item
 
