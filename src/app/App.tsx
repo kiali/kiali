@@ -15,6 +15,7 @@ import LoginPageContainer from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/themes/light-border.css';
+import 'react-datepicker/dist/react-datepicker.css';
 
 Visibility.change((_e, state) => {
   // There are 3 states, visible, hidden and prerender, consider prerender as hidden.

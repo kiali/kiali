@@ -2,11 +2,12 @@ import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
 import {
   DurationInSeconds,
-  RefreshIntervalInMs,
+  IntervalInMilliseconds,
   TimeInSeconds,
   UserName,
   RawDate,
-  TimeInMilliseconds
+  TimeInMilliseconds,
+  ReplayWindow
 } from '../types/Common';
 import { EdgeLabelMode, Layout, GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
@@ -98,9 +99,12 @@ export interface InterfaceSettings {
 }
 
 export interface UserSettings {
-  interface: InterfaceSettings;
-  refreshInterval: RefreshIntervalInMs;
   duration: DurationInSeconds;
+  interface: InterfaceSettings;
+  refreshInterval: IntervalInMilliseconds;
+  replayActive: boolean;
+  replayQueryTime: TimeInMilliseconds;
+  replayWindow: ReplayWindow;
 }
 
 export interface JaegerState {

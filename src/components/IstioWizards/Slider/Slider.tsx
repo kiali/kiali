@@ -15,8 +15,12 @@ type Props = {
   maxLimit: number;
   step: number;
   value: number;
+  ticks: number[];
+  ticks_labels: string[];
   tooltip: boolean;
+  tooltipFormatter: (value: number) => string;
   onSlide: (value: number) => void;
+  onSlideStop: (value: number) => void;
   input: boolean;
   sliderClass: string;
   inputFormat: string;
@@ -39,8 +43,12 @@ class Slider extends React.Component<Props, State> {
     maxLimit: 100,
     value: 0,
     step: 1,
+    ticks: [],
+    ticks_labels: [],
     toolTip: false,
+    tooltipFormatter: noop,
     onSlide: noop,
+    onSlideStop: noop,
     label: null,
     labelClass: null,
     input: false,
@@ -60,6 +68,11 @@ class Slider extends React.Component<Props, State> {
     };
   }
 
+  componentDidMount() {
+    // This empty setState forces a re-render which resolves an issue with initial tick_label placement
+    this.setState({});
+  }
+
   componentDidUpdate(prevProps: Readonly<Props>): void {
     if (prevProps.value !== this.props.value || this.state.value !== this.props.value) {
       this.setState({ value: this.props.value });
@@ -68,6 +81,10 @@ class Slider extends React.Component<Props, State> {
 
   onSlide = value => {
     this.setState({ value }, () => this.props.onSlide(value));
+  };
+
+  onSlideStop = value => {
+    this.setState({ value }, () => this.props.onSlideStop(value));
   };
 
   onPlus = () => {
@@ -99,16 +116,20 @@ class Slider extends React.Component<Props, State> {
     this.setState({ tooltipFormat: format });
   };
 
-  formatter = value => `${value} ${this.state.tooltipFormat}`;
+  formatter = value => {
+    return this.props.tooltipFormatter !== noop
+      ? this.props.tooltipFormatter(value)
+      : `${value} ${this.state.tooltipFormat}`;
+  };
 
   render() {
     const BSSlider = (
       <BootstrapSlider
         {...this.props}
-        locked={this.props.locked}
         formatter={this.formatter}
         value={this.state.value}
         onSlide={this.onSlide}
+        onSlideStop={this.onSlideStop}
       />
     );
 
@@ -149,31 +170,35 @@ class Slider extends React.Component<Props, State> {
     return (
       <>
         <Boundaries slider={BSSlider} {...this.props}>
-          <Button
-            className={leftButtonStyle}
-            variant="link"
-            isDisabled={this.props.locked}
-            onClick={() => this.onMinus()}
-          >
-            <MinusIcon />
-          </Button>
-          <TextInput
-            className={inputStyle}
-            id="slider-text"
-            aria-label="slider-text"
-            value={this.state.value}
-            onChange={this.onInputChange}
-            isDisabled={this.props.locked}
-          />
-          <Button
-            className={rightButtonStyle}
-            variant="link"
-            isDisabled={this.props.locked}
-            onClick={() => this.onPlus()}
-          >
-            <PlusIcon />
-          </Button>
-          <InputGroupText>{this.props.inputFormat}</InputGroupText>
+          {this.props.input && (
+            <>
+              <Button
+                className={leftButtonStyle}
+                variant="link"
+                isDisabled={this.props.locked}
+                onClick={() => this.onMinus()}
+              >
+                <MinusIcon />
+              </Button>
+              <TextInput
+                className={inputStyle}
+                id="slider-text"
+                aria-label="slider-text"
+                value={this.state.value}
+                onChange={this.onInputChange}
+                isDisabled={this.props.locked}
+              />
+              <Button
+                className={rightButtonStyle}
+                variant="link"
+                isDisabled={this.props.locked}
+                onClick={() => this.onPlus()}
+              >
+                <PlusIcon />
+              </Button>
+              <InputGroupText>{this.props.inputFormat}</InputGroupText>
+            </>
+          )}
           {this.props.showLock ? LockIcon : <></>}
         </Boundaries>
       </>

@@ -49,7 +49,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, RefreshIntervalInMs } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Link } from 'react-router-dom';
 import { Paths } from '../../config';
 
@@ -77,7 +77,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
   meshStatus: string;
   navCollapse: boolean;
-  refreshInterval: RefreshIntervalInMs;
+  refreshInterval: IntervalInMilliseconds;
 };
 
 type OverviewProps = ReduxProps & {};

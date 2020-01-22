@@ -1,0 +1,12 @@
+/*
+Overrides for Replay use of the Slider component.
+- to avoid the tt occluding other components (like close replay), limit to when mouse is over the slider only,
+ not the tooltip area itself.
+- to avoid the tooltip getting clipped on the right, add padding to move the shift the "attach" point
+*/
+#replay-slider-div .slider {
+  .tooltip {
+    pointer-events: none;
+    padding-right: 175px;
+  }
+}

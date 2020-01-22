@@ -367,3 +367,31 @@ html.kiosk {
     display: none;
   }
 }
+
+/*
+  Datepicker overrides for graph replay and other uses
+  - note: global .tooltip setting but I think it should be OK
+*/
+// use PF fonts and fond-size
+.react-datepicker {
+  font-family: var(--pf-global--FontFamily--sans-serif);
+  font-size: var(--pf-global--FontSize);
+}
+// provide more space for time container given bigger font
+.react-datepicker__time-container {
+  width: 110px;
+  .react-datepicker__time {
+    .react-datepicker__time-box {
+      width: 100%;
+    }
+  }
+}
+// Make sure datepicker popper rises above other inflated z-index elements
+//   - secondaryMasthead currently at 10
+.react-datepicker-popper {
+  z-index: 11;
+}
+// Make sure tooltips are below datepicker popper but above secondary masthead
+.tooltip {
+  z-index: 10 !important;
+}

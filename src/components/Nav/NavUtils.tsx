@@ -1,5 +1,5 @@
 import { Layout, EdgeLabelMode, NodeType, NodeParamsType, GraphType } from '../../types/Graph';
-import { DurationInSeconds, RefreshIntervalInMs } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParam } from '../../app/History';
 import { isKioskMode } from '../../utils/SearchParamUtils';
@@ -11,7 +11,7 @@ export type GraphUrlParams = {
   graphLayout: Layout;
   graphType: GraphType;
   node?: NodeParamsType;
-  refreshInterval: RefreshIntervalInMs;
+  refreshInterval: IntervalInMilliseconds;
   showServiceNodes: boolean;
   showUnusedNodes: boolean;
 };

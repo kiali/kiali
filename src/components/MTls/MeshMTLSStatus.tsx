@@ -13,11 +13,11 @@ import * as API from '../../services/Api';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { MeshTlsActions } from '../../actions/MeshTlsActions';
-import { RefreshIntervalInMs } from '../../types/Common';
+import { TimeInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 
 type ReduxProps = {
-  lastRefreshAt: RefreshIntervalInMs;
+  lastRefreshAt: TimeInMilliseconds;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
   namespaces: Namespace[] | undefined;
   status: string;

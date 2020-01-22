@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Slider from 'bootstrap-slider-without-jquery';
+import _ from 'lodash';
 
 const orientation = {
   horizontal: 'horizontal',
@@ -12,8 +13,10 @@ type Props = {
   value: number;
   formatter: (value: any) => any;
   onSlide: (event: any) => any;
+  onSlideStop: (event: any) => any;
   orientation: string;
-  ticks_labels: [];
+  ticks: number[];
+  ticks_labels: string[];
   locked: boolean;
   min: number;
   // Note that Slider will use max and maxLimit properties to:
@@ -29,6 +32,7 @@ class BootstrapSlider extends React.Component<Props> {
     formatter: value => value,
     onSlide: event => event,
     orientation: 'horizontal',
+    ticks: [],
     ticks_labels: [],
     locked: false
   };
@@ -45,8 +49,13 @@ class BootstrapSlider extends React.Component<Props> {
       this.props.onSlide(value);
       this.slider.setValue(value);
     };
+    const onSlideStop = value => {
+      value = _.min([value, this.props.max]);
+      this.props.onSlideStop(value);
+      this.slider.setValue(value);
+    };
     this.slider.on('slide', onSlide);
-    this.slider.on('slideStop', onSlide);
+    this.slider.on('slideStop', onSlideStop);
     this.slider.setAttribute('min', this.props.min);
     this.slider.setAttribute('max', this.props.maxLimit);
     if (this.props.locked) {
@@ -74,12 +83,14 @@ class BootstrapSlider extends React.Component<Props> {
         this.props.onSlide(value);
         this.slider.setValue(value);
       };
+      const onSlideStop = value => {
+        value = _.min([value, this.props.max]);
+        this.props.onSlideStop(value);
+        this.slider.setValue(value);
+      };
       this.slider.on('slide', onSlide);
-      this.slider.on('slideStop', onSlide);
+      this.slider.on('slideStop', onSlideStop);
       this.slider.setAttribute('formatter', this.props.formatter);
-      if (this.props && this.props.orientation && orientation) {
-        console.log('TODELETE orientation check');
-      }
       if (this.props.locked) {
         this.slider.disable();
       } else {

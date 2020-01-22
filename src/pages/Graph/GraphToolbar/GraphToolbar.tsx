@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Toolbar, ToolbarGroup } from '@patternfly/react-core';
+import { Button, ButtonVariant, Toolbar, ToolbarGroup, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { connect } from 'react-redux';
@@ -10,7 +10,8 @@ import {
   activeNamespacesSelector,
   edgeLabelModeSelector,
   graphTypeSelector,
-  showUnusedNodesSelector
+  showUnusedNodesSelector,
+  replayActiveSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, NodeParamsType, EdgeLabelMode } from '../../../types/Graph';
@@ -25,12 +26,15 @@ import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
 import TimeRangeContainer from 'components/Time/TimeRange';
+import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
+import ReplayContainer from 'components/Time/Replay';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   node?: NodeParamsType;
+  replayActive: boolean;
   showUnusedNodes: boolean;
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
@@ -42,11 +46,13 @@ type ReduxProps = {
 
 type GraphToolbarProps = ReduxProps & {
   disabled: boolean;
-  onRefresh: () => void;
+  onRefresh?: () => void;
+  onToggleHelp: () => void;
 };
 
 const toolbarStyle = style({
-  marginBottom: '10px'
+  marginBottom: '20px',
+  marginTop: '20px'
 });
 
 const rightToolbarStyle = style({
@@ -134,7 +140,9 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
   }
 
   handleRefresh = () => {
-    this.props.onRefresh();
+    if (this.props.onRefresh) {
+      this.props.onRefresh();
+    }
   };
 
   handleNamespaceReturn = () => {
@@ -151,20 +159,37 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
         <Toolbar className={toolbarStyle}>
           <div style={{ display: 'flex' }}>
             {this.props.node ? (
-              <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
-                Back to full {GraphToolbar.GRAPH_TYPES[graphTypeKey]}
-              </Button>
+              <Tooltip
+                key={'graph-tour-help-ot'}
+                position={TooltipPosition.right}
+                content={`Back to full ${GraphToolbar.GRAPH_TYPES[graphTypeKey]}`}
+              >
+                <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
+                  <KialiIcon.Back className={defaultIconStyle} />
+                </Button>
+              </Tooltip>
             ) : (
-              <TourStopContainer info={GraphTourStops.GraphType}>
-                <ToolbarDropdown
-                  id={'graph_filter_view_type'}
-                  disabled={this.props.disabled}
-                  handleSelect={this.setGraphType}
-                  value={graphTypeKey}
-                  label={GraphToolbar.GRAPH_TYPES[graphTypeKey]}
-                  options={GraphToolbar.GRAPH_TYPES}
-                />
-              </TourStopContainer>
+              <>
+                <TourStopContainer info={GraphTourStops.GraphType}>
+                  <ToolbarDropdown
+                    id={'graph_filter_view_type'}
+                    disabled={this.props.disabled}
+                    handleSelect={this.setGraphType}
+                    value={graphTypeKey}
+                    label={GraphToolbar.GRAPH_TYPES[graphTypeKey]}
+                    options={GraphToolbar.GRAPH_TYPES}
+                  />
+                </TourStopContainer>
+                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
+                  <Button
+                    variant="link"
+                    style={{ paddingLeft: '6px', paddingRight: '0px' }}
+                    onClick={this.props.onToggleHelp}
+                  >
+                    <KialiIcon.Help className={defaultIconStyle} />
+                  </Button>
+                </Tooltip>
+              </>
             )}
             <div className={marginLeftRight}>
               <TourStopContainer info={GraphTourStops.EdgeLabels}>
@@ -184,13 +209,17 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           </div>
           <GraphFindContainer />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
-            <TimeRangeContainer
-              id="graph_time_range"
-              disabled={this.props.disabled}
-              handleRefresh={this.handleRefresh}
-            />
+            <TourStopContainer info={GraphTourStops.TimeRange}>
+              <TimeRangeContainer
+                id="graph_time_range"
+                disabled={this.props.disabled}
+                handleRefresh={this.handleRefresh}
+                supportsReplay={true}
+              />
+            </TourStopContainer>
           </ToolbarGroup>
         </Toolbar>
+        {this.props.replayActive && <ReplayContainer id={'time-range-replay'} />}
       </>
     );
   }
@@ -215,6 +244,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   edgeLabelMode: edgeLabelModeSelector(state),
   graphType: graphTypeSelector(state),
   node: state.graph.node,
+  replayActive: replayActiveSelector(state),
   showUnusedNodes: showUnusedNodesSelector(state)
 });
 

@@ -11,7 +11,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { RefreshIntervalInMs, DurationInSeconds } from '../../types/Common';
+import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from './NamespaceInfo';
 import { ThinStyle } from '../../components/Filters/FilterStyles';
@@ -21,8 +21,8 @@ import TimeRangeContainer from 'components/Time/TimeRange';
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  refreshInterval: RefreshIntervalInMs;
-  setRefreshInterval: (refresh: RefreshIntervalInMs) => void;
+  refreshInterval: IntervalInMilliseconds;
+  setRefreshInterval: (refresh: IntervalInMilliseconds) => void;
 };
 
 type Props = ReduxProps & {
@@ -192,7 +192,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setRefreshInterval: (refreshInterval: RefreshIntervalInMs) => {
+    setRefreshInterval: (refreshInterval: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     }
   };

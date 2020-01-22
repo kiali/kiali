@@ -5,5 +5,5 @@ export const getName = (durationSeconds: number): string => {
   if (name) {
     return name;
   }
-  return 'Last ' + durationSeconds + ' seconds';
+  return durationSeconds + ' seconds';
 };

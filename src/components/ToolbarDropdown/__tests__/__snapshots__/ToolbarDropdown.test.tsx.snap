@@ -17,7 +17,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
     isExpanded={false}
     onSelect={[Function]}
     onToggle={[Function]}
-    placeholderText="Last 1m"
+    placeholderText="1m Traffic"
     selections={60}
   >
     <SelectOption
@@ -35,7 +35,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="60"
     >
-      Last 1m
+      1m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -52,7 +52,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="300"
     >
-      Last 5m
+      5m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -69,7 +69,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="600"
     >
-      Last 10m
+      10m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -86,7 +86,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="1800"
     >
-      Last 30m
+      30m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -103,7 +103,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="3600"
     >
-      Last 1h
+      1h Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -120,7 +120,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="10800"
     >
-      Last 3h
+      3h Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -137,7 +137,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
       sendRef={[Function]}
       value="21600"
     >
-      Last 6h
+      6h Traffic
     </SelectOption>
   </Component>
 </Fragment>
@@ -378,7 +378,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
     isExpanded={false}
     onSelect={[Function]}
     onToggle={[Function]}
-    placeholderText="Last 1m"
+    placeholderText="1m Traffic"
     selections={60}
   >
     <SelectOption
@@ -396,7 +396,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="60"
     >
-      Last 1m
+      1m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -413,7 +413,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="300"
     >
-      Last 5m
+      5m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -430,7 +430,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="600"
     >
-      Last 10m
+      10m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -447,7 +447,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="1800"
     >
-      Last 30m
+      30m Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -464,7 +464,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="3600"
     >
-      Last 1h
+      1h Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -481,7 +481,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="10800"
     >
-      Last 3h
+      3h Traffic
     </SelectOption>
     <SelectOption
       className=""
@@ -498,7 +498,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
       sendRef={[Function]}
       value="21600"
     >
-      Last 6h
+      6h Traffic
     </SelectOption>
   </Component>
 </Fragment>

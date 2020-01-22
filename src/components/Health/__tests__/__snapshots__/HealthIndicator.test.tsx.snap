@@ -80,7 +80,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "name": "No health information",
                   "priority": 0,
                 },
-                "title": "Error Rate over last 10m",
+                "title": "Error Rate over 10m traffic",
               },
             ],
             "requests": Object {

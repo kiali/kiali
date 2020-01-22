@@ -50,6 +50,12 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     name: 'Namespaces',
     description: 'Select the namespaces you want to see in the graph.',
     position: PopoverPosition.bottom
+  },
+  TimeRange: {
+    name: 'Time Range & Replay',
+    description:
+      'Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example "Last 5m" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.',
+    position: PopoverPosition.left
   }
 };
 
@@ -61,6 +67,7 @@ const GraphTour: TourInfo = {
     GraphTourStops.EdgeLabels,
     GraphTourStops.Display,
     GraphTourStops.Find,
+    GraphTourStops.TimeRange,
     GraphTourStops.Graph,
     GraphTourStops.ContextualMenu,
     GraphTourStops.Layout,

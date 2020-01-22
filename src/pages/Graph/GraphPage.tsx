@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
-import { Breadcrumb, BreadcrumbItem, Button, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
@@ -26,7 +25,10 @@ import {
   edgeLabelModeSelector,
   graphDataSelector,
   graphTypeSelector,
-  meshWideMTLSEnabledSelector
+  meshWideMTLSEnabledSelector,
+  lastRefreshAtSelector,
+  replayQueryTimeSelector,
+  replayActiveSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -34,15 +36,16 @@ import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { GlobalActions } from '../../actions/GlobalActions';
 import { PfColors } from 'components/Pf/PfColors';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { TourActions } from 'actions/TourActions';
 import TourStopContainer, { TourInfo, getNextTourStop } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
 import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { getErrorString } from 'services/Api';
+import { Chip, Badge } from '@patternfly/react-core';
+import { toRangeString } from 'components/Time/Utils';
+import { ReplayColor, replayBorder } from 'components/Time/Replay';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -60,13 +63,16 @@ type ReduxProps = {
   edgeLabelMode: EdgeLabelMode;
   graphData: any;
   graphDuration: DurationInSeconds; // duration of current graph
-  graphTimestamp: TimeInSeconds; // queryTime of current graph
+  graphTimestamp: TimeInSeconds; // prom queryTime of current graph
   graphType: GraphType;
   isError: boolean;
   isLoading: boolean;
   isPageVisible: boolean;
+  lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
   node?: NodeParamsType;
+  replayActive: boolean;
+  replayQueryTime: TimeInMilliseconds;
   showLegend: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
@@ -82,12 +88,12 @@ type ReduxProps = {
     edgeLabelMode: EdgeLabelMode,
     showSecurity: boolean,
     showUnusedNodes: boolean,
-    node?: NodeParamsType
+    node?: NodeParamsType,
+    queryTime?: TimeInMilliseconds
   ) => any;
   graphChanged: () => void;
   setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
   endTour: () => void;
   startTour: ({ info: TourInfo, stop: number }) => void;
 };
@@ -95,10 +101,6 @@ type ReduxProps = {
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
 
 const NUMBER_OF_DATAPOINTS = 30;
-
-const breadcrumbStyle = style({
-  marginTop: '10px'
-});
 
 const containerStyle = style({
   minHeight: '350px',
@@ -120,10 +122,26 @@ const cytoscapeToolbarWrapperDivStyle = style({
   borderStyle: 'hidden'
 });
 
-const graphToolbarStyle = style({
+const graphTimeRangeDivStyle = style({
+  position: 'absolute',
+  top: '10px',
+  left: '10px',
+  width: 'auto',
+  zIndex: 2,
+  backgroundColor: PfColors.White
+});
+
+const whiteBackground = style({
+  backgroundColor: PfColors.White
+});
+
+const replayBackground = style({
+  backgroundColor: ReplayColor
+});
+
+const graphLegendStyle = style({
   right: '0',
   bottom: '10px',
-  zIndex: 9999,
   position: 'absolute',
   overflow: 'hidden'
 });
@@ -134,15 +152,6 @@ const GraphErrorBoundaryFallback = () => {
       <EmptyGraphLayoutContainer namespaces={[]} isError={true} />
     </div>
   );
-};
-
-const timeDisplayOptions = {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false
 };
 
 export class GraphPage extends React.Component<GraphPageProps> {
@@ -253,6 +262,8 @@ export class GraphPage extends React.Component<GraphPageProps> {
       (prev.edgeLabelMode !== curr.edgeLabelMode &&
         curr.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
       prev.graphType !== curr.graphType ||
+      (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
+      prev.replayQueryTime !== curr.replayQueryTime ||
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
       prev.showUnusedNodes !== curr.showUnusedNodes ||
@@ -277,43 +288,24 @@ export class GraphPage extends React.Component<GraphPageProps> {
   }
 
   render() {
-    const graphEnd: TimeInMilliseconds = this.props.graphTimestamp * 1000;
-    const graphStart: TimeInMilliseconds = graphEnd - this.props.graphDuration * 1000;
     let conStyle = containerStyle;
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
     const focusSelector = getFocusSelector();
+    const isReady =
+      this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError;
+    const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
     return (
       <>
         <FlexView className={conStyle} column={true}>
-          <div className={breadcrumbStyle}>
-            <Breadcrumb>
-              <BreadcrumbItem isActive={true}>
-                <Title headingLevel="h4" size="xl">
-                  {this.props.node && this.props.node.nodeType !== NodeType.UNKNOWN
-                    ? `Graph for ${this.props.node.nodeType}: ${this.getTitle(this.props.node)}`
-                    : 'Graph'}
-                </Title>
-                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
-                  <Button variant="link" style={{ paddingLeft: '6px' }} onClick={this.toggleHelp}>
-                    <KialiIcon.Help className={defaultIconStyle} />
-                  </Button>
-                </Tooltip>
-              </BreadcrumbItem>
-            </Breadcrumb>
-            {this.props.graphTimestamp > 0 && (
-              <span className={'pull-right'}>
-                {new Date(graphStart).toLocaleDateString(undefined, timeDisplayOptions)}
-                {' ... '}
-                {new Date(graphEnd).toLocaleDateString(undefined, timeDisplayOptions)}
-              </span>
-            )}
-          </div>
           <div>
-            <GraphToolbarContainer disabled={this.props.isLoading} onRefresh={this.handleRefresh} />
+            <GraphToolbarContainer disabled={this.props.isLoading} onToggleHelp={this.toggleHelp} />
           </div>
-          <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
+          <FlexView
+            grow={true}
+            className={`${cytoscapeGraphWrapperDivStyle} ${this.props.replayActive && replayBorder}`}
+          >
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
@@ -321,25 +313,41 @@ export class GraphPage extends React.Component<GraphPageProps> {
             >
               {this.props.showLegend && (
                 <GraphLegend
-                  className={graphToolbarStyle}
+                  className={graphLegendStyle}
                   isMTLSEnabled={this.props.mtlsEnabled}
                   closeLegend={this.props.toggleLegend}
                 />
               )}
-              <TourStopContainer info={GraphTourStops.Graph}>
-                <TourStopContainer info={GraphTourStops.ContextualMenu}>
-                  <CytoscapeGraphContainer
-                    refresh={this.handleRefresh}
-                    containerClassName={cytoscapeGraphContainerStyle}
-                    ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                    isMTLSEnabled={this.props.mtlsEnabled}
-                    focusSelector={focusSelector}
-                    contextMenuNodeComponent={NodeContextMenuContainer}
-                    contextMenuGroupComponent={NodeContextMenuContainer}
-                  />
+              {isReady && (
+                <Chip
+                  className={`${graphTimeRangeDivStyle} ${
+                    this.props.replayActive ? replayBackground : whiteBackground
+                  }`}
+                  isOverflowChip={true}
+                  isReadOnly={true}
+                >
+                  {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
+                  {!isReplayReady && this.props.replayActive && `click Play to start`}
+                  {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
+                  {isReplayReady && `${this.displayTimeRange()}`}
+                </Chip>
+              )}
+              {(!this.props.replayActive || isReplayReady) && (
+                <TourStopContainer info={GraphTourStops.Graph}>
+                  <TourStopContainer info={GraphTourStops.ContextualMenu}>
+                    <CytoscapeGraphContainer
+                      onEmptyGraphAction={this.handleEmptyGraphAction}
+                      containerClassName={cytoscapeGraphContainerStyle}
+                      ref={refInstance => this.setCytoscapeGraph(refInstance)}
+                      isMTLSEnabled={this.props.mtlsEnabled}
+                      focusSelector={focusSelector}
+                      contextMenuNodeComponent={NodeContextMenuContainer}
+                      contextMenuGroupComponent={NodeContextMenuContainer}
+                    />
+                  </TourStopContainer>
                 </TourStopContainer>
-              </TourStopContainer>
-              {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError && (
+              )}
+              {isReady && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
                   <CytoscapeToolbarContainer cytoscapeGraphRef={this.cytoscapeGraphRef} />
                 </div>
@@ -363,7 +371,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
     );
   }
 
-  private handleRefresh = () => {
+  private handleEmptyGraphAction = () => {
     this.loadGraphDataFromBackend();
   };
 
@@ -379,23 +387,6 @@ export class GraphPage extends React.Component<GraphPageProps> {
     }
   };
 
-  private getTitle(node: NodeParamsType) {
-    if (node.nodeType === NodeType.APP) {
-      let title = node.app;
-      if (node.version && node.version !== UNKNOWN) {
-        title += ' - ' + node.version;
-      }
-
-      return title;
-    } else if (node.nodeType === NodeType.SERVICE) {
-      return node.service;
-    } else if (node.nodeType === NodeType.WORKLOAD) {
-      return node.workload;
-    }
-
-    return 'unknown';
-  }
-
   private setCytoscapeGraph(cytoscapeGraph: any) {
     this.cytoscapeGraphRef.current = cytoscapeGraph;
   }
@@ -404,6 +395,9 @@ export class GraphPage extends React.Component<GraphPageProps> {
     if (this.loadPromise) {
       this.loadPromise.cancel();
     }
+    const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
+      ? this.props.replayQueryTime
+      : undefined;
     const promise = this.props.fetchGraphData(
       this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       this.props.duration,
@@ -412,7 +406,8 @@ export class GraphPage extends React.Component<GraphPageProps> {
       this.props.edgeLabelMode,
       this.props.showSecurity,
       this.props.showUnusedNodes,
-      this.props.node
+      this.props.node,
+      queryTime
     );
     this.loadPromise = makeCancelablePromise(promise);
     this.loadPromise.promise
@@ -429,6 +424,13 @@ export class GraphPage extends React.Component<GraphPageProps> {
   private notifyError = (error: Error, _componentStack: string) => {
     AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
   };
+
+  private displayTimeRange = () => {
+    const rangeEnd: TimeInMilliseconds = this.props.graphTimestamp * 1000;
+    const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
+
+    return toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' });
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
@@ -443,8 +445,11 @@ const mapStateToProps = (state: KialiAppState) => ({
   isError: state.graph.isError,
   isLoading: state.graph.isLoading,
   isPageVisible: state.globalState.isPageVisible,
+  lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
   node: state.graph.node,
+  replayActive: replayActiveSelector(state),
+  replayQueryTime: replayQueryTimeSelector(state),
   showLegend: state.graph.toolbarState.showLegend,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
@@ -462,7 +467,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     edgeLabelMode: EdgeLabelMode,
     showSecurity: boolean,
     showUnusedNodes: boolean,
-    node?: NodeParamsType
+    node?: NodeParamsType,
+    queryTime?: TimeInMilliseconds
   ) =>
     dispatch(
       GraphDataThunkActions.fetchGraphData(
@@ -473,13 +479,13 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
         edgeLabelMode,
         showSecurity,
         showUnusedNodes,
-        node
+        node,
+        queryTime
       )
     ),
   graphChanged: bindActionCreators(GraphActions.changed, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  setLastRefreshAt: bindActionCreators(GlobalActions.setLastRefreshAt, dispatch),
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   startTour: bindActionCreators(TourActions.startTour, dispatch)
 });

@@ -195,6 +195,9 @@ class WeightedRouting extends React.Component<Props, State> {
               onSlide={value => {
                 this.onWeight(workload.name, value as number);
               }}
+              onSlideStop={value => {
+                this.onWeight(workload.name, value as number);
+              }}
               locked={this.state.workloads.length > 1 ? workload.locked : true}
               showLock={this.state.workloads.length > 2}
               onLock={locked => this.onLock(workload.name, locked)}

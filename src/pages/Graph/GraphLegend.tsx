@@ -22,7 +22,8 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
       overflow: 'hidden',
       overflowX: 'auto',
       overflowY: 'auto',
-      backgroundColor: PfColors.White
+      backgroundColor: PfColors.White,
+      zIndex: 3
     });
 
     const headerStyle = style({

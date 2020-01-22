@@ -1,5 +1,5 @@
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import { Durations, serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import * as React from 'react';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -17,15 +17,11 @@ type ReduxProps = {
   setDuration: (duration: DurationInSeconds) => void;
 };
 
-type BasicDurationDropdownProps = ReduxProps & {
+type DurationDropdownProps = ReduxProps & {
   id: string;
   disabled?: boolean;
   tooltip?: string;
-};
-
-// These are taken from the serverConfig
-type DurationDropdownProps = BasicDurationDropdownProps & {
-  durations: Durations;
+  nameDropdown?: string;
 };
 
 export class DurationDropdown extends React.Component<DurationDropdownProps> {
@@ -36,23 +32,24 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
         disabled={this.props.disabled}
         handleSelect={key => this.props.setDuration(Number(key))}
         value={String(this.props.duration)}
-        label={this.props.durations[this.props.duration]}
-        options={this.props.durations}
+        label={serverConfig.durations[this.props.duration]}
+        options={serverConfig.durations}
         tooltip={this.props.tooltip}
+        nameDropdown={this.props.nameDropdown}
       />
     );
   }
 }
 
 export const withDurations = DurationDropdownComponent => {
-  return (props: BasicDurationDropdownProps) => {
+  return (props: DurationDropdownProps) => {
     return <DurationDropdownComponent durations={serverConfig.durations} {...props} />;
   };
 };
 
 export const withURLAwareness = DurationDropdownComponent => {
-  return class extends React.Component<BasicDurationDropdownProps> {
-    constructor(props: BasicDurationDropdownProps) {
+  return class extends React.Component<DurationDropdownProps> {
+    constructor(props: DurationDropdownProps) {
       super(props);
       const urlParams = new URLSearchParams(history.location.search);
       const urlDuration = HistoryManager.getDuration(urlParams);

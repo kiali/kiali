@@ -4,13 +4,19 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
 import { refreshIntervalSelector } from '../../store/Selectors';
 import { config } from '../../config';
-import { RefreshIntervalInMs, TimeInMilliseconds } from '../../types/Common';
+import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import RefreshButtonContainer from './RefreshButton';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { HistoryManager, URLParam } from 'app/History';
+
+type ReduxProps = {
+  refreshInterval: IntervalInMilliseconds;
+  setRefreshInterval: (refreshInterval: IntervalInMilliseconds) => void;
+  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
+};
 
 type ComponentProps = {
   id: string;
@@ -19,12 +25,6 @@ type ComponentProps = {
   manageURL?: boolean;
 
   handleRefresh: () => void;
-};
-
-type ReduxProps = {
-  refreshInterval: RefreshIntervalInMs;
-  setRefreshInterval: (refreshInterval: RefreshIntervalInMs) => void;
-  setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
 };
 
 type Props = ComponentProps & ReduxProps;
@@ -115,7 +115,7 @@ class Refresh extends React.PureComponent<Props, State> {
     }
   };
 
-  private updateRefreshInterval = (refreshInterval: RefreshIntervalInMs) => {
+  private updateRefreshInterval = (refreshInterval: IntervalInMilliseconds) => {
     this.props.setRefreshInterval(refreshInterval); // notify redux of the change
   };
 
@@ -131,7 +131,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setRefreshInterval: (refresh: RefreshIntervalInMs) => {
+    setRefreshInterval: (refresh: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refresh));
     },
     setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => {

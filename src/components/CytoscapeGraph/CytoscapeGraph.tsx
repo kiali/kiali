@@ -46,7 +46,7 @@ import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import { DurationInSeconds, RefreshIntervalInMs } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
@@ -64,7 +64,7 @@ type ReduxProps = {
   graphType: GraphType;
   layout: Layout;
   node?: NodeParamsType;
-  refreshInterval: RefreshIntervalInMs;
+  refreshInterval: IntervalInMilliseconds;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
@@ -85,11 +85,11 @@ type CytoscapeGraphProps = ReduxProps & {
   isError: boolean;
   isMTLSEnabled: boolean;
   containerClassName?: string;
-  refresh: () => void;
   focusSelector?: string;
   contextMenuNodeComponent?: NodeContextMenuType;
   contextMenuGroupComponent?: NodeContextMenuType;
   contextMenuEdgeComponent?: EdgeContextMenuType;
+  onEmptyGraphAction: () => void;
 };
 
 type CytoscapeGraphState = {};
@@ -140,8 +140,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
   }
 
+  componentDidMount() {
+    this.cyInitialization(this.getCy());
+  }
+
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, _nextState: CytoscapeGraphState) {
-    this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
+    this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node; // side-effect?  Should this move to componentDidUpdate?
+
+    // don't update due to duration or refreshInterval changes, those don't affect display
     let result =
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.elements !== nextProps.elements ||
@@ -162,10 +168,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     return result;
-  }
-
-  componentDidMount() {
-    this.cyInitialization(this.getCy());
   }
 
   componentDidUpdate(prevProps: CytoscapeGraphProps, _prevState: CytoscapeGraphState) {
@@ -222,7 +224,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         <EmptyGraphLayoutContainer
           elements={this.props.elements}
           namespaces={this.props.activeNamespaces}
-          action={this.props.refresh}
+          action={this.props.onEmptyGraphAction}
           isLoading={this.props.isLoading}
           isError={this.props.isError}
         >
@@ -691,6 +693,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (sameNode) {
       return;
     }
+
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.props.activeNamespaces,
       duration: this.props.duration,
