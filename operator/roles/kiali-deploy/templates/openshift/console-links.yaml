@@ -21,7 +21,7 @@ metadata:
     version: {{ kiali_vars.deployment.version_label }}
     kiali.io/home: {{ kiali_vars.deployment.namespace }}
 spec:
-  href: {{ kiali_route_url }}/{{ kiali_vars.server.web_root }}/console/graph/namespaces?namespaces={{ namespace }}
+  href: {{ kiali_route_url }}{{ '/' if kiali_vars.server.web_root == '/' else (kiali_vars.server.web_root + '/') }}console/graph/namespaces?namespaces={{ namespace }}
   location: NamespaceDashboard
   text: Open on Kiali
   namespaceDashboard:

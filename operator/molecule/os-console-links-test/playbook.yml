@@ -84,8 +84,12 @@
       - "{{ applink.resources[0].metadata.name == 'kiali-app-'+kiali.install_namespace }}"
       - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1' }}"
       - "{{ consolelinks1.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ consolelinks1.resources[0].spec.href is not search('///') }}"
+      - "{{ 'consolelinks1' in consolelinks1.resources[0].spec.namespaceDashboard.namespaces }}"
       - "{{ consolelinks2.resources[0].metadata.name == 'kiali-namespace-consolelinks2' }}"
       - "{{ consolelinks2.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ consolelinks2.resources[0].spec.href is not search('///') }}"
+      - "{{ 'consolelinks2' in consolelinks2.resources[0].spec.namespaceDashboard.namespaces }}"
       - "{{ noconsolelinks.resources | length == 0 }}"
 
   # change to accessible_namespaces by removing consolelinks2 from the list

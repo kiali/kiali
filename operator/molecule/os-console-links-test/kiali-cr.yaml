@@ -13,3 +13,5 @@ spec:
     image_version: {{ kiali.image_version }}
     accessible_namespaces: {{ kiali.accessible_namespaces }}
     service_type: NodePort
+  server:
+    web_root: {{ kiali.server_web_root }}
