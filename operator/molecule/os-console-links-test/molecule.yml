@@ -37,6 +37,7 @@ provisioner:
           image_name: quay.io/kiali/kiali
           image_version: latest
           image_pull_policy: Always
+          server_web_root: "/"
 scenario:
   name: os-console-links-test
   test_sequence:
