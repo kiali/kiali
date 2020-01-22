@@ -10,3 +10,6 @@ Overrides for Replay use of the Slider component.
     padding-right: 175px;
   }
 }
+#replay-slider-div .slider-selection {
+  background: var(--pf-global--active-color--300); // should match PFKialiColor.Replay
+}

@@ -15,7 +15,7 @@ import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFKialiColor } from 'components/Pf/PfColors';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -46,12 +46,8 @@ type ReplaySpeed = {
   text: string;
 };
 
-export const ReplayColor = PfColors.LightBlue300;
-
 export const replayBorder = style({
-  borderLeftStyle: 'solid',
-  borderColor: ReplayColor,
-  borderWidth: '3px'
+  borderLeft: `solid 5px ${PFKialiColor.Replay}`
 });
 
 // key represents replay interval in milliseconds
@@ -95,8 +91,8 @@ const isCustomStyle = style({
   height: '36px'
 });
 
-const isCustomFocusStyle = style({
-  color: ReplayColor
+const isCustomActiveStyle = style({
+  color: PFKialiColor.Active
 });
 
 const replayStyle = style({
@@ -117,8 +113,8 @@ const speedStyle = style({
   padding: '0 2px 2px 2px'
 });
 
-const speedFocusStyle = style({
-  color: ReplayColor,
+const speedActiveStyle = style({
+  color: PFKialiColor.ActiveText,
   fontWeight: 'bolder'
 });
 
@@ -253,7 +249,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
         >
           <Button className={isCustomStyle} variant={ButtonVariant.control} onClick={this.toggleCustomStartTime}>
             <KialiIcon.UserClock
-              className={this.state.isCustomStartTime ? `${defaultIconStyle} ${isCustomFocusStyle}` : defaultIconStyle}
+              className={this.state.isCustomStartTime ? `${defaultIconStyle} ${isCustomActiveStyle}` : defaultIconStyle}
             />
           </Button>
         </Tooltip>
@@ -419,17 +415,17 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
   };
 
   private speedButton = (replaySpeed: ReplaySpeed, isLast: boolean): React.ReactFragment => {
-    const isFocus = this.state.replaySpeed === replaySpeed.speed;
+    const isActive = this.state.replaySpeed === replaySpeed.speed;
     return (
       <>
         <Button
           key={`speed-${replaySpeed.text}`}
           className={speedStyle}
           variant={ButtonVariant.plain}
-          isFocus={isFocus}
+          isActive={isActive}
           onClick={() => this.setReplaySpeed(replaySpeed.speed)}
         >
-          <Text className={isFocus ? speedFocusStyle : undefined}>{replaySpeed.text}</Text>
+          <Text className={isActive ? speedActiveStyle : undefined}>{replaySpeed.text}</Text>
         </Button>
         {!isLast && <div className={vrStyle} />}
       </>

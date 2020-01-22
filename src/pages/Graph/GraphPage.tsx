@@ -36,7 +36,7 @@ import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { PfColors } from 'components/Pf/PfColors';
+import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import TourStopContainer, { TourInfo, getNextTourStop } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
@@ -45,7 +45,7 @@ import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { getErrorString } from 'services/Api';
 import { Chip, Badge } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
-import { ReplayColor, replayBorder } from 'components/Time/Replay';
+import { replayBorder } from 'components/Time/Replay';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -136,7 +136,7 @@ const whiteBackground = style({
 });
 
 const replayBackground = style({
-  backgroundColor: ReplayColor
+  backgroundColor: PFKialiColor.Replay
 });
 
 const graphLegendStyle = style({

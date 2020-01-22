@@ -141,6 +141,12 @@ export enum PFAlertColor {
   WarningBackground = 'var(--pf-global--warning-color--200)'
 }
 
+export enum PFKialiColor {
+  Active = 'var(--pf-global--active-color--400)',
+  ActiveText = 'var(--pf-global--primary-color--200)',
+  Replay = 'var(--pf-global--active-color--300)'
+}
+
 export const withAlpha = (color: PfColors, hexAlpha: string) => {
   return color + hexAlpha;
 };
