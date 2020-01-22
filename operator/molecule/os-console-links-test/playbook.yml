@@ -1,0 +1,223 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+
+  # Test that console links are correct for accessible namespaces of **
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-app-{{ kiali.install_namespace }}"
+    register: applink
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-'+kiali.install_namespace }}"
+
+  # Create some test namespaces
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: consolelinks1
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: consolelinks2
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: noconsolelinks
+
+  # change to accessible_namespaces to a fixed list of namespaces
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+
+  # Test that console links are correct across namespaces
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-app-{{ kiali.install_namespace }}"
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks1"
+    register: consolelinks1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks2"
+    register: consolelinks2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-noconsolelinks"
+    register: noconsolelinks
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-'+kiali.install_namespace }}"
+      - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1' }}"
+      - "{{ consolelinks1.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ consolelinks2.resources[0].metadata.name == 'kiali-namespace-consolelinks2' }}"
+      - "{{ consolelinks2.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
+
+  # change to accessible_namespaces by removing consolelinks2 from the list
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1' ]
+
+  # Test that console links are correct - note we removed a namespace from accessible_namespaces so the link should be gone
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-app-{{ kiali.install_namespace }}"
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks1"
+    register: consolelinks1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks2"
+    register: consolelinks2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-noconsolelinks"
+    register: noconsolelinks
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-'+kiali.install_namespace }}"
+      - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1' }}"
+      - "{{ consolelinks1.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ consolelinks2.resources | length == 0 }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
+
+  # change to accessible_namespaces by adding a namespace to the existing fixed list of accessible namespaces
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'consolelinks1', 'consolelinks2' ]
+
+  # Test that console links are correct across namespaces
+  - name: Get app link
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-app-{{ kiali.install_namespace }}"
+    register: applink
+  - name: Get links from consolelinks1
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks1"
+    register: consolelinks1
+  - name: Get links from consolelinks2
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-consolelinks2"
+    register: consolelinks2
+  - name: Get links from noconsolelinks
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      name: "kiali-namespace-noconsolelinks"
+    register: noconsolelinks
+
+  - name: Assert that console links are correct
+    assert:
+      that:
+      - "{{ applink.resources[0].metadata.name == 'kiali-app-'+kiali.install_namespace }}"
+      - "{{ consolelinks1.resources[0].metadata.name == 'kiali-namespace-consolelinks1' }}"
+      - "{{ consolelinks1.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ consolelinks2.resources[0].metadata.name == 'kiali-namespace-consolelinks2' }}"
+      - "{{ consolelinks2.resources[0].metadata.labels['kiali.io/home'] == kiali.install_namespace }}"
+      - "{{ noconsolelinks.resources | length == 0 }}"
+
+  # Uninstall Kiali CR which should uninstall all console links
+  - name: Remove Kiali CR
+    vars:
+      custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+    k8s:
+      state: absent
+      api_version: kiali.io/v1alpha1
+      kind: Kiali
+      namespace: "{{ cr_namespace }}"
+      name: "{{ custom_resource.metadata.name }}"
+
+  - name: Confirm all the Console Links got deleted
+    k8s_facts:
+      api_version: console.openshift.io/v1
+      kind: ConsoleLink
+      label_selectors:
+      - "kiali.io/home = {{ kiali.install_namespace }}"
+    register: all_console_links
+    until: all_console_links.resources | length == 0
+    retries: 60
+    delay: 5
+
+  # Remove the test namespaces we created earlier
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: consolelinks1
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: consolelinks2
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: noconsolelinks
