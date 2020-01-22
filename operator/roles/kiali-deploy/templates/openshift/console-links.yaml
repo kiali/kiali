@@ -10,6 +10,8 @@ spec:
   href: {{ kiali_route_url }}
   location: ApplicationMenu
   text: Kiali
+####### FIX THIS IF-STATEMENT WITH AN EXPRESSION THAT RETURNS TRUE IF THE VERSION STRING IS 4.3 AND HIGHER ######
+{% if openshift_version >= 4.3 %}
 {% for namespace in namespaces %}
 ---
 apiVersion: console.openshift.io/v1
@@ -28,3 +30,4 @@ spec:
     namespaces:
     - {{ namespace }}
 {% endfor %}
+{% endif %}
