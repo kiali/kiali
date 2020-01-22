@@ -67,7 +67,7 @@
     state: absent
     api_version: console.openshift.io/v1
     kind: ConsoleLink
-    name: "kiali-namespace-{{ inaccessible_namespace }}-link"
+    name: "kiali-namespace-link-{{ kiali_vars.deployment.namespace }}-{{ inaccessible_namespace }}"
   loop: "{{ no_longer_accessible_namespaces }}"
   loop_control:
     loop_var: inaccessible_namespace
