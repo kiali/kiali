@@ -30,16 +30,13 @@
   },
   "script-comments": [
     "When adding new scripts, please be careful to using `npm run` instead of `yarn` for the tasks.",
-    "Some build environments we use do not include npm access, and installing yarn is not possible.",
-    "",
-    "The postinstall script exists because create-react-app does not support",
-    "using your own eslint on the build process, so we patch it."
+    "Some build environments we use do not include npm access, and installing yarn is not possible."
   ],
   "scripts": {
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
     "build-css": "node-sass src/ --output-style compressed --include-path $npm_package_sassIncludes_src --include-path $npm_package_sassIncludes_patternfly --include-path $npm_package_sassIncludes_patternflyReact --include-path $npm_package_sassIncludes_patternflyReactExtensions --include-path $npm_package_sassIncludes_bootstrap --include-path $npm_package_sassIncludes_fontAwesome -o src/",
     "build:dev": "sh -ac 'source ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "npm run copy-fonts && npm run copy-img && npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false react-scripts build",
+    "build:kiali": "npm run copy-fonts && npm run copy-img && npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build",
     "build:prod": "sh -ac 'source ./.env.downstream; npm run build:kiali'",
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",
     "copy-img": "cp -r node_modules/patternfly/dist/img src/",
@@ -54,8 +51,7 @@
     "snyk": "snyk test",
     "analyze": "source-map-explorer build/static/js/main.*",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
-    "snyk-protect": "snyk protect",
-    "postinstall": "sed -i -E 's#\\[.*eslint-config-react-app.*\\]#['\\'$PWD/.eslintrc\\'']#g' node_modules/react-scripts/config/webpack*.js"
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "@kiali/k-charted-pf4": "0.4.2",
