@@ -10,6 +10,7 @@ spec:
   href: {{ kiali_route_url }}
   location: ApplicationMenu
   text: Kiali
+{% if openshift_version is version('4.3', '>=') %}
 {% for namespace in namespaces %}
 ---
 apiVersion: console.openshift.io/v1
@@ -28,3 +29,4 @@ spec:
     namespaces:
     - {{ namespace }}
 {% endfor %}
+{% endif %}
