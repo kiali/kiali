@@ -122,6 +122,13 @@ rules:
   - patch
   - update
   - watch
+- apiGroups: ["config.openshift.io"]
+  resourceNames:
+  - kube-apiserver
+  resources:
+  - clusteroperators
+  verbs:
+  - get
 - apiGroups: ["console.openshift.io"]
   resources:
   - consolelinks
