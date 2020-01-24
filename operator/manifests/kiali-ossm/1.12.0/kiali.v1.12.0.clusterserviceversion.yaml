@@ -1,12 +1,12 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: kiali-operator.v1.1.0
+  name: kiali-operator.v1.12.0
   namespace: placeholder
   annotations:
     categories: Monitoring,Logging & Tracing
     certified: "false"
-    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.1.0
+    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
     capabilities: Seamless Upgrades
     support: Red Hat
     description: "Kiali project provides answers to the questions: What microservices are part of my Istio service mesh and how are they connected?"
@@ -73,12 +73,12 @@ metadata:
         }
       ]
 spec:
-  version: 1.1.0
+  version: 1.12.0
   maturity: stable
-  replaces: kiali-operator.v1.0.8
+  replaces: kiali-operator.v1.0.9
   relatedImages:
   - name: kiali
-    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.1.0
+    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0
   displayName: Kiali Operator
   description: |-
     ## About the managed application
@@ -115,7 +115,7 @@ spec:
 
     For quick descriptions of all the settings you can configure in the Kiali
     Custom Resource (CR), see the file
-    [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.11.0/operator/deploy/kiali/kiali_cr.yaml)
+    [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.12.0/operator/deploy/kiali/kiali_cr.yaml)
 
     Note that the Kiali operator can be told to restrict Kiali's access to
     specific namespaces, or can provide to Kiali cluster-wide access to all
@@ -264,7 +264,7 @@ spec:
               name: kiali-operator
               labels:
                 app: kiali-operator
-                version: v1.1.0
+                version: v1.12.0
               annotations:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8383"
@@ -276,14 +276,14 @@ spec:
                 - /usr/local/bin/ao-logs
                 - /tmp/ansible-operator/runner
                 - stdout
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.1.0
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
                   name: runner
                   readOnly: true
               - name: operator
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.1.0
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
@@ -304,7 +304,7 @@ spec:
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
                 - name: KIALI_IMAGE
-                  value: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.1.0
+                  value: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0
               volumes:
               - name: runner
                 emptyDir: {}
