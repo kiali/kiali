@@ -105,7 +105,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 		// A service node represents a serviceEntry when the service name matches serviceEntry host. Map
 		// these "se-service" nodes to the serviceEntries that represent them.
-		if se, ok := a.getServiceEntry(n.Service, globalInfo); ok {
+		if se, ok := a.getServiceEntry(n.Service, n.Namespace, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -168,7 +168,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace but exported to
 // all namespaces (exportTo: *). It's possible that would allow traffic to flow from an accessible workload
 // through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(serviceName, namespace string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
@@ -201,7 +201,7 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 		// handle exact match
 		// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
 		// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
-		if host == serviceName {
+		if host == serviceName || host == serviceName+"."+namespace {
 			return se, true
 		}
 		// handle serviceName prefix (e.g. host = serviceName.namespace.svc.cluster.local)
