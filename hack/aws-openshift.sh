@@ -401,7 +401,7 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of OpenShift to be downloaded
-DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.2.4"
+DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.3.0"
 
 # The default number of worker nodes that should be in the cluster.
 DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES="4"
