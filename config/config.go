@@ -123,7 +123,7 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth              Auth   `yaml:"auth"`
-	Enabled           bool   `yaml:"enabled"` // Enable autodiscover and Jaeger in Kiali
+	Enabled           bool   `yaml:"enabled"` // Enable Jaeger in Kiali
 	InClusterURL      string `yaml:"in_cluster_url"`
 	NamespaceSelector bool   `yaml:"namespace_selector"`
 	URL               string `yaml:"url"`
