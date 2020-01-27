@@ -10,8 +10,7 @@ import (
 )
 
 func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, error) {
-	conf := config.Get()
-	jaegerConfig := conf.ExternalServices.Tracing
+	jaegerConfig := config.Get().ExternalServices.Tracing
 	integration := true
 	error := ""
 	if !jaegerConfig.Enabled {
@@ -40,9 +39,7 @@ func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, err
 
 		}
 	}
-
-	conf.ExternalServices.Tracing.Integration = integration
-	config.Set(conf)
+	jaegerIntegration = integration
 
 	info := &JaegerInfo{
 		URL:                jaegerConfig.URL,

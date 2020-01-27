@@ -38,7 +38,7 @@ func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (resp
 }
 
 func getErrorTraces(client http.Client, endpoint *url.URL, namespace string, service string, interval string) (errorTraces int, err error) {
-	if !config.Get().ExternalServices.Tracing.Integration {
+	if !jaegerIntegration {
 		return -1, nil
 	}
 	errorTraces = 0
