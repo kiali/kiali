@@ -23,7 +23,7 @@ export const PfSpinner: React.SFC<PfSpinnerProps> = props => {
   const { isLoading } = props;
   // It is more than likely it won't have any children; but it could.
   // @todo: Patternfly Spinner is not working here
-  return isLoading ? <SpinnerIcon className={spinnerStyle} /> : <></>;
+  return isLoading ? <SpinnerIcon id="loading_kiali_spinner" className={spinnerStyle} /> : <></>;
 };
 
 // hook up to Redux for our State to be mapped to props
