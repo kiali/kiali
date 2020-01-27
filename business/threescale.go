@@ -30,7 +30,7 @@ func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) 
 	defer promtimer.ObserveNow(&err)
 
 	conf := config.Get()
-	_, err2 := in.k8s.GetAdapter(conf.IstioNamespace, "adapters", conf.ExternalServices.ThreeScale.AdapterName)
+	_, err2 := in.k8s.GetAdapter(conf.IstioNamespace, "adapters", conf.Extensions.ThreeScale.AdapterName)
 	if err2 != nil {
 		if errors.IsNotFound(err2) {
 			return models.ThreeScaleInfo{}, nil
@@ -134,14 +134,14 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 			},
 		},
 		Spec: map[string]interface{}{
-			"adapter": conf.ExternalServices.ThreeScale.AdapterName,
+			"adapter": conf.Extensions.ThreeScale.AdapterName,
 			"params": map[string]interface{}{
 				"service_id":   handler.ServiceId,
 				"system_url":   handler.SystemUrl,
 				"access_token": handler.AccessToken,
 			},
 			"connection": map[string]interface{}{
-				"address": conf.ExternalServices.ThreeScale.AdapterService + ":" + conf.ExternalServices.ThreeScale.AdapterPort,
+				"address": conf.Extensions.ThreeScale.AdapterService + ":" + conf.Extensions.ThreeScale.AdapterPort,
 			},
 		},
 	}
