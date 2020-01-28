@@ -31,8 +31,7 @@ class IstioActionDropdown extends React.Component<Props, State> {
     };
   }
 
-  onSelect = e => {
-    console.log(e);
+  onSelect = _ => {
     this.setState({
       dropdownOpen: !this.state.dropdownOpen
     });

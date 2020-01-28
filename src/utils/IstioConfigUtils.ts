@@ -64,3 +64,39 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
   }
   return istioObject;
 };
+
+const nsRegexp = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
+const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.)+[a-zA-Z]{2,63}$)/;
+
+// Used to check if Sidecar and Gateway host expressions are valid
+export const isServerHostValid = (serverHost: string): boolean => {
+  if (serverHost.length === 0) {
+    return false;
+  }
+  // <namespace>/<host>
+  const parts = serverHost.split('/');
+  // More than one /
+  if (parts.length > 2) {
+    return false;
+  }
+  // parts[0] is a dns
+  let dnsValid = true;
+  let hostValid = true;
+  let dns = '';
+  let host = '';
+  if (parts.length === 2) {
+    dns = parts[0];
+    host = parts[1];
+
+    if (dns !== '.' && dns !== '*') {
+      dnsValid = parts[0].search(nsRegexp) === 0;
+    }
+  } else {
+    host = parts[0];
+  }
+
+  if (host !== '*') {
+    hostValid = host.search(hostRegexp) === 0;
+  }
+  return dnsValid && hostValid;
+};

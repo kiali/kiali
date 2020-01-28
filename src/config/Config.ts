@@ -111,6 +111,7 @@ const conf = {
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
+      istioPermissions: 'api/istio/permissions',
       jaeger: 'api/jaeger',
       jaegerTraces: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/traces`,
       jaegerTrace: (namespace: string, service: string, idTrace: string) =>

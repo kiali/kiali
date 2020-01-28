@@ -410,8 +410,8 @@ export interface WorkloadSelector {
 
 export interface SidecarSpec {
   workloadSelector?: WorkloadSelector;
-  ingress?: IstioIngressListener;
-  egress?: IstioEgressListener;
+  ingress?: IstioIngressListener[];
+  egress?: IstioEgressListener[];
 }
 
 export interface Sidecar extends IstioObject {

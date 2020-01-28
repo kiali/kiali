@@ -1,4 +1,4 @@
-import { mergeJsonPatch } from '../IstioConfigUtils';
+import { isServerHostValid, mergeJsonPatch } from '../IstioConfigUtils';
 
 describe('Validate JSON Patchs', () => {
   const gateway: object = {
@@ -43,7 +43,7 @@ describe('Validate JSON Patchs', () => {
     }
   };
 
-  it('Dummy test', () => {
+  it('Basic Test', () => {
     mergeJsonPatch(gatewayModified, gateway);
 
     // tslint:disable-next-line
@@ -51,5 +51,34 @@ describe('Validate JSON Patchs', () => {
 
     // tslint:disable-next-line
     expect(gatewayModified['spec']['selector']['istio']).toBeNull();
+  });
+});
+
+describe('Validate Gateway/Sidecar Server Host ', () => {
+  it('No Namespace prefix', () => {
+    expect(isServerHostValid('*')).toBeTruthy();
+    expect(isServerHostValid('productpage')).toBeFalsy();
+    expect(isServerHostValid('productpage.example.com')).toBeTruthy();
+    expect(isServerHostValid('*.example.com')).toBeTruthy();
+  });
+
+  it('Namespace prefix', () => {
+    expect(isServerHostValid('bookinfo/*')).toBeTruthy();
+    expect(isServerHostValid('*/*')).toBeTruthy();
+    expect(isServerHostValid('./*')).toBeTruthy();
+    expect(isServerHostValid('bookinfo/productpage')).toBeFalsy();
+    expect(isServerHostValid('*/productpage')).toBeFalsy();
+    expect(isServerHostValid('./productpage')).toBeFalsy();
+    expect(isServerHostValid('bookinfo/productpage.example.com')).toBeTruthy();
+    expect(isServerHostValid('*/productpage.example.com')).toBeTruthy();
+    expect(isServerHostValid('./productpage.example.com')).toBeTruthy();
+    expect(isServerHostValid('bookinfo/*.example.com')).toBeTruthy();
+    expect(isServerHostValid('*/*.example.com')).toBeTruthy();
+    expect(isServerHostValid('./*.example.com')).toBeTruthy();
+  });
+
+  it('Catch bad urls', () => {
+    expect(isServerHostValid('bookinfo//reviews')).toBeFalsy();
+    expect(isServerHostValid('bookinf*/reviews')).toBeFalsy();
   });
 });

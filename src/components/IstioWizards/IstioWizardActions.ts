@@ -11,6 +11,7 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   LoadBalancerSettings,
+  Sidecar,
   StringMatch,
   VirtualService,
   VirtualServices
@@ -19,6 +20,8 @@ import { serverConfig } from '../../config';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { GatewaySelectorState } from './GatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState } from './TrafficPolicy';
+import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
+import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 
 export const WIZARD_WEIGHTED_ROUTING = 'weighted_routing';
 export const WIZARD_MATCHING_ROUTING = 'matching_routing';
@@ -582,4 +585,66 @@ export const getInitGateway = (virtualServices: VirtualServices): [string, boole
     return [selectedGateway, meshPresent];
   }
   return ['', false];
+};
+
+export const buildGateway = (name: string, namespace: string, state: GatewayState): Gateway => {
+  const gw: Gateway = {
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'Gateway'
+      }
+    },
+    spec: {
+      // Default for istio scenarios, user may change it editing YAML
+      selector: {
+        istio: 'ingressgateway'
+      },
+      servers: state.gatewayServers.map(s => ({
+        port: {
+          number: +s.portNumber,
+          protocol: s.portProtocol,
+          name: s.portName
+        },
+        hosts: s.hosts
+      }))
+    }
+  };
+  return gw;
+};
+
+export const buildSidecar = (name: string, namespace: string, state: SidecarState): Sidecar => {
+  const sc: Sidecar = {
+    metadata: {
+      name: name,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'Sidecar'
+      }
+    },
+    spec: {
+      egress: [
+        {
+          hosts: state.egressHosts.map(eh => eh.host)
+        }
+      ]
+    }
+  };
+  if (state.addWorkloadSelector && state.workloadSelectorValid) {
+    sc.spec.workloadSelector = {
+      labels: {}
+    };
+    state.workloadSelectorLabels
+      .trim()
+      .split(',')
+      .forEach(split => {
+        const labels = split.trim().split('=');
+        // It should be already validated with workloadSelectorValid, but just to add extra safe check
+        if (sc.spec.workloadSelector && labels.length === 2) {
+          sc.spec.workloadSelector.labels[labels[0].trim()] = labels[1].trim();
+        }
+      });
+  }
+  return sc;
 };

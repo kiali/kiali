@@ -4,7 +4,7 @@ import { DashboardModel, DashboardQuery } from '@kiali/k-charted-pf4';
 import Namespace from '../types/Namespace';
 import { IstioMetricsOptions } from '../types/MetricsOptions';
 import { Metrics } from '../types/Metrics';
-import { IstioConfigDetails } from '../types/IstioConfigDetails';
+import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
@@ -523,4 +523,8 @@ export const deleteThreeScaleServiceRule = (namespace: string, service: string) 
 
 export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), params, {});
+};
+
+export const getIstioPermissions = (namespaces: string[]) => {
+  return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, { namespaces: namespaces.join(',') }, {});
 };

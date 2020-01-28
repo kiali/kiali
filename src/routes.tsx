@@ -11,6 +11,7 @@ import GraphPageContainer from './pages/Graph/GraphPage';
 import { icons, Paths } from './config';
 import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -51,7 +52,7 @@ const navItems: MenuItem[] = [
     iconClass: icons.menu.istioConfig,
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
-    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new')]
   },
   {
     iconClass: icons.menu.distributedTracing,
@@ -119,6 +120,10 @@ const pathRoutes: Path[] = [
   {
     path: '/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
     component: WorkloadDetailsPage
+  },
+  {
+    path: '/' + Paths.ISTIO + '/new',
+    component: IstioConfigNewPageContainer
   },
   {
     path: '/' + Paths.ISTIO,

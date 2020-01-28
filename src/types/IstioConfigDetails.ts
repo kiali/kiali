@@ -69,3 +69,9 @@ export interface ParsedSearch {
   type?: string;
   name?: string;
 }
+
+export interface IstioPermissions {
+  [namespace: string]: {
+    [type: string]: ResourcePermissions;
+  };
+}

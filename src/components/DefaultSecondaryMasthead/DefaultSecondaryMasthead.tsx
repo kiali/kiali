@@ -3,15 +3,19 @@ import { Title } from '@patternfly/react-core';
 import SecondaryMasthead from '../Nav/SecondaryMasthead';
 import NamespaceDropdownContainer from '../NamespaceDropdown';
 
-const titleShow = ['applications', 'workloads', 'services', 'istio'];
+const titles = ['applications', 'workloads', 'services', 'istio', 'istio/new'];
 export default class DefaultSecondaryMasthead extends React.Component {
   showTitle() {
     const path = window.location.pathname.replace('/console/', '');
 
-    if (titleShow.includes(path)) {
+    if (titles.includes(path)) {
+      let title = path.charAt(0).toUpperCase() + path.slice(1);
+      if (path === 'istio/new') {
+        title = 'Create New Istio Config';
+      }
       return (
         <Title headingLevel="h1" size="4xl" style={{ margin: '20px 0 20px' }}>
-          {path.charAt(0).toUpperCase() + path.slice(1)}
+          {title}
         </Title>
       );
     }
