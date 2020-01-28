@@ -123,6 +123,12 @@ rules:
   - update
   - watch
 - apiGroups: ["config.openshift.io"]
+  resources:
+  - clusteroperators
+  verbs:
+  - list
+  - watch
+- apiGroups: ["config.openshift.io"]
   resourceNames:
   - kube-apiserver
   resources:
