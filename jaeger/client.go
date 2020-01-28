@@ -36,6 +36,8 @@ type Client struct {
 	endpoint *url.URL
 }
 
+var jaegerIntegration bool
+
 func NewClient(token string) (*Client, error) {
 	cfg := config.Get().ExternalServices.Tracing
 
