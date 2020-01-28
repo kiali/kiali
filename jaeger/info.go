@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -33,10 +34,9 @@ func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, err
 		} else {
 			var response JaegerResponse
 			if errMarshal := json.Unmarshal([]byte(resp), &response); errMarshal != nil {
-				error = "Error unmarshalling Jaeger response, check the endpoint configuration"
+				error = fmt.Sprintf("Error unmarshalling Jaeger response, check the endpoint configuration.\nErr: %v\nResponse: %s", errMarshal, string(resp))
 				integration = false
 			}
-
 		}
 	}
 	jaegerIntegration = integration
