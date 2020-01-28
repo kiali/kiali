@@ -75,7 +75,7 @@ KIALI_IMAGE_NAME="${CLUSTER_KIALI_INTERNAL_NAME}" \
 KIALI_IMAGE_PULL_POLICY="${KIALI_IMAGE_PULL_POLICY}" \
 KIALI_IMAGE_VERSION="${CONTAINER_VERSION}" \
 NAMESPACE="${NAMESPACE}" \
-ROUTER_HOSTNAME="$(shell ${OC} get $(shell ${OC} get routes -n ${NAMESPACE} -o name 2>/dev/null || echo 'noroute' | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}' 2>/dev/null)" \
+ROUTER_HOSTNAME="$(shell ${OC} get $(shell (${OC} get routes -n ${NAMESPACE} -o name 2>/dev/null || echo 'noroute') | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}' 2>/dev/null)" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
