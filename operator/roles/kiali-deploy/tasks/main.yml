@@ -16,6 +16,15 @@
   - is_openshift == False
   - is_k8s == False
 
+# Indicate what kind of cluster we are in (OpenShift or Kubernetes).
+- debug:
+    msg: "CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}"
+- fail:
+    msg: "Cannot determine what type of cluster we are in"
+  when:
+  - is_openshift == False
+  - is_k8s == False
+
 - name: Determine the OpenShift version
   k8s_facts:
     api_version: config.openshift.io/v1
@@ -31,20 +40,11 @@
     ri_query: "status.versions[?name == 'raw-internal'].version"
     ka_query: "status.versions[?name == 'kube-apiserver'].version"
   when:
-  - kube_apiserver_cluster_op_raw is defined
+  - is_openshift == True
 
 - name: Determine the Istio implementation
   set_fact:
     is_maistra: "{{ True if 'maistra.io' in api_groups else False }}"
-
-# Indicate what kind of cluster we are in (OpenShift or Kubernetes).
-- debug:
-    msg: "CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}"
-- fail:
-    msg: "Cannot determine what type of cluster we are in"
-  when:
-  - is_openshift == False
-  - is_k8s == False
 
 - name: Get information about the operator
   k8s_facts:
