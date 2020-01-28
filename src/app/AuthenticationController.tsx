@@ -138,7 +138,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
     };
 
     if (jaegerState.integrationMessage !== '') {
-      MessageCenterActions.addMessage(jaegerState.integrationMessage, '', 'jaeger', MessageType.INFO);
+      AlertUtils.addError(jaegerState.integrationMessage, undefined, 'default', MessageType.INFO);
     }
     this.props.setJaegerInfo(jaegerState);
   };

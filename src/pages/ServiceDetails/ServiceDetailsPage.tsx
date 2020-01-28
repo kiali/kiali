@@ -243,7 +243,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           serviceDetailsInfo: results,
           validations: this.addFormatValidation(results, results.validations)
         });
-        if (results.errorTraces === -1 && this.props.jaegerUrl !== '') {
+        if (results.errorTraces === -1 && this.props.jaegerIntegration) {
           AlertUtils.add(
             'Could not fetch Traces in the service ' +
               this.props.match.params.service +
