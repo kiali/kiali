@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink } from '@kiali/k-charted-pf4';
+import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink, Overlay } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
@@ -20,11 +20,13 @@ import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
+import { SpanOverlay } from './SpanOverlay';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
+  spanOverlay?: Overlay;
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -40,6 +42,7 @@ const displayFlex = style({
 
 export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   options: DashboardQuery;
+  spanOverlay: SpanOverlay;
 
   constructor(props: CustomMetricsProps) {
     super(props);
@@ -48,6 +51,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
+    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
   initOptions(settings: MetricsSettings): DashboardQuery {
@@ -66,8 +70,17 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
   }
 
   componentDidMount() {
-    this.fetchMetrics();
+    this.refresh();
   }
+
+  refresh = () => {
+    this.fetchMetrics();
+    this.spanOverlay.fetch(
+      this.props.namespace,
+      this.props.app,
+      this.options.duration || MetricsDuration.DefaultDuration
+    );
+  };
 
   fetchMetrics = () => {
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
@@ -95,7 +108,8 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
 
   onDurationChanged = (duration: DurationInSeconds) => {
     MetricsHelper.durationToOptions(duration, this.options);
-    this.fetchMetrics();
+    this.spanOverlay.resetLastFetchTime();
+    this.refresh();
   };
 
   onRawAggregationChanged = (aggregator: Aggregator) => {
@@ -119,6 +133,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
+          overlay={this.state.spanOverlay}
           timeWindow={MetricsHelper.durationToTimeTuple(this.options.duration || MetricsDuration.DefaultDuration)}
         />
       </RenderComponentScroll>
@@ -165,7 +180,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
             <MetricsDuration onChanged={this.onDurationChanged} />
           </ToolbarItem>
           <ToolbarItem>
-            <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
+            <RefreshContainer id="metrics-refresh" handleRefresh={this.refresh} hideLabel={true} />
           </ToolbarItem>
         </ToolbarGroup>
       </Toolbar>
