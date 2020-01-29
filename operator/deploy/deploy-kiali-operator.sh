@@ -587,8 +587,8 @@ delete_kiali_resources() {
     fi
 
     # purge OpenShift specific resources
-    ${CLIENT_EXE} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}"
-    ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io "kiali-${NAMESPACE}"
+    ${CLIENT_EXE} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}" 2>/dev/null
+    ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io "kiali-${NAMESPACE}" 2>/dev/null
   fi
 }
 
