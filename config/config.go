@@ -340,6 +340,7 @@ func NewConfig() (c *Config) {
 				Enabled:           true,
 				NamespaceSelector: true,
 				InClusterURL:      "http://tracing.istio-system/jaeger",
+				URL:               "",
 			},
 		},
 		IstioLabels: IstioLabels{
