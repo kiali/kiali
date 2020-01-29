@@ -18,6 +18,13 @@ export enum URLParam {
   GRAPH_LAYOUT = 'layout',
   GRAPH_SERVICE_NODES = 'injectServiceNodes',
   GRAPH_TYPE = 'graphType',
+  JAEGER_START_TIME = 'start',
+  JAEGER_END_TIME = 'end',
+  JAEGER_LIMIT_TRACES = 'limit',
+  JAEGER_TAGS = 'tags',
+  JAEGER_TRACE_ID = 'traceId',
+  JAEGER_TRACE_INTERVAL_SELECTED = 'intSelectedTrace',
+  JAEGER_STATUS_CODE = 'statusCode',
   NAMESPACES = 'namespaces',
   OVERVIEW_TYPE = 'otype',
   QUANTILES = 'quantiles',
@@ -26,13 +33,7 @@ export enum URLParam {
   SHOW_AVERAGE = 'avg',
   SORT = 'sort',
   TO = 'to',
-  UNUSED_NODES = 'unusedNodes',
-  JAEGER_START_TIME = 'start',
-  JAEGER_END_TIME = 'end',
-  JAEGER_LIMIT_TRACES = 'limit',
-  JAEGER_TAGS = 'tags',
-  JAEGER_TRACE_INTERVAL_SELECTED = 'intSelectedTrace',
-  JAEGER_STATUS_CODE = 'statusCode'
+  UNUSED_NODES = 'unusedNodes'
 }
 
 export interface URLParamValue {

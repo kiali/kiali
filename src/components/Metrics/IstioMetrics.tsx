@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, ExternalLink, Overlay } from '@kiali/k-charted-pf4';
+import { Dashboard, DashboardModel, ExternalLink, Overlay, VCDataPoint } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
@@ -17,7 +17,7 @@ import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
-import history from '../../app/History';
+import history, { URLParam } from '../../app/History';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
@@ -165,6 +165,16 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     this.fetchMetrics();
   };
 
+  onClickDataPoint = (_, datum: VCDataPoint) => {
+    if ('traceId' in datum) {
+      history.push(
+        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${
+          datum.traceId
+        }`
+      );
+    }
+  };
+
   render() {
     if (!this.state.dashboard) {
       return this.renderOptionsBar();
@@ -185,6 +195,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
                   labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
                   expandedChart={expandedChart}
                   expandHandler={this.expandHandler}
+                  onClick={this.onClickDataPoint}
                   labelPrettifier={MetricsHelper.prettyLabelValues}
                   overlay={this.state.spanOverlay}
                   timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
