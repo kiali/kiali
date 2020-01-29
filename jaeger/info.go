@@ -31,9 +31,9 @@ func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, err
 				error += ": " + err.Error()
 			}
 		} else {
-			var response JaegerResponse
+			var response JaegerServices
 			if errMarshal := json.Unmarshal([]byte(resp), &response); errMarshal != nil {
-				error = "Error unmarshalling Jaeger response, check the endpoint configuration"
+				error = "Error getting Jaeger response, check the endpoint configuration"
 				integration = false
 			}
 
