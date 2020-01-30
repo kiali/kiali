@@ -10,6 +10,10 @@ type structuredError struct {
 	TraceID string `json:"traceID,omitempty"`
 }
 
+type JaegerServices struct {
+	Data []string `json:"data"`
+}
+
 type JaegerResponse struct {
 	Data   []jaegerModels.Trace `json:"data"`
 	Errors []structuredError    `json:"errors"`
