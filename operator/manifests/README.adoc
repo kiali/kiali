@@ -84,7 +84,7 @@ then you have to push them to your Quay.io image repository (e.g. `quay.io/${QUA
 If this is the case, you need to point the manifests to your own image repository:
 
 ```
-for csv in $(ls ${OPERATOR_DIR}/*/kiali.v*.yaml); do sed -i "s| image: .\+:| image: quay.io/${QUAY_USERNAME}/kiali-operator:|g" ${csv}; done
+for csv in $(ls ${OPERATOR_DIR}/*/kiali.v*.yaml); do sed -i "s|mage: .\+-operator:|mage: quay.io/${QUAY_USERNAME}/kiali-operator:|g" ${csv}; done
 ```
 
 Now upload the manifest bundles to your Quay.io app registry:
@@ -225,7 +225,7 @@ If you plan on installing Service Mesh, you can skip this step since the Service
 will install the Kiali operator automatically since Kiali is a dependency of Service Mesh.
 
 ```
-KIALI_VERSION=1.0.0
+KIALI_VERSION=1.12.0
 cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -233,7 +233,7 @@ metadata:
   name: kiali
   namespace: ${KIALI_OPERATOR_NAMESPACE}
 spec:
-  channel: stable
+  channel: "OpenShift Service Mesh 1.1"
   installPlanApproval: Automatic
   name: ${PACKAGE_NAME}
   source: ${QUAY_USERNAME}-operators
@@ -299,7 +299,7 @@ metadata:
   name: kiali
   namespace: ${KIALI_OPERATOR_NAMESPACE}
 annotations:
-  ansible.operator-sdk/reconcile-period: "0s"
+  ansible.operator-sdk/verbosity: "3"
 spec:
   deployment:
     namespace: ${CONTROL_PLANE_NAMESPACE}

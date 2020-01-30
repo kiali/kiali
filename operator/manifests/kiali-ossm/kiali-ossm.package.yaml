@@ -1,5 +1,7 @@
 packageName: kiali-ossm
 channels:
-- name: stable
+- name: "OpenShift Service Mesh 1.0"
+  currentCSV: kiali-operator.v1.0.9
+- name: "OpenShift Service Mesh 1.1"
   currentCSV: kiali-operator.v1.12.0
-defaultChannel: stable
+defaultChannel: "OpenShift Service Mesh 1.1"
