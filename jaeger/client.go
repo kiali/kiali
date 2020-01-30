@@ -39,18 +39,19 @@ type Client struct {
 var jaegerIntegration bool
 
 func NewClient(token string) (*Client, error) {
-	cfg := config.Get().ExternalServices.Tracing
+	cfg := config.Get()
+	cfgTracing := cfg.ExternalServices.Tracing
 
-	if !cfg.Enabled {
+	if !cfgTracing.Enabled {
 		return nil, errors.New("jaeger is not available")
 	} else {
-		auth := cfg.Auth
+		auth := cfgTracing.Auth
 		if auth.UseKialiToken {
 			auth.Token = token
 		}
-		u, errParse := url.Parse(config.Get().ExternalServices.Tracing.InClusterURL)
-		if !config.Get().InCluster {
-			u, errParse = url.Parse(config.Get().ExternalServices.Tracing.URL)
+		u, errParse := url.Parse(cfgTracing.InClusterURL)
+		if !cfg.InCluster {
+			u, errParse = url.Parse(cfgTracing.URL)
 		}
 		if errParse != nil {
 			log.Errorf("Error parse Jaeger URL: %s", errParse)
