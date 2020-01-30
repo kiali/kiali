@@ -25,20 +25,17 @@
   - is_openshift == False
   - is_k8s == False
 
+- name: Determine the Kubernetes version
+  set_fact:
+    k8s_version: "{{ lookup('k8s', cluster_info='version').kubernetes.gitVersion | regex_replace('^v', '') }}"
+  ignore_errors: yes
+
 - name: Determine the OpenShift version
-  k8s_facts:
-    api_version: config.openshift.io/v1
-    kind: ClusterOperator
-    name: kube-apiserver
-  register: kube_apiserver_cluster_op_raw
-  when:
-  - is_openshift == True
-- set_fact:
-    openshift_version: "{{ kube_apiserver_cluster_op_raw.resources[0] | json_query(ri_query) | join }}"
-    k8s_version: "{{ kube_apiserver_cluster_op_raw.resources[0] | json_query(ka_query) | join }}"
   vars:
+    kube_apiserver_cluster_op_raw: "{{ lookup('k8s', api_version='config.openshift.io/v1', kind='ClusterOperator', resource_name='kube-apiserver') | default({}) }}"
     ri_query: "status.versions[?name == 'raw-internal'].version"
-    ka_query: "status.versions[?name == 'kube-apiserver'].version"
+  set_fact:
+    openshift_version: "{{ kube_apiserver_cluster_op_raw | json_query(ri_query) | join }}"
   when:
   - is_openshift == True
 
