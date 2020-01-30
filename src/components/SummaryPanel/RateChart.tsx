@@ -117,8 +117,8 @@ export const renderRateChartHttp = (percent2xx: number, percent3xx: number, perc
   const vcLines: VCLines = [
     { name: 'OK', x: 'rate', y: percent2xx, color: colorVals.Success },
     { name: '3xx', x: 'rate', y: percent3xx, color: colorVals.Info },
-    { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.DangerBackground }, // 4xx is also an error use close but distinct color
-    { name: '5xx', x: 'rate', y: percent5xx, color: colorVals.Danger }
+    { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.ChartWarning }, // 4xx is also an error use close but distinct color
+    { name: '5xx', x: 'rate', y: percent5xx, color: colorVals.ChartDanger }
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -167,9 +167,9 @@ export const renderInOutRateChartHttp = (
     {
       name: '4xx',
       dp: [{ x: 'In', y: percent4xxIn }, { x: 'Out', y: percent4xxOut }],
-      color: colorVals.DangerBackground
+      color: colorVals.ChartWarning
     }, // 4xx is also an error use close but distinct color
-    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: colorVals.Danger }
+    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: colorVals.ChartDanger }
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({
