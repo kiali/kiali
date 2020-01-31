@@ -1,57 +1,16 @@
 apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
-  name: quarkus
+  name: microprofile-2.2
 spec:
-  title: Quarkus Metrics
-  runtime: Quarkus
-  discoverOn: "vendor_memory_usedNonHeap_bytes"
+  title: MicroProfile Metrics
+  runtime: MicroProfile
+  discoverOn: "base_thread_count"
   items:
   - chart:
-      name: "System CPU load (percent)"
-      spans: 6
-      metricName: "vendor_cpu_systemCpuLoad_percent"
-      dataType: "raw"
-      min: 0
-  - chart:
       name: "Process CPU Load (percent)"
-      spans: 6
+      spans: 12
       metricName: "base_cpu_processCpuLoad_percent"
-      dataType: "raw"
-      min: 0
-  - chart:
-      name: "Used heap"
-      unit: "bytes"
-      spans: 6
-      metricName: "base_memory_usedHeap_bytes"
-      dataType: "raw"
-      min: 0
-  - chart:
-      name: "Memory used non-heap"
-      unit: "bytes"
-      spans: 6
-      metricName: "vendor_memory_usedNonHeap_bytes"
-      dataType: "raw"
-      min: 0
-  - chart:
-      name: "Memory pool usage"
-      unit: "bytes"
-      spans: 4
-      metricName: "vendor_memoryPool_usage_bytes"
-      dataType: "raw"
-      min: 0
-  - chart:
-      name: "Committed heap"
-      unit: "bytes"
-      spans: 4
-      metricName: "base_memory_committedHeap_bytes"
-      dataType: "raw"
-      min: 0
-  - chart:
-      name: "Max heap"
-      unit: "bytes"
-      spans: 4
-      metricName: "base_memory_maxHeap_bytes"
       dataType: "raw"
       min: 0
   - chart:
@@ -91,5 +50,26 @@ spec:
       name: "Thread daemon count"
       spans: 4
       metricName: "base_thread_daemon_count"
+      dataType: "raw"
+      min: 0
+  - chart:
+      name: "Committed heap"
+      unit: "bytes"
+      spans: 4
+      metricName: "base_memory_committedHeap_bytes"
+      dataType: "raw"
+      min: 0
+  - chart:
+      name: "Max heap"
+      unit: "bytes"
+      spans: 4
+      metricName: "base_memory_maxHeap_bytes"
+      dataType: "raw"
+      min: 0
+  - chart:
+      name: "Used heap"
+      unit: "bytes"
+      spans: 4
+      metricName: "base_memory_usedHeap_bytes"
       dataType: "raw"
       min: 0
