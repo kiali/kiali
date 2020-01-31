@@ -214,7 +214,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerEnabled: state.jaegerState ? state.jaegerState.integration : false
+    jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false
   };
 };
 

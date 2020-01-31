@@ -113,6 +113,7 @@ const tabIndex: { [tab: string]: number } = {
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   private promises = new PromisesRegistry();
+  private lastFetchTracesError = false;
 
   constructor(props: ServiceDetailsProps) {
     super(props);
@@ -323,36 +324,54 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       this.setState({ selectedTrace: undefined });
     }
     if (traceId) {
-      fetchTrace(this.props.match.params.namespace, this.props.match.params.service, traceId).then(trace => {
-        let myState = {};
-        if (trace && trace.data) {
-          myState['selectedTrace'] = trace.data[0];
-        }
-        myState['errorSelectedTrace'] = trace ? trace.errors : [{ msg: 'Error Getting Trace ' + traceId }];
-        this.setState(myState);
-      });
-    } else {
-      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, getQueryJaeger()).then(traces => {
-        let myState = {};
-        if (traces && traces.data) {
-          myState['traces'] = traces.data;
-          if (traces.data.length === 0) {
-            myState['selectedTrace'] = undefined;
+      fetchTrace(this.props.match.params.namespace, this.props.match.params.service, traceId)
+        .then(trace => {
+          this.lastFetchTracesError = false;
+          let myState = {};
+          if (trace && trace.data) {
+            myState['selectedTrace'] = trace.data[0];
           }
-        }
-        myState['errorTraces'] = traces
-          ? traces.errors
-          : [
-              {
-                msg:
-                  'Error Getting Traces of service ' +
-                  this.props.match.params.service +
-                  ' in namespace ' +
-                  this.props.match.params.namespace
-              }
-            ];
-        this.setState(myState);
-      });
+          myState['errorSelectedTrace'] = trace ? trace.errors : [{ msg: 'Error Getting Trace ' + traceId }];
+          this.setState(myState);
+        })
+        .catch(error => {
+          if (!this.lastFetchTracesError) {
+            AlertUtils.addError('Could not fetch traces.', error);
+            this.lastFetchTracesError = true;
+            throw error;
+          }
+        });
+    } else {
+      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, getQueryJaeger())
+        .then(traces => {
+          this.lastFetchTracesError = false;
+          let myState = {};
+          if (traces && traces.data) {
+            myState['traces'] = traces.data;
+            if (traces.data.length === 0) {
+              myState['selectedTrace'] = undefined;
+            }
+          }
+          myState['errorTraces'] = traces
+            ? traces.errors
+            : [
+                {
+                  msg:
+                    'Error Getting Traces of service ' +
+                    this.props.match.params.service +
+                    ' in namespace ' +
+                    this.props.match.params.namespace
+                }
+              ];
+          this.setState(myState);
+        })
+        .catch(error => {
+          if (!this.lastFetchTracesError) {
+            AlertUtils.addError('Could not fetch traces.', error);
+            this.lastFetchTracesError = true;
+            throw error;
+          }
+        });
     }
   };
 
@@ -566,8 +585,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerUrl: state.jaegerState ? state.jaegerState.jaegerURL : '',
-  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
+  jaegerUrl: state.jaegerState ? state.jaegerState.url : '',
+  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

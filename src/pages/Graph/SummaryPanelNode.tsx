@@ -645,9 +645,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
+  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false,
   namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
-  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
+  jaegerURL: state.jaegerState ? state.jaegerState.url : ''
 });
 
 const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);

@@ -1,39 +1,25 @@
 import JaegerState from '../JaegerState';
 import { JaegerActions } from '../../actions/JaegerActions';
+import { JaegerInfo } from 'types/JaegerInfo';
 
-const initialState = {
-  jaegerURL: '',
-  integration: false,
-  namespaceSelector: true,
-  integrationMessage: ''
+const initialState: JaegerInfo = {
+  enabled: false,
+  url: '',
+  namespaceSelector: true
 };
 
 describe('JaegerState reducer', () => {
-  let expectedState;
+  let expectedState: JaegerInfo;
   beforeEach(() => {
     expectedState = initialState;
   });
 
-  it('should set url', () => {
-    const url = 'https://jaeger-query-istio-system.127.0.0.1.nip.io';
-    expectedState.jaegerURL = url;
-    expect(JaegerState(initialState, JaegerActions.setUrl(url))).toEqual(expectedState);
-  });
-
-  it('should enable integration', () => {
-    expectedState.integration = true;
-    expect(JaegerState(initialState, JaegerActions.setEnableIntegration(true))).toEqual(expectedState);
-  });
-
   it('should store both url and integration', () => {
     const url = 'https://jaeger-query-istio-system.127.0.0.1.nip.io';
-    expectedState.integration = true;
-    expectedState.jaegerURL = url;
+    expectedState.enabled = true;
+    expectedState.url = url;
     expect(
-      JaegerState(
-        initialState,
-        JaegerActions.setinfo({ jaegerURL: url, integration: true, namespaceSelector: true, integrationMessage: '' })
-      )
+      JaegerState(initialState, JaegerActions.setInfo({ url: url, enabled: true, namespaceSelector: true }))
     ).toEqual(expectedState);
   });
 });

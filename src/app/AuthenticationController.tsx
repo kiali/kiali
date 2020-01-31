@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { JaegerState, KialiAppState, LoginStatus } from '../store/Store';
+import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { JaegerActions } from '../actions/JaegerActions';
@@ -19,7 +19,7 @@ import { JaegerInfo } from '../types/JaegerInfo';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
-  setJaegerInfo: (jaegerInfo: JaegerState | null) => void;
+  setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
 }
@@ -102,7 +102,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
       const getJaegerInfoPromise = API.getJaegerInfo()
-        .then(response => this.setJaegerInfo(response.data))
+        .then(response => this.props.setJaegerInfo(response.data))
         .catch(error => {
           this.props.setJaegerInfo(null);
           AlertUtils.addError(
@@ -128,20 +128,6 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       document.documentElement.className = isKioskMode() ? 'kiosk' : '';
     }
   };
-
-  private setJaegerInfo = (jaegerInfo: JaegerInfo) => {
-    const jaegerState: JaegerState = {
-      jaegerURL: jaegerInfo.url,
-      integration: jaegerInfo.integration,
-      namespaceSelector: jaegerInfo.namespaceSelector,
-      integrationMessage: jaegerInfo.integrationMessage
-    };
-
-    if (jaegerState.integrationMessage !== '') {
-      AlertUtils.addError(jaegerState.integrationMessage, undefined, 'default', MessageType.INFO);
-    }
-    this.props.setJaegerInfo(jaegerState);
-  };
 }
 
 const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus) => {
@@ -160,7 +146,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
-    setJaegerInfo: bindActionCreators(JaegerActions.setinfo, dispatch),
+    setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
     setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
     setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
   };
