@@ -43,7 +43,7 @@ func TestSummarizeValidations(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := IstioValidations{
-		IstioValidationKey{ObjectType: "virtualservice", Name: "foo"}: &IstioValidation{
+		IstioValidationKey{ObjectType: "virtualservice", Name: "foo", Namespace: "bookinfo"}: &IstioValidation{
 			Name:       "foo",
 			ObjectType: "virtualservice",
 			Valid:      true,
@@ -52,7 +52,7 @@ func TestSummarizeValidations(t *testing.T) {
 				{Severity: WarningSeverity, Message: "Message 2"},
 			},
 		},
-		IstioValidationKey{ObjectType: "virtualservice", Name: "bar"}: &IstioValidation{
+		IstioValidationKey{ObjectType: "virtualservice", Name: "bar", Namespace: "bookinfo"}: &IstioValidation{
 			Name:       "bar",
 			ObjectType: "virtualservice",
 			Valid:      false,
@@ -63,7 +63,7 @@ func TestSummarizeValidations(t *testing.T) {
 		},
 	}
 
-	summary := validations.SummarizeValidation()
+	summary := validations.SummarizeValidation("bookinfo")
 
 	assert.Equal(2, summary.Warnings)
 	assert.Equal(2, summary.Errors)

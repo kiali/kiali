@@ -20,6 +20,10 @@ type IstioValidationSummary struct {
 	// required: true
 	// example: 2
 	Errors int `json:"errors"`
+	// Number of Istio Objects analyzed
+	// required: true
+	// example: 6
+	ObjectCount int `json:"objectCount"`
 	// Number of validations with warning severity
 	// required: true
 	// example: 4
@@ -314,10 +318,12 @@ func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioVa
 	return iv
 }
 
-func (iv IstioValidations) SummarizeValidation() IstioValidationSummary {
+func (iv IstioValidations) SummarizeValidation(ns string) IstioValidationSummary {
 	ivs := IstioValidationSummary{}
-	for _, v := range iv {
-		ivs.mergeSummaries(v.Checks)
+	for k, v := range iv {
+		if k.Namespace == ns {
+			ivs.mergeSummaries(v.Checks)
+		}
 	}
 	return ivs
 }
@@ -329,6 +335,7 @@ func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
 		} else if c.Severity == WarningSeverity {
 			summary.Warnings = summary.Warnings + 1
 		}
+		summary.ObjectCount = summary.ObjectCount + 1
 	}
 }
 

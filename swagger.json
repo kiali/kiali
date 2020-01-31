@@ -4100,6 +4100,7 @@
       "title": "IstioValidationSummary represents the number of errors/warnings of a set of Istio Validations.",
       "required": [
         "errors",
+        "objectCount",
         "warnings"
       ],
       "properties": {
@@ -4109,6 +4110,13 @@
           "format": "int64",
           "x-go-name": "Errors",
           "example": 2
+        },
+        "objectCount": {
+          "description": "Number of Istio Objects analyzed",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ObjectCount",
+          "example": 6
         },
         "warnings": {
           "description": "Number of validations with warning severity",
