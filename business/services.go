@@ -225,7 +225,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	additionalDetails := models.GetAdditionalDetails(conf, svc.ObjectMeta.Annotations)
 
 	wg := sync.WaitGroup{}
-	wg.Add(7)
+	wg.Add(6)
 	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
@@ -324,15 +324,17 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	}()
 
 	var eTraces int
-	go func() {
-		// Maybe a future jaeger business layer
-		defer wg.Done()
-		var err2 error
-		eTraces, err2 = in.businessLayer.Jaeger.GetErrorTraces(namespace, service, interval)
-		if err2 != nil {
-			errChan <- err2
-		}
-	}()
+	if conf.ExternalServices.Tracing.Enabled {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var err2 error
+			eTraces, err2 = in.businessLayer.Jaeger.GetErrorTraces(namespace, service, interval)
+			if err2 != nil {
+				errChan <- err2
+			}
+		}()
+	}
 
 	wg.Wait()
 	if len(errChan) != 0 {

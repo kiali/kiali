@@ -1085,27 +1085,6 @@ func NewRoutes() (r *Routes) {
 			handlers.GetJaegerInfo,
 			true,
 		},
-		// swagger:route GET /jaeger jaegerInfo
-		// ---
-		// Get the jaeger URL and other descriptors
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      404: notFoundError
-		//      406: notAcceptableError
-		//      200: jaegerInfoResponse
-		//
-		{
-			"JaegerServices",
-			"GET",
-			"/api/jaeger/services",
-			handlers.GetJaegerServices,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails
 		// ---
 		// Endpoint to get pod details

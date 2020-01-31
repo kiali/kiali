@@ -37,7 +37,7 @@ func getSpans(client http.Client, endpoint *url.URL, namespace, service, startMi
 	q.Set("limit", strconv.Itoa(tracesLimit))
 
 	u.RawQuery = q.Encode()
-	response, _, err := queryTraces(client, u)
+	response, err := queryTraces(client, u)
 	if err != nil {
 		return []Span{}, err
 	}
@@ -82,7 +82,7 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	// Query for errors
 	q.Set("tags", "{\"error\":\"true\"}")
 	u.RawQuery = q.Encode()
-	response, _, _ := queryTraces(client, u)
+	response, _ := queryTraces(client, u)
 	errSpans := tracesToSpans(response.Data, service, namespace)
 	for _, span := range errSpans {
 		spansMap[span.SpanID] = span
@@ -104,7 +104,7 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	// %.1gms would print for instance 0.00012456 as 0.0001ms
 	q.Set("minDuration", fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000))
 	u.RawQuery = q.Encode()
-	response, _, _ = queryTraces(client, u)
+	response, _ = queryTraces(client, u)
 	// TODO / Question: if limit is reached again we might limit to 99th percentile instead?
 	pct90Spans := tracesToSpans(response.Data, service, namespace)
 	for _, span := range pct90Spans {

@@ -4135,13 +4135,9 @@
     "JaegerInfo": {
       "type": "object",
       "properties": {
-        "integration": {
+        "enabled": {
           "type": "boolean",
-          "x-go-name": "Integration"
-        },
-        "integrationMessage": {
-          "type": "string",
-          "x-go-name": "IntegrationMessage"
+          "x-go-name": "Enabled"
         },
         "namespaceSelector": {
           "type": "boolean",
@@ -4152,7 +4148,7 @@
           "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/jaeger"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "KeyValue": {
       "type": "object",
@@ -6683,7 +6679,7 @@
       }
     },
     "jaegerInfoResponse": {
-      "description": "Return all the descriptor data related to Grafana",
+      "description": "Return all the descriptor data related to Jaeger",
       "schema": {
         "$ref": "#/definitions/JaegerInfo"
       }

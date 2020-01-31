@@ -577,11 +577,11 @@ type GrafanaInfoResponse struct {
 	Body models.GrafanaInfo
 }
 
-// Return all the descriptor data related to Grafana
+// Return all the descriptor data related to Jaeger
 // swagger:response jaegerInfoResponse
 type JaegerInfoResponse struct {
 	// in: body
-	Body jaeger.JaegerInfo
+	Body models.JaegerInfo
 }
 
 // Return the information necessary to handle login

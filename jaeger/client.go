@@ -13,19 +13,10 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetJaegerServices() (services []string, code int, err error)
 	GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error)
-	GetJaegerInfo() (*JaegerInfo, int, error)
-	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, code int, err error)
-	GetTraceDetail(traceId string) (trace *JaegerResponse, code int, err error)
+	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error)
+	GetTraceDetail(traceId string) (trace *JaegerResponse, err error)
 	GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error)
-}
-
-type JaegerInfo struct {
-	URL                string `json:"url"`
-	NamespaceSelector  bool   `json:"namespaceSelector"`
-	Integration        bool   `json:"integration"`
-	IntegrationMessage string `json:"integrationMessage"`
 }
 
 // Client for Jaeger API.
@@ -35,8 +26,6 @@ type Client struct {
 	client   http.Client
 	endpoint *url.URL
 }
-
-var jaegerIntegration bool
 
 func NewClient(token string) (*Client, error) {
 	cfg := config.Get()
@@ -67,20 +56,6 @@ func NewClient(token string) (*Client, error) {
 	}
 }
 
-// GetJaegerInfo return the information about Jaeger
-// info for Jaeger Service.
-// Returns (*JaegerInfo, int, error)
-func (in *Client) GetJaegerInfo() (*JaegerInfo, int, error) {
-	return getJaegerInfo(in.client, in.endpoint)
-}
-
-// GetNamespaceServicesRequestRates queries Prometheus to fetch request counter rates, over a time interval, limited to
-// requests for services in the namespace.
-// Returns (rates, error)
-func (in *Client) GetJaegerServices() (services []string, code int, err error) {
-	return getServices(in.client, in.endpoint)
-}
-
 // GetSpans fetches Jaeger traces of a service and extract related spans
 // Returns (spans, error)
 func (in *Client) GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error) {
@@ -90,14 +65,14 @@ func (in *Client) GetSpans(namespace, service, startMicros, endMicros string) ([
 // GetTraces Jaeger to fetch traces of a service
 // requests for traces of a service
 // Returns (traces, code, error)
-func (in *Client) GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, code int, err error) {
+func (in *Client) GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error) {
 	return getTraces(in.client, in.endpoint, namespace, service, rawQuery)
 }
 
 // GetTraceDetail jaeger to fetch a specific trace
 // requests for a specific trace detail
 //  Returns (traces, code, error)
-func (in *Client) GetTraceDetail(traceId string) (trace *JaegerResponse, code int, err error) {
+func (in *Client) GetTraceDetail(traceId string) (trace *JaegerResponse, err error) {
 	return getTraceDetail(in.client, in.endpoint, traceId)
 }
 
