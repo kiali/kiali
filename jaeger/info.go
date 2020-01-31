@@ -11,12 +11,13 @@ import (
 
 func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, error) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
-	integration := true
-	error := ""
+
 	if !jaegerConfig.Enabled {
-		return nil, http.StatusNoContent, nil
+		return &JaegerInfo{URL: "", NamespaceSelector: true, Integration: false, IntegrationMessage: ""}, http.StatusNoContent, nil
 	}
 
+	integration := true
+	error := ""
 	u, err := url.Parse(jaegerConfig.InClusterURL)
 	if err != nil {
 		integration = false
