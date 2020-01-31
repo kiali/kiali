@@ -7,6 +7,7 @@ import { Tabs } from '@patternfly/react-core';
 type SimpleTabsProps = {
   defaultTab: number;
   id: string;
+  isFilled?: boolean;
   mountOnEnter?: boolean;
   style?: React.CSSProperties;
   unmountOnExit?: boolean;
@@ -30,6 +31,7 @@ export default class SimpleTabs extends React.Component<SimpleTabsProps, SimpleT
       <Tabs
         id={this.props.id}
         style={this.props.style ? this.props.style : {}}
+        isFilled={this.props.isFilled ? this.props.isFilled : true}
         activeKey={this.state.activeTab}
         onSelect={this.handleTabSelect}
         mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
+import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -24,10 +24,11 @@ import {
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
-  renderNodeInfo,
   renderNoTraffic,
   mergeMetricsResponses,
-  summaryHeader
+  summaryHeader,
+  hr,
+  summaryPanel
 } from './SummaryPanelCommon';
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
@@ -35,6 +36,11 @@ import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { Dropdown, DropdownItem, DropdownPosition, KebabToggle } from '@patternfly/react-core';
+import history from 'app/History';
+import { KialiAppState } from 'store/Store';
+import { connect } from 'react-redux';
 
 type SummaryPanelNodeMetricsState = {
   grpcRequestCountIn: Datapoint[];
@@ -56,6 +62,7 @@ type SummaryPanelNodeState = SummaryPanelNodeMetricsState & {
   loading: boolean;
   healthLoading: boolean;
   health?: Health;
+  isOpen: boolean;
   metricsLoadError: string | null;
 };
 
@@ -78,23 +85,24 @@ const defaultState: SummaryPanelNodeState = {
   node: null,
   loading: false,
   healthLoading: false,
+  isOpen: false,
   metricsLoadError: null,
   ...defaultMetricsState
 };
 
-export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelNodeState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: '25em',
-    overflowY: 'auto' as 'auto',
-    width: '25em'
-  };
+type ReduxProps = {
+  jaegerIntegration: boolean;
+  namespaceSelector: boolean;
+  jaegerURL: string;
+};
 
+type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
+
+export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, SummaryPanelNodeState> {
   private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
-  constructor(props: SummaryPanelPropType) {
+  constructor(props: SummaryPanelNodeProps) {
     super(props);
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
 
@@ -102,7 +110,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelNodeState) {
+  static getDerivedStateFromProps(props: SummaryPanelNodeProps, state: SummaryPanelNodeState) {
     // if the summaryTarget (i.e. selected node) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.data.summaryTarget !== state.node
@@ -115,7 +123,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
-  componentDidUpdate(prevProps: SummaryPanelPropType) {
+  componentDidUpdate(prevProps: SummaryPanelNodeProps) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
@@ -133,7 +141,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
   }
 
-  updateCharts(props: SummaryPanelPropType) {
+  updateCharts(props: SummaryPanelNodeProps) {
     const target = props.data.summaryTarget;
     const nodeData = decoratedNodeData(target);
     const nodeMetricType = getNodeMetricType(nodeData);
@@ -306,50 +314,78 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && nodeType !== NodeType.UNKNOWN && workload;
 
+    const actions = getOptions(
+      nodeData,
+      this.props.namespaceSelector,
+      this.props.jaegerIntegration,
+      this.props.jaegerURL
+    ).map(o => {
+      return (
+        <DropdownItem
+          key={o.text}
+          onClick={() => {
+            this.onClickAction(o.url);
+          }}
+        >
+          {o.text}
+        </DropdownItem>
+      );
+    });
+
     return (
-      <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelNode.panelStyle}>
+      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
-          {renderTitle(nodeData, this.state.health)}
-          {renderNodeInfo(nodeData)}
-          {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
+          <div>
+            {renderBadgedLink(nodeData)}
+            <Dropdown
+              id="summary-node-actions"
+              style={{ float: 'right' }}
+              isPlain={true}
+              dropdownItems={actions}
+              isOpen={this.state.isOpen}
+              position={DropdownPosition.right}
+              toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
+            />
+          </div>
+          <div>{renderHealth(this.state.health)}</div>
+          <div>
+            {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
+            {shouldRenderDestsList && <div>{destsList}</div>}
+            {shouldRenderSvcList && <div>{servicesList}</div>}
+            {shouldRenderWorkload && <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>}
+          </div>
         </div>
         <div className="panel-body">
-          {shouldRenderDestsList && (
-            <div>
-              <strong>Destinations: </strong>
-              {destsList}
-            </div>
+          {this.hasGrpcTraffic(nodeData) && (
+            <>
+              {this.renderGrpcRates(node)}
+              {hr()}
+            </>
           )}
-          {shouldRenderSvcList && (
-            <div>
-              <strong>Services: </strong>
-              {servicesList}
-            </div>
+          {this.hasHttpTraffic(nodeData) && (
+            <>
+              {this.renderHttpRates(node)}
+              {hr()}
+            </>
           )}
-          {shouldRenderWorkload && (
-            <div>
-              <strong>Workload: </strong>
-              <RenderLink nodeData={nodeData} nodeType={NodeType.WORKLOAD} />
-            </div>
-          )}
-          {(shouldRenderDestsList || shouldRenderSvcList || shouldRenderWorkload) && <hr />}
-          {/* TODO: link to App or Workload Details charts when available
-          {nodeType !== NodeType.UNKNOWN && (
-            <p style={{ textAlign: 'right' }}>
-              <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
-                View detailed charts <KialiIcon.AngleDoubleRight />
-              </Link>
-            </p>
-          )} */}
-          {this.hasGrpcTraffic(nodeData) && this.renderGrpcRates(node)}
-          {this.hasHttpTraffic(nodeData) && this.renderHttpRates(node)}
-          <div>{this.renderCharts(node)}</div>
+          <div>
+            {this.renderCharts(node)}
+            {hr()}
+          </div>
           {!this.hasGrpcTraffic(nodeData) && renderNoTraffic('GRPC')}
           {!this.hasHttpTraffic(nodeData) && renderNoTraffic('HTTP')}
         </div>
       </div>
     );
   }
+
+  private onClickAction = path => {
+    history.push(path);
+  };
+
+  private onToggleActions = isOpen => {
+    this.setState({ isOpen: isOpen });
+  };
 
   private renderGrpcRates = node => {
     const incoming = getTrafficRateGrpc(node);
@@ -364,7 +400,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           outRate={outgoing.rate}
           outRateErr={outgoing.rateErr}
         />
-        <hr />
       </>
     );
   };
@@ -386,7 +421,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           outRate4xx={outgoing.rate4xx}
           outRate5xx={outgoing.rate5xx}
         />
-        <hr />
       </>
     );
   };
@@ -399,7 +433,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <>
           <div>
             <KialiIcon.Info /> Sparkline charts not supported for unknown node. Use edge for details.
-            <hr />
           </div>
         </>
       );
@@ -408,7 +441,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <>
           <div>
             <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is inaccessible.
-            <hr />
           </div>
         </>
       );
@@ -417,7 +449,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <>
           <div>
             <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is a serviceEntry.
-            <hr />
           </div>
         </>
       );
@@ -476,7 +507,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               </div>
             </>
           )}
-          <hr />
         </>
       );
     }
@@ -509,7 +539,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               </div>
             </>
           )}
-          <hr />
         </>
       );
     }
@@ -528,7 +557,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             sentRates={this.state.tcpSentOut}
             hide={isServiceNode}
           />
-          <hr />
         </>
       );
     }
@@ -545,7 +573,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
   private renderBadgeSummary = (hasCB?: boolean, hasVS?: boolean, hasMissingSC?: boolean, isDead?: boolean) => {
     return (
-      <>
+      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
@@ -572,7 +600,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             <span style={{ paddingLeft: '4px' }}>Has No Running Pods</span>
           </div>
         )}
-      </>
+      </div>
     );
   };
 
@@ -586,15 +614,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     destServices.forEach(ds => {
       const service = ds.name;
-      const key = `${ds.namespace}.svc.${service}`;
       const displayName = service;
-      entries.push(<span key={key}>{displayName}</span>);
-      entries.push(<span key={`comma-after-${ds.name}`}>, </span>);
+      entries.push(renderBadgedHost(displayName));
     });
-
-    if (entries.length > 0) {
-      entries.pop();
-    }
 
     return entries;
   };
@@ -631,3 +653,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     return data.tcpIn > 0 || data.tcpOut > 0;
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
+  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
+  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
+});
+
+const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);
+export default SummaryPanelNodeContainer;

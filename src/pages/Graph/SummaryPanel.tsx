@@ -4,8 +4,8 @@ import { SummaryPanelPropType } from '../../types/Graph';
 import SummaryPanelEdge from './SummaryPanelEdge';
 import SummaryPanelGraph from './SummaryPanelGraph';
 import SummaryPanelGroup from './SummaryPanelGroup';
-import SummaryPanelNode from './SummaryPanelNode';
 import { KialiIcon } from 'config/KialiIcon';
+import SummaryPanelNodeContainer from './SummaryPanelNode';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -16,13 +16,13 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
 };
 
 const expandedStyle = style({
-  fontSize: '74%', // TODO: Remove
+  fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
   position: 'relative'
 });
 
 const collapsedStyle = style({
-  fontSize: '74%', // TODO: Remove
+  fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
   position: 'relative',
   $nest: {
@@ -65,7 +65,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
       return null;
     }
     return (
-      <div className={this.state.isVisible ? expandedStyle : collapsedStyle}>
+      <div id="graph-side-panel" className={this.state.isVisible ? expandedStyle : collapsedStyle}>
         <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
           {this.state.isVisible ? (
             <>
@@ -103,7 +103,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
           />
         ) : null}
         {this.props.data.summaryType === 'node' ? (
-          <SummaryPanelNode
+          <SummaryPanelNodeContainer
             data={this.props.data}
             queryTime={this.props.queryTime}
             namespaces={this.props.namespaces}

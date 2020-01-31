@@ -7,9 +7,7 @@ import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import { serverConfig } from '../../config/ServerConfig';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { Badge } from '@patternfly/react-core';
 import { PfColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -18,6 +16,10 @@ export enum NodeMetricType {
   WORKLOAD = 2,
   SERVICE = 3
 }
+
+export const summaryBodyTabs = style({
+  padding: '10px 15px 0 15px'
+});
 
 export const summaryHeader: React.CSSProperties = {
   backgroundColor: PfColors.White
@@ -28,9 +30,21 @@ export const summaryLabels = style({
   marginBottom: '5px'
 });
 
-export const summaryBodyTabs = style({
-  padding: '10px 15px 0 15px'
+export const summaryPanel = style({
+  height: '100%',
+  margin: 0,
+  minWidth: '25em',
+  overflowY: 'scroll',
+  width: '25em'
 });
+
+export const summaryFont: React.CSSProperties = {
+  fontSize: 'var(--graph-side-panel--font-size)'
+};
+
+export const hr = () => {
+  return <hr style={{ margin: '10px 0' }} />;
+};
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
   return (
@@ -51,7 +65,7 @@ type HealthState = {
 export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) => void) => {
   const healthPromise = summaryTarget.data('healthPromise');
   if (healthPromise) {
-    stateSetter({ health: undefined, healthLoading: true });
+    stateSetter({ healthLoading: true });
     healthPromise
       .then(h => stateSetter({ health: h, healthLoading: false }))
       .catch(_err => stateSetter({ health: healthNotAvailable(), healthLoading: false }));
@@ -149,27 +163,6 @@ export const getDatapoints = (
     }
   }
   return [];
-};
-
-export const renderNodeInfo = (nodeData: DecoratedGraphNodeData) => {
-  const hasNamespace =
-    nodeData.nodeType !== NodeType.UNKNOWN && !(nodeData.nodeType === NodeType.SERVICE && nodeData.isServiceEntry);
-  const hasVersion = hasNamespace && nodeData.version;
-  return (
-    <>
-      <div className={`label-collection ${summaryLabels}`}>
-        {hasNamespace && <Badge>Namespace: {nodeData.namespace}</Badge>}
-        {hasVersion && (
-          <>
-            <br />
-            <Badge style={{ marginTop: '2px' }}>
-              {serverConfig.istioLabels.versionLabelName}: {nodeData.version!}
-            </Badge>
-          </>
-        )}
-      </div>
-    </>
-  );
 };
 
 export const renderNoTraffic = (protocol?: string) => {

@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { Badge } from '@patternfly/react-core';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
-import { RenderLink, renderTitle } from './SummaryLink';
+import { renderBadgedLink, renderHealth } from './SummaryLink';
 import {
   shouldRefreshData,
   updateHealth,
@@ -13,16 +12,19 @@ import {
   getNodeMetricType,
   renderNoTraffic,
   summaryHeader,
-  summaryLabels
+  hr,
+  summaryPanel
 } from './SummaryPanelCommon';
 import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics, Datapoint } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { serverConfig } from '../../config/ServerConfig';
-import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { Dropdown, DropdownPosition, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import history from 'app/History';
 
 type SummaryPanelGroupMetricsState = {
   requestCountIn: Datapoint[];
@@ -37,6 +39,7 @@ type SummaryPanelGroupMetricsState = {
 
 type SummaryPanelGroupState = SummaryPanelGroupMetricsState & {
   group: any;
+  isOpen: boolean;
   loading: boolean;
   healthLoading: boolean;
   health?: Health;
@@ -56,6 +59,7 @@ const defaultMetricsState: SummaryPanelGroupMetricsState = {
 
 const defaultState: SummaryPanelGroupState = {
   group: null,
+  isOpen: false,
   loading: false,
   healthLoading: false,
   metricsLoadError: null,
@@ -63,14 +67,6 @@ const defaultState: SummaryPanelGroupState = {
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: '25em',
-    overflowY: 'auto' as 'auto',
-    width: '25em'
-  };
-
   private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -115,48 +111,75 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   render() {
     const group = this.props.data.summaryTarget;
     const nodeData = decoratedNodeData(group);
-    const { namespace } = nodeData;
     const serviceList = this.renderServiceList(group);
     const workloadList = this.renderWorkloadList(group);
 
+    const actions = getOptions(nodeData, true, false, '').map(o => {
+      return (
+        <DropdownItem
+          key={o.text}
+          onClick={() => {
+            this.onClickAction(o.url);
+          }}
+        >
+          {o.text}
+        </DropdownItem>
+      );
+    });
+
     return (
-      <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
-        <div className={`panel-heading ${summaryHeader}`}>
-          {renderTitle(nodeData, this.state.health)}
-          <div className={`label-collection ${summaryLabels}`}>
-            <Badge>namespace: {namespace}</Badge>
-            {this.renderVersionBadges()}
+      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
+        <div className="panel-heading" style={summaryHeader}>
+          <div>
+            {renderBadgedLink(nodeData)}
+            <Dropdown
+              id="summary-group-actions"
+              isPlain={true}
+              style={{ float: 'right' }}
+              dropdownItems={actions}
+              isOpen={this.state.isOpen}
+              position={DropdownPosition.right}
+              toggle={<KebabToggle id="summary-group-kebab" onToggle={this.onToggleActions} />}
+            />
           </div>
-          {this.renderBadgeSummary(group)}
+          <div>{renderHealth(this.state.health)}</div>
+          <div>
+            {this.renderBadgeSummary(group)}
+            {serviceList.length > 0 && <div>{serviceList}</div>}
+            {workloadList.length > 0 && <div> {workloadList}</div>}
+          </div>
         </div>
         <div className="panel-body">
-          {serviceList.length > 0 && (
-            <div>
-              <strong>Services: </strong>
-              {serviceList}
-            </div>
+          {this.hasGrpcTraffic(group) && (
+            <>
+              {this.renderGrpcRates(group)}
+              {hr()}
+            </>
           )}
-          {workloadList.length > 0 && (
-            <div>
-              <strong>Workloads: </strong>
-              {workloadList}
-            </div>
+          {this.hasHttpTraffic(group) && (
+            <>
+              {this.renderHttpRates(group)}
+              {hr()}
+            </>
           )}
-          {(serviceList.length > 0 || workloadList.length > 0) && <hr />}
-
-          {/* TODO: link to App Details charts when available
-           <p style={{ textAlign: 'right' }}>
-            <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
-              View detailed charts <KialiIcon.AngleDoubleRight />
-            </Link>
-          </p> */}
-          {this.hasGrpcTraffic(group) ? this.renderGrpcRates(group) : renderNoTraffic('GRPC')}
-          {this.hasHttpTraffic(group) ? this.renderHttpRates(group) : renderNoTraffic('HTTP')}
-          <div>{this.renderSparklines(group)}</div>
+          <div>
+            {this.renderSparklines(group)}
+            {hr()}
+          </div>
+          {!this.hasGrpcTraffic(group) && renderNoTraffic('GRPC')}
+          {!this.hasHttpTraffic(group) && renderNoTraffic('HTTP')}
         </div>
       </div>
     );
   }
+
+  private onClickAction = path => {
+    history.push(path);
+  };
+
+  private onToggleActions = isExpanded => {
+    this.setState({ isOpen: isExpanded });
+  };
 
   private updateRpsCharts = (props: SummaryPanelPropType) => {
     const target = props.data.summaryTarget;
@@ -213,20 +236,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private renderVersionBadges = () => {
-    const versions = this.props.data.summaryTarget.children(`node[${CyNode.version}]`).toArray();
-    return (
-      <>
-        {versions.length > 0 && <br />}
-        {versions.map((c, _i) => (
-          <Badge style={{ marginTop: '2px', marginRight: '1px' }}>
-            {serverConfig.istioLabels.versionLabelName}: value={c.data(CyNode.version)}
-          </Badge>
-        ))}
-      </>
-    );
-  };
-
   private renderBadgeSummary = group => {
     let hasCB: boolean = group.data(CyNode.hasCB) === true;
     let hasVS: boolean = group.data(CyNode.hasVS) === true;
@@ -240,7 +249,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       });
 
     return (
-      <>
+      <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         {hasCB && (
           <div>
             <KialiIcon.CircuitBreaker />
@@ -253,7 +262,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
-      </>
+      </div>
     );
   };
 
@@ -271,7 +280,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           outRate={outgoing.rate}
           outRateErr={outgoing.rateErr}
         />
-        <hr />
       </>
     );
   };
@@ -294,7 +302,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           outRate4xx={outgoing.rate4xx}
           outRate5xx={outgoing.rate5xx}
         />
-        <hr />
       </>
     );
   };
@@ -327,7 +334,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             dataRps={this.state.requestCountOut}
             dataErrors={this.state.errorCountOut}
           />
-          <hr />
         </>
       );
     }
@@ -347,7 +353,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             receivedRates={this.state.tcpReceivedOut}
             sentRates={this.state.tcpSentOut}
           />
-          <hr />
         </>
       );
     }
@@ -364,15 +369,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     // likely 0 or 1 but support N in case of unanticipated labeling
     const serviceList: any[] = [];
 
-    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach((node, index) => {
+    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(node => {
       const nodeData = decoratedNodeData(node);
-      serviceList.push(<RenderLink key={`node-${index}`} nodeData={nodeData} nodeType={NodeType.SERVICE} />);
-      serviceList.push(<span key={`node-comma-${index}`}>, </span>);
+      serviceList.push(renderBadgedLink(nodeData, NodeType.SERVICE));
     });
-
-    if (serviceList.length > 0) {
-      serviceList.pop();
-    }
 
     return serviceList;
   };
@@ -380,15 +380,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   private renderWorkloadList = (group): any[] => {
     const workloadList: any[] = [];
 
-    group.children('node[workload]').forEach((node, index) => {
+    group.children('node[workload]').forEach(node => {
       const nodeData = decoratedNodeData(node);
-      workloadList.push(<RenderLink key={`node-${index}`} nodeData={nodeData} nodeType={NodeType.WORKLOAD} />);
-      workloadList.push(<span key={`node-comma-${index}`}>, </span>);
+      workloadList.push(renderBadgedLink(nodeData, NodeType.WORKLOAD));
     });
-
-    if (workloadList.length > 0) {
-      workloadList.pop();
-    }
 
     return workloadList;
   };

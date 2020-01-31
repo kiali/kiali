@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { NodeType, DecoratedGraphNodeData, GraphNodeData } from '../../types/Graph';
+import { NodeType, GraphNodeData } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tooltip, Badge, PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
 import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
 
-const getTitle = (nodeData: DecoratedGraphNodeData) => {
-  switch (nodeData.nodeType) {
+const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
+  switch (nodeType || nodeData.nodeType) {
     case NodeType.APP:
       return (
         <Tooltip content={<>Application</>}>
@@ -110,25 +110,55 @@ export const RenderLink = (props: RenderLinkProps) => {
   );
 };
 
-export const renderTitle = (nodeData: DecoratedGraphNodeData, health?: Health) => {
-  const link = getLink(nodeData);
-
+export const renderBadgedHost = (host: string) => {
   return (
     <span>
-      <span style={{ paddingRight: '0.5em' }}>
-        {getTitle(nodeData)}
+      <Tooltip content={<>Host</>}>
+        <Badge className="virtualitem_badge_definition">H</Badge>
+      </Tooltip>
+      {host}
+    </span>
+  );
+};
+
+export const renderBadgedLink = (nodeData: GraphNodeData, nodeType?: NodeType, label?: string) => {
+  const link = getLink(nodeData, nodeType);
+
+  return (
+    <>
+      <span style={{ marginRight: '1em', marginBottom: '3px', display: 'inline-block' }}>
+        {label && (
+          <span style={{ whiteSpace: 'pre' }}>
+            <b>{label}</b>
+          </span>
+        )}
+        {getBadge(nodeData, nodeType)}
         {link}
       </span>
       {nodeData.isInaccessible && <KialiIcon.MtlsLock />}
-      {health && (
-        <HealthIndicator
-          id="graph-health-indicator"
-          mode={DisplayMode.SMALL}
-          health={health}
-          tooltipPlacement={PopoverPosition.left}
-        />
-      )}
-    </span>
+    </>
+  );
+};
+
+export const renderHealth = (health?: Health) => {
+  return (
+    <>
+      <Badge style={{ fontWeight: 'normal', marginTop: '4px', marginBottom: '4px' }} isRead={true}>
+        <span style={{ margin: '3px 0 1px 0' }}>
+          {health ? (
+            <HealthIndicator
+              id="graph-health-indicator"
+              mode={DisplayMode.SMALL}
+              health={health}
+              tooltipPlacement={PopoverPosition.left}
+            />
+          ) : (
+            'n/a'
+          )}
+        </span>
+        <span style={{ marginLeft: '4px' }}>health</span>
+      </Badge>
+    </>
   );
 };
 
@@ -141,7 +171,7 @@ export const renderDestServicesLinks = (node: any) => {
     return links;
   }
 
-  destServices.forEach((ds, index) => {
+  destServices.forEach(ds => {
     const serviceNodeData: GraphNodeData = {
       id: nodeData.id,
       app: '',
@@ -155,13 +185,8 @@ export const renderDestServicesLinks = (node: any) => {
       version: '',
       workload: ''
     };
-    links.push(<RenderLink key={`service-${index}`} nodeData={serviceNodeData} nodeType={NodeType.SERVICE} />);
-    links.push(<span key={`comma-after-${ds.name}`}>, </span>);
+    links.push(renderBadgedLink(serviceNodeData));
   });
-
-  if (links.length > 0) {
-    links.pop();
-  }
 
   return links;
 };

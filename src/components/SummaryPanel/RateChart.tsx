@@ -8,8 +8,8 @@ import * as Legend from 'components/Charts/LegendHelper';
 import { CustomFlyout } from 'components/Charts/CustomFlyout';
 import { VCLines } from 'utils/Graphing';
 
-export const legendHeight = 30;
-export const legendTopMargin = 25;
+export const legendHeight = 25;
+export const legendTopMargin = 20;
 
 type Props = {
   baseName: string;
@@ -56,7 +56,12 @@ export class RateChart extends React.Component<Props, State> {
         };
       }
     });
-    const verticalAxisStyle = singleBar ? { tickLabels: { fill: 'none' } } : { tickLabels: { padding: 2 } };
+    const fontSize = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size');
+    const fontSizePx = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size-px');
+    const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
+    const verticalAxisStyle = singleBar
+      ? { tickLabels: { fill: 'none', fontSize: fontSize } }
+      : { tickLabels: { padding: 2, fontSize: fontSize } };
     return (
       <Chart
         height={height}
@@ -84,15 +89,22 @@ export class RateChart extends React.Component<Props, State> {
                     label: `${dp.name}: ${dp.y.toFixed(2)} %`
                   };
                 })}
-                barWidth={30}
+                barWidth={10}
                 labelComponent={<ChartTooltip constrainToVisibleArea={true} flyoutComponent={<CustomFlyout />} />}
               />
             );
           })}
         </ChartStack>
         <ChartAxis style={verticalAxisStyle} />
-        <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
+        <ChartAxis
+          style={horizontalAxisStyle}
+          dependentAxis={true}
+          showGrid={true}
+          crossAxis={false}
+          tickValues={[0, 25, 50, 75, 100]}
+        />
         <VictoryLegend
+          style={{ labels: { fontSize: Number(fontSizePx) } }}
           name={this.props.baseName + '-legend'}
           data={this.props.series.map((s, idx) => {
             if (this.state.hiddenSeries.has(idx)) {
@@ -184,7 +196,7 @@ export const renderInOutRateChartHttp = (
       }
     };
   });
-  return <RateChart baseName={'in-out-rate-http'} height={132} xLabelsWidth={25} series={vcLines} />;
+  return <RateChart baseName={'in-out-rate-http'} height={80} xLabelsWidth={25} series={vcLines} />;
 };
 
 export const renderInOutRateChartGrpc = (

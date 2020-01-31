@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { NodeType } from 'types/Graph';
+import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
 
 type ReduxProps = {
   jaegerIntegration: boolean;
@@ -42,43 +42,33 @@ const graphContextMenuItemLinkStyle = style({
 type Props = NodeContextMenuProps & ReduxProps;
 
 export class NodeContextMenu extends React.PureComponent<Props> {
-  private static derivedValuesFromProps(props: Props) {
+  static derivedValuesFromProps(node: DecoratedGraphNodeData) {
+    const namespace: string = node.namespace;
     let name: string | undefined = '';
     let type = '';
-    switch (props.nodeType) {
+    switch (node.nodeType) {
       case 'app':
         // Prefer workload type for nodes backed by a workload
-        if (props.workload && props.parent) {
-          name = props.workload;
+        if (node.workload && node.parent) {
+          name = node.workload;
           type = Paths.WORKLOADS;
         } else {
           type = Paths.APPLICATIONS;
-          name = props.app;
+          name = node.app;
         }
         break;
       case 'service':
-        type = props.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
-        name = props.service;
+        type = node.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
+        name = node.service;
         break;
       case 'workload':
-        name = props.workload;
+        name = node.workload;
         type = Paths.WORKLOADS;
         break;
       default:
     }
 
-    return { type, name };
-  }
-
-  // @todo: We need take care of this at global app level
-  makeDetailsPageUrl(type: string, name?: string) {
-    return `/namespaces/${this.props.namespace}/${type}/${name}`;
-  }
-
-  getJaegerURL(name?: string) {
-    return `${this.props.jaegerURL}/search?service=${name}${
-      this.props.namespaceSelector ? `.${this.props.namespace}` : ''
-    }`;
+    return { namespace, type, name };
   }
 
   createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
@@ -103,30 +93,20 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       return null;
     }
 
-    const { type, name } = NodeContextMenu.derivedValuesFromProps(this.props);
-    const detailsPageUrl = this.makeDetailsPageUrl(type, name);
+    const { name } = NodeContextMenu.derivedValuesFromProps(this.props);
+    const options: ContextMenuOption[] = getOptions(
+      this.props,
+      this.props.namespaceSelector,
+      this.props.jaegerIntegration,
+      this.props.jaegerURL
+    );
 
     return (
       <div className={graphContextMenuContainerStyle}>
         <div className={graphContextMenuTitleStyle}>
           <strong>{name}</strong>
         </div>
-        {this.createMenuItem(detailsPageUrl, 'Show Details')}
-        {type !== Paths.SERVICEENTRIES && (
-          <>
-            {this.createMenuItem(`${detailsPageUrl}?tab=traffic`, 'Show Traffic')}
-            {type === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
-            {this.createMenuItem(
-              `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
-              'Show Inbound Metrics'
-            )}
-            {type !== Paths.SERVICES &&
-              this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
-            {type === Paths.SERVICES && this.props.jaegerIntegration
-              ? this.createMenuItem(`${detailsPageUrl}?tab=traces`, 'Show Traces')
-              : this.props.jaegerURL && this.createMenuItem(this.getJaegerURL(name), 'Show Traces', '_blank', true)}
-          </>
-        )}
+        {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
       </div>
     );
   }
@@ -135,6 +115,60 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     this.props.contextMenu.hide(0);
   };
 }
+
+// @todo: We need take care of this at global app level
+const makeDetailsPageUrl = (namespace: string, type: string, name?: string): string => {
+  return `/namespaces/${namespace}/${type}/${name}`;
+};
+
+const getJaegerURL = (namespace: string, namespaceSelector: boolean, jaegerURL: string, name?: string): string => {
+  return `${jaegerURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
+};
+
+export type ContextMenuOption = {
+  text: string;
+  url: string;
+  external?: boolean;
+  target?: string;
+};
+
+export const getOptions = (
+  node: DecoratedGraphNodeData,
+  namespaceSelector: boolean,
+  jaegerIntegration?: boolean,
+  jaegerUrl?: string
+): ContextMenuOption[] => {
+  const { namespace, type, name } = NodeContextMenu.derivedValuesFromProps(node);
+  const detailsPageUrl = makeDetailsPageUrl(namespace, type, name);
+  const options: ContextMenuOption[] = [];
+
+  options.push({ text: 'Show Details', url: detailsPageUrl });
+  if (type !== Paths.SERVICEENTRIES) {
+    options.push({ text: 'Show Traffic', url: `${detailsPageUrl}?tab=traffic` });
+    if (type === Paths.WORKLOADS) {
+      options.push({ text: 'Show Logs', url: `${detailsPageUrl}?tab=logs` });
+    }
+    options.push({
+      text: 'Show Inbound Metrics',
+      url: `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
+    });
+    if (type !== Paths.SERVICES) {
+      options.push({ text: 'Show Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
+    }
+    if (type === Paths.SERVICES) {
+      jaegerIntegration
+        ? options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` })
+        : options.push({
+            text: 'Show Traces',
+            url: getJaegerURL(namespace, namespaceSelector, jaegerUrl!, name),
+            external: true,
+            target: '_blank'
+          });
+    }
+  }
+
+  return options;
+};
 
 const mapStateToProps = (state: KialiAppState) => ({
   jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,

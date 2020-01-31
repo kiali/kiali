@@ -10,17 +10,19 @@ import {
   DecoratedGraphNodeData,
   UNKNOWN
 } from '../../types/Graph';
-import { renderTitle } from './SummaryLink';
+import { renderBadgedLink } from './SummaryLink';
 import {
   shouldRefreshData,
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
+  hr,
   renderNoTraffic,
   NodeMetricType,
-  renderNodeInfo,
   summaryHeader,
-  summaryBodyTabs
+  summaryBodyTabs,
+  summaryPanel,
+  summaryFont
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -70,14 +72,6 @@ const defaultState: SummaryPanelEdgeState = {
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: '25em',
-    overflowY: 'auto' as 'auto',
-    width: '25em'
-  };
-
   private metricsPromise?: CancelablePromise<Response<Metrics>>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -118,90 +112,96 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   }
 
   render() {
-    const edge = this.props.data.summaryTarget;
-    const source = edge.source();
-    const dest = edge.target();
-    const edgeData = decoratedEdgeData(edge);
-    const mTLSPercentage = edgeData.isMTLS;
+    const target = this.props.data.summaryTarget;
+    const source = decoratedNodeData(target.source());
+    const dest = decoratedNodeData(target.target());
+    const edge = decoratedEdgeData(target);
+    const mTLSPercentage = edge.isMTLS;
     const isMtls = mTLSPercentage && mTLSPercentage > 0;
-    const protocol = edgeData.protocol;
+    const protocol = edge.protocol;
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
 
-    const HeadingBlock = ({ prefix, node }) => {
-      const nodeData = decoratedNodeData(node);
+    const MTLSBlock = () => {
       return (
-        <div className="panel-heading label-collection" style={summaryHeader}>
-          <strong>{prefix}</strong> {renderTitle(nodeData)}
-          {renderNodeInfo(nodeData)}
+        <div className="panel-heading" style={summaryHeader}>
+          {this.renderBadgeSummary(mTLSPercentage)}
         </div>
       );
     };
 
-    const MTLSBlock = () => {
-      return <div className="panel-heading label-collection">{this.renderBadgeSummary(mTLSPercentage)}</div>;
-    };
-
     return (
-      <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <HeadingBlock prefix="" node={source} />
-        <HeadingBlock prefix="" node={dest} />
+      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
+        <div className="panel-heading" style={summaryHeader}>
+          {renderBadgedLink(source, undefined, 'From:  ')}
+          {renderBadgedLink(dest, undefined, 'To:        ')}
+        </div>
         {isMtls && <MTLSBlock />}
         {(isGrpc || isHttp) && (
           <div className={summaryBodyTabs}>
             <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-              <Tab title="Traffic" eventKey={0}>
-                {isGrpc && (
-                  <>
-                    <RateTableGrpc
-                      title="GRPC requests per second:"
-                      rate={this.safeRate(edgeData.grpc)}
-                      rateErr={this.safeRate(edgeData.grpcPercentErr)}
-                    />
-                  </>
-                )}
-                {isHttp && (
-                  <>
-                    <RateTableHttp
-                      title="HTTP requests per second:"
-                      rate={this.safeRate(edgeData.http)}
-                      rate3xx={this.safeRate(edgeData.http3xx)}
-                      rate4xx={this.safeRate(edgeData.http4xx)}
-                      rate5xx={this.safeRate(edgeData.http5xx)}
-                    />
-                  </>
-                )}
+              <Tab style={summaryFont} title="Traffic" eventKey={0}>
+                <div style={summaryFont}>
+                  {isGrpc && (
+                    <>
+                      <RateTableGrpc
+                        title="GRPC requests per second:"
+                        rate={this.safeRate(edge.grpc)}
+                        rateErr={this.safeRate(edge.grpcPercentErr)}
+                      />
+                    </>
+                  )}
+                  {isHttp && (
+                    <>
+                      <RateTableHttp
+                        title="HTTP requests per second:"
+                        rate={this.safeRate(edge.http)}
+                        rate3xx={this.safeRate(edge.http3xx)}
+                        rate4xx={this.safeRate(edge.http4xx)}
+                        rate5xx={this.safeRate(edge.http5xx)}
+                      />
+                    </>
+                  )}
+                </div>
               </Tab>
-              <Tab title="Flags" eventKey={1}>
-                <ResponseFlagsTable
-                  title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                  responses={edgeData.responses}
-                />
+              <Tab style={summaryFont} title="Flags" eventKey={1}>
+                <div style={summaryFont}>
+                  <ResponseFlagsTable
+                    title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                    responses={edge.responses}
+                  />
+                </div>
               </Tab>
-              <Tab title="Hosts" eventKey={2}>
-                <ResponseHostsTable
-                  title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
-                  responses={edgeData.responses}
-                />
+              <Tab style={summaryFont} title="Hosts" eventKey={2}>
+                <div style={summaryFont}>
+                  <ResponseHostsTable
+                    title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                    responses={edge.responses}
+                  />
+                </div>
               </Tab>
             </SimpleTabs>
-            <hr />
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
+            {hr()}
+            {this.renderCharts(target, isGrpc, isHttp, isTcp)}
           </div>
         )}
         {isTcp && (
           <div className={summaryBodyTabs}>
             <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-              <Tab eventKey={0} title="Flags">
-                <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
+              <Tab style={summaryFont} eventKey={0} title="Flags">
+                <div style={summaryFont}>
+                  <ResponseFlagsTable title="Response flags by code:" responses={edge.responses} />
+                </div>
               </Tab>
-              <Tab eventKey={1} title="Hosts">
-                <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
+              <Tab style={summaryFont} eventKey={1} title="Hosts">
+                <div style={summaryFont}>
+                  <ResponseHostsTable title="Hosts by code:" responses={edge.responses} />
+                </div>
               </Tab>
             </SimpleTabs>
-            <hr />
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
+            {hr()}
+            {this.renderCharts(target, isGrpc, isHttp, isTcp)}
           </div>
         )}
         {!isGrpc && !isHttp && !isTcp && <div className="panel-body">{renderNoTraffic()}</div>}
@@ -458,7 +458,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       rpsChart = (
         <>
           <RpsChart label={labelRps} dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
-          <hr />
+          {hr()}
           <ResponseTimeChart
             label={labelRt}
             rtAvg={this.state.rtAvg}
@@ -467,7 +467,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             rt99={this.state.rt99}
             unit={this.state.unit}
           />
-          <hr />
         </>
       );
     } else if (isTcp) {
