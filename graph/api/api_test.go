@@ -169,7 +169,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 
 // mockNamespaceGraph provides the same single-namespace mocks to be used for different graph types
 func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -184,6 +184,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q0m1 := model.Metric{
 		"source_workload_namespace":      "unknown",
@@ -199,6 +200,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v0 := model.Vector{
 		&model.Sample{
@@ -208,7 +210,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Metric: q0m1,
 			Value:  50}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -223,13 +225,14 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
 			Value:  100}}
 
-	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q2m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -244,6 +247,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -259,6 +263,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v2",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m2 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -274,6 +279,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v3",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m3 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -334,6 +340,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m7 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -349,6 +356,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m8 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -364,6 +372,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m9 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -394,6 +403,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v2",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m11 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -409,6 +419,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m12 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -439,6 +450,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v3",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m14 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -454,6 +466,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q2m15 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -763,7 +776,7 @@ func TestWorkloadGraph(t *testing.T) {
 }
 
 func TestAppNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -778,6 +791,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q0m1 := model.Metric{
 		"source_workload_namespace":      "istio-system",
@@ -793,6 +807,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v0 := model.Vector{
 		&model.Sample{
@@ -802,7 +817,7 @@ func TestAppNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -817,6 +832,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -832,6 +848,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v2",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m2 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -847,6 +864,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v3",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m3 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -907,6 +925,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m7 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -922,6 +941,7 @@ func TestAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m8 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1033,7 +1053,7 @@ func TestAppNodeGraph(t *testing.T) {
 }
 
 func TestVersionedAppNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1048,6 +1068,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q0m1 := model.Metric{
 		"source_workload_namespace":      "istio-system",
@@ -1063,6 +1084,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v0 := model.Vector{
 		&model.Sample{
@@ -1072,7 +1094,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -1087,6 +1109,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1102,6 +1125,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v2",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m2 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1117,6 +1141,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v3",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m3 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1177,6 +1202,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m7 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1192,6 +1218,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m8 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1303,7 +1330,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 }
 
 func TestWorkloadNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1318,6 +1345,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q0m1 := model.Metric{
 		"source_workload_namespace":      "istio-system",
@@ -1333,6 +1361,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v0 := model.Vector{
 		&model.Sample{
@@ -1342,7 +1371,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -1357,6 +1386,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1372,6 +1402,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v2",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m2 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1387,6 +1418,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v3",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m3 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1447,6 +1479,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m7 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1462,6 +1495,7 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q1m8 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
@@ -1573,10 +1607,10 @@ func TestWorkloadNodeGraph(t *testing.T) {
 }
 
 func TestServiceNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -1591,6 +1625,7 @@ func TestServiceNodeGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v1 := model.Vector{
 		&model.Sample{
@@ -1664,7 +1699,7 @@ func TestServiceNodeGraph(t *testing.T) {
 // - request.host
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1679,16 +1714,17 @@ func TestComplexGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
 			Value:  50}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v1 := model.Vector{}
 
-	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v2 := model.Vector{}
 
 	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
@@ -1700,7 +1736,7 @@ func TestComplexGraph(t *testing.T) {
 	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v5 := model.Vector{}
 
-	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q6m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1715,16 +1751,17 @@ func TestComplexGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "grpc",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v6 := model.Vector{
 		&model.Sample{
 			Metric: q6m0,
 			Value:  50}}
 
-	q7 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q7 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v7 := model.Vector{}
 
-	q8 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q8 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	q8m0 := model.Metric{
 		"source_workload_namespace":      "tutorial",
 		"source_workload":                "customer-v1",
@@ -1739,6 +1776,7 @@ func TestComplexGraph(t *testing.T) {
 		"destination_version":            "v1",
 		"request_protocol":               "http",
 		"response_code":                  "200",
+		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	v8 := model.Vector{
 		&model.Sample{
@@ -1754,16 +1792,16 @@ func TestComplexGraph(t *testing.T) {
 	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v11 := model.Vector{}
 
-	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v12 := model.Vector{}
 
-	q13 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!~"istio-system|istio-telemetry",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q13 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!~"istio-system|istio-telemetry",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v13 := model.Vector{}
 
-	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v14 := model.Vector{}
 
-	q15 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system",destination_service_namespace=~"istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q15 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system",destination_service_namespace=~"istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v15 := model.Vector{}
 
 	client, api, _, err := setupMockedWithIstioComponentNamespaces()
