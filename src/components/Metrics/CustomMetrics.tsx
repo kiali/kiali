@@ -37,16 +37,21 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   template: string;
 };
 
+type Props = CustomMetricsProps & {
+  // Redux props
+  jaegerEnabled: boolean;
+};
+
 const displayFlex = style({
   display: 'flex'
 });
 
-export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
+export class CustomMetrics extends React.Component<Props, MetricsState> {
   options: DashboardQuery;
   timeRange: TimeRange;
   spanOverlay: SpanOverlay;
 
-  constructor(props: CustomMetricsProps) {
+  constructor(props: Props) {
     super(props);
 
     const settings = MetricsHelper.retrieveMetricsSettings();
@@ -77,11 +82,13 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
 
   refresh = () => {
     this.fetchMetrics();
-    this.spanOverlay.fetch(
-      this.props.namespace,
-      this.props.app,
-      this.options.duration || MetricsHelper.defaultMetricsDuration
-    );
+    if (this.props.jaegerEnabled) {
+      this.spanOverlay.fetch(
+        this.props.namespace,
+        this.props.app,
+        this.options.duration || MetricsHelper.defaultMetricsDuration
+      );
+    }
   };
 
   fetchMetrics = () => {
@@ -205,7 +212,11 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
   };
 }
 
-const mapStateToProps = (_: KialiAppState) => ({});
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    jaegerEnabled: state.jaegerState ? state.jaegerState.integration : false
+  };
+};
 
 const CustomMetricsContainer = withRouter<RouteComponentProps<{}> & CustomMetricsProps, any>(
   connect(mapStateToProps)(CustomMetrics)

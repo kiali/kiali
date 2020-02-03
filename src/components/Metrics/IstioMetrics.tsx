@@ -44,17 +44,22 @@ type IstioMetricsProps = ObjectId &
     direction: Direction;
   };
 
+type Props = IstioMetricsProps & {
+  // Redux props
+  jaegerEnabled: boolean;
+};
+
 const displayFlex = style({
   display: 'flex'
 });
 
-class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
+class IstioMetrics extends React.Component<Props, MetricsState> {
   options: IstioMetricsOptions;
   timeRange: TimeRange;
   spanOverlay: SpanOverlay;
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
-  constructor(props: IstioMetricsProps) {
+  constructor(props: Props) {
     super(props);
 
     const settings = MetricsHelper.retrieveMetricsSettings();
@@ -81,11 +86,13 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 
   refresh = () => {
     this.fetchMetrics();
-    this.spanOverlay.fetch(
-      this.props.namespace,
-      this.props.object,
-      this.options.duration || MetricsHelper.defaultMetricsDuration
-    );
+    if (this.props.jaegerEnabled) {
+      this.spanOverlay.fetch(
+        this.props.namespace,
+        this.props.object,
+        this.options.duration || MetricsHelper.defaultMetricsDuration
+      );
+    }
   };
 
   fetchMetrics = () => {
@@ -249,7 +256,11 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   };
 }
 
-const mapStateToProps = (_: KialiAppState) => ({});
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    jaegerEnabled: state.jaegerState ? state.jaegerState.integration : false
+  };
+};
 
 const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
   connect(mapStateToProps)(IstioMetrics)

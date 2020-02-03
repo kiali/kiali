@@ -9,6 +9,7 @@ import { Span, TracingQuery } from 'types/Tracing';
 export class SpanOverlay {
   spans: Span[] = [];
   lastFetchMicros: number | undefined;
+  lastFetchError = false;
 
   constructor(public onChange: (overlay?: Overlay) => void) {}
 
@@ -19,6 +20,7 @@ export class SpanOverlay {
     const opts: TracingQuery = { startMicros: this.lastFetchMicros || frameStart };
     API.getServiceSpans(namespace, service, opts)
       .then(res => {
+        this.lastFetchError = false;
         this.spans = doAppend ? this.spans.filter(s => s.startTime >= frameStart).concat(res.data) : res.data;
         this.onChange(this.buildOverlay());
         // Update last fetch time only if we had some results
@@ -28,7 +30,10 @@ export class SpanOverlay {
         }
       })
       .catch(err => {
-        AlertUtils.addError('Could not fetch spans.', err);
+        if (!this.lastFetchError) {
+          AlertUtils.addError('Could not fetch spans.', err);
+          this.lastFetchError = true;
+        }
       });
   }
 
