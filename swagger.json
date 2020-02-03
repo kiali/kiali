@@ -2039,6 +2039,51 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/errortraces": {
+      "get": {
+        "description": "Endpoint to get the number of traces in error for a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "errorTraces",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/errorTracesResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
         "produces": [
@@ -5194,11 +5239,6 @@
         "endpoints": {
           "$ref": "#/definitions/Endpoints"
         },
-        "errorTraces": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "ErrorTraces"
-        },
         "health": {
           "$ref": "#/definitions/ServiceHealth"
         },
@@ -6627,6 +6667,9 @@
       "schema": {
         "$ref": "#/definitions/MonitoringDashboard"
       }
+    },
+    "errorTracesResponse": {
+      "description": "Number of traces in error"
     },
     "grafanaInfoResponse": {
       "description": "Return all the descriptor data related to Grafana",

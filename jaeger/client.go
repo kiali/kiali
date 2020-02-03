@@ -16,7 +16,7 @@ type ClientInterface interface {
 	GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error)
 	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (trace *JaegerResponse, err error)
-	GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error)
+	GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error)
 }
 
 // Client for Jaeger API.
@@ -79,6 +79,6 @@ func (in *Client) GetTraceDetail(traceId string) (trace *JaegerResponse, err err
 // GetErrorTraces jaeger to fetch a traces of a specific service
 // requests for errors traces
 //  Returns (errorTraces, error)
-func (in *Client) GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error) {
-	return getErrorTraces(in.client, in.endpoint, ns, srv, interval)
+func (in *Client) GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error) {
+	return getErrorTraces(in.client, in.endpoint, ns, srv, duration)
 }

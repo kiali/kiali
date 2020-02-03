@@ -323,19 +323,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, DestinationRules, "")
 	}()
 
-	var eTraces int
-	if conf.ExternalServices.Tracing.Enabled {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			var err2 error
-			eTraces, err2 = in.businessLayer.Jaeger.GetErrorTraces(namespace, service, interval)
-			if err2 != nil {
-				errChan <- err2
-			}
-		}()
-	}
-
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
@@ -355,7 +342,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetEndpoints(eps)
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
-	s.SetErrorTraces(eTraces)
 	s.SetApiDocumentation(apidoc)
 	return &s, nil
 }

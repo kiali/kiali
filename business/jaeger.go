@@ -1,6 +1,8 @@
 package business
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/jaeger"
 )
 
@@ -47,10 +49,10 @@ func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.Jae
 	return client.GetTraceDetail(traceID)
 }
 
-func (in *JaegerService) GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error) {
+func (in *JaegerService) GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return 0, err
 	}
-	return client.GetErrorTraces(ns, srv, interval)
+	return client.GetErrorTraces(ns, srv, duration)
 }

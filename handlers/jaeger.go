@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/config"
@@ -29,6 +31,30 @@ func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	service := params["service"]
 	traces, err := business.Jaeger.GetJaegerTraces(namespace, service, r.URL.RawQuery)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, traces)
+}
+
+func ErrorTraces(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error Traces initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	queryParams := r.URL.Query()
+	durationInSeconds := queryParams.Get("duration")
+	conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
+		return
+	}
+	traces, err := business.Jaeger.GetErrorTraces(namespace, service, time.Second*time.Duration(conv))
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

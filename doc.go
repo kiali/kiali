@@ -44,7 +44,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation namespaceValidations
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation namespaceValidations
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -90,7 +90,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList tracesDetail serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
+// swagger:parameters serviceDetails spansList tracesList errorTraces tracesDetail serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
 type ServiceParam struct {
 	// The service name.
 	//
@@ -519,6 +519,13 @@ type ServiceDetailsResponse struct {
 type TracesDetailResponse struct {
 	// in:body
 	Body []jaegerModels.Trace
+}
+
+// Number of traces in error
+// swagger:response errorTracesResponse
+type ErrorTracesResponse struct {
+	// in:body
+	Body int
 }
 
 // Listing all the information related to a Span

@@ -45,7 +45,6 @@ type ServiceDetails struct {
 	Workloads         WorkloadOverviews `json:"workloads"`
 	Health            ServiceHealth     `json:"health"`
 	Validations       IstioValidations  `json:"validations"`
-	ErrorTraces       int               `json:"errorTraces"`
 	NamespaceMTLS     MTLSStatus        `json:"namespaceMTLS"`
 	ApiDocumentation  ApiDocumentation  `json:"apiDocumentation"`
 	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
@@ -119,10 +118,6 @@ func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCrea
 func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
 	s.DestinationRules.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
 	(&s.DestinationRules).Parse(dr)
-}
-
-func (s *ServiceDetails) SetErrorTraces(errorTraces int) {
-	s.ErrorTraces = errorTraces
 }
 
 func (s *ServiceDetails) SetApiDocumentation(apidoc ApiDocumentation) {

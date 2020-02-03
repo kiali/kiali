@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/kiali/kiali/config"
@@ -36,26 +35,11 @@ func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (resp
 	return queryTraces(client, u)
 }
 
-func getErrorTraces(client http.Client, endpoint *url.URL, namespace string, service string, interval string) (errorTraces int, err error) {
+func getErrorTraces(client http.Client, endpoint *url.URL, namespace, service string, duration time.Duration) (errorTraces int, err error) {
 	errorTraces = 0
 	err = nil
 	u := endpoint
 	u.Path = path.Join(u.Path, "/api/traces")
-	if len(interval) == 0 {
-		return -1, nil
-	}
-	conv, err := strconv.ParseInt(interval[0:len(interval)-1], 10, 64)
-	if err != nil {
-		return -1, err
-	}
-	inter := conv * 1000 * 1000
-	unit := interval[len(interval)-1:]
-	for _, u := range []string{"s", "m", "h"} {
-		if u == unit {
-			break
-		}
-		inter *= 60
-	}
 	q := u.Query()
 	queryService := service
 	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
@@ -63,7 +47,7 @@ func getErrorTraces(client http.Client, endpoint *url.URL, namespace string, ser
 	}
 	q.Set("service", queryService)
 	t := time.Now().UnixNano() / 1000
-	q.Set("start", fmt.Sprintf("%d", t-inter))
+	q.Set("start", fmt.Sprintf("%d", t-(duration.Nanoseconds()/1000)))
 	q.Set("end", fmt.Sprintf("%d", t))
 	q.Set("tags", "{\"error\":\"true\"}")
 
