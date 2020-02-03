@@ -67,4 +67,5 @@ func TestSummarizeValidations(t *testing.T) {
 
 	assert.Equal(2, summary.Warnings)
 	assert.Equal(2, summary.Errors)
+	assert.Equal(2, summary.Errors)
 }
