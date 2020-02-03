@@ -331,11 +331,11 @@ func (iv IstioValidations) SummarizeValidation(ns string) IstioValidationSummary
 func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
 	for _, c := range cs {
 		if c.Severity == ErrorSeverity {
-			summary.Errors = summary.Errors + 1
+			summary.Errors += 1
 		} else if c.Severity == WarningSeverity {
-			summary.Warnings = summary.Warnings + 1
+			summary.Warnings += 1
 		}
-		summary.ObjectCount = summary.ObjectCount + 1
+		summary.ObjectCount += 1
 	}
 }
 
