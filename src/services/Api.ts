@@ -361,6 +361,10 @@ export const getJaegerTraces = (namespace: string, service: string, params: any)
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTraces(namespace, service), params, {});
 };
 
+export const getJaegerErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
+  return newRequest<number>(HTTP_VERBS.GET, urls.jaegerErrorTraces(namespace, service), { duration: duration }, {});
+};
+
 export const getJaegerTrace = (namespace: string, service: string, idTrace: string) => {
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTrace(namespace, service, idTrace), {}, {});
 };

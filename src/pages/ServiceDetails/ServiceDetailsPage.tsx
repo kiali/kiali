@@ -42,6 +42,7 @@ import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
+  nbErrorTraces: number;
   gateways: string[];
   trafficData: GraphDefinition | null;
   validations: Validations;
@@ -120,6 +121,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.state = {
       currentTab: activeTab(tabName, defaultTab),
       serviceDetailsInfo: emptyService,
+      nbErrorTraces: 0,
       gateways: [],
       trafficData: null,
       validations: {},
@@ -245,21 +247,20 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           serviceDetailsInfo: results,
           validations: this.addFormatValidation(results, results.validations)
         });
-        if (results.errorTraces === -1 && this.props.jaegerEnabled) {
-          AlertUtils.add(
-            'Could not fetch Traces in the service ' +
-              this.props.match.params.service +
-              ' in namespace ' +
-              this.props.match.params.namespace +
-              '. Check if ' +
-              this.props.jaegerUrl +
-              ' is available.'
-          );
-        }
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch Service Details.', error);
       });
+
+    if (this.props.jaegerEnabled) {
+      API.getJaegerErrorTraces(this.props.match.params.namespace, this.props.match.params.service, this.props.duration)
+        .then(inError => {
+          this.setState({ nbErrorTraces: inError.data });
+        })
+        .catch(error => {
+          AlertUtils.addError('Could not fetch Jaeger errors.', error);
+        });
+    }
 
     API.getThreeScaleInfo()
       .then(results => {
@@ -455,7 +456,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   render() {
-    const errorTraces = this.state.serviceDetailsInfo.errorTraces;
     const overviewTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
@@ -499,7 +499,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       let jaegerTag: any = undefined;
       if (this.props.jaegerEnabled) {
         const jaegerTitle =
-          errorTraces && errorTraces > 0 ? (
+          this.state.nbErrorTraces > 0 ? (
             <>
               Traces <ExclamationCircleIcon color={PfColors.Red200} />{' '}
             </>
@@ -511,7 +511,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             <ServiceTraces
               namespace={this.props.match.params.namespace}
               service={this.props.match.params.service}
-              errorTags={errorTraces ? errorTraces > -1 : false}
+              errorTags={this.state.nbErrorTraces > 0}
               duration={this.props.duration}
               traces={this.state.traces}
               errorTraces={this.state.errorTraces}
