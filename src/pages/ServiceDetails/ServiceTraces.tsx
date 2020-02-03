@@ -70,7 +70,10 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
       HistoryManager.getParam(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
       sessionStorage.getItem(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
       'none';
-
+    const traceID = HistoryManager.getParam(URLParam.JAEGER_TRACE_ID) || undefined;
+    if (traceID) {
+      this.props.onRefresh(true, traceID);
+    }
     this.state = {
       url: '',
       width: 0,
@@ -230,6 +233,11 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
     this.setState({ traceIntervalDuration: intervals });
   };
 
+  onClickScatter = (traceId: string) => {
+    HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
+    this.props.onRefresh(true, traceId);
+  };
+
   render() {
     return (
       <RenderComponentScroll>
@@ -317,7 +325,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                       fixedTime={this.state.fixedTime}
                       traces={this.state.traces}
                       errorFetchTraces={this.props.errorTraces}
-                      onClick={traceId => this.props.onRefresh(true, traceId)}
+                      onClick={traceId => this.onClickScatter(traceId)}
                       errorTraces={true}
                     />
                   </GridItem>

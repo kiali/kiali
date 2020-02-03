@@ -59,7 +59,8 @@ export class SpanOverlay {
           y: Number(span.duration / 1000000),
           error: hasError,
           color: hasError ? PFAlertColor.Danger : PfColors.Cyan300,
-          size: 4
+          size: 4,
+          traceId: span.traceID
         };
       });
       return toOverlay(info, dps);
