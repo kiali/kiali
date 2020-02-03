@@ -1,5 +1,6 @@
 import { createBrowserHistory, createMemoryHistory } from 'history';
 import { toValidDuration } from '../config/ServerConfig';
+import { BoundsInMilliseconds } from 'types/Common';
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
@@ -12,18 +13,19 @@ export enum URLParam {
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
   DURATION = 'duration',
+  FROM = 'from',
   GRAPH_EDGES = 'edges',
   GRAPH_LAYOUT = 'layout',
   GRAPH_SERVICE_NODES = 'injectServiceNodes',
   GRAPH_TYPE = 'graphType',
   NAMESPACES = 'namespaces',
   OVERVIEW_TYPE = 'otype',
-  POLL_INTERVAL = 'pi', // deprecated
-  REFRESH_INTERVAL = 'refresh', // replaces pi
   QUANTILES = 'quantiles',
+  REFRESH_INTERVAL = 'refresh',
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
   SORT = 'sort',
+  TO = 'to',
   UNUSED_NODES = 'unusedNodes',
   JAEGER_START_TIME = 'start',
   JAEGER_END_TIME = 'end',
@@ -103,9 +105,22 @@ export class HistoryManager {
   };
 
   static getDuration = (urlParams?: URLSearchParams): number | undefined => {
-    const duration = HistoryManager.getParam(URLParam.DURATION, urlParams);
+    const duration = HistoryManager.getNumericParam(URLParam.DURATION, urlParams);
     if (duration) {
       return toValidDuration(Number(duration));
+    }
+    return undefined;
+  };
+
+  static getTimeBounds = (urlParams?: URLSearchParams): BoundsInMilliseconds | undefined => {
+    const from = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
+    if (from) {
+      const to = HistoryManager.getNumericParam(URLParam.TO, urlParams);
+      // "to" can be undefined (stands for "now")
+      return {
+        from: from,
+        to: to
+      };
     }
     return undefined;
   };

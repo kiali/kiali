@@ -391,6 +391,9 @@ html.kiosk {
 .react-datepicker-popper {
   z-index: 11;
 }
+.react-datepicker__navigation--next--with-time:not(.react-datepicker__navigation--next--with-today-button) {
+  right: 118px;
+}
 // Make sure tooltips are below datepicker popper but above secondary masthead
 .tooltip {
   z-index: 10 !important;

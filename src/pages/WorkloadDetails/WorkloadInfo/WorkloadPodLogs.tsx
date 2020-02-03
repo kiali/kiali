@@ -5,11 +5,11 @@ import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
-import { DurationInSeconds } from '../../../types/Common';
-import MetricsDurationContainer from '../../../components/MetricsOptions/MetricsDuration';
-import MetricsDuration from '../../../components/MetricsOptions/MetricsDuration';
+import { DurationInSeconds, TimeRange } from '../../../types/Common';
 import RefreshButtonContainer from '../../../components/Refresh/RefreshButton';
 import { RenderComponentScroll } from '../../../components/Nav/Page';
+import { retrieveDuration } from 'components/Time/TimeRangeHelper';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -79,7 +79,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     if (this.props.pods.length < 1) {
       this.state = {
-        duration: MetricsDuration.initialDuration(),
+        duration: retrieveDuration() || 600,
         loadingPodLogs: false,
         loadingPodLogsError: 'There are no logs to display because no pods are available.',
         tailLines: TailLinesDefault
@@ -99,7 +99,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     this.state = {
       containerInfo: containerInfo,
-      duration: MetricsDuration.initialDuration(),
+      duration: retrieveDuration() || 600,
       loadingPodLogs: false,
       podValue: podValue,
       tailLines: TailLinesDefault
@@ -182,7 +182,11 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                         />
                       </ToolbarItem>
                       <ToolbarItem>
-                        <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
+                        <TimeRangeComponent
+                          tooltip="Time range for log messages"
+                          onChanged={this.setTimeRange}
+                          allowCustom={false}
+                        />
                       </ToolbarItem>
                       <ToolbarItem>
                         <RefreshButtonContainer disabled={!this.state.podLogs} handleRefresh={this.handleRefresh} />
@@ -216,8 +220,8 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     });
   };
 
-  private setDuration = (duration: DurationInSeconds) => {
-    this.setState({ duration: duration });
+  private setTimeRange = (range: TimeRange) => {
+    this.setState({ duration: range as DurationInSeconds });
   };
 
   private setTailLines = (tailLines: number) => {

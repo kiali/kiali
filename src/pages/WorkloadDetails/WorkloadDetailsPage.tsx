@@ -16,7 +16,6 @@ import PfTitle from '../../components/Pf/PfTitle';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
 import { DurationInSeconds } from '../../types/Common';
 import { connect } from 'react-redux';
@@ -26,6 +25,8 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patt
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { retrieveDuration } from 'components/Time/TimeRangeHelper';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -181,7 +182,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       version: ''
     };
     const restParams = {
-      duration: `${MetricsDuration.initialDuration()}s`,
+      duration: `${retrieveDuration() || 600}s`,
       graphType: GraphType.WORKLOAD,
       injectServiceNodes: true,
       appenders: 'deadNode,serviceEntry'
@@ -331,7 +332,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         component = <DurationDropdownContainer id="workload-info-duration-dropdown" />;
         break;
       case 'traffic':
-        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        component = (
+          <TimeRangeComponent
+            onChanged={this.fetchTrafficData}
+            allowCustom={false}
+            tooltip={'Time range for metrics'}
+          />
+        );
         break;
       default:
         return undefined;

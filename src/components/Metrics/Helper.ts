@@ -9,11 +9,13 @@ import {
 } from '@kiali/k-charted-pf4';
 
 import { MetricsSettings, LabelsSettings, Quantiles, LabelSettings } from '../MetricsOptions/MetricsSettings';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
-import { DurationInSeconds } from '../../types/Common';
+import { boundsToDuration, guardTimeRange, TimeRange, DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import history, { URLParam } from '../../app/History';
 import responseFlags from 'utils/ResponseFlags';
+
+// Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
+export const defaultMetricsDuration: DurationInSeconds = 600;
 
 export const combineLabelsSettings = (newSettings: LabelsSettings, stateSettings: LabelsSettings): LabelsSettings => {
   // Labels: keep existing on/off flag
@@ -125,19 +127,22 @@ export const settingsToOptions = (settings: MetricsSettings, opts: MetricsQuery)
   });
 };
 
-export const durationToOptions = (duration: DurationInSeconds, opts: MetricsQuery) => {
-  opts.duration = duration;
-  const intervalOpts = computePrometheusRateParams(duration);
+export const timeRangeToOptions = (range: TimeRange, opts: MetricsQuery) => {
+  delete opts.queryTime;
+  opts.duration = guardTimeRange(
+    range,
+    d => d,
+    ft => {
+      opts.queryTime = ft.to && Math.floor(ft.to / 1000);
+      return boundsToDuration(ft);
+    }
+  );
+  const intervalOpts = computePrometheusRateParams(opts.duration);
   opts.step = intervalOpts.step;
   opts.rateInterval = intervalOpts.rateInterval;
 };
 
-export const initDuration = (opts: MetricsQuery): MetricsQuery => {
-  durationToOptions(MetricsDuration.initialDuration(), opts);
-  return opts;
-};
-
-export const readMetricsSettingsFromURL = (): MetricsSettings => {
+export const retrieveMetricsSettings = (): MetricsSettings => {
   const urlParams = new URLSearchParams(history.location.search);
   const settings: MetricsSettings = {
     showAverage: true,
@@ -192,10 +197,4 @@ export const prettyLabelValues = (promName: PromLabel, val: string): string => {
     }
   }
   return val;
-};
-
-export const durationToTimeTuple = (duration: DurationInSeconds): [Date, Date] => {
-  const now = new Date();
-  const start = new Date(now.getTime() - duration * 1000);
-  return [start, now];
 };

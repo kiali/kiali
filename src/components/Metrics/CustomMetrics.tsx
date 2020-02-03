@@ -10,17 +10,18 @@ import history from '../../app/History';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { DurationInSeconds } from '../../types/Common';
+import { TimeRange, evalTimeRange } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay } from './SpanOverlay';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -42,12 +43,14 @@ const displayFlex = style({
 
 export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   options: DashboardQuery;
+  timeRange: TimeRange;
   spanOverlay: SpanOverlay;
 
   constructor(props: CustomMetricsProps) {
     super(props);
 
-    const settings = MetricsHelper.readMetricsSettingsFromURL();
+    const settings = MetricsHelper.retrieveMetricsSettings();
+    this.timeRange = retrieveTimeRange() || MetricsHelper.defaultMetricsDuration;
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
@@ -65,7 +68,6 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           additionalLabels: 'version:Version'
         };
     MetricsHelper.settingsToOptions(settings, options);
-    MetricsHelper.initDuration(options);
     return options;
   }
 
@@ -78,11 +80,13 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
     this.spanOverlay.fetch(
       this.props.namespace,
       this.props.app,
-      this.options.duration || MetricsDuration.DefaultDuration
+      this.options.duration || MetricsHelper.defaultMetricsDuration
     );
   };
 
   fetchMetrics = () => {
+    // Time range needs to be reevaluated everytime fetching
+    MetricsHelper.timeRangeToOptions(this.timeRange, this.options);
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
       .then(response => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
@@ -106,8 +110,8 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  onDurationChanged = (duration: DurationInSeconds) => {
-    MetricsHelper.durationToOptions(duration, this.options);
+  onTimeFrameChanged = (range: TimeRange) => {
+    this.timeRange = range;
     this.spanOverlay.resetLastFetchTime();
     this.refresh();
   };
@@ -134,7 +138,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
           overlay={this.state.spanOverlay}
-          timeWindow={MetricsHelper.durationToTimeTuple(this.options.duration || MetricsDuration.DefaultDuration)}
+          timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
         />
       </RenderComponentScroll>
     );
@@ -177,7 +181,11 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>
-            <MetricsDuration onChanged={this.onDurationChanged} />
+            <TimeRangeComponent
+              onChanged={this.onTimeFrameChanged}
+              tooltip={'Time range for metrics'}
+              allowCustom={true}
+            />
           </ToolbarItem>
           <ToolbarItem>
             <RefreshContainer id="metrics-refresh" handleRefresh={this.refresh} hideLabel={true} />

@@ -1,7 +1,9 @@
 import logfmtParser from 'logfmt/lib/logfmt_parser';
 import { HistoryManager, URLParam } from '../../app/History';
 import { KeyValuePair } from '../../types/JaegerInfo';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
+import { defaultMetricsDuration } from 'components/Metrics/Helper';
+import { evalTimeRange } from 'types/Common';
 
 export interface JaegerSearchOptions {
   limit: string;
@@ -39,10 +41,10 @@ export const getQueryJaeger = () => {
     }
   });
 
-  const nowTime = Date.now() * 1000;
-  params[URLParam.JAEGER_START_TIME] = nowTime - MetricsDuration.initialDuration() * 1000 * 1000;
-  params[URLParam.JAEGER_END_TIME] = nowTime;
-  HistoryManager.setParam(URLParam.JAEGER_START_TIME, params[URLParam.JAEGER_START_TIME]);
-  HistoryManager.setParam(URLParam.JAEGER_END_TIME, params[URLParam.JAEGER_END_TIME]);
+  const rangeMicros = evalTimeRange(retrieveTimeRange() || defaultMetricsDuration).map(d => d.getTime() * 1000);
+  params[URLParam.JAEGER_START_TIME] = rangeMicros[0];
+  params[URLParam.JAEGER_END_TIME] = rangeMicros[1];
+  HistoryManager.setParam(URLParam.JAEGER_START_TIME, String(rangeMicros[0]));
+  HistoryManager.setParam(URLParam.JAEGER_END_TIME, String(rangeMicros[1]));
   return params;
 };

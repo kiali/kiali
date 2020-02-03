@@ -31,3 +31,37 @@ export type ReplayWindow = {
   interval: IntervalInMilliseconds;
   startTime: TimeInMilliseconds;
 };
+
+export type BoundsInMilliseconds = {
+  from: TimeInMilliseconds;
+  to?: TimeInMilliseconds;
+};
+
+export type TimeRange = DurationInSeconds | BoundsInMilliseconds;
+// Type-guarding TimeRange: executes first callback when range is a duration, or second callback when it's a bounded range, mapping to a value
+export function guardTimeRange<T>(
+  range: TimeRange,
+  ifDuration: (d: DurationInSeconds) => T,
+  ifBounded: (b: BoundsInMilliseconds) => T
+): T {
+  if ((range as BoundsInMilliseconds).from) {
+    return ifBounded(range as BoundsInMilliseconds);
+  } else {
+    return ifDuration(range as DurationInSeconds);
+  }
+}
+
+export const evalTimeRange = (range: TimeRange): [Date, Date] => {
+  const bounds = guardTimeRange(range, durationToBounds, b => b);
+  return [new Date(bounds.from), bounds.to ? new Date(bounds.to) : new Date()];
+};
+
+export const boundsToDuration = (bounds: BoundsInMilliseconds): DurationInSeconds => {
+  return Math.floor(((bounds.to || new Date().getTime()) - bounds.from) / 1000);
+};
+
+export const durationToBounds = (duration: DurationInSeconds): BoundsInMilliseconds => {
+  return {
+    from: new Date().getTime() - duration * 1000
+  };
+};

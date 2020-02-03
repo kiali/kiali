@@ -8,7 +8,8 @@ import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfl
 
 import jaegerIcon from '../../assets/img/jaeger-icon.svg';
 import * as MetricsHelper from '../Metrics/Helper';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
+import { evalTimeRange } from 'types/Common';
 
 interface JaegerScatterProps {
   traces: JaegerTrace[];
@@ -80,7 +81,7 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
         unit="seconds"
         seriesComponent={<ChartScatter />}
         timeWindow={
-          this.props.fixedTime ? MetricsHelper.durationToTimeTuple(MetricsDuration.initialDuration()) : undefined
+          this.props.fixedTime ? evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration) : undefined
         }
         onClick={dp => this.props.onClick(dp.id)}
       />

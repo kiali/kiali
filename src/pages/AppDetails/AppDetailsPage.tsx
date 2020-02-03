@@ -14,7 +14,6 @@ import { RenderHeader } from '../../components/Nav/Page';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -23,6 +22,8 @@ import { connect } from 'react-redux';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 
 type AppDetailsState = {
   app: App;
@@ -138,7 +139,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       version: ''
     };
     const restParams = {
-      duration: `${MetricsDuration.initialDuration()}s`,
+      duration: `${retrieveDuration() || 600}s`,
       graphType: GraphType.APP,
       injectServiceNodes: true,
       appenders: 'deadNode,serviceEntry'
@@ -236,7 +237,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         component = <DurationDropdownContainer id="app-info-duration-dropdown" />;
         break;
       case 'traffic':
-        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        component = (
+          <TimeRangeComponent
+            onChanged={this.fetchTrafficData}
+            allowCustom={false}
+            tooltip={'Time range for metrics'}
+          />
+        );
         break;
       default:
         return undefined;

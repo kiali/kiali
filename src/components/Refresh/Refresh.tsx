@@ -43,10 +43,6 @@ class Refresh extends React.PureComponent<Props, State> {
     if (props.manageURL) {
       let refreshInterval = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL);
       if (refreshInterval === undefined) {
-        refreshInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL); // deprecated
-        HistoryManager.deleteParam(URLParam.POLL_INTERVAL);
-      }
-      if (refreshInterval === undefined) {
         refreshInterval = props.refreshInterval;
       }
       if (refreshInterval !== props.refreshInterval) {

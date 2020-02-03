@@ -7,10 +7,10 @@ import { PromLabel } from '@kiali/k-charted-pf4';
 import history, { URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
 import {
-  readMetricsSettingsFromURL,
   mergeLabelFilter,
   prettyLabelValues,
-  combineLabelsSettings
+  combineLabelsSettings,
+  retrieveMetricsSettings
 } from 'components/Metrics/Helper';
 import { PfColors } from '../Pf/PfColors';
 
@@ -32,7 +32,7 @@ const spacerStyle = style({ height: '1em' });
 export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    const settings = readMetricsSettingsFromURL();
+    const settings = retrieveMetricsSettings();
     settings.labelsSettings = combineLabelsSettings(props.labelsSettings, settings.labelsSettings);
     this.state = { ...settings, isOpen: false };
   }

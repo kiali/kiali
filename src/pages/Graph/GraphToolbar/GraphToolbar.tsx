@@ -25,7 +25,7 @@ import { GraphActions } from '../../../actions/GraphActions';
 import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
-import TimeRangeContainer from 'components/Time/TimeRange';
+import TimeControlsContainer from 'components/Time/TimeControls';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import ReplayContainer from 'components/Time/Replay';
 
@@ -210,7 +210,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           <GraphFindContainer />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
             <TourStopContainer info={GraphTourStops.TimeRange}>
-              <TimeRangeContainer
+              <TimeControlsContainer
                 id="graph_time_range"
                 disabled={this.props.disabled}
                 handleRefresh={this.handleRefresh}

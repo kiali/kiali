@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from 'store/Store';
-import DatePicker from 'react-datepicker';
 import { replayWindowSelector, replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
 import { ReplayWindow, DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
@@ -16,6 +15,7 @@ import { style } from 'typestyle';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
 import { PFKialiColor } from 'components/Pf/PfColors';
+import { DateTimePicker } from './DateTimePicker';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -118,12 +118,6 @@ const speedActiveStyle = style({
   fontWeight: 'bolder'
 });
 
-const startTimeStyle = style({
-  height: '36px',
-  paddingLeft: '.75em',
-  width: '10em'
-});
-
 const vrStyle = style({
   border: '1px inset',
   height: '20px',
@@ -213,9 +207,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
       <div className={`${replayStyle} ${replayBorder}`}>
         {this.state.isCustomStartTime && (
           <Tooltip content="Replay start time">
-            <DatePicker
-              className={startTimeStyle}
-              dateFormat="MMM dd, hh:mm aa"
+            <DateTimePicker
               injectTimes={[maxTime]}
               maxDate={maxTime}
               maxTime={maxTime}
@@ -224,12 +216,7 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
               onCalendarClose={() => this.onPickerClose()}
               onCalendarOpen={() => this.onPickerOpen()}
               onChange={date => this.onPickerChange(date)}
-              popperPlacement="auto-end"
               selected={selectedTime}
-              showTimeSelect={true}
-              timeCaption="Time"
-              timeFormat="hh:mm aa"
-              timeIntervals={5}
             />
           </Tooltip>
         )}

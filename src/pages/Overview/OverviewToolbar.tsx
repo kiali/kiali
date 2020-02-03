@@ -17,7 +17,7 @@ import NamespaceInfo from './NamespaceInfo';
 import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
-import TimeRangeContainer from 'components/Time/TimeRange';
+import TimeControlsContainer from 'components/Time/TimeControls';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -132,7 +132,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
         rightToolbar={[
-          <TimeRangeContainer
+          <TimeControlsContainer
             key="overview-time-range"
             id="overview-time-range"
             disabled={false}

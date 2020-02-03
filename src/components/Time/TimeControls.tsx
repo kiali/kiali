@@ -19,7 +19,7 @@ type ReduxProps = {
   toggleReplayActive: () => void;
 };
 
-type TimeRangeProps = ReduxProps & {
+type TimeControlsProps = ReduxProps & {
   disabled: boolean;
   id: string;
   supportsReplay?: boolean;
@@ -27,7 +27,7 @@ type TimeRangeProps = ReduxProps & {
   handleRefresh: () => void;
 };
 
-export class TimeRange extends React.PureComponent<TimeRangeProps> {
+export class TimeControls extends React.PureComponent<TimeControlsProps> {
   render() {
     const durationTooltip = this.props.replayActive ? 'Traffic metrics per frame' : 'Traffic metrics per refresh';
 
@@ -81,9 +81,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 
-const TimeRangeContainer = connect(
+const TimeControlsContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(TimeRange);
+)(TimeControls);
 
-export default TimeRangeContainer;
+export default TimeControlsContainer;

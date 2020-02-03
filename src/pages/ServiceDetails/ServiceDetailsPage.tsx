@@ -17,7 +17,6 @@ import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../type
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
-import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
@@ -38,6 +37,8 @@ import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
 import { getQueryJaeger } from '../../components/JaegerIntegration/RouteHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { PfColors } from '../../components/Pf/PfColors';
+import { retrieveDuration } from 'components/Time/TimeRangeHelper';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -304,7 +305,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       version: ''
     };
     const restParams = {
-      duration: `${MetricsDuration.initialDuration()}s`,
+      duration: `${retrieveDuration() || 600}s`,
       graphType: GraphType.WORKLOAD,
       injectServiceNodes: true,
       appenders: 'deadNode'
@@ -382,10 +383,22 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         component = <DurationDropdownContainer id="service-info-duration-dropdown" />;
         break;
       case trafficTabName:
-        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        component = (
+          <TimeRangeComponent
+            onChanged={this.fetchTrafficData}
+            allowCustom={false}
+            tooltip={'Time range for metrics'}
+          />
+        );
         break;
       case tracesTabName:
-        component = <MetricsDuration onChanged={() => this.fetchTracesData()} />;
+        component = (
+          <TimeRangeComponent
+            onChanged={() => this.fetchTracesData()}
+            allowCustom={false}
+            tooltip={'Time range for traces'}
+          />
+        );
         break;
       default:
         return undefined;
