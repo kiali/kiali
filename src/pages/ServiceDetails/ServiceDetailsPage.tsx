@@ -57,7 +57,7 @@ type ServiceDetailsState = {
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
   jaegerUrl: string;
-  jaegerIntegration: boolean;
+  jaegerEnabled: boolean;
 }
 
 interface ParsedSearch {
@@ -245,7 +245,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           serviceDetailsInfo: results,
           validations: this.addFormatValidation(results, results.validations)
         });
-        if (results.errorTraces === -1 && this.props.jaegerIntegration) {
+        if (results.errorTraces === -1 && this.props.jaegerEnabled) {
           AlertUtils.add(
             'Could not fetch Traces in the service ' +
               this.props.match.params.service +
@@ -495,9 +495,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
 
     // Conditional Traces tab
-    if (this.props.jaegerIntegration || this.props.jaegerUrl !== '') {
+    if (this.props.jaegerEnabled || this.props.jaegerUrl !== '') {
       let jaegerTag: any = undefined;
-      if (this.props.jaegerIntegration) {
+      if (this.props.jaegerEnabled) {
         const jaegerTitle =
           errorTraces && errorTraces > 0 ? (
             <>
@@ -586,7 +586,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   jaegerUrl: state.jaegerState ? state.jaegerState.url : '',
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false
+  jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

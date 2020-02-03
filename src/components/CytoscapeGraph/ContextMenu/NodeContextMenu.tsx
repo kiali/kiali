@@ -9,7 +9,7 @@ import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
 import history from 'app/History';
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
+  jaegerEnabled: boolean;
   namespaceSelector: boolean;
   jaegerURL: string;
 };
@@ -98,7 +98,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     const options: ContextMenuOption[] = getOptions(
       this.props,
       this.props.namespaceSelector,
-      this.props.jaegerIntegration,
+      this.props.jaegerEnabled,
       this.props.jaegerURL
     );
 
@@ -144,7 +144,7 @@ export const clickHandler = (o: ContextMenuOption) => {
 export const getOptions = (
   node: DecoratedGraphNodeData,
   namespaceSelector: boolean,
-  jaegerIntegration?: boolean,
+  jaegerEnabled?: boolean,
   jaegerUrl?: string
 ): ContextMenuOption[] => {
   const { namespace, type, name } = NodeContextMenu.derivedValuesFromProps(node);
@@ -165,7 +165,7 @@ export const getOptions = (
       options.push({ text: 'Show Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
     }
     if (type === Paths.SERVICES) {
-      jaegerIntegration
+      jaegerEnabled
         ? options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` })
         : options.push({
             text: 'Show Traces',
@@ -180,7 +180,7 @@ export const getOptions = (
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false,
+  jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false,
   namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
   jaegerURL: state.jaegerState ? state.jaegerState.url : ''
 });

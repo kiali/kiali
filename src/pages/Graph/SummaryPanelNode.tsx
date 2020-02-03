@@ -90,7 +90,7 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
+  jaegerEnabled: boolean;
   namespaceSelector: boolean;
   jaegerURL: string;
 };
@@ -316,7 +316,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const actions = getOptions(
       nodeData,
       this.props.namespaceSelector,
-      this.props.jaegerIntegration,
+      this.props.jaegerEnabled,
       this.props.jaegerURL
     ).map(o => {
       return (
@@ -645,7 +645,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false,
+  jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false,
   namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
   jaegerURL: state.jaegerState ? state.jaegerState.url : ''
 });

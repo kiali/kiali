@@ -18,7 +18,6 @@ type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
   jaegerUrl: string;
-  jaegerIntegration: boolean;
 };
 
 type NavigationState = {
@@ -103,7 +102,6 @@ class Navigation extends React.Component<PropsType, NavigationState> {
     const Sidebar = (
       <Menu
         isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
-        jaegerIntegration={this.props.jaegerIntegration}
         location={this.props.location}
         jaegerUrl={this.props.jaegerUrl}
       />
@@ -122,8 +120,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
-  jaegerUrl: state.jaegerState ? state.jaegerState.url : '',
-  jaegerIntegration: state.jaegerState ? state.jaegerState.enabled : false
+  jaegerUrl: state.jaegerState ? state.jaegerState.url : ''
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

@@ -20,7 +20,6 @@ type MenuProps = {
   isNavOpen: boolean;
   location: any;
   jaegerUrl: string;
-  jaegerIntegration: boolean;
 };
 
 type MenuState = {
