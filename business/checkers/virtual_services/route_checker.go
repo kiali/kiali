@@ -72,7 +72,50 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				validations = append(validations, &validation)
 			}
 		}
+
+		trackSubset(routeIdx, kind, destinationWeights, &validations)
 	}
 
 	return validations, valid
+}
+
+func trackSubset(routeIdx int, kind string, destinationWeights reflect.Value, checks *[]*models.IstioCheck) {
+	subsetCollitions := map[string][]int{}
+
+	for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
+		destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
+		if !ok || destinationWeight["weight"] == nil {
+			continue
+		}
+
+		destination, ok := destinationWeight["destination"].(map[string]interface{})
+		if !ok {
+			return
+		}
+
+		subset, ok := destination["subset"].(string)
+		if !ok {
+			return
+		}
+
+		collisions := subsetCollitions[subset]
+		if collisions == nil {
+			collisions = make([]int, 0, destinationWeights.Len())
+		}
+		subsetCollitions[subset] = append(collisions, destWeightIdx)
+	}
+
+	appendSubsetDuplicity(routeIdx, kind, subsetCollitions, checks)
+}
+
+func appendSubsetDuplicity(routeIdx int, kind string, collistionsMap map[string][]int, checks *[]*models.IstioCheck) {
+	for _, dups := range collistionsMap {
+		if len(dups) > 1 {
+			for _, dup := range dups {
+				path := fmt.Sprintf("spec/%s[%d]/route[%d]/subset", kind, routeIdx, dup)
+				validation := models.Build("virtualservices.route.repeatedsubset", path)
+				*checks = append(*checks, &validation)
+			}
+		}
+	}
 }
