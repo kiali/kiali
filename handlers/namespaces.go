@@ -77,7 +77,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 	} else {
-		validationSummary = istioConfigValidationResults.SummarizeValidation()
+		validationSummary = istioConfigValidationResults.SummarizeValidation(namespace)
 	}
 
 	RespondWithJSON(w, http.StatusOK, validationSummary)
