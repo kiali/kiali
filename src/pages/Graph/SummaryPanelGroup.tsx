@@ -23,8 +23,7 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Dropdown, DropdownPosition, DropdownItem, KebabToggle } from '@patternfly/react-core';
-import { getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import history from 'app/History';
+import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 
 type SummaryPanelGroupMetricsState = {
   requestCountIn: Datapoint[];
@@ -116,12 +115,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     const actions = getOptions(nodeData, true, false, '').map(o => {
       return (
-        <DropdownItem
-          key={o.text}
-          onClick={() => {
-            this.onClickAction(o.url);
-          }}
-        >
+        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
           {o.text}
         </DropdownItem>
       );
@@ -172,10 +166,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       </div>
     );
   }
-
-  private onClickAction = path => {
-    history.push(path);
-  };
 
   private onToggleActions = isExpanded => {
     this.setState({ isOpen: isExpanded });

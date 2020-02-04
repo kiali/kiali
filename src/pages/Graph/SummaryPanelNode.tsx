@@ -36,9 +36,8 @@ import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { getOptions } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
+import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { Dropdown, DropdownItem, DropdownPosition, KebabToggle } from '@patternfly/react-core';
-import history from 'app/History';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 
@@ -321,12 +320,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       this.props.jaegerURL
     ).map(o => {
       return (
-        <DropdownItem
-          key={o.text}
-          onClick={() => {
-            this.onClickAction(o.url);
-          }}
-        >
+        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
           {o.text}
         </DropdownItem>
       );
@@ -378,10 +372,6 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       </div>
     );
   }
-
-  private onClickAction = path => {
-    history.push(path);
-  };
 
   private onToggleActions = isOpen => {
     this.setState({ isOpen: isOpen });

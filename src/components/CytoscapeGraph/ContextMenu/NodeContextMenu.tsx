@@ -6,6 +6,7 @@ import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
+import history from 'app/History';
 
 type ReduxProps = {
   jaegerIntegration: boolean;
@@ -130,6 +131,14 @@ export type ContextMenuOption = {
   url: string;
   external?: boolean;
   target?: string;
+};
+
+export const clickHandler = (o: ContextMenuOption) => {
+  if (o.external) {
+    window.open(o.url, o.target);
+  } else {
+    history.push(o.url);
+  }
 };
 
 export const getOptions = (
