@@ -431,13 +431,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
     let status: any = 'N/A';
-    if (ns.validations && !this.isNamespaceEmpty(ns)) {
+    if (ns.validations) {
       status = (
         <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>
           <ValidationSummary
             id={'ns-val-' + ns.name}
             errors={ns.validations.errors}
             warnings={ns.validations.warnings}
+            objectCount={ns.validations.objectCount}
             style={{ marginLeft: '5px' }}
           />
         </Link>

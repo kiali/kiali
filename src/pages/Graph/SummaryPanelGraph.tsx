@@ -281,6 +281,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
               id={'ns-val-' + ns}
               errors={validation.errors}
               warnings={validation.warnings}
+              objectCount={validation.objectCount}
               style={{ marginLeft: '5px' }}
             />
           )}
