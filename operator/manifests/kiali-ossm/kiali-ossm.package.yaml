@@ -1,7 +1,7 @@
 packageName: kiali-ossm
 channels:
 - name: "OpenShift Service Mesh 1.0"
-  currentCSV: kiali-operator.v1.0.9
+  currentCSV: kiali-operator.v1.0.10
 - name: "OpenShift Service Mesh 1.1"
   currentCSV: kiali-operator.v1.12.0
 defaultChannel: "OpenShift Service Mesh 1.1"
