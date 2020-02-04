@@ -39,7 +39,7 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 
 type Props = CustomMetricsProps & {
   // Redux props
-  jaegerEnabled: boolean;
+  jaegerIntegration: boolean;
 };
 
 const displayFlex = style({
@@ -82,7 +82,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
   refresh = () => {
     this.fetchMetrics();
-    if (this.props.jaegerEnabled) {
+    if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch(
         this.props.namespace,
         this.props.app,
@@ -214,7 +214,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false
+    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
   };
 };
 

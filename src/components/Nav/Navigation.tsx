@@ -17,7 +17,7 @@ import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
 type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
-  jaegerUrl: string;
+  jaegerUrl?: string;
 };
 
 type NavigationState = {
@@ -120,7 +120,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   navCollapsed: state.userSettings.interface.navCollapse,
-  jaegerUrl: state.jaegerState ? state.jaegerState.url : ''
+  jaegerUrl: state.jaegerState && state.jaegerState.url ? state.jaegerState.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

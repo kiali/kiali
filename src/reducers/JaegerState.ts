@@ -17,6 +17,7 @@ const JaegerStateGenerator = (
       }
       return updateState(state, {
         enabled: action.payload.enabled,
+        integration: action.payload.integration,
         url: action.payload.url,
         namespaceSelector: action.payload.namespaceSelector
       });

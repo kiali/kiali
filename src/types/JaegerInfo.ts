@@ -4,6 +4,7 @@
 
 export interface JaegerInfo {
   enabled: boolean;
+  integration: boolean;
   url: string;
   namespaceSelector: boolean;
 }

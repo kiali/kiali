@@ -33,7 +33,7 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
-import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
+import { JaegerErrors, JaegerTrace, JaegerInfo } from '../../types/JaegerInfo';
 import { getQueryJaeger } from '../../components/JaegerIntegration/RouteHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { PfColors } from '../../components/Pf/PfColors';
@@ -57,8 +57,7 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
-  jaegerUrl: string;
-  jaegerEnabled: boolean;
+  jaegerInfo?: JaegerInfo;
 }
 
 interface ParsedSearch {
@@ -252,7 +251,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         AlertUtils.addError('Could not fetch Service Details.', error);
       });
 
-    if (this.props.jaegerEnabled) {
+    if (this.props.jaegerInfo && this.props.jaegerInfo.integration) {
       API.getJaegerErrorTraces(this.props.match.params.namespace, this.props.match.params.service, this.props.duration)
         .then(inError => {
           this.setState({ nbErrorTraces: inError.data });
@@ -495,9 +494,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
 
     // Conditional Traces tab
-    if (this.props.jaegerEnabled || this.props.jaegerUrl !== '') {
+    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled) {
       let jaegerTag: any = undefined;
-      if (this.props.jaegerEnabled) {
+      if (this.props.jaegerInfo.integration) {
         const jaegerTitle =
           this.state.nbErrorTraces > 0 ? (
             <>
@@ -527,13 +526,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             Traces <ExternalLinkAltIcon />
           </>
         );
+        const service = this.props.jaegerInfo.namespaceSelector
+          ? this.props.match.params.service + '.' + this.props.match.params.namespace
+          : this.props.match.params.service;
         jaegerTag = (
           <Tab
             eventKey={3}
-            href={
-              this.props.jaegerUrl +
-              `/search?service=${this.props.match.params.service}.${this.props.match.params.namespace}`
-            }
+            href={this.props.jaegerInfo.url + `/search?service=${service}`}
             target="_blank"
             title={jaegerTitle}
           />
@@ -585,8 +584,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerUrl: state.jaegerState ? state.jaegerState.url : '',
-  jaegerEnabled: state.jaegerState ? state.jaegerState.enabled : false
+  jaegerInfo: state.jaegerState || undefined
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);
