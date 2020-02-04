@@ -13,10 +13,21 @@ import (
 // Get JaegerInfo provides the Jaeger URL and other info
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	jaegerConfig := config.Get().ExternalServices.Tracing
-	info := &models.JaegerInfo{
-		Enabled:           jaegerConfig.Enabled,
-		URL:               jaegerConfig.URL,
-		NamespaceSelector: jaegerConfig.NamespaceSelector,
+	var info models.JaegerInfo
+	if jaegerConfig.Enabled {
+		info = models.JaegerInfo{
+			Enabled:           true,
+			Integration:       jaegerConfig.InClusterURL != "",
+			URL:               jaegerConfig.URL,
+			NamespaceSelector: jaegerConfig.NamespaceSelector,
+		}
+	} else {
+		// 0-values would work, but let's be explicit
+		info = models.JaegerInfo{
+			Enabled:     false,
+			Integration: false,
+			URL:         "",
+		}
 	}
 	RespondWithJSON(w, http.StatusOK, info)
 }

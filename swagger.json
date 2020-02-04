@@ -4184,6 +4184,10 @@
           "type": "boolean",
           "x-go-name": "Enabled"
         },
+        "integration": {
+          "type": "boolean",
+          "x-go-name": "Integration"
+        },
         "namespaceSelector": {
           "type": "boolean",
           "x-go-name": "NamespaceSelector"
