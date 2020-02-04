@@ -20,7 +20,7 @@ func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
 	return metrics
 }
 
-func buildLabelStrings(q *IstioMetricsQuery) (string, string) {
+func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 	labels := []string{fmt.Sprintf(`reporter="%s"`, q.Reporter)}
 	ref := "destination"
 	if q.Direction == "outbound" {
@@ -48,15 +48,23 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, string) {
 
 	full := "{" + strings.Join(labels, ",") + "}"
 
-	labels = append(labels, `response_code=~"[5|4].*"`)
-	errors := "{" + strings.Join(labels, ",") + "}"
+	errors := []string{}
+	protocol := strings.ToLower(q.RequestProtocol)
+	if protocol == "" || protocol == "grpc" {
+		grpcLabels := append(labels, `grpc_response_status!="0"`)
+		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
+	}
+	if protocol == "" || protocol == "http" {
+		httpLabels := append(labels, `response_code=~"[5|4].*"`)
+		errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
+	}
 
 	return full, errors
 }
 
-func fetchAllMetrics(api prom_v1.API, q *IstioMetricsQuery, labels, labelsError, grouping string) Metrics {
+func fetchAllMetrics(api prom_v1.API, q *IstioMetricsQuery, labels string, labelsError []string, grouping string) Metrics {
 	var wg sync.WaitGroup
-	fetchRate := func(p8sFamilyName string, metric **Metric, lbl string) {
+	fetchRate := func(p8sFamilyName string, metric **Metric, lbl []string) {
 		defer wg.Done()
 		m := fetchRateRange(api, p8sFamilyName, lbl, grouping, &q.BaseMetricsQuery)
 		*metric = m
@@ -122,15 +130,24 @@ func fetchAllMetrics(api prom_v1.API, q *IstioMetricsQuery, labels, labelsError,
 	}
 }
 
-func fetchRateRange(api prom_v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
+func fetchRateRange(api prom_v1.API, metricName string, labels []string, grouping string, q *BaseMetricsQuery) *Metric {
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
-	if grouping == "" {
-		query = fmt.Sprintf("sum(%s(%s%s[%s]))", q.RateFunc, metricName, labels, q.RateInterval)
-	} else {
-		query = fmt.Sprintf("sum(%s(%s%s[%s])) by (%s)", q.RateFunc, metricName, labels, q.RateInterval, grouping)
+	for i, labelsInstance := range labels {
+		if i > 0 {
+			query += " OR "
+		}
+		if grouping == "" {
+			query += fmt.Sprintf("sum(%s(%s%s[%s]))", q.RateFunc, metricName, labelsInstance, q.RateInterval)
+		} else {
+			query += fmt.Sprintf("sum(%s(%s%s[%s])) by (%s)", q.RateFunc, metricName, labelsInstance, q.RateInterval, grouping)
+		}
+	}
+	if len(labels) > 1 {
+		query = fmt.Sprintf("(%s)", query)
 	}
 	query = roundSignificant(query, 0.001)
+	fmt.Println("QUERY:\n" + query)
 	return fetchRange(api, query, q.Range)
 }
 
