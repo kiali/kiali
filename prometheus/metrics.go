@@ -147,7 +147,6 @@ func fetchRateRange(api prom_v1.API, metricName string, labels []string, groupin
 		query = fmt.Sprintf("(%s)", query)
 	}
 	query = roundSignificant(query, 0.001)
-	fmt.Println("QUERY:\n" + query)
 	return fetchRange(api, query, q.Range)
 }
 
