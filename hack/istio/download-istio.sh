@@ -56,10 +56,12 @@ OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
 if [ -z "${ISTIO_VERSION}" ]; then
-   VERSION_WE_WANT=$(curl https://api.github.com/repos/istio/istio/releases/latest 2> /dev/null |\
-         grep  "tag_name" | \
-         sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+   # get the latest released version
+   VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
+         grep tag_name | sed "s/ *\"tag_name\": *\"\\(.*\\)\",*/\\1/" | \
+         grep -v -E "(alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1,1 -k 2,2 -k 3,3 -k 4,4 | tail -n 1)
    echo "Will use the latest Istio version: $VERSION_WE_WANT"
+   ISTIO_VERSION="${VERSION_WE_WANT}"
 else
    VERSION_WE_WANT="${ISTIO_VERSION}"
    echo "Will use a specific Istio version: $VERSION_WE_WANT"
