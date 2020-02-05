@@ -3,10 +3,10 @@
 */
 
 export interface JaegerInfo {
+  enabled: boolean;
+  integration: boolean;
   url: string;
   namespaceSelector: boolean;
-  integration: boolean;
-  integrationMessage: string;
 }
 
 export type KeyValuePair = {

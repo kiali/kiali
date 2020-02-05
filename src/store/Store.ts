@@ -13,6 +13,7 @@ import { EdgeLabelMode, Layout, GraphType, NodeParamsType, SummaryData, CyData, 
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
+import { JaegerInfo } from 'types/JaegerInfo';
 
 // Store is the Redux Data store
 
@@ -107,13 +108,6 @@ export interface UserSettings {
   replayWindow: ReplayWindow;
 }
 
-export interface JaegerState {
-  jaegerURL: string;
-  integration: boolean;
-  namespaceSelector: boolean;
-  integrationMessage: string;
-}
-
 export interface TourState {
   activeTour?: TourInfo;
   activeStop?: number; // index into the TourInfo.stops array
@@ -133,7 +127,7 @@ export interface KialiAppState {
   graph: GraphState;
   /** User Settings */
   userSettings: UserSettings;
-  /** Jaeger Integration */
-  jaegerState: JaegerState | null;
+  /** Jaeger Settings */
+  jaegerState: JaegerInfo | null;
   tourState: TourState;
 }

@@ -7,9 +7,9 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { Span, TracingQuery } from 'types/Tracing';
 
 export class SpanOverlay {
-  spans: Span[] = [];
-  lastFetchMicros: number | undefined;
-  lastFetchError = false;
+  private spans: Span[] = [];
+  private lastFetchMicros: number | undefined;
+  private lastFetchError = false;
 
   constructor(public onChange: (overlay?: Overlay) => void) {}
 

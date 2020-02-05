@@ -6,12 +6,11 @@ import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
+import { JaegerInfo } from 'types/JaegerInfo';
 import history from 'app/History';
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
-  namespaceSelector: boolean;
-  jaegerURL: string;
+  jaegerInfo?: JaegerInfo;
 };
 
 const graphContextMenuContainerStyle = style({
@@ -95,12 +94,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     }
 
     const { name } = NodeContextMenu.derivedValuesFromProps(this.props);
-    const options: ContextMenuOption[] = getOptions(
-      this.props,
-      this.props.namespaceSelector,
-      this.props.jaegerIntegration,
-      this.props.jaegerURL
-    );
+    const options: ContextMenuOption[] = getOptions(this.props, this.props.jaegerInfo);
 
     return (
       <div className={graphContextMenuContainerStyle}>
@@ -141,12 +135,7 @@ export const clickHandler = (o: ContextMenuOption) => {
   }
 };
 
-export const getOptions = (
-  node: DecoratedGraphNodeData,
-  namespaceSelector: boolean,
-  jaegerIntegration?: boolean,
-  jaegerUrl?: string
-): ContextMenuOption[] => {
+export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
   const { namespace, type, name } = NodeContextMenu.derivedValuesFromProps(node);
   const detailsPageUrl = makeDetailsPageUrl(namespace, type, name);
   const options: ContextMenuOption[] = [];
@@ -164,15 +153,17 @@ export const getOptions = (
     if (type !== Paths.SERVICES) {
       options.push({ text: 'Show Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
     }
-    if (type === Paths.SERVICES) {
-      jaegerIntegration
-        ? options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` })
-        : options.push({
-            text: 'Show Traces',
-            url: getJaegerURL(namespace, namespaceSelector, jaegerUrl!, name),
-            external: true,
-            target: '_blank'
-          });
+    if (type === Paths.SERVICES && jaegerInfo && jaegerInfo.enabled) {
+      if (jaegerInfo.integration) {
+        options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` });
+      } else if (jaegerInfo.url) {
+        options.push({
+          text: 'Show Traces',
+          url: getJaegerURL(namespace, jaegerInfo.namespaceSelector, jaegerInfo.url, name),
+          external: true,
+          target: '_blank'
+        });
+      }
     }
   }
 
@@ -180,9 +171,7 @@ export const getOptions = (
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
-  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
-  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
+  jaegerInfo: state.jaegerState || undefined
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);

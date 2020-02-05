@@ -113,7 +113,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const serviceList = this.renderServiceList(group);
     const workloadList = this.renderWorkloadList(group);
 
-    const actions = getOptions(nodeData, true, false, '').map(o => {
+    const actions = getOptions(nodeData).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
           {o.text}

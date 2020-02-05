@@ -40,6 +40,7 @@ import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/
 import { Dropdown, DropdownItem, DropdownPosition, KebabToggle } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
+import { JaegerInfo } from 'types/JaegerInfo';
 
 type SummaryPanelNodeMetricsState = {
   grpcRequestCountIn: Datapoint[];
@@ -90,9 +91,7 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  jaegerIntegration: boolean;
-  namespaceSelector: boolean;
-  jaegerURL: string;
+  jaegerInfo?: JaegerInfo;
 };
 
 type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
@@ -313,12 +312,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && nodeType !== NodeType.UNKNOWN && workload;
 
-    const actions = getOptions(
-      nodeData,
-      this.props.namespaceSelector,
-      this.props.jaegerIntegration,
-      this.props.jaegerURL
-    ).map(o => {
+    const actions = getOptions(nodeData, this.props.jaegerInfo).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
           {o.text}
@@ -645,9 +639,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
-  namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
-  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
+  jaegerInfo: state.jaegerState || undefined
 });
 
 const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);

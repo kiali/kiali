@@ -351,7 +351,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    urlJaeger: state.jaegerState ? state.jaegerState.jaegerURL : '',
+    urlJaeger: state.jaegerState ? state.jaegerState.url : '',
     namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
   };
 };

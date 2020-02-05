@@ -1,39 +1,25 @@
-import { JaegerState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { JaegerActions } from '../actions/JaegerActions';
+import { JaegerInfo } from 'types/JaegerInfo';
 
-export const INITIAL_JAEGER_STATE: JaegerState | null = {
-  jaegerURL: '',
-  integration: false,
-  namespaceSelector: true,
-  integrationMessage: ''
-};
+export const INITIAL_JAEGER_STATE = null;
 
 const JaegerStateGenerator = (
-  state: JaegerState | null = INITIAL_JAEGER_STATE,
+  state: JaegerInfo | null = INITIAL_JAEGER_STATE,
   action: KialiAppAction
-): JaegerState | null => {
+): JaegerInfo | null => {
   switch (action.type) {
-    case getType(JaegerActions.setEnableIntegration):
-      return updateState(state, {
-        integration: action.payload
-      });
-    case getType(JaegerActions.setUrl):
-      return updateState(state, {
-        jaegerURL: action.payload.url
-      });
-    case getType(JaegerActions.setinfo):
+    case getType(JaegerActions.setInfo):
       if (!action.payload) {
         return null;
       }
-
       return updateState(state, {
-        jaegerURL: action.payload.jaegerURL,
+        enabled: action.payload.enabled,
         integration: action.payload.integration,
-        namespaceSelector: action.payload.namespaceSelector,
-        integrationMessage: action.payload.integrationMessage
+        url: action.payload.url,
+        namespaceSelector: action.payload.namespaceSelector
       });
     default:
       return state;

@@ -46,7 +46,7 @@ type IstioMetricsProps = ObjectId &
 
 type Props = IstioMetricsProps & {
   // Redux props
-  jaegerEnabled: boolean;
+  jaegerIntegration: boolean;
 };
 
 const displayFlex = style({
@@ -86,7 +86,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   refresh = () => {
     this.fetchMetrics();
-    if (this.props.jaegerEnabled) {
+    if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch(
         this.props.namespace,
         this.props.object,
@@ -269,7 +269,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerEnabled: state.jaegerState ? state.jaegerState.integration : false
+    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
   };
 };
 

@@ -57,7 +57,6 @@ export interface ServiceDetailsInfo {
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
   namespaceMTLS?: TLSStatus;
-  errorTraces?: number;
   validations: Validations;
   apiDocumentation: ApiDocumentation;
   additionalDetails: AdditionalItem[];
