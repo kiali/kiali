@@ -955,7 +955,16 @@ func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, 
 
 	errChan := make(chan error, 1)
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if aps, err := in.GetAuthorizationPolicies(namespace); err == nil {
+			rb.AuthorizationPolicies = aps
+		} else {
+			errChan <- err
+		}
+	}(errChan)
 
 	go func(errChan chan error) {
 		defer wg.Done()

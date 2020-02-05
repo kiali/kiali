@@ -424,6 +424,7 @@ type RBACDetails struct {
 	ServiceMeshRbacConfigs []IstioObject `json:"servicemeshrbacconfigs"`
 	ServiceRoles           []IstioObject `json:"serviceroles"`
 	ServiceRoleBindings    []IstioObject `json:"servicerolebindings"`
+	AuthorizationPolicies  []IstioObject `json:"authorizationpolicies"`
 }
 
 type istioResponse struct {

@@ -27,6 +27,7 @@ type Namespace struct {
 }
 
 type Namespaces []Namespace
+type NamespaceNames []string
 
 func CastNamespaceCollection(ns []core_v1.Namespace) []Namespace {
 	namespaces := make([]Namespace, len(ns))
@@ -77,4 +78,21 @@ func (nss Namespaces) GetNames() []string {
 		names = append(names, ns.Name)
 	}
 	return names
+}
+
+func (nsn NamespaceNames) Includes(namespace string) bool {
+	for _, ns := range nsn {
+		if ns == namespace {
+			return true
+		}
+	}
+	return false
+}
+
+func (a NamespaceNames) IsSubsetOf(b NamespaceNames) bool {
+	isSubset := true
+	for _, n := range b {
+		isSubset = isSubset && b.Includes(n)
+	}
+	return isSubset
 }
