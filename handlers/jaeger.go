@@ -2,42 +2,34 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 )
 
-// Get JaegerInfo provides the Jaeger URL and other info, first by checking if a config exists
-// then (if not) by inspecting the Kubernetes Jaeger service in Istio installation namespace
+// Get JaegerInfo provides the Jaeger URL and other info
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
-		return
+	jaegerConfig := config.Get().ExternalServices.Tracing
+	var info models.JaegerInfo
+	if jaegerConfig.Enabled {
+		info = models.JaegerInfo{
+			Enabled:           true,
+			Integration:       jaegerConfig.InClusterURL != "",
+			URL:               jaegerConfig.URL,
+			NamespaceSelector: jaegerConfig.NamespaceSelector,
+		}
+	} else {
+		// 0-values would work, but let's be explicit
+		info = models.JaegerInfo{
+			Enabled:     false,
+			Integration: false,
+			URL:         "",
+		}
 	}
-
-	info, code, err := business.Jaeger.GetJaegerInfo()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, code, err.Error())
-		return
-	}
-	RespondWithJSON(w, code, info)
-}
-
-func GetJaegerServices(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-	services, code, err := business.Jaeger.GetJaegerServices()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, code, err.Error())
-		return
-	}
-	RespondWithJSON(w, code, services)
+	RespondWithJSON(w, http.StatusOK, info)
 }
 
 func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
@@ -49,13 +41,36 @@ func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
-	traces, code, err := business.Jaeger.GetJaegerTraces(namespace, service, r.URL.RawQuery)
+	traces, err := business.Jaeger.GetJaegerTraces(namespace, service, r.URL.RawQuery)
 	if err != nil {
-		log.Error(err)
-		RespondWithError(w, code, err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	RespondWithJSON(w, code, traces)
+	RespondWithJSON(w, http.StatusOK, traces)
+}
+
+func ErrorTraces(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error Traces initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	queryParams := r.URL.Query()
+	durationInSeconds := queryParams.Get("duration")
+	conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
+		return
+	}
+	traces, err := business.Jaeger.GetErrorTraces(namespace, service, time.Second*time.Duration(conv))
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, traces)
 }
 
 func TraceDetails(w http.ResponseWriter, r *http.Request) {
@@ -66,13 +81,12 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	traceID := params["traceID"]
-	traces, code, err := business.Jaeger.GetJaegerTraceDetail(traceID)
+	traces, err := business.Jaeger.GetJaegerTraceDetail(traceID)
 	if err != nil {
-		log.Error(err)
-		RespondWithError(w, code, err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	RespondWithJSON(w, code, traces)
+	RespondWithJSON(w, http.StatusOK, traces)
 }
 
 // ServiceSpans is the API handler to fetch Jaeger spans of a specific service
@@ -92,7 +106,7 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 
 	spans, err := business.Jaeger.GetJaegerSpans(namespace, service, startMicros, endMicros)
 	if err != nil {
-		handleErrorResponse(w, err)
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
 

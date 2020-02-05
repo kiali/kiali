@@ -416,11 +416,13 @@ spec:
 #   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Jaeger Query,
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
-# enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
-# in_cluster_url: Set URL for in-cluster access. Example: "http://jaeger-query.istio-system:16686".
+# enabled: When true, connections to Jaeger are enabled. "in_cluster_url" and/or "url" need to be provided.
+# in_cluster_url: Set URL for in-cluster access, which enables further integration between Kiali and Jaeger.
+#      When not provided, Kiali will only show external links using the "url" config.
+#      Example: "http://tracing.istio-system".
 # namespace_selector: Kiali use this boolean to look traces with namespace selector : service.namespace. Default: true
-# url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
-#      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+# url: External URL that will be used to generate links to Jaeger. It must be accessible to clients external to
+#      the cluster (e.g: browser) in order to generate valid links.
 #      If tracing service is deployed in a QUERY_BASE_PATH set this in the url like https://<hostname>/<QUERY_BASE_PATH> . EX: https://tracing-service:8080/jaeger
 #    ---
 #    tracing:

@@ -480,6 +480,27 @@ func NewRoutes() (r *Routes) {
 			handlers.TraceServiceDetails,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/errortraces traces errorTraces
+		// ---
+		// Endpoint to get the number of traces in error for a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: errorTracesResponse
+		//
+		{
+			"ErrorTraces",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/errortraces",
+			handlers.ErrorTraces,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesDetail
 		// ---
 		// Endpoint to get a specific trace of a given service
@@ -1083,27 +1104,6 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/jaeger",
 			handlers.GetJaegerInfo,
-			true,
-		},
-		// swagger:route GET /jaeger jaegerInfo
-		// ---
-		// Get the jaeger URL and other descriptors
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      404: notFoundError
-		//      406: notAcceptableError
-		//      200: jaegerInfoResponse
-		//
-		{
-			"JaegerServices",
-			"GET",
-			"/api/jaeger/services",
-			handlers.GetJaegerServices,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails

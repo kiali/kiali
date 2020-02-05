@@ -1,6 +1,8 @@
 package business
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/jaeger"
 )
 
@@ -23,22 +25,6 @@ func (in *JaegerService) client() (jaeger.ClientInterface, error) {
 	return in.jaeger, in.loaderErr
 }
 
-func (in *JaegerService) GetJaegerInfo() (info *jaeger.JaegerInfo, code int, err error) {
-	client, err := in.client()
-	if err != nil {
-		return nil, 0, err
-	}
-	return client.GetJaegerInfo()
-}
-
-func (in *JaegerService) GetJaegerServices() (services []string, code int, err error) {
-	client, err := in.client()
-	if err != nil {
-		return nil, 0, err
-	}
-	return client.GetJaegerServices()
-}
-
 func (in *JaegerService) GetJaegerSpans(namespace, service, startMicros, endMicros string) ([]jaeger.Span, error) {
 	client, err := in.client()
 	if err != nil {
@@ -47,26 +33,26 @@ func (in *JaegerService) GetJaegerSpans(namespace, service, startMicros, endMicr
 	return client.GetSpans(namespace, service, startMicros, endMicros)
 }
 
-func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (traces *jaeger.JaegerResponse, code int, err error) {
+func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (traces *jaeger.JaegerResponse, err error) {
 	client, err := in.client()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	return client.GetTraces(ns, srv, query)
 }
 
-func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerResponse, code int, err error) {
+func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerResponse, err error) {
 	client, err := in.client()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	return client.GetTraceDetail(traceID)
 }
 
-func (in *JaegerService) GetErrorTraces(ns string, srv string, interval string) (errorTraces int, err error) {
+func (in *JaegerService) GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return 0, err
 	}
-	return client.GetErrorTraces(ns, srv, interval)
+	return client.GetErrorTraces(ns, srv, duration)
 }
