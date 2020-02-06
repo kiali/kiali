@@ -28,7 +28,7 @@ type AppHealth struct {
 
 // errorCodeRegexp is a regex pattern to match HTTP errors (4xx, 5xx) or GRPC errors (1-16)
 var (
-	errorCodeRegexp, _ = regexp.Compile("^[4-5][0-9]{2}$|^[1-9]$|^1[0-6]$")
+	errorCodeRegexp, _ = regexp.Compile(`^[4-5]\d\d$|^[1-9]$|^1[0-6]$`)
 )
 
 func NewEmptyRequestHealth() RequestHealth {

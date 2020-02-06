@@ -51,11 +51,14 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 	errors := []string{}
 	protocol := strings.ToLower(q.RequestProtocol)
 	if protocol == "" || protocol == "grpc" {
-		grpcLabels := append(labels, `grpc_response_status!="0"`)
+		// this is intentionally not `grpc_response_status!="0"`. We need to be backward compatible and
+		// handle the case where grpc_response_status does not exist.  In Prometheus, negative tests on a
+		// non-existent label match everything, but positive tests match nothing. So, we stay positive.
+		grpcLabels := append(labels, `grpc_response_status=~"^[1-9]$|^1[0-6]$"`)
 		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
 	}
 	if protocol == "" || protocol == "http" {
-		httpLabels := append(labels, `response_code=~"[5|4].*"`)
+		httpLabels := append(labels, `response_code=~"^[4-5]\d\d$"`)
 		errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
 	}
 

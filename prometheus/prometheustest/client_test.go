@@ -55,7 +55,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	}
 
 	mockWithRange(api, expectedRange, round(`sum(rate(istio_requests_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"}[5m]))`), 2.5)
-	mockWithRange(api, expectedRange, roundErrs(`sum(rate(istio_requests_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo",grpc_response_status!="0"}[5m])) OR sum(rate(istio_requests_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo",response_code=~"[5|4].*"}[5m]))`), 4.5)
+	mockWithRange(api, expectedRange, roundErrs(`sum(rate(istio_requests_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo",grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo",response_code=~"^[4-5]\d\d$"}[5m]))`), 4.5)
 	mockWithRange(api, expectedRange, round(`sum(rate(istio_tcp_received_bytes_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"}[5m]))`), 11)
 	mockWithRange(api, expectedRange, round(`sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"}[5m]))`), 13)
 	mockHistogram(api, "istio_request_bytes", `{reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"}[5m]`, 0.35, 0.2, 0.3, 0.7)
@@ -101,7 +101,7 @@ func TestGetAppMetrics(t *testing.T) {
 		return
 	}
 	mockRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`), 1.5)
-	mockRange(api, roundErrs(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",grpc_response_status!="0"}[5m])) OR sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",response_code=~"[5|4].*"}[5m]))`), 3.5)
+	mockRange(api, roundErrs(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",response_code=~"^[4-5]\d\d$"}[5m]))`), 3.5)
 	mockRange(api, round(`sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`), 10)
 	mockRange(api, round(`sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`), 12)
 	mockHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]`, 0.35, 0.2, 0.3, 0.4)
@@ -236,7 +236,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		return
 	}
 	mockRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"}[5m]))`), 1.5)
-	mockRange(api, roundErrs(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",grpc_response_status!="0"}[5m])) OR sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",response_code=~"[5|4].*"}[5m]))`), 3.5)
+	mockRange(api, roundErrs(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",response_code=~"^[4-5]\d\d$"}[5m]))`), 3.5)
 	mockRange(api, round(`sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace="bookinfo"}[5m]))`), 10)
 	mockRange(api, round(`sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"}[5m]))`), 12)
 	mockHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo"}[5m]`, 0.35, 0.2, 0.3, 0.4)
