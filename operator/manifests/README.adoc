@@ -84,7 +84,7 @@ then you have to push them to your Quay.io image repository (e.g. `quay.io/${QUA
 If this is the case, you need to point the manifests to your own image repository:
 
 ```
-for csv in $(ls ${OPERATOR_DIR}/*/kiali.v*.yaml); do sed -i "s| image: .\+:| image: quay.io/${QUAY_USERNAME}/kiali-operator:|g" ${csv}; done
+for csv in $(ls ${OPERATOR_DIR}/*/kiali.v*.yaml); do sed -i "s|mage: .\+-operator:|mage: quay.io/${QUAY_USERNAME}/kiali-operator:|g" ${csv}; done
 ```
 
 Now upload the manifest bundles to your Quay.io app registry:
