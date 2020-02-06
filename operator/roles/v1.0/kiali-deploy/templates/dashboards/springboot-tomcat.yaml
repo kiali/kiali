@@ -1,0 +1,9 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-tomcat
+spec:
+  runtime: Spring Boot
+  title: Tomcat Metrics
+  items:
+  - include: "tomcat"

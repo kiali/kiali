@@ -1,0 +1,30 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kiali
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+{% if kiali_vars.deployment.override_ingress_yaml is defined and kiali_vars.deployment.override_ingress_yaml.metadata is defined and kiali_vars.deployment.override_ingress_yaml.metadata.annotations is defined %}
+  {{ kiali_vars.deployment.override_ingress_yaml.metadata | to_nice_yaml(indent=0) | trim | indent(2) }}
+{% else %}
+  annotations:
+    # For ingress-nginx versions older than 0.20.0
+    # (see: https://github.com/kubernetes/ingress-nginx/issues/3416#issuecomment-438247948)
+    nginx.ingress.kubernetes.io/secure-backends: "{{ 'false' if kiali_vars.identity.cert_file == "" else 'true' }}"
+    # For ingress-nginx versions 0.20.0 and later
+    nginx.ingress.kubernetes.io/backend-protocol: "{{ 'HTTP' if kiali_vars.identity.cert_file == "" else 'HTTPS' }}"
+{% endif %}
+spec:
+{% if kiali_vars.deployment.override_ingress_yaml is defined and kiali_vars.deployment.override_ingress_yaml.spec is defined %}
+  {{ kiali_vars.deployment.override_ingress_yaml.spec | to_nice_yaml(indent=0) | trim | indent(2) }}
+{% else %}
+  rules:
+  - http:
+      paths:
+      - path: {{ kiali_vars.server.web_root }}
+        backend:
+          serviceName: kiali
+          servicePort: {{ kiali_vars.server.port }}
+{% endif %}

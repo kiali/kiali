@@ -1,0 +1,9 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-jvm-pool
+spec:
+  runtime: Spring Boot
+  title: JVM Pool Metrics
+  items:
+  - include: "micrometer-1.0.6-jvm-pool"

@@ -1,0 +1,52 @@
+- name: Create Kiali objects on Kubernetes
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "kubernetes"
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
+  - serviceaccount
+  - configmap
+  - role
+  - role-viewer
+  - rolebinding
+  - deployment
+  - service
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_k8s == True
+
+- name: Create Ingress on Kubernetes if enabled
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "kubernetes"
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
+  - ingress
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_k8s == True
+  - kiali_vars.deployment.ingress_enabled == True
+
+- name: Delete Ingress on Kubernetes if disabled
+  k8s:
+    state: absent
+    api_version: "extensions/v1beta1"
+    kind: "Ingress"
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+    name: "kiali"
+  when:
+  - is_k8s == True
+  - kiali_vars.deployment.ingress_enabled == False
+
+- name: Create additional Kiali roles on Kubernetes
+  include_tasks: process-additional-roles.yml
+  vars:
+    process_resource_cluster: "kubernetes"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - is_k8s == True
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'

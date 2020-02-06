@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+data:
+  config.yaml: |
+    {{ kiali_vars | to_nice_yaml(indent=0) | trim | indent(4) }}

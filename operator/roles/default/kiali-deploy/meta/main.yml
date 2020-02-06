@@ -1,0 +1,25 @@
+galaxy_info:
+  author: Kiali
+  description: Installs the Kiali console and its API server. See https://www.kiali.io
+  license: Apache 2.0
+  min_ansible_version: 2.7.9
+  galaxy_tags:
+  - service-mesh
+  - observability
+  - monitoring
+  - cloud
+  - openshift
+  - kubernetes
+  - maistra
+  - istio
+  # NOTE: This aren't valid platforms for Galaxy - but they are more useful for our purposes
+  platforms:
+  - name: Kubernetes
+    versions:
+    - 1.14
+    - 1.16
+  - name: OpenShift
+    versions:
+    - 4.2
+    - 4.3
+dependencies: []
