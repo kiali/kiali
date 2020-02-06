@@ -335,8 +335,8 @@ func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
 		} else if c.Severity == WarningSeverity {
 			summary.Warnings += 1
 		}
-		summary.ObjectCount += 1
 	}
+	summary.ObjectCount += 1
 }
 
 // MarshalJSON implements the json.Marshaler interface.
