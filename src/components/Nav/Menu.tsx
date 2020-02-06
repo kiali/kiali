@@ -9,7 +9,7 @@ import history from '../../app/History';
 import { navItems } from '../../routes';
 
 const ExternalLink = ({ href, name }) => (
-  <NavItem isActive={false} key={name}>
+  <NavItem isActive={false} key={name} className={'external_link'}>
     <a className="pf-c-nav__link" href={href} target="_blank" rel="noopener noreferrer">
       {name} <ExternalLinkAltIcon style={{ margin: '-4px 0 0 5px' }} />
     </a>
@@ -68,12 +68,12 @@ class Menu extends React.Component<MenuProps, MenuState> {
     const { isNavOpen } = this.props;
 
     const PageNav = (
-      <Nav onSelect={() => undefined} onToggle={() => undefined} aria-label="Nav">
+      <Nav onSelect={() => undefined} onToggle={() => undefined} aria-label="Nav" theme={'dark'}>
         <NavList>{this.renderMenuItems()}</NavList>
       </Nav>
     );
 
-    return <PageSidebar isNavOpen={isNavOpen} nav={PageNav} />;
+    return <PageSidebar isNavOpen={isNavOpen} nav={PageNav} theme={'dark'} />;
   }
 }
 
