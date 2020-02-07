@@ -86,7 +86,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
 	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
 	//    defined, on the other cluster.
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags"
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
@@ -196,6 +196,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		lDestVer, destVerOk := m["destination_version"]
 		lProtocol, protocolOk := m["request_protocol"]
 		lCode, codeOk := m["response_code"]
+		lGrpc, grpcOk := m["grpc_response_status"]
 		lFlags, flagsOk := m["response_flags"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk || !codeOk || !flagsOk {
@@ -219,7 +220,13 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		flags := string(lFlags)
 
 		val := float64(s.Value)
+
+		// set response code in a backward compatible way
+		code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
+
+		// handle multicluster requests
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
+
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | request.host | "unknown"
 		host := destSvc
 
@@ -460,7 +467,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			sourceWorkloadQuery = fmt.Sprintf(`,source_workload_namespace!~"%s"`, excludedIstioRegex)
 		}
 	}
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags"
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,

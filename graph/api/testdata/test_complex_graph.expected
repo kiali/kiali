@@ -122,7 +122,7 @@
               "grpcPercentReq": "100.0"
             },
             "responses": {
-              "200": {
+              "0": {
                 "flags": {
                   "-": "100.0"
                 },

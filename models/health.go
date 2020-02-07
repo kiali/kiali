@@ -1,6 +1,8 @@
 package models
 
 import (
+	"regexp"
+
 	"github.com/prometheus/common/model"
 )
 
@@ -23,6 +25,11 @@ type AppHealth struct {
 	WorkloadStatuses []WorkloadStatus `json:"workloadStatuses"`
 	Requests         RequestHealth    `json:"requests"`
 }
+
+// errorCodeRegexp is a regex pattern to match HTTP errors (4xx, 5xx) or GRPC errors (1-16)
+var (
+	errorCodeRegexp, _ = regexp.Compile(`^[4-5]\d\d$|^[1-9]$|^1[0-6]$`)
+)
 
 func NewEmptyRequestHealth() RequestHealth {
 	return RequestHealth{ErrorRatio: -1, InboundErrorRatio: -1, OutboundErrorRatio: -1}
@@ -102,8 +109,8 @@ func (in *RequestHealth) updateGlobalErrorRatio() {
 
 func aggregate(sample *model.Sample, requestRate, errorRate, errorRatio *float64) {
 	*requestRate += float64(sample.Value)
-	responseCode := sample.Metric["response_code"][0]
-	if responseCode == '5' || responseCode == '4' {
+	responseCode := sample.Metric["response_code"]
+	if errorCodeRegexp.MatchString(string(responseCode)) {
 		*errorRate += float64(sample.Value)
 	}
 	if *requestRate == 0 {
