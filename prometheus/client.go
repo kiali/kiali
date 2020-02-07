@@ -130,7 +130,7 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 
 // FetchRateRange fetches a counter's rate in given range
 func (in *Client) FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
-	return fetchRateRange(in.api, metricName, labels, grouping, q)
+	return fetchRateRange(in.api, metricName, []string{labels}, grouping, q)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range

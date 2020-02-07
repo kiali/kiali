@@ -167,9 +167,9 @@ func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, de
 	isHTTPCode := len(code) == 3
 	isErr := false
 	if isHTTPCode {
-		isErr = strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5")
+		isErr = IsHTTPErr(code)
 	} else {
-		isErr = code != "0"
+		isErr = IsGRPCErr(code)
 	}
 	if isErr {
 		addToMetadataValue(destMetadata, grpcInErr, val)
@@ -203,6 +203,16 @@ func addToMetadataTCP(val float64, flags, host string, sourceMetadata, destMetad
 	addToMetadataValue(destMetadata, tcpIn, val)
 	addToMetadataValue(edgeMetadata, tcp, val)
 	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, host, val)
+}
+
+// IsHTTPErr return true if code is 4xx or 5xx
+func IsHTTPErr(code string) bool {
+	return strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5")
+}
+
+// IsGRPCErr return true if code != 0
+func IsGRPCErr(code string) bool {
+	return code != "0"
 }
 
 // AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffic value
