@@ -24,13 +24,14 @@ import { MessageType } from '../../types/MessageCenter';
 import { GrafanaLinks } from './GrafanaLinks';
 import { SpanOverlay } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
-import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
+import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay;
+  timeRange: TimeRange;
 };
 
 type ObjectId = {
@@ -55,7 +56,6 @@ const displayFlex = style({
 
 class IstioMetrics extends React.Component<Props, MetricsState> {
   options: IstioMetricsOptions;
-  timeRange: TimeRange;
   spanOverlay: SpanOverlay;
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
@@ -63,10 +63,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     super(props);
 
     const settings = MetricsHelper.retrieveMetricsSettings();
-    this.timeRange = retrieveTimeRange() || MetricsHelper.defaultMetricsDuration;
+    const timeRange = retrieveTimeRange() || MetricsHelper.defaultMetricsDuration;
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
+    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
@@ -97,7 +97,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   fetchMetrics = () => {
     // Time range needs to be reevaluated everytime fetching
-    MetricsHelper.timeRangeToOptions(this.timeRange, this.options);
+    MetricsHelper.timeRangeToOptions(this.state.timeRange, this.options);
     let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
       case MetricsObjectTypes.WORKLOAD:
@@ -162,9 +162,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   };
 
   onTimeFrameChanged = (range: TimeRange) => {
-    this.timeRange = range;
-    this.spanOverlay.resetLastFetchTime();
-    this.refresh();
+    this.setState({ timeRange: range }, () => {
+      this.spanOverlay.resetLastFetchTime();
+      this.refresh();
+    });
   };
 
   onReporterChanged = (reporter: Reporter) => {
@@ -181,6 +182,17 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       );
     }
   };
+
+  private onDomainChange(dates: [Date, Date]) {
+    if (dates && dates[0] && dates[1]) {
+      const range: TimeRange = {
+        from: dates[0].getTime(),
+        to: dates[1].getTime()
+      };
+      storeBounds(range);
+      this.onTimeFrameChanged(range);
+    }
+  }
 
   render() {
     if (!this.state.dashboard) {
@@ -206,6 +218,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                   labelPrettifier={MetricsHelper.prettyLabelValues}
                   overlay={this.state.spanOverlay}
                   timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
+                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
                 />
               </CardBody>
             </Card>
@@ -244,6 +257,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>
             <TimeRangeComponent
+              range={this.state.timeRange}
               onChanged={this.onTimeFrameChanged}
               tooltip={'Time range for metrics'}
               allowCustom={true}
