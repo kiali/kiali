@@ -275,7 +275,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
               NS
             </Badge>
           </Tooltip>
-          {ns}
+          {ns}{' '}
           {!!validation && (
             <ValidationSummary
               id={'ns-val-' + ns}
