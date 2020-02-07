@@ -52,6 +52,13 @@ kiali_vars:
     {{ kiali_defaults.deployment }}
     {%- endif -%}
 
+  extensions: |
+    {%- if extensions is defined and extensions is iterable -%}
+    {{ kiali_defaults.extensions | combine((extensions | stripnone), recursive=True) }}
+    {%- else -%}
+    {{ kiali_defaults.extensions }}
+    {%- endif -%}
+
   external_services: |
     {%- if external_services is defined and external_services is iterable -%}
     {{ kiali_defaults.external_services | combine((external_services | stripnone), recursive=True) }}
