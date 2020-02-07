@@ -49,7 +49,7 @@ class WeightedRouting extends React.Component<Props, State> {
   }
 
   getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
-    const wkTraffic = workloads.length < 100 ? Math.round(100 / workloads.length) : 0;
+    const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
     const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
     const wkWeights: WorkloadWeight[] = workloads.map(workload => ({
       name: workload.name,
