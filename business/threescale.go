@@ -303,6 +303,7 @@ func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models
 }
 
 func getThreeScaleRuleDetails(rule kubernetes.IstioObject) string {
+	conf := config.Get()
 	threeScaleHandlerName := ""
 	if rule.GetSpec() != nil {
 		if actions, actionsFound := rule.GetSpec()["actions"]; actionsFound {
@@ -312,8 +313,9 @@ func getThreeScaleRuleDetails(rule kubernetes.IstioObject) string {
 					if actionCast, actionInterface := action.(map[string]interface{}); actionInterface {
 						if handler, handlerFound := actionCast["handler"]; handlerFound {
 							if handlerCast, handlerString := handler.(string); handlerString {
-								if i := strings.Index(handlerCast, "."); i > -1 {
-									threeScaleHandlerName = handlerCast[:i]
+								suffix := "." + conf.IstioNamespace
+								if strings.HasSuffix(handlerCast, "." + conf.IstioNamespace) {
+									threeScaleHandlerName = handlerCast[0:len(handlerCast) - len(suffix)]
 								}
 							}
 						}
