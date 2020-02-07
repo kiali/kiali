@@ -44,3 +44,16 @@ func HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName stri
 
 	return destSvcNs, destSvcName
 }
+
+// HandleResponseCode returns either the HTTP response code or the GRPC response status.  GRPC response
+// status was added upstream in Istio 1.5 and downstream OSSM 1.1.  We support it here in a backward compatible
+// way.  When protocol is not GRPC, or if the version running dies not supply the GRPC statsus, just return the
+// HTTP code.  Also return the HTTP code In the rare case that protocol is GRPC but the HTTP transport fails. (I
+// have never seen this happen).  Otherwise, return the GRPC status.
+func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk bool, grpcResponseStatus string) string {
+	if protocol != graph.GRPC.Name || graph.IsHTTPErr(httpResponseCode) || !grpcResponseStatusOk {
+		return httpResponseCode
+	}
+
+	return grpcResponseStatus
+}

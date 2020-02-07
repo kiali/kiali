@@ -51,9 +51,9 @@ var istioMetrics = []istioMetric{
 	},
 }
 
-func (in *istioMetric) labelsToUse(labels, labelsError string) string {
+func (in *istioMetric) labelsToUse(labels string, labelsError []string) []string {
 	if in.useErrorLabels {
 		return labelsError
 	}
-	return labels
+	return []string{labels}
 }
