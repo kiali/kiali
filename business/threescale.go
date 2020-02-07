@@ -314,8 +314,8 @@ func getThreeScaleRuleDetails(rule kubernetes.IstioObject) string {
 						if handler, handlerFound := actionCast["handler"]; handlerFound {
 							if handlerCast, handlerString := handler.(string); handlerString {
 								suffix := "." + conf.IstioNamespace
-								if strings.HasSuffix(handlerCast, "." + conf.IstioNamespace) {
-									threeScaleHandlerName = handlerCast[0:len(handlerCast) - len(suffix)]
+								if strings.HasSuffix(handlerCast, "."+conf.IstioNamespace) {
+									threeScaleHandlerName = handlerCast[0 : len(handlerCast)-len(suffix)]
 								}
 							}
 						}
