@@ -298,6 +298,34 @@ spec:
 
 ##########
 #  ---
+#  extensions:
+#
+# Kiali enables integration with 3scale API management solution.
+# If this extension is enabled, Kiali will communicate with 3scale Istio adapter allowing to manage 3scale handlers
+# and link 3scale handler with services.
+# Additional documentation https://github.com/3scale/3scale-istio-adapter
+#    ---
+#    threescale:
+#
+# Istio 3scale adapters name. Istio handlers for 3scale are created pointing to this adapter.
+#      ---
+#      adapter_name: "threescale"
+#
+# Istio 3scale adapter port. Istio handlers will use this param as part of the address to connect with the adapter.
+#      ---
+#      adapter_port: "3333"
+#
+# Istio 3scale adapter service. Istio handlers will use this param as part of the address to connect with the adapter.
+#      ---
+#      adapter_service: "threescale-istio-adapter"
+#
+# Flag to indicate if 3scale extension is enabled in Kiali.
+#      ---
+#      enabled: false
+#
+
+##########
+#  ---
 #  external_services:
 #
 # Note about sensitive values in the external_services "auth" sections:

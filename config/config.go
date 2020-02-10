@@ -148,6 +148,13 @@ type ThreeScaleConfig struct {
 	AdapterName    string `yaml:"adapter_name"`
 	AdapterPort    string `yaml:"adapter_port"`
 	AdapterService string `yaml:"adapter_service"`
+	Enabled        bool   `yaml:"enabled"`
+}
+
+// Extensions struct describes configuration for Kiali add-ons (extensions)
+// New add-on/extension configuration should create a specif config and be located under this
+type Extensions struct {
+	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -155,7 +162,6 @@ type ExternalServices struct {
 	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
 	Istio      IstioConfig      `yaml:"istio,omitempty"`
 	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
-	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
 	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
 }
 
@@ -268,6 +274,7 @@ type Config struct {
 	ApiDocumentation         ApiDocumentation         `yaml:"apidocs,omitempty"`
 	Auth                     AuthConfig               `yaml:"auth,omitempty"`
 	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
+	Extensions               Extensions               `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
 	Identity                 security.Identity        `yaml:",omitempty"`
 	InCluster                bool                     `yaml:"in_cluster,omitempty"`
@@ -309,6 +316,14 @@ func NewConfig() (c *Config) {
 			AccessibleNamespaces: []string{"**"},
 			Namespace:            "istio-system",
 		},
+		Extensions: Extensions{
+			ThreeScale: ThreeScaleConfig{
+				AdapterName:    "threescale",
+				AdapterPort:    "3333",
+				AdapterService: "threescale-istio-adapter",
+				Enabled:        false,
+			},
+		},
 		ExternalServices: ExternalServices{
 			Grafana: GrafanaConfig{
 				Auth: Auth{
@@ -327,11 +342,6 @@ func NewConfig() (c *Config) {
 				},
 				CustomMetricsURL: "http://prometheus.istio-system:9090",
 				URL:              "http://prometheus.istio-system:9090",
-			},
-			ThreeScale: ThreeScaleConfig{
-				AdapterName:    "threescale",
-				AdapterPort:    "3333",
-				AdapterService: "threescale-istio-adapter",
 			},
 			Tracing: TracingConfig{
 				Auth: Auth{

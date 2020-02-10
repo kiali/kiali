@@ -17,6 +17,14 @@ const (
 	defaultPrometheusGlobalScrapeInterval = 15 // seconds
 )
 
+type ThreeScaleConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+type Extensions struct {
+	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
+}
+
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
 // All durations are in seconds.
 type PrometheusConfig struct {
@@ -27,6 +35,7 @@ type PrometheusConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
+	Extensions               Extensions                      `json:"extensions,omitempty"`
 	InstallationTag          string                          `json:"installationTag,omitempty"`
 	IstioIdentityDomain      string                          `json:"istioIdentityDomain,omitempty"`
 	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
@@ -44,6 +53,11 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	promConfig := getPrometheusConfig()
 	config := config.Get()
 	publicConfig := PublicConfig{
+		Extensions: Extensions{
+			ThreeScale: ThreeScaleConfig{
+				Enabled: config.Extensions.ThreeScale.Enabled,
+			},
+		},
 		InstallationTag:          config.InstallationTag,
 		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,
