@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import App from '../App';
-import 'jest-canvas-mock';
 
 // Mock getComputedStyle: Cytoscape relies on the result of this to have a valid paddingXXX
 // Current implementation returns '' which is parsed to float as NAN, breaking cytoscape.
