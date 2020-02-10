@@ -66,7 +66,7 @@ func (ap FromNamespaceChecker) validateFromField(ruleIdx int, from interface{}) 
 
 		for i, n := range nsList {
 			if !ap.Namespaces.Includes(n.(string)) {
-				valid = false
+				valid = true
 				path := fmt.Sprintf("spec/rules[%d]/from[%d]/source/namespaces[%d]", ruleIdx, fromIdx, i)
 				validation := models.Build("authorizationpolicy.source.namespacenotfound", path)
 				checks = append(checks, &validation)

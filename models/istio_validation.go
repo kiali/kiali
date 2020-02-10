@@ -104,7 +104,7 @@ var ObjectTypeSingular = map[string]string{
 var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.namespacenotfound": {
 		Message:  "Namespace not found for this rule",
-		Severity: ErrorSeverity,
+		Severity: WarningSeverity,
 	},
 	"destinationrules.multimatch": {
 		Message:  "More than one DestinationRules for the same host subset combination",
