@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { SparklineChart } from '@kiali/k-charted-pf4';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
-import Graphing from '../../utils/Graphing';
 import { Datapoint } from '../../types/Metrics';
 import { PfColors } from 'components/Pf/PfColors';
-import { SparklineChart } from 'components/Charts/SparklineChart';
+import Graphing from 'utils/Graphing';
+
+import 'components/Charts/Charts.css';
 
 export type ResponseTimeUnit = 's' | 'ms';
 type ResponseTimeChartTypeProp = {
