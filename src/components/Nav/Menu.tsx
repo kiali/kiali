@@ -6,7 +6,8 @@ import { Nav, NavList, NavItem, PageSidebar } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from '../../app/History';
-import { navItems } from '../../routes';
+import { navItems, extensionsItems } from '../../routes';
+import { serverConfig } from '../../config';
 
 const ExternalLink = ({ href, name }) => (
   <NavItem isActive={false} key={name} className={'external_link'}>
@@ -40,28 +41,40 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = () => {
     const { location } = this.props;
-    const activeItem = navItems.find(item => {
+    const allNavItems = navItems.concat(extensionsItems);
+    const activeItem = allNavItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
         isRoute = _.filter(item.pathsActive, path => path.test(location.pathname)).length > 0;
       }
       return isRoute;
     });
-    return navItems.map(item => {
-      if (item.title === 'Distributed Tracing') {
-        return (
-          this.props.jaegerUrl && <ExternalLink key={item.to} href={this.props.jaegerUrl} name="Distributed Tracing" />
-        );
-      }
 
-      return (
-        <NavItem isActive={activeItem === item} key={item.to}>
-          <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
-            {item.title}
-          </Link>
-        </NavItem>
-      );
-    });
+    return allNavItems
+      .filter(item => {
+        // Extensions are conditionally rendered
+        if (item.title === '3scale Config') {
+          return serverConfig.extensions!.threescale.enabled;
+        }
+        return true;
+      })
+      .map(item => {
+        if (item.title === 'Distributed Tracing') {
+          return this.props.jaegerUrl !== '' ? (
+            <ExternalLink key={item.to} href={this.props.jaegerUrl} name="Distributed Tracing" />
+          ) : (
+            ''
+          );
+        }
+
+        return (
+          <NavItem isActive={activeItem === item} key={item.to}>
+            <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
+              {item.title}
+            </Link>
+          </NavItem>
+        );
+      });
   };
 
   render() {

@@ -39,6 +39,7 @@ import RefreshContainer from '../../components/Refresh/Refresh';
 import { PfColors } from '../../components/Pf/PfColors';
 import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import { serverConfig } from '../../config';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -261,37 +262,39 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         });
     }
 
-    API.getThreeScaleInfo()
-      .then(results => {
-        this.setState({
-          threeScaleInfo: results.data
+    if (serverConfig.extensions!.threescale!.enabled) {
+      API.getThreeScaleInfo()
+        .then(results => {
+          this.setState({
+            threeScaleInfo: results.data
+          });
+          if (results.data.enabled) {
+            API.getThreeScaleServiceRule(this.props.match.params.namespace, this.props.match.params.service)
+              .then(result => {
+                this.setState({
+                  threeScaleServiceRule: result.data
+                });
+              })
+              .catch(error => {
+                this.setState({
+                  threeScaleServiceRule: undefined
+                });
+                // Only log 500 errors. 404 response is a valid response on this composition case
+                if (error.response && error.response.status >= 500) {
+                  AlertUtils.addError('Could not fetch ThreeScaleServiceRule.', error);
+                }
+              });
+          }
+        })
+        .catch(error => {
+          AlertUtils.addError(
+            'Could not fetch 3scale info. Turning off 3scale integration.',
+            error,
+            'default',
+            MessageType.INFO
+          );
         });
-        if (results.data.enabled) {
-          API.getThreeScaleServiceRule(this.props.match.params.namespace, this.props.match.params.service)
-            .then(result => {
-              this.setState({
-                threeScaleServiceRule: result.data
-              });
-            })
-            .catch(error => {
-              this.setState({
-                threeScaleServiceRule: undefined
-              });
-              // Only log 500 errors. 404 response is a valid response on this composition case
-              if (error.response && error.response.status >= 500) {
-                AlertUtils.addError('Could not fetch ThreeScaleServiceRule.', error);
-              }
-            });
-        }
-      })
-      .catch(error => {
-        AlertUtils.addError(
-          'Could not fetch 3scale info. Turning off 3scale integration.',
-          error,
-          'default',
-          MessageType.INFO
-        );
-      });
+    }
   };
 
   fetchTrafficData = () => {
