@@ -16,10 +16,11 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	var info models.JaegerInfo
 	if jaegerConfig.Enabled {
 		info = models.JaegerInfo{
-			Enabled:           true,
-			Integration:       jaegerConfig.InClusterURL != "",
-			URL:               jaegerConfig.URL,
-			NamespaceSelector: jaegerConfig.NamespaceSelector,
+			Enabled:              true,
+			Integration:          jaegerConfig.InClusterURL != "",
+			URL:                  jaegerConfig.URL,
+			NamespaceSelector:    jaegerConfig.NamespaceSelector,
+			WhiteListIstioSystem: jaegerConfig.WhiteListIstioSystem,
 		}
 	} else {
 		// 0-values would work, but let's be explicit
