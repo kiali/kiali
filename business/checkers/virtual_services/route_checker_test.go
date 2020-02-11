@@ -37,9 +37,24 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/weight")
 }
 
+func TestVSWithRepeatingSubsets(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := RouteChecker{fakeRepeatedSubset()}.Check()
+	assert.True(valid)
+	assert.NotEmpty(validations)
+	assert.Len(validations, 4)
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
+	assert.Equal(validations[0].Severity, models.WarningSeverity)
+	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/subset")
+	assert.Equal(validations[3].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
+	assert.Equal(validations[3].Severity, models.WarningSeverity)
+	assert.Equal(validations[3].Path, "spec/http[0]/route[3]/subset")
+}
+
 func fakeValidVirtualService() kubernetes.IstioObject {
 	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
-		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 45),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
 			data.CreateEmptyVirtualService("reviews-well", "test", []string{"reviews"}),
 		),
 	)
@@ -53,4 +68,18 @@ func fakeOneRouteUnder100() kubernetes.IstioObject {
 	)
 
 	return virtualService
+}
+
+func fakeRepeatedSubset() kubernetes.IstioObject {
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 45),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 55),
+				data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
+					data.CreateEmptyVirtualService("reviews-repeated", "test", []string{"reviews"}),
+				),
+			),
+		),
+	)
+
+	return validVirtualService
 }

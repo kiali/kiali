@@ -169,6 +169,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "The weight is assumed to be 100 because there is only one route destination",
 		Severity: WarningSeverity,
 	},
+	"virtualservices.route.repeatedsubset": {
+		Message:  "This subset is already referenced in another route destination",
+		Severity: WarningSeverity,
+	},
 	"virtualservices.singlehost": {
 		Message:  "More than one Virtual Service for same host",
 		Severity: WarningSeverity,
