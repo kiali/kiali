@@ -6,7 +6,8 @@ const initialState: JaegerInfo = {
   enabled: false,
   integration: false,
   url: '',
-  namespaceSelector: true
+  namespaceSelector: true,
+  whiteListIstioSystem: []
 };
 
 describe('JaegerState reducer', () => {
@@ -23,7 +24,13 @@ describe('JaegerState reducer', () => {
     expect(
       JaegerState(
         initialState,
-        JaegerActions.setInfo({ url: url, enabled: true, integration: true, namespaceSelector: true })
+        JaegerActions.setInfo({
+          url: url,
+          enabled: true,
+          integration: true,
+          namespaceSelector: true,
+          whiteListIstioSystem: []
+        })
       )
     ).toEqual(expectedState);
   });

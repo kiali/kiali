@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Span } from '../../../types/JaegerInfo';
+import { JaegerInfo, Span } from '../../../types/JaegerInfo';
 import { Table, TableHeader, TableBody, IRow, expandable, RowWrapperProps } from '@patternfly/react-table';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
 import { Tooltip } from '@patternfly/react-core';
@@ -17,7 +17,7 @@ import { PfColors } from '../../Pf/PfColors';
 
 interface SpanDetailProps {
   spans: Span[];
-  namespaceSelector: boolean;
+  jaegerInfo?: JaegerInfo;
 }
 
 interface SpanDetailState {
@@ -66,10 +66,14 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
   };
 
   getNodeLog = (sp: Span) => {
-    const node = sp.tags.filter(tag => tag.key === 'node_id')[0].value;
+    let node = '';
+    const filterNode = sp.tags.filter(tag => tag.key === 'node_id');
+    if (filterNode.length > 0) {
+      node = sp.tags.filter(tag => tag.key === 'node_id')[0].value;
+    }
     const srv = sp.process.serviceName.split('.')[0];
     const regex = new RegExp(`${srv}-v[0-9]*`);
-    const result = regex.exec(node);
+    const result = node !== '' ? regex.exec(node) : null;
     if (result) {
       return (
         <Tooltip content={<>View logs of workload {result[0]}</>}>
@@ -80,17 +84,20 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
             View logs
           </Link>
         </Tooltip>
-      )
+      );
     } else {
-      if (srv === 'istio-ingressgateway') {
+      if (this.props.jaegerInfo && this.props.jaegerInfo.whiteListIstioSystem.includes(srv)) {
         return (
-          <Tooltip content={<>View logs of workload istio-ingressgateway</>}>
-            <Link to={this.goLogsWorkloads(srv, '')} onClick={() => history.push(this.goLogsWorkloads(srv, ''))}>
+          <Tooltip content={<>View logs of workload {srv}</>}>
+            <Link
+              to={this.goLogsWorkloads(srv === 'jaeger-query' ? 'jaeger' : srv, '')}
+              onClick={() => history.push(this.goLogsWorkloads(srv === 'jaeger-query' ? 'jaeger' : srv, ''))}
+            >
               View logs
             </Link>
           </Tooltip>
-        )
-      }else {
+        );
+      } else {
         return <> We can't find logs</>;
       }
     }
@@ -99,11 +106,13 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
   getRows = () => {
     let rows: (IRow | string)[] = [];
     this.props.spans.map(span => {
-      const linkToService = this.goService(span.operationName);
-      const linkToMetrics = this.goService(span.operationName, '?tab=metrics');
+      const service = span.process.serviceName === 'jaeger-query' ? span.process.serviceName : span.operationName;
+      const linkToService = this.goService(service);
+      const linkToMetrics = this.goService(service, '?tab=metrics');
       const serviceDefinition = (
         <>
-          {span.operationName.split('.')[0] + '(' + span.operationName.split('.')[1] + ')'}
+          {span.operationName.split('.')[0] +
+            (span.operationName.split('.')[1] ? '(' + span.operationName.split('.')[1] + ')' : '')}
           {span.tags.some(isErrorTag) && (
             <ExclamationCircleIcon color={PfColors.Red200} style={{ marginLeft: '10px' }} />
           )}
@@ -225,7 +234,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
+    jaegerInfo: state.jaegerState || undefined
   };
 };
 

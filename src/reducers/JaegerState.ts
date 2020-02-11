@@ -19,7 +19,8 @@ const JaegerStateGenerator = (
         enabled: action.payload.enabled,
         integration: action.payload.integration,
         url: action.payload.url,
-        namespaceSelector: action.payload.namespaceSelector
+        namespaceSelector: action.payload.namespaceSelector,
+        whiteListIstioSystem: action.payload.whiteListIstioSystem
       });
     default:
       return state;
