@@ -72,6 +72,13 @@ kiali_defaults:
     version_label: ""
     view_only_mode: false
 
+  extensions:
+    threescale:
+      adapter_name: "threescale"
+      adapter_port: "3333"
+      adapter_service: "threescale-istio-adapter"
+      enabled: false
+
   external_services:
     grafana:
       auth:
@@ -122,6 +129,7 @@ kiali_defaults:
       in_cluster_url: ""
       namespace_selector: true
       url: ""
+      whitelist_istio_system: ["jaeger-query", "istio-ingressgateway"]
 
   identity: {}
     #cert_file:
