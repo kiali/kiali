@@ -6,7 +6,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func CreateAuthorizationPolicy(sourceNamespaces []interface{}) kubernetes.IstioObject {
+func CreateAuthorizationPolicy(sourceNamespaces, operationMethods []interface{}) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "auth-policy",
@@ -27,7 +27,13 @@ func CreateAuthorizationPolicy(sourceNamespaces []interface{}) kubernetes.IstioO
 							},
 						},
 					},
-					"to":   "http-example",
+					"to": []interface{}{
+						map[string]interface{}{
+							"operation": map[string]interface{}{
+								"methods": operationMethods,
+							},
+						},
+					},
 					"when": "HTTP",
 				},
 			},

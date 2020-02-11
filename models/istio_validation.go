@@ -106,6 +106,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Namespace not found for this rule",
 		Severity: WarningSeverity,
 	},
+	"authorizationpolicy.to.wrongmethod": {
+		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Message:  "More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,

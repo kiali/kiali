@@ -29,7 +29,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject)
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.GetObjectMeta().Namespace, AuthorizationPolicyCheckerType)
 
 	enabledCheckers := []Checker{
-		authorization.FromNamespaceChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
+		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 	}
 
 	for _, checker := range enabledCheckers {
