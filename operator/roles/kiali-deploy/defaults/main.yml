@@ -120,6 +120,7 @@ kiali_defaults:
       in_cluster_url: ""
       namespace_selector: true
       url: ""
+      whitelist_istio_system: ["jaeger-query", "istio-ingressgateway"]
 
   identity: {}
     #cert_file:
