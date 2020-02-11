@@ -14,6 +14,7 @@ import { retrieveTimeRange, retrieveDuration, storeBounds, storeDuration } from 
 import { DateTimePicker } from './DateTimePicker';
 
 type Props = {
+  range?: TimeRange;
   allowCustom: boolean;
   tooltip: string;
   onChanged: (range: TimeRange) => void;
@@ -24,7 +25,17 @@ export default class TimeRangeComponent extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props);
-    this.range = (this.props.allowCustom ? retrieveTimeRange() : retrieveDuration()) || defaultMetricsDuration;
+    if (props.range) {
+      this.range = props.range;
+    } else {
+      this.range = (this.props.allowCustom ? retrieveTimeRange() : retrieveDuration()) || defaultMetricsDuration;
+    }
+  }
+
+  componentDidUpdate(prev: Props) {
+    if (this.props.range && prev.range !== this.props.range) {
+      this.range = this.props.range;
+    }
   }
 
   onDurationChanged = (key: string) => {
@@ -72,6 +83,7 @@ export default class TimeRangeComponent extends React.Component<Props> {
         id={'metrics_filter_interval_duration'}
         handleSelect={this.onDurationChanged}
         initialValue={d || 'custom'}
+        value={d || 'custom'}
         initialLabel={d ? serverConfig.durations[d] : 'Custom'}
         options={options}
         tooltip={this.props.tooltip}

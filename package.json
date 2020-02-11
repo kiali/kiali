@@ -54,7 +54,7 @@
     "snyk-protect": "snyk protect"
   },
   "dependencies": {
-    "@kiali/k-charted-pf4": "0.4.4",
+    "@kiali/k-charted-pf4": "0.5.0-rc7",
     "@patternfly/patternfly": "2.44.2",
     "@patternfly/react-charts": "5.2.2",
     "@patternfly/react-core": "3.124.1",
