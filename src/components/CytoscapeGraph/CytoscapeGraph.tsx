@@ -117,8 +117,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   private graphHighlighter?: GraphHighlighter;
   private trafficRenderer?: TrafficRender;
-  private focusAnimation?: FocusAnimation;
-  private focusFinished: boolean;
+  private focusSelector?: string;
   private cytoscapeReactWrapperRef: any;
   private contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
   private namespaceChanged: boolean;
@@ -129,7 +128,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
-    this.focusFinished = false;
+    this.focusSelector = props.focusSelector;
     this.namespaceChanged = false;
     this.nodeChanged = false;
     this.initialValues = {
@@ -479,45 +478,34 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     });
   }
 
-  private focus(cy: Cy.Core, elements?: Cy.Collection) {
-    // We only want to focus once, but allow the url to be shared.
-    if (this.focusFinished) {
+  private focus(cy: Cy.Core) {
+    if (!!!this.focusSelector) {
       return;
     }
-    let focusElements = elements;
-    if (!focusElements) {
-      if (this.props.focusSelector) {
-        const selectorResult = cy.$(this.props.focusSelector);
-        if (!selectorResult.empty()) {
-          focusElements = selectorResult;
-        }
+
+    let selected = cy.$(this.focusSelector);
+
+    // only perform the focus one time
+    this.focusSelector = undefined;
+
+    if (!selected) {
+      return;
+    }
+
+    // If there is only one, select it
+    if (selected.length === 1) {
+      this.selectTargetAndUpdateSummary(selected[0]);
+    } else {
+      // If we have many elements, try to check if a compound in this query contains everything, if so, select it.
+      const compound = selected.filter('$node > node');
+      if (compound && compound.length === 1 && selected.subtract(compound).same(compound.children())) {
+        this.selectTargetAndUpdateSummary(compound[0]);
+        selected = compound;
       }
     }
 
-    if (focusElements) {
-      // If there is only one, select it
-      if (focusElements.length === 1) {
-        this.selectTargetAndUpdateSummary(focusElements[0]);
-      } else {
-        // If we have many elements, try to check if a compound in this query contains everything, if so, select it.
-        const compound = focusElements.filter('$node > node');
-        if (compound && compound.length === 1 && focusElements.subtract(compound).same(compound.children())) {
-          this.selectTargetAndUpdateSummary(compound[0]);
-          focusElements = compound;
-        }
-      }
-
-      // Start animation
-      if (this.focusAnimation) {
-        this.focusAnimation.stop();
-      }
-      this.focusAnimation = new FocusAnimation(cy);
-      this.focusAnimation.onFinished(() => {
-        this.focusFinished = true;
-      });
-      this.focusAnimation.start(focusElements);
-    }
-    return focusElements;
+    // Start animation
+    new FocusAnimation(cy).start(selected);
   }
 
   private safeFit(cy: Cy.Core) {

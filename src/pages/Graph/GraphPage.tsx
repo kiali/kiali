@@ -40,7 +40,7 @@ import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import TourStopContainer, { TourInfo, getNextTourStop } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
+import { isKioskMode, getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { getErrorString } from 'services/Api';
 import { Chip, Badge } from '@patternfly/react-core';
@@ -158,6 +158,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
   private loadPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
+  private focusSelector?: string;
 
   static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
     const app = props.match.params.app;
@@ -221,7 +222,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
     super(props);
     this.errorBoundaryRef = React.createRef();
     this.cytoscapeGraphRef = React.createRef();
-
+    this.focusSelector = getFocusSelector();
     // Let URL override current redux state at construction time
     // Note that state updates will not be posted until until after the first render
     const urlNode = GraphPage.getNodeParamsFromProps(props);
@@ -272,6 +273,11 @@ export class GraphPage extends React.Component<GraphPageProps> {
       this.loadGraphDataFromBackend();
     }
 
+    if (!!this.focusSelector) {
+      this.focusSelector = undefined;
+      unsetFocusSelector();
+    }
+
     if (prev.layout.name !== curr.layout.name || prev.graphData !== curr.graphData || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
     }
@@ -292,7 +298,6 @@ export class GraphPage extends React.Component<GraphPageProps> {
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
-    const focusSelector = getFocusSelector();
     const isReady =
       this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError;
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
@@ -340,7 +345,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
                       containerClassName={cytoscapeGraphContainerStyle}
                       ref={refInstance => this.setCytoscapeGraph(refInstance)}
                       isMTLSEnabled={this.props.mtlsEnabled}
-                      focusSelector={focusSelector}
+                      focusSelector={this.focusSelector}
                       contextMenuNodeComponent={NodeContextMenuContainer}
                       contextMenuGroupComponent={NodeContextMenuContainer}
                     />

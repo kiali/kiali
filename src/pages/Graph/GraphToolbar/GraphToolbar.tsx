@@ -28,6 +28,7 @@ import TourStopContainer from 'components/Tour/TourStop';
 import TimeControlsContainer from 'components/Time/TimeControls';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import ReplayContainer from 'components/Time/Replay';
+import { UserSettingsActions } from 'actions/UserSettingsActions';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -42,6 +43,7 @@ type ReduxProps = {
   setGraphType: (graphType: GraphType) => void;
   setNode: (node?: NodeParamsType) => void;
   setShowUnusedNodes: (unusedNodes: boolean) => void;
+  toggleReplayActive: () => void;
 };
 
 type GraphToolbarProps = ReduxProps & {
@@ -137,6 +139,13 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
     HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     HistoryManager.setParam(URLParam.UNUSED_NODES, String(this.props.showUnusedNodes));
+  }
+
+  componentWillUnmount() {
+    // If replay was left active then turn it off
+    if (this.props.replayActive) {
+      this.props.toggleReplayActive();
+    }
   }
 
   handleRefresh = () => {
@@ -254,7 +263,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
     setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
-    setShowUnusedNodes: bindActionCreators(GraphToolbarActions.setShowUnusedNodes, dispatch)
+    setShowUnusedNodes: bindActionCreators(GraphToolbarActions.setShowUnusedNodes, dispatch),
+    toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
   };
 };
 

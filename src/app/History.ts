@@ -13,6 +13,7 @@ export enum URLParam {
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
   DURATION = 'duration',
+  FOCUS_SELECTOR = 'focusSelector',
   FROM = 'from',
   GRAPH_EDGES = 'edges',
   GRAPH_LAYOUT = 'layout',
