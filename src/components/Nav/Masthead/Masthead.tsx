@@ -12,7 +12,7 @@ class Masthead extends React.Component {
     return (
       <ToolbarNext>
         <ToolbarGroup>
-          <PfSpinner />
+          <PfSpinner isLoading={false} />
         </ToolbarGroup>
         <ToolbarGroup>
           <ToolbarItem>
