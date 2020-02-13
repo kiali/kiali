@@ -21,7 +21,6 @@ import {
   activeNamespacesSelector,
   durationSelector,
   edgeLabelModeSelector,
-  graphDataSelector,
   graphTypeSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
@@ -46,8 +45,9 @@ import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInSeconds } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
+import GraphDataSource from '../../services/GraphDataSource';
 import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
 import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
@@ -59,11 +59,9 @@ import { Core } from 'cytoscape';
 type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
-  elements?: DecoratedGraphElements;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   layout: Layout;
-  node?: NodeParamsType;
   refreshInterval: IntervalInMilliseconds;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
@@ -81,18 +79,22 @@ type ReduxProps = {
 };
 
 type CytoscapeGraphProps = ReduxProps & {
-  isLoading: boolean;
-  isError: boolean;
-  isMTLSEnabled: boolean;
   containerClassName?: string;
-  focusSelector?: string;
-  contextMenuNodeComponent?: NodeContextMenuType;
-  contextMenuGroupComponent?: NodeContextMenuType;
   contextMenuEdgeComponent?: EdgeContextMenuType;
+  contextMenuGroupComponent?: NodeContextMenuType;
+  contextMenuNodeComponent?: NodeContextMenuType;
+  dataSource: GraphDataSource;
+  focusSelector?: string;
+  isMTLSEnabled: boolean;
   onEmptyGraphAction: () => void;
 };
 
-type CytoscapeGraphState = {};
+type CytoscapeGraphState = {
+  elements?: DecoratedGraphElements;
+  isError: boolean;
+  isLoading: boolean;
+  node?: NodeParamsType;
+};
 
 type Position = {
   x: number;
@@ -137,22 +139,41 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     };
     this.cytoscapeReactWrapperRef = React.createRef();
     this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
+
+    this.state = {
+      isLoading: false,
+      isError: false
+    };
   }
 
   componentDidMount() {
     this.cyInitialization(this.getCy());
+
+    // Listen to data source events.
+    this.props.dataSource.on('loadStart', this.loadStartHandler);
+    this.props.dataSource.on('emptyNamespaces', this.emptyNamespacesHandler);
+    this.props.dataSource.on('fetchSuccess', this.fetchSuccessHandler);
+    this.props.dataSource.on('fetchError', this.fetchErrorHandler);
+
+    // Initial sync with data source
+    this.setState({
+      elements: this.props.dataSource.graphData,
+      isLoading: this.props.dataSource.isLoading,
+      isError: this.props.dataSource.isError
+    });
   }
 
-  shouldComponentUpdate(nextProps: CytoscapeGraphProps, _nextState: CytoscapeGraphState) {
-    this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node; // side-effect?  Should this move to componentDidUpdate?
+  shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
+    this.nodeChanged =
+      this.nodeChanged || this.props.dataSource.fetchParameters.node !== nextProps.dataSource.fetchParameters.node; // side-effect?  Should this move to componentDidUpdate?
 
     // don't update due to duration or refreshInterval changes, those don't affect display
     let result =
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
-      this.props.elements !== nextProps.elements ||
-      this.props.isError !== nextProps.isError ||
+      this.state.elements !== nextState.elements ||
+      this.state.isError !== nextState.isError ||
       this.props.layout !== nextProps.layout ||
-      this.props.node !== nextProps.node ||
+      this.state.node !== nextState.node ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
@@ -162,14 +183,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showUnusedNodes !== nextProps.showUnusedNodes ||
       this.props.showVirtualServices !== nextProps.showVirtualServices;
 
-    if (!nextProps.elements || !nextProps.elements.nodes || nextProps.elements.nodes.length < 1) {
+    if (!nextState.elements || !nextState.elements.nodes || nextState.elements.nodes.length < 1) {
       result = true;
     }
 
     return result;
   }
 
-  componentDidUpdate(prevProps: CytoscapeGraphProps, _prevState: CytoscapeGraphState) {
+  componentDidUpdate(prevProps: CytoscapeGraphProps, prevState: CytoscapeGraphState) {
     const cy = this.getCy();
     if (!cy) {
       return;
@@ -178,8 +199,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     let updateLayout = false;
     if (
       this.nodeNeedsRelayout() ||
-      this.namespaceNeedsRelayout(prevProps.elements, this.props.elements) ||
-      this.elementsNeedRelayout(prevProps.elements, this.props.elements) ||
+      this.namespaceNeedsRelayout(prevState.elements, this.state.elements) ||
+      this.elementsNeedRelayout(prevState.elements, this.state.elements) ||
       this.props.layout.name !== prevProps.layout.name
     ) {
       updateLayout = true;
@@ -188,7 +209,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.processGraphUpdate(cy, updateLayout);
 
     // pre-select node if provided
-    const node = this.props.node;
+    const node = this.state.node;
     if (node && cy && cy.$(':selected').length === 0) {
       let selector = "[nodeType = '" + node.nodeType + "']";
       switch (node.nodeType) {
@@ -209,11 +230,19 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         this.selectTargetAndUpdateSummary(eles[0]);
       }
     }
-    if (this.props.elements !== prevProps.elements) {
+    if (this.state.elements !== prevState.elements) {
       this.updateHealth(cy);
     }
 
     this.props.updateGraph({ updateTimestamp: Date.now(), cyRef: cy });
+  }
+
+  componentWillUnmount(): void {
+    // Remove data source events listeners.
+    this.props.dataSource.removeListener('loadStart', this.loadStartHandler);
+    this.props.dataSource.removeListener('emptyNamespaces', this.emptyNamespacesHandler);
+    this.props.dataSource.removeListener('fetchSuccess', this.fetchSuccessHandler);
+    this.props.dataSource.removeListener('fetchError', this.fetchErrorHandler);
   }
 
   render() {
@@ -221,11 +250,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       <div id="cytoscape-container" className={this.props.containerClassName}>
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
         <EmptyGraphLayoutContainer
-          elements={this.props.elements}
+          elements={this.state.elements}
           namespaces={this.props.activeNamespaces}
           action={this.props.onEmptyGraphAction}
-          isLoading={this.props.isLoading}
-          isError={this.props.isError}
+          isLoading={this.state.isLoading}
+          isError={this.state.isError}
+          error={this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined}
         >
           <CytoscapeContextMenuWrapper
             ref={this.contextMenuRef}
@@ -242,6 +272,38 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   getCy() {
     return this.cytoscapeReactWrapperRef.current ? this.cytoscapeReactWrapperRef.current.getCy() : null;
   }
+
+  private loadStartHandler = () => {
+    this.setState({
+      isLoading: this.props.dataSource.isLoading,
+      isError: this.props.dataSource.isError,
+      elements: this.props.dataSource.graphData
+    });
+  };
+
+  private emptyNamespacesHandler = () => {
+    this.setState({
+      elements: { edges: [], nodes: [] },
+      node: this.props.dataSource.fetchParameters.node
+    });
+  };
+
+  private fetchErrorHandler = () => {
+    this.setState({ isError: this.props.dataSource.isError });
+  };
+
+  private fetchSuccessHandler = (
+    _graphTimestamp: TimeInSeconds,
+    _graphDuration: DurationInSeconds,
+    graphData: DecoratedGraphElements
+  ) => {
+    this.setState({
+      elements: graphData,
+      node: this.props.dataSource.fetchParameters.node,
+      isError: this.props.dataSource.isError,
+      isLoading: this.props.dataSource.isLoading
+    });
+  };
 
   private setCytoscapeReactWrapperRef(cyRef: any) {
     this.cytoscapeReactWrapperRef.current = cyRef;
@@ -555,7 +617,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // update the entire set of nodes and edges to keep the graph up-to-date
-    cy.json({ elements: this.props.elements });
+    cy.json({ elements: this.state.elements });
 
     cy.endBatch();
 
@@ -661,18 +723,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     };
 
     let sameNode = false;
-    if (this.props.node) {
-      sameNode = this.props.node && this.props.node.nodeType === nodeType;
+    if (this.state.node) {
+      sameNode = this.state.node && this.state.node.nodeType === nodeType;
       switch (nodeType) {
         case NodeType.APP:
-          sameNode = sameNode && this.props.node.app === app;
-          sameNode = sameNode && this.props.node.version === version;
+          sameNode = sameNode && this.state.node.app === app;
+          sameNode = sameNode && this.state.node.version === version;
           break;
         case NodeType.SERVICE:
-          sameNode = sameNode && this.props.node.service === service;
+          sameNode = sameNode && this.state.node.service === service;
           break;
         case NodeType.WORKLOAD:
-          sameNode = sameNode && this.props.node.workload === workload;
+          sameNode = sameNode && this.state.node.workload === workload;
           break;
         default:
           sameNode = true; // don't navigate to unsupported node type
@@ -954,12 +1016,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
-  elements: graphDataSelector(state),
   graphType: graphTypeSelector(state),
-  isError: state.graph.isError,
-  isLoading: state.graph.isLoading,
   layout: state.graph.layout,
-  node: state.graph.node,
   refreshInterval: refreshIntervalSelector(state),
   showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,

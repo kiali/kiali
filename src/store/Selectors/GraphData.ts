@@ -1,8 +1,6 @@
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non provided values are taken as "this didn't change", similar as setState does.
 // Put default values for all fields that are omitted.
-import { KialiAppState } from '../Store';
-import { createSelector } from 'reselect';
 import {
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
@@ -152,11 +150,3 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
   }
   return decoratedGraph;
 };
-
-const getGraphData = (state: KialiAppState) => state.graph.graphData;
-
-export const graphDataSelector = createSelector(
-  getGraphData,
-  // This allows us to save the actual response from the server in the store, but avoid calling the decorateGraphData every time we need to access it
-  graphData => decorateGraphData(graphData)
-);

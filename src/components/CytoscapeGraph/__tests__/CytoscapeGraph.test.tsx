@@ -3,9 +3,10 @@ import { shallow } from 'enzyme';
 
 import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { GraphType, Layout, EdgeLabelMode } from '../../../types/Graph';
+import { EdgeLabelMode, GraphType, Layout } from '../../../types/Graph';
 import EmptyGraphLayoutContainer from '../../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
+import GraphDataSource from '../../../services/GraphDataSource';
 
 jest.mock('../../../services/Api');
 
@@ -24,16 +25,27 @@ const testSetHandler = () => {
 };
 
 describe('CytoscapeGraph component test', () => {
-  it('should set correct elements data', () => {
+  it('should set correct elements data', done => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.NONE;
+
+    const dataSource = new GraphDataSource();
+    dataSource.fetchGraphData({
+      injectServiceNodes: true,
+      graphType: GraphType.VERSIONED_APP,
+      namespaces: [{ name: testNamespace }],
+      duration: 60,
+      edgeLabelMode: myEdgeLabelMode,
+      queryTime: 0,
+      showSecurity: true,
+      showUnusedNodes: false
+    });
 
     const wrapper = shallow(
       <CytoscapeGraph
         activeNamespaces={[{ name: testNamespace }]}
         duration={60}
         edgeLabelMode={myEdgeLabelMode}
-        elements={decorateGraphData(GRAPH_DATA[testNamespace].elements)}
         layout={myLayout}
         updateGraph={testClickHandler}
         updateSummary={testClickHandler}
@@ -51,14 +63,18 @@ describe('CytoscapeGraph component test', () => {
         showTrafficAnimation={false}
         showUnusedNodes={false}
         showVirtualServices={true}
-        isLoading={false}
-        isError={false}
         graphType={GraphType.VERSIONED_APP}
+        dataSource={dataSource}
       />
     );
-    const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
-    const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
-    expect(emptyGraphLayoutWrapper.prop('elements').nodes).toEqual(emptyGraphDecorated.nodes);
-    expect(emptyGraphLayoutWrapper.prop('elements').edges).toEqual(emptyGraphDecorated.edges);
+
+    dataSource.on('fetchSuccess', () => {
+      const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
+      const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
+      expect(emptyGraphLayoutWrapper.prop('elements')!.nodes).toEqual(emptyGraphDecorated.nodes);
+      expect(emptyGraphLayoutWrapper.prop('elements')!.edges).toEqual(emptyGraphDecorated.edges);
+
+      done();
+    });
   });
 });

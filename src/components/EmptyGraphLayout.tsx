@@ -10,10 +10,10 @@ import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { KialiIcon } from '../config/KialiIcon';
+import { DecoratedGraphElements } from '../types/Graph';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    error: state.graph.error,
     isDisplayingUnusedNodes: state.graph.toolbarState.showUnusedNodes
   };
 };
@@ -25,7 +25,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
 };
 
 type EmptyGraphLayoutProps = {
-  elements?: any;
+  elements?: DecoratedGraphElements;
   namespaces: Namespace[];
   action?: any;
   displayUnusedNodes: () => void;
@@ -47,8 +47,8 @@ type EmptyGraphLayoutState = {};
 
 export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
-    const currentIsEmpty = _.isEmpty(this.props.elements.nodes);
-    const nextIsEmpty = _.isEmpty(nextProps.elements.nodes);
+    const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
+    const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);
 
     // Update if we have elements and we are not loading
     if (!nextProps.isLoading && !nextIsEmpty) {

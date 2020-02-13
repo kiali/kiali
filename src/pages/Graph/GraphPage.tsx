@@ -6,11 +6,10 @@ import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
-import { DurationInSeconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN, EdgeLabelMode, Layout } from '../../types/Graph';
+import { EdgeLabelMode, GraphType, Layout, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as AlertUtils from '../../utils/AlertUtils';
 import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
 import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
@@ -23,29 +22,27 @@ import {
   activeNamespacesSelector,
   durationSelector,
   edgeLabelModeSelector,
-  graphDataSelector,
   graphTypeSelector,
-  meshWideMTLSEnabledSelector,
   lastRefreshAtSelector,
-  replayQueryTimeSelector,
-  replayActiveSelector
+  meshWideMTLSEnabledSelector,
+  replayActiveSelector,
+  replayQueryTimeSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
-import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
-import TourStopContainer, { TourInfo, getNextTourStop } from 'components/Tour/TourStop';
+import TourStopContainer, { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 import GraphTour, { GraphTourStops } from './GraphHelpTour';
-import { getErrorString } from 'services/Api';
-import { Chip, Badge } from '@patternfly/react-core';
+import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
+import GraphDataSource from '../../services/GraphDataSource';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -61,12 +58,7 @@ type ReduxProps = {
   activeTour?: TourInfo;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabelMode: EdgeLabelMode;
-  graphData: any;
-  graphDuration: DurationInSeconds; // duration of current graph
-  graphTimestamp: TimeInSeconds; // prom queryTime of current graph
   graphType: GraphType;
-  isError: boolean;
-  isLoading: boolean;
   isPageVisible: boolean;
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
@@ -80,17 +72,6 @@ type ReduxProps = {
   summaryData: SummaryData | null;
   mtlsEnabled: boolean;
 
-  fetchGraphData: (
-    namespaces: Namespace[],
-    duration: DurationInSeconds,
-    graphType: GraphType,
-    injectServiceNodes: boolean,
-    edgeLabelMode: EdgeLabelMode,
-    showSecurity: boolean,
-    showUnusedNodes: boolean,
-    node?: NodeParamsType,
-    queryTime?: TimeInMilliseconds
-  ) => any;
   graphChanged: () => void;
   setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
@@ -155,10 +136,10 @@ const GraphErrorBoundaryFallback = () => {
 };
 
 export class GraphPage extends React.Component<GraphPageProps> {
-  private loadPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
   private focusSelector?: string;
+  private graphDataSource: GraphDataSource;
 
   static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
     const app = props.match.params.app;
@@ -183,7 +164,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
       nodeType = NodeType.SERVICE;
       version = '';
     }
-    const node: NodeParamsType = {
+    return {
       app: app!,
       namespace: { name: namespace! },
       nodeType: nodeType,
@@ -191,7 +172,6 @@ export class GraphPage extends React.Component<GraphPageProps> {
       version: version,
       workload: workload!
     };
-    return node;
   }
 
   static isNodeChanged(prevNode?: NodeParamsType, node?: NodeParamsType): boolean {
@@ -224,11 +204,13 @@ export class GraphPage extends React.Component<GraphPageProps> {
     this.cytoscapeGraphRef = React.createRef();
     this.focusSelector = getFocusSelector();
     // Let URL override current redux state at construction time
-    // Note that state updates will not be posted until until after the first render
+    // Note that state updates will not be posted until after the first render
     const urlNode = GraphPage.getNodeParamsFromProps(props);
     if (GraphPage.isNodeChanged(urlNode, props.node)) {
       props.setNode(urlNode);
     }
+
+    this.graphDataSource = new GraphDataSource();
   }
 
   componentDidMount() {
@@ -240,6 +222,12 @@ export class GraphPage extends React.Component<GraphPageProps> {
     if (!store.getState().graph.node) {
       this.loadGraphDataFromBackend();
     }
+
+    // Connect to graph data source updates
+    this.graphDataSource.on('loadStart', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.on('fetchError', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.on('fetchSuccess', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.on('emptyNamespaces', this.handleGraphDataSourceUpdate);
   }
 
   componentDidUpdate(prev: GraphPageProps) {
@@ -278,7 +266,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
       unsetFocusSelector();
     }
 
-    if (prev.layout.name !== curr.layout.name || prev.graphData !== curr.graphData || activeNamespacesChanged) {
+    if (prev.layout.name !== curr.layout.name || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
     }
 
@@ -288,9 +276,11 @@ export class GraphPage extends React.Component<GraphPageProps> {
   }
 
   componentWillUnmount() {
-    if (this.loadPromise) {
-      this.loadPromise.cancel();
-    }
+    // Disconnect from graph data source updates
+    this.graphDataSource.removeListener('loadStart', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceUpdate);
   }
 
   render() {
@@ -299,13 +289,15 @@ export class GraphPage extends React.Component<GraphPageProps> {
       conStyle = kioskContainerStyle;
     }
     const isReady =
-      this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError;
+      this.graphDataSource.graphData.nodes &&
+      Object.keys(this.graphDataSource.graphData.nodes).length > 0 &&
+      !this.graphDataSource.isError;
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
     return (
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbarContainer disabled={this.props.isLoading} onToggleHelp={this.toggleHelp} />
+            <GraphToolbarContainer disabled={this.graphDataSource.isLoading} onToggleHelp={this.toggleHelp} />
           </div>
           <FlexView
             grow={true}
@@ -348,6 +340,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
                       focusSelector={this.focusSelector}
                       contextMenuNodeComponent={NodeContextMenuContainer}
                       contextMenuGroupComponent={NodeContextMenuContainer}
+                      dataSource={this.graphDataSource}
                     />
                   </TourStopContainer>
                 </TourStopContainer>
@@ -364,8 +357,8 @@ export class GraphPage extends React.Component<GraphPageProps> {
                 namespaces={this.props.activeNamespaces}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.showServiceNodes}
-                queryTime={this.props.graphTimestamp}
-                duration={this.props.graphDuration}
+                queryTime={this.graphDataSource.graphTimestamp}
+                duration={this.graphDataSource.graphDuration}
                 isPageVisible={this.props.isPageVisible}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
@@ -378,6 +371,10 @@ export class GraphPage extends React.Component<GraphPageProps> {
 
   private handleEmptyGraphAction = () => {
     this.loadGraphDataFromBackend();
+  };
+
+  private handleGraphDataSourceUpdate = () => {
+    this.forceUpdate();
   };
 
   private toggleHelp = () => {
@@ -397,33 +394,21 @@ export class GraphPage extends React.Component<GraphPageProps> {
   }
 
   private loadGraphDataFromBackend = () => {
-    if (this.loadPromise) {
-      this.loadPromise.cancel();
-    }
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
       ? this.props.replayQueryTime
       : undefined;
-    const promise = this.props.fetchGraphData(
-      this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
-      this.props.duration,
-      this.props.graphType,
-      this.props.showServiceNodes,
-      this.props.edgeLabelMode,
-      this.props.showSecurity,
-      this.props.showUnusedNodes,
-      this.props.node,
-      queryTime
-    );
-    this.loadPromise = makeCancelablePromise(promise);
-    this.loadPromise.promise
-      .then(() => {
-        // nothing currently on success
-      })
-      .catch(error => {
-        if (!error.isCanceled) {
-          AlertUtils.addError(`Failed to load graph data: ${getErrorString(error)}`);
-        }
-      });
+
+    this.graphDataSource.fetchGraphData({
+      namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
+      duration: this.props.duration,
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.showServiceNodes,
+      edgeLabelMode: this.props.edgeLabelMode,
+      showSecurity: this.props.showSecurity,
+      showUnusedNodes: this.props.showUnusedNodes,
+      node: this.props.node,
+      queryTime: queryTime
+    });
   };
 
   private notifyError = (error: Error, _componentStack: string) => {
@@ -431,7 +416,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
   };
 
   private displayTimeRange = () => {
-    const rangeEnd: TimeInMilliseconds = this.props.graphTimestamp * 1000;
+    const rangeEnd: TimeInMilliseconds = this.graphDataSource.graphTimestamp * 1000;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
 
     return toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' });
@@ -443,12 +428,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeTour: state.tourState.activeTour,
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
-  graphData: graphDataSelector(state),
-  graphDuration: state.graph.graphDataDuration,
-  graphTimestamp: state.graph.graphDataTimestamp,
   graphType: graphTypeSelector(state),
-  isError: state.graph.isError,
-  isLoading: state.graph.isLoading,
   isPageVisible: state.globalState.isPageVisible,
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
@@ -464,30 +444,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  fetchGraphData: (
-    namespaces: Namespace[],
-    duration: DurationInSeconds,
-    graphType: GraphType,
-    injectServiceNodes: boolean,
-    edgeLabelMode: EdgeLabelMode,
-    showSecurity: boolean,
-    showUnusedNodes: boolean,
-    node?: NodeParamsType,
-    queryTime?: TimeInMilliseconds
-  ) =>
-    dispatch(
-      GraphDataThunkActions.fetchGraphData(
-        namespaces,
-        duration,
-        graphType,
-        injectServiceNodes,
-        edgeLabelMode,
-        showSecurity,
-        showUnusedNodes,
-        node,
-        queryTime
-      )
-    ),
   graphChanged: bindActionCreators(GraphActions.changed, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),

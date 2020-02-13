@@ -1,6 +1,5 @@
 import { getType } from 'typesafe-actions';
 import { GraphActions } from '../actions/GraphActions';
-import { GraphDataActions } from '../actions/GraphDataActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
 import { EdgeLabelMode, GraphType } from '../types/Graph';
@@ -10,12 +9,6 @@ import { updateState } from '../utils/Reducer';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   cyData: null,
-  isLoading: false,
-  isError: false,
-  error: undefined,
-  graphDataDuration: 0,
-  graphDataTimestamp: 0,
-  graphData: {},
   layout: DagreGraph.getLayout(),
   node: undefined,
   summaryData: null,
@@ -41,37 +34,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
   switch (action.type) {
-    case getType(GraphDataActions.getGraphDataStart):
-      return updateState(state, { isError: false, isLoading: true });
-    case getType(GraphDataActions.getGraphDataSuccess):
-      return updateState(state, {
-        isLoading: false,
-        isError: false,
-        graphDataDuration: action.payload.graphDuration,
-        graphDataTimestamp: action.payload.timestamp,
-        graphData: action.payload.graphData
-      });
-    case getType(GraphDataActions.getGraphDataFailure):
-      return updateState(state, {
-        isLoading: false,
-        isError: true,
-        error: action.payload.error
-      });
-    case getType(GraphDataActions.getGraphDataWithoutNamespaces):
-      return updateState(state, {
-        isLoading: false,
-        isError: false,
-        error: INITIAL_GRAPH_STATE.error,
-        graphData: INITIAL_GRAPH_STATE.graphData,
-        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
-        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
-        summaryData: INITIAL_GRAPH_STATE.summaryData
-      });
     case getType(GraphActions.changed):
       return updateState(state, {
-        graphData: INITIAL_GRAPH_STATE.graphData,
-        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
-        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
     case getType(GraphActions.setLayout):
@@ -80,9 +44,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         node: action.payload,
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
-        graphData: INITIAL_GRAPH_STATE.graphData,
-        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
-        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
     case getType(GraphActions.updateGraph):
@@ -119,9 +80,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           graphType: action.payload
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-        graphData: INITIAL_GRAPH_STATE.graphData,
-        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
-        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
     case getType(GraphToolbarActions.setHideValue):
@@ -190,9 +148,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           showServiceNodes: !state.toolbarState.showServiceNodes
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-        graphData: INITIAL_GRAPH_STATE.graphData,
-        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
-        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
     case getType(GraphToolbarActions.toggleTrafficAnimation):
