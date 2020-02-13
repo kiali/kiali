@@ -6,17 +6,15 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func CreateAuthorizationPolicy(sourceNamespaces, operationMethods []interface{}) kubernetes.IstioObject {
+func CreateAuthorizationPolicy(sourceNamespaces, operationMethods []interface{}, selector map[string]interface{}) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "auth-policy",
 			Namespace: "bookinfo",
 		},
 		Spec: map[string]interface{}{
-			"selector": []interface{}{
-				map[string]interface{}{
-					"app": "ratings",
-				},
+			"selector": map[string]interface{}{
+				"matchLabels": selector,
 			},
 			"rules": []interface{}{
 				map[string]interface{}{

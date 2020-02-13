@@ -11,6 +11,7 @@ const AuthorizationPolicyCheckerType = "authorizationpolicy"
 type AuthorizationPolicyChecker struct {
 	AuthorizationPolicies []kubernetes.IstioObject
 	Namespaces            models.Namespaces
+	WorkloadList          models.WorkloadList
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -30,6 +31,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject)
 
 	enabledCheckers := []Checker{
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
+		authorization.WorkloadSelectorChecker{AuthorizationPolicy: authPolicy, WorkloadList: a.WorkloadList},
 	}
 
 	for _, checker := range enabledCheckers {

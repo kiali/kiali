@@ -110,6 +110,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
 		Severity: WarningSeverity,
 	},
+	"authorizationpolicy.selector.workloadnotfound": {
+		Message:  "No matching workload found for authorization policy selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Message:  "More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,
