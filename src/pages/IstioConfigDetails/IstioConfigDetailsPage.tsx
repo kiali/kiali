@@ -361,6 +361,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                 width={'100%'}
                 height={'var(--kiali-yaml-editor-height)'}
                 className={'istio-ace-editor'}
+                wrapEnabled={true}
                 readOnly={!this.canUpdate()}
                 setOptions={aceOptions}
                 value={this.state.istioObjectDetails ? yamlSource : undefined}
