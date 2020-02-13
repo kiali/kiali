@@ -85,22 +85,31 @@ const (
 )
 
 var ObjectTypeSingular = map[string]string{
-	"gateways":            "gateway",
-	"virtualservices":     "virtualservice",
-	"destinationrules":    "destinationrule",
-	"serviceentries":      "serviceentry",
-	"rules":               "rule",
-	"quotaspecs":          "quotaspec",
-	"quotaspecbindings":   "quotaspecbinding",
-	"meshpolicies":        "meshpolicy",
-	"servicemeshpolicies": "servicemeshpolicy",
-	"policies":            "policy",
-	"serviceroles":        "servicerole",
-	"servicerolebindings": "servicerolebinding",
-	"clusterrbacconfigs":  "clusterrbacconfig",
+	"gateways":              "gateway",
+	"virtualservices":       "virtualservice",
+	"destinationrules":      "destinationrule",
+	"serviceentries":        "serviceentry",
+	"rules":                 "rule",
+	"quotaspecs":            "quotaspec",
+	"quotaspecbindings":     "quotaspecbinding",
+	"meshpolicies":          "meshpolicy",
+	"servicemeshpolicies":   "servicemeshpolicy",
+	"policies":              "policy",
+	"serviceroles":          "servicerole",
+	"servicerolebindings":   "servicerolebinding",
+	"clusterrbacconfigs":    "clusterrbacconfig",
+	"authorizationpolicies": "authorizationpolicy",
 }
 
 var checkDescriptors = map[string]IstioCheck{
+	"authorizationpolicy.source.namespacenotfound": {
+		Message:  "Namespace not found for this rule",
+		Severity: WarningSeverity,
+	},
+	"authorizationpolicy.to.wrongmethod": {
+		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Message:  "More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,

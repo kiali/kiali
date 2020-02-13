@@ -12,6 +12,11 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+func HttpMethods() []string {
+	return []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch,
+		http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
+}
+
 func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
