@@ -1,12 +1,14 @@
 import * as React from 'react';
+import { SparklineChart } from '@kiali/k-charted-pf4';
 import { ChartThemeColor } from '@patternfly/react-charts';
 
 import { DurationInSeconds } from '../../types/Common';
 import { TimeSeries } from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { getName } from '../../utils/RateIntervals';
-import { SparklineChart } from 'components/Charts/SparklineChart';
 import { PfColors } from 'components/Pf/PfColors';
+
+import 'components/Charts/Charts.css';
 
 type Props = {
   metrics?: TimeSeries[];

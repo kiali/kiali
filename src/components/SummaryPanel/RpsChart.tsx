@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
+import { SparklineChart, VCLines, VCLine, VCDataPoint } from '@kiali/k-charted-pf4';
 
 import { PfColors, PFAlertColor } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
-import Graphing, { VCLines, VCLine, VCDataPoint } from 'utils/Graphing';
-import { SparklineChart } from 'components/Charts/SparklineChart';
+import Graphing from 'utils/Graphing';
+
+import 'components/Charts/Charts.css';
 
 type RpsChartTypeProp = {
   label: string;

@@ -1,12 +1,10 @@
 import * as React from 'react';
+import { VCLines, addLegendEvent, VCEvent } from '@kiali/k-charted-pf4';
 import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { VictoryLegend } from 'victory';
 
 import { PfColors, getPFAlertColorVals } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
-import * as Legend from 'components/Charts/LegendHelper';
-import { CustomFlyout } from 'components/Charts/CustomFlyout';
-import { VCLines } from 'utils/Graphing';
 
 export const legendHeight = 25;
 export const legendTopMargin = 20;
@@ -37,24 +35,27 @@ export class RateChart extends React.Component<Props, State> {
       bottom: 10 + legendTopMargin + legendHeight,
       right: 10
     };
-    const events = Legend.events({
-      items: this.props.series,
-      itemBaseName: this.props.baseName + '-bars-',
-      legendName: this.props.baseName + '-legend',
-      onClick: idx => {
-        // Same event can be fired for several targets, so make sure we only apply it once
-        if (!this.state.hiddenSeries.delete(idx)) {
-          // Was not already hidden => add to set
-          this.state.hiddenSeries.add(idx);
+    const events: VCEvent[] = [];
+    this.props.series.forEach((_, idx) => {
+      addLegendEvent(events, {
+        legendName: this.props.baseName + '-legend',
+        idx: idx,
+        serieName: this.props.baseName + '-bars-' + idx,
+        onClick: __ => {
+          // Same event can be fired for several targets, so make sure we only apply it once
+          if (!this.state.hiddenSeries.delete(idx)) {
+            // Was not already hidden => add to set
+            this.state.hiddenSeries.add(idx);
+          }
+          this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
+          return null;
+        },
+        onMouseOver: props => {
+          return {
+            style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
+          };
         }
-        this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
-        return null;
-      },
-      onMouseOver: (_, props) => {
-        return {
-          style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
-        };
-      }
+      });
     });
     const fontSize = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size');
     const fontSizePx = getComputedStyle(document.body).getPropertyValue('--graph-side-panel--font-size-px');
@@ -90,7 +91,9 @@ export class RateChart extends React.Component<Props, State> {
                   };
                 })}
                 barWidth={10}
-                labelComponent={<ChartTooltip constrainToVisibleArea={true} flyoutComponent={<CustomFlyout />} />}
+                labelComponent={
+                  <ChartTooltip constrainToVisibleArea={true} flyoutStyle={{ stroke: 'none', fillOpacity: 0.6 }} />
+                }
               />
             );
           })}
