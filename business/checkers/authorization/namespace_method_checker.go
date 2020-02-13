@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-const grpcFQDN = `^((\/[a-zA-Z\.]+)+)(\/[a-zA-Z]+)$`
+var methodMatcher = regexp.MustCompile(`^((\/[a-zA-Z\.]+)+)(\/[a-zA-Z]+)$`)
 
 type NamespaceMethodChecker struct {
 	AuthorizationPolicy kubernetes.IstioObject
@@ -130,12 +130,11 @@ func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to interface{}) ([
 
 func validMethod(m string) bool {
 	valid := false
-	validGRPCMethod := regexp.MustCompile(grpcFQDN)
 
 	for _, httpMethod := range httputil.HttpMethods() {
 		// HTTP methods allowed or
 		// For gRPC service, a fully-qualified name like “/package.service/method”
-		valid = valid || (strings.TrimSpace(strings.ToUpper(m)) == httpMethod || validGRPCMethod.MatchString(m))
+		valid = valid || (strings.TrimSpace(strings.ToUpper(m)) == httpMethod || methodMatcher.MatchString(m))
 	}
 
 	return valid
