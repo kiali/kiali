@@ -4113,6 +4113,13 @@
         "url": {
           "type": "string",
           "x-go-name": "URL"
+        },
+        "whiteListIstioSystem": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "WhiteListIstioSystem"
         }
       },
       "x-go-package": "github.com/kiali/kiali/jaeger"

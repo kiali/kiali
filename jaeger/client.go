@@ -22,10 +22,11 @@ type ClientInterface interface {
 }
 
 type JaegerInfo struct {
-	URL                string `json:"url"`
-	NamespaceSelector  bool   `json:"namespaceSelector"`
-	Integration        bool   `json:"integration"`
-	IntegrationMessage string `json:"integrationMessage"`
+	URL                  string   `json:"url"`
+	NamespaceSelector    bool     `json:"namespaceSelector"`
+	Integration          bool     `json:"integration"`
+	IntegrationMessage   string   `json:"integrationMessage"`
+	WhiteListIstioSystem []string `json:"whiteListIstioSystem"`
 }
 
 // Client for Jaeger API.

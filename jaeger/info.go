@@ -42,10 +42,11 @@ func getJaegerInfo(client http.Client, endpoint *url.URL) (*JaegerInfo, int, err
 	jaegerIntegration = integration
 
 	info := &JaegerInfo{
-		URL:                jaegerConfig.URL,
-		NamespaceSelector:  jaegerConfig.NamespaceSelector,
-		Integration:        integration,
-		IntegrationMessage: error,
+		URL:                  jaegerConfig.URL,
+		NamespaceSelector:    jaegerConfig.NamespaceSelector,
+		Integration:          integration,
+		IntegrationMessage:   error,
+		WhiteListIstioSystem: jaegerConfig.WhiteListIstioSystem,
 	}
 
 	return info, http.StatusOK, nil

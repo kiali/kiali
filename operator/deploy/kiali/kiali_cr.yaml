@@ -395,6 +395,7 @@ spec:
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 #      If tracing service is deployed in a QUERY_BASE_PATH set this in the url like https://<hostname>/<QUERY_BASE_PATH> . EX: https://tracing-service:8080/jaeger
+# whitelist_istio_system: Set whitelist services in istio-system to check their traces
 #    ---
 #    tracing:
 #      auth:
@@ -409,6 +410,7 @@ spec:
 #      in_cluster_url: ""
 #      namespace_selector: true
 #      url: ""
+#      whitelist_istio_system: ["jaeger-query", "istio-ingressgateway"]
 
 ##########
 #  ---

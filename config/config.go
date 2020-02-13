@@ -122,11 +122,12 @@ type GrafanaVariablesConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth              Auth   `yaml:"auth"`
-	Enabled           bool   `yaml:"enabled"` // Enable Jaeger in Kiali
-	InClusterURL      string `yaml:"in_cluster_url"`
-	NamespaceSelector bool   `yaml:"namespace_selector"`
-	URL               string `yaml:"url"`
+	Auth                 Auth     `yaml:"auth"`
+	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
+	InClusterURL         string   `yaml:"in_cluster_url"`
+	NamespaceSelector    bool     `yaml:"namespace_selector"`
+	URL                  string   `yaml:"url"`
+	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -326,10 +327,11 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:           true,
-				NamespaceSelector: true,
-				InClusterURL:      "http://tracing.istio-system/jaeger",
-				URL:               "",
+				Enabled:              true,
+				NamespaceSelector:    true,
+				InClusterURL:         "http://tracing.istio-system/jaeger",
+				URL:                  "",
+				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
 		IstioLabels: IstioLabels{
