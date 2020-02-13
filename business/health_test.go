@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -278,26 +278,26 @@ func fakePodsHealthReviewWithoutIstio() []v1.Pod {
 	}
 }
 
-func fakeDeploymentsHealthReview() []v1beta1.Deployment {
-	return []v1beta1.Deployment{
+func fakeDeploymentsHealthReview() []appsv1.Deployment {
+	return []appsv1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-v1"},
-			Status: v1beta1.DeploymentStatus{
+			Status: appsv1.DeploymentStatus{
 				Replicas:            3,
 				AvailableReplicas:   2,
 				UnavailableReplicas: 1},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: appsv1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
 					MatchLabels: map[string]string{"app": "reviews", "version": "v1"}}}},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-v2"},
-			Status: v1beta1.DeploymentStatus{
+			Status: appsv1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 1},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: appsv1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
 					MatchLabels: map[string]string{"app": "reviews", "version": "v2"}}}}}
 }
