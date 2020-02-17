@@ -1,29 +1,15 @@
 import * as Cy from 'cytoscape';
 import * as React from 'react';
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
 import ReactResizeDetector from 'react-resize-detector';
-
 import history from '../../app/History';
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRender from './TrafficAnimation/TrafficRenderer';
-import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
+import EmptyGraphLayout from '../EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
-import { KialiAppState } from '../../store/Store';
-import {
-  activeNamespacesSelector,
-  durationSelector,
-  edgeLabelModeSelector,
-  graphTypeSelector,
-  refreshIntervalSelector
-} from '../../store/Selectors';
 import {
   CyData,
   CytoscapeBaseEvent,
@@ -44,9 +30,7 @@ import * as H from '../../types/Health';
 import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
-import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInSeconds } from '../../types/Common';
-import GraphThunkActions from '../../actions/GraphThunkActions';
 import GraphDataSource from '../../services/GraphDataSource';
 import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
@@ -56,13 +40,25 @@ import { NodeSingular } from 'cytoscape';
 import { EdgeSingular } from 'cytoscape';
 import { Core } from 'cytoscape';
 
-type ReduxProps = {
+type CytoscapeGraphProps = {
   activeNamespaces: Namespace[];
+  containerClassName?: string;
+  contextMenuEdgeComponent?: EdgeContextMenuType;
+  contextMenuGroupComponent?: NodeContextMenuType;
+  contextMenuNodeComponent?: NodeContextMenuType;
+  dataSource: GraphDataSource;
+  displayUnusedNodes: () => void;
   duration: DurationInSeconds;
   edgeLabelMode: EdgeLabelMode;
+  focusSelector?: string;
   graphType: GraphType;
+  isMTLSEnabled: boolean;
   layout: Layout;
+  onEmptyGraphAction: () => void;
+  onReady: (cytoscapeRef: any) => void;
   refreshInterval: IntervalInMilliseconds;
+  setActiveNamespaces: (namespace: Namespace[]) => void;
+  setNode: (node?: NodeParamsType) => void;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
@@ -71,22 +67,8 @@ type ReduxProps = {
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
-  onReady: (cytoscapeRef: any) => void;
-  setActiveNamespaces: (namespace: Namespace[]) => void;
-  setNode: (node?: NodeParamsType) => void;
   updateGraph: (cyData: CyData) => void;
   updateSummary: (event: CytoscapeClickEvent) => void;
-};
-
-type CytoscapeGraphProps = ReduxProps & {
-  containerClassName?: string;
-  contextMenuEdgeComponent?: EdgeContextMenuType;
-  contextMenuGroupComponent?: NodeContextMenuType;
-  contextMenuNodeComponent?: NodeContextMenuType;
-  dataSource: GraphDataSource;
-  focusSelector?: string;
-  isMTLSEnabled: boolean;
-  onEmptyGraphAction: () => void;
 };
 
 type CytoscapeGraphState = {
@@ -107,7 +89,7 @@ type InitialValues = {
 };
 
 // exporting this class for testing
-export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
+export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
     router: () => null
   };
@@ -121,7 +103,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private trafficRenderer?: TrafficRender;
   private focusSelector?: string;
   private cytoscapeReactWrapperRef: any;
-  private contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
+  private readonly contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
   private namespaceChanged: boolean;
   private nodeChanged: boolean;
   private resetSelection: boolean = false;
@@ -249,13 +231,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
-        <EmptyGraphLayoutContainer
-          elements={this.state.elements}
-          namespaces={this.props.activeNamespaces}
+        <EmptyGraphLayout
           action={this.props.onEmptyGraphAction}
+          displayUnusedNodes={this.props.displayUnusedNodes}
+          elements={this.state.elements}
+          error={this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined}
+          isDisplayingUnusedNodes={this.props.showUnusedNodes}
           isLoading={this.state.isLoading}
           isError={this.state.isError}
-          error={this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined}
+          namespaces={this.props.activeNamespaces}
         >
           <CytoscapeContextMenuWrapper
             ref={this.contextMenuRef}
@@ -264,7 +248,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             groupContextMenuContent={this.props.contextMenuGroupComponent}
           />
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
-        </EmptyGraphLayoutContainer>
+        </EmptyGraphLayout>
       </div>
     );
   }
@@ -757,6 +741,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
+    // TODO: When the mini-graph is implemented, the following line must be removed. We don't
+    // want to set invalid URL params in the wrong page.
     history.push(makeNodeGraphUrlFromParams(urlParams));
     this.props.setNode(targetNode);
   };
@@ -1011,36 +997,3 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     });
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
-  edgeLabelMode: edgeLabelModeSelector(state),
-  graphType: graphTypeSelector(state),
-  layout: state.graph.layout,
-  refreshInterval: refreshIntervalSelector(state),
-  showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
-  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
-  showNodeLabels: state.graph.toolbarState.showNodeLabels,
-  showSecurity: state.graph.toolbarState.showSecurity,
-  showServiceNodes: state.graph.toolbarState.showServiceNodes,
-  showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
-  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
-  showVirtualServices: state.graph.toolbarState.showVirtualServices
-});
-
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
-  setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
-  setNode: bindActionCreators(GraphActions.setNode, dispatch),
-  updateGraph: (cyData: CyData) => dispatch(GraphActions.updateGraph(cyData)),
-  updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
-});
-
-const CytoscapeGraphContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps,
-  null,
-  { forwardRef: true }
-)(CytoscapeGraph);
-export default CytoscapeGraphContainer;

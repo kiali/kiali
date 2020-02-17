@@ -1,28 +1,10 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { Button, EmptyState, EmptyStateBody, EmptyStateIcon, EmptyStateVariant, Title } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
-import { KialiAppState } from '../store/Store';
-import { GraphToolbarActions } from '../actions/GraphToolbarActions';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
-import { KialiAppAction } from '../actions/KialiAppAction';
 import { KialiIcon } from '../config/KialiIcon';
 import { DecoratedGraphElements } from '../types/Graph';
-
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    isDisplayingUnusedNodes: state.graph.toolbarState.showUnusedNodes
-  };
-};
-
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
-  return {
-    displayUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)
-  };
-};
 
 type EmptyGraphLayoutProps = {
   elements?: DecoratedGraphElements;
@@ -45,7 +27,7 @@ const emptyStateStyle = style({
 
 type EmptyGraphLayoutState = {};
 
-export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
+export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
     const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);
@@ -159,9 +141,3 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     }
   }
 }
-
-const EmptyGraphLayoutContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(EmptyGraphLayout);
-export default EmptyGraphLayoutContainer;
