@@ -116,7 +116,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, WorkloadList: workloads},
 	}
 }
 
@@ -201,7 +201,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case Sidecars:
 		// Validations on Sidecars are not yet in place
 	case AuthorizationPolicies:
-		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces}
+		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, WorkloadList: workloads}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 	case ServiceRoles:
 		objectCheckers = []ObjectChecker{noServiceChecker}
