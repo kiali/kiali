@@ -6,6 +6,7 @@ import { style } from 'typestyle';
 import { PfColors } from '../Pf/PfColors';
 import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
+import { getDefaultWeights } from './IstioWizardActions';
 
 type Props = {
   serviceName: string;
@@ -48,21 +49,6 @@ class WeightedRouting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
-    const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
-    const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
-    const wkWeights: WorkloadWeight[] = workloads.map(workload => ({
-      name: workload.name,
-      weight: wkTraffic,
-      locked: false,
-      maxWeight: 100
-    }));
-    if (remainTraffic > 0) {
-      wkWeights[wkWeights.length - 1].weight = wkWeights[wkWeights.length - 1].weight + remainTraffic;
-    }
-    return wkWeights;
-  };
-
   resetState = () => {
     if (this.props.workloads.length === 0) {
       return;
@@ -73,7 +59,7 @@ class WeightedRouting extends React.Component<Props, State> {
           workloads:
             prevState.workloads.length === 0 && this.props.initWeights.length > 0
               ? this.props.initWeights
-              : this.getDefaultWeights(this.props.workloads)
+              : getDefaultWeights(this.props.workloads)
         };
       },
       () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, true)

@@ -450,13 +450,30 @@ const getWorkloadsByVersion = (workloads: WorkloadOverview[]): { [key: string]: 
   return wkdVersionName;
 };
 
+export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
+  const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
+  const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
+  const wkWeights: WorkloadWeight[] = workloads.map(workload => ({
+    name: workload.name,
+    weight: wkTraffic,
+    locked: false,
+    maxWeight: 100
+  }));
+  if (remainTraffic > 0) {
+    wkWeights[wkWeights.length - 1].weight = wkWeights[wkWeights.length - 1].weight + remainTraffic;
+  }
+  return wkWeights;
+};
+
 export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: VirtualServices): WorkloadWeight[] => {
   const wkdVersionName = getWorkloadsByVersion(workloads);
   const wkdWeights: WorkloadWeight[] = [];
   if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
     // Populate WorkloadWeights from a VirtualService
     virtualServices.items[0].spec.http![0].route!.forEach(route => {
-      if (route.destination.subset) {
+      // A wkdVersionName[route.destination.subset] === undefined may indicate that a VS contains a removed workload
+      // Checking before to add it to the Init Weights
+      if (route.destination.subset && wkdVersionName[route.destination.subset]) {
         wkdWeights.push({
           name: wkdVersionName[route.destination.subset],
           weight: route.weight || 0,
@@ -465,6 +482,28 @@ export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: V
         });
       }
     });
+  }
+  // Add new workloads with 0 weight if there is missing workloads
+  if (wkdWeights.length > 0 && workloads.length !== wkdWeights.length) {
+    for (let i = 0; i < workloads.length; i++) {
+      const wkd = workloads[i];
+      let newWkd = true;
+      for (let j = 0; j < wkdWeights.length; j++) {
+        const wkdWeight = wkdWeights[j];
+        if (wkd.name === wkdWeight.name) {
+          newWkd = false;
+          break;
+        }
+      }
+      if (newWkd) {
+        wkdWeights.push({
+          name: wkd.name,
+          weight: 0,
+          locked: false,
+          maxWeight: 100
+        });
+      }
+    }
   }
   return wkdWeights;
 };
@@ -482,9 +521,20 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
         httpRoute.match.forEach(m => (rule.matches = rule.matches.concat(parseHttpMatchRequest(m))));
       }
       if (httpRoute.route) {
-        httpRoute.route.forEach(r => rule.routes.push(wkdVersionName[r.destination.subset || '']));
+        httpRoute.route.forEach(r => {
+          const subset = r.destination.subset;
+          const workload = wkdVersionName[subset || ''];
+          // Not adding a route if a workload is not found with a destination subset
+          // That means that a workload has been deleted after a VS/DR has been generated
+          if (workload) {
+            rule.routes.push(workload);
+          }
+        });
       }
-      rules.push(rule);
+      // Not adding a rule if it has empty routes, probably this means that an existing workload was removed
+      if (rule.routes.length > 0) {
+        rules.push(rule);
+      }
     });
   }
   return rules;
