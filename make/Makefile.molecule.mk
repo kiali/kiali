@@ -2,8 +2,9 @@
 # Targets to run operator molecule tests.
 #
 
-# The test scenario to run - see molecule/ - all directories with a name *-test are scenarios you can run
+# The test scenario(s) to run - see molecule/ - all directories with a name *-test are scenarios you can run
 # Example: MOLECULE_SCENARIO=token-test make molecule-test
+# To run multiple scenarios sequentially: MOLECULE_SCENARIO="token-test roles-test" make molecule-test
 MOLECULE_SCENARIO ?= default
 
 ifeq ($(MOLECULE_DEBUG),true)
@@ -27,9 +28,9 @@ endif
 ## molecule-test: Runs Molecule tests using the Molecule docker image
 molecule-test:
 ifeq ($(DORP),docker)
-	docker run --rm -it -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name ${MOLECULE_SCENARIO}
+	for msn in ${MOLECULE_SCENARIO}; do docker run --rm -it -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 else
-	podman run --rm -it -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name ${MOLECULE_SCENARIO}
+	for msn in ${MOLECULE_SCENARIO}; do podman run --rm -it -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 endif
 
 ## molecule-test-all: Runs all Molecule tests using the Molecule docker image
