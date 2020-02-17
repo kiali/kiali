@@ -7,7 +7,6 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -116,51 +115,26 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 }
 
 func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNamespace string) bool {
-	appLabel := config.Get().IstioLabels.AppLabelName
-
 	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
 	if strings.HasPrefix(host.Service, "*") {
 		return true
 	}
 
 	// Covering 'servicename.namespace' host format scenario
-	localSvc, localNs := host.Service, host.Namespace
-	if !host.CompleteInput {
-		svcParts := strings.Split(host.Service, ".")
-		if len(svcParts) > 1 {
-			localSvc = svcParts[0]
-			localNs = svcParts[1]
-		}
-	}
+	localSvc, localNs := kubernetes.ParseTwoPartHost(host)
 
 	if localNs == itemNamespace {
 		// Check Workloads
-		for _, wl := range n.WorkloadList.Workloads {
-			if localSvc == wl.Labels[appLabel] {
-				return true
-			}
+		if matches := kubernetes.HasMatchingWorkloads(localSvc, models.GetLabels(n.WorkloadList.Workloads)); matches {
+			return matches
 		}
+
 		// Check ServiceNames
-		for _, s := range n.Services {
-			if localSvc == s.Name {
-				return true
-			}
+		if matches := kubernetes.HasMatchingServices(localSvc, n.Services); matches {
+			return matches
 		}
 	}
 
-	// Check ServiceEntries
-	for k := range n.ServiceEntries {
-		hostKey := k
-		if i := strings.Index(k, "*"); i > -1 {
-			hostKey = k[i+1:]
-		}
-		if strings.HasSuffix(host.Service, hostKey) {
-			return true
-		}
-	}
-
-	if _, found := n.ServiceEntries[host.Service]; found {
-		return true
-	}
-	return false
+	// Otherwise Check ServiceEntries
+	return kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries)
 }

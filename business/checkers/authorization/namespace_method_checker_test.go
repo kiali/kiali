@@ -67,11 +67,13 @@ func TestToMethodWrongHTTP(t *testing.T) {
 func sourceNamespaceAuthPolicy(nss []interface{}) kubernetes.IstioObject {
 	methods := []interface{}{"GET", "PUT", "PATCH"}
 	selector := map[string]interface{}{"app": "details"}
-	return data.CreateAuthorizationPolicy(nss, methods, selector)
+	hosts := []interface{}{"details"}
+	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }
 
 func toMethodsAuthPolicy(methods []interface{}) kubernetes.IstioObject {
 	nss := []interface{}{"bookinfo"}
 	selector := map[string]interface{}{"app": "details"}
-	return data.CreateAuthorizationPolicy(nss, methods, selector)
+	hosts := []interface{}{"details"}
+	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }

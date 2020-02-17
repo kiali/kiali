@@ -1,17 +1,12 @@
 package kubernetes
 
 import (
-	"fmt"
-	"strings"
-
 	apps_v1 "k8s.io/api/apps/v1"
 	autoscaling_v1 "k8s.io/api/autoscaling/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -549,83 +544,4 @@ func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
-}
-
-// Host represents the FQDN format for Istio hostnames
-type Host struct {
-	Service       string
-	Namespace     string
-	Cluster       string
-	CompleteInput bool
-}
-
-// ParseHost takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
-func ParseHost(hostName, namespace, cluster string) Host {
-	if cluster == "" {
-		cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
-	}
-
-	domainParts := strings.Split(hostName, ".")
-	host := Host{
-		Service: domainParts[0],
-	}
-	if len(domainParts) > 1 {
-		if len(domainParts) > 2 {
-			parsedClusterName := strings.Join(domainParts[2:], ".")
-			if parsedClusterName == cluster {
-				// FQDN input
-				host.Cluster = cluster
-				host.CompleteInput = true
-			}
-		}
-
-		if host.CompleteInput {
-			host.Namespace = domainParts[1]
-		} else {
-			// ServiceEntry or broken hostname
-			host.Service = hostName
-		}
-	} else {
-		// Simple format
-		host.Namespace = namespace
-		host.Cluster = cluster
-		host.CompleteInput = true
-	}
-
-	return host
-}
-
-// GetHost parses hostName and returns a Host struct. It considers Namespaces in the cluster to be more accurate
-// when deciding if the hostName is a ServiceEntry or a service.namespace host definition.
-func GetHost(hostName, namespace, cluster string, clusterNamespaces []string) Host {
-	hParts := strings.Split(hostName, ".")
-	// It might be a service entry or a 2-format host specification
-	if len(hParts) == 2 {
-		// It is subject of validation when object is within the namespace
-		// Otherwise is considered as a service entry
-		if hParts[1] == namespace || includes(clusterNamespaces, hParts[1]) {
-			return Host{
-				Service:       hParts[0],
-				Namespace:     hParts[1],
-				Cluster:       cluster,
-				CompleteInput: true,
-			}
-		}
-	}
-
-	return ParseHost(hostName, namespace, cluster)
-}
-
-func includes(nss []string, namespace string) bool {
-	for _, ns := range nss {
-		if ns == namespace {
-			return true
-		}
-	}
-	return false
-}
-
-// String outputs a full FQDN version of the Host
-func (h Host) String() string {
-	return fmt.Sprintf("%s.%s.%s", h.Service, h.Namespace, h.Cluster)
 }

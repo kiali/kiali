@@ -1,6 +1,8 @@
 package checkers
 
 import (
+	core_v1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -10,7 +12,10 @@ const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
 	AuthorizationPolicies []kubernetes.IstioObject
+	Namespace             string
 	Namespaces            models.Namespaces
+	ServiceEntries        []kubernetes.IstioObject
+	Services              []core_v1.Service
 	WorkloadList          models.WorkloadList
 }
 
@@ -28,10 +33,13 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject) models.IstioValidations {
 	policyName := authPolicy.GetObjectMeta().Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.GetObjectMeta().Namespace, AuthorizationPolicyCheckerType)
+	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
 
 	enabledCheckers := []Checker{
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.WorkloadSelectorChecker{AuthorizationPolicy: authPolicy, WorkloadList: a.WorkloadList},
+		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
+			ServiceEntries: serviceHosts, Services: a.Services},
 	}
 
 	for _, checker := range enabledCheckers {
