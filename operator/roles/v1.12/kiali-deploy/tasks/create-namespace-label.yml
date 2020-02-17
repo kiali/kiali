@@ -1,0 +1,30 @@
+- debug:
+    msg: "Create namespace label [{{ the_namespace_label_name }}={{ the_namespace_label_value }}] on namespace [{{ the_namespace }}]"
+
+- set_fact:
+    the_namespace_raw: {}
+    the_labeled_namespace: {}
+
+- name: "Get namespace [{{ the_namespace }}] that is to be labeled"
+  k8s_facts:
+    api_version: v1
+    kind: Namespace
+    name: "{{ the_namespace }}"
+    namespace: "{{ the_namespace }}"
+  register: the_namespace_raw
+
+- set_fact:
+    the_labeled_namespace: "{{ the_namespace_raw['resources'][0] | combine({'metadata': {'labels': { the_namespace_label_name: the_namespace_label_value }}}, recursive=True) }}"
+  when:
+  - the_namespace_raw['resources'] is defined
+  - the_namespace_raw['resources'][0] is defined
+
+- fail:
+    msg: "Failed to create the label to namespace [{{ the_namespace }}]"
+  when:
+  - the_labeled_namespace.metadata is not defined
+
+- name: "Saving label to namespace [{{ the_namespace }}]"
+  k8s:
+    state: "present"
+    definition: "{{ the_labeled_namespace }}"

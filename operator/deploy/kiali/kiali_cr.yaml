@@ -55,6 +55,32 @@ spec:
 #  istio_namespace: ""
 
 ##########
+# The version of Kiali to install. This is a named version or product name.
+# If not specified, a default version of Kiali will be installed which will be
+# the same version as that of the Kiali operator.
+#
+# This version setting affects the defaults of the deployment.image_name and
+# deployment.image_version settings. See the comments for those settings
+# below for additional details. But in short, this version setting will
+# dictate which version of the Kiali image will be deployed by default.
+# Note that if you explicitly set deployment.image_name and/or
+# deployment.image_version you are responsible for ensuring those settings
+# are compatible with this setting (i.e. the Kiali image must be compatible
+# with the rest of the configuration and resources the operator will install).
+#
+# The currently allowed values for this setting are:
+#   "default", "v1.0", "v1.12"
+#
+# Refer to this file to see where these values are defined in the master branch:
+# https://github.com/kiali/kiali/tree/master/operator/playbooks/default-supported-images.yml
+#
+# See the Kiali documentation to determine which of these versions support
+# the version of Istio you are installing Kiali with.
+#
+#  ---
+#  version: "default"
+
+##########
 #  ---
 #  api:
 #
@@ -171,8 +197,9 @@ spec:
 #      pod_anti: {}
 #
 # Determines which Kiali image to download and install.
-# If you set this to a specific name, you must make sure that image is supported by the operator.
-# If empty, the operator will use a known supported image name.
+# If you set this to a specific name (i.e. you do not leave it as the default empty string),
+# you must make sure that image is supported by the operator.
+# If empty, the operator will use a known supported image name based on which "version" was defined.
 # Note that, as a security measure, a cluster admin may have configured the Kiali operator to
 # ignore this setting. A cluster admin may do this to ensure the Kiali operator only installs
 # a single, specific Kiali version, thus this setting may have no effect depending on how the
@@ -195,8 +222,8 @@ spec:
 # Otherwise, you can set this to any valid Kiali version (such as "v1.0").
 # Note that if this is set to "latest" then the image_pull_policy will be "Always".
 # If you set this to a specific version (i.e. you do not leave it as the default empty string),
-# you must make sure that image version is supported by the operator.
-# If empty, the operator will use a known supported image version.
+# you must make sure that image is supported by the operator.
+# If empty, the operator will use a known supported image version based on which "version" was defined.
 # Note that, as a security measure, a cluster admin may have configured the Kiali operator to
 # ignore this setting. A cluster admin may do this to ensure the Kiali operator only installs
 # a single, specific Kiali version, thus this setting may have no effect depending on how the

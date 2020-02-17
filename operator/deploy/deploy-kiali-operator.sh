@@ -18,7 +18,9 @@
 # an attempt will be made to download it.
 #
 # To customize the behavior of this script, you can set one or more of the
-# following environment variables.
+# following environment variables or pass in their associated command
+# line arguments (run the script with "--help" for details on the command
+# line arguments available).
 #
 # -----------
 # Environment variables that affect the overall behavior of this script:
@@ -214,6 +216,13 @@
 #    already (or will) contain the credentials (i.e. the secret you must create manually).
 #    Default: kiali
 #
+# VERSION
+#    This is the value that will be passed directly to the Kiali CR's "version"
+#    setting when installing Kiali. This is a named version or product name.
+#    If not specified, a default version of Kiali will be installed which will
+#    be the same version as that of the Kiali operator. See the --help output
+#    for the --version option for more details.
+#
 ##############################################################################
 
 # process command line args to override environment
@@ -327,6 +336,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -um|--uninstall-mode)
       UNINSTALL_MODE="$2"
+      shift;shift
+      ;;
+    -v|--version)
+      VERSION="$2"
       shift;shift
       ;;
     -h|--help)
@@ -451,6 +464,17 @@ Valid options for Kiali installation (if Kiali is to be installed):
       required when logging into Kiali. This is only needed when the
       authentication strategy is "login".
       Default: "kiali"
+  -v|--version
+      The version of Kiali to install. This is a named version or product name.
+      If not specified, a default version of Kiali will be installed which will be
+      the same version as that of the Kiali operator.
+      This version setting affects the defaults of the --kiali-image-name and
+      --kiali-image-version settings such that this version will
+      dictate which version of the Kiali image will be deployed by default.
+      Note that if you explicitly set --kiali-image-name and/or
+      --kiali-image-version you are responsible for ensuring those settings
+      are compatible with this version setting (i.e. the Kiali image must be compatible
+      with the rest of the configuration and resources the operator will install).
 
 HELPMSG
       exit 1
@@ -1022,6 +1046,7 @@ echo JAEGER_URL=$JAEGER_URL
 echo NAMESPACE=$NAMESPACE
 echo SECRET_NAME=$SECRET_NAME
 echo _SECRET_EXISTS=$_SECRET_EXISTS
+echo VERSION=$VERSION
 echo "=== KIALI SETTINGS ==="
 
 # Uninstall any Kiali that already exists if we were asked to do so
@@ -1134,6 +1159,7 @@ metadata:
   name: kiali
 spec:
   $(build_spec_value istio_namespace ISTIO_NAMESPACE)
+  $(build_spec_value version VERSION)
   auth:
     $(build_spec_value strategy AUTH_STRATEGY)
   deployment:
