@@ -3,11 +3,17 @@ import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { config, Resource, TResource } from './Config';
 import VirtualItem from './VirtualItem';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector } from '../../store/Selectors';
+import { connect } from 'react-redux';
+import Namespace from '../../types/Namespace';
 
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {
   rows: R[];
+  activeNamespaces: Namespace[];
 };
 
 type VirtualListState = {
@@ -23,7 +29,7 @@ type VirtualListState = {
 // get the type of list user request
 const listRegex = /\/([a-z0-9-]+)/;
 
-export class VirtualList<R extends TResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
+class VirtualListC<R extends TResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
   constructor(props: VirtualListProps<R>) {
     super(props);
     const match = history.location.pathname.match(listRegex) || [];
@@ -82,16 +88,39 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
           marginBottom: '20px'
         }}
       >
-        {this.props.children}
-        <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
-          <TableHeader />
-          <tbody>
-            {rows.map((r, i) => {
-              return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
-            })}
-          </tbody>
-        </Table>
+        {this.props.rows.length > 0 ? (
+          <>
+            {this.props.children}
+            <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
+              <TableHeader />
+              <tbody>
+                {rows.map((r, i) => {
+                  return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
+                })}
+              </tbody>
+            </Table>
+          </>
+        ) : (
+          <EmptyState variant={EmptyStateVariant.full}>
+            <Title headingLevel="h5" size="lg">
+              No {this.state.type} found
+            </Title>
+            <EmptyStateBody>
+              No {this.state.type} in namespace
+              {this.props.activeNamespaces.length === 1
+                ? ` ${this.props.activeNamespaces[0].name}`
+                : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+            </EmptyStateBody>
+          </EmptyState>
+        )}
       </div>
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state)
+});
+
+const VirtualList = connect(mapStateToProps)(VirtualListC);
+export default VirtualList;

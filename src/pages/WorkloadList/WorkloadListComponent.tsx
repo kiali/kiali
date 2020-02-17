@@ -15,7 +15,7 @@ import { activeNamespacesSelector, durationSelector } from '../../store/Selector
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import { VirtualList } from '../../components/VirtualList/VirtualList';
+import VirtualList from '../../components/VirtualList/VirtualList';
 
 type WorkloadListComponentState = FilterComponent.State<WorkloadListItem>;
 

@@ -16,7 +16,7 @@ import { namespaceEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import { VirtualList } from '../../components/VirtualList/VirtualList';
+import VirtualList from '../../components/VirtualList/VirtualList';
 
 type AppListComponentState = FilterComponent.State<AppListItem>;
 

@@ -20,7 +20,7 @@ import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import { VirtualList } from '../../components/VirtualList/VirtualList';
+import VirtualList from '../../components/VirtualList/VirtualList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { ObjectValidation } from '../../types/IstioObjects';
 import IstioActionsNamespaceDropdown from '../../components/IstioActions/IstioActionsNamespaceDropdown';

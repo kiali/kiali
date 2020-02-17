@@ -17,7 +17,7 @@ import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
-import { VirtualList } from '../../components/VirtualList/VirtualList';
+import VirtualList from '../../components/VirtualList/VirtualList';
 
 type ServiceListComponentState = FilterComponent.State<ServiceListItem>;
 
