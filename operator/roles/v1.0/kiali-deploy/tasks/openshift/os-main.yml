@@ -1,0 +1,57 @@
+- name: Create Kiali objects on OpenShift
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "openshift"
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
+  - serviceaccount
+  - configmap
+  - role
+  - role-viewer
+  - rolebinding
+  - deployment
+  - service
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_openshift == True
+
+- name: Create Route on OpenShift if enabled
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "openshift"
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
+  - route
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_openshift == True
+  - kiali_vars.deployment.ingress_enabled == True
+
+- name: Delete Route on Kubernetes if disabled
+  k8s:
+    state: absent
+    api_version: "route.openshift.io/v1"
+    kind: "Route"
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+    name: "kiali"
+  when:
+  - is_openshift == True
+  - kiali_vars.deployment.ingress_enabled == False
+
+- name: Create additional Kiali roles on OpenShift
+  include_tasks: process-additional-roles.yml
+  vars:
+    process_resource_cluster: "openshift"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - is_openshift == True
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Process Kiali OAuth client on OpenShift
+  include: openshift/os-oauth.yml
+  when:
+  - is_openshift == True

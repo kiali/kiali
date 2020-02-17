@@ -75,7 +75,7 @@ metadata:
 spec:
   version: 1.12.0
   maturity: stable
-  replaces: kiali-operator.v1.0.9
+  replaces: kiali-operator.v1.0.10
   relatedImages:
   - name: kiali
     image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0
@@ -303,8 +303,12 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
-                - name: KIALI_IMAGE
-                  value: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0
+                - name: KIALI_IMAGE_default
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.10"
+                - name: KIALI_IMAGE_v1_0
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.10"
+                - name: KIALI_IMAGE_v1_12
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0"
               volumes:
               - name: runner
                 emptyDir: {}

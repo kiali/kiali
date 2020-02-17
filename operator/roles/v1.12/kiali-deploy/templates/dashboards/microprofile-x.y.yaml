@@ -1,0 +1,31 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: microprofile-x.y
+spec:
+  title: MicroProfile Metrics
+  runtime: MicroProfile
+  discoverOn: "base:gc_complete_scavenger_count"
+  items:
+  - chart:
+      name: "Young GC time"
+      unit: "seconds"
+      spans: 3
+      metricName: "base:gc_young_generation_scavenger_time_seconds"
+      dataType: "raw"
+  - chart:
+      name: "Young GC count"
+      spans: 3
+      metricName: "base:gc_young_generation_scavenger_count"
+      dataType: "raw"
+  - chart:
+      name: "Total GC time"
+      unit: "seconds"
+      spans: 3
+      metricName: "base:gc_complete_scavenger_time_seconds"
+      dataType: "raw"
+  - chart:
+      name: "Total GC count"
+      spans: 3
+      metricName: "base:gc_complete_scavenger_count"
+      dataType: "raw"

@@ -1,17 +1,3 @@
 ---
-- hosts: localhost
-  gather_facts: no
-  vars:
-    deployment:
-      image_version: dev
-      namespace: istio-system
-
-    # The Ansible SDK creates a "_kiali_io_kiali" variable that
-    # mimics the Kiali CR but maintains camelCase in key names.
-    # This will only be useful for certain cases (e.g. when
-    # tolerances or affinity are specified) so most times you
-    # can run with this empty (but it has to be defined).
-    _kiali_io_kiali: {}
-  roles:
-  - kiali-deploy
-  - kiali-remove
+- import_playbook: playbooks/kiali-deploy.yml
+- import_playbook: playbooks/kiali-remove.yml

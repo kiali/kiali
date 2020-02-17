@@ -1,0 +1,42 @@
+# All of this is ultimately to obtain the kiali_route_url
+
+# Give some time for the route to come up
+
+- name: Detect Kiali route on OpenShift
+  k8s_facts:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: kiali
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+  register: kiali_route_raw
+  until: kiali_route_raw['resources'] is defined and kiali_route_raw['resources'][0] is defined
+  retries: 6
+  delay: 10
+  when:
+  - is_openshift == True
+
+- name: Set Kiali TLS Termination from OpenShift route
+  set_fact:
+    kiali_route_tls_termination: "{{ kiali_route_raw['resources'][0]['spec']['tls']['termination'] }}"
+  when:
+  - is_openshift == True
+
+- name: Detect HTTP Kiali OpenShift route protocol
+  set_fact:
+    kiali_route_protocol: "http"
+  when:
+  - is_openshift == True
+  - kiali_route_tls_termination == ""
+
+- name: Detect HTTPS Kiali OpenShift route protocol
+  set_fact:
+    kiali_route_protocol: "https"
+  when:
+  - is_openshift == True
+  - kiali_route_tls_termination != ""
+
+- name: Create URL for Kiali OpenShift route
+  set_fact:
+    kiali_route_url: "{{ kiali_route_protocol }}://{{ kiali_route_raw['resources'][0]['status']['ingress'][0]['host'] }}"
+  when:
+  - is_openshift == True

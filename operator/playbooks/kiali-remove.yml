@@ -1,5 +1,5 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-  - import_role:
-      name: "kiali-remove"
+  - include_role:
+      name: "{{ version | default('default') }}/kiali-remove"

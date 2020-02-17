@@ -1,0 +1,40 @@
+- ignore_errors: yes
+  debug:
+    msg: "Remove namespace label [{{ the_namespace_label_name }}] from namespace [{{ the_namespace }}]"
+
+- ignore_errors: yes
+  set_fact:
+    the_namespace_raw: {}
+    the_labeled_namespace: {}
+    the_namespace_label_value: null
+
+- name: "Get namespace [{{ the_namespace }}] whose label is to be removed"
+  ignore_errors: yes
+  k8s_facts:
+    api_version: v1
+    kind: Namespace
+    name: "{{ the_namespace }}"
+    namespace: "{{ the_namespace }}"
+  register: the_namespace_raw
+
+- name: Set the namespace label to a value that will enable it to be deleted
+  ignore_errors: yes
+  set_fact:
+    the_labeled_namespace: "{{ the_namespace_raw['resources'][0] | combine({'metadata': {'labels': { the_namespace_label_name: the_namespace_label_value }}}, recursive=True) }}"
+  when:
+  - the_namespace_raw['resources'] is defined
+  - the_namespace_raw['resources'][0] is defined
+
+- ignore_errors: yes
+  debug:
+    msg: "Failed to remove the label from namespace [{{ the_namespace }}]. This usually happens if the namespace has been deleted."
+  when:
+  - the_labeled_namespace.metadata is not defined
+
+- name: "Saving the label removal from namespace [{{ the_namespace }}]"
+  ignore_errors: yes
+  k8s:
+    state: "present"
+    definition: "{{ the_labeled_namespace }}"
+  when:
+  - the_labeled_namespace.metadata is defined
