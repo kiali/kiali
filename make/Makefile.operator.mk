@@ -99,9 +99,9 @@ kiali-reload-image: .ensure-oc-exists
 
 ## run-operator-playbook: Run the operator dev playbook to run the operator ansible script locally.
 run-operator-playbook:
-	ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
+	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
 
 ## run-operator-playbook-tag: Run a tagged set of tasks via operator dev playbook to run parts of the operator ansible script locally.
 # To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
 run-operator-playbook-tag:
-	ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml --tags test
+	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml --tags test

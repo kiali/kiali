@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kiali
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: kiali-cert-secret
+spec:
+  type: {{ kiali_vars.deployment.service_type }}
+  ports:
+  - name: {{ 'http' if kiali_vars.identity.cert_file == "" else 'tcp' }}
+    protocol: TCP
+    port: {{ kiali_vars.server.port }}
+  selector:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+  {% if kiali_vars.deployment.additional_service_yaml is defined %}{{ kiali_vars.deployment.additional_service_yaml | to_nice_yaml(indent=0) | trim | indent(2) }}{% endif %}

@@ -1,0 +1,16 @@
+# Create the roles needed to access a given namespace.
+# If the namespace does not exist, this task will be skipped.
+- name: "Create additional Kiali roles in [{{ process_resource_cluster }}] namespace [{{ role_namespace }}]"
+  vars:
+    role_namespace_obj: "{{ lookup('k8s', namespace=role_namespace, kind='Namespace', resource_name=role_namespace, api_version='v1') }}"
+  include_tasks: process-resource.yml
+  loop:
+  - "{{ 'role-viewer' if kiali_vars.deployment.view_only_mode == True else 'role' }}"
+  - rolebinding
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - role_namespace_obj is defined
+  - role_namespace_obj.metadata is defined
+  - role_namespace_obj.metadata.name is defined
+  - role_namespace_obj.metadata.name == role_namespace

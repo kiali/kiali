@@ -11,6 +11,7 @@
       kind: Kiali
       namespace: "{{ cr_namespace }}"
       name: "{{ custom_resource.metadata.name }}"
+      wait: yes
 
   - name: Produce Files with Correct Parameters
     shell: " {{ item }}"
@@ -68,36 +69,43 @@
     k8s:
       state: absent
       definition: "{{ crd0 }}"
+      wait: yes
 
   - name: Removing Second Custom Resource Definition
     k8s:
       state: absent
       definition: "{{ crd1 }}"
+      wait: yes
 
   - name: Removing Role
     k8s:
       state: absent
       definition: "{{ role }}"
+      wait: yes
 
   - name: Removing Role Binding
     k8s:
       state: absent
       definition: "{{ role_binding }}"
+      wait: yes
 
   - name: Removing Service Account
     k8s:
       state: absent
       definition: "{{ service_account  }}"
+      wait: yes
 
   - name: Removing Operator Deployment
     k8s:
       state: absent
       definition: "{{ operator }}"
+      wait: yes
 
   - name: Removing Operator namespace
     k8s:
       state: absent
       definition: "{{ namespace }}"
+      wait: yes
     when:
     - kiali.operator_namespace != istio.control_plane_namespace
 
@@ -107,6 +115,7 @@
       api_version: v1
       kind: Namespace
       name: "{{ cr_namespace }}"
+      wait: yes
     when:
     - cr_namespace != istio.control_plane_namespace
     - cr_namespace != kiali.operator_namespace

@@ -1,5 +1,38 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-  - import_role:
-      name: "kiali-deploy"
+
+  - name: Determine the version that is to be installed
+    set_fact:
+      version: "{{ version | default('default') }}"
+
+  - name: Determine the default supported images for all known versions
+    include_vars:
+      file: "default-supported-images.yml"
+      name: supported_kiali_images
+
+  - name: Override the supported images if found in the environment
+    set_fact:
+      supported_kiali_images: "{{ supported_kiali_images | default({}) | combine({item.key: {'image_name': lookup('env', 'KIALI_IMAGE_' + (item.key | replace('.','_'))) | regex_replace('(.+):.+', '\\1'), 'image_version': lookup('env', 'KIALI_IMAGE_' + (item.key | replace('.','_'))) | regex_replace('.+:(.+)', '\\1')}}, recursive=True) }}"
+    loop: "{{ supported_kiali_images | default({}) | dict2items }}"
+    when:
+    - lookup('env', 'KIALI_IMAGE_' + (item.key | replace('.','_')))
+
+  - name: Examine environment and determine if supported image for the requested version is overridden even if no default is known
+    vars:
+      supported_image_env: "{{ lookup('env', 'KIALI_IMAGE_' + (version | replace('.','_'))) }}"
+    set_fact:
+      supported_kiali_images: "{{ supported_kiali_images | default({}) | combine({version: {'image_name': supported_image_env | regex_replace('(.+):.+', '\\1'), 'image_version': supported_image_env | regex_replace('.+:(.+)', '\\1')}}, recursive=True) }}"
+    when:
+    - supported_image_env is defined
+    - supported_image_env != ""
+
+  - name: Make sure a default supported image or an override image is known
+    fail:
+      msg: "Asked to install a version [{{ version }}] that does not have a known supported image."
+    when:
+    - supported_kiali_images[version] is not defined
+
+  - name: Run the version-specific deploy role
+    include_role:
+      name: "{{ version }}/kiali-deploy"
