@@ -88,31 +88,33 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
           marginBottom: '20px'
         }}
       >
-        {this.props.rows.length > 0 ? (
-          <>
-            {this.props.children}
-            <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
-              <TableHeader />
-              <tbody>
-                {rows.map((r, i) => {
-                  return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
-                })}
-              </tbody>
-            </Table>
-          </>
-        ) : (
-          <EmptyState variant={EmptyStateVariant.full}>
-            <Title headingLevel="h5" size="lg">
-              No {this.state.type} found
-            </Title>
-            <EmptyStateBody>
-              No {this.state.type} in namespace
-              {this.props.activeNamespaces.length === 1
-                ? ` ${this.props.activeNamespaces[0].name}`
-                : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-            </EmptyStateBody>
-          </EmptyState>
-        )}
+        {this.props.children}
+        <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
+          <TableHeader />
+          <tbody>
+            {this.props.rows.length > 0 ? (
+              rows.map((r, i) => {
+                return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
+              })
+            ) : (
+              <tr>
+                <td colSpan={tableProps.cells.length}>
+                  <EmptyState variant={EmptyStateVariant.full}>
+                    <Title headingLevel="h5" size="lg">
+                      No {this.state.type} found
+                    </Title>
+                    <EmptyStateBody>
+                      No {this.state.type} in namespace
+                      {this.props.activeNamespaces.length === 1
+                        ? ` ${this.props.activeNamespaces[0].name}`
+                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                    </EmptyStateBody>
+                  </EmptyState>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
       </div>
     );
   }
