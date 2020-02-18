@@ -25,6 +25,7 @@ import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
 import { AdditionalItem } from 'types/Workload';
 import { TextOrLink } from 'components/TextOrLink';
+import { renderAPILogo } from 'components/Logo/Logos';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -98,6 +99,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
                       <Text component={TextVariants.h3}> {additionalItem.title} </Text>
+                      {additionalItem.icon && renderAPILogo(additionalItem.icon, idx)}
                       <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
                   );

@@ -45,11 +45,6 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
       if (aSC !== bSC) {
         return aSC - bSC;
       }
-      // Then by API type
-      const cmp = (a.apiType || '').localeCompare(b.apiType || '');
-      if (cmp !== 0) {
-        return cmp;
-      }
       // Finally by name
       return a.name.localeCompare(b.name);
     }

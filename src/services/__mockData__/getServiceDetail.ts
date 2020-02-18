@@ -49,10 +49,6 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
       ]
     }
   ],
-  apiDocumentation: {
-    hasSpec: true,
-    type: 'rest'
-  },
   virtualServices: {
     items: [
       {

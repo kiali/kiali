@@ -20,7 +20,6 @@ import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import { ApiDocumentation } from '../../components/ApiDocumentation/ApiDocumentation';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { KialiAppState } from '../../store/Store';
 import PfTitle from '../../components/Pf/PfTitle';
@@ -93,10 +92,6 @@ const emptyService: ServiceDetailsInfo = {
     }
   },
   validations: {},
-  apiDocumentation: {
-    type: '',
-    hasSpec: false
-  },
   additionalDetails: []
 };
 
@@ -542,20 +537,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         );
       }
       tabsArray.push(jaegerTag);
-    }
-
-    if (this.state.serviceDetailsInfo.apiDocumentation && this.state.serviceDetailsInfo.apiDocumentation.hasSpec) {
-      const docTabIndex = tabsArray.length;
-      const docTab: any = (
-        <Tab eventKey={docTabIndex} title={'API Doc'} key="API Doc">
-          <ApiDocumentation
-            apiType={this.state.serviceDetailsInfo.apiDocumentation.type}
-            namespace={this.props.match.params.namespace}
-            service={this.props.match.params.service}
-          />
-        </Tab>
-      );
-      tabsArray.push(docTab);
     }
 
     return (

@@ -89,7 +89,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
                | 
             </span>
             <span
-              key="runtime-1"
+              key="logo-1"
             >
               42
             </span>

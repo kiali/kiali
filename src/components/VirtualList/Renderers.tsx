@@ -10,7 +10,7 @@ import { WorkloadListItem } from '../../types/Workload';
 import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
-import { ApiTypeIndicator } from '../ApiDocumentation/ApiTypeIndicator';
+import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
 
 // Links
@@ -43,15 +43,14 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
-  const apiType = (item as ServiceListItem).apiType;
-  const hasApiType = apiType && apiType !== '';
-  const spacer = hasMissingSC && hasApiType;
+  const icon: string | undefined = (item as any).icon;
+  const spacer = hasMissingSC && icon;
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
       <span>
         {hasMissingSC && <MissingSidecar namespace={item.namespace} />}
         {spacer && ' '}
-        {hasApiType && <ApiTypeIndicator apiType={(item as ServiceListItem).apiType} />}
+        {icon && renderAPILogo(icon, 0)}
       </span>
     </td>
   );

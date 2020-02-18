@@ -9,7 +9,7 @@ import { config } from './Config';
 import { icons } from './Icons';
 
 // Logos
-import { kialiLogo } from './Logos';
+import kialiLogo from '../assets/img/logo-alt.svg';
 
 // Paths
 import { Paths } from './Paths';

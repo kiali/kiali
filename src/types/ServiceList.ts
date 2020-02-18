@@ -11,7 +11,7 @@ export interface ServiceList {
 export interface ServiceOverview {
   name: string;
   istioSidecar: boolean;
-  apiType: string;
+  icon?: string;
 }
 
 export interface ServiceListItem extends ServiceOverview {

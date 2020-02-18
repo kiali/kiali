@@ -57,6 +57,7 @@ export interface WorkloadOverview {
   name: string;
   type: string;
   istioSidecar: boolean;
+  icon?: string;
   appLabel: boolean;
   versionLabel: boolean;
 }
@@ -84,4 +85,5 @@ export interface DashboardRef {
 export interface AdditionalItem {
   title: string;
   value: string;
+  icon?: string;
 }

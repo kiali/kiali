@@ -3,7 +3,6 @@ import { Workload } from '../../../types/Workload';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
-import { runtimesLogoProviders } from '../../../config/Logos';
 import Labels from '../../../components/Label/Labels';
 import {
   Card,
@@ -18,6 +17,7 @@ import {
   Title
 } from '@patternfly/react-core';
 import { TextOrLink } from 'components/TextOrLink';
+import { renderRuntimeLogo, renderAPILogo } from 'components/Logo/Logos';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -32,14 +32,6 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
   constructor(props: WorkloadDescriptionProps) {
     super(props);
     this.state = {};
-  }
-
-  renderLogo(name: string, idx: number): JSX.Element {
-    const logoProvider = runtimesLogoProviders[name];
-    if (logoProvider) {
-      return <img key={'logo-' + idx} src={logoProvider} alt={name} title={name} />;
-    }
-    return <span key={'runtime-' + idx}>{name}</span>;
   }
 
   render() {
@@ -79,6 +71,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
                       <Text component={TextVariants.h3}> {additionalItem.title} </Text>
+                      {additionalItem.icon && renderAPILogo(additionalItem.icon, idx)}
                       <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
                   );
@@ -87,7 +80,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                   <StackItem id="runtimes">
                     <Text component={TextVariants.h3}> Runtimes</Text>
                     {runtimes
-                      .map((rt, idx) => this.renderLogo(rt, idx))
+                      .map((rt, idx) => renderRuntimeLogo(rt, idx))
                       .reduce(
                         (list: JSX.Element[], elem) =>
                           list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
