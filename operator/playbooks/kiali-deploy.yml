@@ -12,9 +12,6 @@
       name: supported_kiali_images
 
   - name: Override the supported images if found in the environment
-    vars:
-      loop_items: "{{ supported_kiali_images | default({}) | dict2items }}"
-    loop: "{{ loop_items }}"
     set_fact:
       supported_kiali_images: "{{ supported_kiali_images | default({}) | combine({item.key: {'image_name': lookup('env', 'KIALI_IMAGE_' + (item.key | replace('.','_'))) | regex_replace('(.+):.+', '\\1'), 'image_version': lookup('env', 'KIALI_IMAGE_' + (item.key | replace('.','_'))) | regex_replace('.+:(.+)', '\\1')}}, recursive=True) }}"
     loop: "{{ supported_kiali_images | default({}) | dict2items }}"
