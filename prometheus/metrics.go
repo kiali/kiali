@@ -58,7 +58,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
 	}
 	if protocol == "" || protocol == "http" {
-		httpLabels := append(labels, `response_code=~"^[4-5]\d\d$"`)
+		httpLabels := append(labels, `response_code=~"^[4-5]\\d\\d$"`)
 		errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
 	}
 
