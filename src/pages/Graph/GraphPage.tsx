@@ -1,3 +1,4 @@
+import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -6,17 +7,27 @@ import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
-import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { EdgeLabelMode, GraphType, Layout, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../../types/Graph';
+import {
+  CyData,
+  CytoscapeClickEvent,
+  EdgeLabelMode,
+  GraphType,
+  Layout,
+  NodeParamsType,
+  NodeType,
+  SummaryData,
+  UNKNOWN
+} from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
+import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
 import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
 import GraphToolbarContainer from './GraphToolbar/GraphToolbar';
 import GraphLegend from './GraphLegend';
-import EmptyGraphLayoutContainer from '../../components/EmptyGraphLayout';
+import EmptyGraphLayout from '../../components/EmptyGraphLayout';
 import SummaryPanel from './SummaryPanel';
 import {
   activeNamespacesSelector,
@@ -25,6 +36,7 @@ import {
   graphTypeSelector,
   lastRefreshAtSelector,
   meshWideMTLSEnabledSelector,
+  refreshIntervalSelector,
   replayActiveSelector,
   replayQueryTimeSelector
 } from '../../store/Selectors';
@@ -43,6 +55,8 @@ import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource from '../../services/GraphDataSource';
+import { NamespaceActions } from '../../actions/NamespaceAction';
+import GraphThunkActions from '../../actions/GraphThunkActions';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -56,6 +70,7 @@ type GraphURLPathProps = {
 type ReduxProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
+  displayUnusedNodes: () => void;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
@@ -63,13 +78,23 @@ type ReduxProps = {
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
   node?: NodeParamsType;
+  onReady: (cytoscapeRef: any) => void;
+  refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
+  setActiveNamespaces: (namespace: Namespace[]) => void;
+  showCircuitBreakers: boolean;
   showLegend: boolean;
+  showMissingSidecars: boolean;
+  showNodeLabels: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
+  showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
+  showVirtualServices: boolean;
   summaryData: SummaryData | null;
+  updateGraph: (cyData: CyData) => void;
+  updateSummary: (event: CytoscapeClickEvent) => void;
   mtlsEnabled: boolean;
 
   graphChanged: () => void;
@@ -130,7 +155,12 @@ const graphLegendStyle = style({
 const GraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
-      <EmptyGraphLayoutContainer namespaces={[]} isError={true} />
+      <EmptyGraphLayout
+        namespaces={[]}
+        isError={true}
+        isDisplayingUnusedNodes={false}
+        displayUnusedNodes={() => undefined}
+      />
     </div>
   );
 };
@@ -332,7 +362,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
               {(!this.props.replayActive || isReplayReady) && (
                 <TourStopContainer info={GraphTourStops.Graph}>
                   <TourStopContainer info={GraphTourStops.ContextualMenu}>
-                    <CytoscapeGraphContainer
+                    <CytoscapeGraph
                       onEmptyGraphAction={this.handleEmptyGraphAction}
                       containerClassName={cytoscapeGraphContainerStyle}
                       ref={refInstance => this.setCytoscapeGraph(refInstance)}
@@ -341,6 +371,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
                       contextMenuNodeComponent={NodeContextMenuContainer}
                       contextMenuGroupComponent={NodeContextMenuContainer}
                       dataSource={this.graphDataSource}
+                      {...this.props}
                     />
                   </TourStopContainer>
                 </TourStopContainer>
@@ -433,22 +464,33 @@ const mapStateToProps = (state: KialiAppState) => ({
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
   node: state.graph.node,
+  refreshInterval: refreshIntervalSelector(state),
   replayActive: replayActiveSelector(state),
   replayQueryTime: replayQueryTimeSelector(state),
+  showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
   showLegend: state.graph.toolbarState.showLegend,
+  showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
+  showNodeLabels: state.graph.toolbarState.showNodeLabels,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
+  showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
   showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
+  showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  graphChanged: bindActionCreators(GraphActions.changed, dispatch),
-  setNode: bindActionCreators(GraphActions.setNode, dispatch),
-  toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
+  displayUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch),
   endTour: bindActionCreators(TourActions.endTour, dispatch),
-  startTour: bindActionCreators(TourActions.startTour, dispatch)
+  graphChanged: bindActionCreators(GraphActions.changed, dispatch),
+  onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
+  setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
+  setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  startTour: bindActionCreators(TourActions.startTour, dispatch),
+  toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
+  updateGraph: (cyData: CyData) => dispatch(GraphActions.updateGraph(cyData)),
+  updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
 const GraphPageContainer = connect(

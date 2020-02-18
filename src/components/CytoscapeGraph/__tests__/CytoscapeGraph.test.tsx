@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import { CytoscapeGraph } from '../CytoscapeGraph';
+import CytoscapeGraph from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { EdgeLabelMode, GraphType, Layout } from '../../../types/Graph';
 import EmptyGraphLayoutContainer from '../../EmptyGraphLayout';
@@ -65,6 +65,7 @@ describe('CytoscapeGraph component test', () => {
         showVirtualServices={true}
         graphType={GraphType.VERSIONED_APP}
         dataSource={dataSource}
+        displayUnusedNodes={() => undefined}
       />
     );
 
