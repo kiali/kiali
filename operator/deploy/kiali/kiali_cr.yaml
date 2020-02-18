@@ -24,7 +24,8 @@ spec:
 #  additional_display_details: []
 #
 # A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
-# Each item in the list is an object with "annotation" and "title" fields to indicate which annotation is to be displayed and how it should be displayed.*
+# Each item in the list is an object with "annotation", "title" and "icon_annotation" fields to indicate which annotation is to be displayed and how it should be displayed.
+# At the moment, "icon_annotation" possible values are "rest", "grpc" and "graphql".
 # For example:
 #    - annotation: "domain/my-annotation"
 #      title: "My Annotation"
@@ -110,20 +111,6 @@ spec:
 #      - "ibm.*"
 #      - "kiali-operator"
 #      #label_selector:
-
-##########
-#  ---
-#  apidocs:
-#
-# Configure the api documentation
-# Use  api_spec_annotation_name and api_type_annotation_name if you want
-# to customize the annotation names to use on your services
-#
-#    ---
-#    annotations:
-#      api_spec_annotation_name: "kiali.io/api-spec"
-#      api_type_annotation_name: "kiali.io/api-type"
-
 
 ##########
 #  ---

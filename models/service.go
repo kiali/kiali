@@ -19,10 +19,10 @@ type ServiceOverview struct {
 	// required: true
 	// example: true
 	AppLabel bool `json:"appLabel"`
-	// Type of api being served (graphql, grpc, rest)
+	// Additional icon, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
-	ApiType string `json:"apiType,omitempty"`
+	Icon string `json:"icon"`
 }
 
 type ServiceList struct {
@@ -46,7 +46,6 @@ type ServiceDetails struct {
 	Health            ServiceHealth     `json:"health"`
 	Validations       IstioValidations  `json:"validations"`
 	NamespaceMTLS     MTLSStatus        `json:"namespaceMTLS"`
-	ApiDocumentation  ApiDocumentation  `json:"apiDocumentation"`
 	AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 }
 
@@ -62,11 +61,6 @@ type Service struct {
 	Ip              string            `json:"ip"`
 	Ports           Ports             `json:"ports"`
 	ExternalName    string            `json:"externalName"`
-}
-
-type ApiDocumentation struct {
-	Type    string `json:"type,omitempty"`
-	HasSpec bool   `json:"hasSpec,omitempty"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -118,8 +112,4 @@ func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCrea
 func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
 	s.DestinationRules.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
 	(&s.DestinationRules).Parse(dr)
-}
-
-func (s *ServiceDetails) SetApiDocumentation(apidoc ApiDocumentation) {
-	s.ApiDocumentation = apidoc
 }

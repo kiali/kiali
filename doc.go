@@ -44,7 +44,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation namespaceValidations
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -90,7 +90,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList errorTraces tracesDetail serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
+// swagger:parameters serviceDetails spansList tracesList errorTraces tracesDetail serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
 type ServiceParam struct {
 	// The service name.
 	//

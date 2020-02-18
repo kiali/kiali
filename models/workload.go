@@ -50,6 +50,11 @@ type WorkloadListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
+	// Icon, such as type of api being served (graphql, grpc, rest)
+	// example: rest
+	// required: false
+	Icon string `json:"icon"`
+
 	// Workload labels
 	Labels map[string]string `json:"labels"`
 
@@ -114,6 +119,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.IstioSidecar = w.HasIstioSidecar()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
+	workload.Icon = w.Icon
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
@@ -134,6 +140,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
 	workload.ResourceVersion = meta.ResourceVersion
 	workload.AdditionalDetails = GetAdditionalDetails(conf, meta.Annotations)
+	workload.Icon = GetFirstAdditionalIcon(conf, meta.Annotations)
 }
 
 func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
@@ -301,19 +308,4 @@ func (workload *Workload) HasIstioSidecar() bool {
 	}
 	// Need to check each pod
 	return workload.Pods.HasIstioSidecar()
-}
-
-func GetAdditionalDetails(conf *config.Config, annotations map[string]string) []AdditionalItem {
-	items := []AdditionalItem{}
-	for _, itemConfig := range conf.AdditionalDisplayDetails {
-		if itemConfig.Annotation != "" {
-			if value, ok := annotations[itemConfig.Annotation]; ok {
-				items = append(items, AdditionalItem{
-					Title: itemConfig.Title,
-					Value: value,
-				})
-			}
-		}
-	}
-	return items
 }

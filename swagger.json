@@ -1867,45 +1867,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/services/{service}/apispec": {
-      "get": {
-        "description": "Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
-        "operationId": "serviceApiDocumentation",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/services/{service}/dashboard": {
       "get": {
         "description": "Endpoint to fetch dashboard to be displayed, related to a single service",
@@ -3357,6 +3318,10 @@
     "AdditionalItem": {
       "type": "object",
       "properties": {
+        "icon": {
+          "type": "string",
+          "x-go-name": "Icon"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
@@ -3407,20 +3372,6 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
-    },
-    "ApiDocumentation": {
-      "type": "object",
-      "properties": {
-        "hasSpec": {
-          "type": "boolean",
-          "x-go-name": "HasSpec"
-        },
-        "type": {
-          "type": "string",
-          "x-go-name": "Type"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
     },
     "App": {
       "type": "object",
@@ -5241,9 +5192,6 @@
           },
           "x-go-name": "AdditionalDetails"
         },
-        "apiDocumentation": {
-          "$ref": "#/definitions/ApiDocumentation"
-        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -5448,17 +5396,17 @@
         "appLabel"
       ],
       "properties": {
-        "apiType": {
-          "description": "Type of api being served (graphql, grpc, rest)",
-          "type": "string",
-          "x-go-name": "ApiType",
-          "example": "rest"
-        },
         "appLabel": {
           "description": "Has label app",
           "type": "boolean",
           "x-go-name": "AppLabel",
           "example": true
+        },
+        "icon": {
+          "description": "Additional icon, such as type of api being served (graphql, grpc, rest)",
+          "type": "string",
+          "x-go-name": "Icon",
+          "example": "rest"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Service has an IstioSidecar deployed",
@@ -6038,6 +5986,12 @@
           "x-go-name": "DesiredReplicas",
           "example": 2
         },
+        "icon": {
+          "description": "Icon, such as type of api being served (graphql, grpc, rest)",
+          "type": "string",
+          "x-go-name": "Icon",
+          "example": "rest"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
@@ -6181,6 +6135,12 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "icon": {
+          "description": "Icon, such as type of api being served (graphql, grpc, rest)",
+          "type": "string",
+          "x-go-name": "Icon",
+          "example": "rest"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
