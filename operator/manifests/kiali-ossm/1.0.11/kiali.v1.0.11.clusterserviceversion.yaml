@@ -1,17 +1,17 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: kiali-operator.v1.12.0
+  name: kiali-operator.v1.0.11
   namespace: placeholder
   annotations:
     categories: Monitoring,Logging & Tracing
     certified: "false"
-    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
+    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.0.11
     capabilities: Seamless Upgrades
     support: Red Hat
     description: "Kiali project provides answers to the questions: What microservices are part of my Istio service mesh and how are they connected?"
     repository: https://github.com/kiali/kiali
-    createdAt: 2020-01-07T00:00:00Z
+    createdAt: 2020-02-18T19:29:58Z
     alm-examples: |-
       [
         {
@@ -73,12 +73,9 @@ metadata:
         }
       ]
 spec:
-  version: 1.12.0
+  version: 1.0.11
   maturity: stable
-  replaces: kiali-operator.v1.0.11
-  relatedImages:
-  - name: kiali
-    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0
+  replaces: kiali-operator.v1.0.10
   displayName: Kiali Operator
   description: |-
     ## About the managed application
@@ -115,7 +112,7 @@ spec:
 
     For quick descriptions of all the settings you can configure in the Kiali
     Custom Resource (CR), see the file
-    [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.12.0/operator/deploy/kiali/kiali_cr.yaml)
+    [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.0/operator/deploy/kiali/kiali_cr.yaml)
 
     Note that the Kiali operator can be told to restrict Kiali's access to
     specific namespaces, or can provide to Kiali cluster-wide access to all
@@ -264,26 +261,12 @@ spec:
               name: kiali-operator
               labels:
                 app: kiali-operator
-                version: v1.12.0
-              annotations:
-                prometheus.io/scrape: "true"
-                prometheus.io/port: "8383"
+                version: v1.0.11
             spec:
               serviceAccountName: kiali-operator
               containers:
-              - name: ansible
-                command:
-                - /usr/local/bin/ao-logs
-                - /tmp/ansible-operator/runner
-                - stdout
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
-                imagePullPolicy: "IfNotPresent"
-                volumeMounts:
-                - mountPath: /tmp/ansible-operator/runner
-                  name: runner
-                  readOnly: true
               - name: operator
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.0
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.0.11
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
@@ -303,12 +286,6 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
-                - name: KIALI_IMAGE_default
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.10"
-                - name: KIALI_IMAGE_v1_0
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.10"
-                - name: KIALI_IMAGE_v1_12
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.0"
               volumes:
               - name: runner
                 emptyDir: {}
@@ -428,30 +405,6 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups: ["config.openshift.io"]
-          resources:
-          - clusteroperators
-          verbs:
-          - list
-          - watch
-        - apiGroups: ["config.openshift.io"]
-          resourceNames:
-          - kube-apiserver
-          resources:
-          - clusteroperators
-          verbs:
-          - get
-        - apiGroups: ["console.openshift.io"]
-          resources:
-          - consolelinks
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
         - apiGroups: ["monitoring.kiali.io"]
           resources:
           - monitoringdashboards
@@ -502,13 +455,84 @@ spec:
           - get
           - list
           - watch
-        - apiGroups:
-          - config.istio.io
-          - networking.istio.io
-          - authentication.istio.io
-          - rbac.istio.io
-          - security.istio.io
-          resources: ["*"]
+        - apiGroups: ["config.istio.io"]
+          resources:
+          - adapters
+          - apikeys
+          - bypasses
+          - authorizations
+          - checknothings
+          - circonuses
+          - cloudwatches
+          - deniers
+          - dogstatsds
+          - edges
+          - fluentds
+          - handlers
+          - instances
+          - kubernetesenvs
+          - kuberneteses
+          - listcheckers
+          - listentries
+          - logentries
+          - memquotas
+          - metrics
+          - noops
+          - opas
+          - prometheuses
+          - quotas
+          - quotaspecbindings
+          - quotaspecs
+          - rbacs
+          - redisquotas
+          - reportnothings
+          - rules
+          - signalfxs
+          - solarwindses
+          - stackdrivers
+          - statsds
+          - stdios
+          - templates
+          - tracespans
+          - zipkins
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["networking.istio.io"]
+          resources:
+          - destinationrules
+          - gateways
+          - serviceentries
+          - sidecars
+          - virtualservices
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["authentication.istio.io"]
+          resources:
+          - meshpolicies
+          - policies
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["rbac.istio.io"]
+          resources:
+          - clusterrbacconfigs
+          - rbacconfigs
+          - servicerolebindings
+          - serviceroles
           verbs:
           - create
           - delete
