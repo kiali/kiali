@@ -46,10 +46,10 @@ func TestVSWithRepeatingSubsets(t *testing.T) {
 	assert.Len(validations, 4)
 	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/subset")
+	assert.Regexp(`spec\/http\[0\]\/route\[[0,2]\]\/subset`, validations[0].Path)
 	assert.Equal(validations[3].Message, models.CheckMessage("virtualservices.route.repeatedsubset"))
 	assert.Equal(validations[3].Severity, models.WarningSeverity)
-	assert.Equal(validations[3].Path, "spec/http[0]/route[3]/subset")
+	assert.Regexp(`spec\/http\[0\]\/route\[[1,3]\]\/subset`, validations[3].Path)
 }
 
 func fakeValidVirtualService() kubernetes.IstioObject {
