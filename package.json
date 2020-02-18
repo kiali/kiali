@@ -86,7 +86,7 @@
     "react-ace": "6.4.0",
     "react-bootstrap": "0.32.4",
     "react-copy-to-clipboard": "5.0.1",
-    "react-datepicker": "^2.10.1",
+    "react-datepicker": "2.10.1",
     "react-dom": "16.9.0",
     "react-flexview": "4.0.3",
     "react-floater": "0.6.4",
