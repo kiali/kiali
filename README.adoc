@@ -70,6 +70,9 @@ property to `package.json` with the url of kiali.
   "bugs": {
 ...
 ----
+For a video on getting a Kiali-ui development environment running please see (complete with tips/tricks):
+
+video::v4MN04nQNCU[youtube]
 
 If Kiali is configured with a specific web root, make sure to append it to the URL. On many setups with Kubernetes, the web root will be `/kiali` by default.
 
