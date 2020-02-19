@@ -152,7 +152,7 @@ else
   $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
 fi
 
-$ISTIOCTL create -n ${NAMESPACE} -f ${GATEWAY_YAML}
+$CLIENT_EXE create -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
 if [ "${MONGO_ENABLED}" == "true" ]; then
   echo "Installing Mongo DB and a ratings service that uses it"
