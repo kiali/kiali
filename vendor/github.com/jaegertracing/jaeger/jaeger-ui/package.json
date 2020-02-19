@@ -56,13 +56,14 @@
     "coverage": "lerna run coverage",
     "eslint": "eslint --cache 'scripts/*.{js,ts,tsx}' 'packages/*/src/**/*.{js,ts,tsx}' 'packages/*/*.{js,ts,tsx}'",
     "lint": "npm-run-all -ln --parallel prettier-lint tsc-lint eslint check-license",
-    "prepare": "lerna run --stream --sort prepublishOnly",
+    "prepare": "yarn run snyk-protect && lerna run --stream --sort prepublishOnly",
     "prettier": "prettier --write '{.,scripts}/*.{js,json,md,ts,tsx}' 'packages/*/{src,demo/src}/**/!(layout.worker.bundled|react-vis).{css,js,json,md,ts,tsx}' 'packages/*/*.{css,js,json,md,ts,tsx}'",
     "prettier-lint": "prettier --list-different '{.,scripts}/*.{js,json,md,ts,tsx}' 'packages/*/{src,demo/src}/**/!(layout.worker.bundled|react-vis).{css,js,json,md,ts,tsx}' 'packages/*/*.{css,js,json,md,ts,tsx}'",
     "test": "lerna run test",
     "tsc-lint": "tsc --build",
     "tsc-lint-debug": "tsc --listFiles",
-    "start": "cd packages/jaeger-ui && yarn start"
+    "start": "cd packages/jaeger-ui && yarn start",
+    "snyk-protect": "snyk protect"
   },
   "prettier": {
     "printWidth": 110,
@@ -74,5 +75,9 @@
     "hooks": {
       "pre-commit": "npm-run-all -ln --parallel lint test"
     }
+  },
+  "snyk": true,
+  "dependencies": {
+    "snyk": "^1.294.0"
   }
 }
