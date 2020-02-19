@@ -167,8 +167,8 @@ Valid command line arguments:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
        --set values.kiali.tag=v1.9
-       --set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi
-       --set telemetry.components.telemetry.k8s.resources.requests.cpu=50m
+       --set components.telemetry.k8s.resources.requests.memory=100Mi
+       --set components.telemetry.k8s.resources.requests.cpu=50m
   -h|--help:
        this message
 HELPMSG
@@ -189,11 +189,6 @@ if [ "${CLIENT_EXE}" = "" ]; then
     echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
     exit 1
   fi
-fi
-
-# If OpenShift, install CNI
-if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-  CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
 fi
 
 if [ "${ISTIO_DIR}" == "" ]; then
@@ -226,6 +221,18 @@ if [ ! -f "${ISTIOCTL}" ]; then
 fi
 
 echo "istioctl is found here: ${ISTIOCTL}"
+
+# If OpenShift, install CNI
+if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+  # Istio 1.4 had different option names than 1.5+
+  if ${ISTIOCTL} --remote=false version | grep -q 1.4 ; then
+    CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
+    TELEMETRY_OPTIONS="--set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi --set telemetry.components.telemetry.k8s.resources.requests.cpu=50m"
+  else
+    CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
+    TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
+  fi
+fi
 
 # When installing Istio (i.e. not deleting it) perform some preparation steps
 if [ "${DELETE_ISTIO}" != "true" ]; then
@@ -277,8 +284,7 @@ for s in \
    "--set values.global.controlPlaneSecurityEnabled=${MTLS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "${CNI_OPTIONS}" \
-   "--set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi" \
-   "--set telemetry.components.telemetry.k8s.resources.requests.cpu=50m" \
+   "${TELEMETRY_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
