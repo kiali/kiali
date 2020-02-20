@@ -1,13 +1,25 @@
 import * as React from 'react';
 import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
 import ToolbarDropdown from '../../components/ToolbarDropdown/ToolbarDropdown';
-import { Button, Card, CardBody, Checkbox, Grid, GridItem, Text, TextVariants, Tooltip } from '@patternfly/react-core';
+import {
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  Grid,
+  GridItem,
+  Text,
+  TextVariants,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Tooltip
+} from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
 import { JaegerItem } from '../../components/JaegerIntegration/JaegerResults';
 import { JaegerScatter } from '../../components/JaegerIntegration/JaegerScatter';
-import { PfColors } from '../../components/Pf/PfColors';
 import { JaegerSearchOptions, convTagsLogfmt } from '../../components/JaegerIntegration/RouteHelper';
 import { HistoryManager, URLParam } from '../../app/History';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
@@ -120,15 +132,16 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
     return this.props.traces.filter(trace => trace.duration >= min && trace.duration <= max);
   };
 
-  setErrorTraces = () => {
-    const errorTraces = !this.state.errorTraces;
-    this.setState({ errorTraces: !this.state.errorTraces });
+  setErrorTraces = (key: string) => {
+    let errorTraces = false;
     let tags = this.state.options.tags || '';
-    if (errorTraces) {
+    if (key === 'Error traces') {
+      errorTraces = true;
       tags === '' ? (tags = 'error=true') : (tags += ' error=true');
     } else {
       tags = tags.replace(/ ?error=true/, '');
     }
+    this.setState({ errorTraces: errorTraces });
     this.onOptionsChange('JAEGER_TAGS', tags);
     this.props.onRefresh();
   };
@@ -246,42 +259,69 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
             <Card>
               <CardBody>
                 <RenderHeader>
-                  <Grid>
-                    <GridItem span={2}>
-                      <Text component={TextVariants.h5} style={{ display: '-webkit-inline-box', marginRight: '10px' }}>
-                        Interval Trace
-                      </Text>
-                      <ToolbarDropdown
-                        options={this.state.traceIntervalDuration}
-                        value={this.state.traceIntervalDuration[this.state.selectedTraceIntervalDuration]}
-                        handleSelect={key => this.handleIntervalDuration(key)}
-                      />
-                    </GridItem>
-                    <GridItem span={2}>
-                      <Text component={TextVariants.h5} style={{ display: '-webkit-inline-box', marginRight: '10px' }}>
-                        Limit Results
-                      </Text>
-                      <ToolbarDropdown
-                        options={config.tracing.configuration.limitResults}
-                        value={config.tracing.configuration.limitResults[this.state.selectedLimitSpans]}
-                        handleSelect={key => this.handleLimitDuration(key)}
-                      />
-                    </GridItem>
-                    <GridItem span={2}>
-                      <Text
-                        component={TextVariants.h5}
-                        style={{ display: '-webkit-inline-box', marginLeft: '-40px', marginRight: '10px' }}
-                      >
-                        Status Code
-                      </Text>
-                      <ToolbarDropdown
-                        options={config.tracing.configuration.statusCode}
-                        value={config.tracing.configuration.statusCode[this.state.selectedStatusCode]}
-                        handleSelect={key => this.handleStatusCode(key)}
-                      />
-                    </GridItem>
-                    <GridItem span={2}>
-                      <div style={{ marginTop: '10px' }}>
+                  <Toolbar>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <Text
+                          component={TextVariants.h5}
+                          style={{ display: '-webkit-inline-box', marginRight: '10px' }}
+                        >
+                          Interval Trace
+                        </Text>
+                        <ToolbarDropdown
+                          options={this.state.traceIntervalDuration}
+                          value={this.state.traceIntervalDuration[this.state.selectedTraceIntervalDuration]}
+                          handleSelect={key => this.handleIntervalDuration(key)}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <Text
+                          component={TextVariants.h5}
+                          style={{ display: '-webkit-inline-box', marginRight: '10px' }}
+                        >
+                          Limit Results
+                        </Text>
+                        <ToolbarDropdown
+                          options={config.tracing.configuration.limitResults}
+                          value={config.tracing.configuration.limitResults[this.state.selectedLimitSpans]}
+                          handleSelect={key => this.handleLimitDuration(key)}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <Text
+                          component={TextVariants.h5}
+                          style={{ display: '-webkit-inline-box', marginRight: '10px' }}
+                        >
+                          Status Code
+                        </Text>
+                        <ToolbarDropdown
+                          options={config.tracing.configuration.statusCode}
+                          value={config.tracing.configuration.statusCode[this.state.selectedStatusCode]}
+                          handleSelect={key => this.handleStatusCode(key)}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <Text
+                          component={TextVariants.h5}
+                          style={{ display: '-webkit-inline-box', marginRight: '10px' }}
+                        >
+                          Display
+                        </Text>
+                        <ToolbarDropdown
+                          options={{ 'All traces': 'All traces', 'Error traces': 'Error traces' }}
+                          value={this.state.errorTraces ? 'Error traces' : 'All traces'}
+                          handleSelect={key => this.setErrorTraces(key)}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup>
+                      <ToolbarItem>
                         <Checkbox
                           label="Adjust time"
                           isChecked={this.state.fixedTime}
@@ -292,32 +332,24 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           id="check-adjust-time"
                           name="check-adjust-time"
                         />
-                      </div>
-                    </GridItem>
-                    <GridItem span={2} />
-                    <GridItem span={2}>
-                      <Tooltip content={<>{!this.state.errorTraces ? 'Show Error Traces' : 'Show All Traces'}</>}>
-                        <Button
-                          variant="tertiary"
-                          onClick={() => this.setErrorTraces()}
-                          style={this.state.errorTraces ? { backgroundColor: PfColors.Blue100 } : {}}
-                        >
-                          {!this.state.errorTraces ? 'Errors' : 'All'}
-                        </Button>
-                      </Tooltip>
-                      {this.props.urlJaeger !== '' && (
-                        <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                          <Button
-                            variant="link"
-                            onClick={() => window.open(this.getJaegerUrl(), '_blank')}
-                            style={{ marginLeft: '10px' }}
-                          >
-                            View in Tracing <ExternalLinkAltIcon />
-                          </Button>
-                        </Tooltip>
-                      )}
-                    </GridItem>
-                  </Grid>
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    {this.props.urlJaeger !== '' && (
+                      <ToolbarGroup style={{ marginLeft: 'auto' }}>
+                        <ToolbarItem>
+                          <Tooltip content={<>Open Chart in Jaeger UI</>}>
+                            <Button
+                              variant="link"
+                              onClick={() => window.open(this.getJaegerUrl(), '_blank')}
+                              style={{ marginLeft: '10px' }}
+                            >
+                              View in Tracing <ExternalLinkAltIcon />
+                            </Button>
+                          </Tooltip>
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                    )}
+                  </Toolbar>
                 </RenderHeader>
                 <Grid style={{ margin: '20px' }}>
                   <GridItem span={12}>
