@@ -24,11 +24,21 @@ spec:
 #  additional_display_details: []
 #
 # A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
-# Each item in the list is an object with "annotation", "title" and "icon_annotation" fields to indicate which annotation is to be displayed and how it should be displayed.
-# At the moment, "icon_annotation" possible values are "rest", "grpc" and "graphql".
-# For example:
-#    - annotation: "domain/my-annotation"
-#      title: "My Annotation"
+# It can typically be used to inject some CI meta-data or documentation links into Kiali views.
+# Each item in the list is an object with "annotation", "title" and "icon_annotation" fields to indicate which annotation Kiali needs to look for, and how it should be displayed.
+# "icon_annotation" is optional and would display an icon next to the text.
+# At the moment, the value of the icon annotation can only be one of "rest", "grpc" or "graphql", or be ignored.
+# For example, this config:
+#    - annotation: "my-domain/api-documentation"
+#      icon_annotation: "my-domain/api-type"
+#      title: "API Documentation"
+#    - annotation: "my-domain/gitsha"
+#      title: "GIT Commit"
+# would make Kiali recognize these annotations in a service or a workload definition (Deployment, StatefulSet, etc.) to display the appropriate link and text:
+#    annotations:
+#      my-domain/api-documentation: http://link/to/my/doc
+#      my-domain/api-type: rest
+#      my-domain/gitsha: c6da17cf
 
 ##########
 # Tag used to identify a particular instance/installation of the Kiali server.

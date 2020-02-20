@@ -13,11 +13,8 @@ kiali_defaults:
   istio_namespace: ""
   version: "v1.12"
 
-  additional_display_details:
-  - title: "API Documentation"
-    annotation: "kiali.io/api-spec"
-    icon_annotation: "kiali.io/api-type"
-    
+  additional_display_details: []
+
   api:
     namespaces:
       exclude:
@@ -27,6 +24,11 @@ kiali_defaults:
       - "ibm.*"
       - "kiali-operator"
       #label_selector:
+
+  apidocs:
+    annotations:
+      api_spec_annotation_name: "kiali.io/api-spec"
+      api_type_annotation_name: "kiali.io/api-type"
 
   auth:
     ldap:
