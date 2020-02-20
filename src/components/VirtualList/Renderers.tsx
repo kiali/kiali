@@ -43,14 +43,16 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
-  const icon: string | undefined = (item as any).icon;
-  const spacer = hasMissingSC && icon;
+  const additionalDetails = (item as WorkloadListItem | ServiceListItem).icon;
+  const spacer = hasMissingSC && additionalDetails && additionalDetails.icon;
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
       <span>
         {hasMissingSC && <MissingSidecar namespace={item.namespace} />}
         {spacer && ' '}
-        {icon && renderAPILogo(icon, 0)}
+        {additionalDetails &&
+          additionalDetails.icon &&
+          renderAPILogo(additionalDetails.icon, additionalDetails.title, 0)}
       </span>
     </td>
   );

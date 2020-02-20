@@ -71,7 +71,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
                       <Text component={TextVariants.h3}> {additionalItem.title} </Text>
-                      {additionalItem.icon && renderAPILogo(additionalItem.icon, idx)}
+                      {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
                       <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
                   );

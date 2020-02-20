@@ -11,10 +11,16 @@ import GoLogo from '../../assets/img/go-logo.png';
 import MicroProfileLogo from '../../assets/img/microprofile-logo.png';
 import JVMLogo from '../../assets/img/java-logo.png';
 
-const renderLogo = (name: string, idx: number, logoSet: { [key: string]: any }, className?: string): JSX.Element => {
+const renderLogo = (
+  name: string,
+  title: string | undefined,
+  idx: number,
+  logoSet: { [key: string]: any },
+  className?: string
+): JSX.Element => {
   const logo = logoSet[name];
   if (logo) {
-    return <img key={'logo-' + idx} src={logo} alt={name} title={name} className={className} />;
+    return <img key={'logo-' + idx} src={logo} alt={name} title={title} className={className} />;
   }
   return <span key={'logo-' + idx}>{name}</span>;
 };
@@ -29,7 +35,7 @@ const runtimesLogos = {
   JVM: JVMLogo
 };
 
-export const renderRuntimeLogo = (name: string, idx: number): JSX.Element => renderLogo(name, idx, runtimesLogos);
+export const renderRuntimeLogo = (name: string, idx: number): JSX.Element => renderLogo(name, name, idx, runtimesLogos);
 
 // API types
 const apiLogos = {
@@ -44,4 +50,5 @@ const iconStyle = style({
   width: 30
 });
 
-export const renderAPILogo = (name: string, idx: number): JSX.Element => renderLogo(name, idx, apiLogos, iconStyle);
+export const renderAPILogo = (name: string, title: string | undefined, idx: number): JSX.Element =>
+  renderLogo(name, title, idx, apiLogos, iconStyle);

@@ -1,6 +1,7 @@
 import Namespace from './Namespace';
 import { ServiceHealth } from './Health';
 import { Validations, ObjectValidation } from './IstioObjects';
+import { AdditionalItem } from './Workload';
 
 export interface ServiceList {
   namespace: Namespace;
@@ -11,7 +12,7 @@ export interface ServiceList {
 export interface ServiceOverview {
   name: string;
   istioSidecar: boolean;
-  icon?: string;
+  icon?: AdditionalItem;
 }
 
 export interface ServiceListItem extends ServiceOverview {
