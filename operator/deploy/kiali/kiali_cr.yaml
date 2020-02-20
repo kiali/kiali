@@ -21,24 +21,23 @@ spec:
 
 ##########
 #  ---
-#  additional_display_details: []
+#  additional_display_details:
+#    - title: "API Documentation"
+#      annotation: "kiali.io/api-spec"
+#      icon_annotation: "kiali.io/api-type"
 #
 # A list of additional details that Kiali will look for in annotations and display, for every workloads and services, in their respective details pages.
 # It can typically be used to inject some CI meta-data or documentation links into Kiali views.
 # Each item in the list is an object with "annotation", "title" and "icon_annotation" fields to indicate which annotation Kiali needs to look for, and how it should be displayed.
 # "icon_annotation" is optional and would display an icon next to the text.
 # At the moment, the value of the icon annotation can only be one of "rest", "grpc" or "graphql", or be ignored.
-# For example, this config:
-#    - annotation: "my-domain/api-documentation"
-#      icon_annotation: "my-domain/api-type"
-#      title: "API Documentation"
-#    - annotation: "my-domain/gitsha"
-#      title: "GIT Commit"
-# would make Kiali recognize these annotations in a service or a workload definition (Deployment, StatefulSet, etc.) to display the appropriate link and text:
+# By default, this settings recognizes API Documention links via annotation "kiali.io/api-spec" and icon-annotation "kiali.io/api-type".
+# For example, it would make Kiali recognize these annotations in a service or a workload definition (Deployment, StatefulSet, etc.) to display the appropriate link and text:
 #    annotations:
-#      my-domain/api-documentation: http://link/to/my/doc
-#      my-domain/api-type: rest
-#      my-domain/gitsha: c6da17cf
+#      kiali.io/api-spec: http://link/to/my/doc
+#      kiali.io/api-type: rest
+# Should you change this setting for your own custom annotations, keep in mind that it would override the current default.
+# So you would have to copy the "API Documentation" setting as shown above if you want to preserve these links.
 
 ##########
 # Tag used to identify a particular instance/installation of the Kiali server.
