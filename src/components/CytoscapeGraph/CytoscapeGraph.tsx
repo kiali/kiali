@@ -657,6 +657,27 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     this.graphHighlighter!.onClick(event);
   };
 
+  // This allows us to navigate to the service details page when zoomed in on nodes
+  private handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
+    const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
+      return `/namespaces/${namespace}/${nodeType}/${name}`;
+    };
+    const nodeType = targetNode.nodeType;
+    let urlNodeType = targetNode.nodeType + 's';
+    let name = targetNode.app;
+    if (nodeType === 'service') {
+      name = targetNode.service;
+    } else if (nodeType === 'workload') {
+      name = targetNode.workload;
+    } else {
+      urlNodeType = 'applications';
+    }
+    const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+    console.warn(detailsPageUrl);
+    history.push(detailsPageUrl);
+    return;
+  };
+
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
     const target = event.summaryTarget;
     const targetType = event.summaryType;
@@ -724,7 +745,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           sameNode = true; // don't navigate to unsupported node type
       }
     }
+
     if (sameNode) {
+      this.handleDoubleTapSameNode(targetNode);
       return;
     }
 
