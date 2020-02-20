@@ -53,7 +53,7 @@ type WorkloadListItem struct {
 	// Icon, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
-	Icon string `json:"icon"`
+	Icon *AdditionalItem `json:"icon"`
 
 	// Workload labels
 	Labels map[string]string `json:"labels"`

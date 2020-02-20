@@ -22,7 +22,7 @@ type ServiceOverview struct {
 	// Additional icon, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
-	Icon string `json:"icon"`
+	Icon *AdditionalItem `json:"icon"`
 }
 
 type ServiceList struct {
