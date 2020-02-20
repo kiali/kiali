@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { NodeType, GraphNodeData } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { Tooltip, Badge, PopoverPosition } from '@patternfly/react-core';
+import { Tooltip, Badge, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
 import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
 
@@ -11,13 +11,14 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   switch (nodeType || nodeData.nodeType) {
     case NodeType.APP:
       return (
-        <Tooltip content={<>Application</>}>
+        <Tooltip position={TooltipPosition.auto} content={<>Application</>}>
           <Badge className="virtualitem_badge_definition">A</Badge>
         </Tooltip>
       );
     case NodeType.SERVICE:
       return !!nodeData.isServiceEntry ? (
         <Tooltip
+          position={TooltipPosition.auto}
           content={
             <>{nodeData.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry'}</>
           }
@@ -25,19 +26,19 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
           <Badge className="virtualitem_badge_definition">SE</Badge>
         </Tooltip>
       ) : (
-        <Tooltip content={<>Service</>}>
+        <Tooltip position={TooltipPosition.auto} content={<>Service</>}>
           <Badge className="virtualitem_badge_definition">S</Badge>
         </Tooltip>
       );
     case NodeType.WORKLOAD:
       return (
-        <Tooltip content={<>Workload</>}>
+        <Tooltip position={TooltipPosition.auto} content={<>Workload</>}>
           <Badge className="virtualitem_badge_definition">W</Badge>
         </Tooltip>
       );
     default:
       return (
-        <Tooltip content={<>Unknown</>}>
+        <Tooltip position={TooltipPosition.auto} content={<>Unknown</>}>
           <Badge className="virtualitem_badge_definition">U</Badge>
         </Tooltip>
       );

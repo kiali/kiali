@@ -270,7 +270,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <>
         <span>
-          <Tooltip position={TooltipPosition.top} content={<>Namespace</>}>
+          <Tooltip position={TooltipPosition.auto} content={<>Namespace</>}>
             <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
               NS
             </Badge>
