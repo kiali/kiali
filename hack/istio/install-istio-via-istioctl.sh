@@ -321,7 +321,9 @@ else
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
-    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/kiali
+    if [ "${KIALI_ENABLED}" == "true" ]; then
+      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/kiali
+    fi
     ${CLIENT_EXE} -n ${NAMESPACE} expose svc/prometheus
 
     echo "===== IMPORTANT ====="
