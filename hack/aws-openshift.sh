@@ -403,6 +403,9 @@ cd ${SCRIPT_ROOT}
 # The default version of OpenShift to be downloaded
 DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.3.0"
 
+# The default path under mirror.openshift.com/pub/openshift-v4 where the version downloads are found
+DEFAULT_OCP_URL_PATH="ocp"
+
 # The default number of worker nodes that should be in the cluster.
 DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES="4"
 
@@ -499,6 +502,10 @@ while [[ $# -gt 0 ]]; do
       LOCAL_PLATFORM="$2"
       shift;shift
       ;;
+    -odp|--ocp-dev-preview)
+      OCP_URL_PATH="ocp-dev-preview"
+      shift
+      ;;
     -ov|--openshift-version)
       OPENSHIFT_DOWNLOAD_VERSION="$2"
       shift;shift
@@ -584,6 +591,9 @@ Valid options that configure the hack script itself and the cluster:
   -lp|--local-platform <platform>
       The platform indicator to determine what binaries to download.
       Default: linux (mac if MacOS is detected)
+  -odp|--ocp-dev-preview
+      If specified, the OCP installer and client will be downloaded from the ocp-dev-preview download location.
+      This assumes the version specified (-ov) is a dev preview version and not a released version.
   -ov|--openshift-version <version>
       The version of OpenShift to use.
       Default: ${DEFAULT_OPENSHIFT_DOWNLOAD_VERSION}
@@ -717,8 +727,8 @@ debug "The OpenShift binaries will be downloaded into directory: ${OPENSHIFT_DOW
 debug "The OpenShift installer install directory will be: ${OPENSHIFT_INSTALL_PATH}"
 
 # Determine where to get the binaries and their full paths and how to execute them.
-OPENSHIFT_INSTALLER_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_DOWNLOAD_VERSION}/openshift-install-${LOCAL_PLATFORM}-${OPENSHIFT_DOWNLOAD_VERSION}.tar.gz"
-OPENSHIFT_CLIENT_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OPENSHIFT_DOWNLOAD_VERSION}/openshift-client-${LOCAL_PLATFORM}-${OPENSHIFT_DOWNLOAD_VERSION}.tar.gz"
+OPENSHIFT_INSTALLER_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/${OCP_URL_PATH:-${DEFAULT_OCP_URL_PATH}}/${OPENSHIFT_DOWNLOAD_VERSION}/openshift-install-${LOCAL_PLATFORM}-${OPENSHIFT_DOWNLOAD_VERSION}.tar.gz"
+OPENSHIFT_CLIENT_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/${OCP_URL_PATH:-${DEFAULT_OCP_URL_PATH}}/${OPENSHIFT_DOWNLOAD_VERSION}/openshift-client-${LOCAL_PLATFORM}-${OPENSHIFT_DOWNLOAD_VERSION}.tar.gz"
 
 OPENSHIFT_INSTALLER_EXE="${OPENSHIFT_DOWNLOAD_PATH}/openshift-install"
 OC="${OPENSHIFT_DOWNLOAD_PATH}/oc"
