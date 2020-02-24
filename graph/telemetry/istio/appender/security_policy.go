@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -57,7 +58,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	// 1) query for requests originating from a workload outside the namespace. This may include unnecessary istio
 	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
 	//    traffic will be ignored because it won't map to the trafficMap.
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy"
+	groupBy := "source_workload_namespace,source_workload,source_canonical_service,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_app,destination_version,connection_security_policy"
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
@@ -109,12 +110,14 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
+		lSourceCS, sourceCSOk := m["source_canonical_service"]
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
+		lDestCS, destCSOk := m["destination_canonical_service"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
 		lCsp, cspOk := m["connection_security_policy"]
@@ -126,15 +129,17 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 
 		sourceWlNs := string(lSourceWlNs)
 		sourceWl := string(lSourceWl)
-		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
 		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
-		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		csp := string(lCsp)
+
+		// set app in a backward compatible way
+		sourceApp := util.HandleApp(string(lSourceApp), string(lSourceCS), sourceCSOk)
+		destApp := util.HandleApp(string(lDestApp), string(lDestCS), destCSOk)
 
 		val := float64(s.Value)
 
