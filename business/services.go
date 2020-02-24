@@ -118,10 +118,10 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		/** Check if Service has additional item icon */
 		services[i] = models.ServiceOverview{
-			Name:         item.Name,
-			IstioSidecar: hasSidecar,
-			AppLabel:     appLabel,
-			Icon:         models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
+			Name:                   item.Name,
+			IstioSidecar:           hasSidecar,
+			AppLabel:               appLabel,
+			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 		}
 	}
 

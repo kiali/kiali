@@ -50,10 +50,10 @@ type WorkloadListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
-	// Icon, such as type of api being served (graphql, grpc, rest)
+	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
-	Icon *AdditionalItem `json:"icon"`
+	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
 
 	// Workload labels
 	Labels map[string]string `json:"labels"`
@@ -119,7 +119,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.IstioSidecar = w.HasIstioSidecar()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
-	workload.Icon = w.Icon
+	workload.AdditionalDetailSample = w.AdditionalDetailSample
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
@@ -140,7 +140,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
 	workload.ResourceVersion = meta.ResourceVersion
 	workload.AdditionalDetails = GetAdditionalDetails(conf, meta.Annotations)
-	workload.Icon = GetFirstAdditionalIcon(conf, meta.Annotations)
+	workload.AdditionalDetailSample = GetFirstAdditionalIcon(conf, meta.Annotations)
 }
 
 func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {

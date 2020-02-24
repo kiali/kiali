@@ -5396,17 +5396,14 @@
         "appLabel"
       ],
       "properties": {
+        "additionalDetailSample": {
+          "$ref": "#/definitions/AdditionalItem"
+        },
         "appLabel": {
           "description": "Has label app",
           "type": "boolean",
           "x-go-name": "AppLabel",
           "example": true
-        },
-        "icon": {
-          "description": "Additional icon, such as type of api being served (graphql, grpc, rest)",
-          "type": "string",
-          "x-go-name": "Icon",
-          "example": "rest"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Service has an IstioSidecar deployed",
@@ -5945,6 +5942,9 @@
         "availableReplicas"
       ],
       "properties": {
+        "additionalDetailSample": {
+          "$ref": "#/definitions/AdditionalItem"
+        },
         "additionalDetails": {
           "description": "Additional details to display, such as configured annotations",
           "type": "array",
@@ -5985,12 +5985,6 @@
           "format": "int32",
           "x-go-name": "DesiredReplicas",
           "example": 2
-        },
-        "icon": {
-          "description": "Icon, such as type of api being served (graphql, grpc, rest)",
-          "type": "string",
-          "x-go-name": "Icon",
-          "example": "rest"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
@@ -6124,6 +6118,9 @@
         "podCount"
       ],
       "properties": {
+        "additionalDetailSample": {
+          "$ref": "#/definitions/AdditionalItem"
+        },
         "appLabel": {
           "description": "Define if Pods related to this Workload has the label App",
           "type": "boolean",
@@ -6135,12 +6132,6 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
-        },
-        "icon": {
-          "description": "Icon, such as type of api being served (graphql, grpc, rest)",
-          "type": "string",
-          "x-go-name": "Icon",
-          "example": "rest"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",

@@ -19,10 +19,10 @@ type ServiceOverview struct {
 	// required: true
 	// example: true
 	AppLabel bool `json:"appLabel"`
-	// Additional icon, such as type of api being served (graphql, grpc, rest)
+	// Additional detail sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
-	Icon *AdditionalItem `json:"icon"`
+	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
 }
 
 type ServiceList struct {
