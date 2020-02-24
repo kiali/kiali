@@ -225,7 +225,7 @@ echo "istioctl is found here: ${ISTIOCTL}"
 # If OpenShift, install CNI
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   # Istio 1.4 had different option names than 1.5+
-  if ${ISTIOCTL} --remote=false version | grep -q 1.4 ; then
+  if ${ISTIOCTL} --remote=false version | grep -q "1\.4" ; then
     CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
     TELEMETRY_OPTIONS="--set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi --set telemetry.components.telemetry.k8s.resources.requests.cpu=50m"
   else
