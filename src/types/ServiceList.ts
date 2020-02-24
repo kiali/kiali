@@ -12,7 +12,7 @@ export interface ServiceList {
 export interface ServiceOverview {
   name: string;
   istioSidecar: boolean;
-  icon?: AdditionalItem;
+  additionalDetailSample?: AdditionalItem;
 }
 
 export interface ServiceListItem extends ServiceOverview {

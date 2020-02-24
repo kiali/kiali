@@ -19,7 +19,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -32,26 +32,40 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Workload Name',
     isNumeric: false,
     param: 'wn',
-    compare: (a, b) => a.name.localeCompare(b.name)
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.name.localeCompare(b.name)
   },
   {
     id: 'workloadtype',
     title: 'Workload Type',
     isNumeric: false,
     param: 'wt',
-    compare: (a, b) => a.type.localeCompare(b.type)
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.type.localeCompare(b.type)
   },
   {
     id: 'details',
     title: 'Details',
     isNumeric: false,
     param: 'is',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       // First sort by missing sidecar
       const aSC = hasMissingSidecar(a) ? 1 : 0;
       const bSC = hasMissingSidecar(b) ? 1 : 0;
       if (aSC !== bSC) {
         return aSC - bSC;
+      }
+      // Then by additional details
+      const iconA = a.additionalDetailSample && a.additionalDetailSample.icon;
+      const iconB = b.additionalDetailSample && b.additionalDetailSample.icon;
+      if (iconA || iconB) {
+        if (iconA && iconB) {
+          const cmp = iconA.localeCompare(iconB);
+          if (cmp !== 0) {
+            return cmp;
+          }
+        } else {
+          // Make asc => icon absence is last
+          return iconA ? -1 : 1;
+        }
       }
       // Finally by name
       return a.name.localeCompare(b.name);
@@ -62,7 +76,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'App Label',
     isNumeric: false,
     param: 'al',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       if (a.appLabel && !b.appLabel) {
         return -1;
       } else if (!a.appLabel && b.appLabel) {
@@ -77,7 +91,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Version Label',
     isNumeric: false,
     param: 'vl',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       if (a.versionLabel && !b.versionLabel) {
         return -1;
       } else if (!a.versionLabel && b.versionLabel) {
@@ -92,7 +106,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Label Validation',
     isNumeric: false,
     param: 'lb',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       if (a.versionLabel && a.appLabel && !(b.versionLabel && b.appLabel)) {
         return -1;
       } else if (!(a.versionLabel && a.appLabel) && (b.versionLabel && b.appLabel)) {

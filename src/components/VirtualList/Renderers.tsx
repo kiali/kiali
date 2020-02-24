@@ -43,7 +43,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const hasMissingSC = hasMissingSidecar(item);
-  const additionalDetails = (item as WorkloadListItem | ServiceListItem).icon;
+  const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = hasMissingSC && additionalDetails && additionalDetails.icon;
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>

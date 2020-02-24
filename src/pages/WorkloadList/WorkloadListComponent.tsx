@@ -112,7 +112,7 @@ class WorkloadListComponent extends FilterComponent.Component<
         appLabel: deployment.appLabel,
         versionLabel: deployment.versionLabel,
         istioSidecar: deployment.istioSidecar,
-        icon: deployment.icon,
+        additionalDetailSample: deployment.additionalDetailSample,
         healthPromise: API.getWorkloadHealth(
           data.namespace.name,
           deployment.name,

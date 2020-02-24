@@ -18,7 +18,7 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a, b) => {
+    compare: (a: ServiceListItem, b: ServiceListItem) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -31,19 +31,33 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
     title: 'Service Name',
     isNumeric: false,
     param: 'sn',
-    compare: (a, b) => a.name.localeCompare(b.name)
+    compare: (a: ServiceListItem, b: ServiceListItem) => a.name.localeCompare(b.name)
   },
   {
     id: 'details',
     title: 'Details',
     isNumeric: false,
     param: 'is',
-    compare: (a, b) => {
+    compare: (a: ServiceListItem, b: ServiceListItem) => {
       // First sort by missing sidecar
       const aSC = hasMissingSidecar(a) ? 1 : 0;
       const bSC = hasMissingSidecar(b) ? 1 : 0;
       if (aSC !== bSC) {
         return aSC - bSC;
+      }
+      // Then by additional details
+      const iconA = a.additionalDetailSample && a.additionalDetailSample.icon;
+      const iconB = b.additionalDetailSample && b.additionalDetailSample.icon;
+      if (iconA || iconB) {
+        if (iconA && iconB) {
+          const cmp = iconA.localeCompare(iconB);
+          if (cmp !== 0) {
+            return cmp;
+          }
+        } else {
+          // Make asc => icon absence is last
+          return iconA ? -1 : 1;
+        }
       }
       // Finally by name
       return a.name.localeCompare(b.name);

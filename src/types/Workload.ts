@@ -57,7 +57,7 @@ export interface WorkloadOverview {
   name: string;
   type: string;
   istioSidecar: boolean;
-  icon?: AdditionalItem;
+  additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
   versionLabel: boolean;
 }
