@@ -103,131 +103,131 @@ var ObjectTypeSingular = map[string]string{
 
 var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.namespacenotfound": {
-		Message:  "Namespace not found for this rule",
+		Message:  "KIA0101 Namespace not found for this rule",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.to.wrongmethod": {
-		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
+		Message:  "KIA0102 Only HTTP methods and fully-qualified gRPC names are allowed",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.selector.workloadnotfound": {
-		Message:  "No matching workload found for authorization policy selector in this namespace",
+		Message:  "KIA0103 No matching workload found for authorization policy selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"destinationrules.multimatch": {
-		Message:  "More than one DestinationRules for the same host subset combination",
+		Message:  "KIA0201 More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,
 	},
 	"destinationrules.nodest.matchingregistry": {
-		Message:  "This host has no matching entry in the service registry (service, workload or service entries)",
+		Message:  "KIA0202 This host has no matching entry in the service registry (service, workload or service entries)",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.nodest.subsetlabels": {
-		Message:  "This subset's labels are not found in any matching host",
+		Message:  "KIA0203 This subset's labels are not found in any matching host",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.trafficpolicy.notlssettings": {
-		Message:  "mTLS settings of a non-local Destination Rule are overridden",
+		Message:  "KIA0204 mTLS settings of a non-local Destination Rule are overridden",
 		Severity: WarningSeverity,
 	},
 	"destinationrules.mtls.meshpolicymissing": {
-		Message:  "MeshPolicy enabling mTLS is missing",
-		Severity: ErrorSeverity,
-	},
-	"destinationrules.mtls.servicemeshpolicymissing": {
-		Message:  "ServiceMeshPolicy enabling mTLS is missing",
+		Message:  "KIA0205 MeshPolicy enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.nspolicymissing": {
-		Message:  "Policy enabling namespace-wide mTLS is missing",
+		Message:  "KIA0206 Policy enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.policymtlsenabled": {
-		Message:  "Policy with TLS strict mode found, it should be permissive",
+		Message:  "KIA0207 Policy with TLS strict mode found, it should be permissive",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.meshpolicymtlsenabled": {
-		Message:  "MeshPolicy enabling mTLS found, permissive policy is needed",
+		Message:  "KIA0208 MeshPolicy enabling mTLS found, permissive policy is needed",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.servicemeshpolicymissing": {
+		Message:  "KIA0209 ServiceMeshPolicy enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.servicemeshpolicymtlsenabled": {
-		Message:  "ServiceMeshPolicy enabling mTLS found, permissive policy is needed",
+		Message:  "KIA0210 ServiceMeshPolicy enabling mTLS found, permissive policy is needed",
 		Severity: ErrorSeverity,
 	},
 	"gateways.multimatch": {
-		Message:  "More than one Gateway for the same host port combination",
+		Message:  "KIA0301 More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
 	},
 	"gateways.selector": {
-		Message:  "No matching workload found for gateway selector in this namespace",
-		Severity: WarningSeverity,
-	},
-	"port.name.mismatch": {
-		Message:  "Port name must follow <protocol>[-suffix] form",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.nogateway": {
-		Message:  "VirtualService is pointing to a non-existent gateway",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.nohost.hostnotfound": {
-		Message:  "DestinationWeight on route doesn't have a valid service (host not found)",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.nohost.invalidprotocol": {
-		Message:  "VirtualService doesn't define any valid route protocol",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.route.singleweight": {
-		Message:  "The weight is assumed to be 100 because there is only one route destination",
-		Severity: WarningSeverity,
-	},
-	"virtualservices.route.repeatedsubset": {
-		Message:  "This subset is already referenced in another route destination",
-		Severity: WarningSeverity,
-	},
-	"virtualservices.singlehost": {
-		Message:  "More than one Virtual Service for same host",
-		Severity: WarningSeverity,
-	},
-	"virtualservices.subsetpresent.destinationmandatory": {
-		Message:  "Destination field is mandatory",
-		Severity: ErrorSeverity,
-	},
-	"virtualservices.subsetpresent.subsetnotfound": {
-		Message:  "Subset not found",
+		Message:  "KIA0302 No matching workload found for gateway selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"meshpolicies.mtls.destinationrulemissing": {
-		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
-		Severity: ErrorSeverity,
-	},
-	"servicemeshpolicies.mtls.destinationrulemissing": {
-		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
-		Severity: ErrorSeverity,
-	},
-	"servicerole.invalid.services": {
-		Message:  "Unable to find all the defined services",
-		Severity: ErrorSeverity,
-	},
-	"servicerole.invalid.namespace": {
-		Message:  "ServiceRole can only point to current namespace",
-		Severity: ErrorSeverity,
-	},
-	"servicerolebinding.invalid.role": {
-		Message:  "ServiceRole does not exists in this namespace",
+		Message:  "KIA0401 Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"policies.mtls.destinationrulemissing": {
-		Message:  "Destination Rule enabling namespace-wide mTLS is missing",
+		Message:  "KIA0501 Destination Rule enabling namespace-wide mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"port.name.mismatch": {
+		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
 	},
 	"service.deployment.port.mismatch": {
-		Message:  "Deployment exposing same port as Service not found",
+		Message:  "KIA0701 Deployment exposing same port as Service not found",
 		Severity: WarningSeverity,
 	},
+	"servicemeshpolicies.mtls.destinationrulemissing": {
+		Message:  "KIA0801 Mesh-wide Destination Rule enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"servicerole.invalid.services": {
+		Message:  "KIA0901 Unable to find all the defined services",
+		Severity: ErrorSeverity,
+	},
+	"servicerole.invalid.namespace": {
+		Message:  "KIA0902 ServiceRole can only point to current namespace",
+		Severity: ErrorSeverity,
+	},
+	"servicerolebinding.invalid.role": {
+		Message:  "KIA0903 ServiceRole does not exists in this namespace",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.nohost.hostnotfound": {
+		Message:  "KIA1001 DestinationWeight on route doesn't have a valid service (host not found)",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.nogateway": {
+		Message:  "KIA1002 VirtualService is pointing to a non-existent gateway",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.nohost.invalidprotocol": {
+		Message:  "KIA1003 VirtualService doesn't define any valid route protocol",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.route.singleweight": {
+		Message:  "KIA1004 The weight is assumed to be 100 because there is only one route destination",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.route.repeatedsubset": {
+		Message:  "KIA1005 This subset is already referenced in another route destination",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.singlehost": {
+		Message:  "KIA1006 More than one Virtual Service for same host",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.subsetpresent.subsetnotfound": {
+		Message:  "KIA1007 Subset not found",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.subsetpresent.destinationmandatory": {
+		Message:  "KIA1008 Destination field is mandatory",
+		Severity: ErrorSeverity,
+	},
 	"validation.unable.cross-namespace": {
-		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
+		Message:  "KIA0001 Unable to verify the validity, cross-namespace validation is not supported for this field",
 		Severity: Unknown,
 	},
 }

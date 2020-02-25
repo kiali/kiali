@@ -106,9 +106,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http[0]/route[0]/destination/host", productVs.Checks[0].Path)
-	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[0].Message)
+	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), productVs.Checks[0].Message)
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", productVs.Checks[1].Path)
-	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[1].Message)
+	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
 		Namespace: "test",
@@ -168,7 +168,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
-	assert.Equal("VirtualService is pointing to a non-existent gateway", productVs.Checks[0].Message)
+	assert.Equal(models.CheckMessage("virtualservices.nogateway"), productVs.Checks[0].Message)
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
