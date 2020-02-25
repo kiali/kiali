@@ -31,11 +31,6 @@ export interface WorkloadOverview {
   createdAt: string;
 }
 
-export interface ApiDocumentation {
-  type: string;
-  hasSpec: boolean;
-}
-
 export interface Service {
   type: string;
   name: string;
@@ -58,7 +53,6 @@ export interface ServiceDetailsInfo {
   workloads?: WorkloadOverview[];
   namespaceMTLS?: TLSStatus;
   validations: Validations;
-  apiDocumentation: ApiDocumentation;
   additionalDetails: AdditionalItem[];
 }
 

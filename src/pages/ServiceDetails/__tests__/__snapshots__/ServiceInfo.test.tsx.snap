@@ -98,10 +98,6 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               service={
                 Object {
                   "additionalDetails": Array [],
-                  "apiDocumentation": Object {
-                    "hasSpec": true,
-                    "type": "rest",
-                  },
                   "destinationRules": Object {
                     "items": Array [
                       Object {
@@ -270,10 +266,6 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               service={
                 Object {
                   "additionalDetails": Array [],
-                  "apiDocumentation": Object {
-                    "hasSpec": true,
-                    "type": "rest",
-                  },
                   "destinationRules": Object {
                     "items": Array [
                       Object {
@@ -514,10 +506,6 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
               service={
                 Object {
                   "additionalDetails": Array [],
-                  "apiDocumentation": Object {
-                    "hasSpec": true,
-                    "type": "rest",
-                  },
                   "destinationRules": Object {
                     "items": Array [
                       Object {
