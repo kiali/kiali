@@ -17,9 +17,6 @@ if [ "$VERSION" = "local" ]; then
   rm -rf $DIR/_output/docker/console && mkdir $DIR/_output/docker/console
   cp -r $CONSOLE_DIR/build/* $DIR/_output/docker/console
 
-  # Copy swagger.json to serve it and display kiali api doc
-  cp $DIR/swagger.json $DIR/_output/docker/console/
-
   # If there is a version.txt file, use it (required for continuous delivery)
   if [ ! -f "$DIR/_output/docker/console/version.txt" ]; then
     # If jq command is available, don't do a trip to the web

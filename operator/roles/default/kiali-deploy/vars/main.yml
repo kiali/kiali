@@ -32,13 +32,6 @@ kiali_vars:
     {{ kiali_defaults.api }}
     {%- endif -%}
 
-  apidocs: |
-    {%- if apidocs is defined and apidocs is iterable -%}
-    {{ kiali_defaults.apidocs | combine((apidocs | stripnone), recursive=True) }}
-    {%- else -%}
-    {{ kiali_defaults.apidocs }}
-    {%- endif -%}
-
   auth: |
     {%- if auth is defined and auth is iterable -%}
     {{ kiali_defaults.auth | combine((auth | stripnone), recursive=True) }}

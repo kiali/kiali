@@ -522,24 +522,6 @@ func NewRoutes() (r *Routes) {
 			handlers.TraceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec services serviceApiDocumentation
-		// ---
-		// Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec
-		//
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      404: notFoundError
-		//      500: internalError
-		//      200
-		{
-			"ServiceApiDocumentation",
-			"GET",
-			"/api/namespaces/{namespace}/services/{service}/apispec",
-			handlers.ServiceApiDocumentation,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/workloads workloads workloadList
 		// ---
 		// Endpoint to get the list of workloads for a namespace

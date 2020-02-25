@@ -184,8 +184,9 @@ type IstioLabels struct {
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
 type AdditionalDisplayItem struct {
-	Annotation string `yaml:"annotation"`
-	Title      string `yaml:"title"`
+	Annotation     string `yaml:"annotation"`
+	IconAnnotation string `yaml:"icon_annotation"`
+	Title          string `yaml:"title"`
 }
 
 // KubernetesConfig holds the k8s client, caching and performance configuration
@@ -222,17 +223,6 @@ type ApiConfig struct {
 type ApiNamespacesConfig struct {
 	Exclude       []string
 	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
-}
-
-// ApiDocumentation is the top level configuration for API documentation
-type ApiDocumentation struct {
-	Annotations ApiDocAnnotations `yaml:"annotations,omitempty" json:"annotations"`
-}
-
-// ApiDocAnnotations contains the annotation names used for API documentation
-type ApiDocAnnotations struct {
-	ApiSpecAnnotationName string `yaml:"api_spec_annotation_name,omitempty" json:"apiSpecAnnotationName"`
-	ApiTypeAnnotationName string `yaml:"api_type_annotation_name,omitempty" json:"apiTypeAnnotationName"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -272,7 +262,6 @@ type IstioComponentNamespaces map[string]string
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                `yaml:"api,omitempty"`
-	ApiDocumentation         ApiDocumentation         `yaml:"apidocs,omitempty"`
 	Auth                     AuthConfig               `yaml:"auth,omitempty"`
 	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
 	Extensions               Extensions               `yaml:"extensions,omitempty"`
@@ -302,12 +291,6 @@ func NewConfig() (c *Config) {
 					"ibm.*",
 					"kial-operator",
 				},
-			},
-		},
-		ApiDocumentation: ApiDocumentation{
-			Annotations: ApiDocAnnotations{
-				ApiTypeAnnotationName: "kiali.io/api-type",
-				ApiSpecAnnotationName: "kiali.io/api-spec",
 			},
 		},
 		Auth: AuthConfig{

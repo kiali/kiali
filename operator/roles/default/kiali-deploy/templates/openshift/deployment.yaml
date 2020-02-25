@@ -6,6 +6,9 @@ metadata:
   labels:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
+  annotations:
+    kiali.io/api-spec: https://kiali.io/api
+    kiali.io/api-type: rest
 spec:
   replicas: {{ kiali_vars.deployment.replicas }}
   selector:
