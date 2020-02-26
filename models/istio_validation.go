@@ -198,36 +198,40 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0903 ServiceRole does not exists in this namespace",
 		Severity: ErrorSeverity,
 	},
+	"sidecar.selector.workloadnotfound": {
+		Message:  "KIA1001 No matching workload found for authorization policy selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"virtualservices.nohost.hostnotfound": {
-		Message:  "KIA1001 DestinationWeight on route doesn't have a valid service (host not found)",
+		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.nogateway": {
-		Message:  "KIA1002 VirtualService is pointing to a non-existent gateway",
+		Message:  "KIA1102 VirtualService is pointing to a non-existent gateway",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.nohost.invalidprotocol": {
-		Message:  "KIA1003 VirtualService doesn't define any valid route protocol",
+		Message:  "KIA1103 VirtualService doesn't define any valid route protocol",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.route.singleweight": {
-		Message:  "KIA1004 The weight is assumed to be 100 because there is only one route destination",
+		Message:  "KIA1104 The weight is assumed to be 100 because there is only one route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.route.repeatedsubset": {
-		Message:  "KIA1005 This subset is already referenced in another route destination",
+		Message:  "KIA1105 This subset is already referenced in another route destination",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.singlehost": {
-		Message:  "KIA1006 More than one Virtual Service for same host",
+		Message:  "KIA1106 More than one Virtual Service for same host",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.subsetpresent.subsetnotfound": {
-		Message:  "KIA1007 Subset not found",
+		Message:  "KIA1107 Subset not found",
 		Severity: WarningSeverity,
 	},
 	"virtualservices.subsetpresent.destinationmandatory": {
-		Message:  "KIA1008 Destination field is mandatory",
+		Message:  "KIA1108 Destination field is mandatory",
 		Severity: ErrorSeverity,
 	},
 	"validation.unable.cross-namespace": {
