@@ -99,6 +99,7 @@ var ObjectTypeSingular = map[string]string{
 	"servicerolebindings":   "servicerolebinding",
 	"clusterrbacconfigs":    "clusterrbacconfig",
 	"authorizationpolicies": "authorizationpolicy",
+	"sidecars":              "sidecar",
 }
 
 var checkDescriptors = map[string]IstioCheck{

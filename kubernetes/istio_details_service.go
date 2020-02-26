@@ -28,17 +28,19 @@ var (
 func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
 
 	wg := sync.WaitGroup{}
-	errChan := make(chan error, 4)
+	errChan := make(chan error, 5)
 
 	istioDetails := IstioDetails{}
 	vss := make([]IstioObject, 0)
 	drs := make([]IstioObject, 0)
 	gws := make([]IstioObject, 0)
 	ses := make([]IstioObject, 0)
+	scs := make([]IstioObject, 0)
 
-	wg.Add(4)
+	wg.Add(5)
 	go fetchNoEntry(&ses, namespace, in.GetServiceEntries, &wg, errChan)
 	go fetchNoEntry(&gws, namespace, in.GetGateways, &wg, errChan)
+	go fetchNoEntry(&scs, namespace, in.GetSidecars, &wg, errChan)
 	go fetch(&vss, namespace, serviceName, in.GetVirtualServices, &wg, errChan)
 	go fetch(&drs, namespace, serviceName, in.GetDestinationRules, &wg, errChan)
 	wg.Wait()
@@ -53,6 +55,7 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	istioDetails.DestinationRules = drs
 	istioDetails.Gateways = gws
 	istioDetails.ServiceEntries = ses
+	istioDetails.Sidecars = scs
 
 	return &istioDetails, nil
 }

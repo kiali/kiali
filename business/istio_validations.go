@@ -117,6 +117,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads},
+		checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces, WorkloadList: workloads},
 	}
 }
 
@@ -199,7 +200,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case RbacConfigs:
 		// Validations on RbacConfigs are not yet in place
 	case Sidecars:
-		// Validations on Sidecars are not yet in place
+		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces, WorkloadList: workloads}
+		objectCheckers = []ObjectChecker{sidecarsChecker}
 	case AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads}
@@ -408,6 +410,9 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			if err == nil {
 				istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
+			}
+			if err == nil {
+				istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
 			}
 		} else {
 			istioDetails, err = in.k8s.GetIstioDetails(namespace, "")
