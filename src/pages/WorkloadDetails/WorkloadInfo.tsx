@@ -12,6 +12,7 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import Validation from '../../components/Validations/Validation';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
+import GraphDataSource from '../../services/GraphDataSource';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -19,6 +20,7 @@ type WorkloadInfoProps = {
   namespace: string;
   istioEnabled: boolean;
   health?: WorkloadHealth;
+  miniGraphDataSource: GraphDataSource;
 };
 
 interface ValidationChecks {
@@ -121,6 +123,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
               namespace={this.props.namespace}
               istioEnabled={this.props.istioEnabled}
               health={this.props.health}
+              miniGraphDataSource={this.props.miniGraphDataSource}
             />
           </GridItem>
           <GridItem span={12}>

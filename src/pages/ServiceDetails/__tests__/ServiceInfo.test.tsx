@@ -4,6 +4,7 @@ import { shallowToJson } from 'enzyme-to-json';
 
 import * as ActualAPI from '../../../services/Api';
 import ServiceInfo from '../ServiceInfo';
+import GraphDataSource from '../../../services/GraphDataSource';
 
 jest.mock('../../../services/Api');
 
@@ -12,6 +13,7 @@ const API = require('../../../services/Api') as typeof ActualAPI;
 describe('#ServiceInfo render correctly with data', () => {
   it('should render serviceInfo with data', () => {
     return API.getServiceDetail('istio-system', 'reviews', true).then(data => {
+      const miniGraphDS = new GraphDataSource();
       const wrapper = shallow(
         <ServiceInfo
           namespace="istio-system"
@@ -28,6 +30,7 @@ describe('#ServiceInfo render correctly with data', () => {
               delete: false
             }
           }}
+          miniGraphDataSource={miniGraphDS}
         />
       );
       expect(shallowToJson(wrapper)).toBeDefined();

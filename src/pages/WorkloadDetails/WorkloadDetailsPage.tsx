@@ -13,7 +13,7 @@ import { RenderHeader } from '../../components/Nav/Page';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import PfTitle from '../../components/Pf/PfTitle';
-import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
@@ -27,6 +27,7 @@ import { DurationDropdownContainer } from '../../components/DurationDropdown/Dur
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import GraphDataSource from '../../services/GraphDataSource';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -54,6 +55,8 @@ const paramToTab: { [key: string]: number } = {
 };
 
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
+  private graphDataSource: GraphDataSource;
+
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     this.state = {
@@ -63,6 +66,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       trafficData: null,
       currentTab: activeTab(tabName, defaultTab)
     };
+
+    this.graphDataSource = new GraphDataSource();
   }
 
   componentDidMount(): void {
@@ -163,6 +168,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     if (this.state.workload === emptyWorkload || currentTab === 'info') {
       this.setState({ trafficData: null });
       this.fetchWorkload();
+      this.loadMiniGraphData();
     }
 
     if (currentTab === 'traffic') {
@@ -239,6 +245,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           validations={this.state.validations}
           istioEnabled={this.state.istioEnabled}
           health={this.state.health}
+          miniGraphDataSource={this.graphDataSource}
         />
       </Tab>
     );
@@ -383,6 +390,26 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       </>
     );
   }
+
+  private loadMiniGraphData = () => {
+    this.graphDataSource.fetchGraphData({
+      namespaces: [{ name: this.props.match.params.namespace }],
+      duration: this.props.duration,
+      graphType: GraphType.WORKLOAD,
+      injectServiceNodes: true,
+      edgeLabelMode: EdgeLabelMode.NONE,
+      showSecurity: false,
+      showUnusedNodes: false,
+      node: {
+        app: '',
+        namespace: { name: this.props.match.params.namespace },
+        nodeType: NodeType.WORKLOAD,
+        service: '',
+        version: '',
+        workload: this.props.match.params.workload
+      }
+    });
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 import CytoscapeGraph from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { EdgeLabelMode, GraphType, Layout } from '../../../types/Graph';
-import EmptyGraphLayoutContainer from '../../EmptyGraphLayout';
+import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 import GraphDataSource from '../../../services/GraphDataSource';
 
@@ -44,7 +44,6 @@ describe('CytoscapeGraph component test', () => {
     const wrapper = shallow(
       <CytoscapeGraph
         activeNamespaces={[{ name: testNamespace }]}
-        duration={60}
         edgeLabelMode={myEdgeLabelMode}
         layout={myLayout}
         updateGraph={testClickHandler}

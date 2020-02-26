@@ -11,7 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { RenderHeader } from '../../components/Nav/Page';
-import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import PfTitle from '../../components/Pf/PfTitle';
@@ -24,6 +24,7 @@ import { DurationDropdownContainer } from '../../components/DurationDropdown/Dur
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveDuration } from 'components/Time/TimeRangeHelper';
+import GraphDataSource from '../../services/GraphDataSource';
 
 type AppDetailsState = {
   app: App;
@@ -59,6 +60,8 @@ const paramToTab: { [key: string]: number } = {
 };
 
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
+  private graphDataSource: GraphDataSource;
+
   constructor(props: AppDetailsProps) {
     super(props);
     this.state = {
@@ -66,6 +69,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       trafficData: null,
       currentTab: activeTab(tabName, defaultTab)
     };
+
+    this.graphDataSource = new GraphDataSource();
   }
 
   componentDidMount(): void {
@@ -102,6 +107,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     if (this.state.app === emptyApp || currentTab === defaultTab) {
       this.setState({ trafficData: null });
       this.fetchApp();
+      this.loadMiniGraphData();
     }
 
     if (currentTab === trafficTabName) {
@@ -190,7 +196,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   staticTabs() {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        <AppInfo app={this.state.app} namespace={this.props.match.params.namespace} health={this.state.health} />
+        <AppInfo
+          app={this.state.app}
+          namespace={this.props.match.params.namespace}
+          health={this.state.health}
+          miniGraphDataSource={this.graphDataSource}
+        />
       </Tab>
     );
 
@@ -290,6 +301,26 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       </>
     );
   }
+
+  private loadMiniGraphData = () => {
+    this.graphDataSource.fetchGraphData({
+      namespaces: [{ name: this.props.match.params.namespace }],
+      duration: this.props.duration,
+      graphType: GraphType.APP,
+      injectServiceNodes: true,
+      edgeLabelMode: EdgeLabelMode.NONE,
+      showSecurity: false,
+      showUnusedNodes: false,
+      node: {
+        app: this.props.match.params.app,
+        namespace: { name: this.props.match.params.namespace },
+        nodeType: NodeType.APP,
+        service: '',
+        version: '',
+        workload: ''
+      }
+    });
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

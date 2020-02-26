@@ -5,11 +5,13 @@ import { App } from '../../types/App';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import './AppInfo.css';
 import { Grid, GridItem } from '@patternfly/react-core';
+import GraphDataSource from '../../services/GraphDataSource';
 
 type AppInfoProps = {
   app: App;
-  namespace: string;
   health?: AppHealth;
+  miniGraphDataSource: GraphDataSource;
+  namespace: string;
 };
 
 type AppInfoState = {};
@@ -27,7 +29,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
       <RenderComponentScroll>
         <Grid style={{ margin: '30px' }} gutter={'md'}>
           <GridItem span={12}>
-            <AppDescription app={app} health={this.props.health} />
+            <AppDescription app={app} health={this.props.health} miniGraphDataSource={this.props.miniGraphDataSource} />
           </GridItem>
         </Grid>
       </RenderComponentScroll>

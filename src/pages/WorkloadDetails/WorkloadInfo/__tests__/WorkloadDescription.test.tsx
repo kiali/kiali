@@ -3,9 +3,11 @@ import { shallow, mount } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 import WorkloadDescription from '../WorkloadDescription';
 import { emptyWorkload } from '../../../../types/Workload';
+import GraphDataSource from '../../../../services/GraphDataSource';
 
 describe('WorkloadDescription', () => {
   it('should render with runtimes', () => {
+    const miniGraphDS = new GraphDataSource();
     const workload = {
       ...emptyWorkload,
       runtimes: [
@@ -20,12 +22,18 @@ describe('WorkloadDescription', () => {
       ]
     };
     const wrapper = shallow(
-      <WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />
+      <WorkloadDescription
+        workload={workload}
+        namespace={'my-namespace'}
+        istioEnabled={false}
+        miniGraphDataSource={miniGraphDS}
+      />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('should render with additional details', () => {
+    const miniGraphDS = new GraphDataSource();
     const workload = {
       ...emptyWorkload,
       additionalDetails: [
@@ -39,7 +47,14 @@ describe('WorkloadDescription', () => {
         }
       ]
     };
-    const wrapper = mount(<WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />);
+    const wrapper = mount(
+      <WorkloadDescription
+        workload={workload}
+        namespace={'my-namespace'}
+        istioEnabled={false}
+        miniGraphDataSource={miniGraphDS}
+      />
+    );
     expect(wrapper.find('a').getElements()[0].props.href).toEqual('https://my-service.com');
   });
 });

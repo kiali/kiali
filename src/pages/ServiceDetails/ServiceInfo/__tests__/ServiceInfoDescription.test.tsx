@@ -2,6 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 import ServiceInfoDescription from '../ServiceInfoDescription';
+import GraphDataSource from '../../../../services/GraphDataSource';
 
 const labels = { app: 'reviews' };
 
@@ -36,6 +37,7 @@ const endpoints = [
 
 describe('#ServiceInfoDescription render correctly with data', () => {
   it('should render service description', () => {
+    const miniGraphDS = new GraphDataSource();
     const wrapper = shallow(
       <ServiceInfoDescription
         name="reviews"
@@ -47,6 +49,7 @@ describe('#ServiceInfoDescription render correctly with data', () => {
         createdAt="2018-04-04T15:11:46Z"
         resourceVersion="1234"
         additionalDetails={[]}
+        miniGraphDatasource={miniGraphDS}
       />
     );
     expect(wrapper).toBeDefined();

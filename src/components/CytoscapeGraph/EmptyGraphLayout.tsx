@@ -2,9 +2,9 @@ import * as React from 'react';
 import { Button, EmptyState, EmptyStateBody, EmptyStateIcon, EmptyStateVariant, Title } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
-import Namespace from '../types/Namespace';
-import { KialiIcon } from '../config/KialiIcon';
-import { DecoratedGraphElements } from '../types/Graph';
+import Namespace from '../../types/Namespace';
+import { KialiIcon } from '../../config/KialiIcon';
+import { DecoratedGraphElements } from '../../types/Graph';
 
 type EmptyGraphLayoutProps = {
   elements?: DecoratedGraphElements;
@@ -14,6 +14,7 @@ type EmptyGraphLayoutProps = {
   isDisplayingUnusedNodes: boolean;
   isLoading?: boolean;
   isError: boolean;
+  isMiniGraph: boolean;
   error?: string;
 };
 
@@ -108,7 +109,7 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
 
     const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
 
-    if (isGraphEmpty) {
+    if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
         <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
           <Title headingLevel="h5" size="lg">
@@ -136,8 +137,19 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
           </Button>
         </EmptyState>
       );
-    } else {
-      return this.props.children;
     }
+
+    if (isGraphEmpty && this.props.isMiniGraph) {
+      return (
+        <EmptyState variant={EmptyStateVariant.large} className={emptyStateStyle}>
+          <Title headingLevel="h5" size="lg">
+            Empty Graph
+          </Title>
+          <EmptyStateBody>Not enough data to generate a graph.</EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    return this.props.children;
   }
 }

@@ -54,6 +54,42 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
             "app": "reviews",
           }
         }
+        miniGraphDatasource={
+          GraphDataSource {
+            "_errorMessage": null,
+            "_fetchParams": Object {
+              "duration": 0,
+              "edgeLabelMode": "noEdgeLabels",
+              "graphType": "versionedApp",
+              "injectServiceNodes": true,
+              "namespaces": Array [],
+              "showSecurity": false,
+              "showUnusedNodes": false,
+            },
+            "_isError": false,
+            "_isLoading": false,
+            "decoratedData": [Function],
+            "emit": [Function],
+            "eventEmitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+            "fetchDataForNamespaces": [Function],
+            "fetchDataForNode": [Function],
+            "fetchGraphData": [Function],
+            "graphDuration": 0,
+            "graphElements": Object {
+              "edges": Array [],
+              "nodes": Array [],
+            },
+            "graphTimestamp": 0,
+            "on": [Function],
+            "promiseRegistry": PromisesRegistry {
+              "promises": Map {},
+            },
+            "removeListener": [Function],
+          }
+        }
         name="reviews"
         namespace="istio-system"
         ports={

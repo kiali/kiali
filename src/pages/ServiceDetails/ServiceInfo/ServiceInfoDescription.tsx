@@ -12,12 +12,16 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { EyeIcon } from '@patternfly/react-icons';
+import { style } from 'typestyle';
+import CytoscapeGraph from '../../../components/CytoscapeGraph/CytoscapeGraph';
+import { DagreGraph } from '../../../components/CytoscapeGraph/graphs/DagreGraph';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
+import GraphDataSource from '../../../services/GraphDataSource';
 import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
-import { style } from 'typestyle';
+import { EdgeLabelMode, GraphType } from '../../../types/Graph';
 import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import ValidationList from '../../../components/Validations/ValidationList';
 import './ServiceInfoDescription.css';
@@ -44,6 +48,7 @@ interface ServiceInfoDescriptionProps {
   health?: ServiceHealth;
   threeScaleServiceRule?: ThreeScaleServiceRule;
   validations?: ObjectValidation;
+  miniGraphDatasource: GraphDataSource;
 }
 
 const listStyle = style({
@@ -52,6 +57,8 @@ const listStyle = style({
 });
 
 const ExternalNameType = 'ExternalName';
+
+const cytoscapeGraphContainerStyle = style({ height: '300px' });
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
   getPortOver(portId: number) {
@@ -71,12 +78,12 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
   render() {
     return (
       <Grid gutter="md">
-        <GridItem span={6}>
+        <GridItem span={4}>
           <Card style={{ height: '100%' }}>
             <CardBody>
               <Title headingLevel="h3" size="2xl">
                 {' '}
-                Service overview{' '}
+                Service Overview{' '}
               </Title>
               <Stack>
                 <StackItem id={'labels'}>
@@ -114,7 +121,39 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
             </CardBody>
           </Card>
         </GridItem>
-        <GridItem span={6}>
+        <GridItem span={4}>
+          <Card style={{ height: '100%' }}>
+            <CardBody>
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Graph Overview{' '}
+              </Title>
+              <div style={{ height: '100%' }}>
+                <CytoscapeGraph
+                  activeNamespaces={[{ name: this.props.namespace }]}
+                  containerClassName={cytoscapeGraphContainerStyle}
+                  dataSource={this.props.miniGraphDatasource}
+                  displayUnusedNodes={() => undefined}
+                  edgeLabelMode={EdgeLabelMode.NONE}
+                  graphType={GraphType.APP}
+                  isMTLSEnabled={false}
+                  isMiniGraph={true}
+                  layout={DagreGraph.getLayout()}
+                  refreshInterval={0}
+                  showCircuitBreakers={false}
+                  showMissingSidecars={true}
+                  showNodeLabels={true}
+                  showSecurity={false}
+                  showServiceNodes={true}
+                  showTrafficAnimation={true}
+                  showUnusedNodes={false}
+                  showVirtualServices={true}
+                />
+              </div>
+            </CardBody>
+          </Card>
+        </GridItem>
+        <GridItem span={4}>
           <Card style={{ height: '100%' }}>
             <CardBody>
               <Title headingLevel="h3" size="2xl">

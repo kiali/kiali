@@ -5,7 +5,7 @@ import history from '../../app/History';
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRender from './TrafficAnimation/TrafficRenderer';
-import EmptyGraphLayout from '../EmptyGraphLayout';
+import EmptyGraphLayout from './EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
@@ -48,17 +48,17 @@ type CytoscapeGraphProps = {
   contextMenuNodeComponent?: NodeContextMenuType;
   dataSource: GraphDataSource;
   displayUnusedNodes: () => void;
-  duration: DurationInSeconds;
   edgeLabelMode: EdgeLabelMode;
   focusSelector?: string;
   graphType: GraphType;
+  isMiniGraph?: boolean;
   isMTLSEnabled: boolean;
   layout: Layout;
-  onEmptyGraphAction: () => void;
-  onReady: (cytoscapeRef: any) => void;
+  onEmptyGraphAction?: () => void;
+  onReady?: (cytoscapeRef: any) => void;
   refreshInterval: IntervalInMilliseconds;
-  setActiveNamespaces: (namespace: Namespace[]) => void;
-  setNode: (node?: NodeParamsType) => void;
+  setActiveNamespaces?: (namespace: Namespace[]) => void;
+  setNode?: (node?: NodeParamsType) => void;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
@@ -67,8 +67,8 @@ type CytoscapeGraphProps = {
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
-  updateGraph: (cyData: CyData) => void;
-  updateSummary: (event: CytoscapeClickEvent) => void;
+  updateGraph?: (cyData: CyData) => void;
+  updateSummary?: (event: CytoscapeClickEvent) => void;
 };
 
 type CytoscapeGraphState = {
@@ -216,7 +216,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       this.updateHealth(cy);
     }
 
-    this.props.updateGraph({ updateTimestamp: Date.now(), cyRef: cy });
+    if (this.props.updateGraph) {
+      this.props.updateGraph({ updateTimestamp: Date.now(), cyRef: cy });
+    }
   }
 
   componentWillUnmount(): void {
@@ -239,6 +241,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           isDisplayingUnusedNodes={this.props.showUnusedNodes}
           isLoading={this.state.isLoading}
           isError={this.state.isError}
+          isMiniGraph={!!this.props.isMiniGraph}
           namespaces={this.props.activeNamespaces}
         >
           <CytoscapeContextMenuWrapper
@@ -513,14 +516,18 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     });
 
     cy.ready((evt: Cy.EventObject) => {
-      this.props.onReady(evt.cy);
+      if (this.props.onReady) {
+        this.props.onReady(evt.cy);
+      }
       this.processGraphUpdate(cy, true);
     });
 
     cy.on('destroy', (_evt: Cy.EventObject) => {
       this.trafficRenderer!.stop();
       this.cy = undefined;
-      this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
+      if (this.props.updateSummary) {
+        this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
+      }
     });
   }
 
@@ -653,7 +660,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       summaryType: target.data(CyNode.isGroup) ? 'group' : 'node',
       summaryTarget: target
     };
-    this.props.updateSummary(event);
+    if (this.props.updateSummary) {
+      this.props.updateSummary(event);
+    }
     this.graphHighlighter!.onClick(event);
   };
 
@@ -707,7 +716,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       );
       return;
     }
-    if (target.data(CyNode.isOutside)) {
+    if (target.data(CyNode.isOutside) && this.props.setActiveNamespaces) {
       this.props.setActiveNamespaces([{ name: target.data(CyNode.namespace) }]);
       return;
     }
@@ -753,7 +762,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
 
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.props.activeNamespaces,
-      duration: this.props.duration,
+      duration: this.props.dataSource.fetchParameters.duration,
       edgeLabelMode: this.props.edgeLabelMode,
       graphLayout: this.props.layout,
       graphType: this.props.graphType,
@@ -767,11 +776,15 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     // TODO: When the mini-graph is implemented, the following line must be removed. We don't
     // want to set invalid URL params in the wrong page.
     history.push(makeNodeGraphUrlFromParams(urlParams));
-    this.props.setNode(targetNode);
+    if (this.props.setNode) {
+      this.props.setNode(targetNode);
+    }
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {
-    this.props.updateSummary(event);
+    if (this.props.updateSummary) {
+      this.props.updateSummary(event);
+    }
     this.graphHighlighter!.onClick(event);
   };
 
@@ -845,7 +858,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     if (!cy) {
       return;
     }
-    const duration = this.props.duration;
+    const duration = this.props.dataSource.fetchParameters.duration;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
     const appHealthPerNamespace = new Map<string, Promise<NamespaceAppHealth>>();
     const serviceHealthPerNamespace = new Map<string, Promise<NamespaceServiceHealth>>();

@@ -13,7 +13,7 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
-import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
@@ -39,6 +39,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { serverConfig } from '../../config';
+import GraphDataSource from '../../services/GraphDataSource';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -110,6 +111,7 @@ const tabIndex: { [tab: string]: number } = {
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   private promises = new PromisesRegistry();
   private lastFetchTracesError = false;
+  private graphDataSource: GraphDataSource;
 
   constructor(props: ServiceDetailsProps) {
     super(props);
@@ -130,6 +132,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       },
       traces: []
     };
+
+    this.graphDataSource = new GraphDataSource();
   }
 
   componentWillUnmount() {
@@ -197,6 +201,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     if (currentTab === defaultTab) {
       this.setState({ trafficData: null });
       this.fetchBackend();
+      this.loadMiniGraphData();
     }
 
     if (currentTab === trafficTabName) {
@@ -464,6 +469,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           onRefresh={this.doRefresh}
           threeScaleInfo={this.state.threeScaleInfo}
           threeScaleServiceRule={this.state.threeScaleServiceRule}
+          miniGraphDataSource={this.graphDataSource}
         />
       </Tab>
     );
@@ -564,6 +570,26 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       </>
     );
   }
+
+  private loadMiniGraphData = () => {
+    this.graphDataSource.fetchGraphData({
+      namespaces: [{ name: this.props.match.params.namespace }],
+      duration: this.props.duration,
+      graphType: GraphType.WORKLOAD,
+      injectServiceNodes: true,
+      edgeLabelMode: EdgeLabelMode.NONE,
+      showSecurity: false,
+      showUnusedNodes: false,
+      node: {
+        app: '',
+        namespace: { name: this.props.match.params.namespace },
+        nodeType: NodeType.SERVICE,
+        service: this.props.match.params.service,
+        version: '',
+        workload: ''
+      }
+    });
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

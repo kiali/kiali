@@ -8,6 +8,7 @@ import {
   Badge,
   Card,
   CardBody,
+  CardHeader,
   DataList,
   DataListCell,
   DataListItem,
@@ -15,22 +16,30 @@ import {
   DataListItemRow,
   Grid,
   GridItem,
-  PopoverPosition,
   List,
   ListItem,
+  PopoverPosition,
   Stack,
   StackItem,
   Text,
   TextVariants,
   Title
 } from '@patternfly/react-core';
+import { style } from 'typestyle';
+import { EdgeLabelMode, GraphType } from '../../../types/Graph';
+import CytoscapeGraph from '../../../components/CytoscapeGraph/CytoscapeGraph';
+import { DagreGraph } from '../../../components/CytoscapeGraph/graphs/DagreGraph';
+import GraphDataSource from '../../../services/GraphDataSource';
 
 type AppDescriptionProps = {
   app: App;
   health?: AppHealth;
+  miniGraphDataSource: GraphDataSource;
 };
 
 type AppDescriptionState = {};
+
+const cytoscapeGraphContainerStyle = style({ height: '300px' });
 
 class AppDescription extends React.Component<AppDescriptionProps, AppDescriptionState> {
   constructor(props: AppDescriptionProps) {
@@ -118,10 +127,14 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     const app = this.props.app;
     return app ? (
       <Grid gutter="md">
-        <GridItem span={6}>
-          <Card>
+        <GridItem span={4}>
+          <Card style={{ height: '100%' }}>
+            <CardHeader>
+              <Title headingLevel="h3" size="2xl">
+                Application Overview
+              </Title>
+            </CardHeader>
             <CardBody className="noPadding">
-              <h2>Application Overview</h2>
               <DataList aria-label="workloads and services">
                 <DataListItem aria-labelledby="Workloads">
                   <DataListItemRow>
@@ -137,7 +150,40 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
             </CardBody>
           </Card>
         </GridItem>
-        <GridItem span={6}>
+        <GridItem span={4}>
+          <Card style={{ height: '100%' }}>
+            <CardHeader>
+              <Title style={{ float: 'left' }} headingLevel="h3" size="2xl">
+                Graph Overview
+              </Title>
+            </CardHeader>
+            <CardBody>
+              <div style={{ height: '100%' }}>
+                <CytoscapeGraph
+                  activeNamespaces={[this.props.app.namespace]}
+                  containerClassName={cytoscapeGraphContainerStyle}
+                  dataSource={this.props.miniGraphDataSource}
+                  displayUnusedNodes={() => undefined}
+                  edgeLabelMode={EdgeLabelMode.NONE}
+                  graphType={GraphType.WORKLOAD}
+                  isMTLSEnabled={false}
+                  isMiniGraph={true}
+                  layout={DagreGraph.getLayout()}
+                  refreshInterval={0}
+                  showCircuitBreakers={false}
+                  showMissingSidecars={true}
+                  showNodeLabels={true}
+                  showSecurity={false}
+                  showServiceNodes={true}
+                  showTrafficAnimation={true}
+                  showUnusedNodes={false}
+                  showVirtualServices={true}
+                />
+              </div>
+            </CardBody>
+          </Card>
+        </GridItem>
+        <GridItem span={4}>
           <Card style={{ height: '100%' }}>
             <CardBody>
               <Title headingLevel="h3" size="2xl">

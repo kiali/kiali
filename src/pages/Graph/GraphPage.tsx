@@ -27,7 +27,7 @@ import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/Cytoscape
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
 import GraphToolbarContainer from './GraphToolbar/GraphToolbar';
 import GraphLegend from './GraphLegend';
-import EmptyGraphLayout from '../../components/EmptyGraphLayout';
+import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
 import SummaryPanel from './SummaryPanel';
 import {
   activeNamespacesSelector,
@@ -160,6 +160,7 @@ const GraphErrorBoundaryFallback = () => {
         isError={true}
         isDisplayingUnusedNodes={false}
         displayUnusedNodes={() => undefined}
+        isMiniGraph={false}
       />
     </div>
   );
