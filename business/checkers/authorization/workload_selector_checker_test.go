@@ -50,7 +50,8 @@ func TestWorkloadNotFound(t *testing.T) {
 func workloadSelectorAuthPolicy(selector map[string]interface{}) kubernetes.IstioObject {
 	methods := []interface{}{"GET", "PUT", "PATCH"}
 	nss := []interface{}{"bookinfo"}
-	return data.CreateAuthorizationPolicy(nss, methods, selector)
+	hosts := []interface{}{"details"}
+	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }
 
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {

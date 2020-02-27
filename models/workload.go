@@ -309,3 +309,11 @@ func (workload *Workload) HasIstioSidecar() bool {
 	// Need to check each pod
 	return workload.Pods.HasIstioSidecar()
 }
+
+func GetLabels(wl []WorkloadListItem) []map[string]string {
+	wLabels := make([]map[string]string, 0, len(wl))
+	for _, wl := range wl {
+		wLabels = append(wLabels, wl.Labels)
+	}
+	return wLabels
+}
