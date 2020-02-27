@@ -14,6 +14,7 @@
 
 # ISTIO_DIR is where the Istio download is installed and thus where the istioctl binary is found.
 # CLIENT_EXE_NAME must be either "oc" or "kubectl"
+ISTIOCTL=
 ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="istio-system"
@@ -63,6 +64,10 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --dashboards-enabled flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -ic|--istioctl)
+      ISTIOCTL="$2"
       shift;shift
       ;;
     -id|--istio-dir)
@@ -138,6 +143,9 @@ Valid command line arguments:
   -de|--dashboards-enabled (true|false):
        Set to 'true' if you want Jaeger and Grafana installed.
        Default: false
+  -ic|--istioctl <path to istioctl binary>:
+       Where the istioctl executable is found. Use this when developing Istio installer and testing it.
+       Default: "istioctl" found in the bin/ directory of the Istio directory (--istio-dir).
   -id|--istio-dir <dir>:
        Where Istio has already been downloaded. If not found, this script aborts.
   -iee|--istio-egressgateway-enabled (true|false)
@@ -214,7 +222,7 @@ fi
 
 echo "Istio is found here: ${ISTIO_DIR}"
 
-ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
+ISTIOCTL="${ISTIOCTL:-${ISTIO_DIR}/bin/istioctl}"
 if [ ! -f "${ISTIOCTL}" ]; then
    echo "ERROR: istioctl cannot be found at: ${ISTIOCTL}"
    exit 1
