@@ -1,9 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
   name: reviews-v4
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v4
   template:
     metadata:
       labels:
@@ -36,12 +40,16 @@ spec:
         ports:
         - containerPort: 9080
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: reviews-v6
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v6
   template:
     metadata:
       labels:
