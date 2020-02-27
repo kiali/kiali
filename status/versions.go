@@ -2,6 +2,7 @@ package status
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -28,11 +29,14 @@ var (
 	//   redhat@redhat-pulp.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-Custom
 	// Example Istio snapshot version is:
 	//   root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-cbe9c05c470ec1924f7bcf02334b183e7e6175cb-Clean
+	// Example Istio dev version is:
+	//   1.5-alpha.dbd2aca8887fb42c2bb358417621a78de372f906-dbd2aca8887fb42c2bb358417621a78de372f906-Clean
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
 	ossmVersionExpr           = regexp.MustCompile(`openshift-service-mesh-([0-9]+\.[0-9]+\.[0-9]+)`)
 	maistraProjectVersionExpr = regexp.MustCompile(`openshift-istio.*-([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
+	istioDevVersionExpr       = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*`)
 )
 
 func getVersions() {
@@ -66,8 +70,9 @@ func getVersionComponent(serviceComponent externalService) {
 	}
 }
 
-func validateVersion(istioReq string, installedVersion string) bool {
-	reqWords := strings.Split(istioReq, " ")
+// validateVersion returns true if requiredVersion "<op> version" (e.g. ">= 0.7.1") is satisfied by installedversion
+func validateVersion(requiredVersion string, installedVersion string) bool {
+	reqWords := strings.Split(requiredVersion, " ")
 	requirementV, errReqV := version.NewVersion(reqWords[1])
 	installedV, errInsV := version.NewVersion(installedVersion)
 	if errReqV != nil || errInsV != nil {
@@ -88,6 +93,7 @@ func validateVersion(istioReq string, installedVersion string) bool {
 	return false
 }
 
+// istioVersion returns the current istio version information
 func istioVersion() (*ExternalServiceInfo, error) {
 	var (
 		body    []byte
@@ -194,6 +200,23 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		}
 	}
 
+	// see if it is a dev version of Istio
+	istioVersionStringArr = istioDevVersionExpr.FindStringSubmatch(rawVersion)
+	if istioVersionStringArr != nil {
+		log.Debugf("Detected Istio dev version [%v]", rawVersion)
+		if len(istioVersionStringArr) > 2 {
+			product.Name = "Istio Dev"
+			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#" version numbers
+			buildHash := istioVersionStringArr[2]  // regex group #2 is the build hash
+			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
+			if !validateVersion(config.IstioVersionSupported, majorMinor) {
+				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
 	log.Debugf("Detected unknown Istio implementation version [%v]", rawVersion)
 	product.Name = "Unknown Istio Implementation"
 	product.Version = rawVersion
@@ -279,4 +302,23 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 		}
 	}
 	return nil, err
+}
+
+// set this one time, it is very unlikely that the istio version will without a kiali pod restart, or if it
+// did that that version change will matter, and the kiali pod could be bounced as a workaround.
+var istioSupportsCanonical *bool
+
+// IstioSupportsCanonical returns true if Istio version can be determined and is >= 1.5.
+// TODO: This test can be removed when Kiali stops supporting any Istio versions < 1.5
+func IstioSupportsCanonical() bool {
+	if istioSupportsCanonical != nil {
+		return *istioSupportsCanonical
+	}
+
+	istioVersion, err := istioVersion()
+	if err != nil {
+		return false
+	}
+	*istioSupportsCanonical = validateVersion(">= 1.5", istioVersion.Version)
+	return *istioSupportsCanonical
 }

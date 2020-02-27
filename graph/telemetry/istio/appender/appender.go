@@ -8,11 +8,26 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/status"
 )
 
 const (
 	defaultQuantile = 0.95
 )
+
+// version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
+// these values may change and are therefore re-set on every graph request.  TODO: can we just set these once
+// and potentially require a pod restart
+var appLabel = "app"
+var verLabel = "version"
+
+func init() {
+	if status.IstioSupportsCanonical() {
+		appLabel = "canonical_service"
+		// verLabel = "canonical_revision"  TODO UNCOMMENT WHEN FIELD IS THERE
+		log.Info("JSHAUGHN DEBUG: supportsCanonical=true")
+	}
+}
 
 // ParseAppenders determines which appenders should run for this graphing request
 func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {

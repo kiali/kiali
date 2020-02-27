@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/status"
 )
 
 // HealthService deals with fetching health from various sources and convert to kiali model
@@ -256,6 +257,11 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector) {
 	lblDest := model.LabelName("destination_app")
 	lblSrc := model.LabelName("source_app")
+	if status.IstioSupportsCanonical() {
+		lblDest = model.LabelName("destination_canonical_service")
+		lblSrc = model.LabelName("source_canonical_service")
+	}
+
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {

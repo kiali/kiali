@@ -31,7 +31,22 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/status"
 )
+
+// version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
+// these values may change and are therefore re-set on every graph request.  TODO: can we just set these once
+// and potentially require a pod restart
+var appLabel = "app"
+var verLabel = "version"
+
+func init() {
+	if status.IstioSupportsCanonical() {
+		appLabel = "canonical_service"
+		// verLabel = "canonical_revision"  TODO UNCOMMENT WHEN FIELD IS THERE
+		log.Info("JSHAUGHN DEBUG: supportsCanonical=true")
+	}
+}
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
@@ -86,7 +101,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
 	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
 	//    defined, on the other cluster.
-	groupBy := "source_workload_namespace,source_workload,source_canonical_service,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags"
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
@@ -148,7 +163,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 
 	if !isIstioNamespace {
 		// 1) query for traffic originating from "unknown" (i.e. the internet)
-		tcpGroupBy := "source_workload_namespace,source_workload,source_canonical_service,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_app,destination_version,response_flags"
+		tcpGroupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_flags", appLabel, verLabel, appLabel, verLabel)
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 			tcpMetric,
 			namespace,
@@ -185,17 +200,15 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceCS, sourceCSOk := m["source_canonical_service"]
-		lSourceApp, sourceAppOk := m["source_app"]
-		lSourceVer, sourceVerOk := m["source_version"]
+		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
+		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
-		lDestCS, destCSOk := m["destination_canonical_service"]
-		lDestApp, destAppOk := m["destination_app"]
-		lDestVer, destVerOk := m["destination_version"]
+		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
+		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
 		lProtocol, protocolOk := m["request_protocol"]
 		lCode, codeOk := m["response_code"]
 		lGrpc, grpcOk := m["grpc_response_status"]
@@ -208,18 +221,16 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 
 		sourceWlNs := string(lSourceWlNs)
 		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
+		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		protocol := string(lProtocol)
 		code := string(lCode)
 		flags := string(lFlags)
-
-		// set app in a backward compatible way
-		sourceApp := util.HandleApp(string(lSourceApp), string(lSourceCS), sourceCSOk)
-		destApp := util.HandleApp(string(lDestApp), string(lDestCS), destCSOk)
 
 		// set response code in a backward compatible way
 		code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
@@ -284,17 +295,15 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceCS, sourceCSOk := m["source_canonical_service"]
-		lSourceApp, sourceAppOk := m["source_app"]
-		lSourceVer, sourceVerOk := m["source_version"]
+		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
+		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
-		lDestCS, destCSOk := m["destination_canonical_service"]
-		lDestApp, destAppOk := m["destination_app"]
-		lDestVer, destVerOk := m["destination_version"]
+		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
+		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
 		lFlags, flagsOk := m["response_flags"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
@@ -304,16 +313,14 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 
 		sourceWlNs := string(lSourceWlNs)
 		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
+		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		flags := string(lFlags)
-
-		// set app in a backward compatible way
-		sourceApp := util.HandleApp(string(lSourceApp), string(lSourceCS), sourceCSOk)
-		destApp := util.HandleApp(string(lDestApp), string(lDestCS), destCSOk)
 
 		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
 
@@ -473,7 +480,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			sourceWorkloadQuery = fmt.Sprintf(`,source_workload_namespace!~"%s"`, excludedIstioRegex)
 		}
 	}
-	groupBy := "source_workload_namespace,source_workload,source_canonical_service,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags"
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -485,39 +492,25 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			groupBy)
 	case graph.NodeTypeApp:
 		if graph.IsOK(n.Version) {
-			destAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",%sdestination_service_namespace="%s",destination_app="%s",destination_version="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",%sdestination_service_namespace="%s",destination_%s="%s",destination_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
 				sourceWorkloadQuery,
 				namespace,
+				appLabel,
 				n.App,
+				verLabel,
 				n.Version,
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
-			destCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",%sdestination_service_namespace="%s",destination_canonical_service="%s",destination_version="%s"} [%vs])) by (%s)`,
-				httpMetric,
-				sourceWorkloadQuery,
-				namespace,
-				n.App,
-				n.Version,
-				int(interval.Seconds()), // range duration for the query
-				groupBy)
-			query = fmt.Sprintf(`(%s OR %s)`, destAppQuery, destCSQuery)
 		} else {
-			destAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_app="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
 				sourceWorkloadQuery,
 				namespace,
+				appLabel,
 				n.App,
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
-			destCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s)`,
-				httpMetric,
-				sourceWorkloadQuery,
-				namespace,
-				n.App,
-				int(interval.Seconds()), // range duration for the query
-				groupBy)
-			query = fmt.Sprintf(`(%s OR %s)`, destAppQuery, destCSQuery)
 		}
 	case graph.NodeTypeService:
 		// for service requests we want source reporting to capture source-reported errors.  But unknown only generates destination telemetry.  So
@@ -556,35 +549,23 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			groupBy)
 	case graph.NodeTypeApp:
 		if graph.IsOK(n.Version) {
-			sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s",source_version="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_%s="%s",source_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
 				namespace,
+				appLabel,
 				n.App,
+				verLabel,
 				n.Version,
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
-			sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_canonical_service="%s",source_version="%s"} [%vs])) by (%s)`,
-				httpMetric,
-				namespace,
-				n.App,
-				n.Version,
-				int(interval.Seconds()), // range duration for the query
-				groupBy)
-			query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 		} else {
-			sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
 				namespace,
+				appLabel,
 				n.App,
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
-			sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s)`,
-				httpMetric,
-				namespace,
-				n.App,
-				int(interval.Seconds()), // range duration for the query
-				groupBy)
-			query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 		}
 	case graph.NodeTypeService:
 		query = ""
@@ -612,39 +593,25 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 				groupBy)
 		case graph.NodeTypeApp:
 			if graph.IsOK(n.Version) {
-				sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_app="%s",source_version="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_%s="%s",source_%s="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
 					httpMetric,
 					namespace,
+					appLabel,
 					n.App,
+					verLabel,
 					n.Version,
 					istioNamespacesRegex,
 					int(interval.Seconds()), // range duration for the query
 					groupBy)
-				sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_canonical_service="%s",source_version="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
-					httpMetric,
-					namespace,
-					n.App,
-					n.Version,
-					istioNamespacesRegex,
-					int(interval.Seconds()), // range duration for the query
-					groupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 			} else {
-				sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_app="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_%s="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
 					httpMetric,
 					namespace,
+					appLabel,
 					n.App,
 					istioNamespacesRegex,
 					int(interval.Seconds()), // range duration for the query
 					groupBy)
-				sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_canonical_service="%s",destination_service_namespace=~"%s"} [%vs])) by (%s)`,
-					httpMetric,
-					namespace,
-					n.App,
-					istioNamespacesRegex,
-					int(interval.Seconds()), // range duration for the query
-					groupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 			}
 		case graph.NodeTypeService:
 			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
@@ -664,7 +631,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	if !config.IsIstioNamespace(namespace) {
 		tcpMetric := "istio_tcp_sent_bytes_total"
 
-		tcpGroupBy := "source_workload_namespace,source_workload,source_canonical_service,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_app,destination_version,response_flags"
+		tcpGroupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_flags", appLabel, verLabel, appLabel, verLabel)
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -675,35 +642,23 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 				tcpGroupBy)
 		case graph.NodeTypeApp:
 			if graph.IsOK(n.Version) {
-				destAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_app="%s",destination_version="%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_%s="%s",destination_%s="%s"} [%vs])) by (%s)`,
 					tcpMetric,
 					namespace,
+					appLabel,
 					n.App,
+					verLabel,
 					n.Version,
 					int(interval.Seconds()), // range duration for the query
 					tcpGroupBy)
-				destCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_canonical_service="%s",destination_version="%s"} [%vs])) by (%s)`,
-					tcpMetric,
-					namespace,
-					n.App,
-					n.Version,
-					int(interval.Seconds()), // range duration for the query
-					tcpGroupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, destAppQuery, destCSQuery)
 			} else {
-				destAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_app="%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_%s="%s"} [%vs])) by (%s)`,
 					tcpMetric,
 					namespace,
+					appLabel,
 					n.App,
 					int(interval.Seconds()), // range duration for the query
 					tcpGroupBy)
-				destCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s)`,
-					tcpMetric,
-					namespace,
-					n.App,
-					int(interval.Seconds()), // range duration for the query
-					tcpGroupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, destAppQuery, destCSQuery)
 			}
 		case graph.NodeTypeService:
 			// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how tcp is reported from unknown.
@@ -730,35 +685,23 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 				tcpGroupBy)
 		case graph.NodeTypeApp:
 			if graph.IsOK(n.Version) {
-				sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s",source_version="%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_%s="%s",source_%s="%s"} [%vs])) by (%s)`,
 					tcpMetric,
 					namespace,
+					appLabel,
 					n.App,
+					verLabel,
 					n.Version,
 					int(interval.Seconds()), // range duration for the query
 					tcpGroupBy)
-				sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_canonical_service="%s",source_version="%s"} [%vs])) by (%s)`,
-					tcpMetric,
-					namespace,
-					n.App,
-					n.Version,
-					int(interval.Seconds()), // range duration for the query
-					tcpGroupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 			} else {
-				sourceAppQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s"} [%vs])) by (%s)`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_%s="%s"} [%vs])) by (%s)`,
 					tcpMetric,
 					namespace,
+					appLabel,
 					n.App,
 					int(interval.Seconds()), // range duration for the query
 					tcpGroupBy)
-				sourceCSQuery := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s)`,
-					tcpMetric,
-					namespace,
-					n.App,
-					int(interval.Seconds()), // range duration for the query
-					tcpGroupBy)
-				query = fmt.Sprintf(`(%s OR %s)`, sourceAppQuery, sourceCSQuery)
 			}
 		case graph.NodeTypeService:
 			query = ""

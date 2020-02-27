@@ -57,14 +57,3 @@ func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk 
 
 	return grpcResponseStatus
 }
-
-// HandleApp returns either the app or the canonical_service.  source_canonical_service and destination_canonical_service
-// were added upstream in Istio 1.5.   source_app and destination_app are the legacy fields.  We support it here in a
-// backward compatible way.  Return canonical_service is set, otherwise app.
-func HandleApp(app, canonicalService string, canonicalServiceOk bool) string {
-	if canonicalServiceOk {
-		return canonicalService
-	}
-
-	return app
-}
