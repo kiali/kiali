@@ -11,9 +11,12 @@ import (
 
 // Host represents the FQDN format for Istio hostnames
 type Host struct {
-	Service       string
-	Namespace     string
-	Cluster       string
+	Service   string
+	Namespace string
+	Cluster   string
+	// CompleteInput is true when Service, Namespace and Cluster fields are present.
+	// It is true for simple service names and FQDN services.
+	// It is false for service.namespace format and service entries.
 	CompleteInput bool
 }
 
