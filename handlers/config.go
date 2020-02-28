@@ -20,9 +20,12 @@ const (
 type ThreeScaleConfig struct {
 	Enabled bool `json:"enabled"`
 }
-
+type Iter8Config struct {
+	Enabled bool `json:"enabled"`
+}
 type Extensions struct {
 	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
+	Iter8 Iter8Config `json:"iter8,omitempty"`
 }
 
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
@@ -56,6 +59,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		Extensions: Extensions{
 			ThreeScale: ThreeScaleConfig{
 				Enabled: config.Extensions.ThreeScale.Enabled,
+			},
+			Iter8: Iter8Config {
+				Enabled: config.Extensions.Iter8.Enabled,
 			},
 		},
 		InstallationTag:          config.InstallationTag,
