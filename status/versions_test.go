@@ -111,9 +111,9 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  false,
 		},
 		{
-			rawVersion: "root@f72e3d3ef3c2-docker.io/1.5-alpha.5c882cd74304ec037d38cd3abdf147cf1c44a392-5c882cd74304ec037d38cd3abdf147cf1c44a392-Clean ",
+			rawVersion: "root@f72e3d3ef3c2-docker.io/1.5-alpha.5c882cd74304ec037d38cd3abdf147cf1c44a392-5c882cd74304ec037d38cd3abdf147cf1c44a392-Clean",
 			name:       "Istio Dev",
-			version:    "1.5 (5c882cd74304ec037d38cd3abdf147cf1c44a392)",
+			version:    "1.5 (dev 5c882cd74304ec037d38cd3abdf147cf1c44a392)",
 			supported:  true,
 		},
 		{

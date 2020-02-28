@@ -24,7 +24,7 @@ var verLabel = "version"
 func init() {
 	if status.IstioSupportsCanonical() {
 		appLabel = "canonical_service"
-		// verLabel = "canonical_revision"  TODO UNCOMMENT WHEN FIELD IS THERE
+		verLabel = "canonical_revision"
 		log.Info("JSHAUGHN DEBUG: supportsCanonical=true")
 	}
 }

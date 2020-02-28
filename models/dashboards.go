@@ -34,7 +34,7 @@ func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 	verLabel := "version"
 	if status.IstioSupportsCanonical() {
 		appLabel = "canonical_service"
-		// verLabel = "canonical_revision"  TODO UNCOMMENT WHEN FIELD IS THERE
+		verLabel = "canonical_revision"
 	}
 
 	aggs := []kmodel.Aggregation{
