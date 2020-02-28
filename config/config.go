@@ -152,10 +152,15 @@ type ThreeScaleConfig struct {
 	Enabled        bool   `yaml:"enabled"`
 }
 
+type Iter8Config struct {
+	Enabled bool `yaml:"enabled"`
+}
+
 // Extensions struct describes configuration for Kiali add-ons (extensions)
 // New add-on/extension configuration should create a specif config and be located under this
 type Extensions struct {
 	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
+	Iter8 Iter8Config `yaml:"iter8,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -305,7 +310,10 @@ func NewConfig() (c *Config) {
 				AdapterName:    "threescale",
 				AdapterPort:    "3333",
 				AdapterService: "threescale-istio-adapter",
-				Enabled:        false,
+				Enabled:        true,
+			},
+			Iter8: Iter8Config{
+				Enabled:        true,
 			},
 		},
 		ExternalServices: ExternalServices{

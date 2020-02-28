@@ -1306,6 +1306,122 @@ func NewRoutes() (r *Routes) {
 			handlers.ThreeScaleServiceRuleDelete,
 			true,
 		},
+		// swagger:route GET /iter8 getIter8Info
+		// ---
+		// Endpoint to check if threescale adapter is present in the cluster and if user can write adapter config
+		//
+		//		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8InfoResponse
+		{
+			"Iter8Info",
+			"GET",
+			"/api/iter8",
+			handlers.Iter8Status,
+			true,
+		},
+
+		// swagger:route GET /iter8/experiments getexperiments
+		// ---
+		// Endpoint to fetch iter8 experiments
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experiments
+		{
+			"Iter8Experiments",
+			"GET",
+			"/api/iter8/experiments",
+			handlers.Iter8Experiments,
+			true,
+		},
+
+		// swagger:route GET /iter8/experiments getexperiments
+		// ---
+		// Endpoint to fetch iter8 experiments by namespace and name
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experimentdetail
+		{
+			"Iter8ExperimentsByNamespaceAndName",
+			"GET",
+			"/api/iter8/experiment/namespaces/{namespace}/name/{name}",
+			handlers.Iter8ExperimentGet,
+			true,
+		},
+		// swagger:route POST /iter8/experiment postexperiment
+		// ---
+		// Endpoint to create new iter8 experiments
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experimentdetail
+		{
+			Name: "Iter8ExpreimentCreate",
+			Method: "POST",
+			Pattern: "/api/iter8/experiment",
+			HandlerFunc: handlers.Iter8ExperimentCreate,
+			Authenticated: true,
+		},
+		// swagger:route PATCH /iter8/experiments
+		// ---
+		// Endpoint to update new iter8 experiment (for abort purpose)
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experimentdetail
+		{
+			Name: "Iter8ExpreimentUpdate",
+			Method: "PATCH",
+			Pattern: "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
+			HandlerFunc: handlers.Iter8ExperimentUpdate,
+			Authenticated: true,
+		},
+		// swagger:route DELETE /iter8/experiment deleteexperiment
+		// ---
+		// Endpoint to delete   iter8 experiments
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experimentdetail
+		{
+			Name: "Iter8ExpreimentDelete",
+			Method: "DELETE",
+			Pattern: "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
+			HandlerFunc: handlers.Iter8ExperimentDelete,
+			Authenticated: true,
+		},
 	}
 
 	return
