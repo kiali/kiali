@@ -756,7 +756,10 @@ elif [ "$_CMD" = "status" ]; then
 elif [ "$_CMD" = "ssh" ]; then
 
   infomsg "Logging into the CRC VM..."
-  ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@$(${CRC_COMMAND} ip)
+  ${CRC_OC} debug $(${CRC_OC} get nodes -o name)
+
+  # The old way to do it that no longer works
+  #ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@$(${CRC_COMMAND} ip)
 
 elif [ "$_CMD" = "routes" ]; then
 
