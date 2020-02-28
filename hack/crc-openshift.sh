@@ -95,6 +95,9 @@ get_api_server_url() {
 get_status() {
   check_crc_running
   echo "====================================================================="
+  echo "Version from crc command [${CRC_COMMAND}]"
+  ${CRC_COMMAND} version
+  echo "====================================================================="
   echo "Status from crc command [${CRC_COMMAND}]"
   ${CRC_COMMAND} status
   echo "====================================================================="
@@ -232,10 +235,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.5.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.6.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.2.14"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.3.0"
 
 # The default virtual CPUs assigned to the CRC VM (CRC requires a minimum of 4)
 DEFAULT_CRC_CPUS="4"
@@ -616,6 +619,8 @@ if [ "$_CMD" = "start" ]; then
     infomsg "You asked for a virtual disk size of ${CRC_VIRTUAL_DISK_SIZE}G."
     infomsg "The virtual disk size will be increased by ${_INCREASE_VIRTUAL_DISK_SIZE}."
     infomsg "This multi-step process will take a long time. Be patient."
+
+    infomsg "TODO: THIS PROBABLY WILL FAIL WITH CRC 1.6+ - see https://github.com/code-ready/crc/issues/127"
 
     # cannot resize disk while VM is running, shut it down now
     ${CRC_COMMAND} stop
