@@ -15,10 +15,7 @@ METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
 def test_service_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service_list_json = kiali_client.request(method_name='serviceList', path={'namespace': bookinfo_namespace}).json()
-    assert service_list_json.get('namespace').get('name') == bookinfo_namespace
-
-    services = service_list_json.get('services')
+    services = get_service_list(kiali_client, bookinfo_namespace)
     assert (len (services) == BOOKINFO_EXPECTED_SERVICES) or (len (services) >= BOOKINFO_EXPECTED_SERVICES_MONGODB)
 
     for service in services:
@@ -230,3 +227,53 @@ def test_service_validations_endpoint(kiali_client):
         for g in gateway:
             assert gateway.get(g).get('valid')
 
+def test_service_spans(kiali_client):
+
+    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
+        pytest.skip()
+
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+    services = get_service_list(kiali_client, bookinfo_namespace)
+    assert services != None
+
+    for service in services:
+        name = service.get('name')
+        spansList = kiali_client.request(method_name='spansList', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        for span in spansList:
+            assert span.get('traceID') != None
+            assert span.get('spanID') != None
+            assert span.get('operationName') != None
+
+def test_service_traces_detail(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+
+    if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
+        pytest.skip()
+
+    services = get_service_list(kiali_client, bookinfo_namespace)
+    assert services != None
+
+    for service in services:
+        name = service.get('name')
+        tracesDetailsList = kiali_client.request(method_name='tracesDetail', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        assert tracesDetailsList != None
+
+        for tracesDetail in tracesDetailsList.get('data'):
+            assert tracesDetail.get('traceID') != None
+            assert tracesDetail.get('spans') != None
+
+
+def get_kiali_version(kiali_client):
+    try:
+        response = kiali_client.request(method_name='getStatus')
+        kiali_version = response.json().get('status')
+    except AssertionError:
+        pytest.fail(response.content)
+
+    return kiali_version
+
+def get_service_list(kiali_client, namespace):
+    service_list_json = kiali_client.request(method_name='serviceList', path={'namespace': namespace}).json()
+    assert service_list_json.get('namespace').get('name') == namespace
+
+    return service_list_json.get('services')
