@@ -26,9 +26,9 @@ type AppHealth struct {
 	Requests         RequestHealth    `json:"requests"`
 }
 
-// errorCodeRegexp is a regex pattern to match HTTP errors (4xx, 5xx) or GRPC errors (1-16)
 var (
-	errorCodeRegexp, _ = regexp.Compile(`^[4-5]\d\d$|^[1-9]$|^1[0-6]$`)
+	grpcErrorRegexp, _ = regexp.Compile(`^[1-9]$|^1[0-6]$`) // 1..16
+	httpErrorRegexp, _ = regexp.Compile(`^[4-5]\d\d$`)      // 4xx, 5xx
 )
 
 func NewEmptyRequestHealth() RequestHealth {
@@ -110,7 +110,12 @@ func (in *RequestHealth) updateGlobalErrorRatio() {
 func aggregate(sample *model.Sample, requestRate, errorRate, errorRatio *float64) {
 	*requestRate += float64(sample.Value)
 	responseCode := sample.Metric["response_code"]
-	if errorCodeRegexp.MatchString(string(responseCode)) {
+	regexp := httpErrorRegexp
+	if string(sample.Metric["request_protocol"]) == "grpc" {
+		responseCode = sample.Metric["grpc_response_status"]
+		regexp = grpcErrorRegexp
+	}
+	if regexp.MatchString(string(responseCode)) {
 		*errorRate += float64(sample.Value)
 	}
 	if *requestRate == 0 {

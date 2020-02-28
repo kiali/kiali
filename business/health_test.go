@@ -219,6 +219,26 @@ var (
 		Value:     model.SampleValue(3.5),
 		Timestamp: model.Now(),
 	}
+	sampleReviewsToHttpbinGrpc0 = model.Sample{
+		Metric: model.Metric{
+			"source_service":       "reviews.tutorial.svc.cluster.local",
+			"destination_service":  "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":     "grpc",
+			"grpc_response_status": "0",
+		},
+		Value:     model.SampleValue(5),
+		Timestamp: model.Now(),
+	}
+	sampleReviewsToHttpbinGrpc7 = model.Sample{
+		Metric: model.Metric{
+			"source_service":       "reviews.tutorial.svc.cluster.local",
+			"destination_service":  "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":     "grpc",
+			"grpc_response_status": "7",
+		},
+		Value:     model.SampleValue(3), // should fail, change to 3.5 to succeed
+		Timestamp: model.Now(),
+	}
 	sampleUnknownToHttpbin200 = model.Sample{
 		Metric: model.Metric{
 			"destination_service":      "httpbin.tutorial.svc.cluster.local",
@@ -237,6 +257,28 @@ var (
 			"response_code":            "404",
 		},
 		Value:     model.SampleValue(1.4),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToHttpbinGrpc0 = model.Sample{
+		Metric: model.Metric{
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"request_protocol":         "grpc",
+			"grpc_response_status":     "0",
+		},
+		Value:     model.SampleValue(14),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToHttpbinGrpc7 = model.Sample{
+		Metric: model.Metric{
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"request_protocol":         "grpc",
+			"grpc_response_status":     "7",
+		},
+		Value:     model.SampleValue(2.4), // should fail, change to 1.4 to succeed
 		Timestamp: model.Now(),
 	}
 	sampleUnknownToReviews500 = model.Sample{
