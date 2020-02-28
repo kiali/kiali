@@ -17,6 +17,29 @@ type SidecarChecker struct {
 func (s SidecarChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	validations = validations.MergeValidations(s.runIndividualChecks())
+	validations = validations.MergeValidations(s.runGroupChecks())
+
+	return validations
+}
+
+func (s SidecarChecker) runGroupChecks() models.IstioValidations {
+	validations := models.IstioValidations{}
+
+	enabledDRCheckers := []GroupChecker{
+		sidecars.MultiMatchChecker{Sidecars: s.Sidecars},
+	}
+
+	for _, checker := range enabledDRCheckers {
+		validations = validations.MergeValidations(checker.Check())
+	}
+
+	return validations
+}
+
+func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
+	validations := models.IstioValidations{}
+
 	for _, sidecar := range s.Sidecars {
 		validations.MergeValidations(s.runChecks(sidecar))
 	}

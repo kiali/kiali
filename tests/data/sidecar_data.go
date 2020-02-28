@@ -6,16 +6,17 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func CreateSidecar(selector map[string]interface{}) kubernetes.IstioObject {
+func CreateSidecar(name string) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "auth-policy",
+			Name:      name,
 			Namespace: "bookinfo",
 		},
-		Spec: map[string]interface{}{
-			"workloadSelector": map[string]interface{}{
-				"labels": selector,
-			},
-		},
+		Spec: map[string]interface{}{},
 	}).DeepCopyIstioObject()
+}
+
+func AddSelectorToSidecar(selector map[string]interface{}, gw kubernetes.IstioObject) kubernetes.IstioObject {
+	gw.GetSpec()["workloadSelector"] = selector
+	return gw
 }
