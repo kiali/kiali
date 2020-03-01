@@ -237,6 +237,10 @@ spec:
 #    ---
 #    namespace: ""
 #
+# A set of node labels that dictate onto which node the Kiali pod will be deployed.
+#    ---
+#    node_selector: {}
+#
 # Because an ingress into a cluster can vary wildly in its desired configuration,
 # this setting provides a way to override complete portions of the ingress resource
 # configuration (Ingress on Kubernetes and Route on OpenShift). It is up to the user
