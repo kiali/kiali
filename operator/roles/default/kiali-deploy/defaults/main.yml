@@ -58,6 +58,7 @@ kiali_defaults:
     image_version: ""
     ingress_enabled: true
     namespace: ""
+    node_selector: {}
     #override_ingress_yaml:
     pod_annotations: {}
     priority_class_name: ""
