@@ -131,8 +131,8 @@ fi
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE new-project ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
 fi
@@ -192,6 +192,12 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
