@@ -60,15 +60,13 @@ func buildSidecarValidations(sidecars []KeyWithIndex) models.IstioValidations {
 	}
 
 	for _, sidecarWithIndex := range sidecars {
-		sidecarIndex := sidecarWithIndex.Index
-		sidecarKey := sidecarWithIndex.Key
-		references := extractReferences(append(sidecars[:sidecarIndex], sidecars[sidecarIndex+1:]...))
+		references := extractReferences(sidecarWithIndex.Index, sidecars)
 		checks := models.Build("sidecar.multimatch", "spec/workloadSelector")
 		validations.MergeValidations(
 			models.IstioValidations{
 				*sidecarWithIndex.Key: &models.IstioValidation{
-					Name:       sidecarKey.Name,
-					ObjectType: sidecarKey.ObjectType,
+					Name:       sidecarWithIndex.Key.Name,
+					ObjectType: sidecarWithIndex.Key.ObjectType,
 					Valid:      false,
 					References: references,
 					Checks: []*models.IstioCheck{
@@ -81,11 +79,18 @@ func buildSidecarValidations(sidecars []KeyWithIndex) models.IstioValidations {
 	return validations
 }
 
-func extractReferences(withIndex []KeyWithIndex) []models.IstioValidationKey {
-	references := make([]models.IstioValidationKey, 0, len(withIndex))
+func extractReferences(index int, sidecars []KeyWithIndex) []models.IstioValidationKey {
+	references := make([]models.IstioValidationKey, 0, len(sidecars))
+	filtered := make([]KeyWithIndex, 0, len(sidecars)-1)
 
-	for _, wi := range withIndex {
-		references = append(references, *wi.Key)
+	// Exclude item at index position
+	filtered = append(filtered, sidecars[:index]...)
+	if len(sidecars) > index+1 {
+		filtered = append(filtered, sidecars[index+1:]...)
+	}
+
+	for _, s := range filtered {
+		references = append(references, *s.Key)
 	}
 
 	return references

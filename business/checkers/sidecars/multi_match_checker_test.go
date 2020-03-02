@@ -16,12 +16,12 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 	validations := MultiMatchChecker{
 		Sidecars: []kubernetes.IstioObject{
 			data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string] interface{}{
+				"labels": map[string]interface{}{
 					"app": "reviews",
 				},
 			}, data.CreateSidecar("sidecar1")),
 			data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string] interface{}{
+				"labels": map[string]interface{}{
 					"app": "details",
 				},
 			}, data.CreateSidecar("sidecar2")),
@@ -32,8 +32,6 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 }
 
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
-	assert := assert.New(t)
-
 	validations := MultiMatchChecker{
 		Sidecars: []kubernetes.IstioObject{
 			data.CreateSidecar("sidecar1"),
@@ -41,15 +39,27 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 		},
 	}.Check()
 
+	assertMultimatchFailure(t, validations, "sidecar1", "sidecar2")
+	assertMultimatchFailure(t, validations, "sidecar2", "sidecar1")
+}
+
+func assertMultimatchFailure(t *testing.T, validations models.IstioValidations, item, reference string) {
+	assert := assert.New(t)
+
+	// Global assertion
 	assert.NotEmpty(validations)
-	items := []string{"sidecar1", "sidecar2"}
-	for _, item := range items {
-		validation, ok := validations[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
-		assert.True(ok)
-		assert.False(validation.Valid)
-		assert.NotEmpty(validation.Checks)
-		assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-		assert.Equal(models.CheckMessage("sidecar.multimatch"), validation.Checks[0].Message)
-		assert.Len(validation.References, 1)
-	}
+
+	// Assert specific's object validation
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
+	assert.True(ok)
+	assert.False(validation.Valid)
+
+	// Assert object's checks
+	assert.NotEmpty(validation.Checks)
+	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
+	assert.Equal(models.CheckMessage("sidecar.multimatch"), validation.Checks[0].Message)
+
+	// Assert referenced objects
+	assert.Len(validation.References, 1)
+	assert.Equal(reference, validation.References[0].Name)
 }
