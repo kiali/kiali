@@ -147,7 +147,7 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
   if [[ "$CLIENT_EXE" = *"oc" ]]; then
     $CLIENT_EXE adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE}
     $CLIENT_EXE adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE}
-    $CLIENT_EXE -n ${NAMESPACE} delete NetworkAttachmentDefinition istio-cni
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     $CLIENT_EXE delete project ${NAMESPACE}
   else
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -210,8 +210,8 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
   cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition

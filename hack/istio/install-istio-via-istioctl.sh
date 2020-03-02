@@ -309,7 +309,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
     echo "For each namespace in the mesh, run these commands to remove previously created policies:"
     echo "  oc adm policy remove-scc-from-group privileged system:serviceaccounts:<target-namespace>"
     echo "  oc adm policy remove-scc-from-group anyuid system:serviceaccounts:<target-namespace>"
-    echo "  oc -n <target-namespace> delete NetworkAttachmentDefinition istio-cni"
+    echo "  oc -n <target-namespace> delete network-attachment-definition istio-cni"
     echo "===== IMPORTANT ====="
   fi
 else
