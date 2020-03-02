@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
-import { HTTPRoute, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
+import { HTTPRoute, ObjectCheck, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
@@ -94,30 +94,18 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   checksFrom(validation: ObjectValidation, routeIndex: number, destinationIndex: number) {
-    const checks = checkForPath(
-      validation,
-      'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route[' + destinationIndex + ']/weight'
-    );
+    const basePath = 'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route[' + destinationIndex + ']';
+    const path = [
+      basePath + '/weight',
+      basePath + '/destination',
+      basePath + '/destination/host',
+      basePath + '/subset'
+    ];
 
-    checks.push(
-      ...checkForPath(
-        validation,
-        'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route[' + destinationIndex + ']/destination'
-      )
-    );
-
-    checks.push(
-      ...checkForPath(
-        validation,
-        'spec/' +
-          this.props.kind.toLowerCase() +
-          '[' +
-          routeIndex +
-          ']/route[' +
-          destinationIndex +
-          ']/destination/host'
-      )
-    );
+    const checks: ObjectCheck[] = [];
+    path.forEach((path, _) => {
+      checks.push(...checkForPath(validation, path));
+    });
 
     return checks;
   }
