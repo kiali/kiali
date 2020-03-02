@@ -23,6 +23,10 @@ ISTIO_VERSION=
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -div|--dev-istio-version)
+      DEV_ISTIO_VERSION="$2"
+      shift;shift
+      ;;
     -iv|--istio-version)
       ISTIO_VERSION="$2"
       shift;shift
@@ -34,7 +38,10 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -iv|--istio-version <#.#.#>: Version of Istio to download. (default will be the latest version)
+  -div|--dev-istio-version <version>: If you want a dev version to download, use this option and do not use -iv.
+                                      The value of this option is something like "1.4-dev" or "1.5-dev". If you
+                                      want the latest master build, set this to "latest".
+  -iv|--istio-version <#.#.#>: Released version of Istio to download. (default will be the latest version)
   -o|--output <dir> : Output directory where Istio is (or will be downloaded to if it doesn't exist).
   -h|--help : This message.
 HELPMSG
@@ -56,23 +63,41 @@ OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
 if [ -z "${ISTIO_VERSION}" ]; then
-   # get the latest released version
-   VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
-         grep tag_name | sed "s/ *\"tag_name\": *\"\\(.*\\)\",*/\\1/" | \
-         grep -v -E "(alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1,1 -k 2,2 -k 3,3 -k 4,4 | tail -n 1)
-   echo "Will use the latest Istio version: $VERSION_WE_WANT"
-   ISTIO_VERSION="${VERSION_WE_WANT}"
+  if [ -z "${DEV_ISTIO_VERSION}" ]; then
+    # get the latest released version
+    VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
+          grep tag_name | sed "s/ *\"tag_name\": *\"\\(.*\\)\",*/\\1/" | \
+          grep -v -E "(alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1,1 -k 2,2 -k 3,3 -k 4,4 | tail -n 1)
+    echo "Will use the latest Istio version: $VERSION_WE_WANT"
+    ISTIO_VERSION="${VERSION_WE_WANT}"
+  else
+    # See https://github.com/istio/istio/wiki/Dev%20Builds
+    VERSION_WE_WANT="$(curl -L -s https://storage.googleapis.com/istio-build/dev/${DEV_ISTIO_VERSION})"
+    if [ -z "${VERSION_WE_WANT}" ]; then
+      echo "There is no known build for dev version ${DEV_ISTIO_VERSION}"
+      exit 1
+    fi
+  fi
 else
-   VERSION_WE_WANT="${ISTIO_VERSION}"
-   echo "Will use a specific Istio version: $VERSION_WE_WANT"
+  VERSION_WE_WANT="${ISTIO_VERSION}"
+  echo "Will use a specific Istio version: $VERSION_WE_WANT"
 fi
 
 # See if Istio is downloaded; if not, get it now.
 echo "Will look for Istio here: ${OUTPUT_DIR}/istio-${VERSION_WE_WANT}"
 if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
-   echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
-   export ISTIO_VERSION
-   curl -L https://git.io/getLatestIstio | sh -
+  echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
+  if [ -z "${DEV_ISTIO_VERSION}" ]; then
+    export ISTIO_VERSION
+    curl -L https://git.io/getLatestIstio | sh -
+  else
+    # See https://github.com/istio/istio/wiki/Dev%20Builds
+    curl -L https://gcsweb.istio.io/gcs/istio-build/dev/${VERSION_WE_WANT}/istio-${VERSION_WE_WANT}-linux.tar.gz | tar xvfz -
+    if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
+      echo "Could not download ${VERSION_WE_WANT}"
+      exit 1
+    fi
+  fi
 fi
 
 cd "./istio-${VERSION_WE_WANT}/"
