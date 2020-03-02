@@ -20,6 +20,7 @@ NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
 RATE=1
 AUTO_INJECTION="true"
+DELETE_BOOKINFO="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -27,6 +28,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -ai|--auto-injection)
       AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -db|--delete-bookinfo)
+      DELETE_BOOKINFO="$2"
       shift;shift
       ;;
     -id|--istio-dir)
@@ -69,6 +74,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected or manually injected (default: true).
+  -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
@@ -128,21 +134,35 @@ else
   exit 1
 fi
 
-# If OpenShift, we need to do some additional things
-if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE new-project ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts -n ${NAMESPACE}
-else
-  $CLIENT_EXE create namespace ${NAMESPACE}
-fi
-
 if [ "${BOOKINFO_YAML}" == "" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
 
 if [ "${GATEWAY_YAML}" == "" ]; then
   GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
+fi
+
+if [ "${DELETE_BOOKINFO}" == "true" ]; then
+  echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
+  if [[ "$CLIENT_EXE" = *"oc" ]]; then
+    $CLIENT_EXE adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE}
+    $CLIENT_EXE adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE}
+    $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
+    $CLIENT_EXE delete project ${NAMESPACE}
+  else
+    $CLIENT_EXE delete namespace ${NAMESPACE}
+  fi
+  echo "====== BOOKINFO UNINSTALLED ====="
+  exit 0
+fi
+
+# If OpenShift, we need to do some additional things
+if [[ "$CLIENT_EXE" = *"oc" ]]; then
+  $CLIENT_EXE new-project ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE}
+else
+  $CLIENT_EXE create namespace ${NAMESPACE}
 fi
 
 if [ "${AUTO_INJECTION}" == "true" ]; then
@@ -190,8 +210,14 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  cat <<NAD | $CLIENT_EXE -n ${NAMESPACE} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then

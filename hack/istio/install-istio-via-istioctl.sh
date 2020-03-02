@@ -307,8 +307,9 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands to remove previously created policies:"
-    echo "  oc adm policy remove-scc-from-group privileged system:serviceaccounts -n <target-namespace>"
-    echo "  oc adm policy remove-scc-from-group anyuid system:serviceaccounts -n <target-namespace>"
+    echo "  oc adm policy remove-scc-from-group privileged system:serviceaccounts:<target-namespace>"
+    echo "  oc adm policy remove-scc-from-group anyuid system:serviceaccounts:<target-namespace>"
+    echo "  oc -n <target-namespace> delete network-attachment-definition istio-cni"
     echo "===== IMPORTANT ====="
   fi
 else
@@ -336,8 +337,15 @@ else
 
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands so sidecar injection works:"
-    echo "  oc adm policy add-scc-to-group privileged system:serviceaccounts -n <target-namespace>"
-    echo "  oc adm policy add-scc-to-group anyuid system:serviceaccounts -n <target-namespace>"
+    echo "  oc adm policy add-scc-to-group privileged system:serviceaccounts:<target-namespace>"
+    echo "  oc adm policy add-scc-to-group anyuid system:serviceaccounts:<target-namespace>"
+    cat <<NAD
+  cat <<EOF | oc -n <target-namespace> create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+NAD
     echo "===== IMPORTANT ====="
 
     # Since we are on OpenShift, make sure CNI is enabled
