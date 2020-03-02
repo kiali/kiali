@@ -539,7 +539,7 @@ spec:
 #
 # Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
 #    ---
-#    cache_enabled: false
+#    cache_enabled: true
 #
 # Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
 # on this list of Istio types. Other Istio types are not yet supported.
@@ -570,7 +570,6 @@ spec:
 #    - "DeploymentConfig"
 #    - "Job"
 #    - "ReplicationController"
-#    - "StatefulSet"
 #
 # The QPS value of the Kubernetes client.
 #    ---
