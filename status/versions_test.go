@@ -145,7 +145,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 	}
 }
 
-func TestvalidateVersion(t *testing.T) {
+func TestValidateVersion(t *testing.T) {
 	result := validateVersion(">= 0.7.1", "0.7.1")
 
 	if !result {
@@ -242,7 +242,7 @@ func TestvalidateVersion(t *testing.T) {
 
 	result = validateVersion(">= 1.5", "1.5")
 
-	if result {
+	if !result {
 		t.Errorf("validateVersion was incorrect, got false, want true, 1.5 is >= 1.5")
 	}
 
