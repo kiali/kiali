@@ -36,9 +36,8 @@ func TestGetServiceHealth(t *testing.T) {
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
-	// 1.4 / 15.4 = 0.09
-	assert.InDelta(float64(0.09), health.Requests.ErrorRatio, 0.01)
-	assert.Equal(float64(1.4)/float64(15.4), health.Requests.InboundErrorRatio)
+	assert.InDelta(float64((1.4+1.4)/(1.4+1.4+14+14)), health.Requests.ErrorRatio, 0.01)
+	assert.Equal(float64((1.4+1.4)/(1.4+1.4+14+14)), health.Requests.InboundErrorRatio)
 	assert.Equal(float64(-1), health.Requests.OutboundErrorRatio)
 }
 
@@ -65,10 +64,9 @@ func TestGetAppHealth(t *testing.T) {
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
-	// 1.6 / 6.6 = 0.24
-	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
+	assert.InDelta(float64((1.6+3.5+3.5)/(1.6+5+5+3.5+3.5)), health.Requests.ErrorRatio, 0.0001)
 	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
-	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
+	assert.Equal(float64((3.5+3.5)/(5+5+3.5+3.5)), health.Requests.OutboundErrorRatio)
 }
 
 func TestGetWorkloadHealth(t *testing.T) {
@@ -95,10 +93,9 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
-	// 1.6 / 6.6 = 0.24
-	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
+	assert.InDelta(float64((1.6+3.5+3.5)/(1.6+5+5+3.5+3.5)), health.Requests.ErrorRatio, 0.0001)
 	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
-	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
+	assert.Equal(float64((3.5+3.5)/(5+5+3.5+3.5)), health.Requests.OutboundErrorRatio)
 }
 
 func TestGetAppHealthWithoutIstio(t *testing.T) {
@@ -219,6 +216,26 @@ var (
 		Value:     model.SampleValue(3.5),
 		Timestamp: model.Now(),
 	}
+	sampleReviewsToHttpbinGrpc0 = model.Sample{
+		Metric: model.Metric{
+			"source_service":       "reviews.tutorial.svc.cluster.local",
+			"destination_service":  "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":     "grpc",
+			"grpc_response_status": "0",
+		},
+		Value:     model.SampleValue(5),
+		Timestamp: model.Now(),
+	}
+	sampleReviewsToHttpbinGrpc7 = model.Sample{
+		Metric: model.Metric{
+			"source_service":       "reviews.tutorial.svc.cluster.local",
+			"destination_service":  "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":     "grpc",
+			"grpc_response_status": "7",
+		},
+		Value:     model.SampleValue(3.5),
+		Timestamp: model.Now(),
+	}
 	sampleUnknownToHttpbin200 = model.Sample{
 		Metric: model.Metric{
 			"destination_service":      "httpbin.tutorial.svc.cluster.local",
@@ -239,6 +256,28 @@ var (
 		Value:     model.SampleValue(1.4),
 		Timestamp: model.Now(),
 	}
+	sampleUnknownToHttpbinGrpc0 = model.Sample{
+		Metric: model.Metric{
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"request_protocol":         "grpc",
+			"grpc_response_status":     "0",
+		},
+		Value:     model.SampleValue(14),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToHttpbinGrpc7 = model.Sample{
+		Metric: model.Metric{
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"request_protocol":         "grpc",
+			"grpc_response_status":     "7",
+		},
+		Value:     model.SampleValue(1.4),
+		Timestamp: model.Now(),
+	}
 	sampleUnknownToReviews500 = model.Sample{
 		Metric: model.Metric{
 			"destination_service":      "reviews.tutorial.svc.cluster.local",
@@ -252,6 +291,8 @@ var (
 	serviceRates = model.Vector{
 		&sampleUnknownToHttpbin200,
 		&sampleUnknownToHttpbin404,
+		&sampleUnknownToHttpbinGrpc0,
+		&sampleUnknownToHttpbinGrpc7,
 	}
 	otherRatesIn = model.Vector{
 		&sampleUnknownToReviews500,
@@ -259,6 +300,8 @@ var (
 	otherRatesOut = model.Vector{
 		&sampleReviewsToHttpbin200,
 		&sampleReviewsToHttpbin400,
+		&sampleReviewsToHttpbinGrpc0,
+		&sampleReviewsToHttpbinGrpc7,
 	}
 )
 
