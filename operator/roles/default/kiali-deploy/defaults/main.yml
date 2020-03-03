@@ -147,7 +147,8 @@ kiali_defaults:
     - "Gateway"
     - "ServiceEntry"
     - "VirtualService"
-    cache_namespaces: []
+    cache_namespaces:
+    - ".*"
     cache_token_namespace_duration: 10
     excluded_workloads:
     - "CronJob"
