@@ -132,7 +132,7 @@ export const IstioTypes = {
   rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', icon: 'RC' },
   authorizationpolicy: { name: 'AuthorizationPolicy', url: 'authorizationpolicy', icon: 'AP' },
   servicemeshrbacconfig: { name: 'ServiceMeshRbacConfig', url: 'servicemeshrbacconfigs', icon: 'SRC' },
-  sidecar: { name: 'Sidecar', url: 'sidercars', icon: 'S' },
+  sidecar: { name: 'Sidecar', url: 'sidecars', icon: 'S' },
   servicerole: { name: 'ServiceRole', url: 'serviceroles', icon: 'SR' },
   servicerolebinding: { name: 'ServiceRoleBinding', url: 'servicerolebindings', icon: 'SRB' }
 };
