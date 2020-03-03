@@ -35,16 +35,14 @@ import (
 )
 
 // version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
-// these values may change and are therefore re-set on every graph request.  TODO: can we just set these once
-// and potentially require a pod restart
+// these values may change and are therefore re-set on every graph request.
 var appLabel = "app"
 var verLabel = "version"
 
-func init() {
+func setLabels() {
 	if status.IstioSupportsCanonical() {
 		appLabel = "canonical_service"
 		verLabel = "canonical_revision"
-		log.Info("JSHAUGHN DEBUG: supportsCanonical=true")
 	}
 }
 
@@ -52,6 +50,7 @@ func init() {
 func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
+	setLabels()
 	appenders := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
@@ -433,6 +432,7 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 
 	log.Tracef("Build graph for node [%+v]", n)
 
+	setLabels()
 	appenders := appender.ParseAppenders(o)
 	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 

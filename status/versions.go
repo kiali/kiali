@@ -304,7 +304,7 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-// set this one time, it is very unlikely that the istio version will without a kiali pod restart, or if it
+// set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
 // did that that version change will matter, and the kiali pod could be bounced as a workaround.
 var istioSupportsCanonical *bool
 
@@ -319,6 +319,7 @@ func IstioSupportsCanonical() bool {
 	if err != nil {
 		return false
 	}
-	*istioSupportsCanonical = validateVersion(">= 1.5", istioVersion.Version)
+	valid := validateVersion(">= 1.5", istioVersion.Version)
+	istioSupportsCanonical = &valid
 	return *istioSupportsCanonical
 }
