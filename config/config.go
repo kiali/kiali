@@ -345,11 +345,11 @@ func NewConfig() (c *Config) {
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
 			CacheDuration:               5 * 60,
-			CacheEnabled:                false,
+			CacheEnabled:                true,
 			CacheIstioTypes:             []string{"DestinationRule", "Gateway", "ServiceEntry", "VirtualService"},
 			CacheNamespaces:             []string{},
 			CacheTokenNamespaceDuration: 10,
-			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController", "StatefulSet"},
+			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},
 			QPS:                         175,
 		},
 		LoginToken: LoginToken{
