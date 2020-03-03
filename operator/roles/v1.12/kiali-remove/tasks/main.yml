@@ -137,6 +137,7 @@
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Role', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ConfigMap', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='MonitoringDashboard', api_version='monitoring.kiali.io/v1alpha1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Secret', resource_name='kiali-signing-key', api_version='v1') }}"
   loop_control:
     loop_var: k8s_item
 

@@ -32,6 +32,23 @@ rules:
   - get
   - list
   - patch
+- apiGroups: [""]
+  resources:
+  - secrets
+  verbs:
+  - create
+- apiGroups: [""]
+  resourceNames:
+  - kiali-signing-key
+  resources:
+  - secrets
+  verbs:
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["apps"]
   resources:
   - deployments
