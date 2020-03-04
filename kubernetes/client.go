@@ -105,6 +105,7 @@ type IstioClientInterface interface {
 	IsMaistraApi() bool
 	IsOpenShift() bool
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	Iter8ClientInterface
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs
@@ -120,6 +121,7 @@ type IstioClient struct {
 	istioSecurityApi         *rest.RESTClient
 	maistraAuthenticationApi *rest.RESTClient
 	maistraRbacApi           *rest.RESTClient
+	iter8Api                 *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
@@ -129,6 +131,11 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsMaistraApi() for more details.
 	isMaistraApi *bool
+
+	// isIter8Api private variable will check if extension Iter8 API is present.
+	// It is represented as a pointer to include the initialization phase.
+	// See iter8.go#IsIter8Api() for more details
+	isIter8Api *bool
 
 	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
 	// It is represented as a pointer to include the initialization phase.
@@ -262,6 +269,13 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
 			}
+			// Register Extension (iter8) types
+			for _, rt := range iter8Types {
+				// We will use a Iter8ExperimentObject which only contains metadata and spec with interfaces
+				// model objects will be responsible to parse it
+				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.objectKind), &Iter8ExperimentObject{})
+				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.collectionKind), &Iter8ExperimentObjectList{})
+			}
 
 			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
@@ -270,6 +284,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 			meta_v1.AddToGroupVersion(scheme, MaistraAuthenticationGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, MaistraRbacGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, SecurityGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, Iter8GroupVersion)
 			return nil
 		})
 
@@ -314,6 +329,11 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	iter8Api, err := newClientForAPI(config, Iter8GroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioAuthenticationApi = istioAuthenticationAPI
@@ -321,6 +341,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	client.istioSecurityApi = istioSecurityApi
 	client.maistraAuthenticationApi = maistraAuthenticationAPI
 	client.maistraRbacApi = maistraRbacApi
+	client.iter8Api = iter8Api
 	return &client, nil
 }
 

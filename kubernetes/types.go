@@ -122,6 +122,12 @@ const (
 	templates        = "templates"
 	templateType     = "template"
 	templateTypeList = "templateList"
+
+	// Iter8 types
+
+	iter8experiments        = "experiments"
+	iter8experimentType     = "Experiment"
+	iter8experimentTypeList = "ExperimentList"
 )
 
 var (
@@ -166,6 +172,13 @@ var (
 		Version: "v1beta1",
 	}
 	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
+
+	// We will add a new extesion API in a similar way as we added the Kubernetes + Istio APIs
+	Iter8GroupVersion = schema.GroupVersion{
+		Group:   "iter8.tools",
+		Version: "v1alpha1",
+	}
+	ApiIter8Version = Iter8GroupVersion.Group + "/" + Iter8GroupVersion.Version
 
 	networkingTypes = []struct {
 		objectKind     string
@@ -308,6 +321,16 @@ var (
 		},
 	}
 
+	iter8Types = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     iter8experimentType,
+			collectionKind: iter8experimentTypeList,
+		},
+	}
+
 	// A map to get the plural for a Istio type using the singlar type
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
@@ -356,6 +379,9 @@ var (
 
 		// Authorization Policies
 		authorizationpolicies: authorizationpoliciesType,
+
+		// Iter8
+		iter8experiments: iter8experimentType,
 	}
 )
 

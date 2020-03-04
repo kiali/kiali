@@ -440,6 +440,26 @@ func (o *K8SClientMock) MockServices(namespace string, names []string) {
 	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 }
 
+func (o *K8SClientMock) CreateIter8Experiment(namespace string, json string) (kubernetes.Iter8Experiment, error) {
+	args := o.Called(namespace, json)
+	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
+}
+
+func (o *K8SClientMock) GetIter8Experiment(namespace string, name string) (kubernetes.Iter8Experiment, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
+}
+
+func (o *K8SClientMock) GetIter8Experiments(namespace string) ([]kubernetes.Iter8Experiment, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.Iter8Experiment), args.Error(1)
+}
+
+func (o *K8SClientMock) IsIter8Api() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
