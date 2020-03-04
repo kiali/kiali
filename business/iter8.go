@@ -2,278 +2,148 @@ package business
 
 import (
 	"encoding/json"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	kube "k8s.io/client-go/kubernetes"
-	"github.com/kiali/kiali/config"
-	"k8s.io/client-go/rest"
-	"time"
-	"fmt"
-	"github.com/kiali/kiali/log"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	corev1 "k8s.io/api/core/v1"
-	iter8v1alpha1 "github.com/iter8-tools/iter8-controller/pkg/apis/iter8/v1alpha1"
-	kialiConfig "github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const GroupName = "iter8.tools"
-const GroupVersion = "v1alpha1"
-
 type Iter8Service struct {
-	k8s kubernetes.IstioClientInterface
+	k8s           kubernetes.IstioClientInterface
 	businessLayer *Layer
 }
 
-func (in *Iter8Service) GetIter8Info() (models.Iter8Info, error) {
+func (in *Iter8Service) GetIter8Info() models.Iter8Info {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Info")
+	defer promtimer.ObserveNow(&err)
 
-	var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: GroupVersion}
-	var iter8Kind = SchemeGroupVersion.WithKind("Experiment")
+	conf := config.Get()
 
-	if (iter8Kind == schema.GroupVersionKind{}) {
-		return models.Iter8Info{}, nil
+	// It will be considered enabled if the extension is present in the Kiali configuration and the CRD is enabled on the cluster
+	if conf.Extensions.Iter8.Enabled && in.k8s.IsIter8Api() {
+		return models.Iter8Info{
+			Enabled: true,
+		}
 	}
-	log.Infof("Experiment CRD exists")
 	return models.Iter8Info{
-		Enabled: true,
-	}, nil
+		Enabled: false,
+	}
 }
 
-func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (experiment models.ExperimentDetail, err error) {
-	result := &iter8v1alpha1.Experiment{}
-	cacheToken := ""
-	kConfig := kialiConfig.Get()
-	if kConfig.InCluster {
-		if saToken, err := kubernetes.GetKialiToken(); err != nil {
-			return models.ExperimentDetail{}, err
-		} else {
-			cacheToken = saToken
-		}
-	}
-	config, err := kubernetes.ConfigClient()
+func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (models.Iter8ExperimentDetail, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+
+	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
+
+	iter8ExperimentObject, err := in.k8s.GetIter8Experiment(namespace, name)
 	if err != nil {
-		return models.ExperimentDetail{}, err
-	}
-	istioConfig := rest.Config{
-		Host:            config.Host,
-		TLSClientConfig: config.TLSClientConfig,
-		QPS:             config.QPS,
-		BearerToken:     cacheToken,
-		Burst:           config.Burst,
+		return iter8ExperimentDetail, err
 	}
 
-	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig)
-	clientset := istioClient.GetK8sApi()
-	path := fmt.Sprintf("/apis/iter8.tools/v1alpha1/")
-	err = clientset.CoreV1().RESTClient().Get().AbsPath(path).
-		Namespace(namespace).
-		Resource("experiments").
-		Name(name).
-		Do().Into(result)
-
-	criterias := make([]models.CriteriaDetail, len(result.Spec.Analysis.SuccessCriteria))
-	for i, c := range result.Spec.Analysis.SuccessCriteria {
-		metricName := c.MetricName
-		criteriaDetail := models.CriteriaDetail {
-			Name: c.MetricName,
-			Criteria : models.Criteria {
-				Metric : c.MetricName,
-				SampleSize : c.GetSampleSize(),
-				Tolerance : c.Tolerance,
-				ToleranceType : string(c.ToleranceType),
-				StopOnFailure:c.GetStopOnFailure(),
-			},
-			Metric: models.Metric {
-				AbsentValue: result.Metrics[metricName].AbsentValue,
-				IsCounter: result.Metrics[metricName].IsCounter,
-				QueryTemplate: result.Metrics[metricName].QueryTemplate,
-				SampleSizeTemplate: result.Metrics[metricName].SampleSizeTemplate,
-			},
-		}
-		criterias[i] = criteriaDetail
-	}
-    trafficControl :=  models.TrafficControl {
-    	Algorithm : result.Spec.TrafficControl.GetStrategy(),
-    	Interval: result.Spec.TrafficControl.GetInterval(),
-    	MaxIteration : result.Spec.TrafficControl.GetMaxIterations(),
-    	MaxTrafficPercentage: result.Spec.TrafficControl.GetMaxTrafficPercentage(),
-    	TrafficStepSize: result.Spec.TrafficControl.GetStepSize(),
-    }
-	return models.ExperimentDetail{
-		ExperimentItem : models.ExperimentListItem {
-			Name: result.Name,
-			Status: result.Status.Message,
-			Baseline: result.Spec.TargetService.Baseline,
-			BaselinePercentage: result.Status.TrafficSplit.Baseline,
-			Candidate: result.Spec.TargetService.Candidate,
-			CandidatePercentage: result.Status.TrafficSplit.Candidate,
-		},
-		CriteriaDetails: criterias,
-		TrafficControl: trafficControl,
-
-	}, nil
+	iter8ExperimentDetail.Parse(iter8ExperimentObject)
+	return iter8ExperimentDetail, nil
 }
 
-func (in *Iter8Service) GetIter8Experiments(namespaces []string) ( []models.ExperimentListItem, error) {
-	experiments := make([]models.ExperimentListItem, 0)
-	if (len(namespaces) == 0) {
+func (in *Iter8Service) GetIter8ExperimentsByNamespace(namespace string) ([]models.Iter8ExperimentItem, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8ExperimentsByNamespace")
+	defer promtimer.ObserveNow(&err)
+
+	return in.fetchIter8Experiments(namespace)
+}
+
+func (in *Iter8Service) GetIter8Experiments(namespaces []string) ([]models.Iter8ExperimentItem, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Experiments")
+	defer promtimer.ObserveNow(&err)
+
+	experiments := make([]models.Iter8ExperimentItem, 0)
+	if len(namespaces) == 0 {
 		allNamespaces, _ := in.businessLayer.Namespace.GetNamespaces()
 		for _, namespace := range allNamespaces {
-			namespaces = append (namespaces, namespace.Name)
+			namespaces = append(namespaces, namespace.Name)
 		}
 	}
-
-	log.Info("there are %d Namespace", len(namespaces))
-
 	for _, namespace := range namespaces {
-		experimentsOfNamespace, err := getExperimentsByNamespace(namespace)
+		experimentsOfNamespace, err := in.fetchIter8Experiments(namespace)
 		if err == nil {
 			for _, item := range experimentsOfNamespace {
-				experiments = append (experiments, item)
+				experiments = append(experiments, item)
 			}
-
 		}
-
-	}
-
-	return experiments, nil
-}
-func (in *Iter8Service) GetIter8ExperimentsByName(namespace string) (experiment []models.ExperimentListItem, err error) {
-	return getExperimentsByNamespace(namespace)
-}
-
-func getExperimentsByNamespace(namespace string) (experiment []models.ExperimentListItem, err error) {
-	experiments := make([]models.ExperimentListItem, 0)
-	result := &iter8v1alpha1.ExperimentList{}
-	k8sConfig, err := kubernetes.ConfigClient()
-	if err != nil {
-		return experiments, err
-		// return models.ExperimentList{}, err
-	}
-
-	cacheToken := ""
-	kConfig := kialiConfig.Get()
-	if kConfig.InCluster {
-		if saToken, err := kubernetes.GetKialiToken(); err != nil {
-			return experiments, err
-			// return models.ExperimentList{}, err
-		} else {
-			cacheToken = saToken
-		}
-	}
-	log.Infof("Found token len %d", len(cacheToken))
-		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
-		k8sConfig.Burst = config.Get().KubernetesConfig.Burst
-		k8sConfig.BearerToken = cacheToken
-		k8s, err := kube.NewForConfig(k8sConfig)
-
-	var timeout time.Duration
-	path := fmt.Sprintf("/apis/iter8.tools/v1alpha1/")
-	err = k8s.RESTClient().Get().AbsPath(path).
-		Namespace(namespace).
-		Resource("experiments").
-		Timeout(timeout).
-		Do().
-		Into(result)
-	log.Infof("Get Experiments return error %s", err)
-	log.Infof("Finding experiment for namespace %s", namespace)
-	log.Infof("Received result lenght %d", len(result.Items))
-	for _, item := range result.Items {
-
-		experiments  = append (experiments,  models.ExperimentListItem{
-			Name: item.Name,
-			Phase: string(item.Status.Phase),
-			Status: item.Status.Message,
-			CreatedAt: formatTime(item.CreationTimestamp.Time),
-			Baseline: item.Spec.TargetService.Baseline,
-			BaselinePercentage: item.Status.TrafficSplit.Baseline,
-			Candidate: item.Spec.TargetService.Candidate,
-			CandidatePercentage: item.Status.TrafficSplit.Candidate,
-			Namespace: namespace,
-		})
 	}
 	return experiments, nil
 }
 
-func (in *Iter8Service) Iter8ExperimentCreate(body []byte) ( *iter8v1alpha1.Experiment, error){
-	result := &iter8v1alpha1.Experiment{}
-	k8sConfig, err := kubernetes.ConfigClient()
+func (in *Iter8Service) fetchIter8Experiments(namespace string) ([]models.Iter8ExperimentItem, error) {
+	iter8ExperimentObjects, err := in.k8s.GetIter8Experiments(namespace)
 	if err != nil {
-		return nil, err
-		// return models.ExperimentList{}, err
+		return []models.Iter8ExperimentItem{}, err
+	}
+	experiments := make([]models.Iter8ExperimentItem, 0)
+	for _, iter8ExperimentObject := range iter8ExperimentObjects {
+		iter8ExperimentItem := models.Iter8ExperimentItem{}
+		iter8ExperimentItem.Parse(iter8ExperimentObject)
+		experiments = append(experiments, iter8ExperimentItem)
+	}
+	return experiments, nil
+}
+
+func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (models.Iter8ExperimentDetail, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "CreateIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+
+	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
+
+	json, err := in.ParseJsonForCreate(body)
+	if err != nil {
+		return iter8ExperimentDetail, err
 	}
 
-	cacheToken := ""
-	kConfig := kialiConfig.Get()
-	if kConfig.InCluster {
-		if saToken, err := kubernetes.GetKialiToken(); err != nil {
-			return nil,  err
-			// return models.ExperimentList{}, err
-		} else {
-			cacheToken = saToken
-		}
+	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, json)
+	if err != nil {
+		return iter8ExperimentDetail, err
 	}
-	log.Infof("Found token len %d", len(cacheToken))
-	k8sConfig.QPS = config.Get().KubernetesConfig.QPS
-	k8sConfig.Burst = config.Get().KubernetesConfig.Burst
-	k8sConfig.BearerToken = cacheToken
-	k8s, err := kube.NewForConfig(k8sConfig)
-	newexperimentSpec := &models.ExperimentSpec{}
-	err2 := json.Unmarshal(body, newexperimentSpec)
+
+	iter8ExperimentDetail.Parse(iter8ExperimentObject)
+	return iter8ExperimentDetail, nil
+}
+
+func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
+
+	newExperimentSpec := models.Iter8ExperimentSpec{}
+	err := json.Unmarshal(body, &newExperimentSpec)
+	if err != nil {
+		return "", err
+	}
+	object := kubernetes.Iter8ExperimentObject{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: kubernetes.Iter8GroupVersion.String(),
+			Kind:       "Experiment",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      newExperimentSpec.Name,
+			Namespace: newExperimentSpec.Namespace,
+		},
+		Spec:    kubernetes.Iter8ExperimentSpec{},
+		Metrics: nil,
+		Status:  kubernetes.Iter8ExperimentStatus{},
+	}
+	object.Spec.TargetService.ApiVersion = "v1"
+	object.Spec.TargetService.Name = newExperimentSpec.Service
+	object.Spec.TargetService.Baseline = newExperimentSpec.Baseline
+	object.Spec.TargetService.Candidate = newExperimentSpec.Candidate
+	object.Spec.TrafficControl.Strategy = newExperimentSpec.TrafficControl.Algorithm
+	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
+
+	b, err2 := json.Marshal(object)
 	if err2 != nil {
-		log.Errorf("JSON: %s shows error: %s", string(body), err2)
-		err := fmt.Errorf("Bad Experiment json")
-		return nil, err
+		return "", err2
 	}
-	experiment := iter8v1alpha1.Experiment {
-		TypeMeta: metav1.TypeMeta {
-			APIVersion: iter8v1alpha1.SchemeGroupVersion.String(),
-			Kind: "Experiment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      newexperimentSpec.Name,
-			Namespace: newexperimentSpec.Namespace,
-		},
-		Spec: iter8v1alpha1.ExperimentSpec {
-			TargetService: iter8v1alpha1.TargetService {
-				ObjectReference: &corev1.ObjectReference {
-					Name: newexperimentSpec.Service,
-					Namespace: "bookinfo-iter8",
-					APIVersion: "v1",
-				},
-				Baseline: newexperimentSpec.Baseline,
-				Candidate: newexperimentSpec.Candidate,
-			},
-
-			TrafficControl: iter8v1alpha1.TrafficControl {
-				Strategy: &newexperimentSpec.TrafficControl.Algorithm,
-				MaxTrafficPercentage: &newexperimentSpec.TrafficControl.MaxTrafficPercentage,
-				TrafficStepSize : &newexperimentSpec.TrafficControl.TrafficStepSize,
-				Interval: &newexperimentSpec.TrafficControl.Interval,
-				MaxIterations: &newexperimentSpec.TrafficControl.MaxIteration,
-			},
-
-
-		},
-	}
-	log.Infof("Ready to create %s", string(body))
-
-	path := fmt.Sprintf("/apis/iter8.tools/v1alpha1/")
-	var timeout time.Duration
-	err = k8s.CoreV1().RESTClient().Post().AbsPath(path).
-		Namespace(newexperimentSpec.Namespace).
-		Resource("experiments").
-		Body(&experiment).
-		Timeout(timeout).
-		Do().
-		Into(result)
-	if err != nil {
-		log.Infof("Create return error %s", err)
-	}
-	return result, err
-}
-
-func formatTime(t time.Time) string {
-	return t.UTC().Format(time.RFC3339)
+	return string(b), nil
 }

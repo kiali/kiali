@@ -113,7 +113,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.ThreeScale = ThreeScaleService{k8s: k8s}
-	temporaryLayer.Iter8 = Iter8Service{k8s:k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 
 	return temporaryLayer
 }
