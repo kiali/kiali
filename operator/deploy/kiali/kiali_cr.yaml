@@ -552,7 +552,8 @@ spec:
 #
 # List of namespaces or regex defining namespaces to include in a cache.
 #    ---
-#    cache_namespaces: []
+#    cache_namespaces:
+#    - ".*"
 #
 # Cache duration expressed in seconds
 # Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
