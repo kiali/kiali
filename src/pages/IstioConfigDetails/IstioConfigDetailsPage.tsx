@@ -1,6 +1,12 @@
 import * as React from 'react';
 import { Link, Prompt, RouteComponentProps } from 'react-router-dom';
-import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
+import {
+  aceOptions,
+  compareResourceVersion,
+  IstioConfigDetails,
+  IstioConfigId,
+  safeDumpOptions
+} from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
@@ -56,12 +62,16 @@ const rightToolbarStyle = style({
   backgroundColor: PfColors.White
 });
 
+// TODO perhaps we may want to enable automatic refresh in all list/details pages
+const TIMER_REFRESH = 5000;
+
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
   istioValidations?: ObjectValidation;
   originalIstioObjectDetails?: IstioConfigDetails;
   originalIstioValidations?: ObjectValidation;
   isModified: boolean;
+  isRemoved: boolean;
   yamlModified?: string;
   yamlValidations?: AceValidations;
   currentTab: string;
@@ -103,15 +113,18 @@ export const serviceLink = (namespace: string, host: string, isValid: boolean): 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
   promptTo: string;
+  timerId: number;
 
   constructor(props: RouteComponentProps<IstioConfigId>) {
     super(props);
     this.state = {
       isModified: false,
+      isRemoved: false,
       currentTab: activeTab(tabName, this.defaultTab())
     };
     this.aceEditorRef = React.createRef();
     this.promptTo = '';
+    this.timerId = -1;
   }
 
   defaultTab() {
@@ -136,10 +149,47 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.fetchIstioObjectDetailsFromProps(this.props.match.params);
   };
 
-  fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
-    const promiseConfigDetails = props.objectSubtype
+  newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
+    return props.objectSubtype
       ? API.getIstioConfigDetailSubtype(props.namespace, props.objectType, props.objectSubtype, props.object)
-      : API.getIstioConfigDetail(props.namespace, props.objectType, props.object, true);
+      : API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate);
+  };
+
+  fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
+    const promiseConfigDetails = this.newIstioObjectPromise(props, true);
+
+    window.clearInterval(this.timerId);
+    this.timerId = window.setInterval(() => {
+      const timerPromise = this.newIstioObjectPromise(props, false);
+      timerPromise
+        .then(resultConfigDetails => {
+          if (resultConfigDetails.data && this.state.originalIstioObjectDetails) {
+            const [changed, type, newResourceVersion] = compareResourceVersion(
+              this.state.originalIstioObjectDetails,
+              resultConfigDetails.data
+            );
+            if (changed) {
+              AlertUtils.addWarning(
+                type +
+                  ':' +
+                  props.object +
+                  ' has a newer version (' +
+                  newResourceVersion +
+                  '). Reload to see a new version.'
+              );
+            }
+          }
+        })
+        .catch(error => {
+          this.setState({
+            isRemoved: true
+          });
+          AlertUtils.addError(
+            'Could not fetch ' + props.objectType + ':' + props.object + '. Has it been removed ?',
+            error
+          );
+        });
+    }, TIMER_REFRESH);
 
     // Note that adapters/templates are not supported yet for validations
     promiseConfigDetails
@@ -155,7 +205,13 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         });
       })
       .catch(error => {
-        AlertUtils.addError('Could not fetch IstioConfig details.', error);
+        this.setState({
+          isRemoved: true
+        });
+        AlertUtils.addError(
+          'Could not fetch Istio object type [' + props.objectType + '] name [' + props.object + '].',
+          error
+        );
       });
   };
 
@@ -206,6 +262,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   componentWillUnmount() {
     // Reset ask confirmation flag
     window.onbeforeunload = null;
+    window.clearInterval(this.timerId);
   }
 
   backToList = () => {
@@ -411,7 +468,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <IstioActionButtonsContainer
         objectName={this.props.match.params.object}
         readOnly={!this.canUpdate()}
-        canUpdate={this.canUpdate() && this.state.isModified && !yamlErrors}
+        canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
         onCancel={this.onCancel}
         onUpdate={this.onUpdate}
         onRefresh={this.onRefresh}
@@ -420,7 +477,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   renderRightToolbar = () => {
-    const canDelete = this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
+    const canDelete =
+      this.state.istioObjectDetails !== undefined &&
+      this.state.istioObjectDetails.permissions.delete &&
+      !this.state.isRemoved;
     const istioObject = getIstioObject(this.state.istioObjectDetails);
 
     return (
