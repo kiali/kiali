@@ -115,7 +115,7 @@ export class ValidationSummary extends React.PureComponent<Props> {
     return typeof this.props.objectCount === 'undefined' || this.props.objectCount > 1 ? (
       <Validation iconStyle={this.props.style} severity={this.severity()} />
     ) : (
-      <small>N/A</small>
+      <small style={{ fontSize: '65%', marginLeft: '5px' }}>N/A</small>
     );
   }
 

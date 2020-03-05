@@ -10,8 +10,6 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Text,
-  TextVariants,
   Title
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
@@ -43,7 +41,7 @@ import { computePrometheusRateParams } from '../../services/Prometheus';
 import OverviewCardLinks from './OverviewCardLinks';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { meshWideMTLSStatusSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
@@ -383,10 +381,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                     <CardHeader>
                       {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
                       {ns.name}
+                      {this.renderIstioConfigStatus(ns)}
                     </CardHeader>
                     <CardBody>
                       {this.renderStatuses(ns)}
-                      {this.renderIstioConfigStatus(ns)}
                       <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
                     </CardBody>
                   </Card>
@@ -430,7 +428,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
-    let status: any = 'N/A';
+    let status: any = <small style={{ fontSize: '65%', marginLeft: '5px' }}>N/A</small>;
     if (ns.validations) {
       status = (
         <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>
@@ -444,11 +442,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         </Link>
       );
     }
-    return (
-      <>
-        <Text component={TextVariants.p}>Istio Config status: {status}</Text>
-      </>
-    );
+    return status;
   }
 }
 
