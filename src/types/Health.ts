@@ -334,3 +334,6 @@ export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
 export type WithAppHealth<T> = T & { health: AppHealth };
 export type WithServiceHealth<T> = T & { health: ServiceHealth };
 export type WithWorkloadHealth<T> = T & { health: WorkloadHealth };
+
+export type WithHealth<T> = WithAppHealth<T> | WithServiceHealth<T> | WithWorkloadHealth<T>;
+export const hasHealth = <T>(val: T): val is WithHealth<T> => !!val['health'];

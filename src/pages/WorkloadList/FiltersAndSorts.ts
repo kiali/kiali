@@ -1,7 +1,7 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterTypes } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
-import { GenericSortField, HealthSortField } from '../../types/SortFilters';
-import { getRequestErrorsStatus, WithWorkloadHealth } from '../../types/Health';
+import { SortField } from '../../types/SortFilters';
+import { getRequestErrorsStatus, WithWorkloadHealth, hasHealth } from '../../types/Health';
 import {
   presenceValues,
   istioSidecarFilter,
@@ -13,7 +13,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 
-export const sortFields: GenericSortField<WorkloadListItem>[] = [
+export const sortFields: SortField<WorkloadListItem>[] = [
   {
     id: 'namespace',
     title: 'Namespace',
@@ -133,20 +133,24 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Health',
     isNumeric: false,
     param: 'he',
-    compare: (a: WithWorkloadHealth<WorkloadListItem>, b: WithWorkloadHealth<WorkloadListItem>) => {
-      const statusForA = a.health.getGlobalStatus();
-      const statusForB = b.health.getGlobalStatus();
+    compare: (a, b) => {
+      if (hasHealth(a) && hasHealth(b)) {
+        const statusForA = a.health.getGlobalStatus();
+        const statusForB = b.health.getGlobalStatus();
 
-      if (statusForA.priority === statusForB.priority) {
-        // If both workloads have same health status, use error rate to determine order.
-        const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
-        const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
-        return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
+        if (statusForA.priority === statusForB.priority) {
+          // If both workloads have same health status, use error rate to determine order.
+          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
+          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
+          return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
+        }
+
+        return statusForB.priority - statusForA.priority;
+      } else {
+        return 0;
       }
-
-      return statusForB.priority - statusForA.priority;
     }
-  } as HealthSortField<WorkloadListItem>
+  }
 ];
 
 const workloadNameFilter: FilterType = {
@@ -302,7 +306,7 @@ export const filterBy = (
 
 export const sortWorkloadsItems = (
   unsorted: WorkloadListItem[],
-  sortField: GenericSortField<WorkloadListItem>,
+  sortField: SortField<WorkloadListItem>,
   isAscending: boolean
 ): Promise<WorkloadListItem[]> => {
   if (sortField.title === 'Health') {
