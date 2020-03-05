@@ -13,11 +13,10 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
-import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
-import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
@@ -36,7 +35,6 @@ import { JaegerErrors, JaegerTrace, JaegerInfo } from '../../types/JaegerInfo';
 import { getQueryJaeger } from '../../components/JaegerIntegration/RouteHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { PfColors } from '../../components/Pf/PfColors';
-import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { serverConfig } from '../../config';
 import GraphDataSource from '../../services/GraphDataSource';
@@ -138,6 +136,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   componentWillUnmount() {
     this.promises.cancelAll();
+
+    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
   }
 
   servicePageURL(parsedSearch?: ParsedSearch) {
@@ -165,6 +166,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   componentDidMount() {
     this.doRefresh();
+
+    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.on('fetchError', this.graphDsFetchError);
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
@@ -190,9 +194,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     if (tabValue === defaultTab && this.state.serviceDetailsInfo === emptyService) {
       this.fetchBackend();
     }
-    if (tabValue === trafficTabName && this.state.trafficData == null) {
-      this.fetchTrafficData();
-    }
   };
 
   doRefresh = () => {
@@ -205,7 +206,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     }
 
     if (currentTab === trafficTabName) {
-      this.fetchTrafficData();
+      // Since traffic tab shares data with mini-graph, we reload mini-graph data.
+      this.loadMiniGraphData();
     }
 
     if (currentTab === tracesTabName) {
@@ -297,31 +299,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     }
   };
 
-  fetchTrafficData = () => {
-    const node: NodeParamsType = {
-      service: this.props.match.params.service,
-      namespace: { name: this.props.match.params.namespace },
-      nodeType: NodeType.SERVICE,
-
-      // unneeded
-      workload: '',
-      app: '',
-      version: ''
-    };
-    const restParams = {
-      duration: `${retrieveDuration() || 600}s`,
-      graphType: GraphType.WORKLOAD,
-      injectServiceNodes: true,
-      appenders: 'deadNode'
-    };
-
-    fetchTrafficDetails(node, restParams).then(trafficData => {
-      if (trafficData !== undefined) {
-        this.setState({ trafficData: trafficData });
-      }
-    });
-  };
-
   fetchTracesData = (cleanTrace: boolean = false, traceId?: string) => {
     if (cleanTrace) {
       this.setState({ selectedTrace: undefined });
@@ -405,13 +382,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         component = <DurationDropdownContainer id="service-info-duration-dropdown" />;
         break;
       case trafficTabName:
-        component = (
-          <TimeRangeComponent
-            onChanged={this.fetchTrafficData}
-            allowCustom={false}
-            tooltip={'Time range for metrics'}
-          />
-        );
+        component = <DurationDropdownContainer id="service-traffic-duration-dropdown" />;
         break;
       case tracesTabName:
         component = (
@@ -589,6 +560,24 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         workload: ''
       }
     });
+  };
+
+  private graphDsFetchSuccess = () => {
+    this.setState({
+      trafficData: this.graphDataSource.graphDefinition
+    });
+  };
+
+  private graphDsFetchError = (errorMessage: string | null) => {
+    if (this.state.currentTab === trafficTabName) {
+      if (errorMessage !== '') {
+        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      } else {
+        errorMessage = 'Could not fetch traffic data.';
+      }
+
+      AlertUtils.addError(errorMessage);
+    }
   };
 }
 

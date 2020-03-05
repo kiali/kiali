@@ -231,16 +231,27 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     let myNode: GraphNodeData = { id: '', nodeType: NodeType.UNKNOWN, namespace: '' };
 
     traffic.elements.nodes.forEach(element => {
-      nodes['id-' + element.data.id] = element.data;
-      if (element.data.namespace === this.props.namespace) {
-        const isMyWorkload =
-          this.props.itemType === MetricsObjectTypes.WORKLOAD && this.props.workloadName === element.data.workload;
-        const isMyApp = this.props.itemType === MetricsObjectTypes.APP && this.props.appName === element.data.app;
-        const isMyService =
-          this.props.itemType === MetricsObjectTypes.SERVICE && this.props.serviceName === element.data.service;
+      // Ignore group nodes. They are not relevant for the traffic list because we
+      // are interested in the actual apps.
+      if (!element.data.isGroup) {
+        nodes['id-' + element.data.id] = element.data;
+        if (element.data.namespace) {
+          const isMyWorkload =
+            this.props.itemType === MetricsObjectTypes.WORKLOAD &&
+            element.data.nodeType === NodeType.WORKLOAD &&
+            this.props.workloadName === element.data.workload;
+          const isMyApp =
+            this.props.itemType === MetricsObjectTypes.APP &&
+            element.data.nodeType === NodeType.APP &&
+            this.props.appName === element.data.app;
+          const isMyService =
+            this.props.itemType === MetricsObjectTypes.SERVICE &&
+            element.data.nodeType === NodeType.SERVICE &&
+            this.props.serviceName === element.data.service;
 
-        if (isMyWorkload || isMyApp || isMyService) {
-          myNode = element.data;
+          if (isMyWorkload || isMyApp || isMyService) {
+            myNode = element.data;
+          }
         }
       }
     });

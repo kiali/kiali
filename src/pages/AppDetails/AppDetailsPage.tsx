@@ -11,8 +11,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { RenderHeader } from '../../components/Nav/Page';
-import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
-import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
@@ -22,8 +21,6 @@ import { connect } from 'react-redux';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
-import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import GraphDataSource from '../../services/GraphDataSource';
 
 type AppDetailsState = {
@@ -75,6 +72,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   componentDidMount(): void {
     this.doRefresh();
+
+    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.on('fetchError', this.graphDsFetchError);
   }
 
   componentDidUpdate(prevProps: AppDetailsProps) {
@@ -95,11 +95,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
   }
 
-  fetchTrafficDataOnTabChange = (tabValue: string): void => {
-    if (tabValue === trafficTabName && this.state.trafficData == null) {
-      this.fetchTrafficData();
-    }
-  };
+  componentWillUnmount(): void {
+    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
+  }
 
   doRefresh = () => {
     const currentTab = this.state.currentTab;
@@ -111,7 +110,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
 
     if (currentTab === trafficTabName) {
-      this.fetchTrafficData();
+      // Since traffic tab shares data with mini-graph, we reload mini-graph data.
+      this.loadMiniGraphData();
     }
   };
 
@@ -131,31 +131,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       .catch(error => {
         AlertUtils.addError('Could not fetch App Details.', error);
       });
-  };
-
-  fetchTrafficData = () => {
-    const node: NodeParamsType = {
-      app: this.props.match.params.app,
-      namespace: { name: this.props.match.params.namespace },
-      nodeType: NodeType.APP,
-
-      // unneeded
-      workload: '',
-      service: '',
-      version: ''
-    };
-    const restParams = {
-      duration: `${retrieveDuration() || 600}s`,
-      graphType: GraphType.APP,
-      injectServiceNodes: true,
-      appenders: 'deadNode,serviceEntry'
-    };
-
-    fetchTrafficDetails(node, restParams).then(trafficData => {
-      if (trafficData !== undefined) {
-        this.setState({ trafficData: trafficData });
-      }
-    });
   };
 
   istioSidecar() {
@@ -248,13 +223,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         component = <DurationDropdownContainer id="app-info-duration-dropdown" />;
         break;
       case 'traffic':
-        component = (
-          <TimeRangeComponent
-            onChanged={this.fetchTrafficData}
-            allowCustom={false}
-            tooltip={'Time range for metrics'}
-          />
-        );
+        component = <DurationDropdownContainer id="app-traffic-duration-dropdown" />;
         break;
       default:
         return undefined;
@@ -291,7 +260,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           tabMap={paramToTab}
           tabName={tabName}
           defaultTab={defaultTab}
-          postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
           mountOnEnter={false}
           unmountOnExit={true}
@@ -320,6 +288,24 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         workload: ''
       }
     });
+  };
+
+  private graphDsFetchSuccess = () => {
+    this.setState({
+      trafficData: this.graphDataSource.graphDefinition
+    });
+  };
+
+  private graphDsFetchError = (errorMessage: string | null) => {
+    if (this.state.currentTab === trafficTabName) {
+      if (errorMessage !== '') {
+        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      } else {
+        errorMessage = 'Could not fetch traffic data.';
+      }
+
+      AlertUtils.addError(errorMessage);
+    }
   };
 }
 

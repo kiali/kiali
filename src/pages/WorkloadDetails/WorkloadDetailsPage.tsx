@@ -13,8 +13,7 @@ import { RenderHeader } from '../../components/Nav/Page';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import PfTitle from '../../components/Pf/PfTitle';
-import { EdgeLabelMode, GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
-import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
+import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
 import { DurationInSeconds } from '../../types/Common';
@@ -25,8 +24,6 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patt
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import { retrieveDuration } from 'components/Time/TimeRangeHelper';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import GraphDataSource from '../../services/GraphDataSource';
 
 type WorkloadDetailsState = {
@@ -72,6 +69,9 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   componentDidMount(): void {
     this.doRefresh();
+
+    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.on('fetchError', this.graphDsFetchError);
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
@@ -95,11 +95,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     }
   }
 
-  fetchTrafficDataOnTabChange = (tabValue: string): void => {
-    if (tabValue === trafficTabName && this.state.trafficData == null) {
-      this.fetchTrafficData();
-    }
-  };
+  componentWillUnmount(): void {
+    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
+  }
 
   // All information for validations is fetched in the workload, no need to add another call
   workloadValidations(workload: Workload): Validations {
@@ -171,34 +170,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       this.loadMiniGraphData();
     }
 
-    if (currentTab === 'traffic') {
-      this.fetchTrafficData();
+    if (currentTab === trafficTabName) {
+      // Since traffic tab shares data with mini-graph, we reload mini-graph data.
+      this.loadMiniGraphData();
     }
-  };
-
-  fetchTrafficData = () => {
-    const node: NodeParamsType = {
-      workload: this.props.match.params.workload,
-      namespace: { name: this.props.match.params.namespace },
-      nodeType: NodeType.WORKLOAD,
-
-      // unneeded
-      app: '',
-      service: '',
-      version: ''
-    };
-    const restParams = {
-      duration: `${retrieveDuration() || 600}s`,
-      graphType: GraphType.WORKLOAD,
-      injectServiceNodes: true,
-      appenders: 'deadNode,serviceEntry'
-    };
-
-    fetchTrafficDetails(node, restParams).then(trafficData => {
-      if (trafficData !== undefined) {
-        this.setState({ trafficData: trafficData });
-      }
-    });
   };
 
   fetchWorkload = () => {
@@ -339,13 +314,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         component = <DurationDropdownContainer id="workload-info-duration-dropdown" />;
         break;
       case 'traffic':
-        component = (
-          <TimeRangeComponent
-            onChanged={this.fetchTrafficData}
-            allowCustom={false}
-            tooltip={'Time range for metrics'}
-          />
-        );
+        component = <DurationDropdownContainer id="workload-traffic-duration-dropdown" />;
         break;
       default:
         return undefined;
@@ -380,7 +349,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           tabMap={paramToTab}
           tabName={tabName}
           defaultTab={defaultTab}
-          postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
           mountOnEnter={false}
           unmountOnExit={true}
@@ -409,6 +377,24 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         workload: this.props.match.params.workload
       }
     });
+  };
+
+  private graphDsFetchSuccess = () => {
+    this.setState({
+      trafficData: this.graphDataSource.graphDefinition
+    });
+  };
+
+  private graphDsFetchError = (errorMessage: string | null) => {
+    if (this.state.currentTab === trafficTabName) {
+      if (errorMessage !== '') {
+        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      } else {
+        errorMessage = 'Could not fetch traffic data.';
+      }
+
+      AlertUtils.addError(errorMessage);
+    }
   };
 }
 

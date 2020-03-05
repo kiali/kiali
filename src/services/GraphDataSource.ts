@@ -2,6 +2,7 @@ import { AppenderString, DurationInSeconds, TimeInMilliseconds, TimeInSeconds } 
 import {
   DecoratedGraphElements,
   EdgeLabelMode,
+  GraphDefinition,
   GraphElements,
   GraphType,
   GroupByType,
@@ -21,7 +22,7 @@ const PROMISE_KEY = 'CURRENT_REQUEST';
 type EmitEvents = {
   (eventName: 'loadStart', isPreviousDataInvalid: boolean): void;
   (eventName: 'emptyNamespaces'): void;
-  (eventName: 'fetchError', errorMessage: string): void;
+  (eventName: 'fetchError', errorMessage: string | null): void;
   (
     eventName: 'fetchSuccess',
     graphTimestamp: TimeInSeconds,
@@ -45,7 +46,7 @@ interface FetchParams {
 type OnEvents = {
   (eventName: 'loadStart', callback: (isPreviousDataInvalid: boolean) => void): void;
   (eventName: 'emptyNamespaces', callback: () => void): void;
-  (eventName: 'fetchError', callback: (errorMessage: string) => void): void;
+  (eventName: 'fetchError', callback: (errorMessage: string | null) => void): void;
   (
     eventName: 'fetchSuccess',
     callback: (
@@ -234,7 +235,7 @@ export default class GraphDataSource {
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
         AlertUtils.addError('Cannot load the graph', error);
-        this.emit('fetchError', `Cannot load the graph: ${this.errorMessage}`);
+        this.emit('fetchError', this.errorMessage);
       }
     );
   };
@@ -242,6 +243,15 @@ export default class GraphDataSource {
   // Getters and setters
   public get graphData(): DecoratedGraphElements {
     return this.decoratedData(this.graphElements);
+  }
+
+  public get graphDefinition(): GraphDefinition {
+    return {
+      duration: this.graphDuration,
+      elements: this.graphElements,
+      timestamp: this.graphTimestamp,
+      graphType: this.fetchParameters.graphType
+    };
   }
 
   public get errorMessage(): string | null {
