@@ -395,10 +395,10 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 	if isWorkloadNode || isVersionedAppNode {
 		labels := []string{}
 		if node.App != app {
-			labels = append(labels, "app")
+			labels = append(labels, appLabel)
 		}
 		if node.Version != version {
-			labels = append(labels, "version")
+			labels = append(labels, verLabel)
 		}
 		// prefer the labels of an active time series as often the other labels are inactive
 		if len(labels) > 0 {
