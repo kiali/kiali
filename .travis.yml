@@ -8,7 +8,7 @@ cache:
     - node_modules
 install: yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
 script:
-  - yarn prettier --list-different &&
+  - yarn pretty-quick --check --verbose --branch origin/master &&
     yarn build:dev &&
     yarn test --forceExit --maxWorkers=4
 env:
