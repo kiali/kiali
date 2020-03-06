@@ -57,7 +57,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	// 1) query for requests originating from a workload outside the namespace. This may include unnecessary istio
 	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
 	//    traffic will be ignored because it won't map to the trafficMap.
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy"
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,connection_security_policy", appLabel, verLabel, appLabel, verLabel)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
@@ -109,14 +109,14 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceApp, sourceAppOk := m["source_app"]
-		lSourceVer, sourceVerOk := m["source_version"]
+		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
+		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
-		lDestApp, destAppOk := m["destination_app"]
-		lDestVer, destVerOk := m["destination_version"]
+		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
+		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
 		lCsp, cspOk := m["connection_security_policy"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {

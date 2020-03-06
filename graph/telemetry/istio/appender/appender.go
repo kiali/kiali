@@ -8,14 +8,29 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/status"
 )
 
 const (
 	defaultQuantile = 0.95
 )
 
+// version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
+// these values may change and are therefore re-set on every graph request.
+var appLabel = "app"
+var verLabel = "version"
+
+func setLabels() {
+	if status.IstioSupportsCanonical() {
+		appLabel = "canonical_service"
+		verLabel = "canonical_revision"
+	}
+}
+
 // ParseAppenders determines which appenders should run for this graphing request
 func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
+	setLabels()
+
 	requestedAppenders := make(map[string]bool)
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {

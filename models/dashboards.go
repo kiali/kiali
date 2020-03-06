@@ -6,6 +6,8 @@ import (
 
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
 	kmodel "github.com/kiali/k-charted/model"
+
+	"github.com/kiali/kiali/status"
 )
 
 // ConvertAggregations converts a k8s aggregations (from MonitoringDashboard k8s resource) into this models aggregations
@@ -28,9 +30,16 @@ func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []kmodel.Aggrega
 }
 
 func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
+	appLabel := "app"
+	verLabel := "version"
+	if status.IstioSupportsCanonical() {
+		appLabel = "canonical_service"
+		verLabel = "canonical_revision"
+	}
+
 	aggs := []kmodel.Aggregation{
 		{
-			Label:       fmt.Sprintf("%s_version", local),
+			Label:       fmt.Sprintf("%s_%s", local, verLabel),
 			DisplayName: "Local version",
 		},
 	}
@@ -42,17 +51,18 @@ func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 	}
 	aggs = append(aggs, []kmodel.Aggregation{
 		{
-			Label:       fmt.Sprintf("%s_app", remote),
+			Label:       fmt.Sprintf("%s_%s", remote, appLabel),
 			DisplayName: "Remote app",
 		},
 		{
-			Label:       fmt.Sprintf("%s_version", remote),
+			Label:       fmt.Sprintf("%s_%s", remote, verLabel),
 			DisplayName: "Remote version",
 		},
 		{
 			Label:       "response_code",
 			DisplayName: "Response code",
 		},
+		// TODO: Do we need to aggrgate also on grpc_response_status?
 		{
 			Label:       "response_flags",
 			DisplayName: "Response flags",

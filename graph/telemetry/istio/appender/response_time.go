@@ -79,7 +79,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
 	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
-	groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_code,grpc_response_status"
+	groupBy := fmt.Sprintf("le,source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_code,grpc_response_status", appLabel, verLabel, appLabel, verLabel)
 	millisQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
@@ -190,14 +190,14 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceApp, sourceAppOk := m["source_app"]
-		lSourceVer, sourceVerOk := m["source_version"]
+		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
+		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
-		lDestApp, destAppOk := m["destination_app"]
-		lDestVer, destVerOk := m["destination_version"]
+		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
+		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
 		lResponseCode, responseCodeOk := m["response_code"]
 		lGrpcResponseStatus, grpcReponseStatusOk := m["grpc_response_status"]
 
@@ -217,6 +217,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		responseCode := string(lResponseCode)
+
 		// This was added in istio 1.5, handle in a backward compatible way
 		grpcReponseStatus := "0"
 		if grpcReponseStatusOk {
