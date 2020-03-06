@@ -256,7 +256,7 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 		for i, ns := range nss {
 			var getCacheGateways func(string) ([]kubernetes.IstioObject, error)
 			// businessLayer.Namespace.GetNamespaces() is invoked before, so, namespace used are under the user's view
-			if kialiCache != nil && kialiCache.CheckNamespace(ns.Name) {
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.GatewayType) && kialiCache.CheckNamespace(ns.Name) {
 				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
 					return kialiCache.GetIstioResources("Gateway", namespace)
 				}
@@ -269,6 +269,21 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 		select {
 		case errChan <- err:
 		default:
+		}
+	}
+}
+
+func fetch(rValue *[]kubernetes.IstioObject, namespace, service string, fetcher func(string, string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+	defer wg.Done()
+	if len(errChan) == 0 {
+		fetched, err := fetcher(namespace, service)
+		if err != nil {
+			select {
+			case errChan <- err:
+			default:
+			}
+		} else {
+			*rValue = append(*rValue, fetched...)
 		}
 	}
 }
@@ -391,31 +406,50 @@ func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, n
 func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		var istioDetails *kubernetes.IstioDetails
 		var err error
+		wg2 := sync.WaitGroup{}
+		errChan2 := make(chan error, 5)
+		istioDetails := kubernetes.IstioDetails{}
 
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
-		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache are local in memory, so no need to spawn these queries in threads to reduce the overhead
-			// Probably we could refactor in.k8s.GetIstioDetails, too, but I guess that can be done in future
-			// We are following the pattern to invoke cache from the business logic instead of kubernetes one
-			istioDetails = &kubernetes.IstioDetails{}
+		nsCached := kialiCache != nil && kialiCache.CheckNamespace(namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) {
 			istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
-			if err == nil {
-				istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
-			}
-			if err == nil {
-				istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
-			}
-			if err == nil {
-				istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
-			}
-			if err == nil {
-				istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
-			}
 		} else {
-			istioDetails, err = in.k8s.GetIstioDetails(namespace, "")
+			wg2.Add(1)
+			go fetch(&istioDetails.VirtualServices, namespace, "", in.k8s.GetVirtualServices, &wg2, errChan2)
+		}
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) {
+			istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
+		} else {
+			wg2.Add(1)
+			go fetch(&istioDetails.DestinationRules, namespace, "", in.k8s.GetDestinationRules, &wg2, errChan2)
+		}
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceentryType) {
+			istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
+		} else {
+			wg2.Add(1)
+			go fetchNoEntry(&istioDetails.ServiceEntries, namespace, in.k8s.GetServiceEntries, &wg2, errChan2)
+		}
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.GatewayType) {
+			istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
+		} else {
+			wg2.Add(1)
+			go fetchNoEntry(&istioDetails.Gateways, namespace, in.k8s.GetGateways, &wg2, errChan2)
+		}
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.SidecarType) {
+			istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
+		} else {
+			wg2.Add(1)
+			go fetchNoEntry(&istioDetails.Sidecars, namespace, in.k8s.GetSidecars, &wg2, errChan2)
+		}
+		wg2.Wait()
+
+		// Error may come either from errChan2 (when goroutines are used / without cache) or err (with cache / synchronous)
+		if len(errChan2) != 0 {
+			// We return first error only, likely to be the same issue for all
+			err = <-errChan2
 		}
 		if err != nil {
 			select {
@@ -423,7 +457,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			default:
 			}
 		} else {
-			*rValue = *istioDetails
+			*rValue = istioDetails
 		}
 	}
 }
