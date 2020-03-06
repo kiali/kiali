@@ -3,10 +3,11 @@ package kubernetes
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/rest"
 	"regexp"
 	"strings"
 	"sync"
+
+	"k8s.io/client-go/rest"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,45 +21,6 @@ var (
 	portNameMatcher = regexp.MustCompile(`^[\-].*`)
 	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
-
-// GetIstioDetails returns Istio details for a given namespace,
-// on this version it collects the VirtualServices and DestinationRules defined for a namespace.
-// If serviceName param is provided, it filters all the Istio objects pointing to a particular service.
-// It returns an error on any problem.
-func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
-
-	wg := sync.WaitGroup{}
-	errChan := make(chan error, 5)
-
-	istioDetails := IstioDetails{}
-	vss := make([]IstioObject, 0)
-	drs := make([]IstioObject, 0)
-	gws := make([]IstioObject, 0)
-	ses := make([]IstioObject, 0)
-	scs := make([]IstioObject, 0)
-
-	wg.Add(5)
-	go fetchNoEntry(&ses, namespace, in.GetServiceEntries, &wg, errChan)
-	go fetchNoEntry(&gws, namespace, in.GetGateways, &wg, errChan)
-	go fetchNoEntry(&scs, namespace, in.GetSidecars, &wg, errChan)
-	go fetch(&vss, namespace, serviceName, in.GetVirtualServices, &wg, errChan)
-	go fetch(&drs, namespace, serviceName, in.GetDestinationRules, &wg, errChan)
-	wg.Wait()
-
-	if len(errChan) != 0 {
-		// We return first error only, likely to be the same issue for all
-		err := <-errChan
-		return nil, err
-	}
-
-	istioDetails.VirtualServices = vss
-	istioDetails.DestinationRules = drs
-	istioDetails.Gateways = gws
-	istioDetails.ServiceEntries = ses
-	istioDetails.Sidecars = scs
-
-	return &istioDetails, nil
-}
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
 func (in *IstioClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
@@ -1296,23 +1258,4 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 	}
 
 	return false, ""
-}
-
-func fetch(rValue *[]IstioObject, namespace string, service string, fetcher func(string, string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
-	defer wg.Done()
-	fetched, err := fetcher(namespace, service)
-	*rValue = append(*rValue, fetched...)
-	if err != nil {
-		errChan <- err
-	}
-}
-
-// Identical to above, but since k8s layer has both (namespace, serviceentry) and (namespace) queries, we need two different functions
-func fetchNoEntry(rValue *[]IstioObject, namespace string, fetcher func(string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
-	defer wg.Done()
-	fetched, err := fetcher(namespace)
-	*rValue = append(*rValue, fetched...)
-	if err != nil && len(errChan) == 0 {
-		errChan <- err
-	}
 }
