@@ -88,56 +88,58 @@ export class AlertDrawer extends React.PureComponent<AlertDrawerProps> {
     });
 
     return (
-      <Card className={drawer} hidden={this.props.isHidden}>
-        <CardHead className={AlertDrawer.head}>
-          <CardActions>
-            {this.props.isExpanded ? (
-              <Button id="alert_drawer_collapse" variant="plain" onClick={this.props.expandDrawer}>
-                <KialiIcon.AngleDoubleRight />
+      !this.props.isHidden && (
+        <Card className={drawer} hidden={this.props.isHidden}>
+          <CardHead className={AlertDrawer.head}>
+            <CardActions>
+              {this.props.isExpanded ? (
+                <Button id="alert_drawer_collapse" variant="plain" onClick={this.props.expandDrawer}>
+                  <KialiIcon.AngleDoubleRight />
+                </Button>
+              ) : (
+                <Button id="alert_drawer_expand" variant="plain" onClick={this.props.expandDrawer}>
+                  <KialiIcon.AngleDoubleLeft />
+                </Button>
+              )}
+              <Button id="alert_drawer_close" variant="plain" onClick={this.props.hideDrawer}>
+                <CloseIcon />
               </Button>
+            </CardActions>
+            <CardHeader>{this.props.title}</CardHeader>
+          </CardHead>
+          <CardBody className={AlertDrawer.body}>
+            {this.props.groups.length === 0 ? (
+              noNotificationsMessage
             ) : (
-              <Button id="alert_drawer_expand" variant="plain" onClick={this.props.expandDrawer}>
-                <KialiIcon.AngleDoubleLeft />
-              </Button>
+              <BoundingClientAwareComponent
+                className={AlertDrawer.wrapper}
+                maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: AlertDrawer.wrapperMarginBottom }}
+              >
+                <Accordion className={AlertDrawer.groups}>
+                  {this.props.groups.map(group => {
+                    return hideGroup(group) ? null : (
+                      <AccordionItem key={group.id + '_item'}>
+                        <AccordionToggle
+                          id={group.id + '_toggle'}
+                          isExpanded={group.id === this.props.expandedGroupId}
+                          onClick={() => {
+                            this.props.toggleGroup(group);
+                          }}
+                        >
+                          {group.title} {getUnreadMessageLabel(group.messages)}
+                        </AccordionToggle>
+                        <AccordionContent id={group.id + '_content'} isHidden={group.id !== this.props.expandedGroupId}>
+                          <AlertDrawerGroupContainer key={group.id} group={group} />
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </BoundingClientAwareComponent>
             )}
-            <Button id="alert_drawer_close" variant="plain" onClick={this.props.hideDrawer}>
-              <CloseIcon />
-            </Button>
-          </CardActions>
-          <CardHeader>{this.props.title}</CardHeader>
-        </CardHead>
-        <CardBody className={AlertDrawer.body}>
-          {this.props.groups.length === 0 ? (
-            noNotificationsMessage
-          ) : (
-            <BoundingClientAwareComponent
-              className={AlertDrawer.wrapper}
-              maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: AlertDrawer.wrapperMarginBottom }}
-            >
-              <Accordion className={AlertDrawer.groups}>
-                {this.props.groups.map(group => {
-                  return hideGroup(group) ? null : (
-                    <AccordionItem key={group.id + '_item'}>
-                      <AccordionToggle
-                        id={group.id + '_toggle'}
-                        isExpanded={group.id === this.props.expandedGroupId}
-                        onClick={() => {
-                          this.props.toggleGroup(group);
-                        }}
-                      >
-                        {group.title} {getUnreadMessageLabel(group.messages)}
-                      </AccordionToggle>
-                      <AccordionContent id={group.id + '_content'} isHidden={group.id !== this.props.expandedGroupId}>
-                        <AlertDrawerGroupContainer key={group.id} group={group} />
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </BoundingClientAwareComponent>
-          )}
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      )
     );
   }
 }

@@ -1,93 +1,29 @@
-// Config
-@import '../../node_modules/patternfly/dist/sass/patternfly/color-variables';
-
 // External dependency variables or mixins that are required/extended by our custom styles (tilde tells Webpack not to use relative path)
 // IMPORTANT: Please put non-variable/mixin external dependency imports in vendor.scss!
 // Patternfly variables must be imported before Bootstrap
-@import '../../node_modules/patternfly/dist/sass/patternfly/variables';
-@import '../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables';
-@import '../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/mixins';
-@import '../../node_modules/font-awesome-sass/assets/stylesheets/font-awesome/variables';
+@import '../../node_modules/@patternfly/patternfly/sass-utilities/_all';
+@import '../../node_modules/@patternfly/patternfly/_variables';
 
 // Disable PatternFly 4 reset.
 $pf-global--enable-reset: false;
 
 $color-grey-background-border: #ccc;
-$grid-float-breakpoint: $screen-sm-min !default;
 // PatternFly 4 overrides
 
-// Webpack will not properly bundle the background-image from PatternFly
-@media only screen and (min-width: 576px) {
-  .pf-c-about-modal-box__hero {
-    background-image: url('../img/pfbg_992.jpg') !important;
-  }
+// Remove the padding by default
+.pf-c-page__main-section {
+  padding: 0px;
 }
 
-.pf-c-dropdown__menu {
-  list-style: none;
-}
-
-// TEMP fix until https://github.com/patternfly/patternfly-next/issues/1543 is fixed upstream
-.pf-c-dropdown__menu-item {
-  &:focus,
-  &:hover {
-    color: var(--pf-global--Color--dark-100);
-  }
-}
-
-.pf-c-page {
-  &__header {
-    background-color: var(--pf-global--BackgroundColor--dark-200);
-    background-image: url('../img/pfbg_2000.jpg');
-    background-repeat: no-repeat;
-    background-size: cover;
-  }
-
-  &__main {
-    // `z-index: auto` is required for fullscreen terminal
-    --pf-c-page__main--ZIndex: auto;
-  }
-
-  // `.pf-c-page` specificity required
-  .pf-c-page__main-section {
-    --pf-c-page__main-section--PaddingBottom: 0;
-    --pf-c-page__main-section--PaddingLeft: 0;
-    --pf-c-page__main-section--PaddingRight: 0;
-    --pf-c-page__main-section--PaddingTop: 0;
-  }
-
-  .pf-c-page__sidebar {
-    --pf-c-page__sidebar--Transition: all 100ms ease;
-  }
-}
-
-.pf-c-page__sidebar {
-  --pf-c-page__sidebar--BackgroundColor: #{$color-pf-black-900};
-  --pf-c-page__sidebar-body--PaddingBottom: 0;
-  --pf-c-page__sidebar-body--PaddingTop: 0;
-  --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
-  min-height: 100vh;
-  position: relative; // fix z-index bug in Edge
-  width: 0 !important; // only set size when expanded (.pf-m-expanded is added)
-
-  @media screen and (min-width: $grid-float-breakpoint) {
-    --pf-c-page__sidebar--BoxShadow: none;
-  }
-
-  &.pf-m-expanded {
-    width: var(
-      --pf-c-page__sidebar--md--Width
-    ) !important; // maintain desktop width so size doesn't animate before hiding when resizing to mobile
-  }
-}
-
+// Remove background Image and color by default in header, login and about modal
 .pf-c-page__header {
   background-image: none;
   background-color: unset;
 }
 
-.pf-c-background-image::before {
-  filter: unset;
+.pf-c-about-modal-box__hero {
+  background-image: none !important;
+  background-color: transparent;
 }
 
 .pf-c-login,
@@ -96,9 +32,11 @@ $grid-float-breakpoint: $screen-sm-min !default;
   background-color: #030303;
 }
 
-.pf-c-about-modal-box__hero {
-  background-image: none !important;
-  background-color: transparent;
+// Menu thin and remove margin in top
+.pf-c-page__sidebar {
+  --pf-c-page__sidebar-body--PaddingTop: 0;
+  --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
+  min-height: 100vh;
 }
 
 /**
@@ -118,24 +56,10 @@ a:focus {
 }
 
 /*
- Fix space between title and filter
- */
-.breadcrumb {
-  margin-bottom: -5px;
-}
-
-/*
  Remove height form-control
  */
 .form-control {
   height: unset;
-}
-/*
-
-Keep same height that buttons
- */
-.slider-input-pf {
-  height: 23px;
 }
 
 /*

@@ -25,16 +25,12 @@ export const summaryHeader: React.CSSProperties = {
   backgroundColor: PfColors.White
 };
 
-export const summaryLabels = style({
-  marginTop: '5px',
-  marginBottom: '5px'
-});
-
 export const summaryPanel = style({
   height: '100%',
   margin: 0,
   minWidth: '25em',
   overflowY: 'scroll',
+  backgroundColor: PfColors.White,
   width: '25em'
 });
 

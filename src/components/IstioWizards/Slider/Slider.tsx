@@ -141,7 +141,7 @@ class Slider extends React.Component<Props, State> {
       marginRight: 5
     });
     const inputStyle = style({
-      width: '2.75em',
+      width: '3em',
       textAlign: 'center',
       marginLeft: 0,
       marginRight: 0

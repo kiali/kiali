@@ -1,16 +1,5 @@
 import * as React from 'react';
-import {
-  Card,
-  CardBody,
-  Grid,
-  GridItem,
-  Stack,
-  StackItem,
-  Text,
-  TextVariants,
-  Title,
-  Tooltip
-} from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Stack, StackItem, Title, Tooltip } from '@patternfly/react-core';
 import { EyeIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import CytoscapeGraph from '../../../components/CytoscapeGraph/CytoscapeGraph';
@@ -85,27 +74,42 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 {' '}
                 Service Overview{' '}
               </Title>
-              <Stack>
+              <Stack gutter={'md'} style={{ marginTop: '10px' }}>
                 <StackItem id={'labels'}>
-                  <Text component={TextVariants.h3}> Labels </Text>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Labels{' '}
+                  </Title>
                   <Labels labels={this.props.labels || {}} />
                 </StackItem>
                 <StackItem id={'resource_version'}>
-                  <Text component={TextVariants.h3}> Resource Version </Text>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Resource Version{' '}
+                  </Title>
                   {this.props.resourceVersion}
                 </StackItem>
                 <StackItem id={'selectors'}>
-                  <Text component={TextVariants.h3}> Selectors </Text>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Selectors{' '}
+                  </Title>
                   <Labels labels={this.props.selectors || {}} />
                 </StackItem>
                 <StackItem id={'created_at'}>
-                  <Text component={TextVariants.h3}> Created at </Text>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Created at{' '}
+                  </Title>
                   <LocalTime time={this.props.createdAt} />
                 </StackItem>
                 {this.props.additionalDetails.map((additionalItem, idx) => {
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
-                      <Text component={TextVariants.h3}> {additionalItem.title} </Text>
+                      <Title headingLevel="h6" size="md">
+                        {' '}
+                        {additionalItem.title}{' '}
+                      </Title>
                       {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
                       <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
@@ -113,7 +117,10 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 })}
                 {this.props.threeScaleServiceRule && this.props.threeScaleServiceRule.threeScaleHandlerName !== '' && (
                   <StackItem id={'threescale_link'}>
-                    <Text component={TextVariants.h3}> 3scale API handler</Text>
+                    <Title headingLevel="h6" size="md">
+                      {' '}
+                      3scale API handler
+                    </Title>
                     <TextOrLink text={this.props.threeScaleServiceRule.threeScaleHandlerName} />
                   </StackItem>
                 )}
@@ -162,7 +169,9 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               </Title>
               <Stack className={'stack_service_details'}>
                 <StackItem id={'health'}>
-                  <Text component={TextVariants.h3}> Overall Health </Text>
+                  <Title headingLevel="h6" size="md">
+                    Overall Health{' '}
+                  </Title>
                   <HealthIndicator id={this.props.name} health={this.props.health} mode={DisplayMode.LARGE} />
                 </StackItem>
               </Stack>
@@ -170,12 +179,12 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 {' '}
                 Network Overview{' '}
               </Title>
-              <Stack>
+              <Stack gutter={'md'}>
                 <StackItem id={'ip'}>
-                  <Text component={TextVariants.h3}>
+                  <Title headingLevel="h6" size="md">
                     {' '}
                     {this.props.type !== ExternalNameType ? 'Service IP' : 'ExternalName'}{' '}
-                  </Text>
+                  </Title>
                   {this.props.type !== ExternalNameType
                     ? this.props.ip
                       ? this.props.ip
@@ -185,8 +194,11 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                     : ''}
                 </StackItem>
                 <StackItem id={'endpoints'}>
-                  <Text component={TextVariants.h3}> Endpoints </Text>
-                  <Stack>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Endpoints{' '}
+                  </Title>
+                  <Stack gutter={'md'}>
                     {(this.props.endpoints || []).map((endpoint, i) =>
                       (endpoint.addresses || []).map((address, u) => (
                         <StackItem key={'endpoint_' + i + '_address_' + u}>
@@ -205,13 +217,13 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   </Stack>
                 </StackItem>
                 <StackItem id={'ports'}>
-                  <Text component={TextVariants.h3}>
+                  <Title headingLevel="h6" size="md">
                     <ValidationObjectSummary
                       id={this.props.name + '-config-validation'}
                       validations={this.props.validations ? [this.props.validations] : []}
                     />
                     <span style={{ marginLeft: '10px' }}>Ports</span>
-                  </Text>
+                  </Title>
                   <ul className={listStyle}>
                     {(this.props.ports || []).map((port, i) => (
                       <li key={'port_' + i}>
@@ -221,7 +233,10 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   </ul>
                 </StackItem>
                 <StackItem id={'type'}>
-                  <Text component={TextVariants.h3}> Type </Text>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Type{' '}
+                  </Title>
                   {this.props.type ? this.props.type : ''}
                 </StackItem>
               </Stack>

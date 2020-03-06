@@ -21,6 +21,7 @@ type ToolbarDropdownProps = {
   tooltip?: string;
   value?: number | string;
   useName?: boolean;
+  classNameSelect?: string;
 
   handleSelect: (value: string) => void;
   onToggle?: (isOpen: boolean) => void;
@@ -69,7 +70,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
         isExpanded={isExpanded}
         ariaLabelledBy={this.props.id}
         isDisabled={this.props.disabled}
-        className={widthAuto}
+        className={this.props.classNameSelect ? `${this.props.classNameSelect} ${widthAuto}` : widthAuto}
       >
         {Object.keys(this.props.options).map(key => {
           return (

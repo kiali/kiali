@@ -1,23 +1,12 @@
-/**
-  Third Party / Dependency imports here
-*/
-$font-path: '~patternfly/dist/fonts/';
-$img-path: '~patternfly/dist/img/';
-$icon-font-path: '~patternfly/dist/fonts/';
-
 // Set global base font size to 14px per current OpenShift design
 // https://github.com/openshift/console/blob/ef1212655ba60571aaeec666843cd9f1ef139189/frontend/public/style/_vars.scss#L16
 // Patternfly 3 defaults to 12px, which is too small in many cases.
 $font-size-base: 14px;
 
 /**
-  Patternfly Sass
-*/
-@import 'patternfly';
-
-/**
   PatternflyNext
 */
+
 @import '../../node_modules/@patternfly/patternfly/patternfly.css';
 
 //PF4 Styles
@@ -44,6 +33,7 @@ body {
 // Component
 @import '../components/VirtualList/_VirtualList';
 @import '../components/JaegerIntegration/JaegerResults/_SpanTable';
+@import '../components/IstioWizards/Slider/_Slider';
 @import '../components/Time/_Time';
 @import '../components/Nav/_Menu';
 @import '../pages/Graph/_Graph';

@@ -16,7 +16,6 @@ import ServiceInfo from './ServiceInfo';
 import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
-import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
@@ -408,7 +407,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         ) : (
           <RefreshContainer id="metrics-refresh" handleRefresh={this.doRefresh} hideLabel={true} />
         )}
-        &nbsp;
         {this.state.currentTab === defaultTab && (
           <IstioWizardDropdown
             namespace={this.props.match.params.namespace}
@@ -518,8 +516,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
     return (
       <>
-        <RenderHeader>
-          <BreadcrumbView location={this.props.location} />
+        <RenderHeader location={this.props.location}>
           <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
           {this.renderActions()}
         </RenderHeader>

@@ -18,7 +18,6 @@ import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropd
 import { RenderHeader, RenderComponentScroll } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
-import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
@@ -41,8 +40,6 @@ import {
   Stack,
   StackItem,
   Tab,
-  Text,
-  TextVariants,
   Title,
   TitleLevel,
   TitleSize
@@ -578,9 +575,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   render() {
     return (
       <>
-        <RenderHeader>
-          <BreadcrumbView location={this.props.location} />
-          <Text component={TextVariants.h1}>{this.objectTitle()}</Text>
+        <RenderHeader location={this.props.location}>
+          <Title headingLevel="h2" size="3xl">
+            {this.objectTitle()}
+          </Title>
           {this.renderRightToolbar()}
         </RenderHeader>
         {this.renderTabs()}

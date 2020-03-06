@@ -62,12 +62,15 @@ const toolbarRight = style({
 });
 
 const displayFlex = style({
-  display: 'flex',
-  marginTop: '5px'
+  display: 'flex'
 });
 
 const toolbarMargin = style({
   margin: '10px'
+});
+
+const tailToolbarMargin = style({
+  marginTop: '2px'
 });
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
@@ -179,6 +182,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           label={TailLinesOptions[this.state.tailLines]}
                           options={TailLinesOptions}
                           tooltip={'Show up to last N log lines'}
+                          classNameSelect={tailToolbarMargin}
                         />
                       </ToolbarItem>
                       <ToolbarItem>

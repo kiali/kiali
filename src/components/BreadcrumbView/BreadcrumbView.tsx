@@ -111,28 +111,26 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
       </BreadcrumbItem>
     );
     return (
-      <div className="breadcrumb">
-        <Breadcrumb>
+      <Breadcrumb>
+        <BreadcrumbItem>
+          <Link to={`/${pathItem}`} onClick={this.cleanFilters}>
+            {isIstio ? IstioName : BreadcrumbView.capitalize(pathItem)}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.cleanFilters}>
+            Namespace: {namespace}
+          </Link>
+        </BreadcrumbItem>
+        {isIstio && (
           <BreadcrumbItem>
-            <Link to={`/${pathItem}`} onClick={this.cleanFilters}>
-              {isIstio ? IstioName : BreadcrumbView.capitalize(pathItem)}
+            <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.updateTypeFilter}>
+              {istioType ? BreadcrumbView.istioType(istioType) : istioType}
             </Link>
           </BreadcrumbItem>
-          <BreadcrumbItem>
-            <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.cleanFilters}>
-              Namespace: {namespace}
-            </Link>
-          </BreadcrumbItem>
-          {isIstio && (
-            <BreadcrumbItem>
-              <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.updateTypeFilter}>
-                {istioType ? BreadcrumbView.istioType(istioType) : istioType}
-              </Link>
-            </BreadcrumbItem>
-          )}
-          {linkItem}
-        </Breadcrumb>
-      </div>
+        )}
+        {linkItem}
+      </Breadcrumb>
     );
   }
 }

@@ -23,15 +23,25 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           Service Overview
            
         </Title>
-        <Stack>
+        <Stack
+          gutter="md"
+          style={
+            Object {
+              "marginTop": "10px",
+            }
+          }
+        >
           <StackItem
             id="labels"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Labels 
-            </Text>
+               
+              Labels
+               
+            </Title>
             <Labels
               labels={
                 Object {
@@ -43,21 +53,27 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           <StackItem
             id="resource_version"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Resource Version 
-            </Text>
+               
+              Resource Version
+               
+            </Title>
             1234
           </StackItem>
           <StackItem
             id="selectors"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Selectors 
-            </Text>
+               
+              Selectors
+               
+            </Title>
             <Labels
               labels={Object {}}
             />
@@ -65,11 +81,14 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           <StackItem
             id="created_at"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Created at 
-            </Text>
+               
+              Created at
+               
+            </Title>
             <LocalTime
               time="2018-04-04T15:11:46Z"
             />
@@ -201,11 +220,13 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           <StackItem
             id="health"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Overall Health 
-            </Text>
+              Overall Health
+               
+            </Title>
             <HealthIndicator
               id="reviews"
               mode={0}
@@ -225,28 +246,36 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           Network Overview
            
         </Title>
-        <Stack>
+        <Stack
+          gutter="md"
+        >
           <StackItem
             id="ip"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
                
               Service IP
                
-            </Text>
+            </Title>
             172.30.78.33
           </StackItem>
           <StackItem
             id="endpoints"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Endpoints 
-            </Text>
-            <Stack>
+               
+              Endpoints
+               
+            </Title>
+            <Stack
+              gutter="md"
+            >
               <StackItem
                 key="endpoint_0_address_0"
               >
@@ -402,8 +431,9 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           <StackItem
             id="ports"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
               <ValidationObjectSummary
                 id="reviews-config-validation"
@@ -418,7 +448,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
               >
                 Ports
               </span>
-            </Text>
+            </Title>
             <ul
               className="fza38k8"
             />
@@ -426,11 +456,14 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           <StackItem
             id="type"
           >
-            <Text
-              component="h3"
+            <Title
+              headingLevel="h6"
+              size="md"
             >
-               Type 
-            </Text>
+               
+              Type
+               
+            </Title>
             ClusterIP
           </StackItem>
         </Stack>

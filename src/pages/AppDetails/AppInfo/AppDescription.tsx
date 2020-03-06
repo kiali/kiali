@@ -131,7 +131,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
           <Card style={{ height: '100%' }}>
             <CardHeader>
               <Title headingLevel="h3" size="2xl">
-                Application Overview
+                {' '} Application Overview
               </Title>
             </CardHeader>
             <CardBody className="noPadding">
@@ -185,11 +185,13 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
         </GridItem>
         <GridItem span={4}>
           <Card style={{ height: '100%' }}>
-            <CardBody>
+            <CardHeader>
               <Title headingLevel="h3" size="2xl">
                 {' '}
                 Health Overview{' '}
               </Title>
+            </CardHeader>
+            <CardBody>
               <Stack>
                 <StackItem id="health" className={'stack_service_details'}>
                   <Text component={TextVariants.h3}> Overall Health</Text>

@@ -11,7 +11,6 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import PfTitle from '../../components/Pf/PfTitle';
 import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
@@ -336,8 +335,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   render() {
     return (
       <>
-        <RenderHeader>
-          <BreadcrumbView location={this.props.location} />
+        <RenderHeader location={this.props.location}>
           <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
           {this.renderActions()}
         </RenderHeader>

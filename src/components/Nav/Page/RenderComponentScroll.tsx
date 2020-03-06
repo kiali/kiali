@@ -23,7 +23,7 @@ export class RenderComponentScroll extends React.Component<{ className?: any }, 
   render() {
     return (
       <div
-        style={{ height: this.state.height, overflowY: 'auto' }}
+        style={{ height: this.state.height, overflowY: 'auto', padding: '10px' }}
         className={this.props.className ? this.props.className : undefined}
       >
         {this.props.children}

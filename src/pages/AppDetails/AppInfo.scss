@@ -4,19 +4,6 @@ ul.pf-c-list {
   padding-left: 0px;
 }
 
-div.resourceList.pf-c-data-list__cell {
-  --pf-c-data-list__cell--PaddingTop: 0px;
-  padding-top: 0px;
-}
-
-div.pf-c-data-list__item-content {
-  padding-bottom: 10px;
-  --pf-c-data-list__cell--PaddingBottom: 10px;
-}
-
 div.pf-c-card__body.noPadding {
   padding: 0px;
-  h2 {
-    padding-left: var(--pf-c-card--child--PaddingLeft);
-  }
 }

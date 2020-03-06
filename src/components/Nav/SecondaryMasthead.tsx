@@ -2,7 +2,7 @@ import React from 'react';
 import { style } from 'typestyle';
 
 const paddingStyle = style({
-  margin: '10px 20px 0 10px'
+  margin: '10px 20px 0 0'
 });
 const secondaryMastheadStyle = style({
   position: 'sticky',

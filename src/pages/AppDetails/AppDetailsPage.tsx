@@ -9,7 +9,6 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { AppHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { RenderHeader } from '../../components/Nav/Page';
 import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
@@ -247,8 +246,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     return (
       <>
-        <RenderHeader>
-          <BreadcrumbView location={this.props.location} />
+        <RenderHeader location={this.props.location}>
           <PfTitle location={this.props.location} istio={istioSidecar} />
           {this.renderActions()}
         </RenderHeader>

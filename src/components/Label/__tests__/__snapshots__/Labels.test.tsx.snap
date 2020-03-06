@@ -3,7 +3,6 @@
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
 Array [
   <div
-    className=""
     key="label_0"
   >
     <Label
@@ -13,7 +12,6 @@ Array [
     />
   </div>,
   <div
-    className=""
     key="label_1"
   >
     <Label
@@ -22,26 +20,8 @@ Array [
       value="v1"
     />
   </div>,
-  <div
-    className="hide"
-    key="label_2"
-  >
-    <Label
-      key="label_2"
-      name="env"
-      value="prod"
-    />
-  </div>,
-  <div
-    className="hide"
-    key="label_3"
-  >
-    <Label
-      key="label_3"
-      name="team"
-      value="A"
-    />
-  </div>,
+  "",
+  "",
   <a
     className="fqiflux"
     key="label_more"
@@ -56,7 +36,6 @@ Array [
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
 Array [
   <div
-    className=""
     key="label_0"
   >
     <Label
@@ -66,7 +45,6 @@ Array [
     />
   </div>,
   <div
-    className=""
     key="label_1"
   >
     <Label

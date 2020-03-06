@@ -90,9 +90,7 @@ class Refresh extends React.PureComponent<Props, State> {
             options={REFRESH_INTERVALS}
             tooltip={'Refresh interval'}
           />
-          <span style={{ paddingLeft: '0.5em' }}>
-            <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled} />
-          </span>
+          <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled} />
         </>
       );
     } else {
