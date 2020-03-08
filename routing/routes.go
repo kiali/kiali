@@ -1325,10 +1325,29 @@ func NewRoutes() (r *Routes) {
 			handlers.Iter8Status,
 			true,
 		},
-
+		// swagger:route GET /iter8/namespaces/{namespace}/experiments/{name} getexperiments
+		// ---
+		// Endpoint to fetch iter8 experiments by namespace and name
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//		500: internalError
+		//		200: iter8experimentdetail
+		{
+			"Iter8ExperimentsByNamespaceAndName",
+			"GET",
+			"/api/iter8/namespaces/{namespace}/experiments/{name}",
+			handlers.Iter8ExperimentGet,
+			true,
+		},
 		// swagger:route GET /iter8/experiments getexperiments
 		// ---
-		// Endpoint to fetch iter8 experiments
+		// Endpoint to fetch iter8 experiments for all namespaces user have access.
+		// User can define a comman separated list of namespaces.
 		//
 		// 		Produces:
 		//		- application/json
@@ -1346,28 +1365,9 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 
-		// swagger:route GET /iter8/experiments getexperiments
-		// ---
-		// Endpoint to fetch iter8 experiments by namespace and name
-		//
-		// 		Produces:
-		//		- application/json
-		//
-		//		Schemes: http, https
-		//
-		// responses:
-		//		500: internalError
-		//		200: iter8experimentdetail
-		{
-			"Iter8ExperimentsByNamespaceAndName",
-			"GET",
-			"/api/iter8/experiment/namespaces/{namespace}/name/{name}",
-			handlers.Iter8ExperimentGet,
-			true,
-		},
 		// swagger:route POST /iter8/experiment postexperiment
 		// ---
-		// Endpoint to create new iter8 experiments
+		// Endpoint to create new iter8 experiments for a given namespace.
 		//
 		// 		Produces:
 		//		- application/json
@@ -1378,10 +1378,10 @@ func NewRoutes() (r *Routes) {
 		//		500: internalError
 		//		200: iter8experimentdetail
 		{
-			Name: "Iter8ExpreimentCreate",
-			Method: "POST",
-			Pattern: "/api/iter8/experiment",
-			HandlerFunc: handlers.Iter8ExperimentCreate,
+			Name:          "Iter8ExpreimentCreate",
+			Method:        "POST",
+			Pattern:       "/api/iter8/namespaces/{namespace}/experiments",
+			HandlerFunc:   handlers.Iter8ExperimentCreate,
 			Authenticated: true,
 		},
 		// swagger:route PATCH /iter8/experiments
@@ -1397,10 +1397,10 @@ func NewRoutes() (r *Routes) {
 		//		500: internalError
 		//		200: iter8experimentdetail
 		{
-			Name: "Iter8ExpreimentUpdate",
-			Method: "PATCH",
-			Pattern: "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
-			HandlerFunc: handlers.Iter8ExperimentUpdate,
+			Name:          "Iter8ExpreimentUpdate",
+			Method:        "PATCH",
+			Pattern:       "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
+			HandlerFunc:   handlers.Iter8ExperimentUpdate,
 			Authenticated: true,
 		},
 		// swagger:route DELETE /iter8/experiment deleteexperiment
@@ -1416,10 +1416,10 @@ func NewRoutes() (r *Routes) {
 		//		500: internalError
 		//		200: iter8experimentdetail
 		{
-			Name: "Iter8ExpreimentDelete",
-			Method: "DELETE",
-			Pattern: "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
-			HandlerFunc: handlers.Iter8ExperimentDelete,
+			Name:          "Iter8ExpreimentDelete",
+			Method:        "DELETE",
+			Pattern:       "/api/iter8/experiment/namespaces/{namespace}/name/{name}",
+			HandlerFunc:   handlers.Iter8ExperimentDelete,
 			Authenticated: true,
 		},
 	}
