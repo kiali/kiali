@@ -100,100 +100,44 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
   <GridItem
     span={4}
   >
-    <Card
-      style={
-        Object {
-          "height": "100%",
+    <MiniGraphCard
+      dataSource={
+        GraphDataSource {
+          "_errorMessage": null,
+          "_fetchParams": Object {
+            "duration": 0,
+            "edgeLabelMode": "noEdgeLabels",
+            "graphType": "versionedApp",
+            "injectServiceNodes": true,
+            "namespaces": Array [],
+            "showSecurity": false,
+            "showUnusedNodes": false,
+          },
+          "_isError": false,
+          "_isLoading": false,
+          "decoratedData": [Function],
+          "emit": [Function],
+          "eventEmitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
+          },
+          "fetchDataForNamespaces": [Function],
+          "fetchDataForNode": [Function],
+          "fetchGraphData": [Function],
+          "graphDuration": 0,
+          "graphElements": Object {
+            "edges": Array [],
+            "nodes": Array [],
+          },
+          "graphTimestamp": 0,
+          "on": [Function],
+          "promiseRegistry": PromisesRegistry {
+            "promises": Map {},
+          },
+          "removeListener": [Function],
         }
       }
-    >
-      <CardBody>
-        <Title
-          headingLevel="h3"
-          size="2xl"
-        >
-           
-          Graph Overview
-           
-        </Title>
-        <div
-          style={
-            Object {
-              "height": "100%",
-            }
-          }
-        >
-          <CytoscapeGraph
-            activeNamespaces={
-              Array [
-                Object {
-                  "name": "my-namespace",
-                },
-              ]
-            }
-            containerClassName="f1niyge3"
-            dataSource={
-              GraphDataSource {
-                "_errorMessage": null,
-                "_fetchParams": Object {
-                  "duration": 0,
-                  "edgeLabelMode": "noEdgeLabels",
-                  "graphType": "versionedApp",
-                  "injectServiceNodes": true,
-                  "namespaces": Array [],
-                  "showSecurity": false,
-                  "showUnusedNodes": false,
-                },
-                "_isError": false,
-                "_isLoading": false,
-                "decoratedData": [Function],
-                "emit": [Function],
-                "eventEmitter": EventEmitter {
-                  "_events": Object {},
-                  "_eventsCount": 0,
-                },
-                "fetchDataForNamespaces": [Function],
-                "fetchDataForNode": [Function],
-                "fetchGraphData": [Function],
-                "graphDuration": 0,
-                "graphElements": Object {
-                  "edges": Array [],
-                  "nodes": Array [],
-                },
-                "graphTimestamp": 0,
-                "on": [Function],
-                "promiseRegistry": PromisesRegistry {
-                  "promises": Map {},
-                },
-                "removeListener": [Function],
-              }
-            }
-            displayUnusedNodes={[Function]}
-            edgeLabelMode="noEdgeLabels"
-            graphType="app"
-            isMTLSEnabled={false}
-            isMiniGraph={true}
-            layout={
-              Object {
-                "fit": false,
-                "name": "dagre",
-                "nodeDimensionsIncludeLabels": true,
-                "rankDir": "LR",
-              }
-            }
-            refreshInterval={0}
-            showCircuitBreakers={false}
-            showMissingSidecars={true}
-            showNodeLabels={true}
-            showSecurity={false}
-            showServiceNodes={true}
-            showTrafficAnimation={true}
-            showUnusedNodes={false}
-            showVirtualServices={true}
-          />
-        </div>
-      </CardBody>
-    </Card>
+    />
   </GridItem>
   <GridItem
     span={4}

@@ -1,10 +1,7 @@
 import * as React from 'react';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
-import { Link } from 'react-router-dom';
 import { ServiceIcon, BundleIcon, ApplicationsIcon } from '@patternfly/react-icons';
-import { CytoscapeGraphSelectorBuilder } from '../CytoscapeGraph/CytoscapeGraphSelector';
 import { style } from 'typestyle';
-import { NodeType } from '../../types/Graph';
 
 const PfTitleStyle = style({
   fontSize: '19px',
@@ -57,24 +54,17 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
       type = match[2];
       name = match[3];
     }
-    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(ns);
     switch (type) {
       case 'services':
         graphType = 'service';
-        cytoscapeGraph = cytoscapeGraph.service(name);
         icon = <ServiceIcon />;
         break;
       case 'workloads':
         graphType = 'workload';
-        cytoscapeGraph = cytoscapeGraph.workload(name);
         icon = <BundleIcon />;
         break;
       case 'applications':
         graphType = 'app';
-        cytoscapeGraph = cytoscapeGraph
-          .app(name)
-          .nodeType(NodeType.APP)
-          .isGroup(null);
         icon = <ApplicationsIcon />;
         break;
       default:
@@ -84,8 +74,7 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
       type: type,
       name: name,
       graphType: graphType,
-      icon: icon,
-      cytoscapeGraph: cytoscapeGraph.build()
+      icon: icon
     });
   }
 
@@ -105,12 +94,6 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
     }
   }
 
-  showOnGraphLink() {
-    return `/graph/namespaces?graphType=${this.state.graphType}&injectServiceNodes=true&namespaces=${
-      this.state.namespace
-    }&unusedNodes=true&focusSelector=${encodeURI(this.state.cytoscapeGraph)}`;
-  }
-
   render() {
     return (
       <h2 className={PfTitleStyle}>
@@ -119,11 +102,6 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
           <span style={{ marginLeft: '10px' }}>
             <MissingSidecar namespace={this.state.namespace} />
           </span>
-        )}
-        {this.state.name && (
-          <>
-            {'  '}(<Link to={this.showOnGraphLink()}>Show on graph</Link>)
-          </>
         )}
       </h2>
     );

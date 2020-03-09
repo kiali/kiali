@@ -18,13 +18,8 @@ import {
 } from '@patternfly/react-core';
 import { TextOrLink } from 'components/TextOrLink';
 import { renderRuntimeLogo, renderAPILogo } from 'components/Logo/Logos';
-import CytoscapeGraph from '../../../components/CytoscapeGraph/CytoscapeGraph';
-import { DagreGraph } from '../../../components/CytoscapeGraph/graphs/DagreGraph';
-import { EdgeLabelMode, GraphType } from '../../../types/Graph';
 import GraphDataSource from '../../../services/GraphDataSource';
-import { style } from 'typestyle';
-
-const cytoscapeGraphContainerStyle = style({ height: '300px' });
+import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -34,14 +29,7 @@ type WorkloadDescriptionProps = {
   miniGraphDataSource: GraphDataSource;
 };
 
-type WorkloadDescriptionState = {};
-
-class WorkloadDescription extends React.Component<WorkloadDescriptionProps, WorkloadDescriptionState> {
-  constructor(props: WorkloadDescriptionProps) {
-    super(props);
-    this.state = {};
-  }
-
+class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
   render() {
     const workload = this.props.workload;
     const isTemplateLabels =
@@ -101,36 +89,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
           </Card>
         </GridItem>
         <GridItem span={4}>
-          <Card style={{ height: '100%' }}>
-            <CardBody>
-              <Title headingLevel="h3" size="2xl">
-                {' '}
-                Graph Overview{' '}
-              </Title>
-              <div style={{ height: '300px' }}>
-                <CytoscapeGraph
-                  activeNamespaces={[{ name: this.props.namespace }]}
-                  containerClassName={cytoscapeGraphContainerStyle}
-                  dataSource={this.props.miniGraphDataSource}
-                  displayUnusedNodes={() => undefined}
-                  edgeLabelMode={EdgeLabelMode.NONE}
-                  graphType={GraphType.APP}
-                  isMTLSEnabled={false}
-                  isMiniGraph={true}
-                  layout={DagreGraph.getLayout()}
-                  refreshInterval={0}
-                  showCircuitBreakers={false}
-                  showMissingSidecars={true}
-                  showNodeLabels={true}
-                  showSecurity={false}
-                  showServiceNodes={true}
-                  showTrafficAnimation={true}
-                  showUnusedNodes={false}
-                  showVirtualServices={true}
-                />
-              </div>
-            </CardBody>
-          </Card>
+          <MiniGraphCard dataSource={this.props.miniGraphDataSource} />
         </GridItem>
         <GridItem span={4}>
           <Card style={{ height: '100%' }}>

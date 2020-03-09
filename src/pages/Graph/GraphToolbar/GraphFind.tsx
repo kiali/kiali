@@ -263,7 +263,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     layoutChanged: boolean
   ) => {
     if (!this.props.cyData) {
-      console.debug('Skip Hide: cy not set.');
       return;
     }
 
@@ -333,7 +332,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 
   private handleFind = () => {
     if (!this.props.cyData) {
-      console.debug('Skip Find: cy not set.');
       return;
     }
 

@@ -24,7 +24,7 @@ class OverviewCardLinks extends React.Component<Props> {
 
     // Link to the graph page
     links.push(
-      <Tooltip key="ot_graph" content={<>Go to graph</>} {...tooltipProps}>
+      <Tooltip key="ot_graph" content={<>Show graph</>} {...tooltipProps}>
         <Link
           to={`/graph/namespaces?namespaces=${this.props.name}&graphType=${this.toGraphType(this.props.overviewType)}`}
           className={iconStyle}
@@ -37,7 +37,7 @@ class OverviewCardLinks extends React.Component<Props> {
     // Link to the apps list
     if (this.props.overviewType !== 'app') {
       links.push(
-        <Tooltip key="ot_apps" content={<>Go to applications</>} {...tooltipProps}>
+        <Tooltip key="ot_apps" content={<>Show applications</>} {...tooltipProps}>
           <Link to={`/${Paths.APPLICATIONS}?namespaces=` + this.props.name} className={iconStyle}>
             <ApplicationsIcon />
           </Link>
@@ -48,7 +48,7 @@ class OverviewCardLinks extends React.Component<Props> {
     // Link to the workloads list
     if (this.props.overviewType !== 'workload') {
       links.push(
-        <Tooltip key="ot_workloads" content={<>Go to workloads</>} {...tooltipProps}>
+        <Tooltip key="ot_workloads" content={<>Show workloads</>} {...tooltipProps}>
           <Link to={`/${Paths.WORKLOADS}?namespaces=` + this.props.name} className={iconStyle}>
             <BundleIcon />
           </Link>
@@ -59,7 +59,7 @@ class OverviewCardLinks extends React.Component<Props> {
     // Link to the services list
     if (this.props.overviewType !== 'service') {
       links.push(
-        <Tooltip key="ot_services" content={<>Go to services</>} {...tooltipProps}>
+        <Tooltip key="ot_services" content={<>Show services</>} {...tooltipProps}>
           <Link to={`/${Paths.SERVICES}?namespaces=` + this.props.name} className={iconStyle}>
             <ServiceIcon />
           </Link>
@@ -69,7 +69,7 @@ class OverviewCardLinks extends React.Component<Props> {
 
     // Link to the Istio Config list
     links.push(
-      <Tooltip key="ot_istio" content={<>Go to Istio config</>} {...tooltipProps}>
+      <Tooltip key="ot_istio" content={<>Show Istio config</>} {...tooltipProps}>
         <Link to={`/${Paths.ISTIO}?namespaces=` + this.props.name} className={iconStyle}>
           <PficonTemplateIcon />
         </Link>

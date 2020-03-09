@@ -168,11 +168,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
         <Toolbar className={toolbarStyle}>
           <div style={{ display: 'flex' }}>
             {this.props.node ? (
-              <Tooltip
-                key={'graph-tour-help-ot'}
-                position={TooltipPosition.right}
-                content={`Back to full ${GraphToolbar.GRAPH_TYPES[graphTypeKey]}`}
-              >
+              <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
                 <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
                   <KialiIcon.Back className={defaultIconStyle} />
                 </Button>

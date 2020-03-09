@@ -20,7 +20,6 @@ import {
   CytoscapeMouseOutEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
-  GraphType,
   Layout,
   NodeParamsType,
   NodeType,
@@ -41,7 +40,6 @@ import { EdgeSingular } from 'cytoscape';
 import { Core } from 'cytoscape';
 
 type CytoscapeGraphProps = {
-  activeNamespaces: Namespace[];
   containerClassName?: string;
   contextMenuEdgeComponent?: EdgeContextMenuType;
   contextMenuGroupComponent?: NodeContextMenuType;
@@ -50,8 +48,7 @@ type CytoscapeGraphProps = {
   displayUnusedNodes: () => void;
   edgeLabelMode: EdgeLabelMode;
   focusSelector?: string;
-  graphType: GraphType;
-  isMiniGraph?: boolean;
+  isMiniGraph: boolean;
   isMTLSEnabled: boolean;
   layout: Layout;
   onEmptyGraphAction?: () => void;
@@ -92,6 +89,9 @@ type InitialValues = {
 export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
     router: () => null
+  };
+  static defaultProps = {
+    isMiniGraph: false
   };
   // for dbl-click support
   static doubleTapMs = 350;
@@ -241,8 +241,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           isDisplayingUnusedNodes={this.props.showUnusedNodes}
           isLoading={this.state.isLoading}
           isError={this.state.isError}
-          isMiniGraph={!!this.props.isMiniGraph}
-          namespaces={this.props.activeNamespaces}
+          isMiniGraph={this.props.isMiniGraph}
+          namespaces={this.props.dataSource.fetchParameters.namespaces}
         >
           <CytoscapeContextMenuWrapper
             ref={this.contextMenuRef}
@@ -347,7 +347,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       } else if (isEdge(target)) {
         return { summaryType: 'edge', summaryTarget: target };
       } else {
-        console.log(`${event.type} UNHANDLED`);
         return null;
       }
     };
@@ -407,7 +406,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
           const cytoscapeEvent = getCytoscapeBaseEvent(event);
           if (cytoscapeEvent) {
             this.handleTap(cytoscapeEvent);
-            this.selectTarget(event.target);
+            this.selectTarget(event.target, true);
           }
         }, CytoscapeGraph.doubleTapMs);
       }
@@ -585,9 +584,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     }
 
     const globalScratchData: CytoscapeGlobalScratchData = {
-      activeNamespaces: this.props.activeNamespaces,
+      activeNamespaces: this.props.dataSource.fetchParameters.namespaces,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType,
+      graphType: this.props.dataSource.fetchParameters.graphType,
       mtlsEnabled: this.props.isMTLSEnabled,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,
@@ -638,7 +637,10 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     }
   }
 
-  private selectTarget = (target?: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core) => {
+  private selectTarget = (target?: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core, isTapped: boolean = false) => {
+    if (this.props.isMiniGraph && isTapped) {
+      return;
+    }
     if (this.cy) {
       this.cy
         .$(':selected')
@@ -682,7 +684,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
       urlNodeType = 'applications';
     }
     const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
-    console.warn(detailsPageUrl);
     history.push(detailsPageUrl);
     return;
   };
@@ -691,6 +692,13 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     const target = event.summaryTarget;
     const targetType = event.summaryType;
     if (targetType !== 'node' && targetType !== 'group') {
+      return;
+    }
+    if (this.props.isMiniGraph) {
+      // When in mini-graph mode, we don't do anything. In case you remove this conditional,
+      // make sure that this method won't manipulate the URL when in mini-graph mode.
+      // At the time of writing, URL manipulation is done at the end of this method. Look for
+      // a "history.push(makeNodeGraphUrlFromParams(urlParams));" statement.
       return;
     }
 
@@ -761,11 +769,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     }
 
     const urlParams: GraphUrlParams = {
-      activeNamespaces: this.props.activeNamespaces,
+      activeNamespaces: this.props.dataSource.fetchParameters.namespaces,
       duration: this.props.dataSource.fetchParameters.duration,
       edgeLabelMode: this.props.edgeLabelMode,
       graphLayout: this.props.layout,
-      graphType: this.props.graphType,
+      graphType: this.props.dataSource.fetchParameters.graphType,
       node: targetNode,
       refreshInterval: this.props.refreshInterval,
       showServiceNodes: this.props.showServiceNodes,
@@ -773,8 +781,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    // TODO: When the mini-graph is implemented, the following line must be removed. We don't
-    // want to set invalid URL params in the wrong page.
     history.push(makeNodeGraphUrlFromParams(urlParams));
     if (this.props.setNode) {
       this.props.setNode(targetNode);
@@ -785,7 +791,10 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps,
     if (this.props.updateSummary) {
       this.props.updateSummary(event);
     }
-    this.graphHighlighter!.onClick(event);
+
+    if (!this.props.isMiniGraph) {
+      this.graphHighlighter!.onClick(event);
+    }
   };
 
   private handleMouseIn = (event: CytoscapeMouseInEvent) => {

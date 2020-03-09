@@ -2,23 +2,21 @@ import * as React from 'react';
 import { Card, CardBody, Grid, GridItem, Stack, StackItem, Title, Tooltip } from '@patternfly/react-core';
 import { EyeIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
-import CytoscapeGraph from '../../../components/CytoscapeGraph/CytoscapeGraph';
-import { DagreGraph } from '../../../components/CytoscapeGraph/graphs/DagreGraph';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import GraphDataSource from '../../../services/GraphDataSource';
 import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
-import { EdgeLabelMode, GraphType } from '../../../types/Graph';
 import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import ValidationList from '../../../components/Validations/ValidationList';
-import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
 import { AdditionalItem } from 'types/Workload';
 import { TextOrLink } from 'components/TextOrLink';
 import { renderAPILogo } from 'components/Logo/Logos';
+import './ServiceInfoDescription.css';
+import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -46,8 +44,6 @@ const listStyle = style({
 });
 
 const ExternalNameType = 'ExternalName';
-
-const cytoscapeGraphContainerStyle = style({ height: '300px' });
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
   getPortOver(portId: number) {
@@ -129,36 +125,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
           </Card>
         </GridItem>
         <GridItem span={4}>
-          <Card style={{ height: '100%' }}>
-            <CardBody>
-              <Title headingLevel="h3" size="2xl">
-                {' '}
-                Graph Overview{' '}
-              </Title>
-              <div style={{ height: '100%' }}>
-                <CytoscapeGraph
-                  activeNamespaces={[{ name: this.props.namespace }]}
-                  containerClassName={cytoscapeGraphContainerStyle}
-                  dataSource={this.props.miniGraphDatasource}
-                  displayUnusedNodes={() => undefined}
-                  edgeLabelMode={EdgeLabelMode.NONE}
-                  graphType={GraphType.APP}
-                  isMTLSEnabled={false}
-                  isMiniGraph={true}
-                  layout={DagreGraph.getLayout()}
-                  refreshInterval={0}
-                  showCircuitBreakers={false}
-                  showMissingSidecars={true}
-                  showNodeLabels={true}
-                  showSecurity={false}
-                  showServiceNodes={true}
-                  showTrafficAnimation={true}
-                  showUnusedNodes={false}
-                  showVirtualServices={true}
-                />
-              </div>
-            </CardBody>
-          </Card>
+          <MiniGraphCard dataSource={this.props.miniGraphDatasource} />
         </GridItem>
         <GridItem span={4}>
           <Card style={{ height: '100%' }}>

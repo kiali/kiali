@@ -43,7 +43,6 @@ describe('CytoscapeGraph component test', () => {
 
     const wrapper = shallow(
       <CytoscapeGraph
-        activeNamespaces={[{ name: testNamespace }]}
         edgeLabelMode={myEdgeLabelMode}
         layout={myLayout}
         updateGraph={testClickHandler}
@@ -62,7 +61,6 @@ describe('CytoscapeGraph component test', () => {
         showTrafficAnimation={false}
         showUnusedNodes={false}
         showVirtualServices={true}
-        graphType={GraphType.VERSIONED_APP}
         dataSource={dataSource}
         displayUnusedNodes={() => undefined}
       />

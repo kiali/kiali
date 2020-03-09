@@ -3,13 +3,8 @@ import { shallow } from 'enzyme';
 import { GraphFind } from '../GraphFind';
 import { EdgeLabelMode } from 'types/Graph';
 
-const testHandler = () => {
-  console.log('handled');
-};
-
-const testSetter = _val => {
-  console.log('set');
-};
+const testHandler = () => undefined;
+const testSetter = _val => undefined;
 
 // TODO Find out why typescript is unhappy and get rid of all of these ts-ignores
 describe('Parse find value test', () => {
