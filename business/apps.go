@@ -22,6 +22,14 @@ type AppService struct {
 	businessLayer *Layer
 }
 
+func joinMap(m1 map[string]string, m2 map[string]string) map[string]string {
+	result := m1
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	return result
+}
+
 // GetAppList is the API handler to fetch the list of applications in a given namespace
 func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	var err error
@@ -40,6 +48,14 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	for keyApp, valueApp := range apps {
 		appItem := &models.AppListItem{Name: keyApp}
 		appItem.IstioSidecar = true
+		var labels = make(map[string]string)
+		for _, srv := range valueApp.Services {
+			labels = joinMap(labels, srv.Labels)
+		}
+		for _, wrk := range valueApp.Workloads {
+			labels = joinMap(labels, wrk.Labels)
+		}
+		appItem.Labels = labels
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break
