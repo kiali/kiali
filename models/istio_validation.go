@@ -203,7 +203,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA1001 No matching workload found for authorization policy selector in this namespace",
 		Severity: WarningSeverity,
 	},
-	"sidecar.multimatch": {
+	"sidecar.multimatch.selectorless": {
 		Message:  "KIA1002 More than one selector-less Sidecar in the same namespace",
 		Severity: ErrorSeverity,
 	},
@@ -214,6 +214,10 @@ var checkDescriptors = map[string]IstioCheck{
 	"sidecar.egress.servicenotfound": {
 		Message:  "KIA1004 This host has no matching entry in the service registry",
 		Severity: WarningSeverity,
+	},
+	"sidecar.multimatch.selector": {
+		Message:  "KIA1003 More than one Sidecar applied to the same workload",
+		Severity: ErrorSeverity,
 	},
 	"virtualservices.nohost.hostnotfound": {
 		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",

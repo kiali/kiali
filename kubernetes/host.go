@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 )
@@ -103,12 +104,12 @@ func ParseTwoPartHost(host Host) (string, string) {
 	return localSvc, localNs
 }
 
-func HasMatchingWorkloads(service string, workloadList []map[string]string) bool {
+func HasMatchingWorkloads(service string, workloadList []labels.Set) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
 
 	// Check Workloads
 	for _, wl := range workloadList {
-		if service == wl[appLabel] {
+		if service == wl.Get(appLabel) {
 			return true
 		}
 	}
