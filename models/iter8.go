@@ -14,20 +14,20 @@ type Iter8Info struct {
 }
 
 type Iter8ExperimentItem struct {
-	Name                	string `json:"name"`
-	Phase               	string `json:"phase"`
-	CreatedAt           	string `json:"createdAt"`
-	Status              	string `json:"status"`
-	Baseline            	string `json:"baseline"`
-	BaselinePercentage  	int    `json:"baselinePercentage"`
-	Candidate           	string `json:"candidate"`
-	CandidatePercentage 	int    `json:"candidatePercentage"`
-	Namespace           	string `json:"namespace"`
-	StartedAt				string `json:"startedAt"`
-	EndedAt					string `json:"endedAt"`
-	TargetService 			string `json:"targetService"`
-	TargetServiceNamespace 	string `json:"targetServiceNamespace"`
-	AssessmentConclusion 	string `json:"assessmentConclusion"`
+	Name                   string `json:"name"`
+	Phase                  string `json:"phase"`
+	CreatedAt              string `json:"createdAt"`
+	Status                 string `json:"status"`
+	Baseline               string `json:"baseline"`
+	BaselinePercentage     int    `json:"baselinePercentage"`
+	Candidate              string `json:"candidate"`
+	CandidatePercentage    int    `json:"candidatePercentage"`
+	Namespace              string `json:"namespace"`
+	StartedAt              string `json:"startedAt"`
+	EndedAt                string `json:"endedAt"`
+	TargetService          string `json:"targetService"`
+	TargetServiceNamespace string `json:"targetServiceNamespace"`
+	AssessmentConclusion   string `json:"assessmentConclusion"`
 }
 
 type Iter8ExperimentDetail struct {
@@ -112,13 +112,13 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
 	}
 
-	startTime, _:= strconv.ParseInt(status.StartTimeStamp,10, 64)
-	startTimeString  :=  time.Unix(0, startTime*int64(1000000)).Format(time.RFC1123)
-	endTimeString  := ""
-	if  status.EndTimestamp != "" {
-		_endTime, _:= strconv.ParseInt(status.EndTimestamp,10, 64)
-		endTimeInNano :=  _endTime*int64(1000000)
-		endTimeString = time.Unix(0, endTimeInNano ).Format(time.RFC1123)
+	startTime, _ := strconv.ParseInt(status.StartTimeStamp, 10, 64)
+	startTimeString := time.Unix(0, startTime*int64(1000000)).Format(time.RFC1123)
+	endTimeString := ""
+	if status.EndTimestamp != "" {
+		_endTime, _ := strconv.ParseInt(status.EndTimestamp, 10, 64)
+		endTimeInNano := _endTime * int64(1000000)
+		endTimeString = time.Unix(0, endTimeInNano).Format(time.RFC1123)
 	}
 	targetServiceNamespace := spec.TargetService.Namespace
 	if targetServiceNamespace == "" {
@@ -126,18 +126,18 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	}
 
 	i.ExperimentItem = Iter8ExperimentItem{
-		Name:                	iter8Object.GetObjectMeta().Name,
-		Phase:				 	status.Phase,
-		Status:              	status.Message,
-		Baseline:            	spec.TargetService.Baseline,
-		BaselinePercentage:  	status.TrafficSplitPercentage.Baseline,
-		Candidate:           	spec.TargetService.Candidate,
-		CandidatePercentage: 	status.TrafficSplitPercentage.Candidate,
-		StartedAt:	         	startTimeString,
-		EndedAt:			 	endTimeString,
-		TargetService: 		 	spec.TargetService.Name,
+		Name:                   iter8Object.GetObjectMeta().Name,
+		Phase:                  status.Phase,
+		Status:                 status.Message,
+		Baseline:               spec.TargetService.Baseline,
+		BaselinePercentage:     status.TrafficSplitPercentage.Baseline,
+		Candidate:              spec.TargetService.Candidate,
+		CandidatePercentage:    status.TrafficSplitPercentage.Candidate,
+		StartedAt:              startTimeString,
+		EndedAt:                endTimeString,
+		TargetService:          spec.TargetService.Name,
 		TargetServiceNamespace: targetServiceNamespace,
-		AssessmentConclusion: strings.Join(status.Assestment.Conclusions, ";"),
+		AssessmentConclusion:   strings.Join(status.Assestment.Conclusions, ";"),
 	}
 	i.CriteriaDetails = criterias
 	i.TrafficControl = trafficControl

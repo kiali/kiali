@@ -44,13 +44,22 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
 	// in: path
 	// required: true
 	Name string `json:"namespace"`
+}
+
+// swagger:parameters getIter8Experiments patchIter8Experiments deleteIter8Experiments
+type NameParam struct {
+	// The name param
+	//
+	// in: path
+	// required: true
+	Name string `json:"name"`
 }
 
 // swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
@@ -666,4 +675,25 @@ type ThreeScaleGetRuleResponse struct {
 type swaggIstioConfigPermissions struct {
 	// in:body
 	Body models.IstioConfigPermissions
+}
+
+// Return Iter8 Info
+// swagger:response iter8StatusResponse
+type Iter8StatusResponse struct {
+	// in: body
+	Body models.Iter8Info
+}
+
+// Return a Iter8 Experiment detail
+// swagger:response iter8ExperimentGetDetailResponse
+type Iter8ExperimentGetDetailResponse struct {
+	// in: body
+	Body models.Iter8ExperimentDetail
+}
+
+// Return a list of Iter8 Experiment Items
+// swagger:response iter8ExperimentsGetResponse
+type Iter8ExperimentsResponnse struct {
+	// in: body
+	Body []models.Iter8ExperimentItem
 }
