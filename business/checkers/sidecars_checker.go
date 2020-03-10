@@ -1,6 +1,8 @@
 package checkers
 
 import (
+	core_v1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/business/checkers/sidecars"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -9,9 +11,11 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars     []kubernetes.IstioObject
-	Namespaces   models.Namespaces
-	WorkloadList models.WorkloadList
+	Sidecars       []kubernetes.IstioObject
+	ServiceEntries []kubernetes.IstioObject
+	Services       []core_v1.Service
+	Namespaces     models.Namespaces
+	WorkloadList   models.WorkloadList
 }
 
 func (s SidecarChecker) Check() models.IstioValidations {
@@ -50,9 +54,11 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 func (s SidecarChecker) runChecks(sidecar kubernetes.IstioObject) models.IstioValidations {
 	policyName := sidecar.GetObjectMeta().Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.GetObjectMeta().Namespace, SidecarCheckerType)
+	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
 
 	enabledCheckers := []Checker{
 		sidecars.WorkloadSelectorChecker{Sidecar: sidecar, WorkloadList: s.WorkloadList},
+		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
 	}
 
 	for _, checker := range enabledCheckers {

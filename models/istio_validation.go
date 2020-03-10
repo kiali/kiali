@@ -207,6 +207,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA1002 More than one selector-less Sidecar in the same namespace",
 		Severity: ErrorSeverity,
 	},
+	"sidecar.egress.invalidhostformat": {
+		Message:  "KIA1003 Invalid host format. 'namespace/dnsName' format expected",
+		Severity: ErrorSeverity,
+	},
+	"sidecar.egress.servicenotfound": {
+		Message:  "KIA1004 This host has no matching entry in the service registry",
+		Severity: WarningSeverity,
+	},
 	"virtualservices.nohost.hostnotfound": {
 		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",
 		Severity: ErrorSeverity,
