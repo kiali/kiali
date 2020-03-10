@@ -179,6 +179,151 @@
         }
       }
     },
+    "/iter8/experiments/namespaces/{namespace}/name/{name}": {
+      "delete": {
+        "description": "Endpoint to delete   iter8 experiments",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "deleteIter8Experiments",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name param",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/iter8/experiments/{namespace}/name/{name}": {
+      "patch": {
+        "description": "Endpoint to update new iter8 experiment (for abort purpose)",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "patchIter8Experiments",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name param",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8ExperimentGetDetailResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/iter8/namespaces/{namespace}/experiments": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "summary": "Endpoint to create new iter8 experiments for a given namespace.",
+        "operationId": "postIter8Experiments",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8ExperimentsGetResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/iter8/namespaces/{namespace}/experiments/{name}": {
+      "get": {
+        "description": "Endpoint to fetch iter8 experiments by namespace and name",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "getIter8Experiments",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name param",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8ExperimentGetDetailResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/jaeger": {
       "get": {
         "description": "Get the jaeger URL and other descriptors",
@@ -4128,6 +4273,197 @@
       "title": "IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.",
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Iter8Criteria": {
+      "type": "object",
+      "properties": {
+        "metric": {
+          "type": "string",
+          "x-go-name": "Metric"
+        },
+        "sampleSize": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "SampleSize"
+        },
+        "stopOnFailure": {
+          "type": "boolean",
+          "x-go-name": "StopOnFailure"
+        },
+        "tolerance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Tolerance"
+        },
+        "toleranceType": {
+          "type": "string",
+          "x-go-name": "ToleranceType"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8CriteriaDetail": {
+      "type": "object",
+      "properties": {
+        "criteria": {
+          "$ref": "#/definitions/Iter8Criteria"
+        },
+        "metric": {
+          "$ref": "#/definitions/Iter8Metric"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8ExperimentDetail": {
+      "type": "object",
+      "properties": {
+        "criterias": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Iter8CriteriaDetail"
+          },
+          "x-go-name": "CriteriaDetails"
+        },
+        "experimentItem": {
+          "$ref": "#/definitions/Iter8ExperimentItem"
+        },
+        "trafficControl": {
+          "$ref": "#/definitions/Iter8TrafficControl"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8ExperimentItem": {
+      "type": "object",
+      "properties": {
+        "assessmentConclusion": {
+          "type": "string",
+          "x-go-name": "AssessmentConclusion"
+        },
+        "baseline": {
+          "type": "string",
+          "x-go-name": "Baseline"
+        },
+        "baselinePercentage": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "BaselinePercentage"
+        },
+        "candidate": {
+          "type": "string",
+          "x-go-name": "Candidate"
+        },
+        "candidatePercentage": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CandidatePercentage"
+        },
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "endedAt": {
+          "type": "string",
+          "x-go-name": "EndedAt"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "phase": {
+          "type": "string",
+          "x-go-name": "Phase"
+        },
+        "startedAt": {
+          "type": "string",
+          "x-go-name": "StartedAt"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "targetService": {
+          "type": "string",
+          "x-go-name": "TargetService"
+        },
+        "targetServiceNamespace": {
+          "type": "string",
+          "x-go-name": "TargetServiceNamespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8Info": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "x-go-name": "Enabled"
+        },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8Metric": {
+      "type": "object",
+      "properties": {
+        "absent_value": {
+          "type": "string",
+          "x-go-name": "AbsentValue"
+        },
+        "is_counter": {
+          "type": "boolean",
+          "x-go-name": "IsCounter"
+        },
+        "query_template": {
+          "type": "string",
+          "x-go-name": "QueryTemplate"
+        },
+        "sample_size_template": {
+          "type": "string",
+          "x-go-name": "SampleSizeTemplate"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8TrafficControl": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "x-go-name": "Algorithm"
+        },
+        "interval": {
+          "type": "string",
+          "x-go-name": "Interval"
+        },
+        "maxIteration": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MaxIteration"
+        },
+        "maxTrafficPercentage": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "MaxTrafficPercentage"
+        },
+        "trafficStepSize": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "TrafficStepSize"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "JaegerInfo": {
       "type": "object",
       "properties": {
@@ -6681,6 +7017,27 @@
       "description": "Return caller permissions per namespace and Istio Config type",
       "schema": {
         "$ref": "#/definitions/IstioConfigPermissions"
+      }
+    },
+    "iter8ExperimentGetDetailResponse": {
+      "description": "Return a Iter8 Experiment detail",
+      "schema": {
+        "$ref": "#/definitions/Iter8ExperimentDetail"
+      }
+    },
+    "iter8ExperimentsGetResponse": {
+      "description": "Return a list of Iter8 Experiment Items",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Iter8ExperimentItem"
+        }
+      }
+    },
+    "iter8StatusResponse": {
+      "description": "Return Iter8 Info",
+      "schema": {
+        "$ref": "#/definitions/Iter8Info"
       }
     },
     "jaegerInfoResponse": {
