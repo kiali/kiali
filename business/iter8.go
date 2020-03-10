@@ -71,9 +71,7 @@ func (in *Iter8Service) GetIter8Experiments(namespaces []string) ([]models.Iter8
 	for _, namespace := range namespaces {
 		experimentsOfNamespace, err := in.fetchIter8Experiments(namespace)
 		if err == nil {
-			for _, item := range experimentsOfNamespace {
-				experiments = append(experiments, item)
-			}
+			experiments = append(experiments, experimentsOfNamespace...)
 		}
 	}
 	return experiments, nil

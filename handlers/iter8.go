@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-
-	"github.com/kiali/kiali/models"
 )
 
 func Iter8Status(w http.ResponseWriter, r *http.Request) {
@@ -26,11 +24,10 @@ func Iter8Experiments(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	experiments := []models.Iter8ExperimentItem{}
 	params := r.URL.Query()
 	namespaces := params.Get("namespaces") // csl of namespaces
 	ns := strings.Split(namespaces, ",")
-	experiments, err = business.Iter8.GetIter8Experiments(ns)
+	experiments, err := business.Iter8.GetIter8Experiments(ns)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -58,10 +55,14 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
 	namespace := params["namespaces"]
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	experiment, err := business.Iter8.CreateIter8Experiment(namespace, body)
