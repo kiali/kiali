@@ -3470,6 +3470,14 @@
           "x-go-name": "IstioSidecar",
           "example": true
         },
+        "labels": {
+          "description": "Labels for App",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
         "name": {
           "description": "Name of the application",
           "type": "string",
@@ -5411,6 +5419,14 @@
           "x-go-name": "IstioSidecar",
           "example": true
         },
+        "labels": {
+          "description": "Labels for Service",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
         "name": {
           "description": "Name of the Service",
           "type": "string",
@@ -6492,6 +6508,14 @@
         "name"
       ],
       "properties": {
+        "labels": {
+          "description": "Labels for Namespace",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
         "name": {
           "description": "The id of the namespace.",
           "type": "string",

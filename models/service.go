@@ -23,6 +23,9 @@ type ServiceOverview struct {
 	// example: rest
 	// required: false
 	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
+
+	// Labels for Service
+	Labels map[string]string `json:"labels"`
 }
 
 type ServiceList struct {
