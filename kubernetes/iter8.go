@@ -160,6 +160,7 @@ type Iter8ExperimentSpec struct {
 	TargetService struct {
 		ApiVersion string `json:"apiVersion"`
 		Name       string `json:"name"`
+		Namespace  string `json:"namespace"`
 		Baseline   string `json:"baseline"`
 		Candidate  string `json:"candidate"`
 	} `json:"targetService"`

@@ -41,7 +41,7 @@ func Iter8Experiments(w http.ResponseWriter, r *http.Request) {
 func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	business, err := getBusiness(r)
-	namespace := params["namespaces"]
+	namespace := params["namespace"]
 	name := params["name"]
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
