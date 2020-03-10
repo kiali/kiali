@@ -23,16 +23,13 @@ are:
 * Kiali-UI : UI part, written in Typescript, using the React framework.
 
 Bug tracking happens centrally for both repositories.
-Please open an issue before you make a change. 
-If you have an account at 
-[JBoss JIRA](http://issues.jboss.org/browse/KIALI), use this to open the issue.
-Otherwise open the issue on GitHub
+Before you make a change, please [open an issue in GitHub](https://github.com/kiali/kiali/issues/new/choose). 
 
 ### Good first issues
 
 If you are new to contributing to Kiali and want to pick some easier tasks to 
-get accustomed to the code base, you can pick issues that are marked _good first issue_
-on GitHub or from [this Jira query](https://issues.jboss.org/issues/?filter=12336706).
+get accustomed to the code base, you can pick [issues that are marked _good first issue_
+on GitHub](https://github.com/kiali/kiali/labels/good%20first%20issue).
 
 ### Discussing changes
 
@@ -51,11 +48,12 @@ See the [Backend Style Guide](./STYLE_GUIDE.adoc) and the [Frontend Style Guide]
 
 Once the issue has been agreed upon and developed, you can send a pull-request. 
 
-The pull-request needs to contain a link to the issue. 
-Also for issues that come from Jira, the issue number must be present in the
-pull-request header like e.g.
+The pull-request should have a detailed explanation of the changes that you are doing.
+If you worked on a GitHub issue, please provide the link as part of the description.
 
-    KIALI-0815 Bump go version to 1.9
+If your changes have impact on the front-end, an image showing the changed screen will be
+very helpful to understand your changes. If possible, provide a screenshot before the change
+and another one after the change. 
 
 The pull-request template will help you here.
 
