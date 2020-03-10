@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import { SpinnerIcon } from '@patternfly/react-icons';
 
 type PfSpinnerProps = {
-  isLoading: boolean;
+  isLoading?: boolean;
 };
 
 const spinnerStyle = style({
