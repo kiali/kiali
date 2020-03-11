@@ -79,7 +79,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
 	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
-	groupBy := fmt.Sprintf("le,source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_code,grpc_response_status", appLabel, verLabel, appLabel, verLabel)
+	groupBy := fmt.Sprintf("le,source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_code,grpc_response_status", appLabel, verLabel, appLabel, verLabel)
 	millisQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
@@ -193,6 +193,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
 		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
@@ -201,7 +202,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lResponseCode, responseCodeOk := m["response_code"]
 		lGrpcResponseStatus, grpcReponseStatusOk := m["grpc_response_status"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !responseCodeOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !responseCodeOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
@@ -211,6 +212,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
+		destSvc := string(lDestSvc)
 		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
@@ -232,6 +234,10 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
+
+		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+			continue
+		}
 
 		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it
 		if math.IsNaN(val) {

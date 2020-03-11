@@ -40,40 +40,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 	for id, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeService:
-			// a service node with outgoing edges is never considered dead (or egress)
-			if len(n.Edges) > 0 {
-				continue
-			}
-
-			// A service node that is a service entry is never considered dead
-			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
-				continue
-			}
-
-			// A service node that is an Istio egress cluster is never considered dead
-			if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
-				continue
-			}
-
-			// a service node with no incoming error traffic and no outgoing edges, is dead.
-			// Incoming non-error traffic can not raise the dead because it is caused by an
-			// edge case (pod life-cycle change) that we don't want to see.
-			isDead := true
-		ServiceCase:
-			for _, p := range graph.Protocols {
-				for _, r := range p.NodeRates {
-					if r.IsErr {
-						if errRate, hasErrRate := n.Metadata[r.Name]; hasErrRate && errRate.(float64) > 0 {
-							isDead = false
-							break ServiceCase
-						}
-					}
-				}
-			}
-			if isDead {
-				delete(trafficMap, id)
-				numRemoved++
-			}
+			continue
 		default:
 			// a node with traffic is not dead, skip
 			isDead := true

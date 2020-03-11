@@ -132,14 +132,14 @@ func TestDeadNode(t *testing.T) {
 	a := DeadNodeAppender{}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(9, len(trafficMap))
+	assert.Equal(10, len(trafficMap))
 
 	_, found = trafficMap[unknownId]
 	assert.Equal(false, found)
 
 	ingressNode, found = trafficMap[ingressId]
 	assert.Equal(true, found)
-	assert.Equal(8, len(ingressNode.Edges))
+	assert.Equal(9, len(ingressNode.Edges))
 
 	assert.Equal("testPodsWithTraffic-v1", ingressNode.Edges[0].Dest.Workload)
 	assert.Equal("testPodsNoTraffic-v1", ingressNode.Edges[1].Dest.Workload)

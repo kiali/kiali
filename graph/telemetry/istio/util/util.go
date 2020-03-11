@@ -57,3 +57,11 @@ func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk 
 
 	return grpcResponseStatus
 }
+
+// IsBadTelemetry tests for known issues in generated telemetry given indicative label values.
+// 1) During pod lifecycle changes incomplete telemetry may be generated that results in
+//    destSvc == destSvcName and no dest workload
+// 2) no more conditions known
+func IsBadTelemetry(destSvc, destSvcName, destWl string) bool {
+	return (!graph.IsOK(destWl) && graph.IsOK(destSvc) && graph.IsOK(destSvcName) && (destSvc == destSvcName))
+}
