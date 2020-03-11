@@ -35,6 +35,15 @@ func TestStrategyLoginAuthentication(t *testing.T) {
 	request := httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
 	request.SetBasicAuth("foo", "bar")
 
+	// Add a stale token to the request. Authentication should succeed even if a stale
+	// session is present. This prevents the user form manually clean browser cookies.
+	currentToken, _ := config.GenerateToken("dummy")
+	oldCookie := http.Cookie{
+		Name:  config.TokenCookieName,
+		Value: currentToken.Token,
+	}
+	request.AddCookie(&oldCookie)
+
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)
 	response := responseRecorder.Result()
@@ -47,7 +56,8 @@ func TestStrategyLoginAuthentication(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	// assert.Equal(t,, http.SameSiteStrictMode, cookie.SameSite) ** Commented out because unsupported in go < 1.11
 
-	assert.NotEmpty(t, cookie.Value)
+	newToken, _ := config.GenerateToken("foo")
+	assert.Equal(t, cookie.Value, newToken.Token)
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
 }
 
@@ -84,7 +94,7 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 	assert.Equal(t, config.TokenCookieName, cookie.Name)
 
 	token, err := jwt.ParseWithClaims(cookie.Value, &config.IanaClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.Get().LoginToken.SigningKey), nil
+		return []byte(config.GetSigningKey()), nil
 	})
 
 	assert.Nil(t, err)
@@ -143,7 +153,7 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 	assert.Equal(t, fmt.Sprintln(http.StatusText(http.StatusUnauthorized)), string(body))
 }
 
-// TestStrategyLoginValidUser checks that the Kiali back-end is
+// TestStrategyLoginValidatesExpiration checks that the Kiali back-end is
 // correctly checking the expiration time of the Kiali token.
 //
 // Assuming that a malicious user has stolen the Kiali token of a user,
@@ -453,7 +463,7 @@ func TestStrategyLoginExtend(t *testing.T) {
 	util.Clock = util.ClockMock{Time: clockTime}
 
 	request := httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
-	currentToken, _ := config.GenerateToken("joe")
+	currentToken, _ := config.GenerateToken("foo")
 	oldCookie := http.Cookie{
 		Name:  config.TokenCookieName,
 		Value: currentToken.Token,
@@ -475,10 +485,82 @@ func TestStrategyLoginExtend(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	// assert.Equal(t,, http.SameSiteStrictMode, cookie.SameSite) ** Commented out because unsupported in go < 1.11
 
-	expectedToken, _ := config.GenerateToken("joe")
+	expectedToken, _ := config.GenerateToken("foo")
 	assert.NotEmpty(t, cookie.Value)
 	assert.Equal(t, expectedToken.Token, cookie.Value)
 	assert.Equal(t, clockTime.Add(time.Second*time.Duration(cfg.LoginToken.ExpirationSeconds)), cookie.Expires)
+}
+
+// TestStrategyLoginRejectStaleExtension checks that a stale
+// session (because of a signing key, username or password change) won't
+// be extended, but rejected as unauthorized.
+func TestStrategyLoginRejectStaleExtension(t *testing.T) {
+	jwt.TimeFunc = func() time.Time {
+		return util.Clock.Now()
+	}
+
+	cfg := config.NewConfig()
+	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Server.Credentials.Username = "foo"
+	cfg.Server.Credentials.Passphrase = "bar"
+	config.Set(cfg)
+
+	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	// If token has an old user, session shouldn't be extended
+	request := httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
+	token, _ := config.GenerateToken("joe")
+	oldCookie := http.Cookie{
+		Name:  config.TokenCookieName,
+		Value: token.Token,
+	}
+	request.AddCookie(&oldCookie)
+
+	responseRecorder := httptest.NewRecorder()
+	Authenticate(responseRecorder, request)
+	response := responseRecorder.Result()
+
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Len(t, response.Cookies(), 0)
+
+	// If token has an old password, session shouldn't be extended
+	token, _ = config.GenerateToken("foo")
+	cfg.Server.Credentials.Passphrase = "dummy"
+	config.Set(cfg)
+
+	request = httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
+	oldCookie = http.Cookie{
+		Name:  config.TokenCookieName,
+		Value: token.Token,
+	}
+	request.AddCookie(&oldCookie)
+
+	responseRecorder = httptest.NewRecorder()
+	Authenticate(responseRecorder, request)
+	response = responseRecorder.Result()
+
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Len(t, response.Cookies(), 0)
+
+	// If signing key has changed, session shouldn't be extended
+	token, _ = config.GenerateToken("foo")
+	cfg.LoginToken.SigningKey = "myNewKey"
+	config.Set(cfg)
+
+	request = httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
+	oldCookie = http.Cookie{
+		Name:  config.TokenCookieName,
+		Value: token.Token,
+	}
+	request.AddCookie(&oldCookie)
+
+	responseRecorder = httptest.NewRecorder()
+	Authenticate(responseRecorder, request)
+	response = responseRecorder.Result()
+
+	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
+	assert.Len(t, response.Cookies(), 0)
 }
 
 // TestLogoutWhenNoSession checks that the Logout handler
