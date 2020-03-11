@@ -172,7 +172,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       // - istio namespace nodes (no source telemetry)
       const reporter: Reporter = nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio ? 'destination' : 'source';
       // note: request_protocol is not a valid byLabel for tcp filters but it is ignored by prometheus
-      const byLabels = nodeData.isRoot ? ['destination_service_namespace', 'request_protocol'] : ['request_protocol'];
+      const byLabels = nodeData.isOutside
+        ? ['destination_service_namespace', 'request_protocol']
+        : ['request_protocol'];
       promiseOut = getNodeMetrics(
         nodeMetricType,
         target,
@@ -195,6 +197,9 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       // comparator in getNodeDatapoints).
       const isServiceDestCornerCase = this.isServiceDestCornerCase(nodeMetricType);
       const byLabelsRps = isServiceDestCornerCase ? ['destination_workload', 'request_protocol'] : ['request_protocol'];
+      if (nodeData.isOutside) {
+        byLabelsRps.push('source_workload_namespace');
+      }
       const promiseRps = getNodeMetrics(
         nodeMetricType,
         target,
@@ -207,7 +212,10 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         byLabelsRps
       );
       const filtersTCP = ['tcp_sent', 'tcp_received'];
-      const byLabelsTCP = isServiceDestCornerCase ? ['destination_workload'] : undefined;
+      const byLabelsTCP = isServiceDestCornerCase ? ['destination_workload'] : [];
+      if (nodeData.isOutside) {
+        byLabelsTCP.push('source_workload_namespace');
+      }
       const promiseTCP = getNodeMetrics(
         nodeMetricType,
         target,
@@ -256,12 +264,19 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       comparator = (metric: Metric, protocol?: Protocol) => {
         return (protocol ? metric.request_protocol === protocol : true) && metric.destination_workload === UNKNOWN;
       };
-    } else if (data.isRoot) {
+    } else if (data.isOutside) {
+      // filter out traffic completely outside the active namespaces
       comparator = (metric: Metric, protocol?: Protocol) => {
-        return (
-          (protocol ? metric.request_protocol === protocol : true) &&
-          this.isActiveNamespace(metric.destination_service_namespace)
-        );
+        if (protocol && metric.request_protocol !== protocol) {
+          return false;
+        }
+        if (metric.destination_service_namespace && !this.isActiveNamespace(metric.destination_service_namespace)) {
+          return false;
+        }
+        if (metric.source_workload_namespace && !this.isActiveNamespace(metric.source_workload_namespace)) {
+          return false;
+        }
+        return true;
       };
     }
     const rcOut = outbound.metrics.request_count;
