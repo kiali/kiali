@@ -350,6 +350,16 @@ spec:
 #      ---
 #      enabled: false
 #
+# Kiali enabled integration with Iter8 project.
+# If this extension is enabled, Kiali will communicate with Iter8 controller allowing to manage Experiments and review results.
+# Additional documentation https://iter8.tools/
+#    ---
+#    iter8:
+#
+# Flag to indicate if iter8 extension is enabled in Kiali
+#      ---
+#      enabled: false
+#
 
 ##########
 #  ---

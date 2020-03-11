@@ -313,7 +313,7 @@ func NewConfig() (c *Config) {
 				Enabled:        true,
 			},
 			Iter8: Iter8Config{
-				Enabled: true,
+				Enabled: false,
 			},
 		},
 		ExternalServices: ExternalServices{
