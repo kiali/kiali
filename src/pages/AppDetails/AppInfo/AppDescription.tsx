@@ -27,6 +27,7 @@ import {
 } from '@patternfly/react-core';
 import GraphDataSource from '../../../services/GraphDataSource';
 import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
+import './AppDescription.css';
 
 type AppDescriptionProps = {
   app: App;
@@ -119,7 +120,8 @@ class AppDescription extends React.Component<AppDescriptionProps> {
           <Card style={{ height: '100%' }}>
             <CardHeader>
               <Title headingLevel="h3" size="2xl">
-                {' '} Application Overview
+                {' '}
+                Application Overview
               </Title>
             </CardHeader>
             <CardBody className="noPadding">

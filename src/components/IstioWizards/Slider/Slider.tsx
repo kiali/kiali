@@ -4,6 +4,7 @@ import { Button, ButtonVariant, InputGroupText, TextInput } from '@patternfly/re
 import Boundaries from './Boundaries';
 import { style } from 'typestyle';
 import { MinusIcon, PlusIcon, ThumbTackIcon } from '@patternfly/react-icons';
+import './styles/default.css';
 
 export const noop = Function.prototype;
 

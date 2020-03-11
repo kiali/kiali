@@ -37,3 +37,6 @@ src/fonts/*
 !src/fonts/.gitkeep
 src/sass/*
 !src/sass/index.sass
+
+# Commit Slider css
+!src/components/IstioWizards/Slider/styles/default.css

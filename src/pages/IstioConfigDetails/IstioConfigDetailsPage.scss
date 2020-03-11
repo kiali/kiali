@@ -28,8 +28,8 @@
 div.ace_gutter-cell.ace_info {
   background-image: none;
   &::before {
-    content: '\E935';
-    font-family: 'PatternFlyIcons-webfont';
+    content: '\E026';
+    font-family: 'pficon';
     left: 5px;
     position: absolute;
   }
