@@ -524,6 +524,7 @@ fi
 CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
 NAMESPACE="${NAMESPACE:-istio-system}"
 SECRET_NAME="${SECRET_NAME:-kiali}"
+VERSION="${VERSION:-default}"
 
 # The YAML really needs an empty string denoted with two double-quote characters.
 # We just support "**" because its easier to specify on the command line.

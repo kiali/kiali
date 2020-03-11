@@ -97,6 +97,7 @@ CREDENTIALS_PASSPHRASE ?= admin
 KIALI_IMAGE_PULL_POLICY ?= Always
 SERVICE_TYPE ?= ClusterIP
 VERBOSE_MODE ?= 3
+KIALI_CR_SPEC_VERSION ?= default
 
 # Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.
 IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
