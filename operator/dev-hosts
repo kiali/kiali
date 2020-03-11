@@ -2,6 +2,8 @@ all:
   vars:
     # Mimic Kiali CR settings here
 
+    version: default
+
     deployment:
       image_version: dev
       namespace: istio-system

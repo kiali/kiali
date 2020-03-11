@@ -28,6 +28,7 @@
 operator-create: .prepare-cluster operator-delete .ensure-operator-ns-does-not-exist
 	@echo Deploy Operator
 	${ROOTDIR}/operator/deploy/deploy-kiali-operator.sh \
+    --version                    "${KIALI_CR_SPEC_VERSION}" \
     --operator-image-name        "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
     --operator-image-pull-policy "${OPERATOR_IMAGE_PULL_POLICY}" \
     --operator-image-version     "${OPERATOR_CONTAINER_VERSION}" \
@@ -78,6 +79,7 @@ NAMESPACE="${NAMESPACE}" \
 ROUTER_HOSTNAME="$(shell ${OC} get $(shell (${OC} get routes -n ${NAMESPACE} -o name 2>/dev/null || echo 'noroute') | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}' 2>/dev/null)" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+KIALI_CR_SPEC_VERSION="${KIALI_CR_SPEC_VERSION}" \
 envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
