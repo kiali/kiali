@@ -38,27 +38,46 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	numRemoved := 0
 	for id, n := range trafficMap {
-		switch n.NodeType {
-		case graph.NodeTypeService:
-			continue
-		default:
-			// a node with traffic is not dead, skip
-			isDead := true
-		DefaultCase:
-			for _, p := range graph.Protocols {
-				for _, r := range p.NodeRates {
-					if r.IsIn || r.IsOut {
-						if rate, hasRate := n.Metadata[r.Name]; hasRate && rate.(float64) > 0 {
-							isDead = false
-							break DefaultCase
-						}
+		isDead := true
+
+		// a node with traffic is not dead, skip
+	DefaultCase:
+		for _, p := range graph.Protocols {
+			for _, r := range p.NodeRates {
+				if r.IsIn || r.IsOut {
+					if rate, hasRate := n.Metadata[r.Name]; hasRate && rate.(float64) > 0 {
+						isDead = false
+						break DefaultCase
 					}
 				}
 			}
-			if !isDead {
+		}
+		if !isDead {
+			continue
+		}
+
+		switch n.NodeType {
+		case graph.NodeTypeService:
+			// a service node with outgoing edges is never considered dead (or egress)
+			if len(n.Edges) > 0 {
 				continue
 			}
 
+			// A service node that is a service entry is never considered dead
+			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+				continue
+			}
+
+			// A service node that is an Istio egress cluster is never considered dead
+			if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
+				continue
+			}
+
+			if isDead {
+				delete(trafficMap, id)
+				numRemoved++
+			}
+		default:
 			// There are some node types that are never associated with backing workloads (such as versionless app nodes).
 			// Nodes of those types are never dead because their workload clearly can't be missing (they don't have workloads).
 			// - note: unknown is not saved by this rule (kiali-2078) - i.e. unknown nodes can be declared dead
