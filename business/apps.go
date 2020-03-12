@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	core_v1 "k8s.io/api/core/v1"
@@ -25,7 +26,11 @@ type AppService struct {
 func joinMap(m1 map[string]string, m2 map[string]string) map[string]string {
 	result := m1
 	for k, v := range m2 {
-		m1[k] = v
+		value := v
+		if val, ok := result[k]; ok && !strings.Contains(val, v) {
+			value = fmt.Sprintf("%s,%s", val, value)
+		}
+		result[k] = value
 	}
 	return result
 }
