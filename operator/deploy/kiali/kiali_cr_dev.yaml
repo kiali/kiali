@@ -5,6 +5,7 @@ metadata:
   annotations:
     ansible.operator-sdk/verbosity: "3"
 spec:
+  version: "${KIALI_CR_SPEC_VERSION}"
   auth:
     strategy: $AUTH_STRATEGY
   deployment:

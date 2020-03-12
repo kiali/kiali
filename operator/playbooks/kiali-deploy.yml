@@ -4,7 +4,7 @@
 
   - name: Determine the version that is to be installed
     set_fact:
-      version: "{{ version | default('default') }}"
+      version: "{{ version | default('v1.0') }}"
 
   - name: Determine the default supported images for all known versions
     include_vars:

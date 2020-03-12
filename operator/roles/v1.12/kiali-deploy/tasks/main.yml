@@ -269,7 +269,7 @@
   - kiali_vars.deployment.image_name == ""
 - name: Default the image version to a known supported image.
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': operator_version if supported_kiali_images[kiali_vars.version].image_version == 'operator_version' else supported_kiali_images[kiali_vars.version].image_version}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': ('latest' if operator_version == 'master' else operator_version) if supported_kiali_images[kiali_vars.version].image_version == 'operator_version' else supported_kiali_images[kiali_vars.version].image_version}}, recursive=True) }}"
   when:
   - kiali_vars.deployment.image_version == ""
 
