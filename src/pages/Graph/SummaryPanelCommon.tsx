@@ -149,16 +149,25 @@ export const getDatapoints = (
   comparator: (metric: Metric, protocol?: Protocol) => boolean,
   protocol?: Protocol
 ): M.Datapoint[] => {
+  let dpsMap = new Map<number, M.Datapoint>();
   if (mg && mg.matrix) {
     const tsa: M.TimeSeries[] = mg.matrix;
     for (let i = 0; i < tsa.length; ++i) {
       const ts = tsa[i];
       if (comparator(ts.metric, protocol)) {
-        return ts.values;
+        // Sum values, because several metrics can satisfy the comparator
+        // E.g. with multiple active namespaces and node being an outsider, we need to sum datapoints for every active namespace
+        ts.values.forEach(dp => {
+          const val = Number(dp[1]);
+          if (!isNaN(val)) {
+            const current = dpsMap.get(dp[0]);
+            dpsMap.set(dp[0], current ? [dp[0], current[1] + val] : [dp[0], val]);
+          }
+        });
       }
     }
   }
-  return [];
+  return Array.from(dpsMap.values());
 };
 
 export const renderNoTraffic = (protocol?: string) => {
