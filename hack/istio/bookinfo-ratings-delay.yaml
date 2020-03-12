@@ -10,7 +10,8 @@ spec:
   - fault:
       delay:
         fixedDelay: 7s
-        percent: 100
+        percentage:
+          value: 100
     route:
     - destination:
         host: ratings

@@ -23,7 +23,8 @@ spec:
     fault:
       abort:
         httpStatus: 556
-        percent: 50
+        percentage:
+          value: 50
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
