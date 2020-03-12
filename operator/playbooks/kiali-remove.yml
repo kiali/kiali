@@ -2,4 +2,4 @@
   gather_facts: no
   tasks:
   - include_role:
-      name: "{{ version | default('default') }}/kiali-remove"
+      name: "{{ version | default('v1.0') }}/kiali-remove"
