@@ -237,6 +237,10 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		// handle multicluster requests
 		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
 
+		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+			continue
+		}
+
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | request.host | "unknown"
 		host := destSvc
 
@@ -321,7 +325,12 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		destVer := string(lDestVer)
 		flags := string(lFlags)
 
+		// handle multicluster requests
 		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
+
+		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+			continue
+		}
 
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | "unknown"
 		host := destSvc
