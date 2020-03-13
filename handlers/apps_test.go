@@ -143,7 +143,9 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 }
 
 func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 	api := new(prometheustest.PromAPIMock)
 	k8s := new(kubetest.K8SClientMock)
 	prom, err := prometheus.NewClient()
@@ -172,7 +174,9 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 }
 
 func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 

@@ -25,6 +25,7 @@ import (
 // TestNamespaceAppHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestNamespaceAppHealth(t *testing.T) {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 	ts, k8s, prom := setupNamespaceHealthEndpoint(t)
 	defer ts.Close()
@@ -77,6 +78,7 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 // TestAppHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestAppHealth(t *testing.T) {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 	ts, k8s, prom := setupAppHealthEndpoint(t)
 	defer ts.Close()

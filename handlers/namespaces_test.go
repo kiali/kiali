@@ -162,7 +162,9 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 // Setup mock
 
 func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 	k8s := new(kubetest.K8SClientMock)
 
 	k8s.On("GetNamespaces").Return(
