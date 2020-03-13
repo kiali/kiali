@@ -101,7 +101,7 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
                 <td colSpan={tableProps.cells.length}>
                   <EmptyState variant={EmptyStateVariant.full}>
                     <Title headingLevel="h5" size="lg">
-                      No {this.state.type} found
+                      No {this.state.type === 'istio' ? 'Istio config' : this.state.type} found
                     </Title>
                     <EmptyStateBody>
                       No {this.state.type} in namespace
