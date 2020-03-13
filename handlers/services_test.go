@@ -322,7 +322,9 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 }
 
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
-	config.Set(config.NewConfig())
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheEnabled = false
+	config.Set(conf)
 	k8s := kubetest.NewK8SClientMock()
 
 	api := new(prometheustest.PromAPIMock)
