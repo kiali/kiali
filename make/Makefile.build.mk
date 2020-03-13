@@ -103,7 +103,7 @@ dep-update:
 ## swagger-install: Install swagger from github
 swagger-install:
 	@echo "Installing swagger binary to ${GOPATH}/bin..."
-	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.19.0/swagger_linux_amd64 -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
+	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.22.0/swagger_linux_amd64 -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
 
 ## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
 swagger-validate:
@@ -132,7 +132,7 @@ swagger-travis: swagger-validate
 
 ## lint-install: Installs golangci-lint
 lint-install:
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.21.0
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.23.8
 
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.

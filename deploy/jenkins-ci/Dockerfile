@@ -25,21 +25,21 @@ COPY bin/entrypoint.sh /usr/local/bin/
 
 RUN set -eux; \
     # Install golang \
-    curl -fsSL https://dl.google.com/go/go1.12.13.linux-amd64.tar.gz -o go.tar.gz; \
+    curl -fsSL https://dl.google.com/go/go1.14.linux-amd64.tar.gz -o go.tar.gz; \
     tar -C /usr/local -zxf go.tar.gz; \
     rm go.tar.gz; \
     # Add Yarn repository \
     # curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -; \
     # echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list; \
     # Install NodeJs \
-    curl -fsSL https://nodejs.org/dist/v10.17.0/node-v10.17.0-linux-x64.tar.xz -o node.tar.xz; \
+    curl -fsSL https://nodejs.org/dist/v10.19.0/node-v10.19.0-linux-x64.tar.xz -o node.tar.xz; \
     mkdir -p /usr/local/lib/nodejs; \
     tar -xJf node.tar.xz -C /usr/local/lib/nodejs; \
     rm node.tar.xz; \
     # Install Yarn \
     curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --import; \
-    curl -fsSL https://yarnpkg.com/downloads/1.16.0/yarn-v1.16.0.tar.gz.asc -o yarn.tar.gz.asc; \
-    curl -fsSL https://yarnpkg.com/downloads/1.16.0/yarn-v1.16.0.tar.gz -o yarn.tar.gz; \
+    curl -fsSL https://yarnpkg.com/downloads/1.22.4/yarn-v1.22.4.tar.gz.asc -o yarn.tar.gz.asc; \
+    curl -fsSL https://yarnpkg.com/downloads/1.22.4/yarn-v1.22.4.tar.gz -o yarn.tar.gz; \
     gpg --verify yarn.tar.gz.asc; \
     tar -C /usr/local -zxf yarn.tar.gz; \
     rm yarn.tar.gz yarn.tar.gz.asc; \
@@ -68,7 +68,7 @@ RUN set -eux; \
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Adjust PATH to include tools: golang, nodejs, yarn
-ENV PATH "/usr/local/lib/nodejs/node-v10.17.0-linux-x64/bin:/usr/local/yarn-v1.16.0/bin:/usr/local/go/bin:$PATH"
+ENV PATH "/usr/local/lib/nodejs/node-v10.19.0-linux-x64/bin:/usr/local/yarn-v1.22.4/bin:/usr/local/go/bin:$PATH"
 
 # Skip Jenkins setup wizard
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false

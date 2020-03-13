@@ -1,12 +1,7 @@
-# sudo: required
-#
-# services:
-# - docker
-
 language: go
 
 go:
-- 1.12.13
+- 1.14
 
 notifications:
   irc:
@@ -31,8 +26,6 @@ env:
 install:
  - make swagger-install
  - make lint-install
-#- make dep-install
-#- make dep-update
 
 script:
   - if [ ! -z "$(gofmt -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -l ${GO_FILES})";echo "Diff files:"; gofmt -d ${GO_FILES}; exit 1; fi # Gofmt Linter

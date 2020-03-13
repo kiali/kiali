@@ -3949,14 +3949,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "Histogram": {
-      "description": "Histogram contains Metric objects for several histogram-kind statistics",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Metric"
-      },
-      "x-go-package": "github.com/kiali/kiali/prometheus"
-    },
     "Initializer": {
       "type": "object",
       "title": "Initializer is information about an initializer that has not yet completed.",
@@ -4661,7 +4653,10 @@
         "histograms": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/Histogram"
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/Metric"
+            }
           },
           "x-go-name": "Histograms"
         },
@@ -6224,6 +6219,10 @@
       "type": "object",
       "properties": {
         "processes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Process"
+          },
           "x-go-name": "Processes"
         },
         "spans": {
