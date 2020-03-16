@@ -1,12 +1,12 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: kiali-operator.v1.12.5
+  name: kiali-operator.v1.12.6
   namespace: placeholder
   annotations:
     categories: Monitoring,Logging & Tracing
     certified: "false"
-    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.5
+    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.6
     capabilities: Seamless Upgrades
     support: Red Hat
     description: "Kiali project provides answers to the questions: What microservices are part of my Istio service mesh and how are they connected?"
@@ -73,12 +73,12 @@ metadata:
         }
       ]
 spec:
-  version: 1.12.5
+  version: 1.12.6
   maturity: stable
   replaces: kiali-operator.v1.0.11
   relatedImages:
   - name: kiali
-    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.5
+    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.6
   displayName: Kiali Operator
   description: |-
     ## About the managed application
@@ -264,7 +264,7 @@ spec:
               name: kiali-operator
               labels:
                 app: kiali-operator
-                version: v1.12.5
+                version: v1.12.6
               annotations:
                 prometheus.io/scrape: "true"
                 prometheus.io/port: "8383"
@@ -276,14 +276,14 @@ spec:
                 - /usr/local/bin/ao-logs
                 - /tmp/ansible-operator/runner
                 - stdout
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.5
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.6
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
                   name: runner
                   readOnly: true
               - name: operator
-                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.5
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.12.6
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
@@ -308,7 +308,7 @@ spec:
                 - name: KIALI_IMAGE_v1_0
                   value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.11"
                 - name: KIALI_IMAGE_v1_12
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.5"
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.6"
               volumes:
               - name: runner
                 emptyDir: {}
