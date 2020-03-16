@@ -12,6 +12,8 @@ export default class DefaultSecondaryMasthead extends React.Component {
       let title = path.charAt(0).toUpperCase() + path.slice(1);
       if (path === 'istio/new') {
         title = 'Create New Istio Config';
+      } else if (path === 'istio') {
+        title = 'Istio Config';
       }
       return (
         <Title headingLevel="h1" size="4xl" style={{ margin: '20px 0 20px' }}>

@@ -80,6 +80,7 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
       role: 'presentation',
       caption: conf.caption ? conf.caption : undefined
     };
+    const typeDisplay = this.state.type === 'istio' ? 'Istio config' : this.state.type;
 
     return (
       <div
@@ -101,10 +102,10 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
                 <td colSpan={tableProps.cells.length}>
                   <EmptyState variant={EmptyStateVariant.full}>
                     <Title headingLevel="h5" size="lg">
-                      No {this.state.type} found
+                      No {typeDisplay} found
                     </Title>
                     <EmptyStateBody>
-                      No {this.state.type} in namespace
+                      No {typeDisplay} in namespace
                       {this.props.activeNamespaces.length === 1
                         ? ` ${this.props.activeNamespaces[0].name}`
                         : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
