@@ -98,7 +98,7 @@ kiali_defaults:
     cache_duration: 300000000
 
   login_token:
-    signing_key: "kiali"
+    signing_key: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
     expiration_seconds: 86400
 
   server:
