@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/config"
 	"time"
 )
 
@@ -26,6 +27,7 @@ type JWTClaimsJSON struct {
 	Username string   `json:"username"`
 	Expiry   int      `json:"exp"`
 	Groups   []string `json:"groups"`
+	Issuer    string  `json:"iss,omitempty"`
 }
 
 // Valid so that JWTClaimsJSON satisfies the jwt.Claims interface
@@ -41,6 +43,9 @@ func (c *JWTClaimsJSON) Valid() error {
 	}
 	if c.Iat > int(time.Now().Unix()+int64(time.Second)) {
 		return fmt.Errorf("Token is from the future")
+	}
+	if c.Issuer != config.AuthStrategyLDAPIssuer {
+		return fmt.Errorf("token is invalid because of authentication strategy mismatch")
 	}
 	return nil
 }

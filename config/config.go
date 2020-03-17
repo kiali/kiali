@@ -45,6 +45,7 @@ const (
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
 	AuthStrategyTokenIssuer     = "kiali-token"
+	AuthStrategyLDAPIssuer      = "kiali-ldap"
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
