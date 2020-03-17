@@ -11,24 +11,15 @@ const mutIcons = {
     circuitBreaker: { className: 'fa fa-bolt', type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
     missingSidecar: {
       icon: BlueprintIcon,
-      className: 'fa pficon-blueprint',
+      className: 'pf-icon pf-icon-blueprint',
       type: 'pf',
       name: 'blueprint',
       ascii: '\ue915 ',
       color: 'red'
     },
-    mtls: { className: 'fa pf-locked', type: 'pf', name: 'locked', ascii: '\ue923 ' },
-    disabledMtls: { className: 'fa fa-unlock', type: 'fa', name: 'unlock', ascii: '\uf09c ' },
-    virtualService: { className: 'fa fa-code-fork', type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
-  },
-  menu: {
-    overview: 'fa fa-tachometer',
-    graph: 'fa pficon-topology',
-    applications: 'fa pficon-applications',
-    workloads: 'fa pficon-bundle',
-    services: 'fa pficon-service',
-    istioConfig: 'fa pficon-template',
-    distributedTracing: 'fa fa-paw'
+    mtls: { className: 'pf-icon pf-icon-locked', type: 'pf', name: 'locked', ascii: '\uE02a ' },
+    disabledMtls: { className: 'pf-icon pf-icon-unlocked', type: 'fa', name: 'unlock', ascii: '\uE065 ' },
+    virtualService: { className: 'fa fa-code-branch', type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
   }
 };
 

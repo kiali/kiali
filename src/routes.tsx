@@ -8,7 +8,7 @@ import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import OverviewPageContainer from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './pages/Graph/GraphPage';
-import { icons, Paths } from './config';
+import { Paths } from './config';
 import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
@@ -21,43 +21,36 @@ import ThreeScaleHandlerDetailsPage from './pages/extensions/threescale/ThreeSca
  */
 const navItems: MenuItem[] = [
   {
-    iconClass: icons.menu.overview,
     title: 'Overview',
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    iconClass: icons.menu.graph,
     title: 'Graph',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    iconClass: icons.menu.applications,
     title: 'Applications',
     to: '/' + Paths.APPLICATIONS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
   },
   {
-    iconClass: icons.menu.workloads,
     title: 'Workloads',
     to: '/' + Paths.WORKLOADS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
   },
   {
-    iconClass: icons.menu.services,
     title: 'Services',
     to: '/' + Paths.SERVICES,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
-    iconClass: icons.menu.istioConfig,
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new')]
   },
   {
-    iconClass: icons.menu.distributedTracing,
     title: 'Distributed Tracing',
     to: '/jaeger'
   }
@@ -65,7 +58,6 @@ const navItems: MenuItem[] = [
 
 const extensionsItems: MenuItem[] = [
   {
-    iconClass: '',
     title: '3scale Config',
     to: '/extensions/threescale',
     pathsActive: [/^\/extensions\/threescale/]
