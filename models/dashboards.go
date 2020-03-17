@@ -62,7 +62,10 @@ func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 			Label:       "response_code",
 			DisplayName: "Response code",
 		},
-		// TODO: Do we need to aggrgate also on grpc_response_status?
+		{
+			Label:       "grpc_response_status",
+			DisplayName: "GRPC status",
+		},
 		{
 			Label:       "response_flags",
 			DisplayName: "Response flags",
