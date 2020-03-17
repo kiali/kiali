@@ -10,27 +10,26 @@ import {
 import { decoratedEdgeData } from '../CytoscapeGraphUtils';
 import { Protocol } from '../../../types/Graph';
 
-const TCP_SETTINGS = {
-  baseSpeed: 0.5,
-  timer: {
-    max: 600,
-    min: 150
-  },
-  sentRate: {
-    min: 50,
-    max: 1024 * 1024
-  },
-  errorRate: 0
+type TimerConfig = {
+  // Range of time to use between spawning a new dot.
+  // At higher request per second rate, faster dot spawning.
+  timerMin: number;
+  timerMax: number;
+  // Rate amplitude
+  amplitude: number;
 };
 
-// Min and max values to clamp the request per second rate
-const TIMER_REQUEST_PER_SECOND_MIN = 0;
-const TIMER_REQUEST_PER_SECOND_MAX = 750;
+const timerConfig: TimerConfig = {
+  timerMin: 20,
+  timerMax: 1000,
+  amplitude: 10
+};
 
-// Range of time to use between spawning a new dot.
-// At higher request per second rate, faster dot spawning.
-const TIMER_TIME_BETWEEN_DOTS_MIN = 20;
-const TIMER_TIME_BETWEEN_DOTS_MAX = 1000;
+const tcpTimerConfig: TimerConfig = {
+  timerMin: 50,
+  timerMax: 600,
+  amplitude: 10
+};
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
@@ -39,6 +38,8 @@ const SPEED_RESPONSE_TIME_MAX = 10000;
 // Speed to travel trough an edge
 const SPEED_RATE_MIN = 0.1;
 const SPEED_RATE_MAX = 2.0;
+
+const TCP_SPEED = 0.5;
 
 const BASE_LENGTH = 50;
 
@@ -417,6 +418,21 @@ export default class TrafficRenderer {
   }
 
   private processEdges(edges: any): TrafficEdgeHash {
+    // Calibrate animation amplitude
+    edges.forEach(edge => {
+      const edgeData = decoratedEdgeData(edge);
+      switch (edgeData.protocol) {
+        case Protocol.GRPC:
+          this.calibrateAmplitude(edgeData.grpc, timerConfig);
+          break;
+        case Protocol.HTTP:
+          this.calibrateAmplitude(edgeData.http, timerConfig);
+          break;
+        case Protocol.TCP:
+          this.calibrateAmplitude(edgeData.tcp, tcpTimerConfig);
+          break;
+      }
+    });
     return edges.reduce((trafficEdges: TrafficEdgeHash, edge: any) => {
       const type = this.getTrafficEdgeType(edge);
       if (type !== TrafficEdgeType.NONE) {
@@ -455,7 +471,7 @@ export default class TrafficRenderer {
       const rate = isHttp ? edgeData.http : edgeData.grpc;
       const pErr = isHttp ? edgeData.httpPercentErr : edgeData.grpcPercentErr;
 
-      const timer = this.timerFromRate(rate);
+      const timer = this.timerFromRate(rate, timerConfig);
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
       const speed = this.speedFromResponseTime(edgeData.responseTime) * edgeLengthFactor;
@@ -465,37 +481,30 @@ export default class TrafficRenderer {
       trafficEdge.setEdge(edge);
       trafficEdge.setErrorRate(errorRate);
     } else if (trafficEdge.getType() === TrafficEdgeType.TCP) {
-      trafficEdge.setSpeed(TCP_SETTINGS.baseSpeed * edgeLengthFactor);
-      trafficEdge.setErrorRate(TCP_SETTINGS.errorRate);
-      trafficEdge.setTimer(this.timerFromTcpSentRate(edgeData.tcp)); // 150 - 500
+      trafficEdge.setSpeed(TCP_SPEED * edgeLengthFactor);
+      trafficEdge.setErrorRate(0);
+      trafficEdge.setTimer(this.timerFromRate(edgeData.tcp, tcpTimerConfig));
       trafficEdge.setEdge(edge);
     }
   }
 
+  private calibrateAmplitude(rate: number, config: TimerConfig) {
+    // At the moment, calibration always goes up.
+    // Which means that, if at some point there's a lot of traffic, and later on the traffic goes considerably down,
+    //   the animation will not be re-calibrated for low traffic. Only page refresh would do so.
+    if (rate > config.amplitude) {
+      config.amplitude = 2 * rate;
+    }
+  }
+
   // see for easing functions https://gist.github.com/gre/1650294
-  private timerFromRate(rate: number) {
+  private timerFromRate(rate: number, config: TimerConfig) {
     if (isNaN(rate) || rate === 0) {
       return undefined;
     }
-    // Normalize requests per second within a range
-    const delta =
-      clamp(rate, TIMER_REQUEST_PER_SECOND_MIN, TIMER_REQUEST_PER_SECOND_MAX) / TIMER_REQUEST_PER_SECOND_MAX;
 
-    // Invert and scale
-    return (
-      TIMER_TIME_BETWEEN_DOTS_MIN + Math.pow(1 - delta, 2) * (TIMER_TIME_BETWEEN_DOTS_MAX - TIMER_TIME_BETWEEN_DOTS_MIN)
-    );
-  }
-
-  private timerFromTcpSentRate(tcpSentRate: number) {
-    if (isNaN(tcpSentRate) || tcpSentRate === 0) {
-      return undefined;
-    }
-    // Normalize requests per second within a range
-    const delta = clamp(tcpSentRate, TCP_SETTINGS.sentRate.min, TCP_SETTINGS.sentRate.max) / TCP_SETTINGS.sentRate.max;
-
-    // Invert and scale
-    return TCP_SETTINGS.timer.min + Math.pow(1 - delta, 2) * (TCP_SETTINGS.timer.max - TCP_SETTINGS.timer.min);
+    // Invert and scale; keep a linear relation with rate so that differences between edges are easy to reason about
+    return config.timerMin + (1 - rate / config.amplitude) * (config.timerMax - config.timerMin);
   }
 
   private speedFromResponseTime(responseTime: number) {
