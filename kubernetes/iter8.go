@@ -164,37 +164,37 @@ type Iter8ExperimentSpec struct {
 		Baseline   string `json:"baseline"`
 		Candidate  string `json:"candidate"`
 	} `json:"targetService"`
-	RoutingReference struct {
-		ApiVersion string `json:"apiVersion"`
-		Kind       string `json:"kind"`
-		Name       string `json:"name"`
-	} `json:"routingReference"`
+	RoutingReference *struct {
+		ApiVersion string `json:"apiVersion,omitempty"`
+		Kind       string `json:"kind,omitempty"`
+		Name       string `json:"name,omitempty"`
+	} `json:"routingReference,omitempty"`
 	Analysis struct {
-		AnalyticsService string `json:"analyticsService"`
-		GrafanaEndpoint  string `json:"grafanaEndpoint"`
+		AnalyticsService string `json:"analyticsService,omitempty"`
+		GrafanaEndpoint  string `json:"grafanaEndpoint,omitempty"`
 		SuccessCriteria  []struct {
-			MetricName    string  `json:"metricName"`
-			SampleSize    int     `json:"sampleSize"`
-			Tolerance     float64 `json:"tolerance"`
-			ToleranceType string  `json:"toleranceType"`
+			MetricName    string  `json:"metricName,omitempty"`
+			SampleSize    int     `json:"sampleSize,omitempty"`
+			Tolerance     float64 `json:"tolerance,omitempty"`
+			ToleranceType string  `json:"toleranceType,omitempty"`
 			MinMax        struct {
-				Min float64 `json:"min"`
-				Max float64 `json:"max"`
-			} `json:"min_max"`
-			StopOnFailure bool `json:"stopOnFailure"`
-		} `json:"successCriteria"`
-	} `json:"analysis"`
+				Min float64 `json:"min,omitempty"`
+				Max float64 `json:"max,omitempty"`
+			} `json:"min_max,omitempty"`
+			StopOnFailure bool `json:"stopOnFailure,omitempty"`
+		} `json:"successCriteria,omitempty"`
+	} `json:"analysis,omitempty"`
 	TrafficControl struct {
-		Interval             string  `json:"interval"`
-		MaxIterations        int     `json:"maxIterations"`
-		MaxTrafficPercentage float64 `json:"maxTrafficPercentage"`
-		Strategy             string  `json:"strategy"`
-		TrafficStepSize      float64 `json:"trafficStepSize"`
-		Confidence           float64 `json:"confidence"`
-		OnSuccess            string  `json:"onSuccess"`
-	} `json:"trafficControl"`
-	Assessment string `json:"assessment"`
-	Cleanup    string `json:"cleanup"`
+		Interval             string  `json:"interval,omitempty"`
+		MaxIterations        int     `json:"maxIterations,omitempty"`
+		MaxTrafficPercentage float64 `json:"maxTrafficPercentage,omitempty"`
+		Strategy             string  `json:"strategy,omitempty"`
+		TrafficStepSize      float64 `json:"trafficStepSize,omitempty"`
+		Confidence           float64 `json:"confidence,omitempty"`
+		OnSuccess            string  `json:"onSuccess,omitempty"`
+	} `json:"trafficControl,omitempty"`
+	Assessment string `json:"assessment,omitempty"`
+	Cleanup    string `json:"cleanup,omitempty"`
 }
 
 /*
@@ -209,10 +209,10 @@ type Iter8ExperimentSpec struct {
 		  by ($entity_labels)
 */
 type Iter8ExperimentMetrics map[string]struct {
-	AbsentValue        string `json:"absent_value"`
-	IsCounter          bool   `json:"is_counter"`
-	QueryTemplate      string `json:"query_template"`
-	SampleSizeTemplate string `json:"sample_size_template"`
+	AbsentValue        string `json:"absent_value,omitempty"`
+	IsCounter          bool   `json:"is_counter,omitempty"`
+	QueryTemplate      string `json:"query_template,omitempty"`
+	SampleSizeTemplate string `json:"sample_size_template,omitempty"`
 }
 
 /*

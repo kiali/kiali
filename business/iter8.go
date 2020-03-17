@@ -126,10 +126,9 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      newExperimentSpec.Name,
-			Namespace: newExperimentSpec.Namespace,
 		},
 		Spec:    kubernetes.Iter8ExperimentSpec{},
-		Metrics: nil,
+		Metrics: kubernetes.Iter8ExperimentMetrics{},
 		Status:  kubernetes.Iter8ExperimentStatus{},
 	}
 	object.Spec.TargetService.ApiVersion = "v1"

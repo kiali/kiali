@@ -59,7 +59,7 @@ func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	namespace := params["namespaces"]
+	namespace := params["namespace"]
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

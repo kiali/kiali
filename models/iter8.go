@@ -57,7 +57,7 @@ type Iter8ExperimentSpec struct {
 	Baseline       string              `json:"baseline"`
 	Candidate      string              `json:"candidate"`
 	TrafficControl Iter8TrafficControl `json:"trafficControl"`
-	Criterias      Iter8Criteria       `json:"criterias"`
+	Criterias      []Iter8Criteria       `json:"criterias"`
 }
 
 type Iter8TrafficControl struct {
