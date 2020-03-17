@@ -425,6 +425,12 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
 		log.Warningf("Token is invalid: %s", err.Error())
 	} else {
+		// Session ID claim must be present
+		if len(claims.SessionId) == 0 {
+			log.Warning("Token is invalid: sid claim is required")
+			return http.StatusUnauthorized, ""
+		}
+
 		business, err := business.Get(claims.SessionId)
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
