@@ -3,7 +3,6 @@ package cache
 import (
 	"time"
 
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -27,7 +26,6 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 		namespaces:    namespaces,
 		nameNamespace: nameNamespace,
 	}
-	log.Tracef("[Kiali Cache] SetNamespaces() for [token: %s] = %d", token, len(namespaces))
 }
 
 func (c *kialiCacheImpl) GetNamespaces(token string) []models.Namespace {
@@ -37,10 +35,8 @@ func (c *kialiCacheImpl) GetNamespaces(token string) []models.Namespace {
 		return nil
 	} else {
 		if time.Since(nsToken.created) > c.tokenNamespaceDuration {
-			log.Tracef("[Kiali Cache] GetNamespaces() for [token: %s] Expired !", token)
 			return nil
 		} else {
-			log.Tracef("[Kiali Cache] GetNamespaces() for [token: %s] = %d", token, len(nsToken.namespaces))
 			return nsToken.namespaces
 		}
 	}
@@ -53,11 +49,9 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 		return nil
 	} else {
 		if time.Since(nsToken.created) > c.tokenNamespaceDuration {
-			log.Tracef("[Kiali Cache] GetNamespace() for [token: %s] [namespace: %s] Expired !", token, namespace)
 			return nil
 		} else {
 			if ns, existsNamespace := c.tokenNamespaces[token].nameNamespace[namespace]; existsNamespace {
-				log.Tracef("[Kiali Cache] GetNamespace() for [token: %s] [namespace: %s]", token, namespace)
 				return &ns
 			} else {
 				return nil
