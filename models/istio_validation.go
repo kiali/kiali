@@ -216,7 +216,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"sidecar.multimatch.selector": {
-		Message:  "KIA1003 More than one Sidecar applied to the same workload",
+		Message:  "KIA1005 More than one Sidecar applied to the same workload",
 		Severity: ErrorSeverity,
 	},
 	"virtualservices.nohost.hostnotfound": {
