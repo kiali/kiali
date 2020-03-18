@@ -38,6 +38,12 @@ func GetSigningKey() string {
 	cfg := Get()
 	signKey := cfg.LoginToken.SigningKey
 
+	if len(signKey) == 0 || signKey == "kiali" {
+		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
+		// An empty key is also just not allowed.
+		panic("signing key for login tokens is invalid")
+	}
+
 	if cfg.Auth.Strategy == AuthStrategyLogin {
 		// If we are using "login" strategy, let's combine the login passphrase
 		// and the token signing key to form a new signing key. This way, if

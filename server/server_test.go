@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	rnd "math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -44,7 +45,9 @@ func TestRootContextPath(t *testing.T) {
 	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
 	testCustomRoot := "/customroot"
 
+	rnd.Seed(time.Now().UnixNano())
 	conf := new(config.Config)
+	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.WebRoot = testCustomRoot
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
@@ -184,9 +187,11 @@ func TestSecureComm(t *testing.T) {
 	defer os.Remove(testClientCertFile)
 	defer os.Remove(testClientKeyFile)
 
+	rnd.Seed(time.Now().UnixNano())
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
 	conf.Identity.PrivateKeyFile = testServerKeyFile
+	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
