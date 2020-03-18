@@ -3,16 +3,18 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/util"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util"
+	"github.com/stretchr/testify/assert"
 )
 
 type dummyHandler struct {
@@ -23,8 +25,10 @@ func (t dummyHandler) ServeHTTP(http.ResponseWriter, *http.Request) { }
 // TestStrategyLoginAuthentication checks that a user with no active
 // session is logged in successfully
 func TestStrategyLoginAuthentication(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -65,8 +69,10 @@ func TestStrategyLoginAuthentication(t *testing.T) {
 // rejected as a valid authentication
 func TestStrategyLoginInvalidSignature(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -163,8 +169,10 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 // of this, the Kiali backend must check the expiration Claim of the JWT token.
 func TestStrategyLoginValidatesExpiration(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -216,8 +224,10 @@ func TestStrategyLoginValidatesExpiration(t *testing.T) {
 // changes the Kiali configuration.
 func TestStrategyLoginValidatesUserChange(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -268,8 +278,10 @@ func TestStrategyLoginValidatesUserChange(t *testing.T) {
 // to the Kiali configuration
 func TestStrategyLoginValidatesPasswordChange(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -294,7 +306,6 @@ func TestStrategyLoginValidatesPasswordChange(t *testing.T) {
 
 	// OK, authentication succeeded and we have a token.
 	// Let's change the passphrase for logging into Kiali.
-	cfg = config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "newValue"
@@ -324,8 +335,10 @@ func TestStrategyLoginValidatesPasswordChange(t *testing.T) {
 // that the username field is populated in the Kiali auth token.
 func TestStrategyLoginMissingUser(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -375,8 +388,10 @@ func TestStrategyLoginMissingUser(t *testing.T) {
 // that the expiration date claim is populated in the Kiali auth token.
 func TestStrategyLoginMissingExpiration(t *testing.T) {
 	// Set some config values to a known state
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -453,8 +468,10 @@ func TestStrategyLoginExtend(t *testing.T) {
 		return util.Clock.Now()
 	}
 
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
@@ -499,8 +516,10 @@ func TestStrategyLoginRejectStaleExtension(t *testing.T) {
 		return util.Clock.Now()
 	}
 
+	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.LoginToken.SigningKey = util.RandomString(10)
 	cfg.Server.Credentials.Username = "foo"
 	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
