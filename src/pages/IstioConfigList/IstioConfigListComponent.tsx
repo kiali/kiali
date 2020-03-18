@@ -27,7 +27,8 @@ import IstioActionsNamespaceDropdown from '../../components/IstioActions/IstioAc
 
 interface IstioConfigListComponentState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends FilterComponent.Props<IstioConfigItem> {
-  activeNamespaces: Namespace[];
+  // We keep this as Optional because it does not come from the params
+  activeNamespaces?: Namespace[];
 }
 
 class IstioConfigListComponent extends FilterComponent.Component<
@@ -38,7 +39,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
   private promises = new PromisesRegistry();
 
   constructor(props: IstioConfigListComponentProps) {
-    super(props);
+    super({ ...props, activeNamespaces: props.activeNamespaces || [] });
     this.state = {
       listItems: [],
       currentSortField: this.props.currentSortField,
@@ -71,7 +72,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
   }
 
   paramsAreSynced = (prevProps: IstioConfigListComponentProps): [boolean, boolean] => {
-    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
+    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces!, this.props.activeNamespaces!);
     const paramsSynced =
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
@@ -87,7 +88,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
+    const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
       value => dicIstioType[value]
     );
