@@ -27,10 +27,10 @@ provisioner:
           - '**'
           auth_strategy: openshift
           operator_namespace: kiali-operator
-          #operator_image_name: quay.io/kiali/kiali-operator
-          #operator_version: latest
-          operator_image_name: image-registry.openshift-image-registry.svc:5000/kiali/kiali-operator
-          operator_version: dev
+          operator_image_name: quay.io/kiali/kiali-operator
+          operator_version: latest
+          #operator_image_name: image-registry.openshift-image-registry.svc:5000/kiali/kiali-operator
+          #operator_version: dev
           operator_watch_namespace: kiali-operator
           operator_clusterrolebindings: "- clusterrolebindings"
           operator_clusterroles: "- clusterroles"
