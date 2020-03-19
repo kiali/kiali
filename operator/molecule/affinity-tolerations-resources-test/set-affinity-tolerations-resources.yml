@@ -1,10 +1,10 @@
-- name: Set affinity and tolerations and resources and pod_annotations in current Kiali CR
+- name: Set affinity and tolerations and resources and pod_annotations and service_annotations in current Kiali CR
   vars:
     current_kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=cr_namespace, resource_name=custom_resource.metadata.name) }}"
   set_fact:
-    new_kiali_cr: "{{ current_kiali_cr | combine({'spec': {'deployment': {'affinity': new_affinity, 'tolerations': new_tolerations, 'resources': new_resources, 'pod_annotations': new_pod_annotations }}}, recursive=True) }}"
+    new_kiali_cr: "{{ current_kiali_cr | combine({'spec': {'deployment': {'affinity': new_affinity, 'tolerations': new_tolerations, 'resources': new_resources, 'pod_annotations': new_pod_annotations, 'service_annotations': new_service_annotations }}}, recursive=True) }}"
 
-- name: Change Kiali CR with new affinity and tolerations and resources and pod_annotations
+- name: Change Kiali CR with new affinity and tolerations and resources and pod_annotations and service_annotations
   k8s:
     namespace: '{{ cr_namespace }}'
     definition: "{{ new_kiali_cr }}"

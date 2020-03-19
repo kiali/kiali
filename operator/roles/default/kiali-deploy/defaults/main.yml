@@ -65,6 +65,7 @@ kiali_defaults:
     replicas: 1
     resources: {}
     secret_name: "kiali"
+    service_annotations: {}
     #service_type: "NodePort"
     tolerations: []
     verbose_mode: "3"

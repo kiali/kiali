@@ -3,6 +3,7 @@ kind: Kiali
 metadata:
   name: kiali
 spec:
+  version: default
   istio_namespace: {{ istio.control_plane_namespace }}
   auth:
     strategy: {{ kiali.auth_strategy }}

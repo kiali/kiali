@@ -6,7 +6,7 @@
   tasks:
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/pod_asserts.yml
-  # set affinity and tolerations and resources and pod_annotations
+  # set affinity and tolerations and resources and pod_annotations and service_annotations
   - import_tasks: set-affinity-tolerations-resources.yml
     vars:
       new_affinity:
@@ -59,6 +59,8 @@
           cpu: "42m"
       new_pod_annotations:
         some.test.io/keepCamelCaseFOO: camelCaseValueFOO
+      new_service_annotations:
+        another.test.io/keepCamelCaseBAR: camelCaseValueBAR
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
   - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
@@ -95,6 +97,12 @@
       - "{{ kiali_deployment.resources[0].spec.template.metadata.annotations | length > 0 }}"
       - "{{ kiali_deployment.resources[0].spec.template.metadata.annotations['some.test.io/keepCamelCaseFOO'] is defined and kiali_deployment.resources[0].spec.template.metadata.annotations['some.test.io/keepCamelCaseFOO'] == 'camelCaseValueFOO' }}"
       fail_msg: "Pod annotations was not applied successfully: {{ kiali_deployment.resources[0].spec.template.metadata.annotations }}"
+  - name: Assert that service_annotations was applied
+    assert:
+      that:
+      - "{{ kiali_service.resources[0].metadata.annotations | length > 0 }}"
+      - "{{ kiali_service.resources[0].metadata.annotations['another.test.io/keepCamelCaseBAR'] is defined and kiali_service.resources[0].metadata.annotations['another.test.io/keepCamelCaseBAR'] == 'camelCaseValueBAR' }}"
+      fail_msg: "Service annotations was not applied successfully: {{ kiali_service.resources[0].metadata.annotations }}"
   - name: Assert that camelCase is retained in additional service yaml
     assert:
       that:
@@ -112,6 +120,7 @@
       new_tolerations: null
       new_resources: null
       new_pod_annotations: null
+      new_service_annotations: null
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
   - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
@@ -140,3 +149,8 @@
 #      that:
 #      - "{{ kiali_deployment.resources[0].spec.template.metadata.annotations['some.test.io/keepCamelCaseFOO'] is not defined }}"
 #      fail_msg: "Empty pod annotations was not applied successfully: {{ kiali_deployment.resources[0].spec.template.metadata }} [kiali CR={{ kiali_cr }}]"
+#  - name: Assert that empty service_annotations was applied
+#    assert:
+#      that:
+#      - "{{ kiali_service.resources[0].metadata.annotations['another.test.io/keepCamelCaseBAR'] is not defined }}"
+#      fail_msg: "Empty service annotations was not applied successfully: {{ kiali_service.resources[0].metadata }} [kiali CR={{ kiali_cr }}]"
