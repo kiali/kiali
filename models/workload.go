@@ -8,6 +8,7 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 )
@@ -310,10 +311,10 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
-func GetLabels(wl []WorkloadListItem) []map[string]string {
-	wLabels := make([]map[string]string, 0, len(wl))
-	for _, wl := range wl {
-		wLabels = append(wLabels, wl.Labels)
+func (wl WorkloadList) GetLabels() []labels.Set {
+	wLabels := make([]labels.Set, 0, len(wl.Workloads))
+	for _, w := range wl.Workloads {
+		wLabels = append(wLabels, labels.Set(w.Labels))
 	}
 	return wLabels
 }

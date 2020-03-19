@@ -14,6 +14,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := MultiMatchChecker{
+		WorkloadList: workloadList(),
 		Sidecars: []kubernetes.IstioObject{
 			data.AddSelectorToSidecar(map[string]interface{}{
 				"labels": map[string]interface{}{
@@ -33,17 +34,34 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := MultiMatchChecker{
+		WorkloadList: workloadList(),
 		Sidecars: []kubernetes.IstioObject{
 			data.CreateSidecar("sidecar1"),
 			data.CreateSidecar("sidecar2"),
 		},
 	}.Check()
 
-	assertMultimatchFailure(t, validations, "sidecar1", "sidecar2")
-	assertMultimatchFailure(t, validations, "sidecar2", "sidecar1")
+	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
+	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar2", []string{"sidecar1"})
 }
 
-func assertMultimatchFailure(t *testing.T, validations models.IstioValidations, item, reference string) {
+func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
+	validations := MultiMatchChecker{
+		WorkloadList: workloadList(),
+		Sidecars: []kubernetes.IstioObject{
+			workloadSelectorSidecar("sidecar1", map[string]interface{}{"app": "details", "version": "v1"}),
+			workloadSelectorSidecar("sidecar2", map[string]interface{}{"app": "reviews", "version": "v1"}),
+			workloadSelectorSidecar("sidecar3", map[string]interface{}{"app": "details"}),
+			workloadSelectorSidecar("sidecar4", map[string]interface{}{"version": "v1"}),
+		},
+	}.Check()
+
+	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
+	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar3", []string{"sidecar1", "sidecar4"})
+	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar4", []string{"sidecar1", "sidecar3"})
+}
+
+func assertMultimatchFailure(t *testing.T, code string, validations models.IstioValidations, item string, references []string) {
 	assert := assert.New(t)
 
 	// Global assertion
@@ -57,9 +75,11 @@ func assertMultimatchFailure(t *testing.T, validations models.IstioValidations, 
 	// Assert object's checks
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-	assert.Equal(models.CheckMessage("sidecar.multimatch"), validation.Checks[0].Message)
+	assert.Equal(models.CheckMessage(code), validation.Checks[0].Message)
 
 	// Assert referenced objects
-	assert.Len(validation.References, 1)
-	assert.Equal(reference, validation.References[0].Name)
+	assert.Len(validation.References, len(references))
+	for i, ref := range references {
+		assert.Equal(ref, validation.References[i].Name)
+	}
 }

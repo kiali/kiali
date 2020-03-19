@@ -15,7 +15,7 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid := WorkloadSelectorChecker{
 		WorkloadList: workloadList(),
-		Sidecar: workloadSelectorSidecar(map[string]interface{}{
+		Sidecar: workloadSelectorSidecar("sidecar", map[string]interface{}{
 			"app":     "details",
 			"version": "v1",
 		}),
@@ -27,7 +27,7 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid = WorkloadSelectorChecker{
 		WorkloadList: workloadList(),
-		Sidecar: workloadSelectorSidecar(map[string]interface{}{
+		Sidecar: workloadSelectorSidecar("sidecar", map[string]interface{}{
 			"app": "details",
 		}),
 	}.Check()
@@ -47,33 +47,39 @@ func TestWorkloadNotFound(t *testing.T) {
 	testFailureWithEmptyWorkloadList(assert, map[string]interface{}{"app": "wrong"})
 }
 
-func workloadSelectorSidecar(selector map[string]interface{}) kubernetes.IstioObject {
+func workloadSelectorSidecar(name string, selector map[string]interface{}) kubernetes.IstioObject {
 	workloadSelector := map[string]interface{}{"labels": selector}
-	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar("sidecar"))
+	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar(name))
 }
 
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
-	testFailure(assert, selector, workloadList())
+	testFailure(assert, selector, workloadList(), "sidecar.selector.workloadnotfound")
 }
 
 func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
-	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}))
+	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}), "sidecar.selector.workloadnotfound")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList) {
+func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList, code string) {
 	validations, valid := WorkloadSelectorChecker{
 		WorkloadList: wl,
-		Sidecar:      workloadSelectorSidecar(selector),
+		Sidecar:      workloadSelectorSidecar("sidecar", selector),
 	}.Check()
 
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, models.CheckMessage("sidecar.selector.workloadnotfound"))
+	assert.Equal(validations[0].Message, models.CheckMessage(code))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
 	assert.Equal(validations[0].Path, "spec/workloadSelector/labels")
 }
 
 func workloadList() models.WorkloadList {
-	return data.CreateWorkloadList("test", data.CreateWorkloadListItem("details", map[string]string{"app": "details", "version": "v1"}))
+	wli := []models.WorkloadListItem{
+		data.CreateWorkloadListItem("details-v1", map[string]string{"app": "details", "version": "v1"}),
+		data.CreateWorkloadListItem("details-v2", map[string]string{"app": "details", "version": "v2"}),
+		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
+	}
+
+	return data.CreateWorkloadList("test", wli...)
 }
