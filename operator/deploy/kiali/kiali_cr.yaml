@@ -292,6 +292,10 @@ spec:
 #    ---
 #    secret_name: "kiali"
 #
+# Custom annotations to be created on the Kiali Service resource.
+#    ---
+#    service_annotations: {}
+#
 # The Kiali service type. Kubernetes determines what values are valid.
 # Common values are "NodePort", "ClusterIP", and "LoadBalancer".
 #    ---

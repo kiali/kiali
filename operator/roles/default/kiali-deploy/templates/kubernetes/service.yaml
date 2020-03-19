@@ -9,6 +9,9 @@ metadata:
   annotations:
     kiali.io/api-spec: https://kiali.io/api
     kiali.io/api-type: rest
+{% if kiali_vars.deployment.service_annotations|length > 0 %}
+    {{ kiali_vars.deployment.service_annotations | to_nice_yaml(indent=0) | trim | indent(4) }}
+{% endif %}
 spec:
 {% if kiali_vars.deployment.service_type is defined %}
   type: {{ kiali_vars.deployment.service_type }}
