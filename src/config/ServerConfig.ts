@@ -15,17 +15,17 @@ const toDurations = (tupleArray: [number, string][]): Durations => {
 };
 
 const durationsTuples: [number, string][] = [
-  [60, '1m Traffic'],
-  [300, '5m Traffic'],
-  [600, '10m Traffic'],
-  [1800, '30m Traffic'],
-  [3600, '1h Traffic'],
-  [10800, '3h Traffic'],
-  [21600, '6h Traffic'],
-  [43200, '12h Traffic'],
-  [86400, '1d Traffic'],
-  [604800, '7d Traffic'],
-  [2592000, '30d Traffic']
+  [60, '1m'],
+  [300, '5m'],
+  [600, '10m'],
+  [1800, '30m'],
+  [3600, '1h'],
+  [10800, '3h'],
+  [21600, '6h'],
+  [43200, '12h'],
+  [86400, '1d'],
+  [604800, '7d'],
+  [2592000, '30d']
 ];
 
 const computeValidDurations = (cfg: ComputedServerConfig) => {

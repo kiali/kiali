@@ -378,10 +378,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     let component;
     switch (this.state.currentTab) {
       case defaultTab:
-        component = <DurationDropdownContainer id="service-info-duration-dropdown" />;
+        component = <DurationDropdownContainer id="service-info-duration-dropdown" prefix="Last" />;
         break;
       case trafficTabName:
-        component = <DurationDropdownContainer id="service-traffic-duration-dropdown" />;
+        component = <DurationDropdownContainer id="service-traffic-duration-dropdown" prefix="Last" />;
         break;
       case tracesTabName:
         component = (

@@ -16,6 +16,7 @@ import { toString } from './Utils';
 import { serverConfig } from 'config';
 import { PFKialiColor } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
+import _ from 'lodash';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -57,6 +58,9 @@ const replayIntervals = {
   600000: '10 minutes',
   1800000: '30 minutes'
 };
+
+const getReplayIntervals = (customStartTime: boolean) =>
+  _.mapValues(replayIntervals, v => (customStartTime ? v : `Last ${v}`));
 
 // key represents speed in milliseconds (i.e. how long to wait before refreshing-the-frame (fetching new data)
 const replaySpeeds: ReplaySpeed[] = [
@@ -224,10 +228,9 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
           id={'replay-interval'}
           handleSelect={key => this.setReplayInterval(Number(key))}
           value={String(this.props.replayWindow.interval)}
-          label={replayIntervals[this.props.replayWindow.interval]}
-          options={replayIntervals}
+          label={getReplayIntervals(this.state.isCustomStartTime)[this.props.replayWindow.interval]}
+          options={getReplayIntervals(this.state.isCustomStartTime)}
           tooltip="Replay length"
-          nameDropdown={this.state.isCustomStartTime ? undefined : 'Last'}
         />
         <Tooltip
           key="toggle-is-custom"

@@ -11,6 +11,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
 import history from '../../app/History';
+import _ from 'lodash';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -22,18 +23,24 @@ type DurationDropdownProps = ReduxProps & {
   disabled?: boolean;
   tooltip?: string;
   nameDropdown?: string;
+  suffix?: string;
+  prefix?: string;
 };
 
 export class DurationDropdown extends React.Component<DurationDropdownProps> {
   render() {
+    const durations = _.mapValues(serverConfig.durations, v =>
+      _.reject([this.props.prefix, v, this.props.suffix], _.isEmpty).join(' ')
+    );
+
     return (
       <ToolbarDropdown
         id={this.props.id}
         disabled={this.props.disabled}
         handleSelect={key => this.props.setDuration(Number(key))}
         value={String(this.props.duration)}
-        label={serverConfig.durations[this.props.duration]}
-        options={serverConfig.durations}
+        label={durations[this.props.duration]}
+        options={durations}
         tooltip={this.props.tooltip}
         nameDropdown={this.props.nameDropdown}
       />

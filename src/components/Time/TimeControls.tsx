@@ -30,6 +30,7 @@ type TimeControlsProps = ReduxProps & {
 export class TimeControls extends React.PureComponent<TimeControlsProps> {
   render() {
     const durationTooltip = this.props.replayActive ? 'Traffic metrics per frame' : 'Traffic metrics per refresh';
+    let [prefix, suffix] = this.props.replayActive ? [undefined, 'Traffic'] : ['Last', undefined];
 
     return (
       <span>
@@ -43,7 +44,8 @@ export class TimeControls extends React.PureComponent<TimeControlsProps> {
         <DurationDropdownContainer
           id={'time_range_duration'}
           disabled={this.props.disabled}
-          // prefix={durationPrefix}
+          prefix={prefix}
+          suffix={suffix}
           tooltip={durationTooltip}
         />
         {!(this.props.supportsReplay && this.props.replayActive) && (

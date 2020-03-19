@@ -163,7 +163,7 @@ class WorkloadListComponent extends FilterComponent.Component<
           initialFilters={WorkloadListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
           rightToolbar={[
-            <DurationDropdownContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" />,
+            <DurationDropdownContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" prefix="Last" />,
             <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
           ]}
         />
