@@ -30,11 +30,11 @@
 container-build-kiali: .prepare-kiali-image-files
 ifeq ($(DORP),docker)
 	@echo Building container image for Kiali using docker
-	docker build --pull -t ${DOCKER_TAG} ${OUTDIR}/docker
+	docker build --pull -t ${DOCKER_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
 	docker tag ${DOCKER_TAG} ${QUAY_TAG}
 else
 	@echo Building container image for Kiali using podman
-	podman build --pull -t ${DOCKER_TAG} ${OUTDIR}/docker
+	podman build --pull -t ${DOCKER_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
 	podman tag ${DOCKER_TAG} ${QUAY_TAG}
 endif
 
@@ -44,7 +44,13 @@ container-build-operator: .ensure-operator-sdk-exists
 	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${OPERATOR_QUAY_TAG}"
 
 ## container-build: Build Kiali and Kiali operator container images
+# On x86_64 machine, build both kiali and operator images.
+ifeq ($(GOARCH),amd64)
 container-build: container-build-kiali container-build-operator
+# On other achitectures, only build kiali image.
+else
+container-build: container-build-kiali
+endif
 
 ## container-push-kiali-quay: Pushes the Kiali image to quay.
 container-push-kiali-quay:
@@ -78,4 +84,10 @@ else
 endif
 
 ## container-push: Pushes all container images to quay and docker hub.
+# On x86_64 machine, push both kiali and operator images.
+ifeq ($(GOARCH),amd64)
 container-push: container-push-kiali-quay container-push-kiali-docker container-push-operator-quay
+# On other achitectures, only push kiali image.
+else
+container-push: container-push-kiali-quay container-push-kiali-docker
+endif
