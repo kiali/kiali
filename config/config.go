@@ -190,7 +190,7 @@ type ExternalServices struct {
 	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
 }
 
-// LoginToken holds config used in token-based authentication
+// LoginToken holds config used for generating the Kiali session tokens.
 type LoginToken struct {
 	SigningKey        string `yaml:"signing_key,omitempty"`
 	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`

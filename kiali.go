@@ -209,6 +209,14 @@ func validateConfig() error {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
 	}
 
+	// Check the signing key for the JWT token is valid
+	signingKey := config.Get().LoginToken.SigningKey
+	if len(signingKey) == 0 || signingKey == "kiali" {
+		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
+		// An empty key is also just not allowed.
+		return fmt.Errorf("signing key for login tokens is invalid")
+	}
+
 	return nil
 }
 
