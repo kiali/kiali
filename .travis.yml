@@ -20,7 +20,7 @@ env:
 
 # The project committed the vendor directory into source so there is no need for
 # travis to install dep and pull down dependencies.
-# Therefore, the dep-X targets are commmented out here. Uncomment these if the project
+# Therefore, the dep-X targets are commented out here. Uncomment these if the project
 # decided to no longer commit vendor dependencies into the source tree.
 # See: https://github.com/golang/dep/blob/master/docs/FAQ.md#should-i-commit-my-vendor-directory
 install:
