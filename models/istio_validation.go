@@ -219,6 +219,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA1005 More than one Sidecar applied to the same workload",
 		Severity: ErrorSeverity,
 	},
+	"sidecar.global.selector": {
+		Message:  "KIA1006 Global default sidecar should not have workloadSelector",
+		Severity: WarningSeverity,
+	},
 	"virtualservices.nohost.hostnotfound": {
 		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",
 		Severity: ErrorSeverity,

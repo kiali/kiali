@@ -20,12 +20,12 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 				"labels": map[string]interface{}{
 					"app": "reviews",
 				},
-			}, data.CreateSidecar("sidecar1")),
+			}, data.CreateSidecar("sidecar1", "bookinfo")),
 			data.AddSelectorToSidecar(map[string]interface{}{
 				"labels": map[string]interface{}{
 					"app": "details",
 				},
-			}, data.CreateSidecar("sidecar2")),
+			}, data.CreateSidecar("sidecar2", "bookinfo")),
 		},
 	}.Check()
 
@@ -36,8 +36,8 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := MultiMatchChecker{
 		WorkloadList: workloadList(),
 		Sidecars: []kubernetes.IstioObject{
-			data.CreateSidecar("sidecar1"),
-			data.CreateSidecar("sidecar2"),
+			data.CreateSidecar("sidecar1", "bookinfo"),
+			data.CreateSidecar("sidecar2", "bookinfo"),
 		},
 	}.Check()
 

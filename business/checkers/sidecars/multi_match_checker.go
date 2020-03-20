@@ -51,19 +51,7 @@ func (m MultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
 	swi := make([]KeyWithIndex, 0, len(m.Sidecars))
 
 	for i, s := range m.Sidecars {
-		add := false
-
-		if ws, found := s.GetSpec()["workloadSelector"]; found {
-			if wsCasted, ok := ws.(map[string]interface{}); ok {
-				if _, found := wsCasted["labels"]; !found {
-					add = true
-				}
-			}
-		} else {
-			add = true
-		}
-
-		if add {
+		if !s.HasWorkloadSelectorLabels() {
 			swi = append(swi, KeyWithIndex{
 				Index: i,
 				Key: &models.IstioValidationKey{

@@ -6,11 +6,11 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func CreateSidecar(name string) kubernetes.IstioObject {
+func CreateSidecar(name string, namespace string) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        name,
-			Namespace:   "bookinfo",
+			Namespace:   namespace,
 			ClusterName: "svc.cluster.local",
 		},
 		Spec: map[string]interface{}{},
