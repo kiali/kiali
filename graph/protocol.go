@@ -228,6 +228,13 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	}
 }
 
+// ResetOutgoingMetadata sets outgoing traffic to zero. This is useful for some graph type manipulations.
+func ResetOutgoingMetadata(sourceMetadata Metadata) {
+	delete(sourceMetadata, grpcOut)
+	delete(sourceMetadata, httpOut)
+	delete(sourceMetadata, tcpOut)
+}
+
 // AggregateNodeTraffic adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
 func AggregateNodeTraffic(node, aggregateNode *Node) {
 	for _, protocol := range Protocols {
