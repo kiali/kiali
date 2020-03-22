@@ -22,7 +22,6 @@ func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
 	assert.True(valid)
 }
 
-
 func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -42,10 +41,10 @@ func TestSidecarWithSelectorOutOfControlPlane(t *testing.T) {
 
 	validations, valid := GlobalChecker{
 		Sidecar: data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "reviews",
-				},
-			}, data.CreateSidecar("sidecar1", "bookinfo")),
+			"labels": map[string]interface{}{
+				"app": "reviews",
+			},
+		}, data.CreateSidecar("sidecar1", "bookinfo")),
 	}.Check()
 
 	assert.Empty(validations)
@@ -59,10 +58,10 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 
 	validations, valid := GlobalChecker{
 		Sidecar: data.AddSelectorToSidecar(map[string]interface{}{
-				"labels": map[string]interface{}{
-					"app": "reviews",
-				},
-			}, data.CreateSidecar("sidecar1", conf.IstioNamespace)),
+			"labels": map[string]interface{}{
+				"app": "reviews",
+			},
+		}, data.CreateSidecar("sidecar1", conf.IstioNamespace)),
 	}.Check()
 
 	assert.NotEmpty(validations)
