@@ -60,6 +60,7 @@ export interface WorkloadOverview {
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
   versionLabel: boolean;
+  labels: { [key: string]: string };
 }
 
 export interface WorkloadListItem extends WorkloadOverview {

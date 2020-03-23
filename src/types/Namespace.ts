@@ -1,5 +1,6 @@
 export default interface Namespace {
   name: string;
+  labels?: { [key: string]: string };
 }
 
 export const namespaceFromString = (namespace: string) => ({ name: namespace });

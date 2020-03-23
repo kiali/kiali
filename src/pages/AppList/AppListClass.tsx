@@ -7,7 +7,8 @@ export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] 
       namespace: data.namespace.name,
       name: app.name,
       istioSidecar: app.istioSidecar,
-      healthPromise: API.getAppHealth(data.namespace.name, app.name, rateInterval, app.istioSidecar)
+      healthPromise: API.getAppHealth(data.namespace.name, app.name, rateInterval, app.istioSidecar),
+      labels: app.labels
     }));
   }
   return [];
