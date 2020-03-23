@@ -125,7 +125,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 			Kind:       "Experiment",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      newExperimentSpec.Name,
+			Name: newExperimentSpec.Name,
 		},
 		Spec:    kubernetes.Iter8ExperimentSpec{},
 		Metrics: kubernetes.Iter8ExperimentMetrics{},

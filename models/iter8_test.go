@@ -3,8 +3,8 @@ package models
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIter8MarshalForCreate(t *testing.T) {
@@ -32,7 +32,7 @@ func TestIter8MarshalForCreate(t *testing.T) {
 		  "stopOnFailure": false
 		}
 	  ]
-	}`;
+	}`
 
 	experimentBytes := []byte(experimentJson)
 
