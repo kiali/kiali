@@ -396,6 +396,7 @@ type IstioObject interface {
 	GetObjectMeta() meta_v1.ObjectMeta
 	SetObjectMeta(meta_v1.ObjectMeta)
 	DeepCopyIstioObject() IstioObject
+	HasWorkloadSelectorLabels() bool
 }
 
 // IstioObjectList is a k8s wrapper interface for list config objects.
@@ -496,6 +497,20 @@ func (in *GenericIstioObject) GetObjectMeta() meta_v1.ObjectMeta {
 // SetObjectMeta for a wrapper
 func (in *GenericIstioObject) SetObjectMeta(metadata meta_v1.ObjectMeta) {
 	in.ObjectMeta = metadata
+}
+
+func (in *GenericIstioObject) HasWorkloadSelectorLabels() bool {
+	hwsl := false
+
+	if ws, found := in.GetSpec()["workloadSelector"]; found {
+		if wsCasted, ok := ws.(map[string]interface{}); ok {
+			if _, found := wsCasted["labels"]; found {
+				hwsl = true
+			}
+		}
+	}
+
+	return hwsl
 }
 
 // GetItems from a wrapper

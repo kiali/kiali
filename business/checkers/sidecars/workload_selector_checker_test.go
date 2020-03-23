@@ -49,7 +49,7 @@ func TestWorkloadNotFound(t *testing.T) {
 
 func workloadSelectorSidecar(name string, selector map[string]interface{}) kubernetes.IstioObject {
 	workloadSelector := map[string]interface{}{"labels": selector}
-	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar(name))
+	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar(name, "bookinfo"))
 }
 
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {

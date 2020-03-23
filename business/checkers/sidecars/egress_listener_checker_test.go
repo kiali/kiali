@@ -106,7 +106,7 @@ func TestEgressServiceNotFound(t *testing.T) {
 }
 
 func sidecarWithHosts(hl []interface{}) kubernetes.IstioObject {
-	return data.AddHostsToSidecar(hl, data.CreateSidecar("sidecar"))
+	return data.AddHostsToSidecar(hl, data.CreateSidecar("sidecar", "bookinfo"))
 }
 
 func fakeServices(serviceNames []string) []core_v1.Service {

@@ -59,6 +59,7 @@ func (s SidecarChecker) runChecks(sidecar kubernetes.IstioObject) models.IstioVa
 	enabledCheckers := []Checker{
 		sidecars.WorkloadSelectorChecker{Sidecar: sidecar, WorkloadList: s.WorkloadList},
 		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
+		sidecars.GlobalChecker{Sidecar: sidecar},
 	}
 
 	for _, checker := range enabledCheckers {
