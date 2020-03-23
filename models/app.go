@@ -26,6 +26,9 @@ type AppListItem struct {
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
+
+	// Labels for App
+	Labels map[string]string `json:"labels"`
 }
 
 type WorkloadItem struct {

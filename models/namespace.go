@@ -24,6 +24,9 @@ type Namespace struct {
 	//
 	// required: true
 	CreationTimestamp time.Time `json:"-"`
+
+	// Labels for Namespace
+	Labels map[string]string `json:"labels"`
 }
 
 type Namespaces []Namespace
@@ -42,6 +45,7 @@ func CastNamespace(ns core_v1.Namespace) Namespace {
 	namespace := Namespace{}
 	namespace.Name = ns.Name
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
+	namespace.Labels = ns.Labels
 
 	return namespace
 }
@@ -59,6 +63,7 @@ func CastProject(p osproject_v1.Project) Namespace {
 	namespace := Namespace{}
 	namespace.Name = p.Name
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
+	namespace.Labels = p.Labels
 
 	return namespace
 }
