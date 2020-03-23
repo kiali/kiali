@@ -4396,10 +4396,10 @@ cytoscape-popper@1.0.2:
   dependencies:
     popper.js "^1.0.0"
 
-cytoscape@3.11.0:
-  version "3.11.0"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.11.0.tgz#c5fca7c8b3a01ba24b4d7b8f3eddb1e99d395ed3"
-  integrity sha512-xA9S5UiTjwFwZjxZCTIJjDU5ef2XSqw+/gk+bLcqdOZ496EoPSfnbozGRnKZhxKIVT++NNyWtT7fW1eLU7denQ==
+cytoscape@3.14.0:
+  version "3.14.0"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.14.0.tgz#fa23e38209bebb759415dbbd88f8320b37e9ae56"
+  integrity sha512-j7DgCimbVYbEGibrWflUMedvVIZAQ0YRV8VWwWr2P4J/bS+VrhE3ByclLsGH44deG48/I0YKJP0VkcquSBXc9A==
   dependencies:
     heap "^0.2.6"
     lodash.debounce "^4.0.8"
