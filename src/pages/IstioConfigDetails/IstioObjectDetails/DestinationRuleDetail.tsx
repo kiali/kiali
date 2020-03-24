@@ -18,7 +18,7 @@ import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { checkForPath } from '../../../types/ServiceInfo';
 import ValidationList from '../../../components/Validations/ValidationList';
 import Labels from '../../../components/Label/Labels';
-import { serviceLink } from '../IstioConfigDetailsPage';
+import ServiceLink from './ServiceLink';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -127,7 +127,11 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
                 {destinationRule.spec.host && (
                   <>
                     <Text component={TextVariants.h3}>Host</Text>
-                    {serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
+                    <ServiceLink
+                      namespace={destinationRule.metadata.namespace || ''}
+                      host={destinationRule.spec.host}
+                      isValid={isValid}
+                    />
                   </>
                 )}
               </StackItem>

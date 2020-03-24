@@ -6,7 +6,7 @@ import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-t
 import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
 import { ChartBullet } from '@patternfly/react-charts/dist/js/components/ChartBullet';
 import ValidationList from '../../../components/Validations/ValidationList';
-import { serviceLink } from '../IstioConfigDetailsPage';
+import ServiceLink from './ServiceLink';
 
 interface VirtualServiceRouteProps {
   name: string;
@@ -67,7 +67,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
           const destination = routeItem.destination;
           cells = [
             { title: validation },
-            { title: serviceLink(this.props.namespace, destination.host, isValid) },
+            { title: <ServiceLink namespace={this.props.namespace} host={destination.host} isValid={isValid} /> },
             { title: destination.subset || '-' },
             { title: destination.port ? destination.port.number || '-' : '-' },
             { title: routeItem.weight ? routeItem.weight : '-' }
