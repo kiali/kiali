@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import { ServerConfig } from '../types/ServerConfig';
 
 export type Durations = { [key: number]: string };
@@ -5,6 +7,9 @@ export type Durations = { [key: number]: string };
 export type ComputedServerConfig = ServerConfig & {
   durations: Durations;
 };
+
+export const humanDurations = (config: ComputedServerConfig, prefix?: string, suffix?: string) =>
+  _.mapValues(config.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
   const obj = {};

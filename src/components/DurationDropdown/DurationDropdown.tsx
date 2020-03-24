@@ -1,5 +1,5 @@
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -11,7 +11,6 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { HistoryManager, URLParam } from '../../app/History';
 import history from '../../app/History';
-import _ from 'lodash';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -29,9 +28,7 @@ type DurationDropdownProps = ReduxProps & {
 
 export class DurationDropdown extends React.Component<DurationDropdownProps> {
   render() {
-    const durations = _.mapValues(serverConfig.durations, v =>
-      _.reject([this.props.prefix, v, this.props.suffix], _.isEmpty).join(' ')
-    );
+    const durations = humanDurations(serverConfig, this.props.prefix, this.props.suffix);
 
     return (
       <ToolbarDropdown
@@ -50,7 +47,9 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
 
 export const withDurations = DurationDropdownComponent => {
   return (props: DurationDropdownProps) => {
-    return <DurationDropdownComponent durations={serverConfig.durations} {...props} />;
+    return (
+      <DurationDropdownComponent durations={humanDurations(serverConfig, props.prefix, props.suffix)} {...props} />
+    );
   };
 };
 

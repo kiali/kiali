@@ -8,7 +8,7 @@ import {
   durationToBounds
 } from '../../types/Common';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import { defaultMetricsDuration } from 'components/Metrics/Helper';
 import { retrieveTimeRange, retrieveDuration, storeBounds, storeDuration } from './TimeRangeHelper';
 import { DateTimePicker } from './DateTimePicker';
@@ -77,7 +77,8 @@ export default class TimeRangeComponent extends React.Component<Props> {
   }
 
   renderDuration(d?: DurationInSeconds) {
-    const options = this.props.allowCustom ? { custom: 'Custom', ...serverConfig.durations } : serverConfig.durations;
+    const durations = humanDurations(serverConfig, undefined, 'Traffic');
+    const options = this.props.allowCustom ? { custom: 'Custom', ...durations } : durations;
     return (
       <ToolbarDropdown
         id={'metrics_filter_interval_duration'}
