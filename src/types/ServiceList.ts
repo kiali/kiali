@@ -13,6 +13,7 @@ export interface ServiceOverview {
   name: string;
   istioSidecar: boolean;
   additionalDetailSample?: AdditionalItem;
+  labels: { [key: string]: string };
 }
 
 export interface ServiceListItem extends ServiceOverview {

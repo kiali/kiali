@@ -59,8 +59,7 @@ const replayIntervals = {
   1800000: '30 minutes'
 };
 
-const getReplayIntervals = (customStartTime: boolean) =>
-  _.mapValues(replayIntervals, v => (customStartTime ? v : `Last ${v}`));
+const replayLastIntervals = _.mapValues(replayIntervals, i => `Last ${i}`);
 
 // key represents speed in milliseconds (i.e. how long to wait before refreshing-the-frame (fetching new data)
 const replaySpeeds: ReplaySpeed[] = [
@@ -228,8 +227,8 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
           id={'replay-interval'}
           handleSelect={key => this.setReplayInterval(Number(key))}
           value={String(this.props.replayWindow.interval)}
-          label={getReplayIntervals(this.state.isCustomStartTime)[this.props.replayWindow.interval]}
-          options={getReplayIntervals(this.state.isCustomStartTime)}
+          label={replayIntervals[this.props.replayWindow.interval]}
+          options={this.state.isCustomStartTime ? replayIntervals : replayLastIntervals}
           tooltip="Replay length"
         />
         <Tooltip

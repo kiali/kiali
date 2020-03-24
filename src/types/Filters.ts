@@ -8,7 +8,8 @@ export interface FilterValue {
 
 enum NonInputTypes {
   typeAhead = 'typeahead',
-  select = 'select'
+  select = 'select',
+  custom = 'custom'
 }
 
 export const FilterTypes = {
@@ -24,6 +25,7 @@ export interface FilterType {
   title: string;
   placeholder: string;
   filterType: FilterTypes;
+  customComponent?: any;
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;

@@ -8,6 +8,7 @@ export type NamespaceInfo = {
   tlsStatus?: TLSStatus;
   validations?: ValidationStatus;
   metrics?: TimeSeries[];
+  labels?: { [key: string]: string };
 };
 
 export type NamespaceStatus = {

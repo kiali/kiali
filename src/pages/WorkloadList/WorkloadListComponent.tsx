@@ -118,7 +118,8 @@ class WorkloadListComponent extends FilterComponent.Component<
           deployment.name,
           this.props.duration,
           deployment.istioSidecar
-        )
+        ),
+        labels: deployment.labels
       }));
     }
     return [];

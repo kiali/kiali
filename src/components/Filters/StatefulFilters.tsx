@@ -196,7 +196,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const filter = this.state.activeFilters.find(activeFilter => {
       return filterValue === activeFilter.value && filterType.title === activeFilter.category;
     });
-
     return !!filter;
   };
 
@@ -251,12 +250,20 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           ))}
         </FormSelect>
       );
+    } else if (currentFilterType.filterType === FilterTypes.custom) {
+      const instance = new currentFilterType.customComponent({
+        value: currentValue,
+        onChange: this.updateCurrentValue,
+        filterAdd: value => this.filterAdded(currentFilterType, value),
+        duplicatesFilter: value => this.duplicatesFilter(currentFilterType, value)
+      });
+      return instance.render();
     } else {
       return (
         <TextInput
           type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
-          aria-label={'filter_imput_value'}
+          aria-label={'filter_input_value'}
           placeholder={currentFilterType.placeholder}
           onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}

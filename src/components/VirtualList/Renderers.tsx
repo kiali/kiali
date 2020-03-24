@@ -103,14 +103,18 @@ export const labelValidation: Renderer<WorkloadListItem> = (item: WorkloadListIt
       {appLabel || versionLabel ? (
         <span>
           {appLabel && (
-            <Badge className={'virtualitem_badge_validation'} isRead={true}>
-              app
-            </Badge>
+            <Tooltip content={<>{item.labels['app']}</>}>
+              <Badge className={'virtualitem_badge_validation'} isRead={true}>
+                app
+              </Badge>
+            </Tooltip>
           )}
           {versionLabel && (
-            <Badge className={'virtualitem_badge_validation'} isRead={true}>
-              version
-            </Badge>
+            <Tooltip content={<>{item.labels['version']}</>}>
+              <Badge className={'virtualitem_badge_validation'} isRead={true}>
+                version
+              </Badge>
+            </Tooltip>
           )}
         </span>
       ) : (

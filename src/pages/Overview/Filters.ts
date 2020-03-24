@@ -9,6 +9,7 @@ import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
+import { LabelFilters } from '../../components/Filters/LabelFilter';
 
 export const nameFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'namespace_search',
@@ -44,6 +45,28 @@ export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {
   filterValues: mtlsValues,
   filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
     return namespaces.filter(ns => ns.tlsStatus && filters.some(f => statusMap.get(ns.tlsStatus!.status) === f.value));
+  }
+};
+
+export const labelFilter: FilterTypeWithFilter<NamespaceInfo> = {
+  id: 'label',
+  title: 'Label',
+  placeholder: 'Filter by Label',
+  filterType: FilterTypes.custom,
+  customComponent: LabelFilters,
+  action: FILTER_ACTION_APPEND,
+  filterValues: [],
+  filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
+    return namespaces.filter(ns =>
+      filters.some(f => {
+        if (f.value.includes('=')) {
+          const [k, v] = f.value.split('=');
+          return v.split(',').some(val => !!ns.labels && k in ns.labels && ns.labels[k].startsWith(val));
+        } else {
+          return !!ns.labels && Object.keys(ns.labels).some(label => label.startsWith(f.value));
+        }
+      })
+    );
   }
 };
 
@@ -108,7 +131,12 @@ export const healthFilter: FilterTypeWithFilter<NamespaceInfo> = {
   }
 };
 
-export const availableFilters: FilterTypeWithFilter<NamespaceInfo>[] = [nameFilter, healthFilter, mtlsFilter];
+export const availableFilters: FilterTypeWithFilter<NamespaceInfo>[] = [
+  nameFilter,
+  healthFilter,
+  mtlsFilter,
+  labelFilter
+];
 
 export const filterBy = (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
   let filteredNamespaces: NamespaceInfo[] = namespaces;

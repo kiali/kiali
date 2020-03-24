@@ -130,7 +130,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               status: previous ? previous.status : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               metrics: previous ? previous.metrics : undefined,
-              validations: previous ? previous.validations : undefined
+              validations: previous ? previous.validations : undefined,
+              labels: ns.labels
             };
           });
         const isAscending = FilterHelper.isCurrentSortAscending();

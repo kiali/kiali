@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link, Prompt, RouteComponentProps } from 'react-router-dom';
+import { Prompt, RouteComponentProps } from 'react-router-dom';
 import {
   aceOptions,
   compareResourceVersion,
@@ -21,7 +21,7 @@ import { default as IstioActionButtonsContainer } from '../../components/IstioAc
 import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
-import { Paths, serverConfig } from '../../config';
+import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
@@ -49,7 +49,6 @@ import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { PfColors } from '../../components/Pf/PfColors';
 import IstioObjectLink from '../../components/Link/IstioObjectLink';
-import { ServiceIcon } from '@patternfly/react-icons';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -78,33 +77,6 @@ const tabName = 'list';
 const paramToTab: { [key: string]: number } = {
   overview: 0,
   yaml: 1
-};
-
-export const serviceLink = (namespace: string, host: string, isValid: boolean): any => {
-  if (!host) {
-    return '-';
-  }
-  const isFqdn = host.endsWith('.' + serverConfig.istioIdentityDomain);
-  const isShortName = host.split('.').length === 2;
-  const showLink = isValid && (isFqdn || isShortName);
-  if (showLink) {
-    let linkNamespace = namespace;
-    let linkService = host;
-    if (isFqdn) {
-      // FQDN format: service.namespace.svc.cluster.local
-      const splitFqdn = host.split('.');
-      linkService = splitFqdn[0];
-      linkNamespace = splitFqdn[1];
-    }
-    return (
-      <Link to={'/namespaces/' + linkNamespace + '/services/' + linkService}>
-        {host + ' '}
-        <ServiceIcon />
-      </Link>
-    );
-  } else {
-    return host;
-  }
 };
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {

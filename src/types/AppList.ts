@@ -9,6 +9,7 @@ export interface AppList {
 export interface AppOverview {
   name: string;
   istioSidecar: boolean;
+  labels: { [key: string]: string };
 }
 
 export interface AppListItem extends AppOverview {
