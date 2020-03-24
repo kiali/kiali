@@ -56,10 +56,19 @@ NAMESPACE ?= istio-system
 GOPATH ?= ${HOME}/go
 
 # Environment variables set when running the Go compiler.
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 GO_BUILD_ENVVARS = \
-	GOOS=linux \
-	GOARCH=amd64 \
+	GOOS=$(GOOS) \
+	GOARCH=$(GOARCH) \
 	CGO_ENABLED=0 \
+
+# Environment variables to shift between base images.
+ifeq ($(GOARCH),amd64)
+KIALI_DOCKER_FILE ?= Dockerfile-ubi7-minimal
+else
+KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
+endif
 
 # Determine if we should use Docker OR Podman - value must be one of "docker" or "podman"
 DORP ?= docker
