@@ -33,6 +33,18 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  false,
 		},
 		{
+			rawVersion: "Maistra_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
+			name:       "Maistra Project",
+			version:    "1.1.0",
+			supported:  true,
+		},
+		{
+			rawVersion: "Maistra_1.1.99-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
+			name:       "Maistra Project",
+			version:    "1.1.99",
+			supported:  true,
+		},
+		{
 			rawVersion: "redhat@redhat-docker.io/maistra-0.1.0-1-3a13-unknown",
 			name:       "Maistra",
 			version:    "0.1.0",
@@ -55,6 +67,18 @@ func TestParseIstioRawVersion(t *testing.T) {
 			name:       "OpenShift Service Mesh",
 			version:    "0.9.0",
 			supported:  false,
+		},
+		{
+			rawVersion: "OSSM_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
+			name:       "OpenShift Service Mesh",
+			version:    "1.1.0",
+			supported:  true,
+		},
+		{
+			rawVersion: "OSSM_1.1.99-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean",
+			name:       "OpenShift Service Mesh",
+			version:    "1.1.99",
+			supported:  true,
 		},
 		{
 			rawVersion: "foobar-maistra-11.12.13-wotgorilla?",
