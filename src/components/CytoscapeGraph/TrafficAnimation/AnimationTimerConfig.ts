@@ -34,10 +34,9 @@ export class AnimationTimerConfig {
 
   calibrate(rate: number) {
     // We make this.threshold grow with max rate
-    // (there's some "magic numbers" here, not really explained, perhaps this formula can be changed, but keep threshold following max rate)
     // The scale factor for this graph is updated with the changed threshold.
-    if (rate > this.threshold / 1.5) {
-      this.threshold = 3 * rate;
+    if (rate > this.threshold) {
+      this.threshold = 2 * rate;
       this.scaleFactor = this.computeScaleFactor();
     }
   }
@@ -67,5 +66,5 @@ export class AnimationTimerConfig {
 
 // HTTP config: 1 RPS => 1 dot every second
 export const timerConfig = new AnimationTimerConfig(1);
-// TCP config: 4 bps => 1 dot every second
-export const tcpTimerConfig = new AnimationTimerConfig(4);
+// TCP config: 20 bps => 1 dot every second
+export const tcpTimerConfig = new AnimationTimerConfig(20);
