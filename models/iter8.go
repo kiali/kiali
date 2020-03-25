@@ -9,8 +9,7 @@ import (
 )
 
 type Iter8Info struct {
-	Enabled     bool                `json:"enabled"`
-	Permissions ResourcePermissions `json:"permissions"`
+	Enabled bool `json:"enabled"`
 }
 
 type Iter8ExperimentItem struct {
@@ -34,6 +33,7 @@ type Iter8ExperimentDetail struct {
 	ExperimentItem  Iter8ExperimentItem   `json:"experimentItem"`
 	CriteriaDetails []Iter8CriteriaDetail `json:"criterias"`
 	TrafficControl  Iter8TrafficControl   `json:"trafficControl"`
+	Permissions     ResourcePermissions   `json:"permissions"`
 }
 
 type Iter8CriteriaDetail struct {
@@ -63,7 +63,7 @@ type Iter8ExperimentSpec struct {
 type Iter8TrafficControl struct {
 	Algorithm            string  `json:"algorithm"`
 	Interval             string  `json:"interval"`
-	MaxIteration         int     `json:"maxIteration"`
+	MaxIterations        int     `json:"maxIterations"`
 	MaxTrafficPercentage float64 `json:"maxTrafficPercentage"`
 	TrafficStepSize      float64 `json:"trafficStepSize"`
 }
@@ -107,7 +107,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	trafficControl := Iter8TrafficControl{
 		Algorithm:            spec.TrafficControl.Strategy,
 		Interval:             spec.TrafficControl.Interval,
-		MaxIteration:         spec.TrafficControl.MaxIterations,
+		MaxIterations:        spec.TrafficControl.MaxIterations,
 		MaxTrafficPercentage: spec.TrafficControl.MaxTrafficPercentage,
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
 	}

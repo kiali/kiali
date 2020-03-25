@@ -20,7 +20,10 @@ spec:
 
       # apiVersion of the target service (required)
       # options:
-      #   v1: indicates that the target service is a Kubernetes service
+      #   v1: indicates that the targeconst (
+    Experiments       = "experiments"
+)
+t service is a Kubernetes service
       #   serving.knative.dev/v1alpha1: indicates that the target service is a Knative service
       apiVersion: v1
 
@@ -484,6 +487,7 @@ func (in *Iter8ExperimentObjectList) DeepCopyObject() runtime.Object {
 
 type Iter8ClientInterface interface {
 	CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error)
+	DeleteIter8Experiment(namespace string, name string) error
 	GetIter8Experiment(namespace string, name string) (Iter8Experiment, error)
 	GetIter8Experiments(namespace string) ([]Iter8Experiment, error)
 	IsIter8Api() bool
@@ -548,4 +552,10 @@ func (in *IstioClient) GetIter8Experiments(namespace string) ([]Iter8Experiment,
 		iter8Experiments = append(iter8Experiments, i8)
 	}
 	return iter8Experiments, nil
+}
+
+func (in *IstioClient) DeleteIter8Experiment(namespace string, name string) error {
+	var err error
+	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(iter8experiments).Name(name).Do().Get()
+	return err
 }

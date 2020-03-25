@@ -82,6 +82,7 @@ func Iter8ExperimentUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
+	// TODO This is not yet implemented
 	experiment, err := business.Iter8.GetIter8Experiment(namespace, name)
 	if err != nil {
 		handleErrorResponse(w, err)
@@ -99,10 +100,10 @@ func Iter8ExperimentDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	experiment, err := business.Iter8.GetIter8Experiment(namespace, name)
+	err = business.Iter8.DeleteIter8Experiment(namespace, name)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, experiment)
+	RespondWithCode(w, http.StatusOK)
 }

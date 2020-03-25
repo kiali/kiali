@@ -65,6 +65,7 @@ const (
 	ServiceMeshPolicies    = "servicemeshpolicies"
 	ServiceMeshRbacConfigs = "servicemeshrbacconfigs"
 	AuthorizationPolicies  = "authorizationpolicies"
+	Experiments            = "experiments"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -87,6 +88,8 @@ var resourceTypesToAPI = map[string]string{
 	ServiceMeshPolicies:    kubernetes.MaistraAuthenticationGroupVersion.Group,
 	ServiceMeshRbacConfigs: kubernetes.MaistraRbacGroupVersion.Group,
 	AuthorizationPolicies:  kubernetes.SecurityGroupVersion.Group,
+	// Externsions
+	Experiments: kubernetes.Iter8GroupVersion.Group,
 }
 
 var apiToVersion = map[string]string{

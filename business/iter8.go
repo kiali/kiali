@@ -2,11 +2,14 @@ package business
 
 import (
 	"encoding/json"
+	"sync"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Iter8Service struct {
@@ -39,12 +42,40 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
 
-	iter8ExperimentObject, err := in.k8s.GetIter8Experiment(namespace, name)
-	if err != nil {
+	errChan := make(chan error, 2)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	var iter8ExperimentObject kubernetes.Iter8Experiment
+	var canCreate, canUpdate, canDelete bool
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		var gErr error
+		iter8ExperimentObject, gErr = in.k8s.GetIter8Experiment(namespace, name)
+		if gErr == nil {
+			iter8ExperimentDetail.Parse(iter8ExperimentObject)
+		} else {
+			errChan <- gErr
+		}
+
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		canCreate, canUpdate, canDelete = getPermissions(in.k8s, namespace, Experiments, "")
+	}(errChan)
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
 		return iter8ExperimentDetail, err
 	}
 
-	iter8ExperimentDetail.Parse(iter8ExperimentObject)
+	iter8ExperimentDetail.Permissions.Create = canCreate
+	iter8ExperimentDetail.Permissions.Update = canUpdate
+	iter8ExperimentDetail.Permissions.Delete = canDelete
+
 	return iter8ExperimentDetail, nil
 }
 
@@ -137,10 +168,20 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TargetService.Candidate = newExperimentSpec.Candidate
 	object.Spec.TrafficControl.Strategy = newExperimentSpec.TrafficControl.Algorithm
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
+	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
+	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
 
 	b, err2 := json.Marshal(object)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(b), nil
+}
+
+func (in *Iter8Service) DeleteIter8Experiment(namespace string, name string) (err error) {
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "DeleteIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+
+	err = in.k8s.DeleteIter8Experiment(namespace, name)
+	return err
 }
