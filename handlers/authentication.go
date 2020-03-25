@@ -172,12 +172,6 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 		return false
 	}
 
-	err = business.OpenshiftOAuth.ValidateToken(token)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
-		return false
-	}
-
 	user, err := business.OpenshiftOAuth.GetUserInfo(token)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
@@ -284,13 +278,19 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
 		log.Warningf("Token is invalid: %s", err.Error())
 	} else {
+		// Session ID claim must be present
+		if len(claims.SessionId) == 0 {
+			log.Warning("Token is invalid: sid claim is required")
+			return http.StatusUnauthorized, ""
+		}
+
 		business, err := business.Get(claims.SessionId)
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, ""
 		}
 
-		err = business.OpenshiftOAuth.ValidateToken(claims.SessionId)
+		_, err = business.OpenshiftOAuth.GetUserInfo(claims.SessionId)
 		if err == nil {
 			// Internal header used to propagate the subject of the request for audit purposes
 			r.Header.Add("Kiali-User", claims.Subject)
@@ -425,6 +425,12 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
 		log.Warningf("Token is invalid: %s", err.Error())
 	} else {
+		// Session ID claim must be present
+		if len(claims.SessionId) == 0 {
+			log.Warning("Token is invalid: sid claim is required")
+			return http.StatusUnauthorized, ""
+		}
+
 		business, err := business.Get(claims.SessionId)
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)

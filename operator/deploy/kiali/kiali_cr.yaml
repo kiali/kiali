@@ -533,8 +533,10 @@ spec:
 # value in a secret. If you store this signing key value in a secret, you
 # must indicate what key in what secret by setting this value to a string
 # in the form of "secret:<secretName>:<secretKey>"
+# If left as an empty string, a secret with a random signing key will be
+# generated for you.
 #    ---
-#    signing_key: "kiali"
+#    signing_key: ""
 
 ##########
 #  ---

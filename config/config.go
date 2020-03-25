@@ -45,6 +45,7 @@ const (
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
 	AuthStrategyTokenIssuer     = "kiali-token"
+	AuthStrategyLDAPIssuer      = "kiali-ldap"
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
@@ -153,7 +154,7 @@ type ExternalServices struct {
 	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
 }
 
-// LoginToken holds config used in token-based authentication
+// LoginToken holds config used for generating the Kiali session tokens.
 type LoginToken struct {
 	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
 	SigningKey        string `yaml:"signing_key,omitempty"`
