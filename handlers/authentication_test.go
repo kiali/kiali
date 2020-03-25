@@ -20,7 +20,7 @@ import (
 type dummyHandler struct {
 }
 
-func (t dummyHandler) ServeHTTP(http.ResponseWriter, *http.Request) { }
+func (t dummyHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
 
 // TestStrategyLoginAuthentication checks that a user with no active
 // session is logged in successfully
@@ -117,7 +117,7 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(60)) // 1 minute expiration from now
 	customClaims := config.IanaClaims{
 		StandardClaims: jwt.StandardClaims{
-			Subject:   "foo",    // We use the "foo" user which should be valid
+			Subject:   "foo", // We use the "foo" user which should be valid
 			ExpiresAt: timeExpire.Unix(),
 			Issuer:    config.AuthStrategyLoginIssuer,
 		},
@@ -185,7 +185,7 @@ func TestStrategyLoginValidatesExpiration(t *testing.T) {
 	}
 
 	// Let's create a valid but expired token.
-	timeExpire := util.Clock.Now().Add(- time.Second * time.Duration(1)) // Expiration time is one second in the past
+	timeExpire := util.Clock.Now().Add(-time.Second * time.Duration(1)) // Expiration time is one second in the past
 	customClaims := config.IanaClaims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   "foo",
@@ -399,9 +399,9 @@ func TestStrategyLoginMissingExpiration(t *testing.T) {
 	// Let's create a valid token that does not expire.
 	customClaims := config.IanaClaims{
 		StandardClaims: jwt.StandardClaims{
-			 Subject:   "foo",
+			Subject: "foo",
 			// ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyLoginIssuer,
+			Issuer: config.AuthStrategyLoginIssuer,
 		},
 	}
 
