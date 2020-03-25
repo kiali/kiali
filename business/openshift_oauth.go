@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"strings"
 
-	kube "k8s.io/client-go/kubernetes"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
@@ -118,30 +116,6 @@ func getOAuthAuthorizationServer() (*OAuthAuthorizationServer, error) {
 	}
 
 	return server, nil
-}
-
-func (in *OpenshiftOAuthService) ValidateToken(token string) error {
-	k8sConfig, err := kubernetes.ConfigClient()
-
-	if err != nil {
-		return fmt.Errorf("could not connect to Openshift: %v", err)
-	}
-
-	k8sConfig.BearerToken = token
-
-	k8s, err := kube.NewForConfig(k8sConfig)
-
-	if err != nil {
-		return fmt.Errorf("could not get Openshift cluster config: %v", err)
-	}
-
-	_, err = k8s.Discovery().ServerVersion()
-
-	if err != nil {
-		return fmt.Errorf("could not get info from Openshift: %v", err)
-	}
-
-	return nil
 }
 
 func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
