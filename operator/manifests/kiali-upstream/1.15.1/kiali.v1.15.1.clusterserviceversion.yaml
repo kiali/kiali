@@ -334,6 +334,8 @@ spec:
           - secrets
           verbs:
           - create
+          - list
+          - watch
         - apiGroups: [""]
           resourceNames:
           - kiali-signing-key
