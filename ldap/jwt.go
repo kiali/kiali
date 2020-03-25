@@ -2,11 +2,10 @@ package ldap
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -14,7 +13,7 @@ import (
 
 // GenerateToken generates JWT
 func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
-	signingKey := config.Get().LoginToken.SigningKey
+	signingKey := config.GetSigningKey()
 
 	// Create the token
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -28,6 +27,7 @@ func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
 	claims["groups"] = user.Groups
 	claims["exp"] = expirationTime.Unix()
 	claims["iat"] = time.Now().Unix()
+	claims["iss"] = config.AuthStrategyLDAPIssuer
 
 	signedToken, err := token.SignedString([]byte(signingKey))
 	if err != nil {
@@ -48,7 +48,7 @@ func ValidateToken(token string) (UserInfo, error) {
 // validate does much of the work of ValidateToken
 func validate(bearerToken string) (UserInfo, error) {
 
-	signingKey := config.Get().LoginToken.SigningKey
+	signingKey := config.GetSigningKey()
 
 	auth := false
 	var claims JWTClaimsJSON // special struct for decoding the json
@@ -80,20 +80,4 @@ func validate(bearerToken string) (UserInfo, error) {
 	u.Status.User = &User{Username: claims.Username, UID: claims.UID, Groups: claims.Groups}
 
 	return u, nil
-}
-
-// GetTokenStringFromRequest is to get the token string from the request
-func GetTokenStringFromRequest(r *http.Request) string {
-	tokenString := "" // Default to no token.
-
-	// Token can be provided by a browser in a Cookie or
-	// in an authorization HTTP header.
-	// The token in the cookie has priority.
-	if authCookie, err := r.Cookie(config.TokenCookieName); err == nil && authCookie != nil {
-		tokenString = authCookie.Value
-	} else if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
-		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
-	}
-
-	return tokenString
 }

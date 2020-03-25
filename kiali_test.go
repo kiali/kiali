@@ -1,14 +1,19 @@
 package main
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/util"
 )
 
 func TestValidateWebRoot(t *testing.T) {
 	// create a base config that we know is valid
+	rand.Seed(time.Now().UnixNano())
 	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = util.RandomString(10)
 	conf.Server.StaticContentRootDirectory = "."
 	conf.Auth.Strategy = "anonymous"
 

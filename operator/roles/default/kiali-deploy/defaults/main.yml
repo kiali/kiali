@@ -162,7 +162,7 @@ kiali_defaults:
 
   login_token:
     expiration_seconds: 86400
-    signing_key: "kiali"
+    signing_key: ""
 
   server:
     address: ""
