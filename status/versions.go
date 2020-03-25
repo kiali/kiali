@@ -27,13 +27,16 @@ var (
 	//   redhat@redhat-docker.io/maistra-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-unknown
 	// Example Maistra upstream project version is:
 	//   redhat@redhat-pulp.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-Custom
+	//   Maistra_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean
+	// Example OpenShift Service Mesh 1.1 product version is:
+	//   OSSM_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean
 	// Example Istio snapshot version is:
 	//   root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-cbe9c05c470ec1924f7bcf02334b183e7e6175cb-Clean
 	// Example Istio dev version is:
 	//   1.5-alpha.dbd2aca8887fb42c2bb358417621a78de372f906-dbd2aca8887fb42c2bb358417621a78de372f906-Clean
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
-	ossmVersionExpr           = regexp.MustCompile(`openshift-service-mesh-([0-9]+\.[0-9]+\.[0-9]+)`)
-	maistraProjectVersionExpr = regexp.MustCompile(`openshift-istio.*-([0-9]+\.[0-9]+\.[0-9]+)`)
+	ossmVersionExpr           = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
+	maistraProjectVersionExpr = regexp.MustCompile(`(?:Maistra_|openshift-istio.*-)([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
 	istioDevVersionExpr       = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*`)
@@ -153,6 +156,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		}
 	}
 
+	// OpenShift Service Mesh
 	ossmStringArr := ossmVersionExpr.FindStringSubmatch(rawVersion)
 	if ossmStringArr != nil {
 		log.Debugf("Detected OpenShift Service Mesh version [%v]", rawVersion)
