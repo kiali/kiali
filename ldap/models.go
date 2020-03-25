@@ -27,7 +27,7 @@ type JWTClaimsJSON struct {
 	Username string   `json:"username"`
 	Expiry   int      `json:"exp"`
 	Groups   []string `json:"groups"`
-	Issuer    string  `json:"iss,omitempty"`
+	Issuer   string   `json:"iss,omitempty"`
 }
 
 // Valid so that JWTClaimsJSON satisfies the jwt.Claims interface
