@@ -198,7 +198,7 @@ func ConfigClient() (*rest.Config, error) {
 	}
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
-		Host:  "http://" + net.JoinHostPort(host, port),
+		Host:  "https://" + net.JoinHostPort(host, port),
 		QPS:   kialiConfig.Get().KubernetesConfig.QPS,
 		Burst: kialiConfig.Get().KubernetesConfig.Burst,
 	}, nil
