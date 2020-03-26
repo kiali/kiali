@@ -1782,7 +1782,7 @@ func TestComplexGraph(t *testing.T) {
 		"response_code":                  "200",
 		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
-	q8m1 := model.Metric{ // bad telem (varient 1)
+	q8m1 := model.Metric{ // bad telem (variant 1)
 		"source_workload_namespace":      "tutorial",
 		"source_workload":                "customer-v1",
 		"source_app":                     "customer",
@@ -1797,7 +1797,7 @@ func TestComplexGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
-	q8m2 := model.Metric{ // bad telem (varient 2)
+	q8m2 := model.Metric{ // bad telem (variant 2)
 		"source_workload_namespace":      "tutorial",
 		"source_workload":                "customer-v1",
 		"source_app":                     "customer",
