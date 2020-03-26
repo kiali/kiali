@@ -13,11 +13,12 @@ func TestPrepareIstioDashboard(t *testing.T) {
 	dashboard := PrepareIstioDashboard("Outbound", "source", "destination")
 
 	assert.Equal(dashboard.Title, "Outbound Metrics")
-	assert.Len(dashboard.Aggregations, 6)
+	assert.Len(dashboard.Aggregations, 7)
 	assert.Equal(model.Aggregation{Label: "source_version", DisplayName: "Local version"}, dashboard.Aggregations[0])
 	assert.Equal(model.Aggregation{Label: "destination_service_name", DisplayName: "Remote service"}, dashboard.Aggregations[1])
 	assert.Equal(model.Aggregation{Label: "destination_app", DisplayName: "Remote app"}, dashboard.Aggregations[2])
 	assert.Equal(model.Aggregation{Label: "destination_version", DisplayName: "Remote version"}, dashboard.Aggregations[3])
 	assert.Equal(model.Aggregation{Label: "response_code", DisplayName: "Response code"}, dashboard.Aggregations[4])
-	assert.Equal(model.Aggregation{Label: "response_flags", DisplayName: "Response flags"}, dashboard.Aggregations[5])
+	assert.Equal(model.Aggregation{Label: "grpc_response_status", DisplayName: "GRPC status"}, dashboard.Aggregations[5])
+	assert.Equal(model.Aggregation{Label: "response_flags", DisplayName: "Response flags"}, dashboard.Aggregations[6])
 }
