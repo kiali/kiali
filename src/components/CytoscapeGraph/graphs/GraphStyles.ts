@@ -331,8 +331,15 @@ export class GraphStyles {
           break;
         }
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
-          const responseTime = edgeData.responseTime > 0 ? edgeData.responseTime : 0;
-          if (responseTime > 0) {
+          // todo: remove this logging once we figure out the strangeness going on with responseTime
+          let logResponseTime = edgeData.responseTime;
+          if (!isNaN(logResponseTime) && !Number.isInteger(logResponseTime)) {
+            console.log(`Unexpected string responseTime=|${logResponseTime}|`);
+          }
+          // hack to fix responseTime is sometimes a string during runtime even though its type is number
+          const responseTimeNumber = parseInt(String(edgeData.responseTime));
+          const responseTime = responseTimeNumber > 0 ? responseTimeNumber : 0;
+          if (responseTime && responseTime > 0) {
             content = responseTime < 1000.0 ? `${responseTime.toFixed(0)}ms` : `${(responseTime / 1000.0).toFixed(2)}s`;
           }
           break;
