@@ -32,7 +32,7 @@ func TestGetIstioDashboard(t *testing.T) {
 
 	assert.Nil(err)
 	assert.Equal("Inbound Metrics", dashboard.Title)
-	assert.Len(dashboard.Aggregations, 5)
+	assert.Len(dashboard.Aggregations, 6)
 	assert.Equal("Local version", dashboard.Aggregations[0].DisplayName)
 	assert.Equal("destination_version", dashboard.Aggregations[0].Label)
 	assert.Equal("Remote app", dashboard.Aggregations[1].DisplayName)

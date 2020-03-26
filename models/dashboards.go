@@ -54,6 +54,10 @@ func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 			DisplayName: "Response code",
 		},
 		{
+			Label:       "grpc_response_status",
+			DisplayName: "GRPC status",
+		},
+		{
 			Label:       "response_flags",
 			DisplayName: "Response flags",
 		},
