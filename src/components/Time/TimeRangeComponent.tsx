@@ -77,7 +77,7 @@ export default class TimeRangeComponent extends React.Component<Props> {
   }
 
   renderDuration(d?: DurationInSeconds) {
-    const durations = humanDurations(serverConfig, undefined, 'Traffic');
+    const durations = humanDurations(serverConfig, 'Last', undefined);
     const options = this.props.allowCustom ? { custom: 'Custom', ...durations } : durations;
     return (
       <ToolbarDropdown
