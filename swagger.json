@@ -4330,6 +4330,9 @@
         "experimentItem": {
           "$ref": "#/definitions/Iter8ExperimentItem"
         },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
+        },
         "trafficControl": {
           "$ref": "#/definitions/Iter8TrafficControl"
         }
@@ -4406,9 +4409,6 @@
         "enabled": {
           "type": "boolean",
           "x-go-name": "Enabled"
-        },
-        "permissions": {
-          "$ref": "#/definitions/ResourcePermissions"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4446,10 +4446,10 @@
           "type": "string",
           "x-go-name": "Interval"
         },
-        "maxIteration": {
+        "maxIterations": {
           "type": "integer",
           "format": "int64",
-          "x-go-name": "MaxIteration"
+          "x-go-name": "MaxIterations"
         },
         "maxTrafficPercentage": {
           "type": "number",
