@@ -120,7 +120,7 @@ func MarkTrafficGenerators(trafficMap graph.TrafficMap) {
 // ReduceToServiceGraph compresses a [service-injected workload] graph by removing
 // the workload nodes such that, with exception of non-service root nodes, the resulting
 // graph has edges only from and to service nodes.  It is typically the last thing called
-// prior to retruning the service graph.
+// prior to returning the service graph.
 func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 	reducedTrafficMap := graph.NewTrafficMap()
 
@@ -140,37 +140,56 @@ func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 						log.Tracef("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
 					}
 				}
+				// if there are no outgoing edges to a service then ignore the node
+				if len(serviceEdges) == 0 {
+					log.Tracef("Service graph ignoring non-service root [%s]", n.Workload)
+					continue
+				}
+				// reset the outgoing traffic and add the surviving edge metadata
+				graph.ResetOutgoingMetadata(n.Metadata)
+				for _, edgeToService := range serviceEdges {
+					graph.AddOutgoingEdgeToMetadata(n.Metadata, edgeToService.Metadata)
+				}
 				n.Edges = serviceEdges
 				reducedTrafficMap[id] = n
 			}
 			continue
 		}
 
-		// handle service node, add to reduced traffic map and generate new edges
+		// now, handle a service node, add to reduced traffic map, generate new edges, and reset outgoing
+		// traffic to just that traffic to other services.
 		reducedTrafficMap[id] = n
+
+		// reset outgoing traffic for the service node.   Terminating traffic is lost but that is the nature
+		// of the graph, which aims to show service-to-service interaction.
+		graph.ResetOutgoingMetadata(n.Metadata)
+
+		// eliminate the edges to workload nodes, resetting their outgoing edges to the source service
 		workloadEdges := n.Edges
-		n.Edges = []*graph.Edge{}
-		for _, workloadEdge := range workloadEdges {
-			workload := workloadEdge.Dest
-			checkNodeType(graph.NodeTypeWorkload, workload)
-			for _, serviceEdge := range workload.Edges {
+		n.Edges = []*graph.Edge{} // reset source service edges
+		for _, edgeToWorkload := range workloadEdges {
+			destWorkload := edgeToWorkload.Dest
+			checkNodeType(graph.NodeTypeWorkload, destWorkload)
+			for _, edgeToService := range destWorkload.Edges {
 				// As above, ignore edges to non-service destinations
-				if serviceEdge.Dest.NodeType != graph.NodeTypeService {
-					log.Tracef("Service graph ignoring non-service destination [%s]", serviceEdge.Dest.Workload)
+				if edgeToService.Dest.NodeType != graph.NodeTypeService {
+					log.Tracef("Service graph ignoring non-service destination [%s:%s]", edgeToService.Dest.NodeType, edgeToService.Dest.Workload)
 					continue
 				}
-				childService := serviceEdge.Dest
+				destService := edgeToService.Dest
 				var edge *graph.Edge
 				for _, e := range n.Edges {
-					if childService.ID == e.Dest.ID && serviceEdge.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
+					if destService.ID == e.Dest.ID && edgeToService.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
 						edge = e
 						break
 					}
 				}
 				if nil == edge {
-					n.Edges = append(n.Edges, serviceEdge)
+					edgeToService.Source = n
+					n.Edges = append(n.Edges, edgeToService)
+					graph.AddOutgoingEdgeToMetadata(n.Metadata, edgeToService.Metadata)
 				} else {
-					addServiceGraphTraffic(edge, serviceEdge)
+					addServiceGraphTraffic(edge, edgeToService)
 				}
 			}
 		}
@@ -180,6 +199,7 @@ func ReduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 }
 
 func addServiceGraphTraffic(toEdge, fromEdge *graph.Edge) {
+	graph.AddOutgoingEdgeToMetadata(toEdge.Source.Metadata, fromEdge.Metadata)
 	graph.AggregateEdgeTraffic(fromEdge, toEdge)
 
 	// handle any appender-based edge data (nothing currently)

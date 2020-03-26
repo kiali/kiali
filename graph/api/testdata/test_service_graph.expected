@@ -20,8 +20,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpIn": "20.00",
-                "httpOut": "20.00"
+                "httpIn": "20.00"
               }
             }
           ],
@@ -48,8 +47,7 @@
                 "httpIn": "80.00",
                 "httpIn3xx": "20.00",
                 "httpIn4xx": "20.00",
-                "httpIn5xx": "20.00",
-                "httpOut": "80.00"
+                "httpIn5xx": "20.00"
               }
             }
           ]
@@ -72,7 +70,13 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "170.00",
-                "httpOut": "170.00"
+                "httpOut": "160.00"
+              }
+            },
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpOut": "31.00"
               }
             }
           ]
@@ -95,8 +99,7 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "60.00",
-                "httpIn5xx": "20.00",
-                "httpOut": "60.00"
+                "httpIn5xx": "20.00"
               }
             }
           ]
@@ -119,7 +122,7 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "100.00",
-                "httpOut": "100.00"
+                "httpOut": "124.00"
               }
             }
           ]
@@ -141,8 +144,7 @@
             {
               "protocol": "tcp",
               "rates": {
-                "tcpIn": "581.00",
-                "tcpOut": "581.00"
+                "tcpIn": "581.00"
               }
             }
           ]
@@ -206,7 +208,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "100.00"
+                "httpOut": "50.00"
               }
             },
             {
@@ -354,7 +356,7 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "50.0"
+              "httpPercentReq": "100.0"
             },
             "responses": {
               "200": {
@@ -450,7 +452,7 @@
               "http": "4.00",
               "http4xx": "4.00",
               "httpPercentErr": "100.0",
-              "httpPercentReq": "5.4"
+              "httpPercentReq": "3.2"
             },
             "responses": {
               "404": {
@@ -474,7 +476,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "27.0"
+              "httpPercentReq": "16.1"
             },
             "responses": {
               "200": {
@@ -498,7 +500,7 @@
             "protocol": "http",
             "rates": {
               "http": "40.00",
-              "httpPercentReq": "80.0"
+              "httpPercentReq": "32.3"
             },
             "responses": {
               "200": {
@@ -524,7 +526,7 @@
               "http": "60.00",
               "http5xx": "20.00",
               "httpPercentErr": "33.3",
-              "httpPercentReq": "120.0"
+              "httpPercentReq": "48.4"
             },
             "responses": {
               "200": {
