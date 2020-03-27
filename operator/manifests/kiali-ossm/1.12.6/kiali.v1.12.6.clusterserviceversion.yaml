@@ -75,7 +75,7 @@ metadata:
 spec:
   version: 1.12.6
   maturity: stable
-  replaces: kiali-operator.v1.0.11
+  replaces: kiali-operator.v1.0.12
   relatedImages:
   - name: kiali
     image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.6
