@@ -41,14 +41,14 @@
 #    If UNINSTALL_EXISTING_OPERATOR is true, this value is ignored since Kiali will be uninstalled
 #    when the operator is uninstalled.
 #    If UNINSTALL_MODE is true, this value is ignored.
-#    Default: "false"
+#    Default: If not explicitly defined, an interactive prompt will ask for confirmation.
 #
 # UNINSTALL_EXISTING_OPERATOR
 #    If true, this script will attempt to uninstall any currently existing operator resources.
 #    If the operator is already installed and you opt not to uninstall it, this script will abort.
 #    Uninstalling the operator will also uninstall any existing Kiali installation as well.
 #    If UNINSTALL_MODE is true, this value is ignored.
-#    Default: "false"
+#    Default: If not explicitly defined, an interactive prompt will ask for confirmation.
 #
 # UNINSTALL_MODE
 #    When set to true, this script will uninstall the operator and Kiali, and it will not install anything.
