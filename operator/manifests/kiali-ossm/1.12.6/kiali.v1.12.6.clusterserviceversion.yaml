@@ -339,24 +339,24 @@ spec:
           - list
           - patch
         - apiGroups: [""]
-       ￼  resources:
-       ￼  - secrets
-       ￼  verbs:
-       ￼  - create
-       ￼  - list
-       ￼  - watch
+          resources:
+          - secrets
+          verbs:
+          - create
+          - list
+          - watch
         - apiGroups: [""]
-       ￼  resourceNames:
-       ￼  - kiali-signing-key
-       ￼  resources:
-       ￼  - secrets
-       ￼  verbs:
-       ￼  - delete
-       ￼  - get
-       ￼  - list
-       ￼  - patch
-       ￼  - update
-       ￼  - watch
+          resourceNames:
+          - kiali-signing-key
+          resources:
+          - secrets
+          verbs:
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups: ["apps"]
           resources:
           - deployments
