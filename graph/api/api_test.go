@@ -1700,6 +1700,7 @@ func TestServiceNodeGraph(t *testing.T) {
 // - istio component namespaces
 // - a "shared" node (internal in ns-1, outsider in ns-2)
 // - request.host
+// - bad telemetry filtering
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
@@ -1781,10 +1782,64 @@ func TestComplexGraph(t *testing.T) {
 		"response_code":                  "200",
 		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
+	q8m1 := model.Metric{ // bad telem (variant 1)
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "10.20.30.40:9080",
+		"destination_service_name":       "10.20.30.40:9080",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
+	q8m2 := model.Metric{ // bad telem (variant 2)
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "10.20.30.40",
+		"destination_service_name":       "10.20.30.40",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
+	q8m3 := model.Metric{ // good telem (mock service entry)
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "app.example.com",
+		"destination_service_name":       "app.example.com",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
 	v8 := model.Vector{
 		&model.Sample{
 			Metric: q8m0,
-			Value:  50}}
+			Value:  50},
+		&model.Sample{
+			Metric: q8m1,
+			Value:  100},
+		&model.Sample{
+			Metric: q8m2,
+			Value:  200},
+		&model.Sample{
+			Metric: q8m3,
+			Value:  300}}
 
 	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v9 := model.Vector{}
