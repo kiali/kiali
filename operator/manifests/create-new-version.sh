@@ -34,6 +34,10 @@ while [[ $# -gt 0 ]]; do
       NEW_PACKAGE_NAME="$2"
       shift;shift
       ;;
+    -rv|--replace-version)
+      REPLACE_VERSION="$2"
+      shift;shift
+      ;;
     -vm|--verify-manifest)
       OPERATOR_COURIER_VERIFY="$2"
       shift;shift
@@ -69,6 +73,11 @@ Valid options:
       If specified, this will be the new manifest package name.
       If not specified, the current package name of the old manifest is retained.
       This setting is completely ignored unless --new-manifest is specified and is different from the --old-manifest.
+  -rv|--replace-version <version string>
+      The version that is going to be superceded with the new release. This must be the previous release
+      prior to the new version. For example, if versions 1.0 and 1.1 have been released (into the wild, not just
+      built) and the new version is 2.0, the replace version must be 1.1.
+      Default: the same value as specified by --old-version
   -vm|--verify-manifest <true|false>
       Verify the validity of the manifest metadata via the operator-courier tool. You must have operator-courier
       installed and in your PATH for this to work.
@@ -117,9 +126,15 @@ OLD_VERSION_OLD_MANIFEST_DIR="${OLD_MANIFEST_DIR}/${OLD_VERSION}"
 NEW_VERSION_OLD_MANIFEST_DIR="${OLD_MANIFEST_DIR}/${NEW_VERSION}"
 OLD_VERSION_NEW_MANIFEST_DIR="${NEW_MANIFEST_DIR}/${OLD_VERSION}"
 NEW_VERSION_NEW_MANIFEST_DIR="${NEW_MANIFEST_DIR}/${NEW_VERSION}"
+REPLACE_VERSION=${REPLACE_VERSION:-${OLD_VERSION}}
+REPLACE_VERSION_OLD_MANIFEST_DIR="${OLD_MANIFEST_DIR}/${REPLACE_VERSION}"
 
 if [ ! -d "${OLD_VERSION_OLD_MANIFEST_DIR}" ]; then
   echo "Did not find the old version of the manifest: ${OLD_VERSION_OLD_MANIFEST_DIR}"
+  exit 1
+fi
+if [ ! -d "${REPLACE_VERSION_OLD_MANIFEST_DIR}" ]; then
+  echo "Did not find the replace version of the manifest: ${REPLACE_VERSION_OLD_MANIFEST_DIR}"
   exit 1
 fi
 if [ -d "${NEW_VERSION_OLD_MANIFEST_DIR}" ]; then
@@ -192,7 +207,8 @@ fi
 
 # Update the "replaces" metadata so the CSV indicates it is replacing the old version
 
-sed -i "s/replaces: kiali-operator.v.*/replaces: kiali-operator.v${OLD_VERSION}/gw /tmp/kiali-manifest-changes.txt" ${NEW_VERSION_CSV_YAML}
+OLD_REPLACE_VERSION="$(grep -P '^\s+replaces:\s+kiali-operator\.v(.*)\s*$' ${NEW_VERSION_CSV_YAML}|sed 's/^.*\.v\(.*\)$/\1/')"
+sed -i "s/${OLD_REPLACE_VERSION}/${REPLACE_VERSION}/gw /tmp/kiali-manifest-changes.txt" ${NEW_VERSION_CSV_YAML}
 if [ ! -s /tmp/kiali-manifest-changes.txt ]; then
   echo "It looks like 'replaces' metadata was not changed in the new CSV file. Check the new CSV file for correctness."
   echo CSV FILE: ${NEW_VERSION_CSV_YAML}
