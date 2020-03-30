@@ -276,9 +276,9 @@ rules:
   resources:
   - experiments
   verbs:
-  - create
-  - delete
+  ${OPERATOR_ROLE_CREATE}
+  ${OPERATOR_ROLE_DELETE}
   - get
   - list
-  - patch
+  ${OPERATOR_ROLE_PATCH}
   - watch
