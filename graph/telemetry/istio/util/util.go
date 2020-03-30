@@ -1,11 +1,15 @@
 package util
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
+
+// badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
+var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
 
 // HandleMultiClusterRequest ensures the proper destination service workload and name
 // for requests forwarded from another cluster (via a ServiceEntry).
@@ -60,8 +64,10 @@ func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk 
 
 // IsBadTelemetry tests for known issues in generated telemetry given indicative label values.
 // 1) During pod lifecycle changes incomplete telemetry may be generated that results in
-//    destSvc == destSvcName and no dest workload
+//    destSvc == destSvcName and no dest workload, where destSvc[Name] is in the form of an IP address.
 // 2) no more conditions known
 func IsBadTelemetry(destSvc, destSvcName, destWl string) bool {
-	return (!graph.IsOK(destWl) && graph.IsOK(destSvc) && graph.IsOK(destSvcName) && (destSvc == destSvcName))
+	// case1
+	failsEqualsTest := (!graph.IsOK(destWl) && graph.IsOK(destSvc) && graph.IsOK(destSvcName) && (destSvc == destSvcName))
+	return failsEqualsTest && badServiceMatcher.MatchString(destSvcName)
 }
