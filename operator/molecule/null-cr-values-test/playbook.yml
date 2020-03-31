@@ -13,9 +13,7 @@
   - assert:
       that:
       - kiali_configmap.installation_tag == ""
-      - kiali_configmap.additional_display_details | length == 0
-      - kiali_configmap.apidocs.annotations.api_spec_annotation_name == "kiali.io/api-spec"
-      - kiali_configmap.apidocs.annotations.api_type_annotation_name == "kiali.io/api-type"
+      - kiali_configmap.additional_display_details | length == 1
       - kiali_configmap.auth.ldap.ldap_group_filter == "(cn=%s)"
       - kiali_configmap.deployment.ingress_enabled == True
       - kiali_configmap.deployment.replicas == 1
@@ -38,5 +36,5 @@
       - kiali_configmap.istio_labels.version_label_name == "version"
       - kiali_configmap.kubernetes_config.burst == 200
       - kiali_configmap.kubernetes_config.excluded_workloads | length > 0
-      - kiali_configmap.login_token.signing_key == "kiali"
+      - kiali_configmap.login_token.signing_key | length > 0
       - kiali_configmap.server.metrics_port == 9090
