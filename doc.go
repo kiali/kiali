@@ -4,6 +4,7 @@ import (
 	jaegerModels "github.com/jaegertracing/jaeger/model/json"
 
 	"github.com/kiali/k-charted/model"
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/jaeger"
@@ -696,4 +697,11 @@ type Iter8ExperimentsGetDetailResponse struct {
 type Iter8ExperimentsResponnse struct {
 	// in: body
 	Body []models.Iter8ExperimentItem
+}
+
+// Return a list of Istio components along its status
+// swagger:response istioStatusResponse
+type IstioStatusResponse struct {
+	// in: body
+	Body business.IstioComponentStatus
 }
