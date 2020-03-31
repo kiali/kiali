@@ -304,9 +304,9 @@ spec:
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
                 - name: KIALI_IMAGE_default
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.11"
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.12"
                 - name: KIALI_IMAGE_v1_0
-                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.11"
+                  value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.12"
                 - name: KIALI_IMAGE_v1_12
                   value: "registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.12.6"
               volumes:
