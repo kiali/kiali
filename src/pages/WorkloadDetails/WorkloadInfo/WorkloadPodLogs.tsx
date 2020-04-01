@@ -33,14 +33,14 @@ interface WorkloadPodLogsState {
 
 const TailLinesDefault = 500;
 const TailLinesOptions = {
-  '-1': 'Tail All lines',
-  '10': 'Tail 10 lines',
-  '50': 'Tail 50 lines',
-  '100': 'Tail 100 lines',
-  '300': 'Tail 300 lines',
-  '500': 'Tail 500 lines',
-  '1000': 'Tail 1000 lines',
-  '5000': 'Tail 5000 lines'
+  '-1': 'All lines',
+  '10': 'Last 10 lines',
+  '50': 'Last 50 lines',
+  '100': 'Last 100 lines',
+  '300': 'Last 300 lines',
+  '500': 'Last 500 lines',
+  '1000': 'Last 1000 lines',
+  '5000': 'Last 5000 lines'
 };
 
 const logsTextarea = style({
