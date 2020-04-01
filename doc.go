@@ -686,13 +686,13 @@ type Iter8StatusResponse struct {
 
 // Return a Iter8 Experiment detail
 // swagger:response iter8ExperimentGetDetailResponse
-type Iter8ExperimentGetDetailResponse struct {
+type Iter8ExperimentsGetDetailResponse struct {
 	// in: body
 	Body models.Iter8ExperimentDetail
 }
 
 // Return a list of Iter8 Experiment Items
-// swagger:response iter8ExperimentsGetResponse
+// swagger:response iter8ExperimentsResponse
 type Iter8ExperimentsResponnse struct {
 	// in: body
 	Body []models.Iter8ExperimentItem

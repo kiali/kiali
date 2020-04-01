@@ -196,7 +196,7 @@
         "operationId": "iter8Experiments",
         "responses": {
           "200": {
-            "$ref": "#/responses/iter8GetExperimentsResponse"
+            "$ref": "#/responses/iter8ExperimentsResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -311,7 +311,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/iter8ExperimentsGetResponse"
+            "$ref": "#/responses/iter8ExperimentGetDetailResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -2533,6 +2533,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "traces"
+        ],
         "operationId": "spansList",
         "parameters": [
           {
@@ -3228,6 +3231,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "getThreeScaleInfo",
         "responses": {
           "200": {
@@ -3249,6 +3255,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "getThreeScaleHandlers",
         "responses": {
           "200": {
@@ -3267,6 +3276,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "postThreeScaleHandlers",
         "responses": {
@@ -3288,6 +3300,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "deleteThreeScaleHandler",
         "parameters": [
@@ -3320,6 +3335,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "patchThreeScaleHandler",
         "parameters": [
@@ -3355,6 +3373,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "postThreeScaleService",
         "parameters": [
           {
@@ -3385,6 +3406,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "getThreeScaleService",
         "parameters": [
@@ -3426,6 +3450,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "deleteThreeScaleService",
         "parameters": [
           {
@@ -3462,6 +3489,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "patchThreeScaleService",
         "parameters": [
@@ -7085,7 +7115,7 @@
         "$ref": "#/definitions/Iter8ExperimentDetail"
       }
     },
-    "iter8ExperimentsGetResponse": {
+    "iter8ExperimentsResponse": {
       "description": "Return a list of Iter8 Experiment Items",
       "schema": {
         "type": "array",
