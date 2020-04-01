@@ -1325,7 +1325,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Iter8Status,
 			true,
 		},
-		// swagger:route GET /iter8/namespaces/{namespace}/experiments/{name} getIter8Experiments
+		// swagger:route GET /iter8/namespaces/{namespace}/experiments/{name} iter8 getIter8Experiments
 		// ---
 		// Endpoint to fetch iter8 experiments by namespace and name
 		//
@@ -1344,7 +1344,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Iter8ExperimentGet,
 			true,
 		},
-		// swagger:route GET /iter8/experiments
+		// swagger:route GET /iter8/experiments iter8 iter8Experiments
 		// ---
 		// Endpoint to fetch iter8 experiments for all namespaces user have access.
 		// User can define a comman separated list of namespaces.
@@ -1365,7 +1365,7 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 
-		// swagger:route POST /iter8/namespaces/{namespace}/experiments postIter8Experiments
+		// swagger:route POST /iter8/namespaces/{namespace}/experiments iter8 postIter8Experiments
 		// ---
 		// Endpoint to create new iter8 experiments for a given namespace.
 		//
@@ -1384,7 +1384,7 @@ func NewRoutes() (r *Routes) {
 			HandlerFunc:   handlers.Iter8ExperimentCreate,
 			Authenticated: true,
 		},
-		// swagger:route PATCH /iter8/experiments/{namespace}/name/{name} patchIter8Experiments
+		// swagger:route PATCH /iter8/experiments/{namespace}/name/{name} iter8 patchIter8Experiments
 		// ---
 		// Endpoint to update new iter8 experiment (for abort purpose)
 		//
@@ -1403,7 +1403,7 @@ func NewRoutes() (r *Routes) {
 			HandlerFunc:   handlers.Iter8ExperimentUpdate,
 			Authenticated: true,
 		},
-		// swagger:route DELETE /iter8/experiments/namespaces/{namespace}/name/{name} deleteIter8Experiments
+		// swagger:route DELETE /iter8/experiments/namespaces/{namespace}/name/{name} iter8 deleteIter8Experiments
 		// ---
 		// Endpoint to delete   iter8 experiments
 		//

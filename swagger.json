@@ -179,6 +179,31 @@
         }
       }
     },
+    "/iter8/experiments": {
+      "get": {
+        "description": "User can define a comman separated list of namespaces.",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "iter8"
+        ],
+        "summary": "Endpoint to fetch iter8 experiments for all namespaces user have access.",
+        "operationId": "iter8Experiments",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8GetExperimentsResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/iter8/experiments/namespaces/{namespace}/name/{name}": {
       "delete": {
         "description": "Endpoint to delete   iter8 experiments",
@@ -188,6 +213,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "deleteIter8Experiments",
         "parameters": [
@@ -224,6 +252,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "patchIter8Experiments",
         "parameters": [
@@ -263,6 +294,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "iter8"
+        ],
         "summary": "Endpoint to create new iter8 experiments for a given namespace.",
         "operationId": "postIter8Experiments",
         "parameters": [
@@ -294,6 +328,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "getIter8Experiments",
         "parameters": [
