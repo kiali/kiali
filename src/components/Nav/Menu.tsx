@@ -54,7 +54,9 @@ class Menu extends React.Component<MenuProps, MenuState> {
       .filter(item => {
         // Extensions are conditionally rendered
         if (item.title === '3scale Config') {
-          return serverConfig.extensions!.threescale.enabled;
+          return serverConfig.extensions!.threescale!.enabled;
+        } else if (item.title === 'Iter8 Experiments') {
+          return serverConfig.extensions!.iter8!.enabled;
         }
         return true;
       })

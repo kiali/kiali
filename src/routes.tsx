@@ -14,6 +14,9 @@ import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/Defa
 import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
 import ThreeScaleHandlerListPage from './pages/extensions/threescale/ThreeScaleHandlerList/ThreeScaleHandlerListPage';
 import ThreeScaleHandlerDetailsPage from './pages/extensions/threescale/ThreeScaleHandlerDetails/ThreeScaleHandlerDetailsPage';
+import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/ExperimentListPage';
+import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
+import ExperimentDetailsPage from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentDetailsPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -61,6 +64,11 @@ const extensionsItems: MenuItem[] = [
     title: '3scale Config',
     to: '/extensions/threescale',
     pathsActive: [/^\/extensions\/threescale/]
+  },
+  {
+    title: 'Iter8 Experiments',
+    to: '/extensions/iter8',
+    pathsActive: [/^\/extensions\/iter8/, new RegExp('^/extensions/namespaces/(.*)/iter8')]
   }
 ];
 
@@ -162,6 +170,10 @@ const secondaryMastheadRoutes: Path[] = [
   {
     path: '/' + Paths.JAEGER,
     component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/extensions/iter8',
+    component: DefaultSecondaryMasthead
   }
 ];
 
@@ -178,6 +190,20 @@ const extensionsRoutes: Path[] = [
   {
     path: '/extensions/threescale',
     component: ThreeScaleHandlerListPage
+  },
+  // Extension will follow /extensions/<extension>/namespaces/:namespace/experiments/:name pattern
+  // To make RenderPage.tsx routes easy to filter without regex
+  {
+    path: '/extensions/namespaces/:namespace/iter8/:name',
+    component: ExperimentDetailsPage
+  },
+  {
+    path: '/extensions/iter8/new',
+    component: ExperimentCreatePageContainer
+  },
+  {
+    path: '/extensions/iter8',
+    component: ExperimentListPage
   }
 ];
 

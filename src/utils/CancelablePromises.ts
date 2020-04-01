@@ -75,4 +75,8 @@ export class PromisesRegistry {
       this.promises.delete(key);
     }
   }
+
+  has(key: string): boolean {
+    return this.promises.has(key);
+  }
 }
