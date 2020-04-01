@@ -3258,6 +3258,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "status"
+        ],
         "operationId": "getStatus",
         "responses": {
           "200": {

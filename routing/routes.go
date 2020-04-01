@@ -141,7 +141,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AuthenticationInfo,
 			false,
 		},
-		// swagger:route GET /status getStatus
+		// swagger:route GET /status status getStatus
 		// ---
 		// Endpoint to get the status of Kiali
 		//
