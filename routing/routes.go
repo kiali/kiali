@@ -1045,7 +1045,7 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNode,
 			true,
 		},
-		// swagger:route GET /grafana grafanaInfo
+		// swagger:route GET /grafana integrations grafanaInfo
 		// ---
 		// Get the grafana URL and other descriptors
 		//
@@ -1067,7 +1067,7 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
-		// swagger:route GET /jaeger jaegerInfo
+		// swagger:route GET /jaeger integrations jaegerInfo
 		// ---
 		// Get the jaeger URL and other descriptors
 		//

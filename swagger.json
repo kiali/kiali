@@ -150,6 +150,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "integrations"
+        ],
         "operationId": "grafanaInfo",
         "responses": {
           "200": {
@@ -379,6 +382,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "integrations"
         ],
         "operationId": "jaegerInfo",
         "responses": {
