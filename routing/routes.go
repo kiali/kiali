@@ -61,7 +61,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
-		// swagger:route GET /authenticate Authenticate
+		// swagger:route GET /authenticate auth authenticate
 		// ---
 		// Endpoint to authenticate the user
 		//
@@ -83,7 +83,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Authenticate,
 			false,
 		},
-		// swagger:route POST /authenticate OpenshiftCheckToken
+		// swagger:route POST /authenticate auth openshiftCheckToken
 		// ---
 		// Endpoint to check if a token from Openshift is working correctly
 		//
@@ -102,7 +102,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Authenticate,
 			false,
 		},
-		// swagger:route GET /logout Logout
+		// swagger:route GET /logout auth logout
 		// ---
 		// Endpoint to logout an user (unset the session cookie)
 		//
@@ -117,7 +117,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Logout,
 			false,
 		},
-		// swagger:route GET /auth/info AuthenticationInfo
+		// swagger:route GET /auth/info auth authenticationInfo
 		// ---
 		// Endpoint to get login info, such as strategy, authorization endpoints
 		// for OAuth providers and so on.

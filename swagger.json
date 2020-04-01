@@ -51,7 +51,10 @@
           "http",
           "https"
         ],
-        "operationId": "AuthenticationInfo",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "authenticationInfo",
         "responses": {
           "200": {
             "$ref": "#/responses/authenticationInfo"
@@ -80,7 +83,10 @@
           "http",
           "https"
         ],
-        "operationId": "Authenticate",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "authenticate",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenResponse"
@@ -99,7 +105,10 @@
           "http",
           "https"
         ],
-        "operationId": "OpenshiftCheckToken",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "openshiftCheckToken",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenResponse"
@@ -392,7 +401,10 @@
           "http",
           "https"
         ],
-        "operationId": "Logout",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "logout",
         "responses": {
           "204": {
             "$ref": "#/responses/noContent"
