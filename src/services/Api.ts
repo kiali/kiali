@@ -32,7 +32,7 @@ import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
-
+import { Iter8Info, Iter8Experiment, Iter8ExpDetailsInfo } from '../types/Iter8';
 export const ANONYMOUS_USER = 'anonymous';
 
 export interface Response<T> {
@@ -531,4 +531,32 @@ export const getServiceSpans = (namespace: string, service: string, params: Trac
 
 export const getIstioPermissions = (namespaces: string[]) => {
   return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, { namespaces: namespaces.join(',') }, {});
+};
+
+export const getIter8Info = () => {
+  return newRequest<Iter8Info>(HTTP_VERBS.GET, urls.iter8, {}, {});
+};
+
+export const getExperiments = (namespaces: string[]) => {
+  return newRequest<Iter8Experiment[]>(HTTP_VERBS.GET, urls.iter8Experiments, { namespaces: namespaces.join(',') }, {});
+};
+
+export const getExperimentsByNamespace = (namespace: string) => {
+  return newRequest<Iter8Experiment>(HTTP_VERBS.GET, urls.iter8ExperimentsByNamespace(namespace), {}, {});
+};
+
+export const getExperiment = (namespace: string, name: string) => {
+  return newRequest<Iter8ExpDetailsInfo>(HTTP_VERBS.GET, urls.iter8Experiment(namespace, name), {}, {});
+};
+
+export const deleteExperiment = (namespace: string, name: string) => {
+  return newRequest<Iter8Experiment>(HTTP_VERBS.DELETE, urls.iter8Experiment(namespace, name), {}, {});
+};
+
+export const createExperiment = (namespace: string, specBody: string) => {
+  return newRequest<Iter8Experiment>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), {}, specBody);
+};
+
+export const updateExperiment = (namespace: string, name: string, specBody: string) => {
+  return newRequest<Iter8Experiment>(HTTP_VERBS.POST, urls.iter8Experiment(namespace, name), {}, specBody);
 };

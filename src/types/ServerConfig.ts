@@ -6,10 +6,13 @@ export type IstioLabelKey = 'appLabelName' | 'versionLabelName';
 interface ThreeScaleConfig {
   enabled: boolean;
 }
-
+interface iter8Config {
+  enabled: boolean;
+}
 // Kiali addons/extensions specific
 interface Extensions {
   threescale: ThreeScaleConfig;
+  iter8: iter8Config;
 }
 
 export interface ServerConfig {
