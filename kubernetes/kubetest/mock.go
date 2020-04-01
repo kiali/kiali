@@ -460,6 +460,11 @@ func (o *K8SClientMock) IsIter8Api() bool {
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) DeleteIter8Experiment(namespace string, name string) error {
+	args := o.Called(namespace, name)
+	return args.Error(0)
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{

@@ -102,3 +102,13 @@ rules:
   verbs:
   - get
   - list
+- apiGroups: ["iter8.tools"]
+  resources:
+  - experiments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
