@@ -26,7 +26,7 @@ func NewRoutes() (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
-		// swagger:route GET / Root
+		// swagger:route GET /healthz kiali healthz
 		// ---
 		// Endpoint to get the health of Kiali
 		//
@@ -35,7 +35,8 @@ func NewRoutes() (r *Routes) {
 		//
 		//     Schemes: http, https
 		// responses:
-		//      200: statusInfo
+		//		500: internalError
+		//		200
 		{
 			"Healthz",
 			"GET",
@@ -43,7 +44,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Healthz,
 			false,
 		},
-		// swagger:route GET / Root
+		// swagger:route GET / kiali root
 		// ---
 		// Endpoint to get the status of Kiali
 		//
@@ -159,7 +160,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			true,
 		},
-		// swagger:route GET /config getConfig
+		// swagger:route GET /config kiali getConfig
 		// ---
 		// Endpoint to get the config of Kiali
 		//

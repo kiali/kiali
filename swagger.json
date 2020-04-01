@@ -27,7 +27,10 @@
           "http",
           "https"
         ],
-        "operationId": "Root",
+        "tags": [
+          "kiali"
+        ],
+        "operationId": "root",
         "responses": {
           "200": {
             "$ref": "#/responses/statusInfo"
@@ -129,6 +132,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "kiali"
+        ],
         "operationId": "getConfig",
         "responses": {
           "200": {
@@ -166,6 +172,27 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "description": "Endpoint to get the health of Kiali",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "kiali"
+        ],
+        "operationId": "healthz",
+        "responses": {
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }
