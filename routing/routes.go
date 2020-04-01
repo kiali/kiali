@@ -1399,7 +1399,7 @@ func NewRoutes() (r *Routes) {
 		{
 			Name:          "Iter8ExperimentsUpdate",
 			Method:        "PATCH",
-			Pattern:       "/api/iter8/experiments/namespaces/{namespace}/name/{name}",
+			Pattern:       "/api/iter8/namespaces/{namespace}/experiments/{name}",
 			HandlerFunc:   handlers.Iter8ExperimentUpdate,
 			Authenticated: true,
 		},
@@ -1418,7 +1418,7 @@ func NewRoutes() (r *Routes) {
 		{
 			Name:          "Iter8ExperimentDelete",
 			Method:        "DELETE",
-			Pattern:       "/api/iter8/experiments/namespaces/{namespace}/name/{name}",
+			Pattern:       "/api/iter8/namespaces/{namespace}/experiments/{name}",
 			HandlerFunc:   handlers.Iter8ExperimentDelete,
 			Authenticated: true,
 		},

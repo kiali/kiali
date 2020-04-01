@@ -272,3 +272,13 @@ rules:
   verbs:
   - get
   - list
+- apiGroups: ["iter8.tools"]
+  resources:
+  - experiments
+  verbs:
+  ${OPERATOR_ROLE_CREATE}
+  ${OPERATOR_ROLE_DELETE}
+  - get
+  - list
+  ${OPERATOR_ROLE_PATCH}
+  - watch

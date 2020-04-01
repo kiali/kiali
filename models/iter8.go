@@ -1,7 +1,6 @@
 package models
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -9,8 +8,7 @@ import (
 )
 
 type Iter8Info struct {
-	Enabled     bool                `json:"enabled"`
-	Permissions ResourcePermissions `json:"permissions"`
+	Enabled bool `json:"enabled"`
 }
 
 type Iter8ExperimentItem struct {
@@ -34,6 +32,7 @@ type Iter8ExperimentDetail struct {
 	ExperimentItem  Iter8ExperimentItem   `json:"experimentItem"`
 	CriteriaDetails []Iter8CriteriaDetail `json:"criterias"`
 	TrafficControl  Iter8TrafficControl   `json:"trafficControl"`
+	Permissions     ResourcePermissions   `json:"permissions"`
 }
 
 type Iter8CriteriaDetail struct {
@@ -57,13 +56,13 @@ type Iter8ExperimentSpec struct {
 	Baseline       string              `json:"baseline"`
 	Candidate      string              `json:"candidate"`
 	TrafficControl Iter8TrafficControl `json:"trafficControl"`
-	Criterias      Iter8Criteria       `json:"criterias"`
+	Criterias      []Iter8Criteria     `json:"criterias"`
 }
 
 type Iter8TrafficControl struct {
 	Algorithm            string  `json:"algorithm"`
 	Interval             string  `json:"interval"`
-	MaxIteration         int     `json:"maxIteration"`
+	MaxIterations        int     `json:"maxIterations"`
 	MaxTrafficPercentage float64 `json:"maxTrafficPercentage"`
 	TrafficStepSize      float64 `json:"trafficStepSize"`
 }
@@ -107,19 +106,20 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	trafficControl := Iter8TrafficControl{
 		Algorithm:            spec.TrafficControl.Strategy,
 		Interval:             spec.TrafficControl.Interval,
-		MaxIteration:         spec.TrafficControl.MaxIterations,
+		MaxIterations:        spec.TrafficControl.MaxIterations,
 		MaxTrafficPercentage: spec.TrafficControl.MaxTrafficPercentage,
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
 	}
 
-	startTime, _ := strconv.ParseInt(status.StartTimeStamp, 10, 64)
-	startTimeString := time.Unix(0, startTime*int64(1000000)).Format(time.RFC1123)
+	startTimeString := ""
 	endTimeString := ""
-	if status.EndTimestamp != "" {
-		_endTime, _ := strconv.ParseInt(status.EndTimestamp, 10, 64)
-		endTimeInNano := _endTime * int64(1000000)
-		endTimeString = time.Unix(0, endTimeInNano).Format(time.RFC1123)
+	if status.StartTimeStamp > 0 {
+		startTimeString = time.Unix(0, status.StartTimeStamp).Format(time.RFC1123)
 	}
+	if status.EndTimestamp > 0 {
+		endTimeString = time.Unix(0, status.EndTimestamp).Format(time.RFC1123)
+	}
+
 	targetServiceNamespace := spec.TargetService.Namespace
 	if targetServiceNamespace == "" {
 		targetServiceNamespace = iter8Object.GetObjectMeta().Namespace

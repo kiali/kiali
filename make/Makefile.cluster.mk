@@ -36,7 +36,7 @@
 	@if [ "${CLUSTER_REPO_INTERNAL}" == "" ]; then echo "Cannot determine minikube internal registry hostname."; exit 1; fi
 	@if [ "${CLUSTER_REPO}" == "" ]; then echo "Cannot determine minikube external registry hostname. Make sure minikube is running."; exit 1; fi
 	@echo "Minikube repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
-	@if ! ${MINIKUBE} addons list | grep -q "registry: enabled"; then \
+	@if ! ${MINIKUBE} addons list | grep "registry" | grep "enabled"; then \
 	   echo "Minikube does not have the registry addon enabled. Run 'minikube addons enable registry' in order for the make targets to work."; \
 		exit 1 ;\
 	 fi

@@ -62,3 +62,9 @@ rules:
   verbs:
   - get
   - list
+- apiGroups: ["iter8.tools"]
+  resources:
+  - experiments
+  verbs:
+  - get
+  - list
