@@ -180,6 +180,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "config"
+        ],
         "operationId": "getPermissions",
         "responses": {
           "200": {
