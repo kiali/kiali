@@ -32,21 +32,24 @@ export class LabelFilters extends React.Component<LabelFiltersProps> {
         />
         <Popover
           headerContent={<span>Label Filter Help</span>}
+          position={PopoverPosition.right}
           bodyContent={
             <>
               To set a label filter you must enter values like.
               <br />
               <ul style={{ listStyleType: 'circle', marginLeft: '20px' }}>
                 <li>Filter by label presence: label</li>
-                <li>Filter by label and value: label=value</li>
+                <li>Filter by label and value: label:value</li>
                 <li>
-                  Filter by more than one label and one or more values: label=value label2=value2,value2-2 (separate
-                  with ' ')
+                  Filter by more than one label and one or more values:
+                  <br />
+                  label:value label2:value2,value2-2
+                  <br />
+                  (separate with ' ')
                 </li>
               </ul>
             </>
           }
-          position={PopoverPosition.bottom}
         >
           <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }}>
             <KialiIcon.Help className={defaultIconStyle} />

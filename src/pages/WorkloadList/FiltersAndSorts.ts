@@ -13,6 +13,7 @@ import {
 import { LabelFilters } from '../../components/Filters/LabelFilter';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
+import { filterByLabel } from '../../helpers/LabelFilterHelper';
 
 export const sortFields: SortField<WorkloadListItem>[] = [
   {
@@ -283,31 +284,6 @@ const filterByLabelPresence = (
   return result;
 };
 
-const filterByLabel = (items: WorkloadListItem[], filter: string[]): WorkloadListItem[] => {
-  let result: WorkloadListItem[] = [];
-
-  filter.map(filter => {
-    if (filter.includes('=')) {
-      const values = filter.split('=');
-      // Check Values
-      values[1]
-        .split(',')
-        .map(
-          val =>
-            (result = result.concat(
-              items.filter(item => values[0] in item.labels && item.labels[values[0]].startsWith(val))
-            ))
-        );
-    } else {
-      // Check if has Label
-      result = result.concat(items.filter(item => Object.keys(item.labels).some(key => key.startsWith(filter))));
-    }
-    return null;
-  });
-
-  return filter.length > 0 ? result : items;
-};
-
 const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListItem[] => {
   if (names.length === 0) {
     return items;
@@ -330,7 +306,7 @@ export const filterBy = (
   ret = filterByType(ret, workloadTypeFilters);
   ret = filterByName(ret, workloadNamesSelected);
   ret = filterByLabelPresence(ret, istioSidecar, appLabel, versionLabel);
-  ret = filterByLabel(ret, labelFilters);
+  ret = filterByLabel(ret, labelFilters) as WorkloadListItem[];
 
   // We may have to perform a second round of filtering, using data fetched asynchronously (health)
   // If not, exit fast

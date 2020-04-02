@@ -12,6 +12,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { LabelFilters } from '../../components/Filters/LabelFilter';
+import { filterByLabel } from '../../helpers/LabelFilterHelper';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -158,31 +159,6 @@ const filterByName = (items: ServiceListItem[], names: string[]): ServiceListIte
   });
 };
 
-const filterByLabel = (items: ServiceListItem[], filter: string[]): ServiceListItem[] => {
-  let result: ServiceListItem[] = [];
-
-  filter.map(filter => {
-    if (filter.includes('=')) {
-      const values = filter.split('=');
-      // Check Values
-      values[1]
-        .split(',')
-        .map(
-          val =>
-            (result = result.concat(
-              items.filter(item => values[0] in item.labels && item.labels[values[0]].startsWith(val))
-            ))
-        );
-    } else {
-      // Check if has Label
-      result = result.concat(items.filter(item => Object.keys(item.labels).some(key => key.startsWith(filter))));
-    }
-    return null;
-  });
-
-  return filter.length > 0 ? result : items;
-};
-
 export const filterBy = (
   items: ServiceListItem[],
   filters: ActiveFilter[]
@@ -200,7 +176,7 @@ export const filterBy = (
 
   const serviceFilterSelected = getFilterSelectedValues(labelFilter, filters);
   if (serviceFilterSelected.length > 0) {
-    ret = filterByLabel(ret, serviceFilterSelected);
+    ret = filterByLabel(ret, serviceFilterSelected) as ServiceListItem[];
   }
   // We may have to perform a second round of filtering, using data fetched asynchronously (health)
   // If not, exit fast

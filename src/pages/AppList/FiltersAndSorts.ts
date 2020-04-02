@@ -12,6 +12,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { LabelFilters } from '../../components/Filters/LabelFilter';
+import { filterByLabel } from '../../helpers/LabelFilterHelper';
 
 export const sortFields: SortField<AppListItem>[] = [
   {
@@ -118,35 +119,6 @@ const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppL
   return items.filter(item => item.istioSidecar === istioSidecar);
 };
 
-const filterByLabel = (items: AppListItem[], filter: string[]): AppListItem[] => {
-  let result: AppListItem[] = [];
-
-  filter.map(filter => {
-    if (filter.includes('=')) {
-      const values = filter.split('=');
-      // Check Values
-      values[1].split(',').map(
-        val =>
-          (result = result.concat(
-            items.filter(item => {
-              if (values[0] in item.labels) {
-                return item.labels[values[0]].split(',').some(appVal => appVal.startsWith(val));
-              } else {
-                return false;
-              }
-            })
-          ))
-      );
-    } else {
-      // Check if has Label
-      result = result.concat(items.filter(item => Object.keys(item.labels).some(key => key.startsWith(filter))));
-    }
-    return null;
-  });
-
-  return filter.length > 0 ? result : items;
-};
-
 export const filterBy = (appsList: AppListItem[], filters: ActiveFilter[]): Promise<AppListItem[]> | AppListItem[] => {
   let ret = appsList;
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
@@ -161,7 +133,7 @@ export const filterBy = (appsList: AppListItem[], filters: ActiveFilter[]): Prom
 
   const appLabelsSelected = getFilterSelectedValues(labelFilter, filters);
   if (appLabelsSelected.length > 0) {
-    ret = filterByLabel(ret, appLabelsSelected);
+    ret = filterByLabel(ret, appLabelsSelected) as AppListItem[];
   }
 
   // We may have to perform a second round of filtering, using data fetched asynchronously (health)
