@@ -65,6 +65,15 @@ const emptyStateStyle = style({
   marginTop: 10
 });
 
+const cardNamespaceNameStyle = style({
+  display: 'inline-block',
+  maxWidth: 'calc(100% - 45px)',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  verticalAlign: 'middle',
+  whiteSpace: 'nowrap'
+});
+
 type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
@@ -381,7 +390,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   <Card isCompact={true} className={cardGridStyle}>
                     <CardHeader>
                       {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                      {ns.name}
+                      <span className={cardNamespaceNameStyle} title={ns.name}>
+                        {ns.name}
+                      </span>
                       {this.renderIstioConfigStatus(ns)}
                     </CardHeader>
                     <CardBody>
