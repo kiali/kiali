@@ -1,6 +1,8 @@
 # Security Policy
 Kiali takes security seriously and encourages users to report security concerns.
 
+For current security bulletins see https://kiali.io/news/security-bulletins .
+
 ## Supported Versions
 Kiali provides security updates for versions used in supported versions of the following products:
 
