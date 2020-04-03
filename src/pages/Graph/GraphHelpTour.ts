@@ -4,12 +4,8 @@ import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Display: {
     name: 'Display',
-    description: 'Toggle various display options such as badging traffic animation, and service nodes.'
-  },
-  EdgeLabels: {
-    name: 'Edge Labels',
     description:
-      'Select the information to show on the edges between nodes. Response times reflect the 95th percentile.'
+      'Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.'
   },
   Find: {
     name: 'Find and Hide',
@@ -64,7 +60,6 @@ const GraphTour: TourInfo = {
   stops: [
     GraphTourStops.Namespaces,
     GraphTourStops.GraphType,
-    GraphTourStops.EdgeLabels,
     GraphTourStops.Display,
     GraphTourStops.Find,
     GraphTourStops.TimeRange,

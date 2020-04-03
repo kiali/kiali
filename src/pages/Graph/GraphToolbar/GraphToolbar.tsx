@@ -61,8 +61,8 @@ const rightToolbarStyle = style({
   marginLeft: 'auto'
 });
 
-const marginLeftRight = style({
-  margin: '0 10px 0 10px'
+const leftSpacerStyle = style({
+  marginLeft: '10px'
 });
 
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
@@ -162,7 +162,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
   // TODO [jshaughn] Is there a better typescript way than the style attribute with the spread syntax (here and other places)
   render() {
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
-    const edgeLabelModeKey: string = _.findKey(EdgeLabelMode, val => val === this.props.edgeLabelMode)!;
+
     return (
       <>
         <Toolbar className={toolbarStyle}>
@@ -196,21 +196,11 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
                 </Tooltip>
               </>
             )}
-            <div className={marginLeftRight}>
-              <TourStopContainer info={GraphTourStops.EdgeLabels}>
-                <ToolbarDropdown
-                  id={'graph_filter_edge_labels'}
-                  disabled={false}
-                  handleSelect={this.setEdgeLabelMode}
-                  value={edgeLabelModeKey}
-                  label={GraphToolbar.EDGE_LABEL_MODES[edgeLabelModeKey]}
-                  options={GraphToolbar.EDGE_LABEL_MODES}
-                />
+            <div className={leftSpacerStyle}>
+              <TourStopContainer info={GraphTourStops.Display}>
+                <GraphSettingsContainer graphType={this.props.graphType} />
               </TourStopContainer>
             </div>
-            <TourStopContainer info={GraphTourStops.Display}>
-              <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
-            </TourStopContainer>
           </div>
           <GraphFindContainer />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
@@ -233,13 +223,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     const graphType: GraphType = GraphType[type] as GraphType;
     if (this.props.graphType !== graphType) {
       this.props.setGraphType(graphType);
-    }
-  };
-
-  private setEdgeLabelMode = (edgeMode: string) => {
-    const mode: EdgeLabelMode = EdgeLabelMode[edgeMode] as EdgeLabelMode;
-    if (this.props.edgeLabelMode !== mode) {
-      this.props.setEdgeLabelMode(mode);
     }
   };
 }

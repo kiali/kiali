@@ -1,11 +1,11 @@
 export enum PfColors {
   Black100 = '#fafafa',
   Black150 = '#f5f5f5',
-  Black200 = '#ededed',
+  Black200 = '#f0f0f0',
   Black300 = '#d1d1d1',
   Black400 = '#bbb',
   Black500 = '#8b8d8f',
-  Black600 = '#72767b',
+  Black600 = '#6a6e73',
   Black700 = '#4d5258',
   Black800 = '#393f44',
   Black900 = '#292e34',

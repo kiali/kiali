@@ -55,7 +55,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   Object {
                     "status": Object {
                       "class": "icon-na",
-                      "color": "#72767b",
+                      "color": "#6a6e73",
                       "icon": [Function],
                       "name": "No health information",
                       "priority": 0,
@@ -65,7 +65,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   Object {
                     "status": Object {
                       "class": "icon-na",
-                      "color": "#72767b",
+                      "color": "#6a6e73",
                       "icon": [Function],
                       "name": "No health information",
                       "priority": 0,
@@ -75,7 +75,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                 ],
                 "status": Object {
                   "class": "icon-na",
-                  "color": "#72767b",
+                  "color": "#6a6e73",
                   "icon": [Function],
                   "name": "No health information",
                   "priority": 0,
