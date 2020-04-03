@@ -1,5 +1,10 @@
 - hosts: localhost
   gather_facts: no
   tasks:
+  - name: Determine the default playbook
+    include_vars:
+      file: "default-playbook.yml"
+      name: default_playbook
+
   - include_role:
-      name: "{{ version | default('v1.0') }}/kiali-remove"
+      name: "{{ version | default(default_playbook.playbook) }}/kiali-remove"
