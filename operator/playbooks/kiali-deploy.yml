@@ -2,9 +2,14 @@
   gather_facts: no
   tasks:
 
+  - name: Determine the default playbook
+    include_vars:
+      file: "default-playbook.yml"
+      name: default_playbook
+
   - name: Determine the version that is to be installed
     set_fact:
-      version: "{{ version | default('v1.0') }}"
+      version: "{{ version | default(default_playbook.playbook) }}"
 
   - name: Determine the default supported images for all known versions
     include_vars:
