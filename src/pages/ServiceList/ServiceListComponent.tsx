@@ -166,7 +166,7 @@ class ServiceListComponent extends FilterComponent.Component<
           initialFilters={ServiceListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
           rightToolbar={[
-            <DurationDropdownContainer key={'DurationDropdown'} id="service-list-duration-dropdown" />,
+            <DurationDropdownContainer key={'DurationDropdown'} id="service-list-duration-dropdown" prefix="Last" />,
             <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
           ]}
         />

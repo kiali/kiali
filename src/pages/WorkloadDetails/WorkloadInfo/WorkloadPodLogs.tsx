@@ -34,13 +34,13 @@ interface WorkloadPodLogsState {
 const TailLinesDefault = 500;
 const TailLinesOptions = {
   '-1': 'All lines',
-  '10': '10 lines',
-  '50': '50 lines',
-  '100': '100 lines',
-  '300': '300 lines',
-  '500': '500 lines',
-  '1000': '1000 lines',
-  '5000': '5000 lines'
+  '10': 'Last 10 lines',
+  '50': 'Last 50 lines',
+  '100': 'Last 100 lines',
+  '300': 'Last 300 lines',
+  '500': 'Last 500 lines',
+  '1000': 'Last 1000 lines',
+  '5000': 'Last 5000 lines'
 };
 
 const logsTextarea = style({
@@ -176,7 +176,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                       <ToolbarItem className={displayFlex}>
                         <ToolbarDropdown
                           id={'wpl_tailLines'}
-                          nameDropdown="Tail"
                           handleSelect={key => this.setTailLines(Number(key))}
                           value={this.state.tailLines}
                           label={TailLinesOptions[this.state.tailLines]}

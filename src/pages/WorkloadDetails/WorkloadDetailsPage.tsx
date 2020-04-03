@@ -310,10 +310,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     let component;
     switch (this.state.currentTab) {
       case 'info':
-        component = <DurationDropdownContainer id="workload-info-duration-dropdown" />;
+        component = <DurationDropdownContainer id="workload-info-duration-dropdown" prefix="Last" />;
         break;
       case 'traffic':
-        component = <DurationDropdownContainer id="workload-traffic-duration-dropdown" />;
+        component = <DurationDropdownContainer id="workload-traffic-duration-dropdown" prefix="Last" />;
         break;
       default:
         return undefined;

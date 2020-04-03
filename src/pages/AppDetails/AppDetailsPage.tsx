@@ -219,10 +219,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     let component;
     switch (this.state.currentTab) {
       case 'info':
-        component = <DurationDropdownContainer id="app-info-duration-dropdown" />;
+        component = <DurationDropdownContainer id="app-info-duration-dropdown" prefix="Last" />;
         break;
       case 'traffic':
-        component = <DurationDropdownContainer id="app-traffic-duration-dropdown" />;
+        component = <DurationDropdownContainer id="app-traffic-duration-dropdown" prefix="Last" />;
         break;
       default:
         return undefined;

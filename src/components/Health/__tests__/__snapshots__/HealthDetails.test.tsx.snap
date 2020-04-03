@@ -5,7 +5,7 @@ exports[`HealthDetails renders deployments failure 1`] = `
   key="0"
 >
   <strong>
-     Error Rate over 1m traffic
+     Error Rate over 1m
   </strong>
   <ul
     style={
@@ -37,7 +37,7 @@ exports[`HealthDetails renders healthy 1`] = `
   key="0"
 >
   <strong>
-     Error Rate over 1m traffic
+     Error Rate over 1m
   </strong>
   <ul
     style={
