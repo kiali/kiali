@@ -33,6 +33,7 @@ import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tab } from '@patternfly/react-core';
 import SimpleTabs from 'components/Tab/SimpleTabs';
+import { Direction } from 'types/MetricsOptions';
 
 type SummaryPanelEdgeMetricsState = {
   reqRates: Datapoint[];
@@ -233,8 +234,15 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     m: MetricGroup,
     sourceMetricType: NodeMetricType,
     destMetricType: NodeMetricType,
-    data: DecoratedGraphNodeData
+    data: DecoratedGraphNodeData,
+    isServiceEntry: boolean
   ) => {
+    if (isServiceEntry) {
+      // For service entries, metrics are grouped by destination_service_name and we need to match it per "data.destServices"
+      return getDatapoints(m, (metric: Metric) => {
+        return data.destServices && data.destServices.some(svc => svc.name === metric['destination_service_name']);
+      });
+    }
     let sourceLabel: string;
     let sourceValue: string | undefined;
     switch (sourceMetricType) {
@@ -252,12 +260,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         sourceLabel = 'source_workload';
         sourceValue = data.workload;
     }
-    const comparator = (metric: Metric) => {
-      if (this.isSpecialServiceDest(destMetricType)) {
-        return metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN;
-      }
-      return metric[sourceLabel] === sourceValue;
-    };
+    const comparator = this.isSpecialServiceDest(destMetricType)
+      ? (metric: Metric) => metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN
+      : (metric: Metric) => metric[sourceLabel] === sourceValue;
     return getDatapoints(m, comparator);
   };
 
@@ -293,7 +298,21 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
 
     const quantiles = ['0.5', '0.95', '0.99'];
-    const byLabels = this.getByLabels(sourceMetricType, destMetricType);
+    let byLabels = this.getByLabels(sourceMetricType, destMetricType);
+    let node = edge.target();
+    let direction: Direction = 'inbound';
+    let metricType = destMetricType;
+    let isServiceEntry = false;
+    let otherEndData = sourceData;
+    if (decoratedNodeData(node).isServiceEntry) {
+      // Switch to source to get edge to service entry
+      node = edge.source();
+      direction = 'outbound';
+      metricType = sourceMetricType;
+      byLabels = ['destination_service_name'];
+      isServiceEntry = true;
+      otherEndData = destData;
+    }
 
     let promiseRps, promiseTcp;
     if (isGrpc || isHttp) {
@@ -307,11 +326,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       // see comment below about why we have both 'request_duration' and 'request_duration_millis'
       const filtersRps = ['request_count', 'request_duration', 'request_duration_millis', 'request_error_count'];
       promiseRps = getNodeMetrics(
-        destMetricType,
-        edge.target(),
+        metricType,
+        node,
         props,
         filtersRps,
-        'inbound',
+        direction,
         reporterRps,
         protocol,
         quantiles,
@@ -322,11 +341,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       const reporterTCP = sourceData.nodeType === NodeType.UNKNOWN || sourceData.isIstio ? 'destination' : 'source';
       const filtersTCP = ['tcp_sent', 'tcp_received'];
       promiseTcp = getNodeMetrics(
-        destMetricType,
-        edge.target(),
+        metricType,
+        node,
         props,
         filtersTCP,
-        'inbound',
+        direction,
         reporterTCP,
         undefined, // tcp metrics use dedicated metrics (i.e. no request_protocol label)
         quantiles,
@@ -340,26 +359,50 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         const histograms = response.data.histograms;
         let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultMetricsState;
         if (isGrpc || isHttp) {
-          reqRates = this.getNodeDataPoints(metrics.request_count, sourceMetricType, destMetricType, sourceData);
-          errRates = this.getNodeDataPoints(metrics.request_error_count, sourceMetricType, destMetricType, sourceData);
+          reqRates = this.getNodeDataPoints(
+            metrics.request_count,
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isServiceEntry
+          );
+          errRates = this.getNodeDataPoints(
+            metrics.request_error_count,
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isServiceEntry
+          );
           // We query for both 'request_duration' and 'request_duration_millis' because the former is used
           // with Istio mixer telemetry and the latter with Istio mixer-less (introduced as an experimental
           // option in istion 1.3.0).  Until we can safely rely on the newer metric we must support both. So,
           // prefer the newer but if it holds no valid data, revert to the older.
           let histo = histograms.request_duration_millis;
-          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, sourceData);
+          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isServiceEntry);
           if (this.isEmpty(rtAvg)) {
             histo = histograms.request_duration;
             unit = 's';
-            rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, sourceData);
+            rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isServiceEntry);
           }
-          rtMed = this.getNodeDataPoints(histo['0.5'], sourceMetricType, destMetricType, sourceData);
-          rt95 = this.getNodeDataPoints(histo['0.95'], sourceMetricType, destMetricType, sourceData);
-          rt99 = this.getNodeDataPoints(histo['0.99'], sourceMetricType, destMetricType, sourceData);
+          rtMed = this.getNodeDataPoints(histo['0.5'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
+          rt95 = this.getNodeDataPoints(histo['0.95'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
+          rt99 = this.getNodeDataPoints(histo['0.99'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
         } else {
           // TCP
-          tcpSent = this.getNodeDataPoints(metrics.tcp_sent, sourceMetricType, destMetricType, sourceData);
-          tcpReceived = this.getNodeDataPoints(metrics.tcp_received, sourceMetricType, destMetricType, sourceData);
+          tcpSent = this.getNodeDataPoints(
+            metrics.tcp_sent,
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isServiceEntry
+          );
+          tcpReceived = this.getNodeDataPoints(
+            metrics.tcp_received,
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isServiceEntry
+          );
         }
 
         this.setState({
@@ -421,19 +464,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     }
 
-    const source = decoratedNodeData(edge.source());
     const target = decoratedNodeData(edge.target());
     if (target.isInaccessible) {
       return (
         <>
           <KialiIcon.Info /> Sparkline charts cannot be shown because the destination is inaccessible.
-        </>
-      );
-    }
-    if (source.isServiceEntry || target.isServiceEntry) {
-      return (
-        <>
-          <KialiIcon.Info /> Sparkline charts cannot be shown because the source or destination is a serviceEntry.
         </>
       );
     }
