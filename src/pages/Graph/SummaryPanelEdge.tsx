@@ -237,6 +237,12 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     data: DecoratedGraphNodeData,
     isServiceEntry: boolean
   ) => {
+    if (isServiceEntry) {
+      // For service entries, metrics are grouped by destination_service_name and we need to match it per "data.destServices"
+      return getDatapoints(m, (metric: Metric) => {
+        return data.destServices && data.destServices.some(svc => svc.name === metric['destination_service_name']);
+      });
+    }
     let sourceLabel: string;
     let sourceValue: string | undefined;
     switch (sourceMetricType) {
@@ -254,14 +260,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         sourceLabel = 'source_workload';
         sourceValue = data.workload;
     }
-    let comparator = (metric: Metric) => metric[sourceLabel] === sourceValue;
-    if (isServiceEntry) {
-      comparator = (metric: Metric) => {
-        return data.destServices && data.destServices.some(svc => svc.name === metric['destination_service_name']);
-      };
-    } else if (this.isSpecialServiceDest(destMetricType)) {
-      comparator = (metric: Metric) => metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN;
-    }
+    const comparator = this.isSpecialServiceDest(destMetricType)
+      ? (metric: Metric) => metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN
+      : (metric: Metric) => metric[sourceLabel] === sourceValue;
     return getDatapoints(m, comparator);
   };
 
