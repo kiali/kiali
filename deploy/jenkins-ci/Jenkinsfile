@@ -19,9 +19,6 @@
  *   - UI_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-ui.git
  *      description: SSH Url of the kiali-ui GitHub repository
- *   - DOCKER_NAME
- *      defaultValue: docker.io/kiali/kiali
- *      description: The name of the Docker repository to push the release
  *   - QUAY_NAME
  *      defaultValue: quay.io/kiali/kiali
  *      description: The name of the Quay repository to push the release
@@ -55,7 +52,6 @@ node('kiali-build') {
   def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
-  def dockerTag = ""
   def quayTag = ""
 
   try {
@@ -152,9 +148,8 @@ node('kiali-build') {
       }
 
       stage('Release Kiali to Container Repositories') {
-        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER'), usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
+        withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
           sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
-          dockerTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
           quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
         }
       }
@@ -172,9 +167,7 @@ node('kiali-build') {
            build(job: 'kiali-release-notifier',
              parameters: [
                [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
-               [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
                [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
-               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG'],
                [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
              ], wait: false
            )

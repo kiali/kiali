@@ -64,7 +64,6 @@ BACKEND_FORK_URI ?= $(shell git config --get remote.origin.url)
 BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
-DOCKER_NAME ?= docker.io/kiali/kiali
 QUAY_NAME ?= quay.io/kiali/kiali
 QUAY_OPERATOR_NAME ?= quay.io/kiali/kiali-operator
 
@@ -129,12 +128,6 @@ backend-test:
 	$(MAKE) test-race
 
 backend-push-docker:
-ifdef DOCKER_USER
-ifdef DOCKER_PASSWORD
-	@echo "Logging in to DockerHub..."
-	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
-endif
-endif
 ifdef QUAY_USER
 ifdef QUAY_PASSWORD
 	@echo "Logging in to Quay.io..."
@@ -148,10 +141,6 @@ endif
 	  make container-build container-push
 ifneq ($(IS_SNAPSHOT),y)
    # Create or update vX.Y tags (without the patch number)
-   # docker.io/kiali
-	docker tag "$(DOCKER_NAME):$(VERSION_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
    # quay.io/kiali
 	docker tag "$(QUAY_NAME):$(VERSION_TAG)" "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
@@ -162,7 +151,6 @@ ifneq ($(IS_SNAPSHOT),y)
 	docker rmi "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
    # Clean-up
-	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
 	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
 	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
 
