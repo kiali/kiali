@@ -85,10 +85,10 @@ cluster-build-operator: .prepare-cluster container-build-operator
 cluster-build-kiali: .prepare-cluster container-build-kiali
 ifeq ($(DORP),docker)
 	@echo Re-tag the already built Kiali container image for a remote cluster using docker
-	docker tag ${DOCKER_TAG} ${CLUSTER_KIALI_TAG}
+	docker tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG}
 else
 	@echo Re-tag the already built Kiali container image for a remote cluster using podman
-	podman tag ${DOCKER_TAG} ${CLUSTER_KIALI_TAG}
+	podman tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG}
 endif
 
 ## cluster-build: Builds the images for development with a remote cluster

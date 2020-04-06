@@ -37,10 +37,7 @@ CONTAINER_NAME ?= ${IMAGE_ORG}/kiali
 CONTAINER_VERSION ?= dev
 
 # These two vars allow Jenkins to override values.
-DOCKER_NAME ?= docker.io/${CONTAINER_NAME}
 QUAY_NAME ?= quay.io/${CONTAINER_NAME}
-
-DOCKER_TAG = ${DOCKER_NAME}:${CONTAINER_VERSION}
 QUAY_TAG = ${QUAY_NAME}:${CONTAINER_VERSION}
 
 # Identifies the Kiali operator container images that will be built
