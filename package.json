@@ -70,7 +70,7 @@
     "cytoscape-cola": "2.3.0",
     "cytoscape-cose-bilkent": "4.0.0",
     "cytoscape-dagre": "2.2.2",
-    "cytoscape-popper": "1.0.2",
+    "cytoscape-popper": "1.0.6",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.0",
     "js-yaml": "3.13.1",
