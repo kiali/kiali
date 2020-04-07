@@ -1,7 +1,8 @@
+import seedrandom from 'seedrandom';
 import { ChartModel, SpanValue } from '../../../../common/types/Dashboards';
 import { TimeSeries, Datapoint } from '../../../../common/types/Metrics';
-import seedrandom from 'seedrandom';
 import { LabelsInfo } from '../../../../common/utils/timeSeriesUtils';
+import { makeLegend, VCLine } from '../VictoryChartInfo';
 
 const t0 = 1556802000;
 const increment = 60;
@@ -181,4 +182,29 @@ export const metricWithLabels: ChartModel = {
     values: [[0, 0]],
     labelSet: {'code': 'foobaz'}
   }]
+};
+
+export const genDates = (n: number): Date[] => {
+  const step = 10000;
+  const first = Date.now() - n * step;
+  const dates: Date[] = [];
+  for (let i = 0; i < n; i++) {
+    dates.push(new Date(first + i * step));
+  }
+  return dates;
+};
+
+export const buildLine = (info: { name: string, unit: string, color: string }, xs: any[], values: number[], more?: any[]): VCLine => {
+  return {
+    datapoints: values.map((v, i) => {
+      return {
+        x: xs[i],
+        y: v,
+        ...info,
+        ...more?.[i]
+      };
+    }),
+    legendItem: makeLegend(info.name, info.color),
+    color: info.color
+  };
 };

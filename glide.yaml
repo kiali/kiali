@@ -10,8 +10,10 @@ import:
     version: kubernetes-1.14.6
   - package: k8s.io/apimachinery
     version: kubernetes-1.14.6
+  - package: github.com/golang/protobuf
+    version: v1.3.5
   - package: github.com/prometheus/client_golang
-    version: v0.9.2
+    version: v0.9.4
   - package: github.com/prometheus/common
     version: 89604d197083d4781071d3c65855d24ecfb0a563
   - package: github.com/stretchr/testify
@@ -29,7 +31,7 @@ import:
   - package: k8s.io/kube-openapi
     version: 91cfa479c814065e420cee7ed227db0f63a5854e
   - package: github.com/kiali/k-charted
-    version: v0.4.2
+    version: e7fab0c4fbf0b4995a6d3b0c7d33be26e98d6734
   - package: github.com/NYTimes/gziphandler
     version: v1.1.1
   - package: github.com/jtblin/go-ldap-client

@@ -59,11 +59,7 @@ describe('Victory Charts Utils', () => {
   });
 
   it('should find closest data point', () => {
-    const lines = [{
-      datapoints: [{ x: 0, y: 0 }, { x: 1, y: 0 }]
-    }, {
-      datapoints: [{ x: 0, y: 1 }, { x: 1, y: 1 }]
-    }] as any;
+    const lines = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }];
     // Remember that screen Y coordinate is reversed compared to domain!
     let point = findClosestDatapoint(lines, -50, -50, 10, 10);
     expect(point).toEqual({x: 0, y: 1});
@@ -79,16 +75,12 @@ describe('Victory Charts Utils', () => {
     let point = findClosestDatapoint([], 50, 50, 500, 500);
     expect(point).toBeUndefined();
 
-    point = findClosestDatapoint([{ datapoints: [{ x: 0, y: 0 }] }] as any, 50, 50, 0, 0);
+    point = findClosestDatapoint([{ x: 0, y: 0 }], 50, 50, 0, 0);
     expect(point).toBeUndefined();
   });
 
   it('should find closest data point with different axis scales', () => {
-    const lines = [{
-      datapoints: [{ x: 10000, y: 0 }, { x: 20000, y: 0 }]
-    }, {
-      datapoints: [{ x: 10005, y: 1 }, { x: 20005, y: 1 }]
-    }] as any;
+    const lines = [{ x: 10000, y: 0 }, { x: 20000, y: 0 }, { x: 10005, y: 1 }, { x: 20005, y: 1 }];
     // Remember that screen Y coordinate is reversed compared to domain!
     let point = findClosestDatapoint(lines, -50, -50, 10, 10);
     expect(point).toEqual({x: 10005, y: 1});

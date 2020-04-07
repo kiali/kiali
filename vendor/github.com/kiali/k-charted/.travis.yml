@@ -16,8 +16,7 @@ matrix:
       directories:
       - node_modules
     install:
-    - cd web/pf3 && yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
-    - cd ../pf4 && yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
+    - cd web/pf4 && yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
     - cd ../..
     script:
-    - make pf3 pf4
+    - make pf4
