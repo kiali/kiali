@@ -52,7 +52,7 @@ export const labelFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'label',
   title: 'Label',
   placeholder: 'Filter by Label',
-  filterType: FilterTypes.custom,
+  filterType: FilterTypes.label,
   customComponent: LabelFilters,
   action: FILTER_ACTION_APPEND,
   filterValues: [],

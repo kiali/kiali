@@ -1,19 +1,24 @@
 import * as React from 'react';
 import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
 import history, { HistoryManager, URLParam } from '../../app/History';
-import { config, Resource, TResource } from './Config';
+import { config, RenderResource, Resource } from './Config';
 import VirtualItem from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import Namespace from '../../types/Namespace';
+import { SortField } from '../../types/SortFilters';
+import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
+import * as FilterHelper from '../FilterList/FilterHelper';
+import * as Sorts from '../../pages/Overview/Sorts';
 
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {
   rows: R[];
   activeNamespaces: Namespace[];
+  sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
 };
 
 type VirtualListState = {
@@ -29,7 +34,7 @@ type VirtualListState = {
 // get the type of list user request
 const listRegex = /\/([a-z0-9-]+)/;
 
-class VirtualListC<R extends TResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
+class VirtualListC<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
   constructor(props: VirtualListProps<R>) {
     super(props);
     const match = history.location.pathname.match(listRegex) || [];
@@ -37,9 +42,16 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
     const conf = config[type] as Resource;
     const columns =
       conf.columns && config.headerTable
-        ? conf.columns.map(info =>
-            info.transforms ? { title: info.column, transforms: info.transforms } : { title: info.column }
-          )
+        ? conf.columns.map(info => {
+            let config = { title: info.column };
+            if (info.transforms) {
+              config['transforms'] = info.transforms;
+            }
+            if (info.cellTransforms) {
+              config['cellTransforms'] = info.cellTransforms;
+            }
+            return config;
+          })
         : [];
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
@@ -68,6 +80,7 @@ class VirtualListC<R extends TResource> extends React.Component<VirtualListProps
       HistoryManager.setParam(URLParam.DIRECTION, direction);
     }
     HistoryManager.setParam(URLParam.SORT, String(this.state.conf.columns[index].param));
+    this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
   };
 
   render() {

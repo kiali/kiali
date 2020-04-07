@@ -10,12 +10,13 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Title
+  Title,
+  Tooltip,
+  TooltipPosition
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
-
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
@@ -50,6 +51,8 @@ import ValidationSummary from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Link } from 'react-router-dom';
 import { Paths } from '../../config';
+import { PfColors } from '../../components/Pf/PfColors';
+import VirtualList from '../../components/VirtualList/VirtualList';
 
 const gridStyle = style({
   backgroundColor: '#f5f5f5',
@@ -371,7 +374,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return (
       <>
         <RenderHeader>
-          <Breadcrumb style={{ marginTop: '10px' }}>
+          <Breadcrumb style={{ padding: '10px 0 0 10px' }}>
             <BreadcrumbItem isActive={true}>Namespaces</BreadcrumbItem>
           </Breadcrumb>
           <OverviewToolbarContainer
@@ -384,25 +387,30 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         </RenderHeader>
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll className={gridStyle}>
-            <Grid>
-              {filteredNamespaces.map(ns => (
-                <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
-                  <Card isCompact={true} className={cardGridStyle}>
-                    <CardHeader>
-                      {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                      <span className={cardNamespaceNameStyle} title={ns.name}>
-                        {ns.name}
-                      </span>
-                      {this.renderIstioConfigStatus(ns)}
-                    </CardHeader>
-                    <CardBody>
-                      {this.renderStatuses(ns)}
-                      <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
-                    </CardBody>
-                  </Card>
-                </GridItem>
-              ))}
-            </Grid>
+            {this.state.displayMode === OverviewDisplayMode.LIST ? (
+              <VirtualList rows={filteredNamespaces} sort={this.sort} />
+            ) : (
+              <Grid>
+                {filteredNamespaces.map(ns => (
+                  <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
+                    <Card isCompact={true} className={cardGridStyle}>
+                      <CardHeader>
+                        {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
+                        <span className={cardNamespaceNameStyle} title={ns.name}>
+                          {ns.name}
+                        </span>
+                        {this.renderIstioConfigStatus(ns)}
+                      </CardHeader>
+                      <CardBody>
+                        {this.renderLabels(ns)}
+                        {this.renderStatuses(ns)}
+                        <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
+                      </CardBody>
+                    </Card>
+                  </GridItem>
+                ))}
+              </Grid>
+            )}
           </RenderComponentScroll>
         ) : (
           <div style={{ backgroundColor: '#f5f5f5' }}>
@@ -417,6 +425,33 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           </div>
         )}
       </>
+    );
+  }
+
+  renderLabels(ns: NamespaceInfo): JSX.Element {
+    const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
+    return (
+      <Tooltip
+        aria-label={'Labels list'}
+        position={TooltipPosition.auto}
+        enableFlip={true}
+        content={
+          <ul>
+            {Object.entries(ns.labels || []).map(([key, value]) => (
+              <li>
+                {key}: {value}
+              </li>
+            ))}
+          </ul>
+        }
+      >
+        <div
+          style={{ color: ns.labels && PfColors.Blue400 }}
+          onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
+        >
+          {labelsLength} label{labelsLength !== '1' ? 's' : ''}
+        </div>
+      </Tooltip>
     );
   }
 

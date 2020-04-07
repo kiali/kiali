@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Button } from '@patternfly/react-core';
+import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { ListIcon, ThIcon, ThLargeIcon } from '@patternfly/react-icons';
 import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -35,7 +36,8 @@ type Props = ReduxProps & {
 
 export enum OverviewDisplayMode {
   COMPACT,
-  EXPAND
+  EXPAND,
+  LIST
 }
 
 const overviewTypes = {
@@ -140,18 +142,20 @@ export class OverviewToolbar extends React.Component<Props, State> {
           />
         ]}
       >
-        <>
-          <ToolbarDropdown
-            id="sort_selector"
-            handleSelect={this.changeSortField}
-            value={this.state.sortField.id}
-            label={sortTypes[this.state.overviewType]}
-            options={sortTypes}
-          />
-          <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }}>
-            {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
-          </Button>
-        </>
+        {this.props.displayMode !== OverviewDisplayMode.LIST && (
+          <>
+            <ToolbarDropdown
+              id="sort_selector"
+              handleSelect={this.changeSortField}
+              value={this.state.sortField.id}
+              label={sortTypes[this.state.overviewType]}
+              options={sortTypes}
+            />
+            <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }}>
+              {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
+            </Button>
+          </>
+        )}
         <ToolbarDropdown
           id="overview-type"
           disabled={false}
@@ -162,23 +166,36 @@ export class OverviewToolbar extends React.Component<Props, State> {
           options={overviewTypes}
         />
         <>
-          <Button
-            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-            title="Compact mode"
-            variant="tertiary"
-            isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
-          >
-            Compact
-          </Button>
-          <Button
-            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-            title="Expanded mode"
-            variant="tertiary"
-            isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
-            style={{ marginLeft: '5px' }}
-          >
-            Expand
-          </Button>
+          <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
+            <Button
+              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
+              variant="plain"
+              isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
+              style={{ padding: '0 4px 0 4px' }}
+            >
+              <ThLargeIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
+            <Button
+              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
+              variant="plain"
+              isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
+              style={{ padding: '0 4px 0 4px' }}
+            >
+              <ThIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip content={<>List view</>} position={TooltipPosition.top}>
+            <Button
+              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
+              variant="plain"
+              isActive={this.props.displayMode === OverviewDisplayMode.LIST}
+              style={{ padding: '0 4px 0 4px' }}
+            >
+              <ListIcon />
+            </Button>
+          </Tooltip>
         </>
       </StatefulFilters>
     );

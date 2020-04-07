@@ -1,4 +1,5 @@
 import { TextInputTypes } from '@patternfly/react-core';
+import { LabelFilters } from '../components/Filters/LabelFilter';
 
 // FilterValue maps a Patternfly property. Modify with care.
 export interface FilterValue {
@@ -9,7 +10,7 @@ export interface FilterValue {
 enum NonInputTypes {
   typeAhead = 'typeahead',
   select = 'select',
-  custom = 'custom'
+  label = 'label'
 }
 
 export const FilterTypes = {
@@ -42,3 +43,15 @@ export interface ActiveFilter {
   category: string;
   value: string;
 }
+
+// labelFilter common to lists
+
+export const LabelFilter: FilterType = {
+  id: 'label',
+  title: 'Label',
+  placeholder: 'Filter by Label',
+  filterType: FilterTypes.label,
+  customComponent: LabelFilters,
+  action: FILTER_ACTION_APPEND,
+  filterValues: []
+};

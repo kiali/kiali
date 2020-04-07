@@ -3,7 +3,7 @@
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     graph_filter_interval_duration
@@ -146,7 +146,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     metrics_filter_poll_interval
@@ -289,7 +289,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     graph_filter_layouts
@@ -364,7 +364,7 @@ exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     graph_filter_interval_duration
@@ -507,7 +507,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     metrics_filter_poll_interval
@@ -650,7 +650,7 @@ exports[`ToolbarDropdown Render dropdowns correctly with controlled values and l
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
 <Fragment>
   <Text
-    className="ff3k5ad"
+    className="fswevo5"
     component="h5"
   >
     graph_filter_layouts

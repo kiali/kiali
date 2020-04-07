@@ -1,5 +1,5 @@
 import deepFreeze from 'deep-freeze';
-import { sortable } from '@patternfly/react-table';
+import { cellWidth, sortable, textCenter } from '@patternfly/react-table';
 
 import { AppListItem } from '../../types/AppList';
 import { WorkloadListItem } from '../../types/Workload';
@@ -8,10 +8,12 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
+import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
-export type Renderer<R extends TResource> = (
+export type RenderResource = TResource | NamespaceInfo;
+export type Renderer<R extends RenderResource> = (
   item: R,
   config: Resource,
   icon: string,
@@ -19,7 +21,7 @@ export type Renderer<R extends TResource> = (
 ) => JSX.Element | undefined;
 
 // Health type guard
-export function hasHealth(r: TResource): r is SortResource {
+export function hasHealth(r: RenderResource): r is SortResource {
   return (r as SortResource).healthPromise !== undefined;
 }
 
@@ -27,19 +29,63 @@ export const hasMissingSidecar = (r: SortResource): boolean => {
   return !isIstioNamespace(r.namespace) && !r.istioSidecar;
 };
 
-type ResourceType<R extends TResource> = {
+type ResourceType<R extends RenderResource> = {
   name: string;
   column: string;
   param?: string;
   transforms?: any;
+  cellTransforms?: any;
   renderer: Renderer<R>;
 };
+
+// NamespaceInfo
+const tlsStatus: ResourceType<NamespaceInfo> = {
+  name: 'TLS',
+  param: 'tls',
+  column: 'TLS',
+  transforms: [sortable, cellWidth(5)],
+  renderer: Renderers.tls
+};
+
+const istioConfiguration: ResourceType<NamespaceInfo> = {
+  name: 'IstioConfiguration',
+  param: 'ic',
+  column: 'Config',
+  transforms: [sortable, cellWidth(5)],
+  renderer: Renderers.istioConfig
+};
+
+const status: ResourceType<NamespaceInfo> = {
+  name: 'Status',
+  param: 'h',
+  column: 'Status',
+  transforms: [sortable, cellWidth(40)],
+  cellTransforms: [textCenter],
+  renderer: Renderers.status
+};
+
+const links: ResourceType<NamespaceInfo> = {
+  name: 'Links',
+  param: 'links',
+  column: 'Links',
+  transforms: [cellWidth(15)],
+  renderer: Renderers.links
+};
+
+const nsItem: ResourceType<NamespaceInfo> = {
+  name: 'Namespace',
+  param: 'ns',
+  column: 'Namespace',
+  transforms: [sortable, cellWidth(15)],
+  renderer: Renderers.nsItem
+};
+// General
 
 const item: ResourceType<TResource> = {
   name: 'Item',
   param: 'wn',
   column: 'Name',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(15)],
   renderer: Renderers.item
 };
 
@@ -67,6 +113,14 @@ const namespace: ResourceType<TResource> = {
   renderer: Renderers.namespace
 };
 
+const labels: ResourceType<RenderResource> = {
+  name: 'Labels',
+  param: 'lb',
+  column: 'Labels',
+  transforms: [cellWidth(30)],
+  renderer: Renderers.labels
+};
+
 const health: ResourceType<TResource> = {
   name: 'Health',
   param: 'he',
@@ -89,14 +143,6 @@ const configuration: ResourceType<ServiceListItem | IstioConfigItem> = {
   column: 'Configuration',
   transforms: [sortable],
   renderer: Renderers.configuration
-};
-
-const labelValidation: ResourceType<WorkloadListItem> = {
-  name: 'LabelValidation',
-  param: 'lb',
-  column: 'Label Validation',
-  transforms: [sortable],
-  renderer: Renderers.labelValidation
 };
 
 const workloadType: ResourceType<WorkloadListItem> = {
@@ -144,21 +190,27 @@ export type Resource = {
   icon?: string;
 };
 
+const namespaces: Resource = {
+  name: 'namespaces',
+  columns: [tlsStatus, nsItem, istioConfiguration, labels, status, links],
+  icon: 'NS'
+};
+
 const workloads: Resource = {
   name: 'workloads',
-  columns: [item, namespace, workloadType, health, details, labelValidation],
+  columns: [item, namespace, workloadType, labels, health, details],
   icon: 'W'
 };
 
 const applications: Resource = {
   name: 'applications',
-  columns: [item, namespace, health, details],
+  columns: [item, namespace, labels, health, details],
   icon: 'A'
 };
 
 const services: Resource = {
   name: 'services',
-  columns: [serviceItem, namespace, health, details, configuration],
+  columns: [serviceItem, namespace, labels, health, configuration, details],
   icon: 'S'
 };
 
@@ -171,6 +223,7 @@ const conf = {
   headerTable: true,
   applications: applications,
   workloads: workloads,
+  overview: namespaces,
   services: services,
   istio: istio
 };

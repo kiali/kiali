@@ -6,7 +6,6 @@ export const fetchTraces = (namespace: string, service: string, restParams: any)
   return API.getJaegerTraces(namespace, service, restParams).then(response => {
     const traces: JaegerTrace[] = [];
     if (response.data.data) {
-
       response.data.data.forEach(trace => {
         const data = transformTraceData(trace);
         if (data) {
@@ -14,9 +13,9 @@ export const fetchTraces = (namespace: string, service: string, restParams: any)
         }
       });
       var result: JaegerResponse = { data: traces, errors: response.data.errors };
-      return result
+      return result;
     }
-    return { data: null, errors: response.data.errors }
+    return { data: null, errors: response.data.errors };
   });
 };
 
@@ -24,8 +23,8 @@ export const fetchTrace = (namespace: string, service: string, traceId: string):
   return API.getJaegerTrace(namespace, service, traceId).then(response => {
     if (response.data.data) {
       const trace = transformTraceData(response.data.data[0]);
-      return {data: trace? [trace]: null, errors: response.data.errors}
+      return { data: trace ? [trace] : null, errors: response.data.errors };
     }
-    return {data: null, errors: response.data.errors}
+    return { data: null, errors: response.data.errors };
   });
 };

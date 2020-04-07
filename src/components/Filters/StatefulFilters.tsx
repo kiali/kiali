@@ -250,7 +250,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           ))}
         </FormSelect>
       );
-    } else if (currentFilterType.filterType === FilterTypes.custom) {
+    } else if (currentFilterType.filterType === FilterTypes.label) {
       const instance = new currentFilterType.customComponent({
         value: currentValue,
         onChange: this.updateCurrentValue,
@@ -286,17 +286,20 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return (
       <ToolbarGroup>
         {Array.isArray(this.props.children) ? (
-          (this.props.children as Array<any>).map((child, index) => (
-            <ToolbarItem
-              key={'toolbar_statefulFilters_' + index}
-              className={classNames(
-                'pf-u-mr-md',
-                index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
-              )}
-            >
-              {child}
-            </ToolbarItem>
-          ))
+          (this.props.children as Array<any>).map(
+            (child, index) =>
+              child && (
+                <ToolbarItem
+                  key={'toolbar_statefulFilters_' + index}
+                  className={classNames(
+                    'pf-u-mr-md',
+                    index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
+                  )}
+                >
+                  {child}
+                </ToolbarItem>
+              )
+          )
         ) : (
           <ToolbarItem>{this.props.children}</ToolbarItem>
         )}

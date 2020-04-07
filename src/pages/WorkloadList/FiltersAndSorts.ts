@@ -1,4 +1,11 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterTypes } from '../../types/Filters';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterTypes,
+  LabelFilter
+} from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WithWorkloadHealth, hasHealth } from '../../types/Health';
@@ -10,7 +17,6 @@ import {
   getPresenceFilterValue,
   filterByHealth
 } from '../../components/Filters/CommonFilters';
-import { LabelFilters } from '../../components/Filters/LabelFilter';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
@@ -164,7 +170,7 @@ const workloadNameFilter: FilterType = {
   filterValues: []
 };
 
-const appLabelFilter: FilterType = {
+export const appLabelFilter: FilterType = {
   id: 'applabel',
   title: 'App Label',
   placeholder: 'Filter by App Label Validation',
@@ -173,23 +179,13 @@ const appLabelFilter: FilterType = {
   filterValues: presenceValues
 };
 
-const versionLabelFilter: FilterType = {
+export const versionLabelFilter: FilterType = {
   id: 'versionlabel',
   title: 'Version Label',
   placeholder: 'Filter by Version Label Validation',
   filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: presenceValues
-};
-
-const labelFilter: FilterType = {
-  id: 'label',
-  title: 'Label',
-  placeholder: 'Filter by Label',
-  filterType: FilterTypes.custom,
-  customComponent: LabelFilters,
-  action: FILTER_ACTION_APPEND,
-  filterValues: []
 };
 
 const workloadTypeFilter: FilterType = {
@@ -245,7 +241,7 @@ export const availableFilters: FilterType[] = [
   healthFilter,
   appLabelFilter,
   versionLabelFilter,
-  labelFilter
+  LabelFilter
 ];
 
 /** Filter Method */
@@ -300,7 +296,7 @@ export const filterBy = (
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
   const appLabel = getPresenceFilterValue(appLabelFilter, filters);
   const versionLabel = getPresenceFilterValue(versionLabelFilter, filters);
-  const labelFilters = getFilterSelectedValues(labelFilter, filters);
+  const labelFilters = getFilterSelectedValues(LabelFilter, filters);
 
   let ret = items;
   ret = filterByType(ret, workloadTypeFilters);

@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { TResource, Resource, IstioTypes, hasHealth } from './Config';
+import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
 
 type VirtualItemProps = {
-  item: TResource;
+  item: RenderResource;
   style?: any;
   className?: string;
   index: number;
@@ -53,7 +53,7 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
       });
   };
 
-  renderDetails = (item: TResource, health?: Health) => {
+  renderDetails = (item: RenderResource, health?: Health) => {
     const icon = this.getIcon();
     return this.props.config.columns.map(object => object.renderer(item, this.props.config, icon, health));
   };
@@ -69,7 +69,12 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   render() {
     const { style, className, item } = this.props;
     return (
-      <tr style={style} className={className} role="row" key={'VirtualItem_' + item.namespace + '_' + item.name}>
+      <tr
+        style={style}
+        className={className}
+        role="row"
+        key={'VirtualItem_' + ('namespace' in item ? item.namespace : item.name) + '_' + item.name}
+      >
         {this.renderDetails(item, this.state.health)}
       </tr>
     );

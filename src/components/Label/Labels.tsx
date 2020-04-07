@@ -61,11 +61,13 @@ class Labels extends React.Component<Props, State> {
 
   renderLabels() {
     return this.labelKeys().map((key, i) => {
-      return this.showItem(i)? (
+      return this.showItem(i) ? (
         <div key={'label_' + i}>
           <Label key={'label_' + i} name={key} value={this.props.labels ? this.props.labels[key] : ''} />
         </div>
-      ) : undefined;
+      ) : (
+        undefined
+      );
     });
   }
 

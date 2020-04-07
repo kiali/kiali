@@ -6,7 +6,7 @@ exports[`Overview page renders initial layout 1`] = `
     <Component
       style={
         Object {
-          "marginTop": "10px",
+          "padding": "10px 0 0 10px",
         }
       }
     >

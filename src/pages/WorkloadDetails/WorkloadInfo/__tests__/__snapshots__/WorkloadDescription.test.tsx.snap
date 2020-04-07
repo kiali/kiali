@@ -53,7 +53,9 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               headingLevel="h6"
               size="md"
             >
-               Type 
+               
+              Type
+               
             </Title>
             N/A
           </StackItem>
@@ -64,7 +66,9 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               headingLevel="h6"
               size="md"
             >
-               Created at 
+               
+              Created at
+               
             </Title>
             <LocalTime
               time=""
@@ -77,7 +81,9 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               headingLevel="h6"
               size="md"
             >
-               Resource Version 
+               
+              Resource Version
+               
             </Title>
           </StackItem>
           <StackItem
@@ -186,7 +192,8 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               headingLevel="h6"
               size="md"
             >
-               Overall Health
+               
+              Overall Health
             </Title>
             <HealthIndicator
               id=""

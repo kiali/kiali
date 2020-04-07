@@ -46,27 +46,42 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 {' '}
                 Workload Overview{' '}
               </Title>
-              <Stack gutter="md" style={{marginTop: '10px'}}>
+              <Stack gutter="md" style={{ marginTop: '10px' }}>
                 <StackItem id="labels">
-                  <Title headingLevel="h6" size="md"> {isTemplateLabels ? 'Template Labels' : 'Labels'} </Title>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    {isTemplateLabels ? 'Template Labels' : 'Labels'}{' '}
+                  </Title>
                   <Labels labels={workload.labels || {}} />
                 </StackItem>
                 <StackItem id="type">
-                  <Title headingLevel="h6" size="md"> Type </Title>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Type{' '}
+                  </Title>
                   {workload.type ? workload.type : 'N/A'}
                 </StackItem>
                 <StackItem id="created-at">
-                  <Title headingLevel="h6" size="md"> Created at </Title>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Created at{' '}
+                  </Title>
                   <LocalTime time={workload.createdAt} />
                 </StackItem>
                 <StackItem id="resource-version">
-                  <Title headingLevel="h6" size="md"> Resource Version </Title>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Resource Version{' '}
+                  </Title>
                   {workload.resourceVersion}
                 </StackItem>
                 {workload.additionalDetails.map((additionalItem, idx) => {
                   return (
                     <StackItem key={'additional-details-' + idx} id={'additional-details-' + idx}>
-                      <Title headingLevel="h6" size="md"> {additionalItem.title} </Title>
+                      <Title headingLevel="h6" size="md">
+                        {' '}
+                        {additionalItem.title}{' '}
+                      </Title>
                       {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
                       <TextOrLink text={additionalItem.value} urlTruncate={64} />
                     </StackItem>
@@ -98,9 +113,12 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                 {' '}
                 Health Overview{' '}
               </Title>
-              <Stack gutter="md" style={{marginTop: '10px'}}>
+              <Stack gutter="md" style={{ marginTop: '10px' }}>
                 <StackItem id="health" className={'stack_service_details'}>
-                  <Title headingLevel="h6" size="md"> Overall Health</Title>
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Overall Health
+                  </Title>
                   <HealthIndicator
                     id={workload.name}
                     health={this.props.health}
