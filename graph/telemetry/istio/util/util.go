@@ -62,12 +62,20 @@ func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk 
 	return grpcResponseStatus
 }
 
-// IsBadTelemetry tests for known issues in generated telemetry given indicative label values.
+// IsBadSourceTelemetry tests for known issues in generated telemetry given indicative label values.
+// 1) source namespace is provided without workload or app
+// 2) no more conditions known
+func IsBadSourceTelemetry(ns, wl, app string) bool {
+	// case1
+	return graph.IsOK(ns) && !graph.IsOK(wl) && !graph.IsOK(app)
+}
+
+// IsBadDestTelemetry tests for known issues in generated telemetry given indicative label values.
 // 1) During pod lifecycle changes incomplete telemetry may be generated that results in
 //    destSvc == destSvcName and no dest workload, where destSvc[Name] is in the form of an IP address.
 // 2) no more conditions known
-func IsBadTelemetry(destSvc, destSvcName, destWl string) bool {
+func IsBadDestTelemetry(svc, svcName, wl string) bool {
 	// case1
-	failsEqualsTest := (!graph.IsOK(destWl) && graph.IsOK(destSvc) && graph.IsOK(destSvcName) && (destSvc == destSvcName))
-	return failsEqualsTest && badServiceMatcher.MatchString(destSvcName)
+	failsEqualsTest := (!graph.IsOK(wl) && graph.IsOK(svc) && graph.IsOK(svcName) && (svc == svcName))
+	return failsEqualsTest && badServiceMatcher.MatchString(svcName)
 }
