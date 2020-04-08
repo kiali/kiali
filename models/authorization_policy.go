@@ -25,6 +25,7 @@ type AuthorizationPolicy struct {
 	Spec     struct {
 		Selector interface{} `json:"selector"`
 		Rules    interface{} `json:"rules"`
+		Action   interface{} `json:"action"`
 	} `json:"spec"`
 }
 
@@ -41,4 +42,5 @@ func (ap *AuthorizationPolicy) Parse(authorizationPolicy kubernetes.IstioObject)
 	ap.Metadata = authorizationPolicy.GetObjectMeta()
 	ap.Spec.Selector = authorizationPolicy.GetSpec()["selector"]
 	ap.Spec.Rules = authorizationPolicy.GetSpec()["rules"]
+	ap.Spec.Action = authorizationPolicy.GetSpec()["action"]
 }
