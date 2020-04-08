@@ -12,7 +12,7 @@
     + [Building a patch release (back-end only)](#building-a-patch-release-back-end-only)
     + [Building a major release](#building-a-major-release)
     + [Building a snapshot release](#building-a-snapshot-release)
-    + [Building an edge/daily release](#building-an-edge-daily-release)
+    + [Building an edge/daily release](#building-an-edgedaily-release)
 * [Recovering and troubleshooting a build](#recovering-and-troubleshooting-a-build)
 * [Making test builds](#making-test-builds)
 * [Developer setup](#developer-setup)
@@ -206,7 +206,7 @@ repositories.
 ## Recovering and troubleshooting a build
 
 The Pipeline is not idempotent, mainly because of all external systems
-that are involved (NPM, repositories, DockerHub, etc.). Nevertheless,
+that are involved (NPM, repositories, Quay.io, etc.). Nevertheless,
 it is possible to re-try a build or do a new build to continue the
 failed one. You first need to figure out at what stage the build failed
 to decide how to proceed.
@@ -239,7 +239,7 @@ the suggested action of the first check that is not OK:
      prepare it for the next release.
    * Retry the build but set parameters SKIP_UI_RELEASE to `y` and UI_VERSION
      to the version of the front-end that got published in NPM.
-1. Are the container images present in DockerHub and Quay.io?
+1. Are the container images present in Quay.io?
    Is the back-end version properly tagged (see https://github.com/kiali/kiali/tags)?
    If not to any of these questions:
    * Retry the build but set parameters SKIP_UI_RELEASE to `y` and UI_VERSION
@@ -262,8 +262,8 @@ It is not possible to simulate a build. However, you can run a build
 against and affecting alternate repositories.
 
 To run test builds you will need your own forks of the Kiali repositories
-and your own DockerHub and Quay.io repositories. You will need to
-setup Jenkins with a GitHub, DockerHub and Quay.io accounts with push
+and your own Quay.io repository. You will need to
+setup Jenkins with a GitHub and Quay.io accounts with push
 privileges to your repositories; see the
 [Setup Jenkins credentials](#setup-jenkins-credentials) of the developer
 setup section to learn more.
@@ -274,8 +274,6 @@ When running the build, set the following parameters:
   `git@github.com:israel-hdez/swscore.git`.
 * UI_GITHUB_URI: Use the SSH url of your Kiali's front-end fork; e.g.
   `git@github.com:israel-hdez/swsui.git`.
-* DOCKER_NAME: Use your own DockerHub repository for Kiali;
-  e.g. `docker.io/edgarhz/kiali`.
 * QUAY_NAME: Use your own Quay.io repository for Kiali;
   e.g. `quay.io/edgarhz/kiali`.
 * QUAY_OPERATOR_NAME: Use your own Quay.io repository for the operator;
@@ -389,14 +387,6 @@ at the left to add these five credentials:
   * Kind: Secret text
   * ID: kiali-npm
   * Secret: An arbitrary string.
-* **DockerHub credentials:** Used to push the Kiali image to
-  DockerHub. For development, use your DockerHub account (it will
-  be safer if you use an account without push rights to the
-  DockerHub Kiali repositories.)
-  * Kind: Username with password
-  * ID: kiali-docker
-  * Username: A valid DockerHub username
-  * Password: A valid DockerHub password
 * **Quay credentials:** Used to push the Kiali image and the
   Kiali operator image to Quay.io. For development, use your
   Quay.io account (it will be safer if you use an account
