@@ -38,10 +38,8 @@ func GetSigningKey() string {
 	cfg := Get()
 	signKey := cfg.LoginToken.SigningKey
 
-	if cfg.Auth.Strategy != AuthStrategyAnonymous && (len(signKey) == 0 || signKey == "kiali") {
-		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
-		// An empty key is also just not allowed.
-		panic("signing key for login tokens is invalid")
+	if err := ValidateSigningKey(signKey, cfg.Auth.Strategy); err != nil {
+		panic(err)
 	}
 
 	if cfg.Auth.Strategy == AuthStrategyLogin {
@@ -53,6 +51,16 @@ func GetSigningKey() string {
 	}
 
 	return signKey
+}
+
+func ValidateSigningKey(signingKey string, authStrategy string) error {
+	if authStrategy != AuthStrategyAnonymous && (len(signingKey) == 0 || signingKey == "kiali") {
+		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
+		// An empty key is also just not allowed.
+		return fmt.Errorf("signing key for login tokens is invalid")
+	}
+
+	return nil
 }
 
 // GenerateToken generates a signed token with an expiration of <ExpirationSeconds> seconds
