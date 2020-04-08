@@ -16,14 +16,14 @@ Quite often a change in k-charted impacts the interfacing with Kiali, so it's be
 
 This is currently a manual process:
 
-- Bump versions in `web/pf3/package.json` and `web/pf4/package.json`
+- Bump versions in `web/pf4/package.json`
 
 - Commit bumped versions, with commit message such as "Release x.y.z"
 
 - Build / lint / test everything
 
 ```bash
-make go pf3 pf4
+make go pf4
 ```
 
 - Push upstream
@@ -35,8 +35,7 @@ make go pf3 pf4
 - Publish NPM modules
 
 ```bash
-cd web/pf3 && npm publish
-cd ../pf4 && npm publish
+cd web/pf4 && npm publish
 ```
 
 - Go to Github: https://github.com/kiali/k-charted/releases/new and fill-in new release (from tag vx.y.z, named vx.y.z), including some description + link to the commits list, e.g.:

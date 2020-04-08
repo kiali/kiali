@@ -13,7 +13,7 @@ The Go code:
 
 The TypeScript code:
 
-- Provides Dashboards as React components, with two available implementations: one using Patternfly 3 (ie. C3 charts), the other Patternfly 4 (ie. Victory charts).
+- Provides Dashboards, with one available implementation using React and Patternfly 4 (ie. Victory charts). The code structure should make it easy to provide other implementations (we had Patternfly 3 as well, in the past).
 - Of course, the data model used for these components is exactly what is returned from Go. So no extra manipulation is required.
 
 ## Usage
@@ -109,7 +109,7 @@ It binds any logging function to be used in K-Charted. It can be omitted, in whi
 
 ### React (Javascript / TypeScript)
 
-You can use the one of the PatternFly implementations by importing `@kiali/k-charted-pf3` or `@kiali/k-charted-pf4`. Example with `axios`:
+Import `@kiali/k-charted-pf4`. Example with `axios`:
 
 ```javascript
   axios.get(`/namespaces/${this.state.namespace}/dashboards/${this.state.dashboardName}`).then(rs => {
@@ -147,10 +147,6 @@ make go
 For the frontend, run:
 
 ```bash
-make pf3
-
-# and/or
-
 make pf4
 ```
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import KChart from './KChart';
-import { getDataSupplier, toOverlay, toVCLine, toVCDatapoints } from '../utils/victoryChartsUtils';
+import { getDataSupplier, toOverlay, toVCDatapoints } from '../utils/victoryChartsUtils';
 import { empty, error, generateRandomMetricChart, generateRandomHistogramChart, generateRandomForOverlay, emptyLabels } from '../types/__mocks__/Charts.mock';
 
 import '@patternfly/react-core/dist/styles/base.css';
@@ -55,7 +55,7 @@ storiesOf('PF4 KChart', module)
     };
     const dps = toVCDatapoints(generateRandomForOverlay(), info.title);
     return (
-      <KChart chart={metric} data={getDataSupplier(metric, emptyLabels, colors)!()} overlay={toOverlay(info, dps)} />
+      <KChart chart={metric} data={getDataSupplier(metric, emptyLabels, colors)!()} overlay={toOverlay(info, dps)} onClick={p => alert(p.actualY || p.y)} />
     );
   })
   .add('histogram', () => (
