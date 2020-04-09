@@ -85,6 +85,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 
 func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
 	testConfig := config.NewConfig()
+	testConfig.KubernetesConfig.CacheEnabled = false
 	testConfig.IstioComponentNamespaces = config.IstioComponentNamespaces{"telemetry": "istio-telemetry"}
 	config.Set(testConfig)
 	k8s := new(kubetest.K8SClientMock)
@@ -1700,7 +1701,8 @@ func TestServiceNodeGraph(t *testing.T) {
 // - istio component namespaces
 // - a "shared" node (internal in ns-1, outsider in ns-2)
 // - request.host
-// - bad telemetry filtering
+// - bad dest telemetry filtering
+// - bad source telemetry filtering
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
@@ -1757,9 +1759,28 @@ func TestComplexGraph(t *testing.T) {
 		"response_code":                  "200",
 		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
+	q6m1 := model.Metric{
+		"source_workload_namespace":      "bad-source-temetry",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "tutorial",
+		"destination_service":            "customer:9080",
+		"destination_service_name":       "customer",
+		"destination_workload_namespace": "tutorial",
+		"destination_workload":           "customer-v1",
+		"destination_app":                "customer",
+		"destination_version":            "v1",
+		"request_protocol":               "grpc",
+		"response_code":                  "200",
+		"grpc_response_status":           "0",
+		"response_flags":                 "-"}
 	v6 := model.Vector{
 		&model.Sample{
 			Metric: q6m0,
+			Value:  50},
+		&model.Sample{
+			Metric: q6m1,
 			Value:  50}}
 
 	q7 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`

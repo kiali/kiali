@@ -220,6 +220,10 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destVer := string(lDestVer)
 		responseCode := string(lResponseCode)
 
+		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
+			continue
+		}
+
 		// This was added in istio 1.5, handle in a backward compatible way
 		grpcReponseStatus := "0"
 		if grpcReponseStatusOk {
@@ -235,7 +239,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
-		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue
 		}
 
