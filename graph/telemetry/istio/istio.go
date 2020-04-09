@@ -231,13 +231,17 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		code := string(lCode)
 		flags := string(lFlags)
 
+		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
+			continue
+		}
+
 		// set response code in a backward compatible way
 		code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
 
 		// handle multicluster requests
 		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
 
-		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue
 		}
 
@@ -325,10 +329,14 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		destVer := string(lDestVer)
 		flags := string(lFlags)
 
+		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
+			continue
+		}
+
 		// handle multicluster requests
 		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
 
-		if util.IsBadTelemetry(destSvc, destSvcName, destWl) {
+		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue
 		}
 
