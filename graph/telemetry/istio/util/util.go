@@ -63,7 +63,7 @@ func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk 
 }
 
 // IsBadSourceTelemetry tests for known issues in generated telemetry given indicative label values.
-// 1) source namespace is provided without workload or app
+// 1) source namespace is provided with neither workload nor app
 // 2) no more conditions known
 func IsBadSourceTelemetry(ns, wl, app string) bool {
 	// case1
