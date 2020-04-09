@@ -57,7 +57,7 @@ func ValidateSigningKey(signingKey string, authStrategy string) error {
 	if authStrategy != AuthStrategyAnonymous && (len(signingKey) == 0 || signingKey == "kiali") {
 		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
 		// An empty key is also just not allowed.
-		return fmt.Errorf("signing key for login tokens is invalid")
+		return errors.New("signing key for login tokens is invalid")
 	}
 
 	return nil
