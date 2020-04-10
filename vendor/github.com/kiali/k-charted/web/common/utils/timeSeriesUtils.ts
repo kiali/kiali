@@ -1,5 +1,5 @@
-import { TimeSeries, Histogram } from '../types/Metrics';
-import { LabelSet, AllPromLabelsValues } from '../types/Labels';
+import { TimeSeries, NamedTimeSeries } from '../types/Metrics';
+import { LabelSet, AllPromLabelsValues, nameLabel, statLabel } from '../types/Labels';
 
 type KVMapper = (key: string, value: string) => string;
 export type LabelsInfo = {
@@ -20,18 +20,9 @@ const isVisibleMetric = (labels: LabelSet, labelValues: AllPromLabelsValues): bo
   return true;
 };
 
-export const filterAndNameMetric = (chartName: string, metrics: TimeSeries[], labels: LabelsInfo): TimeSeries[] => {
+export const filterAndNameMetric = (metrics: TimeSeries[], labels: LabelsInfo): NamedTimeSeries[] => {
   const filtered = metrics.filter(ts => isVisibleMetric(ts.labelSet, labels.values));
-  return nameTimeSeries(filtered, chartName, labels.prettifier);
-};
-
-export const filterAndNameHistogram = (histogram: Histogram, labels: LabelsInfo): Histogram => {
-  const filtered: Histogram = {};
-  Object.keys(histogram).forEach(stat => {
-    filtered[stat] = histogram[stat].filter(ts => isVisibleMetric(ts.labelSet, labels.values));
-    nameHistogramStat(filtered[stat], stat, labels.prettifier);
-  });
-  return filtered;
+  return nameTimeSeries(filtered, labels.prettifier);
 };
 
 const mapStatForDisplay = (stat: string): string => {
@@ -44,45 +35,39 @@ const mapStatForDisplay = (stat: string): string => {
   }
 };
 
-const nameHistogramStat = (matrix: TimeSeries[], stat: string, labelPrettifier?: KVMapper): TimeSeries[] => {
-  const statDisplay = mapStatForDisplay(stat);
-  matrix.forEach(ts => {
-    const labels = Object.keys(ts.labelSet)
-      .filter(k => k !== 'reporter')
+const nameTimeSeries = (series: TimeSeries[], labelPrettifier?: KVMapper): NamedTimeSeries[] => {
+  let hasSeveralFamilyNames = false;
+  if (series.length > 0) {
+    const firstName = series[0].labelSet[nameLabel];
+    hasSeveralFamilyNames = series.some(s => s.labelSet[nameLabel] !== firstName);
+  }
+  return series.map(ts => {
+    const name = ts.labelSet[nameLabel];
+    const stat = mapStatForDisplay(ts.labelSet[statLabel]);
+    const otherLabels = Object.keys(ts.labelSet)
+      .filter(k => k !== nameLabel && k !== statLabel)
       .map(k => {
         const val = ts.labelSet[k];
         return labelPrettifier ? labelPrettifier(k, val) : val;
-      })
-      .join(',');
+      });
+    const labels = (stat ? [stat] : []).concat(otherLabels).join(',');
+    let finalName = '';
     if (labels === '') {
-      // Ex: average // quantile 0.999 // etc.
-      ts.name = statDisplay;
+      // E.g. Serie A
+      finalName = name;
+    } else if (hasSeveralFamilyNames) {
+      // E.g. Serie A [p99,another_label_value]
+      finalName = `${name} [${labels}]`;
     } else {
-      // Ex: policy: average // stadium: quantile 0.999 // etc.
-      ts.name = `${labels}: ${statDisplay}`;
+      // E.g. p99,another_label_value
+      // (since we only have a single serie name, it is considered implicit and we save some characters space)
+      finalName = labels;
     }
+    return {
+      ...ts,
+      name: finalName
+    };
   });
-  return matrix;
-};
-
-const nameTimeSeries = (matrix: TimeSeries[], chartName: string, labelPrettifier?: KVMapper): TimeSeries[] => {
-  matrix.forEach(ts => {
-    const labels = Object.keys(ts.labelSet)
-      .filter(k => k !== 'reporter')
-      .map(k => {
-        const val = ts.labelSet[k];
-        return labelPrettifier ? labelPrettifier(k, val) : val;
-      })
-      .join(',');
-    if (labels === '') {
-      // Ex: Request volume (ops)
-      ts.name = chartName;
-    } else {
-      // Ex: policy // stadium // etc.
-      ts.name = labels;
-    }
-  });
-  return matrix;
 };
 
 export const generateKey = (ts: TimeSeries[], chartName: string): string => {

@@ -169,7 +169,6 @@ func (in *DashboardsService) GetDashboard(params model.DashboardQuery, template 
 	if err != nil {
 		return nil, err
 	}
-
 	dashboard, err := in.loadAndResolveDashboardResource(params.Namespace, template, map[string]bool{})
 	if err != nil {
 		return nil, err
@@ -195,19 +194,22 @@ func (in *DashboardsService) GetDashboard(params model.DashboardQuery, template 
 				unitScale = chart.UnitScale
 			}
 			filledCharts[idx] = model.ConvertChart(chart)
-			if chart.DataType == v1alpha1.Raw {
-				aggregator := params.RawDataAggregator
-				if chart.Aggregator != "" {
-					aggregator = chart.Aggregator
+			metrics := chart.GetMetrics()
+			for _, ref := range metrics {
+				if chart.DataType == v1alpha1.Raw {
+					aggregator := params.RawDataAggregator
+					if chart.Aggregator != "" {
+						aggregator = chart.Aggregator
+					}
+					metric := promClient.FetchRange(ref.MetricName, filters, grouping, aggregator, &params.MetricsQuery)
+					filledCharts[idx].FillMetric(ref, metric, unitScale)
+				} else if chart.DataType == v1alpha1.Rate {
+					metric := promClient.FetchRateRange(ref.MetricName, filters, grouping, &params.MetricsQuery)
+					filledCharts[idx].FillMetric(ref, metric, unitScale)
+				} else {
+					histo := promClient.FetchHistogramRange(ref.MetricName, filters, grouping, &params.MetricsQuery)
+					filledCharts[idx].FillHistogram(ref, histo, unitScale)
 				}
-				metric := promClient.FetchRange(chart.MetricName, filters, grouping, aggregator, &params.MetricsQuery)
-				model.FillMetric(metric, unitScale, chart.MetricName, &filledCharts[idx])
-			} else if chart.DataType == v1alpha1.Rate {
-				metric := promClient.FetchRateRange(chart.MetricName, filters, grouping, &params.MetricsQuery)
-				model.FillMetric(metric, unitScale, chart.MetricName, &filledCharts[idx])
-			} else {
-				histo := promClient.FetchHistogramRange(chart.MetricName, filters, grouping, &params.MetricsQuery)
-				model.FillHistogram(histo, unitScale, chart.MetricName, &filledCharts[idx])
 			}
 		}(i, item.Chart)
 	}

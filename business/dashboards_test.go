@@ -41,11 +41,11 @@ func TestGetIstioDashboard(t *testing.T) {
 	assert.Equal("Request volume", dashboard.Charts[0].Name)
 	assert.Equal("Request duration", dashboard.Charts[1].Name)
 	assert.Equal("TCP sent", dashboard.Charts[5].Name)
-	assert.Nil(dashboard.Charts[0].Histogram)
-	assert.Nil(dashboard.Charts[1].Metric)
-	assert.Equal(float64(10), dashboard.Charts[0].Metric[0].Values[0].Value)
-	assert.Equal(float64(20), dashboard.Charts[1].Histogram["avg"][0].Values[0].Value)
-	assert.Equal(float64(13), dashboard.Charts[5].Metric[0].Values[0].Value)
+	assert.Len(dashboard.Charts[0].Metrics, 1)
+	assert.Len(dashboard.Charts[1].Metrics, 1)
+	assert.Equal(float64(10), dashboard.Charts[0].Metrics[0].Values[0].Value)
+	assert.Equal(float64(20), dashboard.Charts[1].Metrics[0].Values[0].Value)
+	assert.Equal(float64(13), dashboard.Charts[5].Metrics[0].Values[0].Value)
 }
 
 func fakeCounter(value int) *prometheus.Metric {

@@ -38,7 +38,7 @@ describe('Victory Charts Utils', () => {
       name: '',
       unit: '',
       spans: 6,
-      metric: [{
+      metrics: [{
         values: [[1, 1], [2, 2], [3, NaN], [4, 4]],
         labelSet: {}
       }]

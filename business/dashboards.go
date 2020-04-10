@@ -2,6 +2,7 @@ package business
 
 import (
 	"math"
+	"sort"
 
 	kbus "github.com/kiali/k-charted/business"
 	kconf "github.com/kiali/k-charted/config"
@@ -195,15 +196,23 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 			unitScale = chartTpl.scale
 		}
 		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
-			newChart.Metric = kmodel.ConvertMatrix(metric.Matrix, unitScale)
+			newChart.Metrics = kmodel.ConvertMatrix(metric.Matrix, kmodel.BuildLabelsMap(newChart.Name, ""), unitScale)
 		}
 		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
-			newChart.Histogram = make(map[string][]*kmodel.SampleStream, len(histo))
-			for k, v := range histo {
-				newChart.Histogram[k] = kmodel.ConvertMatrix(v.Matrix, unitScale)
+			newChart.Metrics = []*kmodel.SampleStream{}
+			// Extract and sort keys for consistent ordering
+			stats := []string{}
+			for k := range histo {
+				stats = append(stats, k)
+			}
+			sort.Strings(stats)
+			for _, stat := range stats {
+				v := histo[stat]
+				matrix := kmodel.ConvertMatrix(v.Matrix, kmodel.BuildLabelsMap(newChart.Name, stat), unitScale)
+				newChart.Metrics = append(newChart.Metrics, matrix...)
 			}
 		}
-		if newChart.Metric != nil || newChart.Histogram != nil {
+		if len(newChart.Metrics) > 0 {
 			dashboard.Charts = append(dashboard.Charts, newChart)
 		}
 	}

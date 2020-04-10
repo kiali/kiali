@@ -23,8 +23,8 @@
   },
   "devDependencies": {
     "@babel/core": "~7.4.3",
-    "@patternfly/react-charts": "~5.2.2",
-    "@patternfly/react-core": "~3.124.1",
+    "@patternfly/react-charts": "5.3.18",
+    "@patternfly/react-core": "3.153.3",
     "@storybook/addon-info": "~5.0.10",
     "@storybook/react": "~5.0.10",
     "@types/jest": "~24.0.11",

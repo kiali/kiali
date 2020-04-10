@@ -10,3 +10,6 @@ export type AllPromLabelsValues = Map<PromLabel, SingleLabelValues>;
 export type LabelSet = {
   [key: string]: string;
 };
+
+export const nameLabel = '__name__';
+export const statLabel = '__stat__';
