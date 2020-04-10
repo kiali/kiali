@@ -300,6 +300,8 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
+                - name: ANSIBLE_DEBUG_LOGS
+                  value: "True"
               volumes:
               - name: runner
                 emptyDir: {}
