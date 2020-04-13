@@ -130,6 +130,7 @@
   },
   "resolutions": {
     "hoist-non-react-statics": "3.3.0",
+    "kind-of": "6.0.3",
     "victory": "~34.0.1",
     "victory-core": "~34.0.0"
   },
