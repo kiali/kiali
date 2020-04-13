@@ -217,10 +217,8 @@ func validateConfig() error {
 
 	// Check the signing key for the JWT token is valid
 	signingKey := config.Get().LoginToken.SigningKey
-	if len(signingKey) == 0 || signingKey == "kiali" {
-		// "kiali" is a well-known signing key reported in a CVE. We ban it's usage.
-		// An empty key is also just not allowed.
-		return fmt.Errorf("signing key for login tokens is invalid")
+	if err := config.ValidateSigningKey(signingKey, auth.Strategy); err != nil {
+		return err
 	}
 
 	return nil
