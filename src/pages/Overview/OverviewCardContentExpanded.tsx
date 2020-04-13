@@ -59,7 +59,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
       return (
         <>
           {mainLink}
-          <Text component={TextVariants.h2}>N/A</Text>
+          <Text style={{ marginTop: '20px' }}>N/A</Text>
         </>
       );
     }
