@@ -202,10 +202,10 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
   return filters.some(filter => {
     if (filter.category === LabelFilter.title) {
-      if (filter.value.includes('=')) {
-        const [k, v] = filter.value.split('=');
+      if (filter.value.includes(':')) {
+        const [k, v] = filter.value.split(':');
         if (k === key) {
-          return v.split(',').some(val => value.split(',').some(vl => val === vl));
+          return v.split(',').some(val => value.split(',').some(vl => vl.trim().startsWith(val.trim())));
         }
         return false;
       }
