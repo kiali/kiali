@@ -1,5 +1,0 @@
-- name: Assert Accessible Namespaces contains {{ namespace_list }}
-  assert:
-    that:
-    - item in kiali_configmap.deployment.accessible_namespaces
-  loop: "{{ namespace_list }}"

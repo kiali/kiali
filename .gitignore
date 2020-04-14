@@ -43,3 +43,6 @@ tests/e2e/.pytest_cache
 tests/e2e/**/__pycache__
 tests/e2e/.kiali-e2e/
 
+# Do not commit operator code to this repo
+operator
+
