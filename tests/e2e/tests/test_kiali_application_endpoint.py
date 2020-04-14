@@ -33,19 +33,16 @@ def test_application_details_endpoint(kiali_client):
       assert 'workloadName' in workload and len (workload.get('workloadName')) > 0
 
 
-def __test_application_health_endpoint(kiali_client):
+def test_application_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_health = kiali_client.request(method_name='appHealth', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
+    app_health = kiali_client.request(method_name='appHealth', path={'namespace': bookinfo_namespace, 'app': 'productpage'}).json()
     assert app_health != None
 
-    envoy = app_health.get('envoy')[0]
-    assert envoy != None
-    assert 'inbound' in envoy
-    assert 'outbound' in envoy
-
-    assert 'requests' in app_health
     assert 'workloadStatuses' in app_health
+    workload = app_health.get('workloadStatuses')[0]
+    assert workload != None
+
 
 def test_application_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
