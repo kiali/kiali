@@ -1,7 +1,8 @@
 package business
 
 import (
-	v1 "k8s.io/api/core/v1"
+	"github.com/kiali/kiali/models"
+	apps_v1 "k8s.io/api/apps/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -16,6 +17,12 @@ type Status string
 type ComponentName string
 type IsCoreComponent bool
 type ComponentStatus struct {
+	// The app label value of the Istio component
+	//
+	// example: istiod
+	// required: true
+	Name ComponentName `json:"name"`
+
 	// The status of a Istio component
 	//
 	// example:  Not Found
@@ -29,21 +36,13 @@ type ComponentStatus struct {
 	IsCore IsCoreComponent `json:"is_core"`
 }
 
-type IstioComponentStatus map[ComponentName]ComponentStatus
+type IstioComponentStatus []ComponentStatus
 
 const (
-	NotFound   Status = "Not Found"
-	NotRunning Status = "Not Running"
-	Running    Status = "Running"
+	Healthy   Status = "Healthy"
+	Unhealthy Status = "Unhealthy"
+	NotFound  Status = "NotFound"
 )
-
-var PhaseStatusMap = map[v1.PodPhase]Status{
-	v1.PodFailed:    NotRunning,
-	v1.PodPending:   NotRunning,
-	v1.PodSucceeded: NotRunning,
-	v1.PodUnknown:   NotRunning,
-	v1.PodRunning:   Running,
-}
 
 // List of workloads part of a Istio deployment and if whether it is mandatory or not
 var components = map[ComponentName]IsCoreComponent{
@@ -60,16 +59,17 @@ var components = map[ComponentName]IsCoreComponent{
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	isc := IstioComponentStatus{}
+	cf := map[ComponentName]bool{}
 
 	// Fetching workloads from control plane namespace
-	pods, error := iss.k8s.GetPods(config.Get().IstioNamespace, "")
+	ds, error := iss.k8s.GetDeployments(config.Get().IstioNamespace)
 	if error != nil {
 		return isc, error
 	}
 
 	// Map workloads there by app name
-	for _, pod := range pods {
-		appName := ComponentName(pod.Labels[config.Get().IstioLabels.AppLabelName])
+	for _, d := range ds {
+		appName := ComponentName(d.Labels[config.Get().IstioLabels.AppLabelName])
 		if appName == "" {
 			continue
 		}
@@ -79,53 +79,38 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 			continue
 		}
 
-		if s, ok := GetPodStatus(pod); ok {
-			if cs, found := isc[appName]; found {
-				s = healthiest(s, cs.Status)
-			}
-			isc[appName] = ComponentStatus{Status: s, IsCore: isCore}
-		}
+		// Component found
+		cf[appName] = true
+
+		// Check status
+		isc = append(isc, ComponentStatus{
+			Name:   appName,
+			Status: GetDeploymentStatus(d),
+			IsCore: isCore,
+		},
+		)
 	}
 
-	// Add missing pods
+	// Add missing deployments
 	for comp, isCore := range components {
-		if _, found := isc[comp]; !found {
-			isc[comp] = ComponentStatus{
+		if _, found := cf[comp]; !found {
+			isc = append(isc, ComponentStatus{
+				Name:   comp,
 				Status: NotFound,
 				IsCore: isCore,
-			}
+			})
 		}
 	}
 
 	return isc, nil
 }
 
-func GetPodStatus(pod v1.Pod) (Status, bool) {
-	status, ok := Running, true
-
-	if areContainersReady(pod) {
-		status, ok = PhaseStatusMap[pod.Status.Phase]
-	} else {
-		status, ok = NotRunning, true
+func GetDeploymentStatus(d apps_v1.Deployment) Status {
+	status := Unhealthy
+	wl := &models.Workload{}
+	wl.ParseDeployment(&d)
+	if wl.DesiredReplicas == wl.AvailableReplicas && wl.DesiredReplicas == wl.CurrentReplicas {
+		status = Healthy
 	}
-
-	return status, ok
-}
-
-func areContainersReady(pod v1.Pod) bool {
-	cr := true
-	for _, cs := range pod.Status.ContainerStatuses {
-		cr = cr && cs.Ready
-	}
-	return cr
-}
-
-func healthiest(a, b Status) Status {
-	if a == Running && b != Running {
-		return a
-	} else if a == NotRunning && b != Running {
-		return a
-	} else {
-		return b
-	}
+	return status
 }
