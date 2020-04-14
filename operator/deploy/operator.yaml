@@ -23,17 +23,6 @@ spec:
     spec:
       serviceAccountName: kiali-operator
       containers:
-      - name: ansible
-        command:
-        - /usr/local/bin/ao-logs
-        - /tmp/ansible-operator/runner
-        - stdout
-        image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
-        imagePullPolicy: ${OPERATOR_IMAGE_PULL_POLICY}
-        volumeMounts:
-        - mountPath: /tmp/ansible-operator/runner
-          name: runner
-          readOnly: true
       - name: operator
         image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
         imagePullPolicy: ${OPERATOR_IMAGE_PULL_POLICY}
@@ -53,6 +42,8 @@ spec:
               fieldPath: metadata.namespace
         - name: OPERATOR_NAME
           value: "kiali-operator"
+        - name: ANSIBLE_DEBUG_LOGS
+          value: "True"
       volumes:
       - name: runner
         emptyDir: {}
