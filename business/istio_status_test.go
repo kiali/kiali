@@ -96,6 +96,91 @@ func TestMultiplePod(t *testing.T) {
 	assert.Equal(IsCoreComponent(true), icsl["istio-egressgateway"].IsCore)
 }
 
+func TestContainerStatus(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	pods := []v1.Pod{
+		kubetest.FakePodWithContainers(
+			"istio-egressgateway-122hjbhq",
+			map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"},
+			v1.PodRunning,
+			[]v1.ContainerStatus{
+				{
+					Name:  "istio-egressgateway",
+					Ready: false,
+				},
+				{
+					Name:  "istio-egress-2",
+					Ready: true,
+				},
+			},
+		),
+		kubetest.FakePodWithContainers(
+			"istiod-1jna99",
+			map[string]string{"app": "istiod", "istio": "pilot"},
+			v1.PodRunning,
+			[]v1.ContainerStatus{
+				{
+					Name:  "istiod",
+					Ready: true,
+				},
+				{
+					Name:  "istiod",
+					Ready: true,
+				},
+			},
+		),
+		kubetest.FakePodWithContainers(
+			"istio-tracing-847ajj",
+			map[string]string{"app": "jaeger"},
+			v1.PodRunning,
+			[]v1.ContainerStatus{
+				{
+					Name:  "istio-tracing",
+					Ready: true,
+				},
+			},
+		),
+		kubetest.FakePodWithContainers(
+			"grafana-982jjh",
+			map[string]string{"app": "grafana"},
+			v1.PodRunning,
+			[]v1.ContainerStatus{
+				{
+					Name:  "grafana",
+					Ready: false,
+				},
+			},
+		),
+		kubetest.FakePodWithContainers(
+			"prometheus-982jjh",
+			map[string]string{"app": "prometheus"},
+			v1.PodPending,
+			[]v1.ContainerStatus{
+				{
+					Name:  "prometheus",
+					Ready: true,
+				},
+			},
+		),
+	}
+
+	k8s := mockPodsCall(pods)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assert.Equal(NotRunning, icsl["istio-egressgateway"].Status)
+	assert.Equal(Running, icsl["istiod"].Status)
+	assert.Equal(Running, icsl["jaeger"].Status)
+	assert.Equal(NotRunning, icsl["grafana"].Status)
+	assert.Equal(NotRunning, icsl["prometheus"].Status)
+	assert.Equal(NotFound, icsl["istio-ingressgateway"].Status)
+}
+
 func TestStatusHealthier(t *testing.T) {
 	assert := assert.New(t)
 

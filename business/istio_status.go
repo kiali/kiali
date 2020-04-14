@@ -101,8 +101,23 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 }
 
 func GetPodStatus(pod v1.Pod) (Status, bool) {
-	status, ok := PhaseStatusMap[pod.Status.Phase]
+	status, ok := Running, true
+
+	if areContainersReady(pod) {
+		status, ok = PhaseStatusMap[pod.Status.Phase]
+	} else {
+		status, ok = NotRunning, true
+	}
+
 	return status, ok
+}
+
+func areContainersReady(pod v1.Pod) bool {
+	cr := true
+	for _, cs := range pod.Status.ContainerStatuses {
+		cr = cr && cs.Ready
+	}
+	return cr
 }
 
 func healthiest(a, b Status) Status {

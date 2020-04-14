@@ -528,6 +528,19 @@ func FakePod(name string, labels map[string]string, podPhase core_v1.PodPhase) c
 	}
 }
 
+func FakePodWithContainers(name string, labels map[string]string, podPhase core_v1.PodPhase, containerStatuses []core_v1.ContainerStatus) core_v1.Pod {
+	return core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Status: core_v1.PodStatus{
+			Phase:             podPhase,
+			ContainerStatuses: containerStatuses,
+		},
+	}
+}
+
 func FakePodList() []core_v1.Pod {
 	return []core_v1.Pod{
 		{
