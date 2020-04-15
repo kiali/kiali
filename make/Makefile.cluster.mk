@@ -77,7 +77,7 @@ cluster-status: .prepare-cluster
 	@echo "Operator image that will be pushed to the cluster: ${CLUSTER_OPERATOR_TAG}"
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
-cluster-build-operator: .prepare-cluster container-build-operator
+cluster-build-operator: .ensure-operator-repo-exists .prepare-cluster container-build-operator
 	@echo Building container image for Kiali operator using operator-sdk tagged for a remote cluster
 	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${CLUSTER_OPERATOR_TAG}"
 

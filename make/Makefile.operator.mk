@@ -25,7 +25,7 @@
 # The Kiali operator does not create secrets, but this calls the install script
 # which can create a Kiali secret for you as a convienence so you don't have
 # to remember to do it yourself. It will only do this if it was told to install Kiali.
-operator-create: .prepare-cluster operator-delete .ensure-operator-ns-does-not-exist
+operator-create: .ensure-operator-repo-exists .prepare-cluster operator-delete .ensure-operator-ns-does-not-exist
 	@echo Deploy Operator
 	${ROOTDIR}/operator/deploy/deploy-kiali-operator.sh \
     --version                    "${KIALI_CR_SPEC_VERSION}" \
@@ -63,9 +63,9 @@ secret-delete: .ensure-oc-exists
 
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
 ifeq ($(AUTH_STRATEGY),login)
-kiali-create: .prepare-cluster secret-create
+kiali-create: .ensure-operator-repo-exists .prepare-cluster secret-create
 else
-kiali-create: .prepare-cluster
+kiali-create: .ensure-operator-repo-exists .prepare-cluster
 endif
 	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
 	cat ${KIALI_CR_FILE} | \
@@ -100,10 +100,10 @@ kiali-reload-image: .ensure-oc-exists
 	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
 
 ## run-operator-playbook: Run the operator dev playbook to run the operator ansible script locally.
-run-operator-playbook:
+run-operator-playbook: .ensure-operator-repo-exists
 	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
 
 ## run-operator-playbook-tag: Run a tagged set of tasks via operator dev playbook to run parts of the operator ansible script locally.
 # To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
-run-operator-playbook-tag:
+run-operator-playbook-tag: .ensure-operator-repo-exists
 	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml --tags test

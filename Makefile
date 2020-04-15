@@ -158,3 +158,13 @@ git-init:
 	@if [ ! -x "${MINIKUBE}" ]; then \
 	  echo "Missing 'minikube'"; exit 1; \
 	fi
+
+.ensure-operator-repo-exists:
+	@if [ ! -d "${ROOTDIR}/operator" ]; then \
+	  echo "================ ERROR ================"; \
+	  echo "You are missing the operator."; \
+	  echo "To fix this, run the following command:"; \
+	  echo "  git clone git@github.com:kiali/kiali-operator.git ${ROOTDIR}/operator"; \
+	  echo "======================================="; \
+	  exit 1; \
+	fi

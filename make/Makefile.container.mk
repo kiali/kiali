@@ -37,7 +37,7 @@ else
 endif
 
 ## container-build-operator: Build Kiali operator container image.
-container-build-operator: .ensure-operator-sdk-exists
+container-build-operator: .ensure-operator-repo-exists .ensure-operator-sdk-exists
 	@echo Building container image for Kiali operator using operator-sdk
 	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${OPERATOR_QUAY_TAG}"
 
