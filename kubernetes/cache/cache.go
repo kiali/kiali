@@ -25,6 +25,9 @@ type (
 		// Control methods
 		// Check if a namespace is listed to be cached; if yes, creates a cache for that namespace
 		CheckNamespace(namespace string) bool
+
+		// Clear a namespace's cache
+		RefreshNamespace(namespace string)
 		// Stop all caches
 		Stop()
 
@@ -176,6 +179,14 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 		return c.createCache(namespace)
 	}
 	return c.isKubernetesSynced(namespace) && c.isIstioSynced(namespace)
+}
+
+// RefreshNamespace will delete the specific namespace's cache and create a new one.
+func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
+	defer c.cacheLock.Unlock()
+	c.cacheLock.Lock()
+	delete(c.nsCache, namespace)
+	c.createCache(namespace)
 }
 
 func (c *kialiCacheImpl) Stop() {
