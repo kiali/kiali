@@ -13,12 +13,18 @@
  *   - UI_RELEASING_BRANCH
  *      defaultValue: refs/heads/master
  *      description: Branch of the UI to release
+ *   - OPERATOR_RELEASING_BRANCH
+ *      defaultValue: refs/heads/master
+ *      description: Branch of the operator to release
  *   - BACKEND_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali.git
  *      description: SSH Url of the kiali-backend GitHub repository
  *   - UI_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-ui.git
  *      description: SSH Url of the kiali-ui GitHub repository
+ *   - OPERATOR_GITHUB_URI
+ *      defaultValue: git@github.com:kiali/kiali-operator.git
+ *      description: SSH Url of the kiali-operator GitHub repository
  *   - QUAY_NAME
  *      defaultValue: quay.io/kiali/kiali
  *      description: The name of the Quay repository to push the release
@@ -31,12 +37,21 @@
  *   - UI_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-ui/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)
+ *   - OPERATOR_PULL_URI
+ *      defaultValue: https://api.github.com/repos/kiali/kiali-operator/pulls
+ *      description: The URL of the GitHub API to use to create pull requests for the operator (changes to prepare for next version)
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
  *   - SKIP_UI_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the UI
+ *   - SKIP_BACKEND_RELEASE
+ *      defaultValue: n
+ *      description: Set to 'y' if you don't want to release the backend
+ *   - SKIP_OPERATOR_RELEASE
+ *      defaultValue: n
+ *      description: Set to 'y' if you don't want to release the operator
  *   - UI_VERSION
  *       defaultValue: ''
  *       description: If you are skipping UI release. Specify the UI version to package, or leave
@@ -48,27 +63,34 @@
  */
 
 node('kiali-build') {
-  def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
-  def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
-  def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
+  def (backendForkUri, uiForkUri, operatorForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git']
+  def (backendDir, uiDir, operatorDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator']
+  def (backendMakefile, uiMakefile, operatorMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
+  def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
+  def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
   def quayTag = ""
 
   try {
     cleanWs()
     stage('Checkout code') {
-      checkout([
-        $class: 'GitSCM',
-        branches: [[name: params.BACKEND_RELEASING_BRANCH]],
-        doGenerateSubmoduleConfigurations: false,
-        extensions: [
-          [$class: 'RelativeTargetDirectory', relativeTargetDir: backendDir]
-        ],
-        submoduleCfg: [],
-        userRemoteConfigs: [[
-          credentialsId: 'kiali-bot-gh-ssh',
-          url: params.BACKEND_GITHUB_URI]]
-      ])
+      if ( buildBackend || buildOperator) {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: params.BACKEND_RELEASING_BRANCH]],
+          doGenerateSubmoduleConfigurations: false,
+          extensions: [
+            [$class: 'RelativeTargetDirectory', relativeTargetDir: backendDir]
+          ],
+          submoduleCfg: [],
+          userRemoteConfigs: [[
+            credentialsId: 'kiali-bot-gh-ssh',
+            url: params.BACKEND_GITHUB_URI]]
+        ])
+
+        sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
+        sh "cd ${backendDir}; git config user.name 'kiali-bot'"
+      }
       if ( buildUi ) {
         checkout([
           $class: 'GitSCM',
@@ -86,9 +108,24 @@ node('kiali-build') {
         sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
         sh "cd ${uiDir}; git config user.name 'kiali-bot'"
       }
+      if ( buildOperator ) {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: params.OPERATOR_RELEASING_BRANCH]],
+          doGenerateSubmoduleConfigurations: false,
+          extensions: [
+            [$class: 'RelativeTargetDirectory', relativeTargetDir: operatorDir]
+          ],
+          submoduleCfg: [],
+          userRemoteConfigs: [[
+            credentialsId: 'kiali-bot-gh-ssh',
+            url: params.OPERATOR_GITHUB_URI]]
+        ])
 
-      sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
-      sh "cd ${backendDir}; git config user.name 'kiali-bot'"
+        sh "cd ${operatorDir}; git config user.email 'kiali-dev@googlegroups.com'"
+        sh "cd ${operatorDir}; git config user.name 'kiali-bot'"
+        sh "cp ${backendDir}/deploy/jenkins-ci/${operatorMakefile} ${operatorDir}"
+      }
     }
 
     // Determine release type if "auto" was specified
@@ -104,15 +141,20 @@ node('kiali-build') {
             "GOPATH=${env.WORKSPACE}",
             "BACKEND_FORK_URI=${backendForkUri}",
             "UI_FORK_URI=${uiForkUri}",
+            "OPERATOR_FORK_URI=${operatorForkUri}",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
         withEnv(["GOPATH=${env.WORKSPACE}"]) {
           stage('Build backend') {
-            sh "make -f ${backendMakefile} -C ${backendDir} backend-build-release"
+            if ( buildBackend ) {
+              sh "make -f ${backendMakefile} -C ${backendDir} backend-build-release"
+            }
           }
           stage('Test backend') {
-            sh "make -f ${backendMakefile} -C ${backendDir} backend-test"
+            if ( buildBackend ) {
+              sh "make -f ${backendMakefile} -C ${backendDir} backend-test"
+            }
           }
         }
       }, ui: {
@@ -124,6 +166,12 @@ node('kiali-build') {
         stage('Test UI') {
           if ( buildUi ) {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
+          }
+        }
+      }, operator: {
+        stage('Build Operator') {
+          if ( buildOperator ) {
+            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-build-release"
           }
         }
       },
@@ -148,16 +196,39 @@ node('kiali-build') {
       }
 
       stage('Release Kiali to Container Repositories') {
-        withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
-          sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
-          quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
+        if ( buildBackend ) {
+          withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
+            sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
+            quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
+          }
         }
       }
 
       stage('Create release cut in back-end repo') {
-        withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-          sshagent(['kiali-bot-gh-ssh']) {
-            sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
+        if ( buildBackend ) {
+          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+            sshagent(['kiali-bot-gh-ssh']) {
+              sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
+            }
+          }
+        }
+      }
+
+      stage('Release Kiali Operator to Container Repositories') {
+        if ( buildOperator ) {
+          withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
+            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-quay"
+            quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${operatorDir}/Makefile").trim()
+          }
+        }
+      }
+
+      stage('Create release cut in operator repo') {
+        if ( buildOperator ) {
+          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+            sshagent(['kiali-bot-gh-ssh']) {
+              sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-version-tag operator-prepare-next-version"
+            }
           }
         }
       }
