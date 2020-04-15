@@ -11,6 +11,7 @@
 #       delete: deletes the OpenShift environment removing persisted data
 #       status: outputs the current status of the OpenShift environment
 #          ssh: logs into the CRC VM via ssh so you can probe in the VM
+#        sshoc: logs into the CRC VM via oc debug so you can probe in the VM
 #       routes: outputs all known route URLs
 #     services: outputs all known service endpoints (excluding internal openshift services)
 #
@@ -274,6 +275,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="ssh"
       shift
       ;;
+    sshoc)
+      _CMD="sshoc"
+      shift
+      ;;
     routes)
       _CMD="routes"
       shift
@@ -381,7 +386,8 @@ The command must be one of:
   * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
   * delete: Stops the CRC VM and removes all persistent data. 'start' will then bring up a clean CRC VM.
   * status: Information about the CRC VM and the OpenShift cluster running inside it.
-  * ssh: Provides a command line prompt with root access inside the CRC VM.
+  * ssh: Provides a command line prompt with root access inside the CRC VM. Logs in via ssh.
+  * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
 
@@ -755,11 +761,13 @@ elif [ "$_CMD" = "status" ]; then
 
 elif [ "$_CMD" = "ssh" ]; then
 
-  infomsg "Logging into the CRC VM..."
-  ${CRC_OC} debug $(${CRC_OC} get nodes -o name)
+  infomsg "Logging into the CRC VM via ssh..."
+  ssh -i ${CRC_ROOT_DIR}/machines/crc/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip)
 
-  # The old way to do it that no longer works
-  #ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@$(${CRC_COMMAND} ip)
+elif [ "$_CMD" = "sshoc" ]; then
+
+  infomsg "Logging into the CRC VM via oc debug..."
+  ${CRC_OC} debug $(${CRC_OC} get nodes -o name)
 
 elif [ "$_CMD" = "routes" ]; then
 
@@ -770,6 +778,6 @@ elif [ "$_CMD" = "services" ]; then
   print_all_service_endpoints
 
 else
-  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, routes, services, sm-install, sm-uninstall, bi-install"
+  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, sshoc, routes, services, sm-install, sm-uninstall, bi-install"
   exit 1
 fi
