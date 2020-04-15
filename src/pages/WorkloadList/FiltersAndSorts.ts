@@ -21,6 +21,10 @@ import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 
+const missingLabels = (r: WorkloadListItem): number => {
+  return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
+};
+
 export const sortFields: SortField<WorkloadListItem>[] = [
   {
     id: 'namespace',
@@ -74,6 +78,12 @@ export const sortFields: SortField<WorkloadListItem>[] = [
           // Make asc => icon absence is last
           return iconA ? -1 : 1;
         }
+      }
+      // Second by  missing labels
+      const missingA = missingLabels(a);
+      const missingB = missingLabels(b);
+      if (missingA !== missingB) {
+        return missingA > missingB ? 1 : -1;
       }
       // Finally by name
       return a.name.localeCompare(b.name);
