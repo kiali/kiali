@@ -13,39 +13,36 @@ type IstioStatusService struct {
 	k8s kubernetes.IstioClientInterface
 }
 
-type Status string
-type ComponentName string
-type IsCoreComponent bool
 type ComponentStatus struct {
 	// The app label value of the Istio component
 	//
 	// example: istiod
 	// required: true
-	Name ComponentName `json:"name"`
+	Name string `json:"name"`
 
 	// The status of a Istio component
 	//
 	// example:  Not Found
 	// required: true
-	Status Status `json:"status"`
+	Status string `json:"status"`
 
 	// When true, the component is part of istio core. Otherwise, it is an addon
 	//
 	// example:  true
 	// required: true
-	IsCore IsCoreComponent `json:"is_core"`
+	IsCore bool `json:"is_core"`
 }
 
 type IstioComponentStatus []ComponentStatus
 
 const (
-	Healthy   Status = "Healthy"
-	Unhealthy Status = "Unhealthy"
-	NotFound  Status = "NotFound"
+	Healthy   string = "Healthy"
+	Unhealthy string = "Unhealthy"
+	NotFound  string = "NotFound"
 )
 
 // List of workloads part of a Istio deployment and if whether it is mandatory or not
-var components = map[ComponentName]IsCoreComponent{
+var components = map[string]bool{
 	// Core components, mandatory
 	"istio-egressgateway":  true,
 	"istio-ingressgateway": true,
@@ -59,7 +56,7 @@ var components = map[ComponentName]IsCoreComponent{
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	isc := IstioComponentStatus{}
-	cf := map[ComponentName]bool{}
+	cf := map[string]bool{}
 
 	// Fetching workloads from control plane namespace
 	ds, error := iss.k8s.GetDeployments(config.Get().IstioNamespace)
@@ -69,7 +66,7 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 
 	// Map workloads there by app name
 	for _, d := range ds {
-		appName := ComponentName(d.Labels[config.Get().IstioLabels.AppLabelName])
+		appName := d.Labels[config.Get().IstioLabels.AppLabelName]
 		if appName == "" {
 			continue
 		}
@@ -105,7 +102,7 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	return isc, nil
 }
 
-func GetDeploymentStatus(d apps_v1.Deployment) Status {
+func GetDeploymentStatus(d apps_v1.Deployment) string {
 	status := Unhealthy
 	wl := &models.Workload{}
 	wl.ParseDeployment(&d)

@@ -221,31 +221,6 @@
         }
       }
     },
-    "/iter8/experiments": {
-      "get": {
-        "description": "User can define a comman separated list of namespaces.",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "iter8"
-        ],
-        "summary": "Endpoint to fetch iter8 experiments for all namespaces user have access.",
-        "operationId": "iter8Experiments",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/iter8ExperimentsResponse"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/istio/status": {
       "get": {
         "description": "Get the status of each components needed in the control plane",
@@ -266,6 +241,31 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/iter8/experiments": {
+      "get": {
+        "description": "User can define a comman separated list of namespaces.",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "iter8"
+        ],
+        "summary": "Endpoint to fetch iter8 experiments for all namespaces user have access.",
+        "operationId": "iter8Experiments",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8ExperimentsResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -3777,6 +3777,11 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "CauseType": {
+      "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Chart": {
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
       "type": "object",
@@ -3882,15 +3887,28 @@
     "ComponentStatus": {
       "type": "object",
       "required": [
+        "name",
         "status",
         "is_core"
       ],
       "properties": {
         "is_core": {
-          "$ref": "#/definitions/IsCoreComponent"
+          "description": "When true, the component is part of istio core. Otherwise, it is an addon",
+          "type": "boolean",
+          "x-go-name": "IsCore",
+          "example": true
+        },
+        "name": {
+          "description": "The app label value of the Istio component",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "istiod"
         },
         "status": {
-          "$ref": "#/definitions/Status"
+          "description": "The status of a Istio component",
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Not Found"
         }
       },
       "x-go-package": "github.com/kiali/kiali/business"
@@ -4143,10 +4161,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
-    "IsCoreComponent": {
-      "type": "boolean",
-      "x-go-package": "github.com/kiali/kiali/business"
-    },
     "IstioCheck": {
       "type": "object",
       "title": "IstioCheck represents an individual check.",
@@ -4174,8 +4188,8 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioComponentStatus": {
-      "type": "object",
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "$ref": "#/definitions/ComponentStatus"
       },
       "x-go-package": "github.com/kiali/kiali/business"
@@ -6144,8 +6158,117 @@
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
     },
     "Status": {
-      "type": "string",
-      "x-go-package": "github.com/kiali/kiali/business"
+      "type": "object",
+      "title": "Status is a return value for calls that don't return other objects.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "code": {
+          "description": "Suggested HTTP return code for this status, 0 if not set.\n+optional",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Code"
+        },
+        "continue": {
+          "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nconsistent list may not be possible if the server configuration has changed or more than a few\nminutes have passed. The resourceVersion field returned when using this continue value will be\nidentical to the value in the first response, unless you have received this token from an error\nmessage.",
+          "type": "string",
+          "x-go-name": "Continue"
+        },
+        "details": {
+          "$ref": "#/definitions/StatusDetails"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "message": {
+          "description": "A human-readable description of the status of this operation.\n+optional",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "reason": {
+          "$ref": "#/definitions/StatusReason"
+        },
+        "resourceVersion": {
+          "description": "String that identifies the server's internal version of this object that\ncan be used by clients to determine when objects have changed.\nValue must be treated as opaque by clients and passed unmodified back to the server.\nPopulated by the system.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "selfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "status": {
+          "description": "Status of the operation.\nOne of: \"Success\" or \"Failure\".\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status\n+optional",
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "StatusCause": {
+      "description": "StatusCause provides more information about an api.Status failure, including\ncases when multiple errors are encountered.",
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "The field of the resource that has caused this error, as named by its JSON\nserialization. May include dot and postfix notation for nested attributes.\nArrays are zero-indexed.  Fields may appear more than once in an array of\ncauses due to fields having multiple errors.\nOptional.\n\nExamples:\n\"name\" - the field \"name\" on the current resource\n\"items[0].name\" - the field \"name\" on the first array entry in \"items\"\n+optional",
+          "type": "string",
+          "x-go-name": "Field"
+        },
+        "message": {
+          "description": "A human-readable description of the cause of the error.  This field may be\npresented as-is to a reader.\n+optional",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "reason": {
+          "$ref": "#/definitions/CauseType"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "StatusDetails": {
+      "description": "StatusDetails is a set of additional properties that MAY be set by the\nserver to provide additional information about a response. The Reason\nfield of a Status object defines what attributes will be set. Clients\nmust ignore fields that do not match the defined type of each attribute,\nand should assume that any attribute may be empty, invalid, or under\ndefined.",
+      "type": "object",
+      "properties": {
+        "causes": {
+          "description": "The Causes array includes more details associated with the StatusReason\nfailure. Not all StatusReasons may provide detailed causes.\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StatusCause"
+          },
+          "x-go-name": "Causes"
+        },
+        "group": {
+          "description": "The group attribute of the resource associated with the status StatusReason.\n+optional",
+          "type": "string",
+          "x-go-name": "Group"
+        },
+        "kind": {
+          "description": "The kind attribute of the resource associated with the status StatusReason.\nOn some operations may differ from the requested resource Kind.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "description": "The name attribute of the resource associated with the status StatusReason\n(when there is a single name which can be described).\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "retryAfterSeconds": {
+          "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate\nthe client must take an alternate action - for those errors this field may indicate how long to wait\nbefore taking the alternate action.\n+optional",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "RetryAfterSeconds"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "StatusInfo": {
       "description": "This is used for returning a response of Kiali Status",
@@ -6183,6 +6306,11 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "StatusReason": {
+      "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "ThreeScaleHandler": {
       "description": "ThreeScaleHAndler represents the minimal info that a user needs to know from the UI to link a service with 3Scale site",

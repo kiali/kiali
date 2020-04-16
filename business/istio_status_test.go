@@ -92,11 +92,11 @@ func TestAllComp(t *testing.T) {
 	assertComponent(assert, icsl, "prometheus", NotFound, false)
 }
 
-func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status Status, isCore bool) {
+func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
 	for _, ics := range icsl {
-		if ics.Name == ComponentName(name) {
+		if ics.Name == name {
 			assert.Equal(status, ics.Status)
-			assert.Equal(IsCoreComponent(isCore), ics.IsCore)
+			assert.Equal(isCore, ics.IsCore)
 		}
 	}
 }
