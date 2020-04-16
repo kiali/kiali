@@ -13,9 +13,8 @@ import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import VirtualList from '../../components/VirtualList/VirtualList';
+import TimeControlsContainer from 'components/Time/TimeControls';
 
 type WorkloadListComponentState = FilterComponent.State<WorkloadListItem>;
 
@@ -164,8 +163,12 @@ class WorkloadListComponent extends FilterComponent.Component<
           initialFilters={WorkloadListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
           rightToolbar={[
-            <DurationDropdownContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" prefix="Last" />,
-            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
+            <TimeControlsContainer
+              key={'DurationDropdown'}
+              id="workload-list-duration-dropdown"
+              handleRefresh={this.updateListItems}
+              disabled={false}
+            />
           ]}
         />
       </VirtualList>

@@ -14,9 +14,8 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { namespaceEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import VirtualList from '../../components/VirtualList/VirtualList';
+import TimeControlsContainer from 'components/Time/TimeControls';
 
 type AppListComponentState = FilterComponent.State<AppListItem>;
 
@@ -138,8 +137,12 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
           initialFilters={AppListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
           rightToolbar={[
-            <DurationDropdownContainer key={'DurationDropdown'} id="app-list-dropdown" prefix="Last" />,
-            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
+            <TimeControlsContainer
+              key={'DurationDropdown'}
+              id="app-list-duration-dropdown"
+              handleRefresh={this.updateListItems}
+              disabled={false}
+            />
           ]}
         />
       </VirtualList>

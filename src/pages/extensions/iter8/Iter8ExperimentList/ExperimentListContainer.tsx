@@ -32,13 +32,13 @@ import { Iter8Info, Iter8Experiment } from '../../../../types/Iter8';
 import { Link } from 'react-router-dom';
 import * as FilterComponent from '../../../../components/FilterList/FilterComponent';
 
-import RefreshButtonContainer from '../../../../components/Refresh/RefreshButton';
 import { KialiAppState } from '../../../../store/Store';
 import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
 import Namespace from '../../../../types/Namespace';
 import { PromisesRegistry } from '../../../../utils/CancelablePromises';
 import { namespaceEquals } from '../../../../utils/Common';
+import RefreshContainer from 'components/Refresh/Refresh';
 
 // Style constants
 const rightToolbar = style({ marginLeft: 'auto' });
@@ -187,7 +187,7 @@ class ExperimentListPage extends React.Component<Props, State> {
     });
   };
 
-  updateListItems() {
+  updateListItems = () => {
     this.promises.cancelAll();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
     if (namespacesSelected.length === 0) {
@@ -205,7 +205,7 @@ class ExperimentListPage extends React.Component<Props, State> {
     } else {
       this.fetchExperiments(namespacesSelected);
     }
-  }
+  };
 
   // Invoke the history object to update and URL and start a routing
   goNewExperimentPage = () => {
@@ -244,7 +244,14 @@ class ExperimentListPage extends React.Component<Props, State> {
       <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
         <ToolbarSection aria-label="ToolbarSection">
           <Toolbar className={rightToolbar}>
-            <RefreshButtonContainer key={'Refresh'} handleRefresh={() => this.updateListItems()} />
+            <RefreshContainer
+              id="time_range_refresh"
+              key="Refresh"
+              disabled={false}
+              hideLabel={true}
+              handleRefresh={this.updateListItems}
+              manageURL={true}
+            />
             {this.actionsToolbar()}
           </Toolbar>
         </ToolbarSection>

@@ -14,10 +14,9 @@ import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import VirtualList from '../../components/VirtualList/VirtualList';
+import TimeControlsContainer from 'components/Time/TimeControls';
 
 type ServiceListComponentState = FilterComponent.State<ServiceListItem>;
 
@@ -166,8 +165,12 @@ class ServiceListComponent extends FilterComponent.Component<
           initialFilters={ServiceListFilters.availableFilters}
           onFilterChange={this.onFilterChange}
           rightToolbar={[
-            <DurationDropdownContainer key={'DurationDropdown'} id="service-list-duration-dropdown" prefix="Last" />,
-            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
+            <TimeControlsContainer
+              key={'DurationDropdown'}
+              id="service-list-duration-dropdown"
+              handleRefresh={this.updateListItems}
+              disabled={false}
+            />
           ]}
         />
       </VirtualList>
