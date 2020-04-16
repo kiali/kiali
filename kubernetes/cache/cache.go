@@ -146,7 +146,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer
 
-	if _, exist := c.stopChan[namespace]; !exist {
+	if nsChan, exist := c.stopChan[namespace]; !exist || nsChan == nil {
 		c.stopChan[namespace] = make(chan struct{})
 	}
 
@@ -194,6 +194,12 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 
 // RefreshNamespace will delete the specific namespace's cache and create a new one.
 func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
+	if nsChan, exist := c.stopChan[namespace]; exist {
+		if nsChan != nil {
+			close(nsChan)
+			nsChan = nil //nolint
+		}
+	}
 	defer c.cacheLock.Unlock()
 	c.cacheLock.Lock()
 	delete(c.nsCache, namespace)
@@ -203,8 +209,10 @@ func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
 func (c *kialiCacheImpl) Stop() {
 	log.Infof("Stopping Kiali Cache")
 	for _, nsChan := range c.stopChan {
-		close(nsChan)
-		nsChan = nil
+		if nsChan != nil {
+			close(nsChan)
+			nsChan = nil //nolint
+		}
 	}
 	defer c.cacheLock.Unlock()
 	c.cacheLock.Lock()
