@@ -53,7 +53,7 @@ type (
 		refreshDuration        time.Duration
 		cacheNamespaces        []string
 		cacheIstioTypes        map[string]bool
-		stopChan               chan struct{}
+		stopChan               map[string]chan struct{}
 		nsCache                map[string]typeCache
 		cacheLock              sync.Mutex
 		tokenLock              sync.RWMutex
@@ -102,12 +102,19 @@ func NewKialiCache() (KialiCache, error) {
 		cacheIstioTypes[iType] = true
 	}
 	log.Tracef("[Kiali Cache] cacheIstioTypes %v", cacheIstioTypes)
+
+	stopChan := make(map[string]chan struct{})
+
+	for _, ns := range cacheNamespaces {
+		stopChan[ns] = make(chan struct{})
+	}
+
 	kialiCacheImpl := kialiCacheImpl{
 		istioClient:            *istioClient,
 		refreshDuration:        refreshDuration,
 		cacheNamespaces:        cacheNamespaces,
 		cacheIstioTypes:        cacheIstioTypes,
-		stopChan:               make(chan struct{}),
+		stopChan:               stopChan,
 		nsCache:                make(map[string]typeCache),
 		tokenNamespaces:        make(map[string]namespaceCache),
 		tokenNamespaceDuration: tokenNamespaceDuration,
@@ -139,11 +146,15 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer
 
+	if _, exist := c.stopChan[namespace]; !exist {
+		c.stopChan[namespace] = make(chan struct{})
+	}
+
 	go func() {
 		for _, informer := range c.nsCache[namespace] {
-			go informer.Run(c.stopChan)
+			go informer.Run(c.stopChan[namespace])
 		}
-		<-c.stopChan
+		<-c.stopChan[namespace]
 		log.Infof("Kiali cache for [namespace: %s] stopped", namespace)
 	}()
 
@@ -155,8 +166,8 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 		}
 		return hasSynced
 	}
-	if synced := cache.WaitForCacheSync(c.stopChan, isSynced); !synced {
-		c.stopChan <- struct{}{}
+	if synced := cache.WaitForCacheSync(c.stopChan[namespace], isSynced); !synced {
+		c.stopChan[namespace] <- struct{}{}
 		log.Errorf("Kiali cache for [namespace: %s] sync failure", namespace)
 		return false
 	}
@@ -191,9 +202,9 @@ func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
 
 func (c *kialiCacheImpl) Stop() {
 	log.Infof("Stopping Kiali Cache")
-	if c.stopChan != nil {
-		close(c.stopChan)
-		c.stopChan = nil
+	for _, nsChan := range c.stopChan {
+		close(nsChan)
+		nsChan = nil
 	}
 	defer c.cacheLock.Unlock()
 	c.cacheLock.Lock()
