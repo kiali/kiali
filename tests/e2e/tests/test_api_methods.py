@@ -9,7 +9,7 @@ def before_all_tests(kiali_client):
     control_plane_namespace = conftest.get_control_plane_namespace()
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
-    tested_method_list = ['root','jaegerInfo', 'grafanaInfo', 'getpermissions', 'getStatus', 'getConfig', 'authenticate',
+    tested_method_list = ['root','jaegerInfo', 'grafanaInfo', 'getPermissions', 'getStatus', 'getConfig', 'authenticate',
                           'namespaceList', 'namespaceMetrics','namespaceHealth',
                           'istioConfigList', 'istioConfigDetails', 'istioConfigCreate', 'istioConfigDelete', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
@@ -111,7 +111,7 @@ def test_pod_logs(kiali_client):
 
 def test_grafana_info(kiali_client):
     evaluate_response(kiali_client, method_name='grafanaInfo')
-    
+
 def test_get_permissions(kiali_client):
     evaluate_response(kiali_client, method_name='getPermissions')
     
