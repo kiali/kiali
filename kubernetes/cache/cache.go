@@ -146,17 +146,17 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer
 
-	if nsChan, exist := c.stopChan[namespace]; !exist || nsChan == nil {
+	if _, exist := c.stopChan[namespace]; !exist {
 		c.stopChan[namespace] = make(chan struct{})
 	}
 
-	go func() {
+	go func(stopCh <-chan struct{}) {
 		for _, informer := range c.nsCache[namespace] {
-			go informer.Run(c.stopChan[namespace])
+			go informer.Run(stopCh)
 		}
-		<-c.stopChan[namespace]
+		<-stopCh
 		log.Infof("Kiali cache for [namespace: %s] stopped", namespace)
-	}()
+	}(c.stopChan[namespace])
 
 	log.Infof("Waiting for Kiali cache for [namespace: %s] to sync", namespace)
 	isSynced := func() bool {
@@ -194,28 +194,24 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 
 // RefreshNamespace will delete the specific namespace's cache and create a new one.
 func (c *kialiCacheImpl) RefreshNamespace(namespace string) {
-	if nsChan, exist := c.stopChan[namespace]; exist {
-		if nsChan != nil {
-			close(nsChan)
-			nsChan = nil //nolint
-		}
-	}
 	defer c.cacheLock.Unlock()
 	c.cacheLock.Lock()
+	if nsChan, exist := c.stopChan[namespace]; exist {
+		close(nsChan)
+		delete(c.stopChan, namespace)
+	}
 	delete(c.nsCache, namespace)
 	c.createCache(namespace)
 }
 
 func (c *kialiCacheImpl) Stop() {
 	log.Infof("Stopping Kiali Cache")
-	for _, nsChan := range c.stopChan {
-		if nsChan != nil {
-			close(nsChan)
-			nsChan = nil //nolint
-		}
-	}
 	defer c.cacheLock.Unlock()
 	c.cacheLock.Lock()
+	for namespace, nsChan := range c.stopChan {
+		close(nsChan)
+		delete(c.stopChan, namespace)
+	}
 	log.Infof("Clearing Kiali Cache")
 	for ns := range c.nsCache {
 		delete(c.nsCache, ns)
