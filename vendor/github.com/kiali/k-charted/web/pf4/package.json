@@ -1,6 +1,6 @@
 {
   "name": "@kiali/k-charted-pf4",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Dashboards and Charts library for Kubernetes, with React / PatternFly 4",
   "repository": "https://github.com/kiali/k-charted",
   "author": "Red Hat",
@@ -13,7 +13,13 @@
   ],
   "peerDependencies": {
     "@types/react": ">=16.0.0",
-    "react": ">=16.0.0"
+    "react": ">=16.0.0",
+    "victory": ">=34.0.1",
+    "victory-core": ">=34.0.0"
+  },
+  "resolutions": {
+    "victory": "~34.0.1",
+    "victory-core": "~34.0.0"
   },
   "devDependencies": {
     "@babel/core": "~7.4.3",
@@ -32,14 +38,16 @@
     "react": "~16.8.6",
     "react-docgen-typescript-loader": "~3.1.0",
     "react-dom": "~16.8.6",
-    "react-scripts": "3.0.0",
+    "react-scripts": "3.3.1",
     "seedrandom": "~3.0.1",
     "ts-jest": "~24.0.2",
     "tslint": "~5.16.0",
     "tslint-no-circular-imports": "~0.6.2",
     "tslint-react": "^4.0.0",
-    "typescript": "3.4.5",
-    "typestyle": "~2.0.2"
+    "typescript": "~3.7.5",
+    "typestyle": "~2.0.2",
+    "victory": "~34.0.1",
+    "victory-core": "~34.0.0"
   },
   "scripts": {
     "build": "tsc -p .",

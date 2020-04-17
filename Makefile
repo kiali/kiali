@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.16.0-SNAPSHOT
+VERSION ?= v1.17.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -37,10 +37,7 @@ CONTAINER_NAME ?= ${IMAGE_ORG}/kiali
 CONTAINER_VERSION ?= dev
 
 # These two vars allow Jenkins to override values.
-DOCKER_NAME ?= docker.io/${CONTAINER_NAME}
 QUAY_NAME ?= quay.io/${CONTAINER_NAME}
-
-DOCKER_TAG = ${DOCKER_NAME}:${CONTAINER_VERSION}
 QUAY_TAG = ${QUAY_NAME}:${CONTAINER_VERSION}
 
 # Identifies the Kiali operator container images that will be built

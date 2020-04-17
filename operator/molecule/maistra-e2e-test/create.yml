@@ -33,7 +33,7 @@
     - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
     - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator_without_ao.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ operators.kiali.clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ operators.kiali.clusterroles }}" envsubst
     register: template
 

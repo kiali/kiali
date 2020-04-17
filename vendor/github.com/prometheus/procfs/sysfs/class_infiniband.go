@@ -97,7 +97,7 @@ func (fs FS) InfiniBandClass() (InfiniBandClass, error) {
 
 	dirs, err := ioutil.ReadDir(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list InfiniBand devices at %q: %v", path, err)
+		return nil, err
 	}
 
 	ibc := make(InfiniBandClass, len(dirs))
@@ -251,7 +251,7 @@ func parseInfiniBandCounters(portPath string) (*InfiniBandCounters, error) {
 		name := filepath.Join(path, f.Name())
 		value, err := util.SysReadFile(name)
 		if err != nil {
-			if os.IsNotExist(err) || err.Error() == "operation not supported" || err.Error() == "invalid argument" {
+			if os.IsNotExist(err) || os.IsPermission(err) || err.Error() == "operation not supported" || err.Error() == "invalid argument" {
 				continue
 			}
 			return nil, fmt.Errorf("failed to read file %q: %v", name, err)
@@ -334,7 +334,7 @@ func parseInfiniBandCounters(portPath string) (*InfiniBandCounters, error) {
 		name := filepath.Join(path, f.Name())
 		value, err := util.SysReadFile(name)
 		if err != nil {
-			if os.IsNotExist(err) || err.Error() == "operation not supported" || err.Error() == "invalid argument" {
+			if os.IsNotExist(err) || os.IsPermission(err) || err.Error() == "operation not supported" || err.Error() == "invalid argument" {
 				continue
 			}
 			return nil, fmt.Errorf("failed to read file %q: %v", name, err)

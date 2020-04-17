@@ -1,45 +1,18 @@
 import React from 'react';
-import { ChartScatter } from '@patternfly/react-charts';
+import { ChartScatter, ChartLine } from '@patternfly/react-charts';
 import { storiesOf } from '@storybook/react';
 
 import '@patternfly/react-core/dist/styles/base.css';
 import ChartWithLegend from './ChartWithLegend';
-import { VCLine, makeLegend } from '../types/VictoryChartInfo';
+import { VCLine, makeLegend, VCLines } from '../types/VictoryChartInfo';
+import { buildLine } from '../types/__mocks__/Charts.mock';
 
-const traces: VCLine = {
-  datapoints: [{
-    x: 0,
-    y: 0.62,
-    name: 'Trace 1',
-    unit: 'seconds',
-    size: 8
-  }, {
-    x: 4,
-    y: 0.80,
-    name: 'Trace 2',
-    unit: 'seconds',
-    size: 4
-  }, {
-    x: 5,
-    y: 0.83,
-    name: 'Trace 3',
-    unit: 'seconds',
-    size: 4
-  }, {
-    x: 8,
-    y: 0.45,
-    name: 'Trace 4',
-    unit: 'seconds',
-    size: 5
-  }, {
-    x: 16,
-    y: 0.152,
-    name: 'Trace 5',
-    unit: 'seconds',
-    size: 10
-  }],
-  legendItem: makeLegend('span duration', 'blue')
-};
+const traces: VCLine = buildLine(
+  { name: 'span duration', unit: 'seconds', color: 'blue' },
+  [0, 4, 5, 8, 16],
+  [0.62, 0.80, 0.83, 0.45, 0.152],
+  [{ name: 'Trace 1', size: 8 }, { name: 'Trace 2', size: 4 }, { name: 'Trace 3', size: 4 }, { name: 'Trace 4', size: 5 }, { name: 'Trace 5', size: 10 }]
+);
 
 const now = new Date().getTime();
 const tracesXAsDates = {
@@ -56,27 +29,66 @@ const tracesXAsDatesBis = {
   datapoints: tracesXAsDates.datapoints.map(t => {
     return {
       ...t,
-      y: t.y * 2
+      y: t.y * 2,
+      color: 'lightblue'
     };
   }),
-  legendItem: makeLegend('span duration', 'lightblue')
+  legendItem: makeLegend('span duration 2', 'lightblue')
 };
 
-storiesOf('ChartWithLegend', module)
-  .add('as scatter plots', () => {
-    return <ChartWithLegend data={[traces]} unit="seconds" seriesComponent={(<ChartScatter/>)} onClick={dp => alert(`${dp.name}: [${dp.x}, ${dp.y}]`)} />;
-  })
-  .add('as scatter plots with dates', () => {
+const crossing: VCLines = [
+  buildLine({ name: 'mm 1', unit: 'ms', color: 'cyan' }, [0, 1, 2], [1, 3, 2]),
+  buildLine({ name: 'much longer serie name 2', unit: '', color: 'orange' }, [0, 1, 2], [2, 3, 1])
+];
+
+class InChartNav extends React.Component<{}, { from: Date, to: Date, data: VCLine }> {
+  constructor(props: {}) {
+    super(props);
+    this.state = { from: new Date(now - 40000), to: new Date(now + 40000), data: tracesXAsDates };
+  }
+
+  render() {
     return (
       <ChartWithLegend
-        data={[tracesXAsDates]}
+        data={[this.state.data]}
         unit="seconds"
         seriesComponent={(<ChartScatter/>)}
         onClick={dp => alert(`${dp.name}: [${dp.x}, ${dp.y}]`)}
-        timeWindow={[new Date(now - 40000), new Date(now + 40000)]}
+        brushHandlers={{
+          onDomainChangeEnd: (_, props) => {
+            const domain = props.currentDomain;
+            if (domain && domain.x && domain.x[0]) {
+              const data = {
+                ...this.state.data,
+                datapoints: this.state.data.datapoints.filter(d => d.x >= domain.x[0] && d.x <= domain.x[1])
+              };
+              this.setState({ from: domain.x[0] as Date, to: domain.x[1] as Date, data: data });
+            }
+          }
+        }}
+        timeWindow={[this.state.from, this.state.to]}
+      />
+    );
+  }
+}
+
+storiesOf('ChartWithLegend', module)
+  .add('as scatter plots', () => {
+    return (
+      <ChartWithLegend
+        data={[traces]}
+        unit="seconds"
+        seriesComponent={(<ChartScatter/>)}
+        onClick={dp => alert(`${dp.name}: [${dp.x}, ${dp.y}]`)}
       />
     );
   })
+  .add('as scatter with dates and in-chart navigation', () => {
+    return <InChartNav/>;
+  })
   .add('with two series', () => {
     return <ChartWithLegend data={[tracesXAsDates, tracesXAsDatesBis]} unit="seconds" seriesComponent={(<ChartScatter/>)} onClick={dp => alert(`${dp.name}: [${dp.x}, ${dp.y}]`)} />;
+  })
+  .add('with crossing point', () => {
+    return <ChartWithLegend data={crossing} unit="seconds" stroke={true} seriesComponent={(<ChartLine/>)} />;
   });

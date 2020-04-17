@@ -10,6 +10,7 @@ import { getDataSupplier } from '../utils/victoryChartsUtils';
 import { Overlay } from '../types/Overlay';
 import KChart from './KChart';
 import { VCDataPoint } from '../types/VictoryChartInfo';
+import { BrushHandlers } from './Container';
 
 const expandedChartContainerStyle = style({
   height: 'calc(100vh - 248px)'
@@ -28,6 +29,7 @@ type Props = {
   labelValues: AllPromLabelsValues;
   labelPrettifier?: (key: string, value: string) => string;
   onClick?: (chart: ChartModel, datum: VCDataPoint) => void;
+  brushHandlers?: BrushHandlers;
   overlay?: Overlay;
   timeWindow?: [Date, Date];
 };
@@ -97,6 +99,7 @@ export class Dashboard extends React.Component<Props, State> {
         expandHandler={expandHandler}
         overlay={this.props.overlay}
         onClick={onClick}
+        brushHandlers={this.props.brushHandlers}
         timeWindow={this.props.timeWindow}
       />
     );

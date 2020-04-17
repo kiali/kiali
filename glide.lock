@@ -1,5 +1,5 @@
-hash: 57f4ccb4bd6308650c1f5bbab6ad89ce6520ad4d5ecefdc24108f7f7ce79fbd9
-updated: 2020-01-10T16:29:20.652954975+01:00
+hash: 97531da42e811be0710fe2bcb5c7161d045881d2197af7710169fcc48d29dacd
+updated: 2020-04-07T15:09:33.56528743+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -12,14 +12,14 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/gogo/protobuf
-  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
+  version: 342cbe0a04158f6dcb03ca0079991a51a4248c02
   subpackages:
   - proto
   - sortkeys
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf
-  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+  version: 84668698ea25b64748563aa20726db66a6b8d299
   subpackages:
   - proto
   - ptypes
@@ -35,7 +35,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gorilla/mux
-  version: 00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15
+  version: 75dcda0896e109a2a22c9315bca3bb21b87b2ba5
 - name: github.com/hashicorp/go-version
   version: 23480c0665776210b5fbbac6eaaee40e3e6a96b7
 - name: github.com/hashicorp/golang-lru
@@ -51,7 +51,7 @@ imports:
 - name: github.com/jtblin/go-ldap-client
   version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
-  version: 593b43d1980f6d1b355b3e17de195b1388f2c198
+  version: e7fab0c4fbf0b4995a6d3b0c7d33be26e98d6734
   subpackages:
   - business
   - config
@@ -74,7 +74,7 @@ imports:
 - name: github.com/NYTimes/gziphandler
   version: dd0439581c7657cb652dfe5c71d7d48baf39541d
 - name: github.com/openshift/api
-  version: d4a64ec2cbd86f11ea74dfdcf6520d5833d0c6cd
+  version: 8ce0047d664fc92a53ded23caef9ede2dc4468c6
   subpackages:
   - apps/v1
   - project/v1
@@ -86,7 +86,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
-  version: 505eaef017263e299324067d40ca2c48f6a2cf50
+  version: 2641b987480bca71fb39738eb8c8b0d577cb1d76
   subpackages:
   - api
   - api/prometheus/v1
@@ -94,7 +94,7 @@ imports:
   - prometheus/internal
   - prometheus/promhttp
 - name: github.com/prometheus/client_model
-  version: d1d2010b5beead3fa1c5f271a5cf626e40b3ad6e
+  version: 7bc5445566f0fe75b15de23e6b93886e982d7bf9
   subpackages:
   - go
 - name: github.com/prometheus/common
@@ -104,7 +104,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 436b8d67311d20a1554856a974008796024691cb
+  version: 8068798bcbd1702c3fc908a35f28e98b41f357aa
   subpackages:
   - internal/fs
   - internal/util
@@ -161,7 +161,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: gopkg.in/asn1-ber.v1
-  version: 29be175fc3a3b1787c008093b829fbfee40decd6
+  version: effdc98edfb5dde0d9fd8dfba266f6483e6ce9f0
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ldap.v2

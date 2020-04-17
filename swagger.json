@@ -27,7 +27,10 @@
           "http",
           "https"
         ],
-        "operationId": "Root",
+        "tags": [
+          "kiali"
+        ],
+        "operationId": "root",
         "responses": {
           "200": {
             "$ref": "#/responses/statusInfo"
@@ -51,7 +54,10 @@
           "http",
           "https"
         ],
-        "operationId": "AuthenticationInfo",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "authenticationInfo",
         "responses": {
           "200": {
             "$ref": "#/responses/authenticationInfo"
@@ -80,7 +86,10 @@
           "http",
           "https"
         ],
-        "operationId": "Authenticate",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "authenticate",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenResponse"
@@ -99,7 +108,10 @@
           "http",
           "https"
         ],
-        "operationId": "OpenshiftCheckToken",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "openshiftCheckToken",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenResponse"
@@ -119,6 +131,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "kiali"
         ],
         "operationId": "getConfig",
         "responses": {
@@ -141,6 +156,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "integrations"
+        ],
         "operationId": "grafanaInfo",
         "responses": {
           "200": {
@@ -158,6 +176,27 @@
         }
       }
     },
+    "/healthz": {
+      "get": {
+        "description": "Endpoint to get the health of Kiali",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "kiali"
+        ],
+        "operationId": "healthz",
+        "responses": {
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/istio/permissions": {
       "get": {
         "description": "Endpoint to get the caller permissions on new Istio Config objects",
@@ -168,10 +207,38 @@
           "http",
           "https"
         ],
+        "tags": [
+          "config"
+        ],
         "operationId": "getPermissions",
         "responses": {
           "200": {
             "$ref": "#/responses/istioConfigPermissions"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/iter8/experiments": {
+      "get": {
+        "description": "User can define a comman separated list of namespaces.",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "iter8"
+        ],
+        "summary": "Endpoint to fetch iter8 experiments for all namespaces user have access.",
+        "operationId": "iter8Experiments",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/iter8ExperimentsResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -188,6 +255,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "deleteIter8Experiments",
         "parameters": [
@@ -224,6 +294,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "patchIter8Experiments",
         "parameters": [
@@ -263,6 +336,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "iter8"
+        ],
         "summary": "Endpoint to create new iter8 experiments for a given namespace.",
         "operationId": "postIter8Experiments",
         "parameters": [
@@ -277,7 +353,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/iter8ExperimentsGetResponse"
+            "$ref": "#/responses/iter8ExperimentGetDetailResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -294,6 +370,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "iter8"
         ],
         "operationId": "getIter8Experiments",
         "parameters": [
@@ -334,6 +413,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "integrations"
+        ],
         "operationId": "jaegerInfo",
         "responses": {
           "200": {
@@ -355,7 +437,10 @@
           "http",
           "https"
         ],
-        "operationId": "Logout",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "logout",
         "responses": {
           "204": {
             "$ref": "#/responses/noContent"
@@ -2496,6 +2581,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "traces"
+        ],
         "operationId": "spansList",
         "parameters": [
           {
@@ -3170,6 +3258,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "status"
+        ],
         "operationId": "getStatus",
         "responses": {
           "200": {
@@ -3190,6 +3281,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "getThreeScaleInfo",
         "responses": {
@@ -3212,6 +3306,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "getThreeScaleHandlers",
         "responses": {
           "200": {
@@ -3230,6 +3327,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "postThreeScaleHandlers",
         "responses": {
@@ -3251,6 +3351,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "deleteThreeScaleHandler",
         "parameters": [
@@ -3283,6 +3386,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "patchThreeScaleHandler",
         "parameters": [
@@ -3318,6 +3424,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "postThreeScaleService",
         "parameters": [
           {
@@ -3348,6 +3457,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "getThreeScaleService",
         "parameters": [
@@ -3389,6 +3501,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "threescale"
+        ],
         "operationId": "deleteThreeScaleService",
         "parameters": [
           {
@@ -3425,6 +3540,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "threescale"
         ],
         "operationId": "patchThreeScaleService",
         "parameters": [
@@ -7048,7 +7166,7 @@
         "$ref": "#/definitions/Iter8ExperimentDetail"
       }
     },
-    "iter8ExperimentsGetResponse": {
+    "iter8ExperimentsResponse": {
       "description": "Return a list of Iter8 Experiment Items",
       "schema": {
         "type": "array",

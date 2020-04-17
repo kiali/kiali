@@ -1,4 +1,4 @@
-// Copyright 2019 The Prometheus Authors
+// Copyright 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,8 +15,10 @@ package procfs
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -54,9 +56,9 @@ type (
 	// For the proc file format details, see https://linux.die.net/man/5/proc.
 	netUDPLine struct {
 		Sl        uint64
-		LocalAddr uint64
+		LocalAddr net.IP
 		LocalPort uint64
-		RemAddr   uint64
+		RemAddr   net.IP
 		RemPort   uint64
 		St        uint64
 		TxQueue   uint64
@@ -172,7 +174,7 @@ func parseNetUDPLine(fields []string) (*netUDPLine, error) {
 		return nil, fmt.Errorf(
 			"cannot parse local_address field in udp socket line: %s", fields[1])
 	}
-	if line.LocalAddr, err = strconv.ParseUint(l[0], 16, 64); err != nil {
+	if line.LocalAddr, err = hex.DecodeString(l[0]); err != nil {
 		return nil, fmt.Errorf(
 			"cannot parse local_address value in udp socket line: %s", err)
 	}
@@ -187,7 +189,7 @@ func parseNetUDPLine(fields []string) (*netUDPLine, error) {
 		return nil, fmt.Errorf(
 			"cannot parse rem_address field in udp socket line: %s", fields[1])
 	}
-	if line.RemAddr, err = strconv.ParseUint(r[0], 16, 64); err != nil {
+	if line.RemAddr, err = hex.DecodeString(r[0]); err != nil {
 		return nil, fmt.Errorf(
 			"cannot parse rem_address value in udp socket line: %s", err)
 	}

@@ -65,7 +65,7 @@ func TestNetClass(t *testing.T) {
 		linkMode         int64 = 1
 		mtu              int64 = 1500
 		nameAssignType   int64 = 2
-		netDevGroup      int64 = 0
+		netDevGroup      int64
 		speed            int64 = 1000
 		txQueueLen       int64 = 1000
 		netType          int64 = 1

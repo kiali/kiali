@@ -180,14 +180,14 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 	serviceOk := IsOK(service)
 
 	if !workloadOk && !appOk && !serviceOk {
-		panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+		panic(fmt.Sprintf("Failed ID gen1: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
 	}
 
 	// handle workload graph nodes (service graphs are initially processed as workload graphs)
 	if graphType == GraphTypeWorkload || graphType == GraphTypeService {
 		// workload graph nodes are type workload or service
 		if !workloadOk && !serviceOk {
-			panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+			panic(fmt.Sprintf("Failed ID gen2: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
 		}
 		if !workloadOk {
 			return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService

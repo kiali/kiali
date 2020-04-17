@@ -30,12 +30,10 @@
 container-build-kiali: .prepare-kiali-image-files
 ifeq ($(DORP),docker)
 	@echo Building container image for Kiali using docker
-	docker build --pull -t ${DOCKER_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
-	docker tag ${DOCKER_TAG} ${QUAY_TAG}
+	docker build --pull -t ${QUAY_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
 else
 	@echo Building container image for Kiali using podman
-	podman build --pull -t ${DOCKER_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
-	podman tag ${DOCKER_TAG} ${QUAY_TAG}
+	podman build --pull -t ${QUAY_TAG} -f ${OUTDIR}/docker/${KIALI_DOCKER_FILE} ${OUTDIR}/docker
 endif
 
 ## container-build-operator: Build Kiali operator container image.
@@ -62,17 +60,6 @@ else
 	podman push ${QUAY_TAG}
 endif
 
-## container-push-kiali-docker: Pushes the Kiali image to docker hub.
-# TODO when can we stop publishing to docker.io?
-container-push-kiali-docker:
-ifeq ($(DORP),docker)
-	@echo Pushing current image to ${DOCKER_TAG} using docker
-	docker push ${DOCKER_TAG}
-else
-	@echo Pushing current image to ${DOCKER_TAG} using podman
-	podman push ${DOCKER_TAG}
-endif
-
 ## container-push-operator: Pushes the operator image to quay.
 container-push-operator-quay:
 ifeq ($(DORP),docker)
@@ -86,8 +73,8 @@ endif
 ## container-push: Pushes all container images to quay and docker hub.
 # On x86_64 machine, push both kiali and operator images.
 ifeq ($(GOARCH),amd64)
-container-push: container-push-kiali-quay container-push-kiali-docker container-push-operator-quay
+container-push: container-push-kiali-quay container-push-operator-quay
 # On other achitectures, only push kiali image.
 else
-container-push: container-push-kiali-quay container-push-kiali-docker
+container-push: container-push-kiali-quay
 endif

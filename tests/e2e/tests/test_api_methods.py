@@ -9,7 +9,7 @@ def before_all_tests(kiali_client):
     control_plane_namespace = conftest.get_control_plane_namespace()
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
-    tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'Authenticate',
+    tested_method_list = ['root','jaegerInfo', 'grafanaInfo', 'getPermissions', 'getStatus', 'getConfig', 'authenticate',
                           'namespaceList', 'namespaceMetrics','namespaceHealth',
                           'istioConfigList', 'istioConfigDetails', 'istioConfigCreate', 'istioConfigDelete', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
@@ -17,7 +17,7 @@ def before_all_tests(kiali_client):
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
                           'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion',
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
-                          'AuthenticationInfo', 'OpenshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
+                          'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
                           'meshTls', 'namespaceValidations', 'spansList', 'tracesDetail']
 
@@ -75,7 +75,7 @@ def test_swagger_double_api(kiali_client):
         assert not 'api/api' in value[0]
 
 def test_root(kiali_client):
-    evaluate_response(kiali_client, method_name='Root')
+    evaluate_response(kiali_client, method_name='root')
 
 def test_virtualservices(kiali_client):
     data = '{"metadata":{"namespace":"bookinfo","name":"reviews","labels":{"kiali_wizard":"weighted_routing"}},"spec":{"http":[{"route":[{"destination":{"host":"reviews","subset":"v1"},"weight":75},{"destination":{"host":"reviews","subset":"v2"},"weight":13},{"destination":{"host":"reviews","subset":"v3"},"weight":12}]}],"hosts":["reviews"],"gateways":null}}'    
@@ -90,13 +90,13 @@ def test_jaeger_info(kiali_client):
     assert response.status_code == 200
 
 def test_authentication_info(kiali_client):
-    evaluate_response(kiali_client, method_name='AuthenticationInfo')
+    evaluate_response(kiali_client, method_name='authenticationInfo')
 
 def test_openshift_checkToken(kiali_client):
     if conftest.get_kiali_auth_method() == "oauth":
         pytest.skip()
     else:
-        evaluate_response(kiali_client, method_name='OpenshiftCheckToken')
+        evaluate_response(kiali_client, method_name='openshiftCheckToken')
 
 def test_namespace_tls(kiali_client):
     evaluate_response(kiali_client, method_name='namespaceTls', path={'namespace': control_plane_namespace})
@@ -111,7 +111,10 @@ def test_pod_logs(kiali_client):
 
 def test_grafana_info(kiali_client):
     evaluate_response(kiali_client, method_name='grafanaInfo')
-
+    
+def test_get_permissions(kiali_client):
+    evaluate_response(kiali_client, method_name='getPermissions')
+    
 def test_get_status(kiali_client):
     evaluate_response(kiali_client, method_name='getStatus')
 
@@ -122,7 +125,7 @@ def test_get_token(kiali_client):
     if conftest.get_kiali_auth_method() == "oauth":
         pytest.skip()
     else:
-        evaluate_response(kiali_client, method_name='Authenticate')
+        evaluate_response(kiali_client, method_name='authenticate')
 
 
 def test_namespace_list(kiali_client):
@@ -141,10 +144,10 @@ def test_istio_config_list(kiali_client):
 
 
 def test_istio_config_details(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': 'promtcp'})
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'gateways', 'object': 'ingressgateway'})
 
 def test_istio_config_details_subtype(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': control_plane_namespace, 'object_type': 'destinationrules', 'object_subtype': 'istio-policy', 'object': 'istio-policy'} )
+    evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': control_plane_namespace, 'object_type': 'gateways', 'object_subtype': 'ingressgateway', 'object': 'ingressgateway'} )
 
 def test_service_list(kiali_client):
     evaluate_response(kiali_client, method_name='serviceList', path={'namespace': control_plane_namespace})

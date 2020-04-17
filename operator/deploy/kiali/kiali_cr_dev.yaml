@@ -3,7 +3,7 @@ kind: Kiali
 metadata:
   name: kiali
   annotations:
-    ansible.operator-sdk/verbosity: "3"
+    ansible.operator-sdk/verbosity: "1"
 spec:
   version: "${KIALI_CR_SPEC_VERSION}"
   auth:
