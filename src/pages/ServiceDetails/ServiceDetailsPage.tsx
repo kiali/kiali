@@ -37,6 +37,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { serverConfig } from '../../config';
 import GraphDataSource from '../../services/GraphDataSource';
+import { URLParam } from '../../app/History';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -47,7 +48,6 @@ type ServiceDetailsState = {
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
   currentTab: string;
-  traces: JaegerTrace[];
   errorTraces?: JaegerErrors[];
   selectedTrace?: JaegerTrace;
   errorSelectedTrace?: JaegerErrors[];
@@ -107,6 +107,8 @@ const tabIndex: { [tab: string]: number } = {
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   private promises = new PromisesRegistry();
+  private traces: JaegerTrace[] = [];
+  private lastFetchTraceMicros: number | undefined = undefined;
   private lastFetchTracesError = false;
   private graphDataSource: GraphDataSource;
 
@@ -126,8 +128,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           update: false,
           delete: false
         }
-      },
-      traces: []
+      }
     };
 
     this.graphDataSource = new GraphDataSource();
@@ -321,12 +322,16 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           }
         });
     } else {
-      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, getQueryJaeger())
+      const params = getQueryJaeger();
+      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, params)
         .then(traces => {
+          const appendTraces = this.lastFetchTraceMicros !== undefined;
           this.lastFetchTracesError = false;
           let myState = {};
           if (traces && traces.data) {
-            myState['traces'] = traces.data;
+            this.traces = appendTraces
+              ? this.traces.filter(t => t.startTime >= params[URLParam.JAEGER_START_TIME]).concat(traces.data)
+              : traces.data;
             if (traces.data.length === 0) {
               myState['selectedTrace'] = undefined;
             }
@@ -485,7 +490,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               service={this.props.match.params.service}
               errorTags={this.state.nbErrorTraces > 0}
               duration={this.props.duration}
-              traces={this.state.traces}
+              traces={this.traces}
               errorTraces={this.state.errorTraces}
               selectedTrace={this.state.selectedTrace}
               selectedErrorTrace={this.state.errorSelectedTrace}
