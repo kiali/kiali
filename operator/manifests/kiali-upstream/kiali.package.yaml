@@ -1,7 +1,0 @@
-packageName: kiali
-channels:
-- name: alpha
-  currentCSV: kiali-operator.v1.16.0
-- name: stable
-  currentCSV: kiali-operator.v1.16.0
-defaultChannel: stable

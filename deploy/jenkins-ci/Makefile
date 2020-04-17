@@ -65,7 +65,6 @@ BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 QUAY_NAME ?= quay.io/kiali/kiali
-QUAY_OPERATOR_NAME ?= quay.io/kiali/kiali-operator
 
 ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
@@ -137,22 +136,16 @@ endif
 	CONTAINER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
-	  OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
-	  make container-build container-push
+	  make container-build-kiali container-push
 ifneq ($(IS_SNAPSHOT),y)
    # Create or update vX.Y tags (without the patch number)
    # quay.io/kiali
 	docker tag "$(QUAY_NAME):$(VERSION_TAG)" "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
-   # quay.io/kiali-operator
-	docker tag "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)" "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker push "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker rmi "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
    # Clean-up
 	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
-	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
 
 backend-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)

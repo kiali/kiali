@@ -51,8 +51,8 @@ The [bin/jq](https://stedolan.github.io/jq/) v1.6 and
 [bin/semver](https://github.com/fsaintjacques/semver-tool) v2.1.0
 are tools used to properly set version strings when building releases.
 
-The [Makefile](Makefile) is repeatedly invoked by the Pipeline. It
-is analog and compliments the [Makefile.jenkins](https://github.com/kiali/kiali-ui/blob/master/Makefile.jenkins)
+The [Makefile](Makefile) and [Makefile.operator.jenkins](Makefile.operator.jenkins) are repeatedly invoked by the Pipeline. They
+are analog and compliment the [Makefile.jenkins](https://github.com/kiali/kiali-ui/blob/master/Makefile.jenkins)
 of the kiali-ui repository. These are the files where the build
 steps are implemented. 
 
@@ -95,8 +95,8 @@ have a short description to help you know adjust them, if needed.
 Since parameters are already described, instead of explaining what
 each parameter does, the rest of this section is focused on showing
 _by example_ how to run a build of the different Kiali use-cases. 
-Unless pointed, it's assumed that you want build both the back-end and
-the front-end.
+Unless pointed, it's assumed that you want build the back-end and
+the front-end and the operator.
 
 ### Automatically determine the release type and build it 
 
@@ -117,7 +117,7 @@ current date and the Kiali's Sprint start/end cycle:
 
 Set the RELEASE_TYPE parameter of the Pipeline to _minor_ value. This
 will publish a minor release of Kiali from the _master_ branches of the
-back-end and front-end.
+back-end and front-end and operator.
 
 ![Minor release param](assets/jk_minor_release_params.png)
 
@@ -138,6 +138,8 @@ parameters as follows:
   generate the release from; e.g. `refs/heads/v0.20`.
 * UI_RELEASING_BRANCH: The branch of the **front-end repository** to
   generate the release from; e.g. `refs/heads/v0.20`.
+* OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
+  generate the release from; e.g. `refs/heads/v0.20`.
   
 ### Building a patch release (back-end only)
 
@@ -153,6 +155,7 @@ Set the Pipeline parameters as follows:
 * BACKEND_RELEASING_BRANCH: The branch of the **back-end repository** to
   generate the release from; e.g. `refs/heads/v0.20`.
 * SKIP_UI_RELEASE: Set to `y`.
+* SKIP_OPERATOR_RELEASE: Set to `y`.
 
 The front-end that will be bundled in the container image will be the version
 specified in the main Makefile
@@ -182,6 +185,8 @@ Then, run Pipeline with the parameters as follows:
   generate the release from; e.g. `refs/heads/v1.0`.
 * UI_RELEASING_BRANCH: The branch of the **front-end repository** to
   generate the release from; e.g. `refs/heads/v1.0`.
+* OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
+  generate the release from; e.g. `refs/heads/v1.0`.
   
 ### Building a snapshot release
 
@@ -197,7 +202,7 @@ Otherwise, you probably want to use a number greater than `1`.
 
 Set the RELEASE_TYPE parameter of the Pipeline to _edge_ value. This will
 publish a release of Kiali with `latest` tags from the _master_ branches
-of the back-end and front-end.
+of the back-end and front-end and operator.
 
 **Note:** Remember that edge releases are build automatically on each
 commit in the master branches of both the back-end and front-end
@@ -274,6 +279,8 @@ When running the build, set the following parameters:
   `git@github.com:israel-hdez/swscore.git`.
 * UI_GITHUB_URI: Use the SSH url of your Kiali's front-end fork; e.g.
   `git@github.com:israel-hdez/swsui.git`.
+* OPERATOR_GITHUB_URI: Use the SSH url of your Kiali operator fork; e.g.
+  `git@github.com:israel-hdez/kiali-operator.git`.
 * QUAY_NAME: Use your own Quay.io repository for Kiali;
   e.g. `quay.io/edgarhz/kiali`.
 * QUAY_OPERATOR_NAME: Use your own Quay.io repository for the operator;
@@ -282,6 +289,8 @@ When running the build, set the following parameters:
   e.g. `https://api.github.com/repos/israel-hdez/swscore/pulls`.
 * UI_PULL_URI: Use the GitHub API base URL for your front-end fork;
   e.g. `https://api.github.com/repos/israel-hdez/swsui/pulls`.
+* OPERATOR_PULL_URI: Use the GitHub API base URL for your operator fork;
+  e.g. `https://api.github.com/repos/israel-hdez/kiali-operator/pulls`.
 * NPM_DRY_RUN: Set to `y`.
 
 Once you run the first test build, if you need to run more test builds,
@@ -300,7 +309,7 @@ some understanding about which files you need to change.
 
 The "hard" part is to test the Pipeline. You need a Jenkins instance
 with the tools to correctly build both Kiali's back-end and
-front-end, and to deploy Kiali. Instead of going through all the
+front-end and operator, and to deploy Kiali. Instead of going through all the
 steps to setup such Jenkins instance, a [preconfigured
 Docker image](https://hub.docker.com/r/edgarhz/kiali-jenkins) is
 available to start as fast as possible. Run it by invoking:

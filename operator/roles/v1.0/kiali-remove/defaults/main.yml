@@ -1,8 +1,0 @@
-kiali_defaults:
-  deployment:
-    accessible_namespaces: []
-    namespace: "istio-system"
-
-# Will be auto-detected, but for debugging purposes you can force one of these to true
-is_k8s: false
-is_openshift: false
