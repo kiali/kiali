@@ -56,6 +56,11 @@ var components = map[string]bool{
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	isc := IstioComponentStatus{}
+
+	if !config.Get().ExternalServices.Istio.IstioStatusEnabled {
+		return isc, nil
+	}
+
 	cf := map[string]bool{}
 
 	// Fetching workloads from control plane namespace

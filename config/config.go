@@ -140,6 +140,7 @@ type TracingConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
+	IstioStatusEnabled     bool   `yaml:"istio_status_enabled,omitempty"`
 	IstioIdentityDomain    string `yaml:"istio_identity_domain,omitempty"`
 	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
 	UrlServiceVersion      string `yaml:"url_service_version"`
@@ -325,6 +326,7 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 			},
 			Istio: IstioConfig{
+				IstioStatusEnabled:     true,
 				IstioIdentityDomain:    "svc.cluster.local",
 				IstioSidecarAnnotation: "sidecar.istio.io/status",
 				UrlServiceVersion:      "http://istio-pilot:8080/version",
