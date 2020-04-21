@@ -18,7 +18,6 @@ import { GraphType, NodeParamsType, EdgeLabelMode } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
-import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
 import Namespace, { namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
@@ -29,6 +28,7 @@ import TimeControlsContainer from 'components/Time/TimeControls';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import ReplayContainer from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
+import GraphSecondaryMasthead from './GraphSecondaryMasthead';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -48,8 +48,8 @@ type ReduxProps = {
 
 type GraphToolbarProps = ReduxProps & {
   disabled: boolean;
-  onRefresh?: () => void;
   onToggleHelp: () => void;
+  onRefresh?: () => void;
 };
 
 const toolbarStyle = style({
@@ -61,18 +61,7 @@ const rightToolbarStyle = style({
   marginLeft: 'auto'
 });
 
-const leftSpacerStyle = style({
-  marginLeft: '10px'
-});
-
 export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
-  /**
-   *  Key-value pair object representation of GraphType enum.  Values are human-readable versions of enum keys.
-   *
-   *  Example:  GraphType => {'APP': 'App', 'VERSIONED_APP': 'VersionedApp'}
-   */
-  static readonly GRAPH_TYPES = _.mapValues(GraphType, val => `${_.capitalize(_.startCase(val))} graph`);
-
   /**
    *  Key-value pair object representation of EdgeLabelMode
    *
@@ -159,48 +148,27 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     history.push('/graph/namespaces');
   };
 
-  // TODO [jshaughn] Is there a better typescript way than the style attribute with the spread syntax (here and other places)
   render() {
-    const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
-
     return (
       <>
+        <GraphSecondaryMasthead
+          disabled={this.props.disabled}
+          graphType={this.props.graphType}
+          onToggleHelp={this.props.onToggleHelp}
+          onGraphTypeChange={this.props.setGraphType}
+        />
         <Toolbar className={toolbarStyle}>
           <div style={{ display: 'flex' }}>
-            {this.props.node ? (
+            {this.props.node && (
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
                 <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
                   <KialiIcon.Back className={defaultIconStyle} />
                 </Button>
               </Tooltip>
-            ) : (
-              <>
-                <TourStopContainer info={GraphTourStops.GraphType}>
-                  <ToolbarDropdown
-                    id={'graph_filter_view_type'}
-                    disabled={this.props.disabled}
-                    handleSelect={this.setGraphType}
-                    value={graphTypeKey}
-                    label={GraphToolbar.GRAPH_TYPES[graphTypeKey]}
-                    options={GraphToolbar.GRAPH_TYPES}
-                  />
-                </TourStopContainer>
-                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
-                  <Button
-                    variant="link"
-                    style={{ paddingLeft: '6px', paddingRight: '0px' }}
-                    onClick={this.props.onToggleHelp}
-                  >
-                    <KialiIcon.Help className={defaultIconStyle} />
-                  </Button>
-                </Tooltip>
-              </>
             )}
-            <div className={leftSpacerStyle}>
-              <TourStopContainer info={GraphTourStops.Display}>
-                <GraphSettingsContainer graphType={this.props.graphType} />
-              </TourStopContainer>
-            </div>
+            <TourStopContainer info={GraphTourStops.Display}>
+              <GraphSettingsContainer graphType={this.props.graphType} />
+            </TourStopContainer>
           </div>
           <GraphFindContainer />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
@@ -218,13 +186,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       </>
     );
   }
-
-  private setGraphType = (type: string) => {
-    const graphType: GraphType = GraphType[type] as GraphType;
-    if (this.props.graphType !== graphType) {
-      this.props.setGraphType(graphType);
-    }
-  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

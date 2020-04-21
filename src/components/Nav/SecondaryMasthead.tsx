@@ -1,7 +1,7 @@
 import React from 'react';
 import { style } from 'typestyle';
 
-const paddingStyle = style({
+const marginStyle = style({
   margin: '10px 20px 0 0'
 });
 const secondaryMastheadStyle = style({
@@ -22,7 +22,7 @@ export default class SecondaryMasthead extends React.Component<{ title: boolean 
         id="global-namespace-selector"
         className={`container-fluid ${secondaryMastheadStyle} ${secondaryMastheadStyleHeight}`}
       >
-        <div className={paddingStyle}>{this.props.children}</div>
+        <div className={marginStyle}>{this.props.children}</div>
       </div>
     );
   }

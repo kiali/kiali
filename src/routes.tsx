@@ -148,10 +148,6 @@ const pathRoutes: Path[] = [
 
 const secondaryMastheadRoutes: Path[] = [
   {
-    path: '/graph/namespaces',
-    component: DefaultSecondaryMasthead
-  },
-  {
     path: '/' + Paths.APPLICATIONS,
     component: DefaultSecondaryMasthead
   },

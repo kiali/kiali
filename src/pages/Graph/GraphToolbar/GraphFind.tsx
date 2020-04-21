@@ -165,13 +165,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
             {this.props.showFindHelp ? (
               <GraphHelpFind onClose={this.toggleFindHelp}>
                 <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-                  <KialiIcon.Help className={defaultIconStyle} />
+                  <KialiIcon.Info className={defaultIconStyle} />
                 </Button>
               </GraphHelpFind>
             ) : (
               <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
                 <Button variant={ButtonVariant.link} style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-                  <KialiIcon.Help className={defaultIconStyle} />
+                  <KialiIcon.Info className={defaultIconStyle} />
                 </Button>
               </Tooltip>
             )}
