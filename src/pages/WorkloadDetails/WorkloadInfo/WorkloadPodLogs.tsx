@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Title, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
@@ -10,6 +10,7 @@ import RefreshButtonContainer from '../../../components/Refresh/RefreshButton';
 import { RenderComponentScroll } from '../../../components/Nav/Page';
 import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import Splitter from 'm-react-splitters';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -18,16 +19,18 @@ export interface WorkloadPodLogsProps {
 
 interface ContainerInfo {
   container: string;
-  containerOptions: object;
 }
 
 interface WorkloadPodLogsState {
   containerInfo?: ContainerInfo;
   duration: DurationInSeconds;
   loadingPodLogs: boolean;
+  loadingContainerLogs: boolean;
   loadingPodLogsError?: string;
+  loadingContainerLogsError?: string;
   podValue?: number;
   podLogs?: PodLogs;
+  containerLogs?: PodLogs;
   tailLines: number;
 }
 
@@ -43,10 +46,17 @@ const TailLinesOptions = {
   '5000': 'Last 5000 lines'
 };
 
+const appLogsDiv = style({
+  height: 'calc(100% + 30px)'
+});
+
+const proxyLogsDiv = style({
+  height: '100%'
+});
+
 const logsTextarea = style({
   width: '100%',
-  // 75px is the height of the toolbar inside "Logs" tab
-  height: 'calc(100% - 75px)',
+  height: 'calc(100% - 70px)',
   overflow: 'auto',
   resize: 'none',
   color: '#fff',
@@ -75,6 +85,7 @@ const tailToolbarMargin = style({
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private loadPodLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
+  private loadContainerLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
   private podOptions: object = {};
 
   constructor(props: WorkloadPodLogsProps) {
@@ -84,7 +95,9 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       this.state = {
         duration: retrieveDuration() || 600,
         loadingPodLogs: false,
+        loadingContainerLogs: false,
         loadingPodLogsError: 'There are no logs to display because no pods are available.',
+        loadingContainerLogsError: 'There are no logs to display because no container logs are available.',
         tailLines: TailLinesDefault
       };
       return;
@@ -104,6 +117,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       containerInfo: containerInfo,
       duration: retrieveDuration() || 600,
       loadingPodLogs: false,
+      loadingContainerLogs: false,
       podValue: podValue,
       tailLines: TailLinesDefault
     };
@@ -160,17 +174,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           options={this.podOptions!}
                         />
                       </ToolbarItem>
-                      <ToolbarItem className={displayFlex}>
-                        <ToolbarDropdown
-                          id={'wpl_containers'}
-                          nameDropdown="&nbsp;&nbsp;&nbsp;Container"
-                          tooltip="Display logs for the selected pod container"
-                          handleSelect={key => this.setContainer(key)}
-                          value={this.state.containerInfo.container}
-                          label={this.state.containerInfo.container}
-                          options={this.state.containerInfo.containerOptions!}
-                        />
-                      </ToolbarItem>
                     </ToolbarGroup>
                     <ToolbarGroup className={toolbarRight}>
                       <ToolbarItem className={displayFlex}>
@@ -196,11 +199,37 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                       </ToolbarItem>
                     </ToolbarGroup>
                   </Toolbar>
-                  <textarea
-                    className={logsTextarea}
-                    readOnly={true}
-                    value={this.state.podLogs ? this.state.podLogs.logs : 'Loading logs...'}
-                  />
+                  <Splitter
+                    position="horizontal"
+                    primaryPaneMaxHeight="100%"
+                    primaryPaneMinHeight={0}
+                    primaryPaneHeight="50%"
+                    dispatchResize={true}
+                    postPoned={true}
+                  >
+                    <div className={appLogsDiv}>
+                      <Title size="lg" headingLevel="h5">
+                        {this.formatAppLogLabel(this.props.pods[this.state.podValue!])} Logs
+                      </Title>
+                      <textarea
+                        className={logsTextarea}
+                        readOnly={true}
+                        value={this.state.podLogs ? this.state.podLogs.logs : 'Loading logs...'}
+                        aria-label="Pod logs text"
+                      />
+                    </div>
+                    <div className={proxyLogsDiv}>
+                      <Title size="lg" headingLevel="h5">
+                        Proxy Logs
+                      </Title>
+                      <textarea
+                        className={logsTextarea}
+                        readOnly={true}
+                        value={this.state.containerLogs ? this.state.containerLogs.logs : 'Loading container logs...'}
+                        aria-label="Container logs text"
+                      />
+                    </div>
+                  </Splitter>
                 </CardBody>
               </Card>
             </GridItem>
@@ -215,12 +244,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const pod = this.props.pods[Number(podValue)];
     const containerInfo = this.getContainerInfo(pod);
     this.setState({ containerInfo: containerInfo, podValue: Number(podValue) });
-  };
-
-  private setContainer = (container: string) => {
-    this.setState({
-      containerInfo: { container: container, containerOptions: this.state.containerInfo!.containerOptions }
-    });
   };
 
   private setTimeRange = (range: TimeRange) => {
@@ -250,7 +273,19 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     containerNames.forEach(c => {
       options[c] = c;
     });
-    return { container: containerNames[0], containerOptions: options };
+    return { container: containerNames[0] };
+  };
+
+  private formatAppLogLabel = (pod: Pod): string => {
+    const labels = pod.labels;
+    let label = 'N/A';
+
+    if (labels) {
+      const app = pod.appLabel ? labels['app'] : 'No App';
+      const version = pod.versionLabel ? labels['version'] : '';
+      label = app + '-' + version;
+    }
+    return label;
   };
 
   private fetchLogs = (
@@ -262,7 +297,16 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   ) => {
     const sinceTime = Math.floor(Date.now() / 1000) - duration;
     const promise: Promise<Response<PodLogs>> = getPodLogs(namespace, podName, container, tailLines, sinceTime);
+    const containerPromise: Promise<Response<PodLogs>> = getPodLogs(
+      namespace,
+      podName,
+      'istio-proxy',
+      tailLines,
+      sinceTime
+    );
+    this.loadContainerLogsPromise = makeCancelablePromise(Promise.all([containerPromise]));
     this.loadPodLogsPromise = makeCancelablePromise(Promise.all([promise]));
+
     this.loadPodLogsPromise.promise
       .then(response => {
         const podLogs = response[0].data;
@@ -285,9 +329,33 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         });
       });
 
+    this.loadContainerLogsPromise.promise
+      .then(response => {
+        const containerLogs = response[0].data;
+        this.setState({
+          loadingContainerLogs: false,
+          containerLogs: containerLogs.logs ? containerLogs : { logs: 'No container logs found for the time period.' }
+        });
+        return;
+      })
+      .catch(error => {
+        if (error.isCanceled) {
+          console.debug('ContainerLogs: Ignore fetch error (canceled).');
+          this.setState({ loadingContainerLogs: false });
+          return;
+        }
+        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        this.setState({
+          loadingContainerLogs: false,
+          containerLogs: { logs: `Failed to fetch container logs: ${errorMsg}` }
+        });
+      });
+
     this.setState({
       loadingPodLogs: true,
-      podLogs: undefined
+      loadingContainerLogs: true,
+      podLogs: undefined,
+      containerLogs: undefined
     });
   };
 }
