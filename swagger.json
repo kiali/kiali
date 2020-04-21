@@ -6704,6 +6704,10 @@
         "spec": {
           "type": "object",
           "properties": {
+            "action": {
+              "type": "object",
+              "x-go-name": "Action"
+            },
             "rules": {
               "type": "object",
               "x-go-name": "Rules"
