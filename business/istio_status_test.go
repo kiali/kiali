@@ -66,6 +66,45 @@ func TestComponentRunning(t *testing.T) {
 	assert.Equal(Healthy, status)
 }
 
+func TestNoPilotsFound(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
+		fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
+	}
+
+	k8s := mockDeploymentCall(pods)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assert.Equal("Istio Status disabled: Pilot not found", icsl.Message)
+}
+
+func TestMultiplePilots(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+		fakeDeploymentWithStatus("istio-pilot", map[string]string{"app": "pilot", "istio": "pilot"}, healthyStatus),
+	}
+
+	k8s := mockDeploymentCall(pods)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assert.Equal("Istio Status disabled: Multiple Pilot found", icsl.Message)
+}
+
 func TestMonolithComp(t *testing.T) {
 	assert := assert.New(t)
 
@@ -139,7 +178,7 @@ func TestMixerComp(t *testing.T) {
 }
 
 func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
-	for _, ics := range icsl {
+	for _, ics := range icsl.List {
 		if ics.Name == name {
 			assert.Equal(status, ics.Status)
 			assert.Equal(isCore, ics.IsCore)
@@ -148,7 +187,7 @@ func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name 
 }
 
 func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name string) {
-	for _, ics := range icsl {
+	for _, ics := range icsl.List {
 		if ics.Name == name {
 			assert.NotEqual(name, ics.Name)
 		}

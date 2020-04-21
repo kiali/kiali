@@ -16,7 +16,7 @@ type IstioStatusService struct {
 type ComponentStatus struct {
 	// The app label value of the Istio component
 	//
-	// example: istiod
+	// example: istio-ingressgateway
 	// required: true
 	Name string `json:"name"`
 
@@ -33,7 +33,17 @@ type ComponentStatus struct {
 	IsCore bool `json:"is_core"`
 }
 
-type IstioComponentStatus []ComponentStatus
+type IstioComponentStatus struct {
+	// Message regarding the Istio architecture: monolith, mixer-based, multiple or none
+	//
+	// example: Istio status disabled: multiple pilots found
+	Message string `json:"message,omitempty"`
+
+	// List of each istio deployment status
+	//
+	// required: true
+	List []ComponentStatus `json:"list"`
+}
 
 const (
 	Healthy   string = "Healthy"
@@ -79,11 +89,27 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	}
 
 	arch := iss.detectArchitecture(ds)
-	if arch != "monolith" && arch != "mixer" {
-		return IstioComponentStatus{}, nil
+	if unex, isc := unexpectedArch(arch); unex {
+		return isc, nil
 	}
 
 	return iss.getStatusOf(arch, ds)
+}
+
+func unexpectedArch(arch string) (bool, IstioComponentStatus) {
+	unex, isc := false, IstioComponentStatus{}
+
+	if arch == "multiple" {
+		unex, isc = true, IstioComponentStatus{
+			Message: "Istio Status disabled: Multiple Pilot found",
+		}
+	} else if arch == "notfound" {
+		unex, isc = true, IstioComponentStatus{
+			Message: "Istio Status disabled: Pilot not found",
+		}
+	}
+
+	return unex, isc
 }
 
 func (iss *IstioStatusService) detectArchitecture(ds []apps_v1.Deployment) string {
@@ -91,13 +117,12 @@ func (iss *IstioStatusService) detectArchitecture(ds []apps_v1.Deployment) strin
 	mixArch := false
 
 	for _, d := range ds {
-		appName := d.Name
-		if appName == "" {
+		if d.Name == "" {
 			continue
 		}
 
-		monArch = monArch || appName == "istiod"
-		mixArch = mixArch || appName == "istio-pilot"
+		monArch = monArch || d.Name == "istiod"
+		mixArch = mixArch || d.Name == "istio-pilot"
 	}
 
 	arch := "notfound"
@@ -113,28 +138,27 @@ func (iss *IstioStatusService) detectArchitecture(ds []apps_v1.Deployment) strin
 }
 
 func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment) (IstioComponentStatus, error) {
-	isc := IstioComponentStatus{}
+	isc := make([]ComponentStatus, 0, len(ds))
 	cf := map[string]bool{}
 
 	// Map workloads there by app name
 	for _, d := range ds {
-		appName := d.Name
-		if appName == "" {
+		if d.Name == "" {
 			continue
 		}
 
-		isCore, found := components[arch][appName]
+		isCore, found := components[arch][d.Name]
 		if !found {
 			continue
 		}
 
 		// Component found
-		cf[appName] = true
+		cf[d.Name] = true
 
 		if status := GetDeploymentStatus(d); status != Healthy {
 			// Check status
 			isc = append(isc, ComponentStatus{
-				Name:   appName,
+				Name:   d.Name,
 				Status: status,
 				IsCore: isCore,
 			},
@@ -153,7 +177,10 @@ func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment)
 		}
 	}
 
-	return isc, nil
+	return IstioComponentStatus{
+		Message: "",
+		List:    isc,
+	}, nil
 }
 
 func GetDeploymentStatus(d apps_v1.Deployment) string {
