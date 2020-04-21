@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-version"
+	"gopkg.in/yaml.v2"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kversion "k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -20,7 +22,13 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+const ISTIO_CONFIGMAP_NAME = "istio"
+
 type externalService func() (*ExternalServiceInfo, error)
+
+type istioMeshConfig struct {
+	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
+}
 
 var (
 	// Example Maistra product version is:
@@ -312,18 +320,52 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 // did that that version change will matter, and the kiali pod could be bounced as a workaround.
 var istioSupportsCanonical *bool
 
-// IstioSupportsCanonical returns true if Istio version can be determined and is >= 1.5.
-// TODO: This test can be removed when Kiali stops supporting any Istio versions < 1.5
+// IstioSupportsCanonical returns true if Telemetry V2 is enabled
+// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
 func IstioSupportsCanonical() bool {
 	if istioSupportsCanonical != nil {
 		return *istioSupportsCanonical
 	}
 
-	istioVersion, err := istioVersion()
+	k8sConfig, err := kubernetes.ConfigClient()
 	if err != nil {
+		log.Warningf("IstioSupportsCanonical: Cannot create config structure Kubernetes Client.")
 		return false
 	}
-	valid := validateVersion(">= 1.5", istioVersion.Version)
-	istioSupportsCanonical = &valid
+
+	k8s, err := kube.NewForConfig(k8sConfig)
+	if err != nil {
+		log.Warningf("IstioSupportsCanonical: Cannot create Kubernetes Client.")
+		return false
+	}
+
+	cfg := config.Get()
+	istioConfig, err := k8s.CoreV1().ConfigMaps(cfg.IstioNamespace).Get(ISTIO_CONFIGMAP_NAME, meta_v1.GetOptions{})
+	if err != nil {
+		log.Warningf("IstioSupportsCanonical: Cannot retrieve Istio ConfigMap.")
+		return false
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	log.Tracef("meshConfig: %v", meshConfigYaml)
+	if !ok {
+		log.Warningf("IstioSupportsCanonical: Cannot find Istio mesh configuration.")
+		return false
+	}
+
+	meshConfig := istioMeshConfig{}
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		log.Warningf("IstioSupportsCanonical: Cannot read Istio mesh configuration.")
+		return false
+	}
+
+	log.Infof("IstioSupportsCanonical: %t", meshConfig.DisableMixerHttpReports)
+
+	// References:
+	//   * https://github.com/istio/api/pull/1112
+	//   * https://github.com/istio/istio/pull/17695
+	//   * https://github.com/istio/istio/issues/15935
+	istioSupportsCanonical = &meshConfig.DisableMixerHttpReports
 	return *istioSupportsCanonical
 }
