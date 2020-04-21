@@ -8,6 +8,7 @@ import {
   FormGroup,
   FormHelperText,
   ListItem,
+  ListVariant,
   LoginFooterItem,
   LoginForm,
   LoginPage as LoginNext,
@@ -259,7 +260,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
 
     return (
       <LoginNext
-        footerListVariants="inline"
+        footerListVariants={ListVariant.inline}
         brandImgSrc={kialiLogo}
         brandImgAlt="Kiali logo"
         footerListItems={listItem}

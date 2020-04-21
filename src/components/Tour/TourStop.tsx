@@ -9,7 +9,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { TourActions } from 'actions/TourActions';
 import { style } from 'typestyle';
-import { Props } from 'tippy.js';
 import { PfColors } from 'components/Pf/PfColors';
 
 export interface TourStopInfo {
@@ -148,7 +147,7 @@ class TourStop extends React.PureComponent<TourStopProps> {
 
   render() {
     const offset: string = this.props.info.offset ? this.props.info.offset : '0, 0';
-    const tippyProps: Props = { offset: offset };
+    const tippyProps: Partial<any> = { offset: offset };
     const isVisible = this.isVisible();
     this.tourStopInfo.isValid = true;
 

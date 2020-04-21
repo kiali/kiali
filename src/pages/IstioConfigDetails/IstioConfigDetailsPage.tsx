@@ -36,7 +36,6 @@ import {
   EmptyStateBody,
   Grid,
   GridItem,
-  GutterSize,
   Stack,
   StackItem,
   Tab,
@@ -376,7 +375,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
     return (
       <div className="container-fluid container-cards-pf">
-        <Grid gutter={GutterSize.md}>
+        <Grid gutter={'md'}>
           <GridItem span={editorSpan}>
             {this.state.istioObjectDetails ? (
               <AceEditor

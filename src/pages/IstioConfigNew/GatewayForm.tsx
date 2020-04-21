@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { Button, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+// Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
+import { Button, FormSelect, FormSelectOption, TextInputBase as TextInput } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { PfColors } from '../../components/Pf/PfColors';
 import { isServerHostValid } from '../../utils/IstioConfigUtils';
