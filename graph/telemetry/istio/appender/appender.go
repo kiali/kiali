@@ -21,7 +21,7 @@ var appLabel = "app"
 var verLabel = "version"
 
 func setLabels() {
-	if status.IstioSupportsCanonical() {
+	if status.AreCanonicalMetricsAvailable() {
 		appLabel = "canonical_service"
 		verLabel = "canonical_revision"
 	}

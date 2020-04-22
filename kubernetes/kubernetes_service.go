@@ -19,6 +19,17 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
+// GetConfigMap fetches and returns the specified ConfigMap definition
+// from the cluster
+func (in *IstioClient) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {
+	configMap, err := in.k8s.CoreV1().ConfigMaps(namespace).Get(configName, emptyGetOptions)
+	if err != nil {
+		return &core_v1.ConfigMap{}, err
+	}
+
+	return configMap, nil
+}
+
 // GetNamespace fetches and returns the specified namespace definition
 // from the cluster
 func (in *IstioClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {

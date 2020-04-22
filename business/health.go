@@ -257,7 +257,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector) {
 	lblDest := model.LabelName("destination_app")
 	lblSrc := model.LabelName("source_app")
-	if status.IstioSupportsCanonical() {
+	if status.AreCanonicalMetricsAvailable() {
 		lblDest = model.LabelName("destination_canonical_service")
 		lblSrc = model.LabelName("source_canonical_service")
 	}

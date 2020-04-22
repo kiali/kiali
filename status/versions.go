@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"gopkg.in/yaml.v2"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kversion "k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -316,56 +315,83 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-// set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
-// did that that version change will matter, and the kiali pod could be bounced as a workaround.
-var istioSupportsCanonical *bool
+// set this one time, it is very unlikely that mixer will be enabled/disabled without a kiali pod restart, or if it
+// did that that change will matter, and the kiali pod could be bounced as a workaround.
+var isMixerDisabled *bool
 
-// IstioSupportsCanonical returns true if Telemetry V2 is enabled
+// IsMixerDisabled returns true if Telemetry V2 is enabled (mixer is not collecting metrics)
 // TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
-func IstioSupportsCanonical() bool {
-	if istioSupportsCanonical != nil {
-		return *istioSupportsCanonical
+func IsMixerDisabled() bool {
+	if isMixerDisabled != nil {
+		return *isMixerDisabled
 	}
 
 	k8sConfig, err := kubernetes.ConfigClient()
 	if err != nil {
-		log.Warningf("IstioSupportsCanonical: Cannot create config structure Kubernetes Client.")
+		log.Warningf("IsMixerDisabled: Cannot create config structure Kubernetes Client.")
 		return false
 	}
 
-	k8s, err := kube.NewForConfig(k8sConfig)
+	k8s, err := kubernetes.NewClientFromConfig(k8sConfig)
 	if err != nil {
-		log.Warningf("IstioSupportsCanonical: Cannot create Kubernetes Client.")
+		log.Warningf("IsMixerDisabled: Cannot create Kubernetes Client.")
 		return false
 	}
 
 	cfg := config.Get()
-	istioConfig, err := k8s.CoreV1().ConfigMaps(cfg.IstioNamespace).Get(ISTIO_CONFIGMAP_NAME, meta_v1.GetOptions{})
+	istioConfig, err := k8s.GetConfigMap(cfg.IstioNamespace, ISTIO_CONFIGMAP_NAME)
 	if err != nil {
-		log.Warningf("IstioSupportsCanonical: Cannot retrieve Istio ConfigMap.")
+		log.Warningf("IsMixerDisabled: Cannot retrieve Istio ConfigMap.")
 		return false
 	}
 
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	log.Tracef("meshConfig: %v", meshConfigYaml)
 	if !ok {
-		log.Warningf("IstioSupportsCanonical: Cannot find Istio mesh configuration.")
+		log.Warningf("IsMixerDisabled: Cannot find Istio mesh configuration.")
 		return false
 	}
 
 	meshConfig := istioMeshConfig{}
 	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
 	if err != nil {
-		log.Warningf("IstioSupportsCanonical: Cannot read Istio mesh configuration.")
+		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
 		return false
 	}
 
-	log.Infof("IstioSupportsCanonical: %t", meshConfig.DisableMixerHttpReports)
+	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
 
 	// References:
 	//   * https://github.com/istio/api/pull/1112
 	//   * https://github.com/istio/istio/pull/17695
 	//   * https://github.com/istio/istio/issues/15935
-	istioSupportsCanonical = &meshConfig.DisableMixerHttpReports
-	return *istioSupportsCanonical
+	isMixerDisabled = &meshConfig.DisableMixerHttpReports
+	return *isMixerDisabled
+}
+
+// set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
+// did that that version change will matter, and the kiali pod could be bounced as a workaround.
+var istioSupportsCanonical *bool
+
+// AreCanonicalMetricsAvailable returns true if canonical labels are present in Istio Telemetry.
+// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
+func AreCanonicalMetricsAvailable() bool { // AreCanonicalMetricsAvailable() bool {
+	if istioSupportsCanonical == nil {
+		// First, check Istio version because canonical labels were first introduced in Istio v1.5. Prior
+		// Istio versions won't have canonical labels in metrics regardless of active Telemetry version.
+		istioVersion, err := istioVersion()
+		if err != nil {
+			return false
+		}
+
+		valid := validateVersion(">= 1.5", istioVersion.Version)
+
+		// Result is cached; we now know whether Istio supports canonical labels in Telemetry.
+		log.Infof("IstioSupportsCanonical: %t", valid)
+		istioSupportsCanonical = &valid
+	}
+
+	// Canonical metrics are present only if Istio version is 1.5 or later (aka canonical is supported)
+	// AND if mixer is disabled.
+	return *istioSupportsCanonical && IsMixerDisabled()
 }
