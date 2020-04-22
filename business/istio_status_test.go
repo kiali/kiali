@@ -24,6 +24,8 @@ var unhealthyStatus = apps_v1.DeploymentStatus{
 	UnavailableReplicas: 1,
 }
 
+var isMixerDisabled *bool
+
 func TestComponentNotRunning(t *testing.T) {
 	assert := assert.New(t)
 
@@ -72,51 +74,6 @@ func TestComponentRunning(t *testing.T) {
 	shutdown()
 }
 
-func TestNoPilotsFound(t *testing.T) {
-	assert := assert.New(t)
-
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	pods := []apps_v1.Deployment{
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
-		fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
-		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
-	}
-
-	k8s := mockDeploymentCall(pods)
-	iss := IstioStatusService{k8s: k8s}
-
-	icsl, error := iss.GetStatus()
-	assert.NoError(error)
-	assert.Equal("Istio Status disabled: Pilot not found", icsl.Message)
-
-	// Cleaning up environment
-	shutdown()
-}
-
-func TestMultiplePilots(t *testing.T) {
-	assert := assert.New(t)
-
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	pods := []apps_v1.Deployment{
-		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
-		fakeDeploymentWithStatus("istio-pilot", map[string]string{"app": "pilot", "istio": "pilot"}, healthyStatus),
-	}
-
-	k8s := mockDeploymentCall(pods)
-	iss := IstioStatusService{k8s: k8s}
-
-	icsl, error := iss.GetStatus()
-	assert.NoError(error)
-	assert.Equal("Istio Status disabled: Multiple Pilot found", icsl.Message)
-
-	// Cleaning up environment
-	shutdown()
-}
-
 func TestGrafanaDisabled(t *testing.T) {
 	assert := assert.New(t)
 
@@ -128,7 +85,7 @@ func TestGrafanaDisabled(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s := mockDeploymentCall(pods)
+	k8s := mockDeploymentCall(pods, true)
 	iss := IstioStatusService{k8s: k8s}
 
 	icsl, error := iss.GetStatus()
@@ -153,7 +110,7 @@ func TestTracingDisabled(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s := mockDeploymentCall(pods)
+	k8s := mockDeploymentCall(pods, true)
 	iss := IstioStatusService{k8s: k8s}
 
 	icsl, error := iss.GetStatus()
@@ -180,7 +137,7 @@ func TestMonolithComp(t *testing.T) {
 		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
 	}
 
-	k8s := mockDeploymentCall(pods)
+	k8s := mockDeploymentCall(pods, true)
 	iss := IstioStatusService{k8s: k8s}
 
 	icsl, error := iss.GetStatus()
@@ -213,15 +170,15 @@ func TestMixerComp(t *testing.T) {
 
 	pods := []apps_v1.Deployment{
 		fakeDeploymentWithStatus("istio-citadel", map[string]string{"app": "citadel", "istio": "citadel"}, healthyStatus),
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
-		fakeDeploymentWithStatus("istio-pilot", map[string]string{"app": "pilot", "istio": "pilot"}, healthyStatus),
-		fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus), fakeDeploymentWithStatus("istio-pilot", map[string]string{"app": "pilot", "istio": "pilot"}, healthyStatus), fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
 	}
 
-	k8s := mockDeploymentCall(pods)
+	k8s := mockDeploymentCall(pods, false)
 	iss := IstioStatusService{k8s: k8s}
 
+	boolVar := true
+	isMixerDisabled = &boolVar
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-galley", NotFound, true)
@@ -247,7 +204,7 @@ func TestMixerComp(t *testing.T) {
 
 func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
 	componentFound := false
-	for _, ics := range icsl.List {
+	for _, ics := range icsl {
 		if ics.Name == name {
 			assert.Equal(status, ics.Status)
 			assert.Equal(isCore, ics.IsCore)
@@ -260,7 +217,7 @@ func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name 
 
 func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name string) {
 	componentFound := false
-	for _, ics := range icsl.List {
+	for _, ics := range icsl {
 		if ics.Name == name {
 			componentFound = true
 		}
@@ -269,9 +226,10 @@ func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name
 }
 
 // Setup K8S api call to fetch Pods
-func mockDeploymentCall(deployments []apps_v1.Deployment) *kubetest.K8SClientMock {
+func mockDeploymentCall(deployments []apps_v1.Deployment, mixerDisabled bool) *kubetest.K8SClientMock {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(deployments, nil)
+	k8s.On("IsMixerDisabled").Return(mixerDisabled)
 
 	return k8s
 }
@@ -290,6 +248,8 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 }
 
 func shutdown() {
-	delete(components["monolith"], GRAFANA_COMPONENT)
-	delete(components["monolith"], TRACING_COMPONENT)
+	delete(components["mixer"], GRAFANA_COMPONENT)
+	delete(components["mixer"], TRACING_COMPONENT)
+	delete(components["mixerless"], TRACING_COMPONENT)
+	delete(components["mixerless"], GRAFANA_COMPONENT)
 }

@@ -470,6 +470,11 @@ func (o *K8SClientMock) DeleteIter8Experiment(namespace string, name string) err
 	return args.Error(0)
 }
 
+func (o *K8SClientMock) IsMixerDisabled() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{

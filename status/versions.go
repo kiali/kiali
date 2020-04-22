@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-version"
-	"gopkg.in/yaml.v2"
 	kversion "k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -21,13 +20,7 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-const ISTIO_CONFIGMAP_NAME = "istio"
-
 type externalService func() (*ExternalServiceInfo, error)
-
-type istioMeshConfig struct {
-	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
-}
 
 var (
 	// Example Maistra product version is:
@@ -326,46 +319,26 @@ func IsMixerDisabled() bool {
 		return *isMixerDisabled
 	}
 
-	k8sConfig, err := kubernetes.ConfigClient()
-	if err != nil {
-		log.Warningf("IsMixerDisabled: Cannot create config structure Kubernetes Client.")
+	clientFactory, error := kubernetes.GetClientFactory()
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot connect to Kubernetes API")
 		return true
 	}
 
-	k8s, err := kubernetes.NewClientFromConfig(k8sConfig)
-	if err != nil {
-		log.Warningf("IsMixerDisabled: Cannot create Kubernetes Client.")
+	token, error := kubernetes.GetKialiToken()
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot get Kiali token")
 		return true
 	}
 
-	cfg := config.Get()
-	istioConfig, err := k8s.GetConfigMap(cfg.IstioNamespace, ISTIO_CONFIGMAP_NAME)
-	if err != nil {
-		log.Warningf("IsMixerDisabled: Cannot retrieve Istio ConfigMap.")
+	client, error := clientFactory.GetClient(token)
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot get Kubernetes Client")
 		return true
 	}
 
-	meshConfigYaml, ok := istioConfig.Data["mesh"]
-	log.Tracef("meshConfig: %v", meshConfigYaml)
-	if !ok {
-		log.Warningf("IsMixerDisabled: Cannot find Istio mesh configuration.")
-		return true
-	}
-
-	meshConfig := istioMeshConfig{}
-	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
-	if err != nil {
-		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
-		return true
-	}
-
-	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
-
-	// References:
-	//   * https://github.com/istio/api/pull/1112
-	//   * https://github.com/istio/istio/pull/17695
-	//   * https://github.com/istio/istio/issues/15935
-	isMixerDisabled = &meshConfig.DisableMixerHttpReports
+	mixedDisabled := client.IsMixerDisabled()
+	isMixerDisabled = &mixedDisabled
 	return *isMixerDisabled
 }
 

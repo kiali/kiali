@@ -4188,25 +4188,9 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioComponentStatus": {
-      "type": "object",
-      "required": [
-        "list"
-      ],
-      "properties": {
-        "list": {
-          "description": "List of each istio deployment status",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ComponentStatus"
-          },
-          "x-go-name": "List"
-        },
-        "message": {
-          "description": "Message regarding the Istio architecture: monolith, mixer-based, multiple or none",
-          "type": "string",
-          "x-go-name": "Message",
-          "example": "Istio status disabled: multiple pilots found"
-        }
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ComponentStatus"
       },
       "x-go-package": "github.com/kiali/kiali/business"
     },

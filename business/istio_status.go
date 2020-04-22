@@ -1,11 +1,11 @@
 package business
 
 import (
-	"github.com/kiali/kiali/models"
 	apps_v1 "k8s.io/api/apps/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -33,17 +33,7 @@ type ComponentStatus struct {
 	IsCore bool `json:"is_core"`
 }
 
-type IstioComponentStatus struct {
-	// Message regarding the Istio architecture: monolith, mixer-based, multiple or none
-	//
-	// example: Istio status disabled: multiple pilots found
-	Message string `json:"message,omitempty"`
-
-	// List of each istio deployment status
-	//
-	// required: true
-	List []ComponentStatus `json:"list"`
-}
+type IstioComponentStatus []ComponentStatus
 
 const (
 	Healthy   string = "Healthy"
@@ -54,7 +44,7 @@ const (
 // List of workloads part of a Istio deployment and if whether it is mandatory or not.
 // It follows the default profile
 var components = map[string]map[string]bool{
-	"monolith": {
+	"mixerless": {
 		"istio-egressgateway":  false,
 		"istio-ingressgateway": true,
 		"istiod":               true,
@@ -87,53 +77,12 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 		return IstioComponentStatus{}, error
 	}
 
-	arch := iss.detectArchitecture(ds)
-	if unex, isc := unexpectedArch(arch); unex {
-		return isc, nil
+	arch := "mixerless"
+	if !iss.k8s.IsMixerDisabled() {
+		arch = "mixer"
 	}
 
 	return iss.getStatusOf(arch, ds)
-}
-
-func unexpectedArch(arch string) (bool, IstioComponentStatus) {
-	unex, isc := false, IstioComponentStatus{}
-
-	if arch == "multiple" {
-		unex, isc = true, IstioComponentStatus{
-			Message: "Istio Status disabled: Multiple Pilot found",
-		}
-	} else if arch == "notfound" {
-		unex, isc = true, IstioComponentStatus{
-			Message: "Istio Status disabled: Pilot not found",
-		}
-	}
-
-	return unex, isc
-}
-
-func (iss *IstioStatusService) detectArchitecture(ds []apps_v1.Deployment) string {
-	monArch := false
-	mixArch := false
-
-	for _, d := range ds {
-		if d.Name == "" {
-			continue
-		}
-
-		monArch = monArch || d.Name == "istiod"
-		mixArch = mixArch || d.Name == "istio-pilot"
-	}
-
-	arch := "notfound"
-	if monArch && !mixArch {
-		arch = "monolith"
-	} else if !monArch && mixArch {
-		arch = "mixer"
-	} else if monArch && mixArch {
-		arch = "multiple"
-	}
-
-	return arch
 }
 
 func addAddOnComponents(arch string) {
@@ -144,11 +93,10 @@ func addAddOnComponents(arch string) {
 	if config.Get().ExternalServices.Tracing.Enabled {
 		components[arch][TRACING_COMPONENT] = false
 	}
-
 }
 
 func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment) (IstioComponentStatus, error) {
-	isc := make([]ComponentStatus, 0, len(ds))
+	isc := IstioComponentStatus{}
 	cf := map[string]bool{}
 
 	// Append grafana and tracing if they are enabled on kiali
@@ -190,10 +138,7 @@ func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment)
 		}
 	}
 
-	return IstioComponentStatus{
-		Message: "",
-		List:    isc,
-	}, nil
+	return isc, nil
 }
 
 func GetDeploymentStatus(d apps_v1.Deployment) string {
