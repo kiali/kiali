@@ -152,7 +152,9 @@ cd ${GOPATH}/src/github.com/kiali/kiali
 make container-build
 ----
 
-On x86_64 machine, this will build both the Kiali and the Kiali operator image. On aarch64 machine, this will only build the Kiali image.
+This will build the Kiali image.
+
+Generated container image will be consistant with the host machine (either x86_64 or aarch64).
 
 === Pushing Kiali operator and Kiali images to your cluster
 
