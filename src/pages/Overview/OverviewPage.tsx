@@ -430,7 +430,20 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   renderLabels(ns: NamespaceInfo): JSX.Element {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
-    return (
+    const labelContent = ns.labels ? (
+      <div
+        id="labels_info"
+        style={{ color: PfColors.Blue400 }}
+        onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
+      >
+        {labelsLength} label{labelsLength !== '1' ? 's' : ''}
+      </div>
+    ) : (
+      <div id="labels_info">
+        {labelsLength} label{labelsLength !== '1' ? 's' : ''}
+      </div>
+    );
+    return ns.labels ? (
       <Tooltip
         aria-label={'Labels list'}
         position={TooltipPosition.auto}
@@ -445,13 +458,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           </ul>
         }
       >
-        <div
-          style={{ color: ns.labels && PfColors.Blue400 }}
-          onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
-        >
-          {labelsLength} label{labelsLength !== '1' ? 's' : ''}
-        </div>
+        {labelContent}
       </Tooltip>
+    ) : (
+      labelContent
     );
   }
 
