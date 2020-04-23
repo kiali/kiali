@@ -615,9 +615,14 @@ export interface AuthorizationPolicy extends IstioObject {
   spec: AuthorizationPolicySpec;
 }
 
+export interface AuthorizationPolicyWorkloadSelector {
+  matchLabels: { [key: string]: string };
+}
+
 export interface AuthorizationPolicySpec {
-  selector?: WorkloadSelector;
+  selector?: AuthorizationPolicyWorkloadSelector;
   rules?: AuthorizationPolicyRule[];
+  action?: string;
 }
 
 export interface AuthorizationPolicyRule {
@@ -632,9 +637,13 @@ export interface RuleFrom {
 
 export interface Source {
   principals?: string[];
+  notPrincipals?: string[];
   requestPrincipals?: string[];
+  notRequestPrincipals?: string[];
   namespaces?: string[];
+  notNamespaces?: string[];
   ipBlocks?: string[];
+  notIpBlocks?: string[];
 }
 
 export interface RuleTo {
@@ -643,14 +652,19 @@ export interface RuleTo {
 
 export interface Operation {
   hosts?: string[];
+  notHosts?: string[];
   ports?: string[];
+  notPorts?: string[];
   methods?: string[];
+  notMethods?: string[];
   paths?: string[];
+  notPaths?: string[];
 }
 
 export interface Condition {
   key: string;
-  values: string[];
+  values?: string[];
+  notValues?: string[];
 }
 
 export interface ServiceRole extends IstioObject {
