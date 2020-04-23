@@ -329,34 +329,34 @@ func IsMixerDisabled() bool {
 	k8sConfig, err := kubernetes.ConfigClient()
 	if err != nil {
 		log.Warningf("IsMixerDisabled: Cannot create config structure Kubernetes Client.")
-		return false
+		return true
 	}
 
 	k8s, err := kubernetes.NewClientFromConfig(k8sConfig)
 	if err != nil {
 		log.Warningf("IsMixerDisabled: Cannot create Kubernetes Client.")
-		return false
+		return true
 	}
 
 	cfg := config.Get()
 	istioConfig, err := k8s.GetConfigMap(cfg.IstioNamespace, ISTIO_CONFIGMAP_NAME)
 	if err != nil {
 		log.Warningf("IsMixerDisabled: Cannot retrieve Istio ConfigMap.")
-		return false
+		return true
 	}
 
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	log.Tracef("meshConfig: %v", meshConfigYaml)
 	if !ok {
 		log.Warningf("IsMixerDisabled: Cannot find Istio mesh configuration.")
-		return false
+		return true
 	}
 
 	meshConfig := istioMeshConfig{}
 	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
 	if err != nil {
 		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
-		return false
+		return true
 	}
 
 	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
