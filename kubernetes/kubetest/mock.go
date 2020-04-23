@@ -100,6 +100,11 @@ func (o *K8SClientMock) GetAdapters(namespace, labelSelector string) ([]kubernet
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {
+	args := o.Called(namespace, configName)
+	return args.Get(0).(*core_v1.ConfigMap), args.Error(1)
+}
+
 func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_apps_v1.CronJob, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]batch_apps_v1.CronJob), args.Error(1)

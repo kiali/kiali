@@ -41,6 +41,7 @@ type IstioClientInterface interface {
 	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
 	GetAdapters(namespace, labelSelector string) ([]IstioObject, error)
 	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
+	GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
 	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
