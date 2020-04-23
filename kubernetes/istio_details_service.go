@@ -870,16 +870,16 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 
 func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject, error) {
 	// In case AuthorizationPolicies aren't present on Istio, return empty array.
-	if !in.hasSecurityResource(authorizationpolicies) {
+	if !in.hasSecurityResource(AuthorizationPolicies) {
 		return []IstioObject{}, nil
 	}
 
-	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(authorizationpolicies).Do().Get()
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(AuthorizationPolicies).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[authorizationpolicies],
+		Kind:       PluralType[AuthorizationPolicies],
 		APIVersion: ApiSecurityVersion,
 	}
 	authorizationPoliciesList, ok := result.(*GenericIstioObjectList)
@@ -897,12 +897,12 @@ func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject
 }
 
 func (in *IstioClient) GetAuthorizationPolicy(namespace string, name string) (IstioObject, error) {
-	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(authorizationpolicies).SubResource(name).Do().Get()
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(AuthorizationPolicies).SubResource(name).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[authorizationpolicies],
+		Kind:       PluralType[AuthorizationPolicies],
 		APIVersion: ApiSecurityVersion,
 	}
 	authorizationPolicy, ok := result.(*GenericIstioObject)

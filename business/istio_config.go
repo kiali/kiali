@@ -104,6 +104,7 @@ var apiToVersion = map[string]string{
 
 // IstioConfig types used in the IstioConfig New Page Form
 var newIstioConfigTypes = []string{
+	kubernetes.AuthorizationPolicies,
 	kubernetes.Sidecars,
 	kubernetes.Gateways,
 }
