@@ -58,8 +58,6 @@ var components = map[string]map[string]bool{
 		"istio-egressgateway":  false,
 		"istio-ingressgateway": true,
 		"istiod":               true,
-		"grafana":              false,
-		"istio-tracing":        false,
 		"prometheus":           true,
 	},
 	"mixer": {
@@ -71,11 +69,12 @@ var components = map[string]map[string]bool{
 		"istio-policy":           true,
 		"istio-sidecar-injector": true,
 		"istio-telemetry":        true,
-		"grafana":                false,
-		"istio-tracing":          false,
 		"prometheus":             true,
 	},
 }
+
+const GRAFANA_COMPONENT = "grafana"
+const TRACING_COMPONENT = "istio-tracing"
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	if !config.Get().ExternalServices.Istio.IstioStatusEnabled {
@@ -137,9 +136,23 @@ func (iss *IstioStatusService) detectArchitecture(ds []apps_v1.Deployment) strin
 	return arch
 }
 
+func addAddOnComponents(arch string) {
+	if config.Get().ExternalServices.Grafana.Enabled {
+		components[arch][GRAFANA_COMPONENT] = false
+	}
+
+	if config.Get().ExternalServices.Tracing.Enabled {
+		components[arch][TRACING_COMPONENT] = false
+	}
+
+}
+
 func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment) (IstioComponentStatus, error) {
 	isc := make([]ComponentStatus, 0, len(ds))
 	cf := map[string]bool{}
+
+	// Append grafana and tracing if they are enabled on kiali
+	addAddOnComponents(arch)
 
 	// Map workloads there by app name
 	for _, d := range ds {

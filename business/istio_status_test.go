@@ -48,6 +48,9 @@ func TestComponentNotRunning(t *testing.T) {
 				ds,
 			)))
 	}
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func TestComponentRunning(t *testing.T) {
@@ -64,6 +67,9 @@ func TestComponentRunning(t *testing.T) {
 	)
 
 	assert.Equal(Healthy, status)
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func TestNoPilotsFound(t *testing.T) {
@@ -84,6 +90,9 @@ func TestNoPilotsFound(t *testing.T) {
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 	assert.Equal("Istio Status disabled: Pilot not found", icsl.Message)
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func TestMultiplePilots(t *testing.T) {
@@ -103,6 +112,59 @@ func TestMultiplePilots(t *testing.T) {
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 	assert.Equal("Istio Status disabled: Multiple Pilot found", icsl.Message)
+
+	// Cleaning up environment
+	shutdown()
+}
+
+func TestGrafanaDisabled(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.Enabled = false
+	config.Set(conf)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+	}
+
+	k8s := mockDeploymentCall(pods)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
+
+	// Don't return status of mixer deployment
+	assertNotPresent(assert, icsl, GRAFANA_COMPONENT)
+
+	// Cleaning up environment
+	shutdown()
+}
+
+func TestTracingDisabled(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = false
+	config.Set(conf)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+	}
+
+	k8s := mockDeploymentCall(pods)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
+
+	// Don't return status of mixer deployment
+	assertNotPresent(assert, icsl, TRACING_COMPONENT)
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func TestMonolithComp(t *testing.T) {
@@ -129,8 +191,8 @@ func TestMonolithComp(t *testing.T) {
 	assertComponent(assert, icsl, "prometheus", NotFound, true)
 
 	// Don't return healthy deployments
-	assertComponent(assert, icsl, "istio-egressgateway", Healthy, false)
-	assertComponent(assert, icsl, "istiod", Healthy, true)
+	assertNotPresent(assert, icsl, "istio-egressgateway")
+	assertNotPresent(assert, icsl, "istiod")
 
 	// Don't return status of mixer deployment
 	assertNotPresent(assert, icsl, "istio-citadel")
@@ -138,6 +200,9 @@ func TestMonolithComp(t *testing.T) {
 	assertNotPresent(assert, icsl, "istio-pilot")
 	assertNotPresent(assert, icsl, "istio-policy")
 	assertNotPresent(assert, icsl, "istio-telemetry")
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func TestMixerComp(t *testing.T) {
@@ -162,7 +227,7 @@ func TestMixerComp(t *testing.T) {
 	assertComponent(assert, icsl, "istio-galley", NotFound, true)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
 	assertComponent(assert, icsl, "istio-policy", NotFound, true)
-	assertComponent(assert, icsl, "istio-sidecar-injection", NotFound, true)
+	assertComponent(assert, icsl, "istio-sidecar-injector", NotFound, true)
 	assertComponent(assert, icsl, "istio-telemetry", NotFound, true)
 	assertComponent(assert, icsl, "grafana", Unhealthy, false)
 	assertComponent(assert, icsl, "istio-tracing", Unhealthy, false)
@@ -175,23 +240,32 @@ func TestMixerComp(t *testing.T) {
 
 	// Don't return status of mixer deployment
 	assertNotPresent(assert, icsl, "istiod")
+
+	// Cleaning up environment
+	shutdown()
 }
 
 func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
+	componentFound := false
 	for _, ics := range icsl.List {
 		if ics.Name == name {
 			assert.Equal(status, ics.Status)
 			assert.Equal(isCore, ics.IsCore)
+			componentFound = true
 		}
 	}
+
+	assert.True(componentFound)
 }
 
 func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name string) {
+	componentFound := false
 	for _, ics := range icsl.List {
 		if ics.Name == name {
-			assert.NotEqual(name, ics.Name)
+			componentFound = true
 		}
 	}
+	assert.False(componentFound)
 }
 
 // Setup K8S api call to fetch Pods
@@ -213,4 +287,9 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 			Replicas: &status.Replicas,
 			Selector: &meta_v1.LabelSelector{
 				MatchLabels: labels}}}
+}
+
+func shutdown() {
+	delete(components["monolith"], GRAFANA_COMPONENT)
+	delete(components["monolith"], TRACING_COMPONENT)
 }
