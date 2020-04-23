@@ -1,6 +1,5 @@
 import { GlobalAction } from './GlobalActions';
 import { GraphAction } from './GraphActions';
-import { GraphDataAction } from './GraphDataActions';
 import { GraphToolbarAction } from './GraphToolbarActions';
 import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
@@ -14,7 +13,6 @@ import { TourAction } from './TourActions';
 export type KialiAppAction =
   | GlobalAction
   | GraphAction
-  | GraphDataAction
   | GraphToolbarAction
   | HelpDropdownAction
   | LoginAction

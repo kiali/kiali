@@ -8,7 +8,6 @@ import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
-  cyData: null,
   layout: DagreGraph.getLayout(),
   node: undefined,
   summaryData: null,
@@ -28,13 +27,14 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showTrafficAnimation: false,
     showUnusedNodes: false,
     showVirtualServices: true
-  }
+  },
+  updateTime: 0
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
   switch (action.type) {
-    case getType(GraphActions.changed):
+    case getType(GraphActions.onNamespaceChange):
       return updateState(state, {
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
@@ -46,12 +46,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
-    case getType(GraphActions.updateGraph):
+    case getType(GraphActions.setUpdateTime):
       return updateState(state, {
-        cyData: updateState(state.cyData, {
-          updateTimestamp: action.payload.updateTimestamp,
-          cyRef: action.payload.cyRef
-        })
+        updateTime: action.payload
       });
     case getType(GraphActions.updateSummary):
       return updateState(state, {

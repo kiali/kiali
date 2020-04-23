@@ -7,11 +7,11 @@ import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import {
-  CyData,
   CytoscapeClickEvent,
+  DecoratedGraphElements,
   EdgeLabelMode,
   GraphType,
   Layout,
@@ -54,7 +54,7 @@ import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
-import GraphDataSource from '../../services/GraphDataSource';
+import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 
@@ -70,6 +70,7 @@ type GraphURLPathProps = {
 type ReduxProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
+  compressOnHide: boolean;
   displayUnusedNodes: () => void;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabelMode: EdgeLabelMode;
@@ -83,6 +84,7 @@ type ReduxProps = {
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespace: Namespace[]) => void;
+  setUpdateTime: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;
@@ -93,11 +95,10 @@ type ReduxProps = {
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
   summaryData: SummaryData | null;
-  updateGraph: (cyData: CyData) => void;
   updateSummary: (event: CytoscapeClickEvent) => void;
   mtlsEnabled: boolean;
 
-  graphChanged: () => void;
+  onNamespaceChange: () => void;
   setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
   endTour: () => void;
@@ -105,6 +106,19 @@ type ReduxProps = {
 };
 
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
+
+export type GraphData = {
+  elements: DecoratedGraphElements;
+  errorMessage?: string;
+  fetchParams: FetchParams;
+  isLoading: boolean;
+  isError?: boolean;
+  timestamp: TimeInMilliseconds;
+};
+
+type GraphPageState = {
+  graphData: GraphData;
+};
 
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -166,7 +180,7 @@ const GraphErrorBoundaryFallback = () => {
   );
 };
 
-export class GraphPage extends React.Component<GraphPageProps> {
+export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
   private focusSelector?: string;
@@ -242,9 +256,34 @@ export class GraphPage extends React.Component<GraphPageProps> {
     }
 
     this.graphDataSource = new GraphDataSource();
+
+    this.state = {
+      graphData: {
+        elements: { edges: [], nodes: [] },
+        isLoading: true,
+        fetchParams: {
+          namespaces: props.node ? [props.node.namespace] : props.activeNamespaces,
+          duration: props.duration,
+          graphType: props.graphType,
+          injectServiceNodes: props.showServiceNodes,
+          edgeLabelMode: props.edgeLabelMode,
+          showSecurity: props.showSecurity,
+          showUnusedNodes: props.showUnusedNodes,
+          node: props.node,
+          queryTime: 0
+        },
+        timestamp: 0
+      }
+    };
   }
 
   componentDidMount() {
+    // Connect to graph data source updates
+    this.graphDataSource.on('loadStart', this.handleGraphDataSourceStart);
+    this.graphDataSource.on('fetchError', this.handleGraphDataSourceError);
+    this.graphDataSource.on('fetchSuccess', this.handleGraphDataSourceSuccess);
+    this.graphDataSource.on('emptyNamespaces', this.handleGraphDataSourceEmpty);
+
     // This is a special bookmarking case. If the initial URL is for a node graph then
     // defer the graph fetch until the first component update, when the node is set.
     // (note: to avoid direct store access we could parse the URL again, perhaps that
@@ -253,12 +292,6 @@ export class GraphPage extends React.Component<GraphPageProps> {
     if (!store.getState().graph.node) {
       this.loadGraphDataFromBackend();
     }
-
-    // Connect to graph data source updates
-    this.graphDataSource.on('loadStart', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.on('fetchError', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.on('fetchSuccess', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.on('emptyNamespaces', this.handleGraphDataSourceUpdate);
   }
 
   componentDidUpdate(prev: GraphPageProps) {
@@ -273,7 +306,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
 
     // Ensure we initialize the graph when there is a change to activeNamespaces.
     if (activeNamespacesChanged) {
-      this.props.graphChanged();
+      this.props.onNamespaceChange();
     }
 
     if (
@@ -308,10 +341,10 @@ export class GraphPage extends React.Component<GraphPageProps> {
 
   componentWillUnmount() {
     // Disconnect from graph data source updates
-    this.graphDataSource.removeListener('loadStart', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphDataSourceUpdate);
-    this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceUpdate);
+    this.graphDataSource.removeListener('loadStart', this.handleGraphDataSourceStart);
+    this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceError);
+    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphDataSourceSuccess);
+    this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
   }
 
   render() {
@@ -319,16 +352,17 @@ export class GraphPage extends React.Component<GraphPageProps> {
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
-    const isReady =
-      this.graphDataSource.graphData.nodes &&
-      Object.keys(this.graphDataSource.graphData.nodes).length > 0 &&
-      !this.graphDataSource.isError;
+    const isEmpty = !(
+      this.state.graphData.elements.nodes && Object.keys(this.state.graphData.elements.nodes).length > 0
+    );
+    const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
+    const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
     return (
       <>
         <FlexView className={conStyle} column={true}>
           <div>
-            <GraphToolbarContainer disabled={this.graphDataSource.isLoading} onToggleHelp={this.toggleHelp} />
+            <GraphToolbarContainer cy={cy} disabled={this.state.graphData.isLoading} onToggleHelp={this.toggleHelp} />
           </div>
           <FlexView
             grow={true}
@@ -371,7 +405,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
                       focusSelector={this.focusSelector}
                       contextMenuNodeComponent={NodeContextMenuContainer}
                       contextMenuGroupComponent={NodeContextMenuContainer}
-                      dataSource={this.graphDataSource}
+                      graphData={this.state.graphData}
                       {...this.props}
                     />
                   </TourStopContainer>
@@ -389,8 +423,8 @@ export class GraphPage extends React.Component<GraphPageProps> {
                 namespaces={this.props.activeNamespaces}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.showServiceNodes}
-                queryTime={this.graphDataSource.graphTimestamp}
-                duration={this.graphDataSource.graphDuration}
+                queryTime={this.state.graphData.timestamp}
+                duration={this.state.graphData.fetchParams.duration}
                 isPageVisible={this.props.isPageVisible}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
@@ -405,8 +439,55 @@ export class GraphPage extends React.Component<GraphPageProps> {
     this.loadGraphDataFromBackend();
   };
 
-  private handleGraphDataSourceUpdate = () => {
-    this.forceUpdate();
+  private handleGraphDataSourceSuccess = (
+    graphTimestamp: TimeInSeconds,
+    _,
+    elements: DecoratedGraphElements,
+    fetchParams: FetchParams
+  ) => {
+    this.setState({
+      graphData: {
+        elements: elements,
+        isLoading: false,
+        fetchParams: fetchParams,
+        timestamp: graphTimestamp * 1000
+      }
+    });
+  };
+
+  private handleGraphDataSourceError = (errorMessage: string | null, fetchParams: FetchParams) => {
+    this.setState({
+      graphData: {
+        elements: { edges: [], nodes: [] },
+        errorMessage: !!errorMessage ? errorMessage : undefined,
+        isError: true,
+        isLoading: false,
+        fetchParams: fetchParams,
+        timestamp: Date.now()
+      }
+    });
+  };
+
+  private handleGraphDataSourceEmpty = (fetchParams: FetchParams) => {
+    this.setState({
+      graphData: {
+        elements: EMPTY_GRAPH_DATA,
+        isLoading: false,
+        fetchParams: fetchParams,
+        timestamp: Date.now()
+      }
+    });
+  };
+
+  private handleGraphDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: FetchParams) => {
+    this.setState({
+      graphData: {
+        elements: isPreviousDataInvalid ? EMPTY_GRAPH_DATA : this.state.graphData.elements,
+        fetchParams: fetchParams,
+        isLoading: true,
+        timestamp: isPreviousDataInvalid ? Date.now() : this.state.graphData.timestamp
+      }
+    });
   };
 
   private toggleHelp = () => {
@@ -448,7 +529,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
   };
 
   private displayTimeRange = () => {
-    const rangeEnd: TimeInMilliseconds = this.graphDataSource.graphTimestamp * 1000;
+    const rangeEnd: TimeInMilliseconds = this.state.graphData.timestamp;
     const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
 
     return toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' });
@@ -458,6 +539,7 @@ export class GraphPage extends React.Component<GraphPageProps> {
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
+  compressOnHide: state.graph.toolbarState.compressOnHide,
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
   graphType: graphTypeSelector(state),
@@ -484,13 +566,13 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   displayUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch),
   endTour: bindActionCreators(TourActions.endTour, dispatch),
-  graphChanged: bindActionCreators(GraphActions.changed, dispatch),
+  onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
-  updateGraph: (cyData: CyData) => dispatch(GraphActions.updateGraph(cyData)),
   updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
 });
 

@@ -41,32 +41,46 @@ describe('CytoscapeGraph component test', () => {
       showUnusedNodes: false
     });
 
-    const wrapper = shallow(
-      <CytoscapeGraph
-        edgeLabelMode={myEdgeLabelMode}
-        layout={myLayout}
-        updateGraph={testClickHandler}
-        updateSummary={testClickHandler}
-        onReady={testReadyHandler}
-        onEmptyGraphAction={testClickHandler}
-        refreshInterval={0}
-        setActiveNamespaces={testSetHandler}
-        setNode={testSetHandler}
-        isMTLSEnabled={false}
-        showCircuitBreakers={false}
-        showMissingSidecars={true}
-        showNodeLabels={true}
-        showSecurity={true}
-        showServiceNodes={true}
-        showTrafficAnimation={false}
-        showUnusedNodes={false}
-        showVirtualServices={true}
-        dataSource={dataSource}
-        displayUnusedNodes={() => undefined}
-      />
-    );
-
     dataSource.on('fetchSuccess', () => {
+      const wrapper = shallow(
+        <CytoscapeGraph
+          compressOnHide={true}
+          edgeLabelMode={myEdgeLabelMode}
+          graphData={{
+            elements: dataSource.graphData,
+            isLoading: false,
+            fetchParams: {
+              injectServiceNodes: true,
+              graphType: GraphType.VERSIONED_APP,
+              namespaces: [{ name: testNamespace }],
+              duration: 60,
+              edgeLabelMode: myEdgeLabelMode,
+              queryTime: 0,
+              showSecurity: true,
+              showUnusedNodes: false
+            },
+            timestamp: 0
+          }}
+          layout={myLayout}
+          updateSummary={testClickHandler}
+          onReady={testReadyHandler}
+          onEmptyGraphAction={testClickHandler}
+          refreshInterval={0}
+          setActiveNamespaces={testSetHandler}
+          setNode={testSetHandler}
+          isMTLSEnabled={false}
+          showCircuitBreakers={false}
+          showMissingSidecars={true}
+          showNodeLabels={true}
+          showSecurity={true}
+          showServiceNodes={true}
+          showTrafficAnimation={false}
+          showUnusedNodes={false}
+          showVirtualServices={true}
+          displayUnusedNodes={() => undefined}
+        />
+      );
+
       const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
       const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
       expect(emptyGraphLayoutWrapper.prop('elements')!.nodes).toEqual(emptyGraphDecorated.nodes);

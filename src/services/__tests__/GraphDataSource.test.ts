@@ -61,14 +61,14 @@ describe('GraphDataSource', () => {
     ds.fetchGraphData(FETCH_PARAMS);
 
     expect(ds.isLoading).toBeTruthy();
-    expect(mockLoadStartCallback).toHaveBeenCalledWith(true);
+    expect(mockLoadStartCallback).toHaveBeenCalledWith(true, FETCH_PARAMS);
   });
 
   it('informs data loading succeeded', done => {
     axiosMock.onGet('/api/namespaces/graph').reply(200, GRAPH_EMPTY_RESPONSE);
     const ds = new GraphDataSource();
 
-    ds.on('fetchSuccess', (graphTimestamp, graphDuration, graphData) => {
+    ds.on('fetchSuccess', (graphTimestamp, graphDuration, graphData, FETCH_PARAMS) => {
       expect(ds.isLoading).toBeFalsy();
       expect(ds.isError).toBeFalsy();
       expect(ds.errorMessage).toBeFalsy();
@@ -79,6 +79,7 @@ describe('GraphDataSource', () => {
       expect(ds.graphTimestamp).toEqual(graphTimestamp);
       expect(ds.graphDuration).toEqual(graphDuration);
       expect(ds.graphData).toEqual(graphData);
+      expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
 
       done();
     });
@@ -87,7 +88,7 @@ describe('GraphDataSource', () => {
   });
 
   it('informs data loading failed', done => {
-    axiosMock.onGet('/api/namespaces/graph').reply(500, { error: 'foo bar' });
+    axiosMock.onGet('/api/namespaces/graph').reply(500, { error: 'foo bar', FETCH_PARAMS });
     const ds = new GraphDataSource();
 
     ds.on('fetchError', errorMsg => {
@@ -95,6 +96,7 @@ describe('GraphDataSource', () => {
       expect(ds.isError).toBeTruthy();
       expect(ds.errorMessage).toEqual('foo bar');
       expect(errorMsg).toEqual('Cannot load the graph: foo bar');
+      expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
 
       done();
     });

@@ -19,19 +19,38 @@ import { createSelector } from 'reselect';
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
 
+// GraphDataSource allows us to have multiple graphs in play, which functionally allows us to maintain
+// the master graph page as well as to offer mini-graphs in the detail pages.
+//
+// GraphDataSource (GDS) emits events asynchronously and has the potential to disrupt the expected
+// react+redux workflow typical of our components.  To avoid unexpected results here are some
+// [anti-]patterns for using GraphDataSource:
+//   - Do not set up GDS callbacks in nested components.  It is better to process the callbacks in the
+//     top-level component and then update props (via react or redux) and let the lower components update normally.
+//       - if A embeds B, do not have callbacks for the same GDS in A and B, just A
+//   - Avoid accessing GDS fields to access fetch information (elements, timestamps, fetchParameters, etc).  In
+//     short, the fields are volatile and can change at unexpected times.
+//       - Instead, in the callbacks save what you need to local variables or properties.  Then use them to
+//         trigger react/redux state changes normally.
+//   - Avoid passing a GDS as a property.
+//       - The only reason to do this is for an embedded component to access the GDS fields directly, which is
+//         an anti-pattern explained above.  Having said that, if you are SURE the GDS is stable, it will work
+//         (at this writing we still do this for mini-graphs).
+
 type EmitEvents = {
-  (eventName: 'loadStart', isPreviousDataInvalid: boolean): void;
-  (eventName: 'emptyNamespaces'): void;
-  (eventName: 'fetchError', errorMessage: string | null): void;
+  (eventName: 'loadStart', isPreviousDataInvalid: boolean, fetchParams: FetchParams): void;
+  (eventName: 'emptyNamespaces', fetchParams: FetchParams): void;
+  (eventName: 'fetchError', errorMessage: string | null, fetchParams: FetchParams): void;
   (
     eventName: 'fetchSuccess',
     graphTimestamp: TimeInSeconds,
     graphDuration: DurationInSeconds,
-    graphData: DecoratedGraphElements
+    graphData: DecoratedGraphElements,
+    fetchParams: FetchParams
   ): void;
 };
 
-interface FetchParams {
+export interface FetchParams {
   duration: DurationInSeconds;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
@@ -44,15 +63,16 @@ interface FetchParams {
 }
 
 type OnEvents = {
-  (eventName: 'loadStart', callback: (isPreviousDataInvalid: boolean) => void): void;
-  (eventName: 'emptyNamespaces', callback: () => void): void;
-  (eventName: 'fetchError', callback: (errorMessage: string | null) => void): void;
+  (eventName: 'loadStart', callback: (isPreviousDataInvalid: boolean, fetchParams: FetchParams) => void): void;
+  (eventName: 'emptyNamespaces', callback: (fetchParams: FetchParams) => void): void;
+  (eventName: 'fetchError', callback: (errorMessage: string | null, fetchParams: FetchParams) => void): void;
   (
     eventName: 'fetchSuccess',
     callback: (
       graphTimestamp: TimeInSeconds,
       graphDuration: DurationInSeconds,
-      graphData: DecoratedGraphElements
+      graphData: DecoratedGraphElements,
+      fetchParams: FetchParams
     ) => void
   ): void;
 };
@@ -108,7 +128,7 @@ export default class GraphDataSource {
       this.graphElements = EMPTY_GRAPH_DATA;
       this.graphDuration = 0;
       this.graphTimestamp = 0;
-      this.emit('emptyNamespaces');
+      this.emit('emptyNamespaces', fetchParams);
       return;
     }
 
@@ -169,7 +189,7 @@ export default class GraphDataSource {
       this.graphTimestamp = 0;
     }
 
-    this.emit('loadStart', isPreviousDataInvalid);
+    this.emit('loadStart', isPreviousDataInvalid, fetchParams);
     if (fetchParams.node) {
       this.fetchDataForNode(restParams);
     } else {
@@ -200,7 +220,7 @@ export default class GraphDataSource {
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         this._isLoading = this._isError = false;
-        this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData);
+        this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData, this.fetchParameters);
       },
       error => {
         this._isLoading = false;
@@ -211,7 +231,7 @@ export default class GraphDataSource {
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
         AlertUtils.addError('Cannot load the graph', error);
-        this.emit('fetchError', `Cannot load the graph: ${this.errorMessage}`);
+        this.emit('fetchError', `Cannot load the graph: ${this.errorMessage}`, this.fetchParameters);
       }
     );
   };
@@ -224,7 +244,7 @@ export default class GraphDataSource {
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         this._isLoading = this._isError = false;
-        this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData);
+        this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData, this.fetchParameters);
       },
       error => {
         this._isLoading = false;
@@ -235,7 +255,7 @@ export default class GraphDataSource {
         this._isError = true;
         this._errorMessage = API.getErrorString(error);
         AlertUtils.addError('Cannot load the graph', error);
-        this.emit('fetchError', this.errorMessage);
+        this.emit('fetchError', this.errorMessage, this.fetchParameters);
       }
     );
   };

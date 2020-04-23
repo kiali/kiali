@@ -62,8 +62,16 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
         <CardBody>
           <div style={{ height: '100%' }}>
             <CytoscapeGraph
+              compressOnHide={true}
               containerClassName={miniGraphContainerStyle}
-              dataSource={this.props.dataSource}
+              graphData={{
+                elements: this.props.dataSource.graphData,
+                errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
+                isError: this.props.dataSource.isError,
+                isLoading: this.props.dataSource.isLoading,
+                fetchParams: this.props.dataSource.fetchParameters,
+                timestamp: this.props.dataSource.graphTimestamp
+              }}
               displayUnusedNodes={() => undefined}
               edgeLabelMode={EdgeLabelMode.NONE}
               isMTLSEnabled={false}

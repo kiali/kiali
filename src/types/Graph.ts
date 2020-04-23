@@ -1,10 +1,4 @@
 import Namespace from './Namespace';
-import { TimeInMilliseconds } from './Common';
-
-export interface CyData {
-  updateTimestamp: TimeInMilliseconds;
-  cyRef: any;
-}
 
 export interface Layout {
   name: string;
