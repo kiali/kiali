@@ -275,6 +275,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     layoutChanged: boolean
   ) => {
     const selector = this.parseValue(this.props.hideValue);
+    let prevRemoved = this.removedElements;
 
     cy.startBatch();
 
@@ -326,11 +327,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     cy.endBatch();
 
     const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
+    const same = this.areSameElements(prevRemoved, this.removedElements);
+    prevRemoved = undefined;
     if (hideChanged || (compressOnHideChanged && selector) || hasRemovedElements) {
       const zoom = cy.zoom();
       const pan = cy.pan();
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      if (!hideChanged && !compressOnHideChanged && !layoutChanged) {
+      if (!same || compressOnHideChanged || layoutChanged) {
+        CytoscapeGraphUtils.safeFit(cy);
+      } else {
         if (zoom !== cy.zoom()) {
           cy.zoom(zoom);
         }
@@ -340,6 +345,23 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       }
     }
   };
+
+  private areSameElements(elemsA: any, elemsB: any): boolean {
+    if (elemsA === elemsB) {
+      return true;
+    }
+    if (!elemsA || !elemsB) {
+      return false;
+    }
+    if (elemsA.length !== elemsB.length) {
+      return false;
+    }
+    const idsA = elemsA.map(e => e.id).sort();
+    return elemsB
+      .map(e => e.id)
+      .sort()
+      .every((eId, index) => eId === idsA[index]);
+  }
 
   private handleFind = (cy: any) => {
     const selector = this.parseValue(this.props.findValue);

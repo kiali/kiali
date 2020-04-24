@@ -67,14 +67,15 @@ export const CyNode = {
 };
 
 export const ZoomOptions = {
-  fitPadding: 25
+  fitPadding: 25,
+  maxZoom: 2.5
 };
 
 export const safeFit = (cy: Cy.Core, centerElements?: Cy.Collection) => {
   cy.fit(centerElements, ZoomOptions.fitPadding);
-  if (cy.zoom() > 2.5) {
-    cy.zoom(2.5);
-    cy.center(centerElements);
+  if (cy.zoom() > ZoomOptions.maxZoom) {
+    cy.zoom(ZoomOptions.maxZoom);
+    !!centerElements && !!centerElements.length ? cy.center(centerElements) : cy.center();
   }
 };
 

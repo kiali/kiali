@@ -536,12 +536,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     cy.endBatch();
 
+    // Run layout and fit outside of the batch operation for it to take effect on the new nodes
     if (updateLayout) {
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-    }
-
-    // We need to fit outside of the batch operation for it to take effect on the new nodes
-    if (updateLayout) {
       this.safeFit(cy);
     }
 
