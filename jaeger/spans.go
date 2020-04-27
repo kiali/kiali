@@ -45,7 +45,7 @@ func getSpans(client http.Client, endpoint *url.URL, namespace, service, startMi
 	spans := tracesToSpans(response.Data, service, namespace)
 	if len(response.Data) == tracesLimit {
 		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
-		log.Info("Limit of traces was reached, trying to find more relevant spans...")
+		log.Trace("Limit of traces was reached, trying to find more relevant spans...")
 		return findRelevantSpans(client, spans, u, q, service, namespace)
 	}
 
@@ -94,7 +94,7 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	})
 	idx90 := int(9 * len(spansSample) / 10)
 	duration90th := time.Duration(spansSample[idx90].Duration) * time.Microsecond
-	log.Infof("90th percentile duration: %s", duration90th)
+	log.Tracef("90th percentile duration: %s", duration90th)
 	for _, span := range spansSample[idx90:] {
 		spansMap[span.SpanID] = span
 	}
@@ -116,6 +116,6 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	for _, span := range spansMap {
 		ret = append(ret, span)
 	}
-	log.Infof("Found %d relevant spans", len(ret))
+	log.Tracef("Found %d relevant spans", len(ret))
 	return ret, nil
 }
