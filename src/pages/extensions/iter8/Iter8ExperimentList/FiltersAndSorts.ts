@@ -1,9 +1,8 @@
-import { FILTER_ACTION_APPEND, FilterType } from '../../../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../../types/Filters';
 import { SortField } from '../../../../types/SortFilters';
 import { Iter8Experiment } from '../../../../types/Iter8';
 import { TextInputTypes } from '@patternfly/react-core';
-
-// Place Holder, not quite finished yet. Or if filter is needed, and how to use the common filters?
+import { getFilterSelectedValues } from '../../../../components/Filters/CommonFilters';
 
 export const sortFields: SortField<Iter8Experiment>[] = [
   {
@@ -49,16 +48,149 @@ export const sortFields: SortField<Iter8Experiment>[] = [
   }
 ];
 
-const appNameFilter: FilterType = {
-  id: 'name',
-  title: 'Name',
-  placeholder: 'Filter by Experiment Name',
+const filterByTargetService = (items: Iter8Experiment[], names: string[]): Iter8Experiment[] => {
+  return items.filter(item => {
+    let targetServiceFiltered = true;
+    if (names.length > 0) {
+      targetServiceFiltered = false;
+      for (let i = 0; i < names.length; i++) {
+        if (item.targetService.includes(names[i])) {
+          targetServiceFiltered = true;
+          break;
+        }
+      }
+    }
+    return targetServiceFiltered;
+  });
+};
+
+const filterByBaseline = (items: Iter8Experiment[], names: string[]): Iter8Experiment[] => {
+  return items.filter(item => {
+    let baselineFiltered = true;
+    if (names.length > 0) {
+      baselineFiltered = false;
+      for (let i = 0; i < names.length; i++) {
+        if (item.baseline.includes(names[i])) {
+          baselineFiltered = true;
+          break;
+        }
+      }
+    }
+    return baselineFiltered;
+  });
+};
+
+const filterByCandidate = (items: Iter8Experiment[], names: string[]): Iter8Experiment[] => {
+  return items.filter(item => {
+    let candidateFiltered = true;
+    if (names.length > 0) {
+      candidateFiltered = false;
+      for (let i = 0; i < names.length; i++) {
+        if (item.candidate.includes(names[i])) {
+          candidateFiltered = true;
+          break;
+        }
+      }
+    }
+    return candidateFiltered;
+  });
+};
+
+const filterByPhase = (items: Iter8Experiment[], names: string[]): Iter8Experiment[] => {
+  return items.filter(item => {
+    let phaseFiltered = true;
+    if (names.length > 0) {
+      phaseFiltered = false;
+      for (let i = 0; i < names.length; i++) {
+        if (item.phase.includes(names[i])) {
+          phaseFiltered = true;
+          break;
+        }
+      }
+    }
+    return phaseFiltered;
+  });
+};
+
+export const filterBy = (iter8Experiment: Iter8Experiment[], filters: ActiveFilter[]): Iter8Experiment[] => {
+  let ret = iter8Experiment;
+
+  const targetServiceSelected = getFilterSelectedValues(targetServiceFilter, filters);
+  if (targetServiceSelected.length > 0) {
+    ret = filterByTargetService(ret, targetServiceSelected);
+  }
+
+  const baselineSelected = getFilterSelectedValues(baselineFilter, filters);
+  if (baselineSelected.length > 0) {
+    ret = filterByBaseline(ret, baselineSelected);
+  }
+
+  // We may have to perform a second round of filtering, using data fetched asynchronously (health)
+  // If not, exit fast
+  const candidateSelected = getFilterSelectedValues(candidateFilter, filters);
+  if (candidateSelected.length > 0) {
+    return filterByCandidate(ret, candidateSelected);
+  }
+
+  const phaseSelected = getFilterSelectedValues(phaseFilter, filters);
+  if (phaseSelected.length > 0) {
+    return filterByPhase(ret, phaseSelected);
+  }
+  return ret;
+};
+
+const targetServiceFilter: FilterType = {
+  id: 'targetService',
+  title: 'Service',
+  placeholder: 'Filter by Service Name',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };
 
-export const availableFilters: FilterType[] = [appNameFilter];
+const baselineFilter: FilterType = {
+  id: 'baselin',
+  title: 'Baseline',
+  placeholder: 'Filter by Baseline Name',
+  filterType: TextInputTypes.text,
+  action: FILTER_ACTION_APPEND,
+  filterValues: []
+};
+const candidateFilter: FilterType = {
+  id: 'candidate',
+  title: 'Candidate',
+  placeholder: 'Filter by Candidate Name',
+  filterType: TextInputTypes.text,
+  action: FILTER_ACTION_APPEND,
+  filterValues: []
+};
+
+export const phaseFilter: FilterType = {
+  id: 'phase',
+  title: 'Phase',
+  placeholder: 'Filter by Phase',
+  filterType: FilterTypes.select,
+  action: FILTER_ACTION_APPEND,
+  filterValues: [
+    {
+      id: 'Initializing',
+      title: 'Initializing'
+    },
+    {
+      id: 'Progressing',
+      title: 'Progressing'
+    },
+    {
+      id: 'Pause',
+      title: 'Pause'
+    },
+    {
+      id: 'Completed',
+      title: 'Completed'
+    }
+  ]
+};
+export const availableFilters: FilterType[] = [targetServiceFilter, baselineFilter, candidateFilter, phaseFilter];
 
 /** Sort Method */
 

@@ -37,7 +37,9 @@ import {
   PlayIcon,
   PlayCircleIcon,
   StopIcon,
-  UserClockIcon
+  UserClockIcon,
+  OnRunningIcon,
+  InProgressIcon
 } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
@@ -91,7 +93,9 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   VirtualService: (props: IconProps) => <CodeBranchIcon className={props.className} />,
   Warning: (props: IconProps) => <WarningTriangleIcon className={props.className} color={PFAlertColor.Warning} />,
   Website: (props: IconProps) => <HomeIcon className={props.className} />,
-  Workloads: (props: IconProps) => <BundleIcon className={props.className} />
+  Workloads: (props: IconProps) => <BundleIcon className={props.className} />,
+  OnRunningIcon: (props: IconProps) => <OnRunningIcon className={props.className} />,
+  InProgressIcon: (props: IconProps) => <InProgressIcon className={props.className} />
 };
 
 Object.keys(KialiIcon).forEach(key => {
