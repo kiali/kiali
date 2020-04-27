@@ -108,6 +108,18 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
 }
 
+func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/?orgId=1"
+	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
+	config.Set(conf)
+	info, code, err := getGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/?orgId=1", t))
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, code)
+	assert.Len(t, info.ExternalLinks, 1)
+	assert.Equal(t, "http://grafana-external:3001/some_path?orgId=1", info.ExternalLinks[0].URL)
+}
+
 func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) dashboardSupplier {
 	return func(url, _ string, _ *config.Auth) ([]byte, int, error) {
 		assert.Equal(t, expectURL, url)

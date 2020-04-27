@@ -73,14 +73,20 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 
 	// Call Grafana REST API to get dashboard urls
 	links := []kmodel.ExternalLink{}
+	urlParts := strings.Split(externalURL, "?")
 	for _, dashboardConfig := range grafanaConfig.Dashboards {
 		dashboardPath, err := getDashboardPath(apiURL, dashboardConfig.Name, &auth, dashboardSupplier)
 		if err != nil {
 			return nil, http.StatusServiceUnavailable, err
 		}
 		if dashboardPath != "" {
+			// E.g.: http://localhost:3000?orgId=1 transformed into http://localhost:3000/d/LJ_uJAvmk/istio-service-dashboard?orgId=1
+			externalURL = strings.TrimSuffix(urlParts[0], "/") + "/" + strings.TrimPrefix(dashboardPath, "/")
+			if len(urlParts) > 1 {
+				externalURL = externalURL + "?" + urlParts[1]
+			}
 			externalLink := kmodel.ExternalLink{
-				URL:  strings.TrimSuffix(externalURL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
+				URL:  externalURL,
 				Name: dashboardConfig.Name,
 				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
 					App:       dashboardConfig.Variables.App,
@@ -142,5 +148,10 @@ func getDashboardPath(basePath, name string, auth *config.Auth, dashboardSupplie
 }
 
 func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(strings.TrimSuffix(url, "/")+"/api/search?query="+searchPattern, auth, time.Second*10)
+	urlParts := strings.Split(url, "?")
+	query := strings.TrimSuffix(urlParts[0], "/") + "/api/search?query=" + searchPattern
+	if len(urlParts) > 1 {
+		query = query + "&" + urlParts[1]
+	}
+	return httputil.HttpGet(query, auth, time.Second*10)
 }
