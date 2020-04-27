@@ -105,6 +105,7 @@ type IstioClientInterface interface {
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsMaistraApi() bool
 	IsOpenShift() bool
+	IsMixerDisabled() bool
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 	Iter8ClientInterface
 }
@@ -147,6 +148,10 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#HasSecurityResource() for more details.
 	securityResources *map[string]bool
+
+	// isMixedDisabled private variable will check if mixed is enabled in the current istio deployment.
+	// It is represented with a pointer to a bool. True if mixer is disabled, false instead
+	isMixerDisabled *bool
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients

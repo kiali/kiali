@@ -470,6 +470,11 @@ func (o *K8SClientMock) DeleteIter8Experiment(namespace string, name string) err
 	return args.Error(0)
 }
 
+func (o *K8SClientMock) IsMixerDisabled() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func fakeService(namespace, name string) core_v1.Service {
 	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -513,6 +518,31 @@ func FakePodListWithoutSidecar() []core_v1.Pod {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "httpbin-v1",
 				Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
+	}
+}
+
+func FakePod(name string, labels map[string]string, podPhase core_v1.PodPhase) core_v1.Pod {
+	return core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Status: core_v1.PodStatus{
+			Phase: podPhase,
+		},
+	}
+}
+
+func FakePodWithContainers(name string, labels map[string]string, podPhase core_v1.PodPhase, containerStatuses []core_v1.ContainerStatus) core_v1.Pod {
+	return core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:   name,
+			Labels: labels,
+		},
+		Status: core_v1.PodStatus{
+			Phase:             podPhase,
+			ContainerStatuses: containerStatuses,
+		},
 	}
 }
 

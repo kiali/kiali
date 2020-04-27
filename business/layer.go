@@ -26,6 +26,7 @@ type Layer struct {
 	TLS            TLSService
 	ThreeScale     ThreeScaleService
 	Iter8          Iter8Service
+	IstioStatus    IstioStatusService
 }
 
 // Global clientfactory and prometheus clients.
@@ -114,6 +115,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.ThreeScale = ThreeScaleService{k8s: k8s}
 	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
 
 	return temporaryLayer
 }
