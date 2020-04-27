@@ -340,15 +340,17 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         <div className="panel-heading" style={summaryHeader}>
           <div>
             {renderBadgedLink(nodeData)}
-            <Dropdown
-              id="summary-node-actions"
-              style={{ float: 'right' }}
-              isPlain={true}
-              dropdownItems={actions}
-              isOpen={this.state.isOpen}
-              position={DropdownPosition.right}
-              toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
-            />
+            {!nodeData.isInaccessible && (
+              <Dropdown
+                id="summary-node-actions"
+                style={{ float: 'right' }}
+                isPlain={true}
+                dropdownItems={actions}
+                isOpen={this.state.isOpen}
+                position={DropdownPosition.right}
+                toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
+              />
+            )}
           </div>
           <div>{renderHealth(this.state.health)}</div>
           <div>
