@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.17.0-SNAPSHOT
+VERSION ?= v1.18.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -157,4 +157,14 @@ git-init:
 .ensure-minikube-exists:
 	@if [ ! -x "${MINIKUBE}" ]; then \
 	  echo "Missing 'minikube'"; exit 1; \
+	fi
+
+.ensure-operator-repo-exists:
+	@if [ ! -d "${ROOTDIR}/operator" ]; then \
+	  echo "================ ERROR ================"; \
+	  echo "You are missing the operator."; \
+	  echo "To fix this, run the following command:"; \
+	  echo "  git clone git@github.com:kiali/kiali-operator.git ${ROOTDIR}/operator"; \
+	  echo "======================================="; \
+	  exit 1; \
 	fi

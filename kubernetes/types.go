@@ -93,9 +93,9 @@ const (
 	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
 	// Authorization Policies
-	authorizationpolicies         = "authorizationpolicies"
-	authorizationpoliciesType     = "AuthorizationPolicy"
-	authorizationpoliciesTypeList = "AuthorizationPolicyList"
+	AuthorizationPolicies         = "authorizationpolicies"
+	AuthorizationPoliciesType     = "AuthorizationPolicy"
+	AuthorizationPoliciesTypeList = "AuthorizationPolicyList"
 
 	// Config - Rules
 
@@ -254,8 +254,8 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     authorizationpoliciesType,
-			collectionKind: authorizationpoliciesTypeList,
+			objectKind:     AuthorizationPoliciesType,
+			collectionKind: AuthorizationPoliciesTypeList,
 		},
 	}
 
@@ -378,7 +378,7 @@ var (
 		serviceMeshRbacConfigs: serviceMeshRbacConfigType,
 
 		// Authorization Policies
-		authorizationpolicies: authorizationpoliciesType,
+		AuthorizationPolicies: AuthorizationPoliciesType,
 
 		// Iter8
 		iter8experiments: iter8experimentType,

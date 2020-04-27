@@ -221,6 +221,33 @@
         }
       }
     },
+    "/istio/status": {
+      "get": {
+        "description": "Get the status of each components needed in the control plane",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "status"
+        ],
+        "operationId": "istioStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioStatusResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/iter8/experiments": {
       "get": {
         "description": "User can define a comman separated list of namespaces.",
@@ -3857,6 +3884,35 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ComponentStatus": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "is_core"
+      ],
+      "properties": {
+        "is_core": {
+          "description": "When true, the component is necessary for Istio to function. Otherwise, it is an addon",
+          "type": "boolean",
+          "x-go-name": "IsCore",
+          "example": true
+        },
+        "name": {
+          "description": "The app label value of the Istio component",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "istio-ingressgateway"
+        },
+        "status": {
+          "description": "The status of a Istio component",
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Not Found"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/business"
+    },
     "Config": {
       "type": "object",
       "properties": {
@@ -4130,6 +4186,13 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "IstioComponentStatus": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ComponentStatus"
+      },
+      "x-go-package": "github.com/kiali/kiali/business"
     },
     "IstioConfigDetails": {
       "type": "object",
@@ -6704,6 +6767,10 @@
         "spec": {
           "type": "object",
           "properties": {
+            "action": {
+              "type": "object",
+              "x-go-name": "Action"
+            },
             "rules": {
               "type": "object",
               "x-go-name": "Rules"
@@ -7158,6 +7225,12 @@
       "description": "Return caller permissions per namespace and Istio Config type",
       "schema": {
         "$ref": "#/definitions/IstioConfigPermissions"
+      }
+    },
+    "istioStatusResponse": {
+      "description": "Return a list of Istio components along its status",
+      "schema": {
+        "$ref": "#/definitions/IstioComponentStatus"
       }
     },
     "iter8ExperimentGetDetailResponse": {

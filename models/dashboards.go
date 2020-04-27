@@ -32,7 +32,7 @@ func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []kmodel.Aggrega
 func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 	appLabel := "app"
 	verLabel := "version"
-	if status.IstioSupportsCanonical() {
+	if status.AreCanonicalMetricsAvailable() {
 		appLabel = "canonical_service"
 		verLabel = "canonical_revision"
 	}

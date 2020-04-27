@@ -1,0 +1,182 @@
+# This Makefile is used to automate Kaili operator releases.
+# Please, see documentation in RELEASING.adoc
+
+RELEASE_TYPE ?= 'minor'
+
+OPERATOR_VERSION ?= $(shell sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
+
+# Take the version as-is without filtering out the 'v' (if it exists)
+# This will take 'latest' as is or vX.Y.Z-type.
+VERSION_TAG ?= $(shell sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+
+# Determine what's the version to release, according to the RELEASE_TYPE
+# NOTE: OPERATOR_VERSION_TO_RELEASE variable will only be used to update the main Makefile
+# with the version string to publish. Once the main Makefile is updated, all other parts
+# of this ci-Makefile should use OPERATOR_VERSION since, then, it will contain the right
+# version string and the value of OPERATOR_VERSION_TO_RELEASE will be invalid.
+ifeq ($(RELEASE_TYPE),patch)
+  # For patch, bump the version that is present in Makefile. This will be the
+  # version string to use for the release.
+  OPERATOR_VERSION_TO_RELEASE ?= v$(shell semver bump $(RELEASE_TYPE) $(OPERATOR_VERSION))
+endif
+ifeq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
+  # For major and minor, remove the -SNAPSHOT suffix from the Makefile
+  OPERATOR_VERSION_TO_RELEASE ?= v$(shell semver bump release $(OPERATOR_VERSION))
+endif
+
+ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else ifeq ($(RELEASE_TYPE),edge)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = n
+endif
+
+ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+  # For end-of-week snapshot release, substitute the -SNAPSHOT prefix in the Makefile with
+  # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X}
+  OPERATOR_VERSION_TO_RELEASE ?= v$(shell semver bump prerel $(RELEASE_TYPE) $(OPERATOR_VERSION))
+else ifeq ($(RELEASE_TYPE),edge)
+  # Use 'latest' for edge releases
+  OPERATOR_VERSION_TO_RELEASE ?= latest
+endif
+
+ifeq ($(RELEASE_TYPE),edge)
+  # Avoid semver error, as OPERATOR_VERSION will return empty string when using 'latest' as the version
+  # By not setting these variable, we avoid a semver error when expanding a rule that uses $(OPERATOR_BUMPED_VERSION)
+else
+  # NOTE: The value fo OPERATOR_BUMPED_VERSION and OPERATOR_VERSION_BRANCH will only be valid
+  # after the main Makefile has been modified with the version being released.
+  OPERATOR_BUMPED_VERSION ?= $(shell semver bump minor $(OPERATOR_VERSION))
+  OPERATOR_VERSION_BRANCH ?= $(shell semver bump release $(OPERATOR_VERSION) | sed 's/\.[[:digit:]]\+$$//')
+endif
+
+OPERATOR_GITHUB_URI ?= git@github.com:kiali/kiali-operator.git
+OPERATOR_PULL_URI ?= https://api.github.com/repos/kiali/kiali-operator/pulls
+OPERATOR_RELEASE_URI = $(subst pulls,releases,$(OPERATOR_PULL_URI))
+OPERATOR_MAIN_BRANCH ?= master
+
+KIALI_BOT_USER ?= kiali-bot
+OPERATOR_FORK_URI ?= $(shell git config --get remote.origin.url)
+
+# BUILD_TAG is an environment variable from Jenkins
+BUILD_TAG ?= prepare-next-version
+BUMP_BRANCH_ID ?= $(BUILD_TAG)
+
+QUAY_OPERATOR_NAME ?= quay.io/kiali/kiali-operator
+
+ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
+  IS_SNAPSHOT ?= y
+  OMIT_VERSION_BRANCH ?= y
+else
+  IS_SNAPSHOT ?= n
+endif
+
+# Block edge releases on github
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_GITHUB_TAG = y
+endif
+
+.PHONY: operator-build-release operator-push-quay
+.PHONY: operator-push-version-tag operator-prepare-next-version
+.PHONY: operator-prepare-next-patch-version operator-prepare-master-next-version
+.PHONY: all release
+
+all:
+	$(error You must explicitly specify a target)
+
+operator-build-release:
+	@echo "Will build version: $(OPERATOR_VERSION_TO_RELEASE)"
+	sed -i -r 's/^VERSION \?= v.*/VERSION \?= $(OPERATOR_VERSION_TO_RELEASE)/' Makefile
+	OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
+	  $(MAKE) clean build
+
+operator-push-quay:
+ifdef QUAY_USER
+ifdef QUAY_PASSWORD
+	@echo "Logging in to Quay.io..."
+	@docker login -u "$(QUAY_USER)" -p "$(QUAY_PASSWORD)" quay.io
+endif
+endif
+	OPERATOR_CONTAINER_VERSION="$(VERSION_TAG)" \
+	  OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
+	 $(MAKE) push
+ifneq ($(IS_SNAPSHOT),y)
+   # Create or update vX.Y tags (without the patch number)
+   # quay.io/kiali-operator
+	docker tag "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)" "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
+	docker push "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
+	docker rmi "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
+endif
+   # Clean-up
+	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
+
+operator-push-version-tag:
+ifeq ($(PUSH_GITHUB_TAG),y)
+	git add Makefile
+	git commit -m "Release $(OPERATOR_VERSION)"
+	git push $(OPERATOR_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
+ifdef GH_TOKEN
+	@echo "Creating GitHub release..."
+ifeq ($(IS_SNAPSHOT),y)
+	@curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"name": "Kiali Operator $(OPERATOR_VERSION)", "tag_name": "$(VERSION_TAG)", "prerelease": true}' \
+	  -X POST $(OPERATOR_RELEASE_URI)
+else
+	@curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"name": "Kiali Operator $(OPERATOR_VERSION)", "tag_name": "$(VERSION_TAG)"}' \
+	  -X POST $(OPERATOR_RELEASE_URI)
+endif
+endif
+else
+	@echo "Skipped push version tag"
+endif
+
+operator-prepare-next-patch-version:
+ifndef OMIT_VERSION_BRANCH
+	# First, try to push directly to the vX.Y branch
+	git push $(OPERATOR_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/v$(OPERATOR_VERSION_BRANCH) || touch pr_needed.txt
+	# If push to vX.Y branch fails, create a PR
+	[ ! -f pr_needed.txt ] || git push $(OPERATOR_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)-patch
+ifdef GH_TOKEN
+	@[ ! -f pr_needed.txt ] || echo "Creating PR to prepare for next version..."
+	@[ ! -f pr_needed.txt ] || curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"title": "Prepare for next version", "body": "I could not update v$(OPERATOR_VERSION_BRANCH) branch. Please, merge.", "head": "$(KIALI_BOT_USER):$(BUMP_BRANCH_ID)-patch", "base": "v$(OPERATOR_VERSION_BRANCH)"}' \
+	  -X POST $(OPERATOR_PULL_URI)
+endif
+	# Clean-up
+	rm -f pr_needed.txt
+else
+	@echo "Creation or update of the version branch $(OPERATOR_VERSION_BRANCH) is omitted."
+endif
+
+operator-prepare-master-next-version:
+	# Only minor releases require to prepare the master branch for the next release
+ifeq ($(RELEASE_TYPE),minor)
+	sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$(OPERATOR_BUMPED_VERSION)-SNAPSHOT/" Makefile
+	git add Makefile
+	git commit -m "Prepare for next version"
+	# First, try to push directly to master
+	git push $(OPERATOR_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/$(OPERATOR_MAIN_BRANCH) || touch pr_needed.txt
+	# If push to master fails, create a PR
+	[ ! -f pr_needed.txt ] || git push $(OPERATOR_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)-main
+ifdef GH_TOKEN
+	@[ ! -f pr_needed.txt ] || echo "Creating PR to prepare for next version..."
+	@[ ! -f pr_needed.txt ] || curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"title": "Prepare for next version", "body": "I could not update $(OPERATOR_MAIN_BRANCH) branch. Please, merge.", "head": "$(KIALI_BOT_USER):$(BUMP_BRANCH_ID)-main", "base": "$(OPERATOR_MAIN_BRANCH)"}' \
+	  -X POST $(OPERATOR_PULL_URI)
+endif
+	# Clean-up
+	rm -f pr_needed.txt
+else
+	@echo "Skipping preparing repository for next version..."
+endif
+
+operator-prepare-next-version: operator-prepare-next-patch-version operator-prepare-master-next-version
+
+release: operator-build-release operator-push-quay \
+  operator-push-version-tag operator-prepare-next-version

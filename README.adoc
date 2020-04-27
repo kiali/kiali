@@ -84,6 +84,7 @@ cd $GOPATH
 mkdir -p src/github.com/kiali
 cd src/github.com/kiali
 git clone git@github.com:kiali/kiali
+git clone git@github.com:kiali/kiali-operator kiali/operator
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
@@ -151,7 +152,9 @@ cd ${GOPATH}/src/github.com/kiali/kiali
 make container-build
 ----
 
-On x86_64 machine, this will build both the Kiali and the Kiali operator image. On aarch64 machine, this will only build the Kiali image.
+This will build the Kiali image.
+
+Generated container image will be consistant with the host machine (either x86_64 or aarch64).
 
 === Pushing Kiali operator and Kiali images to your cluster
 
@@ -167,7 +170,7 @@ This actually invokes the `container-build` target as well, so you technically d
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
+cd ${GOPATH}/src/github.com/kiali/kiali
 make operator-create
 ----
 
@@ -177,7 +180,7 @@ Deploying the Kiali operator needs to be done only one time. After the operator 
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
+cd ${GOPATH}/src/github.com/kiali/kiali
 make kiali-create
 ----
 
@@ -189,7 +192,7 @@ If you want to remove Kiali, you can do so via the operator by executing the `ki
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
+cd ${GOPATH}/src/github.com/kiali/kiali
 make kiali-delete
 ----
 
@@ -197,7 +200,7 @@ If you want to purge your cluster of all Kiali resources without going through t
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
+cd ${GOPATH}/src/github.com/kiali/kiali
 make kiali-purge
 ----
 
@@ -218,7 +221,7 @@ make kiali-reload-image
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali/operator
+cd ${GOPATH}/src/github.com/kiali/kiali
 make operator-delete
 ----
 
@@ -247,7 +250,7 @@ ${GOPATH}/bin/kiali -config <your-config-file>
 
 == Configuration
 
-Many configuration settings can optionally be set within the Kiali Operator custom resource (CR) file. See link:./operator/deploy/kiali/kiali_cr.yaml[this example Kiali CR file] that has all the configuration settings documented.
+Many configuration settings can optionally be set within the Kiali Operator custom resource (CR) file. See link:https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml[this example Kiali CR file] that has all the configuration settings documented.
 
 == Embedding Kiali
 

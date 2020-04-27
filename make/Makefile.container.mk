@@ -37,7 +37,7 @@ else
 endif
 
 ## container-build-operator: Build Kiali operator container image.
-container-build-operator: .ensure-operator-sdk-exists
+container-build-operator: .ensure-operator-repo-exists .ensure-operator-sdk-exists
 	@echo Building container image for Kiali operator using operator-sdk
 	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${OPERATOR_QUAY_TAG}"
 
@@ -60,21 +60,5 @@ else
 	podman push ${QUAY_TAG}
 endif
 
-## container-push-operator: Pushes the operator image to quay.
-container-push-operator-quay:
-ifeq ($(DORP),docker)
-	@echo Pushing Kiali operator image using docker
-	docker push ${OPERATOR_QUAY_TAG}
-else
-	@echo Pushing Kiali operator image using podman
-	podman push ${OPERATOR_QUAY_TAG}
-endif
-
-## container-push: Pushes all container images to quay and docker hub.
-# On x86_64 machine, push both kiali and operator images.
-ifeq ($(GOARCH),amd64)
-container-push: container-push-kiali-quay container-push-operator-quay
-# On other achitectures, only push kiali image.
-else
+## container-push: Pushes all container images to quay
 container-push: container-push-kiali-quay
-endif

@@ -38,6 +38,12 @@ specified, the type of the release will be determined based on the current date.
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>OPERATOR_RELEASING_BRANCH</name>
+          <description>Branch of the operator to release</description>
+          <defaultValue>refs/heads/master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>BACKEND_GITHUB_URI</name>
           <description>SSH Url of the kiali-backend GitHub repository</description>
           <defaultValue>git@github.com:kiali/kiali.git</defaultValue>
@@ -47,6 +53,12 @@ specified, the type of the release will be determined based on the current date.
           <name>UI_GITHUB_URI</name>
           <description>SSH Url of the kiali-ui GitHub repository</description>
           <defaultValue>git@github.com:kiali/kiali-ui.git</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>OPERATOR_GITHUB_URI</name>
+          <description>SSH Url of the kiali-operator GitHub repository</description>
+          <defaultValue>git@github.com:kiali/kiali-operator.git</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
@@ -76,6 +88,13 @@ UI (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>OPERATOR_PULL_URI</name>
+          <description>The URL of the GitHub API to use to create pull requests for the
+operator (changes to prepare for next version)</description>
+          <defaultValue>https://api.github.com/repos/kiali/kiali-operator/pulls</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>NPM_DRY_RUN</name>
           <description>Set to &quot;y&quot; if you want to make a &quot;dry run&quot; of the front-end release process</description>
           <defaultValue>n</defaultValue>
@@ -84,6 +103,18 @@ UI (changes to prepare for next version)</description>
         <hudson.model.StringParameterDefinition>
           <name>SKIP_UI_RELEASE</name>
           <description>Set to &apos;y&apos; if you don&apos;t want to release the UI</description>
+          <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_BACKEND_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the backend</description>
+          <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_OPERATOR_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the operator</description>
           <defaultValue>n</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>

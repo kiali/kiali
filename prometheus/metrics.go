@@ -41,7 +41,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, ref, q.Workload))
 	}
 	if q.App != "" {
-		if status.IstioSupportsCanonical() {
+		if status.AreCanonicalMetricsAvailable() {
 			labels = append(labels, fmt.Sprintf(`%s_canonical_service="%s"`, ref, q.App))
 		} else {
 			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, ref, q.App))

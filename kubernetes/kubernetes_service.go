@@ -2,10 +2,13 @@ package kubernetes
 
 import (
 	"bytes"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
+	"gopkg.in/yaml.v2"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -18,6 +21,23 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes/scheme"
 )
+
+const IstioConfigmapName = "istio"
+
+type istioMeshConfig struct {
+	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
+}
+
+// GetConfigMap fetches and returns the specified ConfigMap definition
+// from the cluster
+func (in *IstioClient) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {
+	configMap, err := in.k8s.CoreV1().ConfigMaps(namespace).Get(configName, emptyGetOptions)
+	if err != nil {
+		return &core_v1.ConfigMap{}, err
+	}
+
+	return configMap, nil
+}
 
 // GetNamespace fetches and returns the specified namespace definition
 // from the cluster
@@ -344,4 +364,40 @@ func (in *IstioClient) GetSelfSubjectAccessReview(namespace, api, resourceType s
 		}
 	}
 	return result, err
+}
+
+func (in *IstioClient) IsMixerDisabled() bool {
+	if in.isMixerDisabled != nil {
+		return *in.isMixerDisabled
+	}
+
+	cfg := config.Get()
+	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, IstioConfigmapName)
+	if err != nil {
+		log.Warningf("IsMixerDisabled: Cannot retrieve Istio ConfigMap.")
+		return true
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	log.Tracef("meshConfig: %v", meshConfigYaml)
+	if !ok {
+		log.Warningf("IsMixerDisabled: Cannot find Istio mesh configuration.")
+		return true
+	}
+
+	meshConfig := istioMeshConfig{}
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
+		return true
+	}
+
+	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
+
+	// References:
+	//   * https://github.com/istio/api/pull/1112
+	//   * https://github.com/istio/istio/pull/17695
+	//   * https://github.com/istio/istio/issues/15935
+	in.isMixerDisabled = &meshConfig.DisableMixerHttpReports
+	return *in.isMixerDisabled
 }

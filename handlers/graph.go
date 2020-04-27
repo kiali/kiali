@@ -10,7 +10,7 @@ package handlers
 //              Prometheus, Istio and Kubernetes.
 //
 //   Phase Two: Provide the TrafficMap to the requested ConfigVendor which returns the vendor-specific
-//              configuration retuened to the caller.
+//              configuration returned to the caller.
 //
 // The current Handlers:
 //   GraphNamespaces: Generate a graph for one or more requested namespaces.

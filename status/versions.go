@@ -308,22 +308,63 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
+// set this one time, it is very unlikely that mixer will be enabled/disabled without a kiali pod restart, or if it
+// did that that change will matter, and the kiali pod could be bounced as a workaround.
+var isMixerDisabled *bool
+
+// IsMixerDisabled returns true if Telemetry V2 is enabled (mixer is not collecting metrics)
+// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
+func IsMixerDisabled() bool {
+	if isMixerDisabled != nil {
+		return *isMixerDisabled
+	}
+
+	clientFactory, error := kubernetes.GetClientFactory()
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot connect to Kubernetes API")
+		return true
+	}
+
+	token, error := kubernetes.GetKialiToken()
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot get Kiali token")
+		return true
+	}
+
+	client, error := clientFactory.GetClient(token)
+	if error != nil {
+		log.Warningf("IsMixerDisabled: Cannot get Kubernetes Client")
+		return true
+	}
+
+	mixedDisabled := client.IsMixerDisabled()
+	isMixerDisabled = &mixedDisabled
+	return *isMixerDisabled
+}
+
 // set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
 // did that that version change will matter, and the kiali pod could be bounced as a workaround.
 var istioSupportsCanonical *bool
 
-// IstioSupportsCanonical returns true if Istio version can be determined and is >= 1.5.
-// TODO: This test can be removed when Kiali stops supporting any Istio versions < 1.5
-func IstioSupportsCanonical() bool {
-	if istioSupportsCanonical != nil {
-		return *istioSupportsCanonical
+// AreCanonicalMetricsAvailable returns true if canonical labels are present in Istio Telemetry.
+// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
+func AreCanonicalMetricsAvailable() bool { // AreCanonicalMetricsAvailable() bool {
+	if istioSupportsCanonical == nil {
+		// First, check Istio version because canonical labels were first introduced in Istio v1.5. Prior
+		// Istio versions won't have canonical labels in metrics regardless of active Telemetry version.
+		istioVersion, err := istioVersion()
+		if err != nil {
+			return false
+		}
+
+		valid := validateVersion(">= 1.5", istioVersion.Version)
+
+		// Result is cached; we now know whether Istio supports canonical labels in Telemetry.
+		log.Infof("IstioSupportsCanonical: %t", valid)
+		istioSupportsCanonical = &valid
 	}
 
-	istioVersion, err := istioVersion()
-	if err != nil {
-		return false
-	}
-	valid := validateVersion(">= 1.5", istioVersion.Version)
-	istioSupportsCanonical = &valid
-	return *istioSupportsCanonical
+	// Canonical metrics are present only if Istio version is 1.5 or later (aka canonical is supported)
+	// AND if mixer is disabled.
+	return *istioSupportsCanonical && IsMixerDisabled()
 }
