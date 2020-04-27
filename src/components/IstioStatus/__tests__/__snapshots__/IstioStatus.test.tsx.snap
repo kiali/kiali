@@ -1,0 +1,193 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`When addon component has a problem the Icon shows is displayed in orange 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "grafana",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-egressgateway",
+            "status": "Healthy",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--warning-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When both core and addon component have problems the Icon shows is displayed in red 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "grafana",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-egressgateway",
+            "status": "Unhealthy",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--danger-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When core component has a problem the Icon shows is displayed in Red 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "grafana",
+            "status": "Healthy",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-egressgateway",
+            "status": "Unhealthy",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--danger-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;

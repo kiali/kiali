@@ -1,9 +1,10 @@
 import * as React from 'react';
 
-import PfSpinner from '../../PfSpinner';
 import { Toolbar as ToolbarNext, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import UserDropdown from './UserDropdown';
 import { default as MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
+import { default as IstioStatus } from '../../IstioStatus/IstioStatus';
+import PfSpinner from '../../PfSpinner';
+import UserDropdown from './UserDropdown';
 import HelpDropdown from './HelpDropdown';
 import MessageCenterTriggerContainer from '../../../components/MessageCenter/MessageCenterTrigger';
 
@@ -15,6 +16,9 @@ class Masthead extends React.Component {
           <PfSpinner />
         </ToolbarGroup>
         <ToolbarGroup>
+          <ToolbarItem>
+            <IstioStatus />
+          </ToolbarItem>
           <ToolbarItem>
             <MeshMTLSStatus />
           </ToolbarItem>

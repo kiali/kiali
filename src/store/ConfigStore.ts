@@ -19,6 +19,7 @@ import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_JAEGER_STATE } from '../reducers/JaegerState';
 import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 import { INITIAL_TOUR_STATE } from '../reducers/TourState';
+import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
 
 declare const window;
 
@@ -81,6 +82,7 @@ const initialStore: KialiAppState = {
   userSettings: INITIAL_USER_SETTINGS_STATE,
   jaegerState: INITIAL_JAEGER_STATE,
   meshTLSStatus: INITIAL_MESH_TLS_STATE,
+  istioStatus: INITIAL_ISTIO_STATUS_STATE,
   tourState: INITIAL_TOUR_STATE
 };
 

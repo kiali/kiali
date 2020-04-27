@@ -12,18 +12,18 @@ import { JaegerInfo, JaegerResponse } from '../types/JaegerInfo';
 import { LoginSession } from '../store/Store';
 import {
   AppHealth,
-  ServiceHealth,
-  WorkloadHealth,
   NamespaceAppHealth,
   NamespaceServiceHealth,
-  NamespaceWorkloadHealth
+  NamespaceWorkloadHealth,
+  ServiceHealth,
+  WorkloadHealth
 } from '../types/Health';
 import { App } from '../types/App';
 import { ServerStatus } from '../types/ServerStatus';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
-import { HTTP_VERBS, UserName, Password, DurationInSeconds } from '../types/Common';
-import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
+import { DurationInSeconds, HTTP_VERBS, Password, UserName } from '../types/Common';
+import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
 import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
@@ -32,7 +32,9 @@ import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
-import { Iter8Info, Iter8Experiment, Iter8ExpDetailsInfo } from '../types/Iter8';
+import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info } from '../types/Iter8';
+import { ComponentStatus } from '../types/IstioStatus';
+
 export const ANONYMOUS_USER = 'anonymous';
 
 export interface Response<T> {
@@ -118,6 +120,10 @@ export const getNamespaceMetrics = (namespace: string, params: IstioMetricsOptio
 
 export const getMeshTls = () => {
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), {}, {});
+};
+
+export const getIstioStatus = () => {
+  return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
 };
 
 export const getNamespaceTls = (namespace: string) => {

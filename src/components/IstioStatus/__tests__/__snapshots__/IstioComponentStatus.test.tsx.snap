@@ -1,0 +1,177 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-isito-ingress"
+>
+  <SplitItem>
+    <ExclamationCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--danger-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    isito-ingress
+  </SplitItem>
+  <SplitItem>
+    Not found
+  </SplitItem>
+</Split>
+`;
+
+exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-isito-ingress"
+>
+  <SplitItem>
+    <ExclamationCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--danger-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    isito-ingress
+  </SplitItem>
+  <SplitItem>
+    Not healty
+  </SplitItem>
+</Split>
+`;
+
+exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-isito-ingress"
+>
+  <SplitItem>
+    <CheckCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "#3e8635",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    isito-ingress
+  </SplitItem>
+  <SplitItem />
+</Split>
+`;
+
+exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-prometheus"
+>
+  <SplitItem>
+    <CheckCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "#3e8635",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    prometheus
+  </SplitItem>
+  <SplitItem />
+</Split>
+`;
+
+exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-prometheus"
+>
+  <SplitItem>
+    <ExclamationTriangleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--warning-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    prometheus
+  </SplitItem>
+  <SplitItem>
+    Not found
+  </SplitItem>
+</Split>
+`;
+
+exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-prometheus"
+>
+  <SplitItem>
+    <ExclamationTriangleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--warning-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    prometheus
+  </SplitItem>
+  <SplitItem>
+    Not healty
+  </SplitItem>
+</Split>
+`;

@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`lists all the components grouped 1`] = `
+<TextContent
+  style={
+    Object {
+      "color": "#fff",
+    }
+  }
+>
+  <Text
+    component="h4"
+  >
+    Istio Components Status
+  </Text>
+  <List
+    aria-label="Istio Component List"
+    id="istio-status"
+  >
+    <IstioComponentStatus
+      componentStatus={
+        Object {
+          "is_core": true,
+          "name": "istiod",
+          "status": "NotFound",
+        }
+      }
+    />
+    <IstioComponentStatus
+      componentStatus={
+        Object {
+          "is_core": true,
+          "name": "istio-egressgateway",
+          "status": "Unhealthy",
+        }
+      }
+    />
+    <IstioComponentStatus
+      componentStatus={
+        Object {
+          "is_core": false,
+          "name": "grafana",
+          "status": "NotFound",
+        }
+      }
+    />
+    <IstioComponentStatus
+      componentStatus={
+        Object {
+          "is_core": false,
+          "name": "prometheus",
+          "status": "Unhealthy",
+        }
+      }
+    />
+  </List>
+</TextContent>
+`;

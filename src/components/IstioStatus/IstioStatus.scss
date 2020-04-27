@@ -1,0 +1,41 @@
+#istio-status {
+  &.pf-c-data-list {
+    color: var(--pf-c-tooltip__content--Color);
+    --pf-c-data-list--BorderTopWidth: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pf-c-data-list__item {
+    --pf-c-data-list--BackgroundColor: var(--pf-c-tooltip__content--BackgroundColor);
+    --pf-c-data-list__item-item--BorderTopWidth: 0;
+  }
+
+  .pf-c-data-list__item-row {
+    --pf-c-data-list__item-row--PaddingRight: 0;
+    --pf-c-data-list__item-row--PaddingLeft: 0;
+  }
+
+  .pf-c-data-list__cell {
+    --pf-c-data-list__cell--PaddingTop: 0;
+    --pf-c-data-list__cell-cell--PaddingTop: 0;
+  }
+
+  .pf-c-data-list__item-content {
+    --pf-c-data-list__item-content--PaddingBottom: 0;
+  }
+
+  &.pf-c-list {
+    --pf-c-content--ul--PaddingLeft: 0;
+    --pf-c-content--ul--MarginTop: 0;
+    --pf-c-content--ul--MarginLeft: 0;
+
+    .pf-l-split {
+      color: var(--pf-c-tooltip__content--Color);
+
+      .pf-l-split__item {
+        text-align: left;
+      }
+    }
+  }
+}

@@ -68,7 +68,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     const { isDropdownOpen } = this.state;
 
     const Toggle = (
-      <DropdownToggle onToggle={this.onDropdownToggle} iconComponent={null}>
+      <DropdownToggle onToggle={this.onDropdownToggle} iconComponent={null} style={{ marginTop: 3 }}>
         <QuestionCircleIcon />
       </DropdownToggle>
     );
