@@ -446,8 +446,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return ns.labels ? (
       <Tooltip
         aria-label={'Labels list'}
-        position={TooltipPosition.auto}
+        position={TooltipPosition.bottom}
         enableFlip={true}
+        distance={5}
         content={
           <ul>
             {Object.entries(ns.labels || []).map(([key, value]) => (
