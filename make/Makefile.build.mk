@@ -103,7 +103,7 @@ dep-update:
 ## swagger-install: Install swagger from github
 swagger-install:
 	@echo "Installing swagger binary to ${GOPATH}/bin..."
-	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.22.0/swagger_linux_amd64 -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
+	@curl https://github.com/go-swagger/go-swagger/releases/download/v0.22.0/swagger_linux_${GOARCH} --create-dirs -Lo ${GOPATH}/bin/swagger && chmod +x ${GOPATH}/bin/swagger
 
 ## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
 swagger-validate:
