@@ -87,11 +87,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(
-        this.props.namespace,
-        this.props.object,
-        this.options.duration || MetricsHelper.defaultMetricsDuration
-      );
+      this.spanOverlay.fetch(this.props.namespace, this.props.object, this.state.timeRange);
     }
   };
 

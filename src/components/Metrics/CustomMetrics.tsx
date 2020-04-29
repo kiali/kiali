@@ -83,11 +83,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(
-        this.props.namespace,
-        this.props.app,
-        this.options.duration || MetricsHelper.defaultMetricsDuration
-      );
+      this.spanOverlay.fetch(this.props.namespace, this.props.app, this.state.timeRange);
     }
   };
 
