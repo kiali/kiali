@@ -226,8 +226,15 @@ EOM
 
     infomsg "Creating control plane namespace: ${CONTROL_PLANE_NAMESPACE}"
     ${OC} create namespace ${CONTROL_PLANE_NAMESPACE}
-    echo "Wait a few seconds for the webhooks to prepare themselves..."
-    sleep 10
+
+    infomsg "Wait for the webhook to be created."
+    while [ "$(${OC} get validatingwebhookconfigurations -o name | grep servicemesh)" == "" ]
+    do
+      echo -n "."
+      sleep 5
+    done
+    echo "done."
+
     infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
     if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
       ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f ${MAISTRA_SMCP_YAML}
@@ -236,6 +243,11 @@ EOM
       rm -f /tmp/maistra-smcp.yaml
       get_downloader
       eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.1/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_full.yaml"
+
+      # The example we just downloaded doesn't specify a version. We could set it explicitly to v1.1
+      # but the webhook will set the value to v1.1 for us automagically.
+      #sed -i 's/istio:/version: v1.1\n  istio:/' /tmp/maistra-smcp.yaml
+
       ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f /tmp/maistra-smcp.yaml
 
       # START CODE THAT IS NECESSARY TO PULL CONTENT FROM PRIVATE MAISTRA QUAY REPO
