@@ -4,7 +4,6 @@
 # aws-openshift.sh
 #
 # Run this script to create/destroy an OpenShift 4 cluster on AWS.
-# This can also optionally install Maistra.
 #
 # This script takes one command whose value is one of the following:
 #       create: starts the OpenShift environment
@@ -13,10 +12,6 @@
 #       routes: outputs all known route URLs
 #     services: outputs all known service endpoints (excluding internal openshift services)
 #       oc-env: used to configure a shell for 'oc'
-#   sm-install: installs service mesh into the cluster
-# sm-uninstall: removes all service mesh components
-#   bi-install: installs bookinfo demo into the cluster
-#  k-uninstall: removes only kiali components
 #
 # This script accepts several options - see --help for details.
 #
@@ -172,18 +167,6 @@ get_status() {
   fi
 }
 
-check_istio_app() {
-  local expected="$1"
-  apps=$(${OC} get deployment.apps -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
-  for app in ${apps[@]}
-  do
-    if [[ "$expected" == "$app" ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
-
 get_registry_names() {
   local ext=$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
   local int=$(${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
@@ -267,95 +250,6 @@ print_all_service_endpoints() {
   done
 }
 
-install_service_mesh() {
-  local create_smcp="$1"
-  infomsg "Installing the Service Mesh operator..."
-  cat <<EOM | ${OC} apply -f -
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: servicemeshoperator
-  namespace: openshift-operators
-spec:
-  channel: '1.0'
-  installPlanApproval: Automatic
-  name: servicemeshoperator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOM
-  if [ "${create_smcp}" == "true" ] ; then
-
-    infomsg "Waiting for the operator CRDs to come online"
-    #### TODO: when 1.0.7 is released, add elasticsearches.logging.openshift.io
-    for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io
-    do
-      echo -n "Waiting for $crd ..."
-      while ! ${OC} get crd $crd > /dev/null 2>&1
-      do
-        sleep 2
-        echo -n '.'
-      done
-      echo "done."
-    done
-
-
-    infomsg "Waiting for operator Deployments to be created..."
-
-    debug "Waiting for service mesh deployment to be created..."
-    local servicemesh_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep istio)
-    while [ "${servicemesh_deployment}" == "" ]
-    do
-      sleep 2
-      servicemesh_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep istio)
-    done
-
-    debug "Waiting for kiali deployment to be created..."
-    local kiali_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep kiali)
-    while [ "${kiali_deployment}" == "" ]
-    do
-      sleep 2
-      kiali_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep kiali)
-    done
-
-    debug "Waiting for jaeger deployment to be created..."
-    local jaeger_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep jaeger)
-    while [ "${jaeger_deployment}" == "" ]
-    do
-      sleep 2
-      jaeger_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep jaeger)
-    done
-
-    infomsg "Waiting for operator Deployments to start..."
-    for op in ${servicemesh_deployment} ${kiali_deployment} ${jaeger_deployment}
-    do
-      echo -n "Waiting for ${op} to be ready..."
-      readyReplicas="0"
-      while [ "$?" != "0" -o "$readyReplicas" == "0" ]
-      do
-        sleep 1
-        echo -n '.'
-        readyReplicas="$(${OC} get ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
-      done
-      echo "done."
-    done
-
-    infomsg "Creating control plane namespace: ${CONTROL_PLANE_NAMESPACE}"
-    ${OC} create namespace ${CONTROL_PLANE_NAMESPACE}
-    infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
-    if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
-      ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f ${MAISTRA_SMCP_YAML}
-    else
-      debug "Using example SMCP/SMMR"
-      rm -f /tmp/maistra-smcp.yaml
-      get_downloader
-      eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.0/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_full.yaml"
-      ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f /tmp/maistra-smcp.yaml
-    fi
-  else
-    infomsg "The operators should be available but the Maistra SMCP CR will not be created."
-  fi
-}
-
 get_worker_node_count() {
   OPENSHIFT_WORKER_NODE_COUNT="$(${OC} get nodes 2>/dev/null | grep worker | wc -l)"
 }
@@ -418,14 +312,8 @@ DEFAULT_AWS_CLUSTER_NAME="${USER}-dev"
 # The AWS region where the cluster will be installed.
 DEFAULT_AWS_REGION="us-east-1"
 
-# Default control plane namespace - where the CRs and the Istio components are installed
-DEFAULT_CONTROL_PLANE_NAMESPACE="istio-system"
-
-# Default namespace where bookinfo is to be installed
-DEFAULT_BOOKINFO_NAMESPACE="bookinfo"
-
-# Temporarily ignore the version check by default since the current installer/client releases do not report correct versions
-IGNORE_VERSION_CHECK="true"
+# If true, will ignore the version check (use this if the installer or client releases do not report correct versions).
+IGNORE_VERSION_CHECK="false"
 
 # process command line args to override environment
 _CMD=""
@@ -459,22 +347,6 @@ while [[ $# -gt 0 ]]; do
       _CMD="oc-env"
       shift
       ;;
-    sm-install)
-      _CMD="sm-install"
-      shift
-      ;;
-    sm-uninstall)
-      _CMD="sm-uninstall"
-      shift
-      ;;
-    bi-install)
-      _CMD="bi-install"
-      shift
-      ;;
-    k-uninstall)
-      _CMD="k-uninstall"
-      shift
-      ;;
 
     # OPTIONS CONFIGURING THE HACK SCRIPT ITSELF AND THE CLUSTER
 
@@ -496,6 +368,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ivc|--ignore-version-check)
       IGNORE_VERSION_CHECK="$2"
+      shift;shift
+      ;;
+    -kuca|--kiali-user-cluster-admin)
+      KIALI_USER_IS_CLUSTER_ADMIN="$2"
       shift;shift
       ;;
     -lp|--local-platform)
@@ -535,33 +411,6 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
 
-    # OPTIONS CONFIGURING THE SERVICE MESH AND ITS COMPONENTS
-
-    -bin|--bookinfo-namespace)
-      BOOKINFO_NAMESPACE="$2"
-      shift;shift
-      ;;
-    -cpn|--control-plane-namespace)
-      CONTROL_PLANE_NAMESPACE="$2"
-      shift;shift
-      ;;
-    -ie|--istio-enabled)
-      ISTIO_ENABLED="$2"
-      shift;shift
-      ;;
-    -kuca|--kiali-user-cluster-admin)
-      KIALI_USER_IS_CLUSTER_ADMIN="$2"
-      shift;shift
-      ;;
-    -nw|--no-wait-for-istio)
-      WAIT_FOR_ISTIO=false
-      shift
-      ;;
-    -smcp|--maistra-smcp-yaml)
-      MAISTRA_SMCP_YAML="$2"
-      shift;shift
-      ;;
-
     # HELP
 
     -h|--help)
@@ -588,6 +437,10 @@ Valid options that configure the hack script itself and the cluster:
       If true, this script will continue even if it detects you have installed a different
       version than the one asked for (--openshift-version).
       Default: false
+  -kuca|--kiali-user-cluster-admin (true|false)
+      Determines if the "kiali" OpenShift user is to be given cluster admin rights.
+      Default: not set - you will be prompted during startup
+      Used only for the 'create' command.
   -lp|--local-platform <platform>
       The platform indicator to determine what binaries to download.
       Default: linux (mac if MacOS is detected)
@@ -614,44 +467,14 @@ Valid options that configure the hack script itself and the cluster:
   -v|--verbose
       Enable logging of debug messages from this script.
 
-Valid options that configure the service mesh components:
-
-  -bin|--bookinfo-namespace
-      The namespace where the bookinfo demo will be installed.
-      Default: ${DEFAULT_BOOKINFO_NAMESPACE}
-      Used only for the 'bi-install' command.
-  -cpn|--control-plane-namespace
-      The namespace where the service mesh components are or will be installed. The operator CRs are installed here also.
-      Default: ${DEFAULT_CONTROL_PLANE_NAMESPACE}
-  -ie|--istio-enabled (true|false)
-      When set to true, Maistra will be installed in OpenShift.
-      Default: true
-      Used only for the 'create' command.
-  -kuca|--kiali-user-cluster-admin (true|false)
-      Determines if the "kiali" OpenShift user is to be given cluster admin rights.
-      Default: not set - you will be prompted during startup
-      Used only for the 'create' command.
-  -nw|--no-wait-for-istio
-      When specified, this script will not wait for Maistra to be up and running before exiting.
-      This will be ignored when --istio-enabled is false.
-      Used only for the 'create' command.
-  -smcp|--maistra-smcp-yaml <file or url>
-      Points to the YAML file that defines the ServiceMeshControlPlane custom resource which declares what to install.
-      If not defined, a basic one will be used.
-      Used only for the 'create' command.
-
 The command must be one of:
 
-  * create: Starts OpenShift and optionally installs Maistra.
+  * create: Starts OpenShift.
   * destroy: Stops OpenShift and removes all persistent data.
   * status: Information about the OpenShift cluster.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
   * oc-env: Used to configure a shell for 'oc'.
-  * sm-install: Installs Service Mesh into the cluster.
-  * sm-uninstall: Removes Service Mesh from the cluster.
-  * bi-install: Installs Bookinfo demo into the cluster.
-  * k-uninstall: Removes Kiali from the cluster.
 
 HELPMSG
       exit 1
@@ -691,12 +514,6 @@ debug "The local operating system platform: ${LOCAL_PLATFORM}"
 # This is where you want the OpenShift binaries to go
 OPENSHIFT_DOWNLOAD_BASEPATH="${OPENSHIFT_DOWNLOAD_BASEPATH:-${HOME}/openshift}"
 
-# If ISTIO_ENABLED=true, then a version of Maistra will be installed for you.
-ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
-
-# By default, wait for Maistra to be up and running before the script ends.
-WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
-
 # Settings for the install-config.yaml configuration settings
 AWS_BASE_DOMAIN="${AWS_BASE_DOMAIN:-${DEFAULT_AWS_BASE_DOMAIN}}"
 AWS_CLUSTER_NAME="${AWS_CLUSTER_NAME:-${DEFAULT_AWS_CLUSTER_NAME}}"
@@ -704,10 +521,6 @@ AWS_REGION="${AWS_REGION:-${DEFAULT_AWS_REGION}}"
 
 # The minimum number of worker nodes the cluster needs to have
 OPENSHIFT_REQUIRED_WORKER_NODES=${OPENSHIFT_REQUIRED_WORKER_NODES:-${DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES}}
-
-# Namespaces for the components
-CONTROL_PLANE_NAMESPACE="${CONTROL_PLANE_NAMESPACE:-${DEFAULT_CONTROL_PLANE_NAMESPACE}}"
-BOOKINFO_NAMESPACE="${BOOKINFO_NAMESPACE:-${DEFAULT_BOOKINFO_NAMESPACE}}"
 
 #--------------------------------------------------------------
 # Variables below have values derived from the variables above.
@@ -753,11 +566,7 @@ debug "ENVIRONMENT:
   AWS_KUBECONFIG=$AWS_KUBECONFIG
   AWS_PROFILE=$AWS_PROFILE
   AWS_REGION=$AWS_REGION
-  BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
-  CONTROL_PLANE_NAMESPACE=$CONTROL_PLANE_NAMESPACE
-  ISTIO_ENABLED=$ISTIO_ENABLED
   LOCAL_PLATFORM=$LOCAL_PLATFORM
-  MAISTRA_SMCP_YAML=$MAISTRA_SMCP_YAML
   OC=$OC
   OPENSHIFT_CLIENT_DOWNLOAD_LOCATION=$OPENSHIFT_CLIENT_DOWNLOAD_LOCATION
   OPENSHIFT_DOWNLOAD_BASEPATH=$OPENSHIFT_DOWNLOAD_BASEPATH
@@ -964,10 +773,8 @@ EOM
   if [ "${KIALI_USER_IS_CLUSTER_ADMIN}" == "true" ]; then
     infomsg "Will assign the cluster-admin role to the kiali user."
     ${OC} adm policy add-cluster-role-to-user cluster-admin kiali
-    _CREATE_SMCP_RESOURCE="true"
   else
     infomsg "Kiali user will not be assigned the cluster-admin role."
-    _CREATE_SMCP_RESOURCE="true" # still try to install Maistra  it should work with system:admin logged in
   fi
 
   # Make sure the image registry is exposed via the default route
@@ -978,58 +785,8 @@ EOM
     debug "The image registry operator has exposed the internal image registry"
   fi
 
-  # Ask for enough nodes that will be required for Maistra/Service Mesh/Kiali to run
+  # Ask for the nodes we want
   scale_worker_nodes ${OPENSHIFT_REQUIRED_WORKER_NODES}
-
-  # Install Maistra
-  ${OC} get -n ${CONTROL_PLANE_NAMESPACE} ServiceMeshControlPlane > /dev/null 2>&1
-  if [ "$?" != "0" ]; then
-    if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      install_service_mesh "${_CREATE_SMCP_RESOURCE}"
-    else
-      infomsg "You asked that Maistra not be enabled - neither the operators nor a SMCP CR will be created."
-    fi
-  else
-    if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      infomsg "It appears Maistra has already been installed - will not attempt to do so again."
-    else
-      infomsg "You asked that Maistra not be enabled, but it appears to have already been installed. You might want to uninstall it."
-    fi
-  fi
-
-  # If Maistra is enabled, it should be installing now - if we need to, wait for it to finish
-  if [ "${ISTIO_ENABLED}" == "true" ] ; then
-    if [ "${WAIT_FOR_ISTIO}" == "true" ]; then
-      infomsg "Wait for Maistra to fully start (this is going to take a while)..."
-
-      infomsg "Waiting for Maistra Deployments to be created."
-      _EXPECTED_APPS=(istio-citadel prometheus istio-galley istio-policy istio-telemetry istio-pilot istio-egressgateway istio-ingressgateway istio-sidecar-injector)
-      for expected in ${_EXPECTED_APPS[@]}
-      do
-        echo -n "Waiting for $expected ..."
-        while ! check_istio_app $expected
-        do
-             sleep 5
-             echo -n '.'
-        done
-        echo "done."
-      done
-
-      infomsg "Waiting for Maistra Deployments to start..."
-      for app in $(${OC} get deployment.apps -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
-      do
-         echo -n "Waiting for ${app} to be ready..."
-         readyReplicas="0"
-         while [ "$?" != "0" -o "$readyReplicas" == "0" ]
-         do
-            sleep 1
-            echo -n '.'
-            readyReplicas="$(${OC} get deployment.app/${app} -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
-         done
-         echo "done."
-      done
-    fi
-  fi
 
   # show the status message
   get_status
@@ -1057,117 +814,6 @@ elif [ "$_CMD" = "oc-env" ]; then
   echo "export PATH=\"${OPENSHIFT_DOWNLOAD_PATH}:\$PATH\""
   echo "# Run this command to configure your shell:"
   echo "# eval \$($0 oc-env)"
-
-elif [ "$_CMD" = "sm-install" ]; then
-
-  install_service_mesh "true"
-
-elif [ "$_CMD" = "sm-uninstall" ]; then
-
-  # remove the SMCP and SMMR CRs which uninstalls all the Service Mesh components
-  debug "Deleting the ServiceMesh SMCP and SMMR CRs"
-  ${OC} delete -n ${CONTROL_PLANE_NAMESPACE} $(${OC} get smcp -n ${CONTROL_PLANE_NAMESPACE} -o name)
-  ${OC} delete -n ${CONTROL_PLANE_NAMESPACE} $(${OC} get smmr -n ${CONTROL_PLANE_NAMESPACE} -o name)
-
-  # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
-  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
-  if [ "${_kialicr}" != "" ]; then
-    debug "Deleting the Kiali CR"
-    ${OC} patch ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge
-    ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
-  fi
-
-  debug "Cleaning up the rest of ServiceMesh"
-
-  # clean up the control plane namespace
-  ${OC} delete namespace ${CONTROL_PLANE_NAMESPACE}
-
-  # clean up OLM Subscriptions
-  for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep -E 'servicemesh|kiali|jaeger|elasticsearch')
-  do
-    ${OC} delete -n openshift-operators ${sub}
-  done
-
-  # clean up OLM CSVs for all the different operators which deletes the operators and their related resources
-  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep -E 'servicemesh|kiali|jaeger|elasticsearch')
-  do
-    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
-  done
-
-  # Delete Istio-CNI resources that are getting left behind for some reason
-  for r in \
-    $(${OC} get clusterrolebindings -o name | grep -E 'istio') \
-    $(${OC} get clusterroles -o name | grep -E 'istio')
-  do
-    ${OC} delete ${r}
-  done
-  for r in \
-    $(${OC} get sa -n openshift-operators -o name | grep -E 'istio') \
-    $(${OC} get configmaps -n openshift-operators -o name | grep -E 'istio') \
-    $(${OC} get secrets -n openshift-operators -o name | grep -E 'istio')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-
-  # clean up additional leftover items
-  # see: https://docs.openshift.com/container-platform/4.1/service_mesh/service_mesh_install/removing-ossm.html#ossm-remove-cleanup_removing-ossm
-  ${OC} delete validatingwebhookconfiguration/openshift-operators.servicemesh-resources.maistra.io
-  ${OC} delete -n openshift-operators daemonset/istio-node
-  ${OC} delete clusterrole/istio-admin
-  ${OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${OC} delete
-  ${OC} get crds -o name | grep '.*\.maistra\.io' | xargs -r -n 1 ${OC} delete
-  ${OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${OC} delete
-  ${OC} get crds -o name | grep '.*\.jaegertracing\.io' | xargs -r -n 1 ${OC} delete
-  ${OC} get crds -o name | grep '.*\.logging\.openshift\.io' | xargs -r -n 1 ${OC} delete
-
-elif [ "$_CMD" = "bi-install" ]; then
-
-  infomsg "Installing Bookinfo into namespace [${BOOKINFO_NAMESPACE}]"
-
-  # see: https://maistra.io/docs/examples/bookinfo/
-  ${OC} new-project ${BOOKINFO_NAMESPACE}
-  ${OC} patch -n ${CONTROL_PLANE_NAMESPACE} --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
-  ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
-  ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
-
-  BOOKINFO_PRODUCTPAGE_URL="http://$(${OC} get route istio-ingressgateway -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{.spec.host}')/productpage"
-  infomsg "Bookinfo URL: ${BOOKINFO_PRODUCTPAGE_URL}"
-
-  infomsg "Installing Bookinfo Traffic Generator..."
-  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION="0s" RATE="1" ROUTE="${BOOKINFO_PRODUCTPAGE_URL}" envsubst | ${OC} apply -n ${BOOKINFO_NAMESPACE} -f -
-  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | ${OC} apply -n ${BOOKINFO_NAMESPACE} -f -
-
-elif [ "$_CMD" = "k-uninstall" ]; then
-
-  # Tell ServiceMesh to disable Kiali so it doesn't try to manage it
-  _smcp=$(${OC} get smcp -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
-  if [ "${_smcp}" != "" ]; then
-    debug "Telling ServiceMesh to disable Kiali"
-    ${OC} patch ${_smcp} -n ${CONTROL_PLANE_NAMESPACE} -p '{"spec":{"istio":{"kiali":{"enabled": "false"}}}}' --type=merge
-  fi
-
-  # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
-  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
-  if [ "${_kialicr}" != "" ]; then
-    debug "Deleting the Kiali CR"
-    ${OC} patch ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge
-    ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
-  fi
-
-  # clean up OLM subscriptions
-  for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep kiali)
-  do
-    ${OC} delete -n openshift-operators ${sub}
-  done
-
-  # clean up OLM CSVs which deletes the operator and its related resources
-  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali)
-  do
-    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
-  done
-
-  # clean up additional leftover items
-  ${OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${OC} delete
 
 else
   infomsg "ERROR: Missing command. See --help for usage."
