@@ -312,7 +312,7 @@ DEFAULT_AWS_CLUSTER_NAME="${USER}-dev"
 # The AWS region where the cluster will be installed.
 DEFAULT_AWS_REGION="us-east-1"
 
-# Temporarily ignore the version check by default since the current installer/client releases do not report correct versions
+# If true, will ignore the version check (use this if the installer or client releases do not report correct versions).
 IGNORE_VERSION_CHECK="false"
 
 # process command line args to override environment
