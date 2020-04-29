@@ -118,8 +118,44 @@ EOM2
 
   local create_smcp="$1"
   OPERATOR_SOURCE_NAME=${OPERATOR_SOURCE_NAME:-redhat-operators}
-  infomsg "Installing the Service Mesh operator..."
+  infomsg "Installing the Service Mesh operators..."
   cat <<EOM | ${OC} apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: elasticsearch-operator
+  namespace: openshift-operators
+spec:
+  channel: "4.3"
+  installPlanApproval: Automatic
+  name: elasticsearch-operator
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: jaeger-product
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: jaeger-product
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -461,7 +497,7 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
     ${OC} delete -n openshift-operators ${r}
   done
 
-  # clean up additional leftover items
+  # clean up additional leftover items (TODO: is this still needed for SM 1.1?)
   # see: https://docs.openshift.com/container-platform/4.1/service_mesh/service_mesh_install/removing-ossm.html#ossm-remove-cleanup_removing-ossm
   ${OC} delete validatingwebhookconfiguration/openshift-operators.servicemesh-resources.maistra.io
   ${OC} delete -n openshift-operators daemonset/istio-node
@@ -506,6 +542,14 @@ elif [ "$_CMD" = "k-uninstall" ]; then
     ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
   fi
 
+  debug "Waiting for Kiali CR to disappear..."
+  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
+  while [ "${kiali_deployment}" != "" ]
+  do
+    sleep 2
+    _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
+  done
+
   # clean up OLM subscriptions
   for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep kiali)
   do
@@ -513,7 +557,7 @@ elif [ "$_CMD" = "k-uninstall" ]; then
   done
 
   # clean up OLM CSVs which deletes the operator and its related resources
-  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali)
+  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali-operator)
   do
     ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
