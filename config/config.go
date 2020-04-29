@@ -162,7 +162,7 @@ type Iter8Config struct {
 // New add-on/extension configuration should create a specif config and be located under this
 type Extensions struct {
 	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
-	Iter8      Iter8Config      `yaml:"iter8,omitempty"`
+	Iter8      Iter8Config      `yaml:"iter_8,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
