@@ -20,6 +20,12 @@ import { TextOrLink } from 'components/TextOrLink';
 import { renderRuntimeLogo, renderAPILogo } from 'components/Logo/Logos';
 import GraphDataSource from '../../../services/GraphDataSource';
 import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
+import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
+import { style } from 'typestyle';
+
+const titleStyle = style({
+  margin: '15px 0 11px 0'
+});
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -44,9 +50,21 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
             <CardBody>
               <Title headingLevel="h3" size="2xl">
                 {' '}
-                Workload Overview{' '}
+                Workload Properties{' '}
               </Title>
               <Stack gutter="md" style={{ marginTop: '10px' }}>
+                <StackItem id="name">
+                  <Title headingLevel="h6" size="md">
+                    {' '}
+                    Name{' '}
+                  </Title>
+                  {workload.name}
+                  {!this.props.istioEnabled && (
+                    <span style={{ marginLeft: '10px' }}>
+                      <MissingSidecar namespace={this.props.namespace} />
+                    </span>
+                  )}
+                </StackItem>
                 <StackItem id="labels">
                   <Title headingLevel="h6" size="md">
                     {' '}
@@ -115,8 +133,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
               </Title>
               <Stack gutter="md" style={{ marginTop: '10px' }}>
                 <StackItem id="health" className={'stack_service_details'}>
-                  <Title headingLevel="h6" size="md">
-                    {' '}
+                  <Title headingLevel="h3" size="lg" className={titleStyle}>
                     Overall Health
                   </Title>
                   <HealthIndicator

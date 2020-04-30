@@ -2,20 +2,9 @@
 
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
-  <RenderHeader>
-    <Component
-      style={
-        Object {
-          "padding": "10px 0 0 10px",
-        }
-      }
-    >
-      <BreadcrumbItem
-        isActive={true}
-      >
-        Namespaces
-      </BreadcrumbItem>
-    </Component>
+  <div
+    className="f10utphz"
+  >
     <Connect(OverviewToolbar)
       displayMode={1}
       onError={[Function]}
@@ -23,7 +12,7 @@ exports[`Overview page renders initial layout 1`] = `
       setDisplayMode={[Function]}
       sort={[Function]}
     />
-  </RenderHeader>
+  </div>
   <div
     style={
       Object {

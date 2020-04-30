@@ -10,7 +10,6 @@ import {
   CardBody,
   CardHeader,
   DataList,
-  DataListCell,
   DataListItem,
   DataListItemCells,
   DataListItemRow,
@@ -21,13 +20,25 @@ import {
   PopoverPosition,
   Stack,
   StackItem,
-  Text,
-  TextVariants,
   Title
 } from '@patternfly/react-core';
 import GraphDataSource from '../../../services/GraphDataSource';
 import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
 import './AppDescription.css';
+import { style } from 'typestyle';
+
+const iconStyle = style({
+  margin: '0 16px 0 0',
+  padding: '24px 0 0 0'
+});
+
+const resourceListStyle = style({
+  margin: '0px 0 11px 0'
+});
+
+const titleStyle = style({
+  margin: '15px 0 11px 0'
+});
 
 type AppDescriptionProps = {
   app: App;
@@ -73,7 +84,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
 
   renderEmptyItem(type: string) {
     const message = 'No ' + type + ' found for this app.';
-    return <DataListCell> {message} </DataListCell>;
+    return <div> {message} </div>;
   }
 
   workloadList() {
@@ -83,13 +94,15 @@ class AppDescription extends React.Component<AppDescriptionProps> {
       workloads.length > 0 ? workloads.map(wkd => this.renderWorkloadItem(ns, wkd)) : this.renderEmptyItem('workloads');
 
     return [
-      <DataListCell key="workload-icon" isIcon={true}>
+      <div key="workload-icon" className={iconStyle}>
         <Badge>W</Badge>
-      </DataListCell>,
-      <DataListCell key="workload-list" className="resourceList">
-        <Text component={TextVariants.h3}>Workloads</Text>
+      </div>,
+      <div key="workload-list" className={resourceListStyle}>
+        <Title headingLevel="h3" size="lg" className={titleStyle}>
+          Workloads
+        </Title>
         <List>{workloadList}</List>
-      </DataListCell>
+      </div>
     ];
   }
 
@@ -102,13 +115,15 @@ class AppDescription extends React.Component<AppDescriptionProps> {
         : this.renderEmptyItem('services');
 
     return [
-      <DataListCell key="service-icon" isIcon={true}>
+      <div key="service-icon" className={iconStyle}>
         <Badge>S</Badge>
-      </DataListCell>,
-      <DataListCell key="service-list" className="resourceList">
-        <Text component={TextVariants.h3}>Services</Text>
+      </div>,
+      <div key="service-list" className={resourceListStyle}>
+        <Title headingLevel="h3" size="lg" className={titleStyle}>
+          Services
+        </Title>
         <List>{serviceList}</List>
-      </DataListCell>
+      </div>
     ];
   }
 
@@ -121,7 +136,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
             <CardHeader>
               <Title headingLevel="h3" size="2xl">
                 {' '}
-                Application Overview
+                Application Structure
               </Title>
             </CardHeader>
             <CardBody className="noPadding">
@@ -154,7 +169,9 @@ class AppDescription extends React.Component<AppDescriptionProps> {
             <CardBody>
               <Stack>
                 <StackItem id="health" className={'stack_service_details'}>
-                  <Text component={TextVariants.h3}> Overall Health</Text>
+                  <Title headingLevel="h3" size="lg" className={titleStyle}>
+                    Overall Health
+                  </Title>
                   <HealthIndicator
                     id={app.name}
                     health={this.props.health}

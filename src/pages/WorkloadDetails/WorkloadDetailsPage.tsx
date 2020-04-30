@@ -11,7 +11,6 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import PfTitle from '../../components/Pf/PfTitle';
 import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
@@ -319,7 +318,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         return undefined;
     }
     return (
-      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+      <span style={{ position: 'absolute', right: '18px', zIndex: 1 }}>
         {component}
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
         &nbsp;
@@ -336,7 +335,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     return (
       <>
         <RenderHeader location={this.props.location}>
-          <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
+          {
+            // This magic space will align details header width with Graph, List pages
+          }
+          <div style={{ paddingBottom: 14 }} />
           {this.renderActions()}
         </RenderHeader>
         <ParameterizedTabs

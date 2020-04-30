@@ -28,7 +28,7 @@ export default class DefaultSecondaryMasthead extends React.Component {
         title = 'Create New Iter8 Experiment';
       }
       return (
-        <Title headingLevel="h1" size="4xl" style={{ margin: '20px 0 20px' }}>
+        <Title headingLevel="h1" size="3xl" style={{ margin: '18px 0 18px' }}>
           {title}
         </Title>
       );

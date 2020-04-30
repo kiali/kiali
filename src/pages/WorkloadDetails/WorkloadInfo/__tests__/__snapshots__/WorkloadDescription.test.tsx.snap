@@ -20,7 +20,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
           size="2xl"
         >
            
-          Workload Overview
+          Workload Properties
            
         </Title>
         <Stack
@@ -31,6 +31,34 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             }
           }
         >
+          <StackItem
+            id="name"
+          >
+            <Title
+              headingLevel="h6"
+              size="md"
+            >
+               
+              Name
+               
+            </Title>
+            <span
+              style={
+                Object {
+                  "marginLeft": "10px",
+                }
+              }
+            >
+              <MissingSidecar
+                color="red"
+                icon={[Function]}
+                namespace="my-namespace"
+                text="Missing Sidecar"
+                textTooltip="Missing Sidecar"
+                tooltip={false}
+              />
+            </span>
+          </StackItem>
           <StackItem
             id="labels"
           >
@@ -189,10 +217,10 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             id="health"
           >
             <Title
-              headingLevel="h6"
-              size="md"
+              className="f112ji85"
+              headingLevel="h3"
+              size="lg"
             >
-               
               Overall Health
             </Title>
             <HealthIndicator

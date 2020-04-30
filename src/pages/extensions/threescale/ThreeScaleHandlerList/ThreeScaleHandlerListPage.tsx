@@ -2,6 +2,8 @@ import * as React from 'react';
 import { RenderContent } from '../../../../components/Nav/Page';
 import {
   Badge,
+  Breadcrumb,
+  BreadcrumbItem,
   Dropdown,
   DropdownItem,
   DropdownPosition,
@@ -22,16 +24,29 @@ import { ThreeScaleHandler, ThreeScaleInfo } from '../../../../types/ThreeScale'
 import { Link } from 'react-router-dom';
 import history from '../../../../app/History';
 
-// Style constants
+// Extensions header style
+// Extensions may not reuse other components in App/Workload/Services pages due exceptions
+// i.e. no namespaces controllers, then some styles need to be adjusted manually
+const extensionHeader = style({
+  padding: '0px 20px 18px 20px',
+  backgroundColor: PfColors.White
+});
+const breadcrumbPadding = style({
+  padding: '22px 0 5px 0'
+});
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
-const containerWhite = style({ backgroundColor: PfColors.White });
 const rightToolbar = style({ marginLeft: 'auto' });
 
 // Page title on 3scale extension doesn't have a namespace
 // 3scale entities are always located under the control plane namespace, but that's implicit in the domain
 const pageTitle = (
-  <div className={`${containerPadding} ${containerWhite}`}>
-    <Title headingLevel="h1" size="4xl" style={{ margin: '20px 0 0' }}>
+  <div className={extensionHeader}>
+    <Breadcrumb className={breadcrumbPadding}>
+      <BreadcrumbItem isActive={true}>
+        <Link to={'/extensions/threescale'}>3scale Handlers</Link>
+      </BreadcrumbItem>
+    </Breadcrumb>
+    <Title headingLevel="h1" size="3xl" style={{ margin: '20px 0 0' }}>
       3scale Handlers
     </Title>
   </div>

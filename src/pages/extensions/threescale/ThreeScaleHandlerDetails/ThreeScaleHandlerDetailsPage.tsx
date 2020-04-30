@@ -16,6 +16,7 @@ import {
   Text,
   TextInput,
   TextVariants,
+  Title,
   Toolbar,
   ToolbarSection
 } from '@patternfly/react-core';
@@ -47,11 +48,26 @@ interface State {
   deleteModalOpen: boolean;
 }
 
-// Style constants
+// Extensions header style
+// Extensions may not reuse other components in App/Workload/Services pages due exceptions
+// i.e. no namespaces controllers, then some styles need to be adjusted manually
+const extensionHeader = style({
+  padding: '0px 20px 18px 20px',
+  backgroundColor: PfColors.White
+});
+const breadcrumbPadding = style({
+  padding: '22px 0 5px 0'
+});
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
-const containerWhite = style({ backgroundColor: PfColors.White });
-const paddingLeft = style({ paddingLeft: '20px' });
-const rightToolbar = style({ marginLeft: 'auto' });
+// Toolbar in 3scale details page is added manually.
+// This style sync with other action dropdown locations to maintain same aspect/location
+const rightToolbarStyle = style({
+  position: 'absolute',
+  right: '20px',
+  zIndex: 1,
+  marginTop: '-30px',
+  backgroundColor: PfColors.White
+});
 
 // Kubernetes ID validation helper, used to allow mark a warning in the form edition
 const k8sRegExpName = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
@@ -196,36 +212,21 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
   // It renders actions only if user has permissions
   toolbar = () => {
     return (
-      <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
-        <ToolbarSection aria-label="ToolbarSection">
-          <Toolbar className={rightToolbar}>
-            <RefreshButtonContainer
-              key={'Refresh'}
-              handleRefresh={() => this.fetchHandler(this.props.match.params.handlerName)}
-            />
-            {this.canDelete() && this.actionsToolbar()}
-          </Toolbar>
-        </ToolbarSection>
-      </Toolbar>
+      <span className={rightToolbarStyle}>
+        <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
+          <ToolbarSection aria-label="ToolbarSection">
+            <Toolbar>
+              <RefreshButtonContainer
+                key={'Refresh'}
+                handleRefresh={() => this.fetchHandler(this.props.match.params.handlerName)}
+              />
+              {this.canDelete() && this.actionsToolbar()}
+            </Toolbar>
+          </ToolbarSection>
+        </Toolbar>
+      </span>
     );
   };
-
-  // Page title on 3scale extension doesn't have a namespace
-  // 3scale entities are always located under the control plane namespace, but that's implicit in the domain
-  pageTitle = (title: string) => (
-    <>
-      <div className={`breadcrumb ${containerWhite} ${paddingLeft}`}>
-        <Breadcrumb>
-          <BreadcrumbItem>
-            <Link to={'/extensions/threescale'}>3scale Handlers</Link>
-          </BreadcrumbItem>
-          <BreadcrumbItem isActive={true}>{title}</BreadcrumbItem>
-        </Breadcrumb>
-        <Text component={TextVariants.h1}>{title}</Text>
-        {!this.state.isNew && this.toolbar()}
-      </div>
-    </>
-  );
 
   // Invoke the history object to update and URL and start a routing
   goHandlersPage = () => {
@@ -290,12 +291,36 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
   };
 
   render() {
-    const title = this.props.match.params.handlerName
-      ? this.props.match.params.handlerName
-      : 'Create New 3scale Handler';
+    const title = this.props.match.params.handlerName;
     return (
       <>
-        {this.pageTitle(title)}
+        <div className={extensionHeader}>
+          <Breadcrumb className={breadcrumbPadding}>
+            <BreadcrumbItem isActive={title ? false : true}>
+              <Link to={'/extensions/threescale'}>3scale Handlers</Link>
+            </BreadcrumbItem>
+            {title ? (
+              <BreadcrumbItem isActive={true}>
+                <Link to={'/extensions/threescale/' + title}>{title}</Link>
+              </BreadcrumbItem>
+            ) : (
+              ''
+            )}
+          </Breadcrumb>
+          {
+            // Title will be only show in the Create 3scale Handler scenario
+            // We have removed title on existing details items as it's showed in the breadcrumb
+            // Is used a space to sync the height with other pages
+          }
+          {!title ? (
+            <Title headingLevel="h1" size="3xl" style={{ margin: '20px 0 0' }}>
+              Create 3scale Handler
+            </Title>
+          ) : (
+            <div style={{ paddingBottom: 56 }} />
+          )}
+          {!this.state.isNew && this.toolbar()}
+        </div>
         <RenderContent>
           <div className={containerPadding}>
             <Form isHorizontal={true}>

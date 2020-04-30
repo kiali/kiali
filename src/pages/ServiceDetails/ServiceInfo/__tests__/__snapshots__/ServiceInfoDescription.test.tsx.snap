@@ -20,80 +20,356 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           size="2xl"
         >
            
-          Service Overview
+          Service Info
            
         </Title>
-        <Stack
-          gutter="md"
+        <Component
+          activeKey={0}
+          isFilled={true}
+          onSelect={[Function]}
           style={
             Object {
-              "marginTop": "10px",
+              "marginTop": "20px",
             }
           }
         >
-          <StackItem
-            id="labels"
+          <Tab
+            eventKey={0}
+            title="Properties"
           >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-               
-              Labels
-               
-            </Title>
-            <Labels
-              labels={
+            <Stack
+              gutter="md"
+              style={
                 Object {
-                  "app": "reviews",
+                  "marginTop": "20px",
                 }
               }
-            />
-          </StackItem>
-          <StackItem
-            id="resource_version"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
             >
-               
-              Resource Version
-               
-            </Title>
-            1234
-          </StackItem>
-          <StackItem
-            id="selectors"
+              <StackItem
+                id="name"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Name
+                   
+                </Title>
+                reviews
+                <span
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                    }
+                  }
+                >
+                  <MissingSidecar
+                    color="red"
+                    icon={[Function]}
+                    namespace="my-namespace"
+                    text="Missing Sidecar"
+                    textTooltip="Missing Sidecar"
+                    tooltip={false}
+                  />
+                </span>
+              </StackItem>
+              <StackItem
+                id="labels"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Labels
+                   
+                </Title>
+                <Labels
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
+                />
+              </StackItem>
+              <StackItem
+                id="resource_version"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Resource Version
+                   
+                </Title>
+                1234
+              </StackItem>
+              <StackItem
+                id="selectors"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Selectors
+                   
+                </Title>
+                <Labels
+                  labels={Object {}}
+                />
+              </StackItem>
+              <StackItem
+                id="created_at"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Created at
+                   
+                </Title>
+                <LocalTime
+                  time="2018-04-04T15:11:46Z"
+                />
+              </StackItem>
+            </Stack>
+          </Tab>
+          <Tab
+            eventKey={1}
+            title="Network"
           >
-            <Title
-              headingLevel="h6"
-              size="md"
+            <Stack
+              gutter="md"
+              style={
+                Object {
+                  "marginTop": "20px",
+                }
+              }
             >
-               
-              Selectors
-               
-            </Title>
-            <Labels
-              labels={Object {}}
-            />
-          </StackItem>
-          <StackItem
-            id="created_at"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-               
-              Created at
-               
-            </Title>
-            <LocalTime
-              time="2018-04-04T15:11:46Z"
-            />
-          </StackItem>
-        </Stack>
+              <StackItem
+                id="ip"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Service IP
+                   
+                </Title>
+                172.30.78.33
+              </StackItem>
+              <StackItem
+                id="endpoints"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Endpoints
+                   
+                </Title>
+                <Stack
+                  gutter="md"
+                >
+                  <StackItem
+                    key="endpoint_0_address_0"
+                  >
+                    <Tooltip
+                      appendTo={[Function]}
+                      aria="describedby"
+                      boundary="window"
+                      className=""
+                      content={
+                        <React.Fragment>
+                          reviews-v2-4140793682-qrpm9
+                        </React.Fragment>
+                      }
+                      distance={15}
+                      enableFlip={true}
+                      entryDelay={500}
+                      exitDelay={500}
+                      flipBehavior={
+                        Array [
+                          "top",
+                          "right",
+                          "bottom",
+                          "left",
+                          "top",
+                          "right",
+                          "bottom",
+                        ]
+                      }
+                      id=""
+                      isAppLauncher={false}
+                      isContentLeftAligned={false}
+                      isVisible={false}
+                      maxWidth="18.75rem"
+                      position="top"
+                      tippyProps={Object {}}
+                      trigger="mouseenter focus"
+                      zIndex={9999}
+                    >
+                      <span>
+                        <EyeIcon
+                          color="currentColor"
+                          noVerticalAlign={false}
+                          size="sm"
+                          title={null}
+                        />
+                         
+                        172.17.0.11
+                      </span>
+                    </Tooltip>
+                  </StackItem>
+                  <StackItem
+                    key="endpoint_0_address_1"
+                  >
+                    <Tooltip
+                      appendTo={[Function]}
+                      aria="describedby"
+                      boundary="window"
+                      className=""
+                      content={
+                        <React.Fragment>
+                          reviews-v3-3651831602-zn9g6
+                        </React.Fragment>
+                      }
+                      distance={15}
+                      enableFlip={true}
+                      entryDelay={500}
+                      exitDelay={500}
+                      flipBehavior={
+                        Array [
+                          "top",
+                          "right",
+                          "bottom",
+                          "left",
+                          "top",
+                          "right",
+                          "bottom",
+                        ]
+                      }
+                      id=""
+                      isAppLauncher={false}
+                      isContentLeftAligned={false}
+                      isVisible={false}
+                      maxWidth="18.75rem"
+                      position="top"
+                      tippyProps={Object {}}
+                      trigger="mouseenter focus"
+                      zIndex={9999}
+                    >
+                      <span>
+                        <EyeIcon
+                          color="currentColor"
+                          noVerticalAlign={false}
+                          size="sm"
+                          title={null}
+                        />
+                         
+                        172.17.0.14
+                      </span>
+                    </Tooltip>
+                  </StackItem>
+                  <StackItem
+                    key="endpoint_0_address_2"
+                  >
+                    <Tooltip
+                      appendTo={[Function]}
+                      aria="describedby"
+                      boundary="window"
+                      className=""
+                      content={
+                        <React.Fragment>
+                          reviews-v1-401049526-tfstp
+                        </React.Fragment>
+                      }
+                      distance={15}
+                      enableFlip={true}
+                      entryDelay={500}
+                      exitDelay={500}
+                      flipBehavior={
+                        Array [
+                          "top",
+                          "right",
+                          "bottom",
+                          "left",
+                          "top",
+                          "right",
+                          "bottom",
+                        ]
+                      }
+                      id=""
+                      isAppLauncher={false}
+                      isContentLeftAligned={false}
+                      isVisible={false}
+                      maxWidth="18.75rem"
+                      position="top"
+                      tippyProps={Object {}}
+                      trigger="mouseenter focus"
+                      zIndex={9999}
+                    >
+                      <span>
+                        <EyeIcon
+                          color="currentColor"
+                          noVerticalAlign={false}
+                          size="sm"
+                          title={null}
+                        />
+                         
+                        172.17.0.16
+                      </span>
+                    </Tooltip>
+                  </StackItem>
+                </Stack>
+              </StackItem>
+              <StackItem
+                id="ports"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                  <ValidationObjectSummary
+                    id="reviews-config-validation"
+                    validations={Array []}
+                  />
+                  <span
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                      }
+                    }
+                  >
+                    Ports
+                  </span>
+                </Title>
+                <ul
+                  className="fza38k8"
+                />
+              </StackItem>
+              <StackItem
+                id="type"
+              >
+                <Title
+                  headingLevel="h6"
+                  size="md"
+                >
+                   
+                  Type
+                   
+                </Title>
+                ClusterIP
+              </StackItem>
+            </Stack>
+          </Tab>
+        </Component>
       </CardBody>
     </Card>
   </GridItem>
@@ -165,250 +441,16 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             id="health"
           >
             <Title
-              headingLevel="h6"
-              size="md"
+              className="f112ji85"
+              headingLevel="h3"
+              size="lg"
             >
               Overall Health
-               
             </Title>
             <HealthIndicator
               id="reviews"
               mode={0}
             />
-          </StackItem>
-        </Stack>
-        <Title
-          headingLevel="h3"
-          size="2xl"
-          style={
-            Object {
-              "marginTop": "60px",
-            }
-          }
-        >
-           
-          Network Overview
-           
-        </Title>
-        <Stack
-          gutter="md"
-        >
-          <StackItem
-            id="ip"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-               
-              Service IP
-               
-            </Title>
-            172.30.78.33
-          </StackItem>
-          <StackItem
-            id="endpoints"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-               
-              Endpoints
-               
-            </Title>
-            <Stack
-              gutter="md"
-            >
-              <StackItem
-                key="endpoint_0_address_0"
-              >
-                <Tooltip
-                  appendTo={[Function]}
-                  aria="describedby"
-                  boundary="window"
-                  className=""
-                  content={
-                    <React.Fragment>
-                      reviews-v2-4140793682-qrpm9
-                    </React.Fragment>
-                  }
-                  distance={15}
-                  enableFlip={true}
-                  entryDelay={500}
-                  exitDelay={500}
-                  flipBehavior={
-                    Array [
-                      "top",
-                      "right",
-                      "bottom",
-                      "left",
-                      "top",
-                      "right",
-                      "bottom",
-                    ]
-                  }
-                  id=""
-                  isAppLauncher={false}
-                  isContentLeftAligned={false}
-                  isVisible={false}
-                  maxWidth="18.75rem"
-                  position="top"
-                  tippyProps={Object {}}
-                  trigger="mouseenter focus"
-                  zIndex={9999}
-                >
-                  <span>
-                    <EyeIcon
-                      color="currentColor"
-                      noVerticalAlign={false}
-                      size="sm"
-                      title={null}
-                    />
-                     
-                    172.17.0.11
-                  </span>
-                </Tooltip>
-              </StackItem>
-              <StackItem
-                key="endpoint_0_address_1"
-              >
-                <Tooltip
-                  appendTo={[Function]}
-                  aria="describedby"
-                  boundary="window"
-                  className=""
-                  content={
-                    <React.Fragment>
-                      reviews-v3-3651831602-zn9g6
-                    </React.Fragment>
-                  }
-                  distance={15}
-                  enableFlip={true}
-                  entryDelay={500}
-                  exitDelay={500}
-                  flipBehavior={
-                    Array [
-                      "top",
-                      "right",
-                      "bottom",
-                      "left",
-                      "top",
-                      "right",
-                      "bottom",
-                    ]
-                  }
-                  id=""
-                  isAppLauncher={false}
-                  isContentLeftAligned={false}
-                  isVisible={false}
-                  maxWidth="18.75rem"
-                  position="top"
-                  tippyProps={Object {}}
-                  trigger="mouseenter focus"
-                  zIndex={9999}
-                >
-                  <span>
-                    <EyeIcon
-                      color="currentColor"
-                      noVerticalAlign={false}
-                      size="sm"
-                      title={null}
-                    />
-                     
-                    172.17.0.14
-                  </span>
-                </Tooltip>
-              </StackItem>
-              <StackItem
-                key="endpoint_0_address_2"
-              >
-                <Tooltip
-                  appendTo={[Function]}
-                  aria="describedby"
-                  boundary="window"
-                  className=""
-                  content={
-                    <React.Fragment>
-                      reviews-v1-401049526-tfstp
-                    </React.Fragment>
-                  }
-                  distance={15}
-                  enableFlip={true}
-                  entryDelay={500}
-                  exitDelay={500}
-                  flipBehavior={
-                    Array [
-                      "top",
-                      "right",
-                      "bottom",
-                      "left",
-                      "top",
-                      "right",
-                      "bottom",
-                    ]
-                  }
-                  id=""
-                  isAppLauncher={false}
-                  isContentLeftAligned={false}
-                  isVisible={false}
-                  maxWidth="18.75rem"
-                  position="top"
-                  tippyProps={Object {}}
-                  trigger="mouseenter focus"
-                  zIndex={9999}
-                >
-                  <span>
-                    <EyeIcon
-                      color="currentColor"
-                      noVerticalAlign={false}
-                      size="sm"
-                      title={null}
-                    />
-                     
-                    172.17.0.16
-                  </span>
-                </Tooltip>
-              </StackItem>
-            </Stack>
-          </StackItem>
-          <StackItem
-            id="ports"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-              <ValidationObjectSummary
-                id="reviews-config-validation"
-                validations={Array []}
-              />
-              <span
-                style={
-                  Object {
-                    "marginLeft": "10px",
-                  }
-                }
-              >
-                Ports
-              </span>
-            </Title>
-            <ul
-              className="fza38k8"
-            />
-          </StackItem>
-          <StackItem
-            id="type"
-          >
-            <Title
-              headingLevel="h6"
-              size="md"
-            >
-               
-              Type
-               
-            </Title>
-            ClusterIP
           </StackItem>
         </Stack>
       </CardBody>

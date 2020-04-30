@@ -97,6 +97,12 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
             </Title>
             {globalStatus}
             <Stack gutter={'md'} style={{ marginTop: '10px' }}>
+              <StackItem id={'name'}>
+                <Title headingLevel="h6" size="md">
+                  Name
+                </Title>
+                {virtualService.metadata.name || ''}
+              </StackItem>
               <StackItem id={'created_at'}>
                 <Title headingLevel="h6" size="md">
                   Created at

@@ -213,7 +213,7 @@ describe('Overview page', () => {
   it('filters namespaces info name match', done => {
     FilterSelected.setSelected([
       {
-        category: 'Name',
+        category: 'Namespace',
         value: 'bc'
       }
     ]);
@@ -235,7 +235,7 @@ describe('Overview page', () => {
   it('filters namespaces info name no match', done => {
     FilterSelected.setSelected([
       {
-        category: 'Name',
+        category: 'Namespace',
         value: 'yz'
       }
     ]);
@@ -250,7 +250,7 @@ describe('Overview page', () => {
   it('filters namespaces info name and health match', done => {
     FilterSelected.setSelected([
       {
-        category: 'Name',
+        category: 'Namespace',
         value: 'bc'
       },
       {

@@ -13,8 +13,8 @@ import { LabelFilters } from '../../components/Filters/LabelFilter';
 
 export const nameFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'namespace_search',
-  title: 'Name',
-  placeholder: 'Filter by Name',
+  title: 'Namespace',
+  placeholder: 'Filter by Namespace',
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],

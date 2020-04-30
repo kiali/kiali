@@ -1,7 +1,5 @@
 import * as React from 'react';
 import {
-  Breadcrumb,
-  BreadcrumbItem,
   Card,
   CardBody,
   CardHeader,
@@ -34,7 +32,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import OverviewToolbarContainer, { OverviewDisplayMode, OverviewToolbar, OverviewType } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
-import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
+import { RenderComponentScroll } from '../../components/Nav/Page';
 import OverviewCardContentCompact from './OverviewCardContentCompact';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -75,6 +73,13 @@ const cardNamespaceNameStyle = style({
   textOverflow: 'ellipsis',
   verticalAlign: 'middle',
   whiteSpace: 'nowrap'
+});
+
+// Yes, the 20px is a magic number to adjust the style as there are several chained components
+// with their own style.
+const overviewHeader = style({
+  backgroundColor: PfColors.White,
+  padding: '10px 20px 10px 10px'
 });
 
 type State = {
@@ -373,10 +378,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     const filteredNamespaces = Filters.filterBy(this.state.namespaces, FilterSelected.getSelected());
     return (
       <>
-        <RenderHeader>
-          <Breadcrumb style={{ padding: '10px 0 0 10px' }}>
-            <BreadcrumbItem isActive={true}>Namespaces</BreadcrumbItem>
-          </Breadcrumb>
+        <div className={overviewHeader}>
           <OverviewToolbarContainer
             onRefresh={this.load}
             onError={FilterHelper.handleError}
@@ -384,7 +386,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             displayMode={this.state.displayMode}
             setDisplayMode={this.setDisplayMode}
           />
-        </RenderHeader>
+        </div>
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll className={gridStyle}>
             {this.state.displayMode === OverviewDisplayMode.LIST ? (

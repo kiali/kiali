@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { RenderHeader } from '../../../../components/Nav/Page';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,6 +20,7 @@ import { Iter8ExpDetailsInfo } from '../../../../types/Iter8';
 import RefreshButtonContainer from '../../../../components/Refresh/RefreshButton';
 import Iter8Dropdown from './Iter8Dropdown';
 import history from '../../../../app/History';
+import { PfColors } from '../../../../components/Pf/PfColors';
 
 interface Props {
   namespace: string;
@@ -31,6 +31,13 @@ interface State {
   experiment?: Iter8ExpDetailsInfo;
   canDelete: boolean;
 }
+const extensionHeader = style({
+  padding: '0px 20px 18px 20px',
+  backgroundColor: PfColors.White
+});
+const breadcrumbPadding = style({
+  padding: '22px 0 5px 0'
+});
 
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
 const tabsPadding = style({ height: '40px', padding: '0px ', backgroundColor: 'white' });
@@ -78,19 +85,25 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
   // It is a simplified view of BreadcrumbView with fixed rendering
   breadcrumb = () => {
     return (
-      <div className="breadcrumb">
-        <Breadcrumb>
-          <BreadcrumbItem>
-            <Link to={`/extensions/iter8`}>Iter8 Experiments</Link>
-          </BreadcrumbItem>
-          <BreadcrumbItem>
-            <Link to={`/extensions/iter8?namespaces=${this.props.match.params.namespace}`}>
-              Namespace: {this.props.match.params.namespace}
-            </Link>
-          </BreadcrumbItem>
-          <BreadcrumbItem isActive={true}>{this.props.match.params.name}</BreadcrumbItem>
-        </Breadcrumb>
-      </div>
+      <Breadcrumb className={breadcrumbPadding}>
+        <BreadcrumbItem>
+          <Link to={`/extensions/iter8`}>Iter8 Experiments</Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <Link to={`/extensions/iter8?namespaces=${this.props.match.params.namespace}`}>
+            Namespace: {this.props.match.params.namespace}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem isActive={true}>
+          <Link
+            to={
+              '/extensions/namespaces/' + this.props.match.params.namespace + '/iter8/' + this.props.match.params.name
+            }
+          >
+            {this.props.match.params.name}
+          </Link>
+        </BreadcrumbItem>
+      </Breadcrumb>
     );
   };
 
@@ -212,7 +225,7 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
 
   renderRightToolbar = () => {
     return (
-      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+      <span style={{ position: 'absolute', right: '20px', zIndex: 1 }}>
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
         <Iter8Dropdown
           experimentName={this.props.match.params.name}
@@ -226,11 +239,15 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
   render() {
     return (
       <>
-        <RenderHeader>
+        <div className={extensionHeader}>
           {this.breadcrumb()}
-          <Text component={TextVariants.h1}>{this.props.match.params.name}</Text>
+          {
+            // Iter8 details page doesn't share same components that App/Workload/Service/Istio Config detail
+            // So it requires some adjust to maintain same weight ratio
+          }
+          <div style={{ paddingBottom: 15 }} />
           {this.renderRightToolbar()}
-        </RenderHeader>
+        </div>
         <div className={tabsPadding} />
         <div className={containerPadding}>
           <Grid gutter={'md'}>

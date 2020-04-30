@@ -11,6 +11,7 @@ import {
   StackItem,
   Text,
   TextVariants,
+  Title,
   TooltipPosition
 } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
@@ -115,6 +116,12 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
             <Text component={TextVariants.h2}>Destination Rule Overview</Text>
             {globalStatus}
             <Stack>
+              <StackItem id={'name'}>
+                <Title headingLevel="h6" size="md">
+                  Name
+                </Title>
+                {destinationRule.metadata.name || ''}
+              </StackItem>
               <StackItem id={'created_at'}>
                 <Text component={TextVariants.h3}>Created at</Text>
                 <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />

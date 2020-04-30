@@ -263,7 +263,9 @@ class ExperimentListPage extends React.Component<Props, State> {
   onFilterChange = () => {
     // Resetting pagination when filters change
     this.updateListItems();
-  }; // This is a simplified toolbar for refresh and actions.
+  };
+
+  // This is a simplified toolbar for refresh and actions.
   // Kiali has a shared component toolbar for more complex scenarios like filtering
   // It renders actions only if user has permissions
   toolbar = () => {
@@ -278,7 +280,7 @@ class ExperimentListPage extends React.Component<Props, State> {
             handleRefresh={this.updateListItems}
             disabled={false}
           />,
-          <>{this.actionsToolbar()},</>
+          <>{this.actionsToolbar()}</>
         ]}
       />
     );

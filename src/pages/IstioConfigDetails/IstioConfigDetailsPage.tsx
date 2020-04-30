@@ -444,7 +444,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
-  renderRightToolbar = () => {
+  renderActions = () => {
     const canDelete =
       this.state.istioObjectDetails !== undefined &&
       this.state.istioObjectDetails.permissions.delete &&
@@ -547,10 +547,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return (
       <>
         <RenderHeader location={this.props.location}>
-          <Title headingLevel="h2" size="3xl">
-            {this.objectTitle()}
-          </Title>
-          {this.renderRightToolbar()}
+          {
+            // This magic space will align details header width with Graph, List pages
+          }
+          <div style={{ paddingBottom: 14 }} />
+          {this.renderActions()}
         </RenderHeader>
         {this.renderTabs()}
         <Prompt

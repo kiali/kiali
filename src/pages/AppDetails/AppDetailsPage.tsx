@@ -12,7 +12,6 @@ import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
@@ -227,8 +226,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       default:
         return undefined;
     }
+    // Align actions style with other pages
     return (
-      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+      <span style={{ position: 'absolute', right: '18px', zIndex: 1 }}>
         {component}
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
         &nbsp;
@@ -242,12 +242,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   render() {
-    const istioSidecar = this.istioSidecar();
-
     return (
       <>
         <RenderHeader location={this.props.location}>
-          <PfTitle location={this.props.location} istio={istioSidecar} />
+          {
+            // This magic space will align details header width with Graph, List pages
+          }
+          <div style={{ paddingBottom: 14 }} />
           {this.renderActions()}
         </RenderHeader>
         <ParameterizedTabs

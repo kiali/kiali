@@ -20,7 +20,6 @@ import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { KialiAppState } from '../../store/Store';
-import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
 import { durationSelector } from '../../store/Selectors';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -451,7 +450,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const virtualServices = serviceDetails.virtualServices || [];
     const destinationRules = serviceDetails.destinationRules || [];
     return (
-      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+      <span style={{ position: 'absolute', right: '18px', zIndex: 1 }}>
         {component}
         {this.state.currentTab !== tracesTabName ? (
           <RefreshButtonContainer handleRefresh={this.doRefresh} />
@@ -568,7 +567,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return (
       <>
         <RenderHeader location={this.props.location}>
-          <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
+          {
+            // This magic space will align details header width with Graph, List pages
+          }
+          <div style={{ paddingBottom: 14 }} />
           {this.renderActions()}
         </RenderHeader>
         <ParameterizedTabs
