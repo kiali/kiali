@@ -102,7 +102,8 @@
     "ts-key-enum": "^2.0.0",
     "tween-functions": "^1.2.0",
     "typescript": "3.5.3",
-    "u-basscss": "2.0.0"
+    "u-basscss": "2.0.0",
+    "snyk": "^1.316.1"
   },
   "scripts": {
     "analyze": "source-map-explorer build/static/js/main.*",
@@ -111,7 +112,9 @@
     "start:ga-debug": "REACT_APP_GA_DEBUG=1 REACT_APP_VSN_STATE=$(../../scripts/get-tracking-version.js) react-app-rewired start",
     "start": "react-app-rewired start",
     "test-dev": "react-app-rewired test --env=jsdom",
-    "test": "CI=1 react-app-rewired test --env=jsdom --color"
+    "test": "CI=1 react-app-rewired test --env=jsdom --color",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -126,5 +129,6 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "snyk": true
 }
