@@ -22,6 +22,7 @@ import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
+import { statLabel } from '@kiali/k-charted-pf4/dist/common/types/Labels';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -164,10 +165,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     const hasHistograms =
       this.state.dashboard !== undefined &&
       this.state.dashboard.charts.some(chart => {
-        if (chart.histogram) {
-          return Object.keys(chart.histogram).length > 0;
-        }
-        return false;
+        return chart.metrics.some(m => m.labelSet.hasOwnProperty(statLabel));
       });
     return (
       <Toolbar style={{ padding: 10 }}>

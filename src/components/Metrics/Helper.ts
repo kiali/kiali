@@ -80,16 +80,7 @@ export const extractLabelsSettings = (dashboard: DashboardModel, stateSettings: 
       defaultValue: true
     })
   );
-  dashboard.charts.forEach(chart => {
-    if (chart.metric) {
-      extractLabelsSettingsOnSeries(chart.metric, dashboard.aggregations, newSettings);
-    }
-    if (chart.histogram) {
-      Object.keys(chart.histogram).forEach(stat => {
-        extractLabelsSettingsOnSeries(chart.histogram![stat], dashboard.aggregations, newSettings);
-      });
-    }
-  });
+  dashboard.charts.forEach(chart => extractLabelsSettingsOnSeries(chart.metrics, dashboard.aggregations, newSettings));
   return combineLabelsSettings(newSettings, stateSettings);
 };
 

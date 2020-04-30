@@ -47,11 +47,10 @@ const createMetricChart = (name: string): ChartModel => {
     name: name,
     unit: 'B',
     spans: 12,
-    metric: [
+    metrics: [
       {
         labelSet: { __name__: name },
-        values: [[1111, 5], [2222, 10]],
-        name: ''
+        values: [[1111, 5], [2222, 10]]
       }
     ]
   };
@@ -62,36 +61,24 @@ const createHistogramChart = (name: string): ChartModel => {
     name: name,
     unit: 'B',
     spans: 12,
-    histogram: {
-      average: [
-        {
-          labelSet: { __name__: name },
-          values: [[1111, 10], [2222, 11]],
-          name: name
-        }
-      ],
-      median: [
-        {
-          labelSet: { __name__: name },
-          values: [[1111, 20], [2222, 21]],
-          name: name
-        }
-      ],
-      percentile95: [
-        {
-          labelSet: { __name__: name },
-          values: [[1111, 30], [2222, 31]],
-          name: name
-        }
-      ],
-      percentile99: [
-        {
-          labelSet: { __name__: name },
-          values: [[1111, 40], [2222, 41]],
-          name: name
-        }
-      ]
-    }
+    metrics: [
+      {
+        labelSet: { __name__: name, __stat__: 'avg' },
+        values: [[1111, 10], [2222, 11]]
+      },
+      {
+        labelSet: { __name__: name, __stat__: '0.5' },
+        values: [[1111, 20], [2222, 21]]
+      },
+      {
+        labelSet: { __name__: name, __stat__: '0.95' },
+        values: [[1111, 30], [2222, 31]]
+      },
+      {
+        labelSet: { __name__: name, __stat__: '0.99' },
+        values: [[1111, 40], [2222, 41]]
+      }
+    ]
   };
 };
 
