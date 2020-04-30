@@ -57,10 +57,16 @@ type MonitoringDashboardChart struct {
 	ChartType    *string                          `json:"chartType"`
 	Min          *int                             `json:"min"`
 	Max          *int                             `json:"max"`
-	MetricName   string                           `json:"metricName"`
+	MetricName   string                           `json:"metricName"` // Deprecated; use Metrics instead
+	Metrics      []MonitoringDashboardMetric      `json:"metrics"`
 	DataType     string                           `json:"dataType"`   // DataType is either "raw", "rate" or "histogram"
 	Aggregator   string                           `json:"aggregator"` // Aggregator can be set for raw data. Ex: "sum", "avg". See https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
 	Aggregations []MonitoringDashboardAggregation `json:"aggregations"`
+}
+
+type MonitoringDashboardMetric struct {
+	MetricName  string `json:"metricName"`
+	DisplayName string `json:"displayName"`
 }
 
 type MonitoringDashboardAggregation struct {
@@ -80,6 +86,19 @@ type MonitoringDashboardExternalLinkVariables struct {
 	Service   string `json:"service,omitempty"`
 	Version   string `json:"version,omitempty"`
 	Workload  string `json:"workload,omitempty"`
+}
+
+// GetMetrics provides consistent MonitoringDashboardMetric slice in a backward-compatible way, if deprecated field MetricName is used instead of Metrics in Spec.
+func (in *MonitoringDashboardChart) GetMetrics() []MonitoringDashboardMetric {
+	if len(in.Metrics) == 0 {
+		return []MonitoringDashboardMetric{
+			MonitoringDashboardMetric{
+				MetricName:  in.MetricName,
+				DisplayName: in.Name,
+			},
+		}
+	}
+	return in.Metrics
 }
 
 // TODO: auto-generate the following deepcopy methods!

@@ -10,6 +10,11 @@ import (
 	"github.com/kiali/k-charted/prometheus"
 )
 
+const (
+	statLabel = "__stat__"
+	nameLabel = "__name__"
+)
+
 // MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource
 type MonitoringDashboard struct {
 	Title         string         `json:"title"`
@@ -20,41 +25,59 @@ type MonitoringDashboard struct {
 
 // Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource
 type Chart struct {
-	Name      string                     `json:"name"`
-	Unit      string                     `json:"unit"`
-	Spans     int                        `json:"spans"`
-	ChartType *string                    `json:"chartType,omitempty"`
-	Min       *int                       `json:"min,omitempty"`
-	Max       *int                       `json:"max,omitempty"`
-	Metric    []*SampleStream            `json:"metric"`
-	Histogram map[string][]*SampleStream `json:"histogram"`
-	Error     string                     `json:"error"`
+	Name      string          `json:"name"`
+	Unit      string          `json:"unit"`
+	Spans     int             `json:"spans"`
+	ChartType *string         `json:"chartType,omitempty"`
+	Min       *int            `json:"min,omitempty"`
+	Max       *int            `json:"max,omitempty"`
+	Metrics   []*SampleStream `json:"metrics"`
+	Error     string          `json:"error"`
 }
 
-func FillHistogram(from prometheus.Histogram, scale float64, name string, chart *Chart) {
-	stats := make(map[string][]*SampleStream, len(from))
-	for stat, metric := range from {
-		if metric.Err != nil {
-			chart.Error = fmt.Sprintf("error in metric %s/%s: %v", name, stat, metric.Err)
+// BuildLabelsMap initiates a labels map out of a given metric name and optionally histogram stat
+// Exported for external usage (Kiali)
+func BuildLabelsMap(name, stat string) map[string]string {
+	labels := map[string]string{
+		nameLabel: name,
+	}
+	if stat != "" {
+		labels[statLabel] = stat
+	}
+	return labels
+}
+
+func (chart *Chart) FillHistogram(ref v1alpha1.MonitoringDashboardMetric, from prometheus.Histogram, scale float64) {
+	// Extract and sort keys for consistent ordering
+	stats := []string{}
+	for k := range from {
+		stats = append(stats, k)
+	}
+	sort.Strings(stats)
+	for _, stat := range stats {
+		promMetric := from[stat]
+		if promMetric.Err != nil {
+			chart.Error = fmt.Sprintf("error in metric %s/%s: %v", ref.MetricName, stat, promMetric.Err)
 			return
 		}
-		stats[stat] = ConvertMatrix(metric.Matrix, scale)
+		metric := ConvertMatrix(promMetric.Matrix, BuildLabelsMap(ref.DisplayName, stat), scale)
+		chart.Metrics = append(chart.Metrics, metric...)
 	}
-	chart.Histogram = stats
 }
 
-func FillMetric(from prometheus.Metric, scale float64, name string, chart *Chart) {
+func (chart *Chart) FillMetric(ref v1alpha1.MonitoringDashboardMetric, from prometheus.Metric, scale float64) {
 	if from.Err != nil {
-		chart.Error = fmt.Sprintf("error in metric %s: %v", name, from.Err)
+		chart.Error = fmt.Sprintf("error in metric %s: %v", ref.MetricName, from.Err)
 		return
 	}
-	chart.Metric = ConvertMatrix(from.Matrix, scale)
+	metric := ConvertMatrix(from.Matrix, BuildLabelsMap(ref.DisplayName, ""), scale)
+	chart.Metrics = append(chart.Metrics, metric...)
 }
 
-func ConvertMatrix(from pmod.Matrix, scale float64) []*SampleStream {
+func ConvertMatrix(from pmod.Matrix, initialLabels map[string]string, scale float64) []*SampleStream {
 	series := make([]*SampleStream, len(from))
 	for i, s := range from {
-		series[i] = convertSampleStream(s, scale)
+		series[i] = convertSampleStream(s, initialLabels, scale)
 	}
 	return series
 }
@@ -64,8 +87,11 @@ type SampleStream struct {
 	Values   []SamplePair      `json:"values"`
 }
 
-func convertSampleStream(from *pmod.SampleStream, scale float64) *SampleStream {
-	labelSet := make(map[string]string, len(from.Metric))
+func convertSampleStream(from *pmod.SampleStream, initialLabels map[string]string, scale float64) *SampleStream {
+	labelSet := make(map[string]string, len(from.Metric)+len(initialLabels))
+	for k, v := range initialLabels {
+		labelSet[k] = v
+	}
 	for k, v := range from.Metric {
 		labelSet[string(k)] = string(v)
 	}
@@ -108,6 +134,7 @@ func ConvertChart(from v1alpha1.MonitoringDashboardChart) Chart {
 		ChartType: from.ChartType,
 		Min:       from.Min,
 		Max:       from.Max,
+		Metrics:   []*SampleStream{},
 	}
 }
 

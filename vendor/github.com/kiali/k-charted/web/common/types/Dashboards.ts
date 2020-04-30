@@ -1,4 +1,4 @@
-import { TimeSeries, Histogram } from './Metrics';
+import { TimeSeries } from './Metrics';
 import { PromLabel, LabelDisplayName } from './Labels';
 
 export interface DashboardModel {
@@ -18,8 +18,7 @@ export interface ChartModel {
   chartType?: ChartType;
   min?: number;
   max?: number;
-  metric?: TimeSeries[];
-  histogram?: Histogram;
+  metrics: TimeSeries[];
   error?: string;
 }
 

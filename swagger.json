@@ -3794,27 +3794,17 @@
           "type": "string",
           "x-go-name": "Error"
         },
-        "histogram": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/SampleStream"
-            }
-          },
-          "x-go-name": "Histogram"
-        },
         "max": {
           "type": "integer",
           "format": "int64",
           "x-go-name": "Max"
         },
-        "metric": {
+        "metrics": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/SampleStream"
           },
-          "x-go-name": "Metric"
+          "x-go-name": "Metrics"
         },
         "min": {
           "type": "integer",

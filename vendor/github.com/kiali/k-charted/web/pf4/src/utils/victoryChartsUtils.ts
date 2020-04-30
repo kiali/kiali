@@ -1,6 +1,6 @@
-import { TimeSeries, Histogram, Datapoint } from '../../../common/types/Metrics';
+import { TimeSeries, Datapoint, NamedTimeSeries } from '../../../common/types/Metrics';
 import { VCLines, LegendInfo, VCLine, LegendItem, VCDataPoint, makeLegend } from '../types/VictoryChartInfo';
-import { filterAndNameMetric, filterAndNameHistogram, LabelsInfo } from '../../../common/utils/timeSeriesUtils';
+import { filterAndNameMetric, LabelsInfo } from '../../../common/utils/timeSeriesUtils';
 import { ChartModel } from '../../../common/types/Dashboards';
 import { Overlay, OverlayInfo } from '../types/Overlay';
 
@@ -26,49 +26,20 @@ export const toVCLine = (dps: VCDataPoint[], dpInject: { unit: string, color: st
 };
 
 let colorsIdx = 0;
-const toVCLines = (ts: TimeSeries[], unit: string, colors: string[], title?: string): VCLines => {
+const toVCLines = (ts: NamedTimeSeries[], unit: string, colors: string[]): VCLines => {
   return ts.map(line => {
-    const name = title || line.name || '';
     const color = colors[colorsIdx % colors.length];
     colorsIdx++;
-    return toVCLine(toVCDatapoints(line.values, name), { name: name, unit: unit, color: color });
+    return toVCLine(toVCDatapoints(line.values, line.name), { name: line.name, unit: unit, color: color });
   });
-};
-
-const histogramToVCLines = (histogram: Histogram, unit: string, colors: string[]): VCLines => {
-  // Flat-map histo_stat * series
-  const stats = Object.keys(histogram);
-  let allLines: VCLines = [];
-  stats.forEach(statName => {
-    const lines = toVCLines(histogram[statName], unit, colors);
-    allLines = allLines.concat(lines);
-  });
-  return allLines;
-};
-
-const metricsDataSupplier = (chartName: string, metrics: TimeSeries[], labels: LabelsInfo, unit: string, colors: string[]): () => VCLines => {
-  return () => {
-    colorsIdx = 0;
-    const filtered = filterAndNameMetric(chartName, metrics, labels);
-    return toVCLines(filtered, unit, colors);
-  };
-};
-
-const histogramDataSupplier = (histogram: Histogram, labels: LabelsInfo, unit: string, colors: string[]): () => VCLines => {
-  return () => {
-    colorsIdx = 0;
-    const filtered = filterAndNameHistogram(histogram, labels);
-    return histogramToVCLines(filtered, unit, colors);
-  };
 };
 
 export const getDataSupplier = (chart: ChartModel, labels: LabelsInfo, colors: string[]): (() => VCLines) => {
-  if (chart.metric) {
-    return metricsDataSupplier(chart.name, chart.metric, labels, chart.unit, colors);
-  } else if (chart.histogram) {
-    return histogramDataSupplier(chart.histogram, labels, chart.unit, colors);
-  }
-  return () => ([]);
+  return () => {
+    colorsIdx = 0;
+    const filtered = filterAndNameMetric(chart.metrics, labels);
+    return toVCLines(filtered, chart.unit, colors);
+  };
 };
 
 export const buildLegendInfo = (items: LegendItem[], chartWidth: number): LegendInfo => {

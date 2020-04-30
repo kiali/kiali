@@ -79,5 +79,6 @@ func PrepareIstioDashboard(direction, local, remote string) kmodel.MonitoringDas
 	return kmodel.MonitoringDashboard{
 		Title:        fmt.Sprintf("%s Metrics", direction),
 		Aggregations: buildIstioAggregations(local, remote),
+		Charts:       []kmodel.Chart{},
 	}
 }
