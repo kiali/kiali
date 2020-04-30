@@ -295,7 +295,7 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of OpenShift to be downloaded
-DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.3.0"
+DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.4.0"
 
 # The default path under mirror.openshift.com/pub/openshift-v4 where the version downloads are found
 DEFAULT_OCP_URL_PATH="ocp"
@@ -582,7 +582,7 @@ debug "ENVIRONMENT:
 
 # Download the installer if we do not have it yet
 if [ -f "${OPENSHIFT_INSTALLER_EXE}" ]; then
-  _existingVersion=$(${OPENSHIFT_INSTALLER_EXE} version | head -n 1 | sed ${SEDOPTIONS} 's/^.*v\([0-9.]*\).*/\1/')
+  _existingVersion=$(${OPENSHIFT_INSTALLER_EXE} version | head -n 1 | sed ${SEDOPTIONS} 's/^.* v\{0,1\}\([0-9.]*\).*/\1/')
   _desiredVersion=$(echo -n ${OPENSHIFT_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^\([0-9.]*\).*/\1/')
   if [ "${_existingVersion}" != "${_desiredVersion}" ]; then
     warnmsg "===== WARNING ====="
