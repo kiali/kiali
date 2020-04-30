@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Chart, ChartBar, ChartStack, ChartAxis } from '@patternfly/react-charts';
 
 import { NamespaceStatus } from './NamespaceInfo';
-import { FAILURE, DEGRADED, HEALTHY } from '../../types/Health';
+import { FAILURE, DEGRADED, HEALTHY, IDLE } from '../../types/Health';
 
 type Props = {
   status: NamespaceStatus;
@@ -46,7 +46,8 @@ class OverviewCardBars extends React.Component<Props, State> {
     return (
       <div ref={this.containerRef}>
         <Chart height={50} width={this.state.width} padding={{ top: 20, left: 5, right: 5, bottom: 0 }}>
-          <ChartStack colorScale={[FAILURE.color, DEGRADED.color, HEALTHY.color]} xOffset={10}>
+          <ChartStack colorScale={[IDLE.color, FAILURE.color, DEGRADED.color, HEALTHY.color]} xOffset={10}>
+            <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inIdle.length }]} />
             <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inError.length }]} />
             <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inWarning.length }]} />
             <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inSuccess.length }]} />

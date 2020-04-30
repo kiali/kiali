@@ -74,12 +74,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Success);
+    expect(html).toContain(PFAlertColor.InfoBackground);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Success);
+    expect(html).toContain(PFAlertColor.InfoBackground);
     expect(html).toContain('0 / 0');
   });
 
@@ -96,12 +96,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Danger);
+    expect(html).toContain(PFAlertColor.InfoBackground);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Danger);
+    expect(html).toContain(PFAlertColor.InfoBackground);
   });
 
   it('renders error rate failure', () => {

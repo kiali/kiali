@@ -1,4 +1,10 @@
-import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon, UnknownIcon } from '@patternfly/react-icons';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  MinusCircleIcon,
+  UnknownIcon
+} from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { getName } from '../utils/RateIntervals';
 import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
@@ -35,6 +41,14 @@ export interface Status {
   icon: IconType;
   class: string;
 }
+
+export const IDLE: Status = {
+  name: 'Idle',
+  color: PFAlertColor.InfoBackground,
+  priority: 3,
+  icon: MinusCircleIcon,
+  class: 'icon-idle'
+};
 
 export const FAILURE: Status = {
   name: 'Failure',
@@ -87,22 +101,51 @@ interface ThresholdStatus {
 const RATIO_NA = -1;
 
 export const ratioCheck = (availableReplicas: number, currentReplicas: number, desiredReplicas: number): Status => {
-  // No Pods returns No Health Info
-  if (desiredReplicas === 0 && currentReplicas === 0) {
-    return NA;
+  /*
+    IDLE STATE
+ */
+  // User has scaled down a workload, then desired replicas will be 0 and it's not an error condition
+  if (desiredReplicas === 0) {
+    return IDLE;
   }
-  // No available Pods when there are desired and current means a Failure
-  if (desiredReplicas > 0 && currentReplicas > 0 && availableReplicas === 0) {
+
+  /*
+   DEGRADED STATE
+  */
+  // When a workload has available pods but less than desired defined by user it should be marked as degraded
+  if (
+    desiredReplicas > 0 &&
+    currentReplicas > 0 &&
+    availableReplicas > 0 &&
+    (currentReplicas < desiredReplicas || availableReplicas < desiredReplicas)
+  ) {
+    return DEGRADED;
+  }
+
+  /*
+     FAILURE STATE
+  */
+  // When availableReplicas is 0 but user has marked a desired > 0, that's an error condition
+  if (desiredReplicas > 0 && availableReplicas === 0) {
     return FAILURE;
   }
+
   // Pending Pods means problems
   if (desiredReplicas === availableReplicas && availableReplicas !== currentReplicas) {
     return FAILURE;
   }
-  // Health condition
-  if (desiredReplicas === currentReplicas && currentReplicas === availableReplicas) {
+
+  /*
+     HEALTHY STATE
+  */
+  if (
+    desiredReplicas === currentReplicas &&
+    currentReplicas === availableReplicas &&
+    availableReplicas === desiredReplicas
+  ) {
     return HEALTHY;
   }
+
   // Other combination could mean a degraded situation
   return DEGRADED;
 };
@@ -204,12 +247,8 @@ export class AppHealth extends Health {
     const items: HealthItem[] = [];
     {
       // Pods
-      let countInactive = 0;
       const children: HealthSubItem[] = workloadStatuses.map(d => {
         const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas);
-        if (status === NA) {
-          countInactive++;
-        }
         return {
           text: d.name + ': ' + d.availableReplicas + ' / ' + d.desiredReplicas,
           status: status
@@ -221,10 +260,6 @@ export class AppHealth extends Health {
         status: podsStatus,
         children: children
       };
-      if (countInactive > 0 && countInactive === workloadStatuses.length) {
-        // No active deployment => special case for failure
-        item.status = FAILURE;
-      }
       items.push(item);
     }
     // Request errors

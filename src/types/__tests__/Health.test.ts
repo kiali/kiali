@@ -11,7 +11,7 @@ describe('Health', () => {
     expect(H.ratioCheck(3, 3, 3)).toEqual(H.HEALTHY);
   });
   it('should check ratio with no item', () => {
-    expect(H.ratioCheck(0, 0, 0)).toEqual(H.NA);
+    expect(H.ratioCheck(0, 0, 0)).toEqual(H.IDLE);
   });
   it('should check ratio pending Pods', () => {
     // 3 Pods with problems
@@ -79,7 +79,7 @@ describe('Health', () => {
     );
     expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
   });
-  it('should aggregate degraded workload', () => {
+  it('should aggregate idle workload', () => {
     const health = new H.AppHealth(
       [
         { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
