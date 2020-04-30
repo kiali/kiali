@@ -2,7 +2,7 @@ import { PfColors, PFAlertColor } from 'components/Pf/PfColors';
 import { toOverlay, OverlayInfo, Overlay } from '@kiali/k-charted-pf4';
 
 import * as API from '../../services/Api';
-import { DurationInSeconds } from '../../types/Common';
+import { TimeRange, durationToBounds, guardTimeRange } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { Span, TracingQuery } from 'types/Tracing';
 
@@ -13,15 +13,29 @@ export class SpanOverlay {
 
   constructor(public onChange: (overlay?: Overlay) => void) {}
 
-  fetch(namespace: string, service: string, duration: DurationInSeconds) {
-    const doAppend = this.lastFetchMicros !== undefined;
-    const nowMicros = new Date().getTime() * 1000;
-    const frameStart = nowMicros - (duration + 60) * 1000000; // seconds to micros with 1min margin;
-    const opts: TracingQuery = { startMicros: this.lastFetchMicros || frameStart };
+  fetch(namespace: string, service: string, range: TimeRange) {
+    const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
+    // Convert start time to microseconds with 1min margin
+    const frameStart = (boundsMillis.from - 60000) * 1000;
+    const frameEnd = boundsMillis.to ? boundsMillis.to * 1000 : undefined;
+    if (frameEnd) {
+      // Closed time frame (looking in past)
+      // Turning off incremental refresh as it doesn't make sense with bounded end time
+      this.lastFetchMicros = undefined;
+    }
+    const opts: TracingQuery = {
+      startMicros: this.lastFetchMicros || frameStart,
+      endMicros: frameEnd
+    };
     API.getServiceSpans(namespace, service, opts)
       .then(res => {
         this.lastFetchError = false;
-        this.spans = doAppend ? this.spans.filter(s => s.startTime >= frameStart).concat(res.data) : res.data;
+        if (this.lastFetchMicros) {
+          // Incremental refresh
+          this.spans = this.spans.filter(s => s.startTime >= frameStart).concat(res.data);
+        } else {
+          this.spans = res.data;
+        }
         this.onChange(this.buildOverlay());
         // Update last fetch time only if we had some results
         // So that if Jaeger DB hadn't time to ingest data, it's still going to be fetched next time
