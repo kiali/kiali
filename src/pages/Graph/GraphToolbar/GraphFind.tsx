@@ -280,20 +280,16 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     cy.startBatch();
 
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
-    if (!!this.hiddenElements) {
-      if (!graphChanged) {
-        this.hiddenElements.style({ visibility: 'visible' });
-      }
-      this.hiddenElements = undefined;
+    if (!!this.hiddenElements && !graphChanged) {
+      this.hiddenElements.style({ visibility: 'visible' });
     }
+    this.hiddenElements = undefined;
 
     // restore removed elements when we are working with the same graph. . Either way,release for garbage collection.  If the graph has changed
-    if (!!this.removedElements) {
-      if (!graphChanged) {
-        this.removedElements.restore();
-      }
-      this.removedElements = undefined;
+    if (!!this.removedElements && !graphChanged) {
+      this.removedElements.restore();
     }
+    this.removedElements = undefined;
 
     if (selector) {
       // select the new hide-hits
@@ -332,14 +328,25 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     if (hideChanged || (compressOnHideChanged && selector) || hasRemovedElements) {
       const zoom = cy.zoom();
       const pan = cy.pan();
+
+      // I don't know why but for some reason the first layout may not leave some elements in their final
+      // position.  Running the layout a second time seems to solve the issue, so for now we'll take the hit
+      // when removing nodes and run it a second time.
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      if (!same || compressOnHideChanged || layoutChanged) {
+      CytoscapeGraphUtils.runLayout(cy, this.props.layout); // intentionally run a second time
+
+      // after the layout perform a fit to minimize movement, unless we need to maintain a custom zoom/pan.
+      // Absorb small zoom/pan changes made by the layout, only re-establish significant, user-generated changes.
+      const zoomChanged = Math.abs(zoom - cy.zoom()) > 0.1;
+      const panChanged = Math.abs(pan.x - cy.pan().x) > 20 || Math.abs(pan.y - cy.pan().y) > 20;
+
+      if (!same || compressOnHideChanged || layoutChanged || !(zoomChanged || panChanged)) {
         CytoscapeGraphUtils.safeFit(cy);
       } else {
-        if (zoom !== cy.zoom()) {
+        if (zoomChanged) {
           cy.zoom(zoom);
         }
-        if (pan.x !== cy.pan().x || pan.y !== cy.pan().y) {
+        if (panChanged) {
           cy.pan(pan);
         }
       }
