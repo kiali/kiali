@@ -14,10 +14,7 @@ exports[`Inbound Metrics for a workload renders initial layout 1`] = `
       "subscription": Subscription {
         "handleChangeWrapper": [Function],
         "listeners": Object {
-          "clear": [Function],
-          "get": [Function],
           "notify": [Function],
-          "subscribe": [Function],
         },
         "onStateChange": [Function],
         "parentSub": undefined,
@@ -28,7 +25,7 @@ exports[`Inbound Metrics for a workload renders initial layout 1`] = `
           "subscribe": [Function],
           Symbol(observable): [Function],
         },
-        "unsubscribe": [Function],
+        "unsubscribe": null,
       },
     }
   }
@@ -53,10 +50,7 @@ exports[`Metrics for a service renders initial layout 1`] = `
       "subscription": Subscription {
         "handleChangeWrapper": [Function],
         "listeners": Object {
-          "clear": [Function],
-          "get": [Function],
           "notify": [Function],
-          "subscribe": [Function],
         },
         "onStateChange": [Function],
         "parentSub": undefined,
@@ -67,7 +61,7 @@ exports[`Metrics for a service renders initial layout 1`] = `
           "subscribe": [Function],
           Symbol(observable): [Function],
         },
-        "unsubscribe": [Function],
+        "unsubscribe": null,
       },
     }
   }

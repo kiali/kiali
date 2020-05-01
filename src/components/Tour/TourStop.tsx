@@ -41,6 +41,7 @@ type ReduxProps = {
 };
 
 type TourStopProps = ReduxProps & {
+  children?: React.ReactNode;
   info: TourStopInfo;
 };
 
@@ -150,6 +151,7 @@ class TourStop extends React.PureComponent<TourStopProps> {
     const tippyProps: Partial<any> = { offset: offset };
     const isVisible = this.isVisible();
     this.tourStopInfo.isValid = true;
+    const children = this.props.children;
 
     return (
       <>
@@ -183,11 +185,11 @@ class TourStop extends React.PureComponent<TourStopProps> {
                 </div>
               }
             >
-              <>{this.props.children}</>
+              <>{children}</>
             </Popover>
           </>
         ) : (
-          <>{this.props.children}</>
+          <>{children}</>
         )}
       </>
     );

@@ -30,6 +30,7 @@ export class JaegerTraceTitle extends React.Component<JaegerScatterProps> {
                 href={this.props.onClickLink}
                 style={{ right: '130px', fontSize: '16px', position: 'absolute' }}
                 target={'_blank'}
+                rel="noopener noreferrer"
               >
                 View Trace in Tracing <ExternalLinkAltIcon />
               </a>

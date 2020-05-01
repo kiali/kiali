@@ -20,6 +20,7 @@ enum CopyStatus {
 
 type DebugInformationProps = {
   appState: KialiAppState;
+  ref: React.RefObject<any>;
 };
 
 type DebugInformationState = {

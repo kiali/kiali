@@ -16,8 +16,9 @@ import * as Sorts from '../../pages/Overview/Sorts';
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {
-  rows: R[];
   activeNamespaces: Namespace[];
+  children?: React.ReactNode;
+  rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
 };
 
