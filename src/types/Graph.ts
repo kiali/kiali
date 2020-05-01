@@ -1,4 +1,5 @@
 import Namespace from './Namespace';
+import { DurationInSeconds, TimeInSeconds } from './Common';
 
 export interface Layout {
   name: string;
@@ -22,8 +23,8 @@ export interface SummaryPanelPropType {
   namespaces: Namespace[];
   graphType: GraphType;
   injectServiceNodes: boolean;
-  queryTime: number;
-  duration: number;
+  queryTime: TimeInSeconds;
+  duration: DurationInSeconds;
   step: number;
   rateInterval: string;
 }
