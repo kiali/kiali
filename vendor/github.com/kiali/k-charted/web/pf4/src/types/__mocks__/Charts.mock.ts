@@ -3,20 +3,30 @@ import { ChartModel, SpanValue } from '../../../../common/types/Dashboards';
 import { TimeSeries, Datapoint } from '../../../../common/types/Metrics';
 import { LabelsInfo } from '../../../../common/utils/timeSeriesUtils';
 import { makeLegend, VCLine } from '../VictoryChartInfo';
+import { LabelSet, statLabel, nameLabel } from '../../../../common/types/Labels';
 
 const t0 = 1556802000;
 const increment = 60;
 
-type MetricMock = { name: string, labels: { [key: string]: string } };
-
 export const biggerTimeWindow: [Date, Date] = [new Date((t0 - 10 * 60) * 1000), new Date((t0 + 10 * 60) * 1000)];
 
-const genSeries = (metrics: MetricMock[]): TimeSeries[] => {
-  return metrics.map(m => {
-    m.labels.__name__ = m.name;
+export const genLabels = (name: string, stat?: string, others?: [string, string][]): LabelSet => {
+  const labels: LabelSet = {};
+  labels[nameLabel] = name;
+  if (stat) {
+    labels[statLabel] = stat;
+  }
+  if (others) {
+    others.forEach(o => labels[o[0]] = o[1]);
+  }
+  return labels;
+};
+
+const genSeries = (labelSets: LabelSet[]): TimeSeries[] => {
+  return labelSets.map(labels => {
     return {
       values: genSingle(0, 50),
-      labelSet: m.labels
+      labelSet: labels
     };
   });
 };
@@ -32,15 +42,7 @@ const genSingle = (offset: number, entropy: number): [number, number][] => {
 };
 
 export const generateRandomMetricChart = (title: string, names: string[], spans: SpanValue, seed?: string): ChartModel => {
-  if (seed) {
-    seedrandom(seed, { global: true });
-  }
-  return {
-    name: title,
-    unit: 'bytes',
-    spans: spans,
-    metric: genSeries(names.map(n => ({ name: n, labels: {}})))
-  };
+  return generateRandomMetricChartWithLabels(title, names.map(n => genLabels(n)), spans, seed);
 };
 
 export const generateRandomScatterChart = (title: string, names: string[], spans: SpanValue, seed?: string): ChartModel => {
@@ -52,11 +54,11 @@ export const generateRandomScatterChart = (title: string, names: string[], spans
     unit: 'seconds',
     chartType: 'scatter',
     spans: spans,
-    metric: genSeries(names.map(n => ({ name: n, labels: {}})))
+    metrics: genSeries(names.map(n => genLabels(n)))
   };
 };
 
-export const generateRandomMetricChartWithLabels = (title: string, metrics: MetricMock[], spans: SpanValue, seed?: string): ChartModel => {
+export const generateRandomMetricChartWithLabels = (title: string, labels: LabelSet[], spans: SpanValue, seed?: string): ChartModel => {
   if (seed) {
     seedrandom(seed, { global: true });
   }
@@ -64,7 +66,7 @@ export const generateRandomMetricChartWithLabels = (title: string, metrics: Metr
     name: title,
     unit: 'bytes',
     spans: spans,
-    metric: genSeries(metrics)
+    metrics: genSeries(labels)
   };
 };
 
@@ -72,29 +74,25 @@ export const generateRandomHistogramChart = (title: string, spans: SpanValue, se
   if (seed) {
     seedrandom(seed, { global: true });
   }
-  const histo = {
-    '0.99': [{
+  const histo = [{
       values: genSingle(90, 100),
-      labelSet: {}
-    }],
-    '0.95': [{
+      labelSet: genLabels(title, '0.99')
+    }, {
       values: genSingle(80, 25),
-      labelSet: {}
-    }],
-    '0.5': [{
+      labelSet: genLabels(title, '0.95')
+    }, {
       values: genSingle(25, 15),
-      labelSet: {}
-    }],
-    avg: [{
+      labelSet: genLabels(title, '0.5')
+    }, {
       values: genSingle(0, 50),
-      labelSet: {}
-    }]
-  };
+      labelSet: genLabels(title, 'avg')
+    }
+  ];
   return {
     name: title,
     unit: 'bitrate',
     spans: spans,
-    histogram: histo
+    metrics: histo
   };
 };
 
@@ -106,14 +104,14 @@ export const empty: ChartModel = {
   name: 'Empty metric chart',
   unit: 'bytes',
   spans: 6,
-  metric: []
+  metrics: []
 };
 
 export const error: ChartModel = {
   name: 'Chart with error',
   unit: 'bytes',
   spans: 6,
-  metric: [],
+  metrics: [],
   error: 'Unable to fetch metrics'
 };
 
@@ -121,9 +119,9 @@ export const metric: ChartModel = {
   name: 'Metric chart',
   unit: 'bytes',
   spans: 6,
-  metric: [{
+  metrics: [{
     values: [[t0, 50.4], [t0 + increment, 48.2], [t0 + 2 * increment, 42.0]],
-    labelSet: {}
+    labelSet: genLabels('Metric chart')
   }]
 };
 
@@ -131,16 +129,14 @@ export const histogram: ChartModel = {
   name: 'Histogram chart',
   unit: 'bytes',
   spans: 6,
-  histogram: {
-    avg: [{
+  metrics: [{
       values: [[t0, 50.4], [t0 + increment, 48.2], [t0 + 2 * increment, 42.0]],
-      labelSet: {}
-    }],
-    '0.99': [{
+      labelSet: genLabels('Metric chart', 'avg')
+    }, {
       values: [[t0, 150.4], [t0 + increment, 148.2], [t0 + 2 * increment, 142.0]],
-      labelSet: {}
-    }]
-  }
+      labelSet: genLabels('Metric chart', '0.99')
+    }
+  ]
 };
 
 export const emptyLabels: LabelsInfo = {
@@ -169,7 +165,7 @@ export const metricWithLabels: ChartModel = {
   name: 'Metric chart',
   unit: 'bytes',
   spans: 6,
-  metric: [{
+  metrics: [{
     values: [[0, 0]],
     labelSet: {'code': '200'}
   }, {

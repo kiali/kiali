@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// ProcMapPermissions contains permission settings read from /proc/[pid]/maps
 type ProcMapPermissions struct {
 	// mapping has the [R]ead flag set
 	Read bool

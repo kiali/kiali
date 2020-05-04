@@ -6,7 +6,8 @@ export type Datapoint = [number, number];
 export interface TimeSeries {
   labelSet: LabelSet;
   values: Datapoint[];
-  name?: string;
 }
 
-export type Histogram = { [key: string]: TimeSeries[] };
+export interface NamedTimeSeries extends TimeSeries {
+  name: string;
+}

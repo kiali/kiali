@@ -28,12 +28,12 @@ func (o *ClientMock) GetDashboards(namespace string) ([]v1alpha1.MonitoringDashb
 
 func FakeChart(id, dataType string) v1alpha1.MonitoringDashboardChart {
 	return v1alpha1.MonitoringDashboardChart{
-		Name:       "My chart " + id,
-		Unit:       "s",
-		UnitScale:  10.0,
-		Spans:      6,
-		MetricName: "my_metric_" + id,
-		DataType:   dataType,
+		Name:      "My chart " + id,
+		Unit:      "s",
+		UnitScale: 10.0,
+		Spans:     6,
+		Metrics:   []v1alpha1.MonitoringDashboardMetric{{DisplayName: "My chart " + id, MetricName: "my_metric_" + id}},
+		DataType:  dataType,
 		Aggregations: []v1alpha1.MonitoringDashboardAggregation{
 			v1alpha1.MonitoringDashboardAggregation{
 				DisplayName: "Agg " + id,

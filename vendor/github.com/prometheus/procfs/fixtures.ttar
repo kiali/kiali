@@ -1609,6 +1609,37 @@ Mode: 664
 Directory: fixtures/proc/fs
 Mode: 755
 # ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Directory: fixtures/proc/fs/fscache
+Mode: 755
+# ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Path: fixtures/proc/fs/fscache/stats
+Lines: 24
+FS-Cache statistics
+Cookies: idx=3 dat=67877 spc=0
+Objects: alc=67473 nal=0 avl=67473 ded=388
+ChkAux : non=12 ok=33 upd=44 obs=55
+Pages  : mrk=547164 unc=364577
+Acquire: n=67880 nul=98 noc=25 ok=67780 nbf=39 oom=26
+Lookups: n=67473 neg=67470 pos=58 crt=67473 tmo=85
+Invals : n=14 run=13
+Updates: n=7 nul=3 run=8
+Relinqs: n=394 nul=1 wcr=2 rtr=3
+AttrChg: n=6 ok=5 nbf=4 oom=3 run=2
+Allocs : n=20 ok=19 wt=18 nbf=17 int=16
+Allocs : ops=15 owt=14 abt=13
+Retrvls: n=151959 ok=82823 wt=23467 nod=69136 nbf=15 int=69 oom=43
+Retrvls: ops=151959 owt=42747 abt=44
+Stores : n=225565 ok=225565 agn=12 nbf=13 oom=14
+Stores : ops=69156 run=294721 pgs=225565 rxd=225565 olm=43
+VmScan : nos=364512 gon=2 bsy=43 can=12 wt=66
+Ops    : pend=42753 run=221129 enq=628798 can=11 rej=88
+Ops    : ini=377538 dfr=27 rel=377538 gc=37
+CacheOp: alo=1 luo=2 luc=3 gro=4
+CacheOp: inv=5 upo=6 dro=7 pto=8 atc=9 syn=10
+CacheOp: rap=11 ras=12 alp=13 als=14 wrp=15 ucp=16 dsp=17
+CacheEv: nsp=18 stl=19 rtr=20 cul=21EOF
+Mode: 644
+# ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Directory: fixtures/proc/fs/xfs
 Mode: 755
 # ttar - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -194,13 +194,13 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
 	result, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
-		return &Metric{err: err}
+		return &Metric{Err: err}
 	}
 	switch result.Type() {
 	case model.ValMatrix:
 		return &Metric{Matrix: result.(model.Matrix)}
 	}
-	return &Metric{err: fmt.Errorf("invalid query, matrix expected: %s", query)}
+	return &Metric{Err: fmt.Errorf("invalid query, matrix expected: %s", query)}
 }
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.

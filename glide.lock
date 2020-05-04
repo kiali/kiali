@@ -1,5 +1,5 @@
-hash: 97531da42e811be0710fe2bcb5c7161d045881d2197af7710169fcc48d29dacd
-updated: 2020-04-07T15:09:33.56528743+02:00
+hash: bd4ff4db3028fc99e8d8acf93da59d1ab79196e6bf8ac23b3507087ffb854df7
+updated: 2020-04-27T15:38:15.077206012+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -51,7 +51,7 @@ imports:
 - name: github.com/jtblin/go-ldap-client
   version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
-  version: e7fab0c4fbf0b4995a6d3b0c7d33be26e98d6734
+  version: 5ae8b0ffa6d41e06538d9e81d0db45fce59f88f0
   subpackages:
   - business
   - config
@@ -104,7 +104,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 8068798bcbd1702c3fc908a35f28e98b41f357aa
+  version: 0f5e4f3adc672241b4ada841d1e556d4b1e1c31b
   subpackages:
   - internal/fs
   - internal/util
@@ -151,7 +151,7 @@ imports:
   subpackages:
   - rate
 - name: google.golang.org/appengine
-  version: b6ce0843b556e44e6416df5c2fd05db0869cc8d4
+  version: 553959209a20f3be281c16dd5be5c740a893978f
   subpackages:
   - internal
   - internal/base

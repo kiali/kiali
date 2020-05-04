@@ -118,8 +118,44 @@ EOM2
 
   local create_smcp="$1"
   OPERATOR_SOURCE_NAME=${OPERATOR_SOURCE_NAME:-redhat-operators}
-  infomsg "Installing the Service Mesh operator..."
+  infomsg "Installing the Service Mesh operators..."
   cat <<EOM | ${OC} apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: elasticsearch-operator
+  namespace: openshift-operators
+spec:
+  channel: "4.3"
+  installPlanApproval: Automatic
+  name: elasticsearch-operator
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: jaeger-product
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: jaeger-product
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: $OPERATOR_SOURCE_NAME
+  sourceNamespace: openshift-marketplace
+---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -190,8 +226,15 @@ EOM
 
     infomsg "Creating control plane namespace: ${CONTROL_PLANE_NAMESPACE}"
     ${OC} create namespace ${CONTROL_PLANE_NAMESPACE}
-    echo "Wait a few seconds for the webhooks to prepare themselves..."
-    sleep 10
+
+    infomsg "Wait for the webhook to be created."
+    while [ "$(${OC} get validatingwebhookconfigurations -o name | grep servicemesh)" == "" ]
+    do
+      echo -n "."
+      sleep 5
+    done
+    echo "done."
+
     infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
     if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
       ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f ${MAISTRA_SMCP_YAML}
@@ -200,6 +243,11 @@ EOM
       rm -f /tmp/maistra-smcp.yaml
       get_downloader
       eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.1/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_full.yaml"
+
+      # The example we just downloaded doesn't specify a version. We could set it explicitly to v1.1
+      # but the webhook will set the value to v1.1 for us automagically.
+      #sed -i 's/istio:/version: v1.1\n  istio:/' /tmp/maistra-smcp.yaml
+
       ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f /tmp/maistra-smcp.yaml
 
       # START CODE THAT IS NECESSARY TO PULL CONTENT FROM PRIVATE MAISTRA QUAY REPO
@@ -461,7 +509,7 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
     ${OC} delete -n openshift-operators ${r}
   done
 
-  # clean up additional leftover items
+  # clean up additional leftover items (TODO: is this still needed for SM 1.1?)
   # see: https://docs.openshift.com/container-platform/4.1/service_mesh/service_mesh_install/removing-ossm.html#ossm-remove-cleanup_removing-ossm
   ${OC} delete validatingwebhookconfiguration/openshift-operators.servicemesh-resources.maistra.io
   ${OC} delete -n openshift-operators daemonset/istio-node
@@ -506,6 +554,14 @@ elif [ "$_CMD" = "k-uninstall" ]; then
     ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
   fi
 
+  debug "Waiting for Kiali CR to disappear..."
+  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
+  while [ "${kiali_deployment}" != "" ]
+  do
+    sleep 2
+    _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
+  done
+
   # clean up OLM subscriptions
   for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep kiali)
   do
@@ -513,7 +569,7 @@ elif [ "$_CMD" = "k-uninstall" ]; then
   done
 
   # clean up OLM CSVs which deletes the operator and its related resources
-  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali)
+  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali-operator)
   do
     ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done

@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/k-charted/prometheus"
@@ -28,4 +29,22 @@ func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string
 func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
 	args := o.Called(labels)
 	return args.Get(0).([]string), args.Error(1)
+}
+
+func FakeCounter(value int) prometheus.Metric {
+	return prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{},
+				Values: []model.SamplePair{model.SamplePair{Timestamp: 0, Value: model.SampleValue(value)}},
+			},
+		},
+	}
+}
+
+func FakeHistogram(avg, p99 int) prometheus.Histogram {
+	return prometheus.Histogram{
+		"0.99": FakeCounter(p99),
+		"avg":  FakeCounter(avg),
+	}
 }

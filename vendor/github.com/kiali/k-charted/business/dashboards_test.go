@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	pmodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -14,7 +13,7 @@ import (
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
 	"github.com/kiali/k-charted/log"
 	"github.com/kiali/k-charted/model"
-	"github.com/kiali/k-charted/prometheus"
+	"github.com/kiali/k-charted/prometheus/mock"
 	pmock "github.com/kiali/k-charted/prometheus/mock"
 )
 
@@ -55,8 +54,8 @@ func TestGetDashboard(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.MetricsQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.MetricsQuery).Return(fakeHistogram(11))
+	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.MetricsQuery).Return(mock.FakeCounter(10))
+	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.MetricsQuery).Return(mock.FakeHistogram(11, 11))
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -67,10 +66,14 @@ func TestGetDashboard(t *testing.T) {
 	assert.Len(dashboard.Charts, 2)
 	assert.Equal("My chart 1_1", dashboard.Charts[0].Name)
 	assert.Equal("My chart 1_2", dashboard.Charts[1].Name)
-	assert.Nil(dashboard.Charts[0].Histogram)
-	assert.Nil(dashboard.Charts[1].Metric)
-	assert.Equal(float64(100), dashboard.Charts[0].Metric[0].Values[0].Value)
-	assert.Equal(float64(110), dashboard.Charts[1].Histogram["avg"][0].Values[0].Value)
+	assert.Len(dashboard.Charts[0].Metrics, 1)
+	// Note: fake dashboard has scale=10 for every chart
+	assert.Equal(float64(100), dashboard.Charts[0].Metrics[0].Values[0].Value)
+	assert.Len(dashboard.Charts[1].Metrics, 2)
+	assert.Equal(float64(110), dashboard.Charts[1].Metrics[0].Values[0].Value)
+	assert.Equal(float64(110), dashboard.Charts[1].Metrics[1].Values[0].Value)
+	assert.Equal("0.99", dashboard.Charts[1].Metrics[0].LabelSet["__stat__"])
+	assert.Equal("avg", dashboard.Charts[1].Metrics[1].LabelSet["__stat__"])
 }
 
 func TestGetDashboardFromKialiNamespace(t *testing.T) {
@@ -89,8 +92,8 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.MetricsQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.MetricsQuery).Return(fakeHistogram(11))
+	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.MetricsQuery).Return(mock.FakeCounter(10))
+	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.MetricsQuery).Return(mock.FakeHistogram(11, 12))
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -214,23 +217,6 @@ func TestDiscoveryMatcherWithComposition(t *testing.T) {
 	assert.Equal("Runtime 2", runtimes[0].Name)
 	assert.Len(runtimes[0].DashboardRefs, 1)
 	assert.Equal("dashboard2", runtimes[0].DashboardRefs[0].Template)
-}
-
-func fakeCounter(value int) prometheus.Metric {
-	return prometheus.Metric{
-		Matrix: pmodel.Matrix{
-			&pmodel.SampleStream{
-				Metric: pmodel.Metric{},
-				Values: []pmodel.SamplePair{pmodel.SamplePair{Timestamp: 0, Value: pmodel.SampleValue(value)}},
-			},
-		},
-	}
-}
-
-func fakeHistogram(avg int) prometheus.Histogram {
-	return prometheus.Histogram{
-		"avg": fakeCounter(avg),
-	}
 }
 
 func fakeDashboard(id string) *v1alpha1.MonitoringDashboard {

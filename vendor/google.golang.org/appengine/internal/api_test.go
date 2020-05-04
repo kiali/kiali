@@ -415,7 +415,7 @@ func TestAPICallAllocations(t *testing.T) {
 	}
 
 	// Lots of room for improvement...
-	const min, max float64 = 60, 85
+	const min, max float64 = 60, 86
 	if avg < min || max < avg {
 		t.Errorf("Allocations per API call = %g, want in [%g,%g]", avg, min, max)
 	}
