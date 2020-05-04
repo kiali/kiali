@@ -73,8 +73,24 @@ type Iter8ExperimentStatus struct {
 	CurrentIteration  int                    `json:"currentIteration"`
 	AnalysisState     map[string]interface{} `json:"analysisState"`
 	GrafanaURL        string                 `json:"grafanaURL"`
-	Assestment        struct {
+	Assestment    struct {
 		Conclusions []string `json:"conclusions"`
+		AllSuccessCriteriaMet bool `json:"all_success_criteria_met,omitempty"`
+		AbortExperiment bool `json:"abort_experiment,omitempty"`
+		SuccessCriteriaStatus [] struct {
+			// Name of the metric to which the criterion applies
+			// example: iter8_latency
+			MetricName string `json:"metric_name"`
+
+			// Assessment of this success criteria in plain English
+			Conclusions []string `json:"conclusions"`
+
+			// Indicates whether or not the success criterion for the corresponding metric has been met
+			SuccessCriterionMet bool `json:"success_criterion_met"`
+
+			// Indicates whether or not the experiment must be aborted on the basis of the criterion for this metric
+			AbortExperiment bool `json:"abort_experiment"`
+		}`json:"success_criteria,omitempty"`
 	} `json:"assessment"`
 	TrafficSplitPercentage struct {
 		Baseline  int `json:"baseline"`
