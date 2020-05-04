@@ -8,7 +8,13 @@ exports[`HealthIndicator renders healthy 1`] = `
   boundary="window"
   className="health_indicator"
   content={
-    <TextContent>
+    <TextContent
+      style={
+        Object {
+          "color": "#fff",
+        }
+      }
+    >
       <Text
         component="h2"
       >

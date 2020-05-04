@@ -4,6 +4,7 @@ import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 import './Health.css';
+import { PfColors } from '../Pf/PfColors';
 
 export enum DisplayMode {
   LARGE,
@@ -68,7 +69,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
   }
   renderHealthTooltip(health: H.Health) {
     return (
-      <TextContent>
+      <TextContent style={{ color: PfColors.White }}>
         <Text component={TextVariants.h2}>{this.state.globalStatus.name}</Text>
         <HealthDetails health={health} />
       </TextContent>

@@ -5,19 +5,24 @@ svg:not(:root).icon-na {
   overflow: visible;
 }
 .tippy-popper[x-placement^='left'] .pf-tooltip-theme .tippy-arrow {
-  background-color: #fff;
-  border-color: black;
-  border-width: 1px;
-  border-style: solid;
+  // This is the old style of health tooltip with white background
+  // I will keep it here instead to remove completely the style in case we need tweaks in the future
+  // background-color: #fff;
+  // border-color: black;
+  // border-width: 1px;
+  // border-style: solid;
 }
 .health_indicator .pf-c-tooltip__content {
-  background-color: #fff;
-  border-style: solid;
-  border-color: black;
+  // This is the old style of health tooltip with white background
+  // I will keep it here instead to remove completely the style in case we need tweaks in the future
+  // background-color: #fff;
+  // border-style: solid;
+  // border-color: black;
   border-width: 1px;
   text-align: left;
 }
 .health_indicator .pf-c-content ul {
   margin-bottom: var(--pf-c-content--ul--MarginTop);
   margin-top: 0;
+  color: #fff;
 }
