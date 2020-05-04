@@ -9,19 +9,19 @@ type Iter8Info struct {
 }
 
 type Iter8ExperimentItem struct {
-	Name                   string `json:"name"`
-	Phase                  string `json:"phase"`
-	CreatedAt              int64 `json:"createdAt"`
-	Status                 string `json:"status"`
-	Baseline               string `json:"baseline"`
-	BaselinePercentage     int    `json:"baselinePercentage"`
-	Candidate              string `json:"candidate"`
-	CandidatePercentage    int    `json:"candidatePercentage"`
-	Namespace              string `json:"namespace"`
+	Name                   string   `json:"name"`
+	Phase                  string   `json:"phase"`
+	CreatedAt              int64    `json:"createdAt"`
+	Status                 string   `json:"status"`
+	Baseline               string   `json:"baseline"`
+	BaselinePercentage     int      `json:"baselinePercentage"`
+	Candidate              string   `json:"candidate"`
+	CandidatePercentage    int      `json:"candidatePercentage"`
+	Namespace              string   `json:"namespace"`
 	StartedAt              int64    `json:"startedAt"`
 	EndedAt                int64    `json:"endedAt"`
-	TargetService          string `json:"targetService"`
-	TargetServiceNamespace string `json:"targetServiceNamespace"`
+	TargetService          string   `json:"targetService"`
+	TargetServiceNamespace string   `json:"targetServiceNamespace"`
 	AssessmentConclusion   []string `json:"assessmentConclusion"`
 }
 
@@ -33,10 +33,10 @@ type Iter8ExperimentDetail struct {
 }
 
 type Iter8CriteriaDetail struct {
-	Name     string        `json:"name"`
-	Criteria Iter8Criteria `json:"criteria"`
-	Metric   Iter8Metric   `json:"metric"`
-	Status Iter8SuccessCrideriaStatus `json:"status"`
+	Name     string                     `json:"name"`
+	Criteria Iter8Criteria              `json:"criteria"`
+	Metric   Iter8Metric                `json:"metric"`
+	Status   Iter8SuccessCrideriaStatus `json:"status"`
 }
 
 type Iter8Metric struct {
@@ -47,9 +47,9 @@ type Iter8Metric struct {
 }
 
 type Iter8SuccessCrideriaStatus struct {
-	Conclusions []string `json:"conclusions"`
-	SuccessCriterionMet bool `json:"success_criterion_met"`
-	AbortExperiment bool `json:"abort_experiment"`
+	Conclusions         []string `json:"conclusions"`
+	SuccessCriterionMet bool     `json:"success_criterion_met"`
+	AbortExperiment     bool     `json:"abort_experiment"`
 }
 
 type Iter8ExperimentSpec struct {
@@ -89,9 +89,9 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	for i, c := range spec.Analysis.SuccessCriteria {
 		metricName := c.MetricName
 		successCrideriaStatus := Iter8SuccessCrideriaStatus{}
-		for j , a := range status.Assestment.SuccessCriteriaStatus {
+		for j, a := range status.Assestment.SuccessCriteriaStatus {
 			if a.MetricName == c.MetricName {
-				successCrideriaStatus = Iter8SuccessCrideriaStatus {
+				successCrideriaStatus = Iter8SuccessCrideriaStatus{
 					status.Assestment.SuccessCriteriaStatus[j].Conclusions,
 					status.Assestment.SuccessCriteriaStatus[j].SuccessCriterionMet,
 					status.Assestment.SuccessCriteriaStatus[j].AbortExperiment,
@@ -113,7 +113,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 				QueryTemplate:      metrics[metricName].QueryTemplate,
 				SampleSizeTemplate: metrics[metricName].SampleSizeTemplate,
 			},
-			Status : successCrideriaStatus,
+			Status: successCrideriaStatus,
 		}
 		criterias[i] = criteriaDetail
 	}
@@ -125,7 +125,6 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		MaxTrafficPercentage: spec.TrafficControl.MaxTrafficPercentage,
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
 	}
-
 
 	// startTime, _ := strconv.ParseInt(status.StartTimeStamp, 10, 64)
 	// startTimeString := time.Unix(0, status.StartTimestamp*int64(1000000)).Format(time.RFC1123)
@@ -143,7 +142,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		BaselinePercentage:     status.TrafficSplitPercentage.Baseline,
 		Candidate:              spec.TargetService.Candidate,
 		CandidatePercentage:    status.TrafficSplitPercentage.Candidate,
-		CreatedAt:		status.CreateTimeStamp,
+		CreatedAt:              status.CreateTimeStamp,
 		StartedAt:              status.StartTimeStamp,
 		EndedAt:                status.EndTimestamp,
 		TargetService:          spec.TargetService.Name,
@@ -164,8 +163,8 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 	i.Phase = status.Phase
 	i.Status = status.Message
 	i.CreatedAt = iter8Object.GetStatus().CreateTimeStamp
-	i.StartedAt =  iter8Object.GetStatus().StartTimeStamp
-	i.EndedAt =  iter8Object.GetStatus().EndTimestamp
+	i.StartedAt = iter8Object.GetStatus().StartTimeStamp
+	i.EndedAt = iter8Object.GetStatus().EndTimestamp
 
 	i.Baseline = spec.TargetService.Baseline
 	i.BaselinePercentage = status.TrafficSplitPercentage.Baseline

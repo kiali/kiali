@@ -170,16 +170,16 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
-	for _, criteria :=  range newExperimentSpec.Criterias {
-		 min_max := struct {
-			Min float64  `json:"min,omitempty"`
-			Max float64  `json:"max,omitempty"`
-		} {
+	for _, criteria := range newExperimentSpec.Criterias {
+		min_max := struct {
+			Min float64 `json:"min,omitempty"`
+			Max float64 `json:"max,omitempty"`
+		}{
 			Min: 0.1,
 			Max: 1.0,
 		}
-		object.Spec.Analysis.SuccessCriteria = append (object.Spec.Analysis.SuccessCriteria,
-			struct  {
+		object.Spec.Analysis.SuccessCriteria = append(object.Spec.Analysis.SuccessCriteria,
+			struct {
 				MetricName    string  `json:"metricName,omitempty"`
 				ToleranceType string  `json:"toleranceType,omitempty"`
 				Tolerance     float64 `json:"tolerance,omitempty"`
@@ -189,13 +189,13 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 					Max float64 `json:"max,omitempty"`
 				} `json:"min_max,omitempty"`
 				StopOnFailure bool `json:"stopOnFailure,omitempty"`
-			}  {
-				MetricName: criteria.Metric,
-				ToleranceType : criteria.ToleranceType,
-				Tolerance: criteria.Tolerance,
+			}{
+				MetricName:    criteria.Metric,
+				ToleranceType: criteria.ToleranceType,
+				Tolerance:     criteria.Tolerance,
 				StopOnFailure: criteria.StopOnFailure,
-				MinMax: min_max,
-		})
+				MinMax:        min_max,
+			})
 	}
 
 	b, err2 := json.Marshal(object)
