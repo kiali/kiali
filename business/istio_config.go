@@ -829,6 +829,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case ServiceRoleBindings:
 		istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
 		istioConfigDetail.ServiceRoleBinding.Parse(result)
+	case PeerAuthentications:
+		istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
+		istioConfigDetail.PeerAuthentication.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -837,7 +840,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 		kialiCache.RefreshNamespace(namespace)
 	}
 	return istioConfigDetail, err
-
 }
 
 func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype string, body []byte) (models.IstioConfigDetails, error) {
