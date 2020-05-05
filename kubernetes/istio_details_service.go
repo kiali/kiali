@@ -931,6 +931,52 @@ func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject
 	return authorizationPolicies, nil
 }
 
+func (in *IstioClient) GetPeerAuthentications(namespace string) ([]IstioObject, error) {
+	// In case PeerAuthentication aren't present on Istio, return empty array.
+	if !in.hasSecurityResource(PeerAuthentications) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(PeerAuthentications).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[PeerAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	peerAuthenticationsList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PeerAuthentication list", namespace)
+	}
+
+	peerAuthentications := make([]IstioObject, 0)
+	for _, pa := range peerAuthenticationsList.GetItems() {
+		s := pa.DeepCopyIstioObject()
+		s.SetTypeMeta(typeMeta)
+		peerAuthentications = append(peerAuthentications, s)
+	}
+	return peerAuthentications, nil
+}
+
+func (in *IstioClient) GetPeerAuthentication(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(PeerAuthentications).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[PeerAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	peerAuthentication, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PeerAuthentication object", namespace)
+	}
+	p := peerAuthentication.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
+}
+
 func (in *IstioClient) GetAuthorizationPolicy(namespace string, name string) (IstioObject, error) {
 	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(AuthorizationPolicies).SubResource(name).Do().Get()
 	if err != nil {

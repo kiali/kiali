@@ -97,6 +97,11 @@ const (
 	AuthorizationPoliciesType     = "AuthorizationPolicy"
 	AuthorizationPoliciesTypeList = "AuthorizationPolicyList"
 
+	// Peer Authentications
+	PeerAuthentications         = "peerauthentications"
+	PeerAuthenticationsType     = "PeerAuthentication"
+	PeerAuthenticationsTypeList = "PeerAuthenticationList"
+
 	// Config - Rules
 
 	rules        = "rules"
@@ -253,6 +258,10 @@ var (
 		objectKind     string
 		collectionKind string
 	}{
+		{
+			objectKind:     PeerAuthenticationsType,
+			collectionKind: PeerAuthenticationsTypeList,
+		},
 		{
 			objectKind:     AuthorizationPoliciesType,
 			collectionKind: AuthorizationPoliciesTypeList,
