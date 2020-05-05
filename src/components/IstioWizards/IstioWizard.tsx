@@ -125,6 +125,22 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
               simple: ROUND_ROBIN
             }
       };
+      const gateway: GatewaySelectorState = {
+        addGateway: false,
+        gwHosts: '',
+        gwHostsValid: false,
+        newGateway: false,
+        selectedGateway: '',
+        addMesh: false,
+        port: 80
+      };
+      if (hasGateway(this.props.virtualServices)) {
+        const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
+        gateway.addGateway = true;
+        gateway.selectedGateway = gatewaySelected;
+        gateway.addMesh = isMesh;
+      }
+
       this.setState({
         showWizard: this.props.show,
         workloads: [],
@@ -140,7 +156,8 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
           initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
             ? initVsHosts
             : [fqdnServiceName(this.props.serviceName, this.props.namespace)],
-        trafficPolicy: trafficPolicy
+        trafficPolicy: trafficPolicy,
+        gateway: gateway
       });
     }
   }
