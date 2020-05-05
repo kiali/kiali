@@ -55,7 +55,7 @@ type IstioConfigDetails struct {
 	ServiceRoleBinding    *ServiceRoleBinding    `json:"serviceRoleBinding"`
 	Sidecar               *Sidecar               `json:"sidecar"`
 	AuthorizationPolicy   *AuthorizationPolicy   `json:"authorizationPolicy"`
-	PeerAuthentication    *PeerAuthentication     `json:"peerAuthentication"`
+	PeerAuthentication    *PeerAuthentication    `json:"peerAuthentication"`
 	Permissions           ResourcePermissions    `json:"permissions"`
 	IstioValidation       *IstioValidation       `json:"validation"`
 }
