@@ -149,6 +149,11 @@ type IstioClient struct {
 	// See istio_details_service.go#HasSecurityResource() for more details.
 	securityResources *map[string]bool
 
+	// securityResources private variable will check which resources kiali has access to from security.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#HasSecurityResource() for more details.
+	authenticationResources *map[string]bool
+
 	// isMixedDisabled private variable will check if mixed is enabled in the current istio deployment.
 	// It is represented with a pointer to a bool. True if mixer is disabled, false instead
 	isMixerDisabled *bool
