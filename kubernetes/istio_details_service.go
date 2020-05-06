@@ -1446,45 +1446,30 @@ func GatewayNames(gateways [][]IstioObject) map[string]struct{} {
 	return names
 }
 
-func PolicyHasStrictMTLS(policy IstioObject) bool {
-	_, mode := PolicyHasMTLSEnabled(policy)
+func PeerAuthnHasStrictMTLS(peerAuthn IstioObject) bool {
+	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
-	// It is mandatory to have default as a name
-	if policyMeta := policy.GetObjectMeta(); policyMeta.Name != "default" {
-		return false, ""
-	}
-
+func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 	// It is no globally enabled when has targets
-	targets, targetPresent := policy.GetSpec()["targets"]
-	specificTarget := targetPresent && len(targets.([]interface{})) > 0
-	if specificTarget {
+	if peerAuthn.HasMatchLabelsSelector() {
 		return false, ""
 	}
 
-	// It is globally enabled when a peer has mtls enabled
-	peers, peersPresent := policy.GetSpec()["peers"]
-	if !peersPresent {
-		return false, ""
-	}
-
-	for _, peer := range peers.([]interface{}) {
-		peerMap := peer.(map[string]interface{})
-		if mtls, present := peerMap["mtls"]; present {
-			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
-				if modeItf, found := mtlsMap["mode"]; found {
-					if mode, ok := modeItf.(string); ok {
-						return true, mode
-					} else {
-						return false, ""
-					}
+	// It is globally enabled when mtls is in STRICT mode
+	if mtls, mtlsPresent := peerAuthn.GetSpec()["mtls"]; mtlsPresent {
+		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
+			if modeItf, found := mtlsMap["mode"]; found {
+				if mode, ok := modeItf.(string); ok {
+					return true, mode
+				} else {
+					return false, ""
 				}
+			} else {
+				// STRICT when mtls object is empty
+				return true, "STRICT"
 			}
-
-			// STRICT mode when mtls object is empty
-			return true, "STRICT"
 		}
 	}
 

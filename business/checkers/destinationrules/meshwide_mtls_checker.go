@@ -28,7 +28,7 @@ func (m MeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		checkerId = "destinationrules.mtls.servicemeshpolicymissing"
 	}
 	for _, mp := range mPolicies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}

@@ -17,7 +17,7 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// if MeshPolicy doesn't have mtls in strict mode, stop validation with any check.
-	if strictMode := kubernetes.PolicyHasStrictMTLS(t.MeshPolicy); !strictMode {
+	if strictMode := kubernetes.PeerAuthnHasStrictMTLS(t.MeshPolicy); !strictMode {
 		return validations, true
 	}
 

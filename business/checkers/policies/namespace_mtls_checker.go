@@ -15,7 +15,7 @@ func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// if Policy doesn't enables mTLS, stop validation with any check.
-	if strictMode := kubernetes.PolicyHasStrictMTLS(t.Policy); !strictMode {
+	if strictMode := kubernetes.PeerAuthnHasStrictMTLS(t.Policy); !strictMode {
 		return validations, true
 	}
 

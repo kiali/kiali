@@ -20,7 +20,7 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// otherwise, check among Policies for a rule enabling ns-wide mTLS
 	for _, mp := range m.MTLSDetails.Policies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}
@@ -33,7 +33,7 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		mPolicies = m.MTLSDetails.ServiceMeshPolicies
 	}
 	for _, mp := range mPolicies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}

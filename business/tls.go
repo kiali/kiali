@@ -22,7 +22,7 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	mpp, mpErr := in.hasMeshPolicyEnabled()
+	mpp, mpErr := in.hasMeshPeerAuthnEnabled()
 	if mpErr != nil {
 		return models.MTLSStatus{}, mpErr
 	}
@@ -44,16 +44,11 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 	}, nil
 }
 
-func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
+func (in *TLSService) hasMeshPeerAuthnEnabled() (bool, error) {
 	var mps []kubernetes.IstioObject
 	var err error
 	if !in.k8s.IsMaistraApi() {
-		// MeshPolicies are not namespaced.
-		// See KIALI-3223: Query MeshPolicies without namespace as this API doesn't work in the same way in AWS EKS
-		if mps, err = in.k8s.GetMeshPolicies(); err != nil {
-			// This query can return false if Kiali doesn't have cluster permissions
-			// On this case we log internally the error but we return a false with nil
-			checkForbidden("GetMeshPolicies", err, "probably Kiali doesn't have cluster permissions")
+		if mps, err = in.k8s.GetPeerAuthentications(config.Get().IstioNamespace); err != nil {
 			return false, nil
 		}
 	} else {
@@ -73,7 +68,7 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 	}
 
 	for _, mp := range mps {
-		if strictMode := kubernetes.PolicyHasStrictMTLS(mp); strictMode {
+		if strictMode := kubernetes.PeerAuthnHasStrictMTLS(mp); strictMode {
 			return true, nil
 		}
 	}
@@ -165,7 +160,7 @@ func (in TLSService) hasPolicyNamespacemTLSDefinition(namespace string) (string,
 	}
 
 	for _, p := range ps {
-		if enabled, mode := kubernetes.PolicyHasMTLSEnabled(p); enabled {
+		if enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); enabled {
 			return mode, nil
 		}
 	}
