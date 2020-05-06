@@ -99,6 +99,8 @@ type IstioClientInterface interface {
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
 	GetAuthorizationPolicy(namespace string, name string) (IstioObject, error)
 	GetAuthorizationPolicies(namespace string) ([]IstioObject, error)
+	GetPeerAuthentication(namespace string, name string) (IstioObject, error)
+	GetPeerAuthentications(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)

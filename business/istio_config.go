@@ -43,6 +43,7 @@ type IstioConfigCriteria struct {
 	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
 	IncludeAuthorizationPolicies  bool
+	IncludePeerAuthentication     bool
 }
 
 const (
@@ -65,6 +66,7 @@ const (
 	ServiceMeshPolicies    = "servicemeshpolicies"
 	ServiceMeshRbacConfigs = "servicemeshrbacconfigs"
 	AuthorizationPolicies  = "authorizationpolicies"
+	PeerAuthentications    = "peerauthentications"
 	Experiments            = "experiments"
 )
 
@@ -88,6 +90,7 @@ var resourceTypesToAPI = map[string]string{
 	ServiceMeshPolicies:    kubernetes.MaistraAuthenticationGroupVersion.Group,
 	ServiceMeshRbacConfigs: kubernetes.MaistraRbacGroupVersion.Group,
 	AuthorizationPolicies:  kubernetes.SecurityGroupVersion.Group,
+	PeerAuthentications:    kubernetes.SecurityGroupVersion.Group,
 	// Externsions
 	Experiments: kubernetes.Iter8GroupVersion.Group,
 }
@@ -140,6 +143,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		ServiceRoles:           models.ServiceRoles{},
 		ServiceRoleBindings:    models.ServiceRoleBindings{},
 		AuthorizationPolicies:  models.AuthorizationPolicies{},
+		PeerAuthentications:    models.PeerAuthentications{},
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -148,10 +152,10 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, err
 	}
 
-	errChan := make(chan error, 18)
+	errChan := make(chan error, 19)
 
 	var wg sync.WaitGroup
-	wg.Add(19)
+	wg.Add(20)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -343,6 +347,17 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				(&istioConfigList.AuthorizationPolicies).Parse(ap)
 			} else {
 				errChan <- apErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludePeerAuthentication {
+			if pa, paErr := in.k8s.GetPeerAuthentications(criteria.Namespace); paErr == nil {
+				(&istioConfigList.PeerAuthentications).Parse(pa)
+			} else {
+				errChan <- paErr
 			}
 		}
 	}(errChan)
@@ -593,6 +608,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		} else {
 			err = iErr
 		}
+	case PeerAuthentications:
+		if ap, iErr := in.k8s.GetPeerAuthentication(namespace, object); iErr == nil {
+			istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
+			istioConfigDetail.PeerAuthentication.Parse(ap)
+		} else {
+			err = iErr
+		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -807,6 +829,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case ServiceRoleBindings:
 		istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
 		istioConfigDetail.ServiceRoleBinding.Parse(result)
+	case PeerAuthentications:
+		istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
+		istioConfigDetail.PeerAuthentication.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -815,7 +840,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 		kialiCache.RefreshNamespace(namespace)
 	}
 	return istioConfigDetail, err
-
 }
 
 func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype string, body []byte) (models.IstioConfigDetails, error) {

@@ -4212,6 +4212,9 @@
           "type": "string",
           "x-go-name": "ObjectType"
         },
+        "peerAuthentication": {
+          "$ref": "#/definitions/peerAuthentication"
+        },
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
@@ -4288,6 +4291,9 @@
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
+        },
+        "peerAuthentications": {
+          "$ref": "#/definitions/authorizationRules"
         },
         "policies": {
           "$ref": "#/definitions/Policies"
@@ -6777,13 +6783,13 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "authorizationRules": {
-      "description": "This is used for returning an array of AuthorizationPolicies",
+      "description": "This is used for returning an array of PeerAuthentication",
       "type": "array",
-      "title": "AuthorizationPolicies authorizationPolicies",
+      "title": "PeerAuthentications peerAuthentications",
       "items": {
-        "$ref": "#/definitions/authorizationPolicy"
+        "$ref": "#/definitions/peerAuthentication"
       },
-      "x-go-name": "AuthorizationPolicies",
+      "x-go-name": "PeerAuthentications",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "destinationRule": {
@@ -7034,6 +7040,46 @@
         }
       },
       "x-go-name": "Namespace",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "peerAuthentication": {
+      "description": "This is used for returning an PeerAuthentication",
+      "type": "object",
+      "title": "PeerAuthentication peerAuthentication",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "mtls": {
+              "type": "object",
+              "x-go-name": "Mtls"
+            },
+            "portLevelMtls": {
+              "type": "object",
+              "x-go-name": "PortLevelMtls"
+            },
+            "selector": {
+              "type": "object",
+              "x-go-name": "Selector"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "PeerAuthentication",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "virtualService": {
