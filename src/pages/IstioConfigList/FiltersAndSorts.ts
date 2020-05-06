@@ -126,6 +126,10 @@ export const istioTypeFilter: FilterType = {
       title: 'QuotaSpecBinding'
     },
     {
+      id: 'PeerAuthentication',
+      title: 'PeerAuthentication'
+    },
+    {
       id: 'RbacConfig',
       title: 'RbacConfig'
     },

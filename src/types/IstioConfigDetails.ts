@@ -20,7 +20,8 @@ import {
   ClusterRbacConfig,
   Sidecar,
   ServiceMeshRbacConfig,
-  IstioObject
+  IstioObject,
+  PeerAuthentication
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -51,6 +52,7 @@ export interface IstioConfigDetails {
   serviceMeshRbacConfig: ServiceMeshRbacConfig;
   serviceRole: ServiceRole;
   serviceRoleBinding: ServiceRoleBinding;
+  peerAuthentication: PeerAuthentication;
   permissions: ResourcePermissions;
   validation: ObjectValidation;
 }

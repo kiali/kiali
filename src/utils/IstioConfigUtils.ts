@@ -58,6 +58,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.serviceRole;
     } else if (istioObjectDetails.serviceRoleBinding) {
       istioObject = istioObjectDetails.serviceRoleBinding;
+    } else if (istioObjectDetails.peerAuthentication) {
+      istioObject = istioObjectDetails.peerAuthentication;
     } else if (istioObjectDetails.sidecar) {
       istioObject = istioObjectDetails.sidecar;
     }

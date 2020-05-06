@@ -9,6 +9,7 @@ import {
   IstioRule,
   IstioTemplate,
   ObjectValidation,
+  PeerAuthentication,
   Policy,
   QuotaSpec,
   QuotaSpecBinding,
@@ -71,6 +72,7 @@ export interface IstioConfigList {
   sidecars: Sidecar[];
   serviceRoles: ServiceRole[];
   serviceRoleBindings: ServiceRoleBinding[];
+  peerAuthentications: PeerAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
   validations: Validations;
 }
@@ -95,6 +97,7 @@ export const dicIstioType = {
   ServiceRoleBinding: 'servicerolebindings',
   ServiceMeshPolicy: 'servicemeshpolicies',
   ServiceMeshRbacConfig: 'servicemeshrbacconfigs',
+  PeerAuthentication: 'peerauthentications',
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
@@ -115,7 +118,8 @@ export const dicIstioType = {
   serviceroles: 'ServiceRole',
   servicerolebindings: 'ServiceRoleBinding',
   servicemeshpolicies: 'ServiceMeshPolicy',
-  servicemeshrbacconfigs: 'ServiceMeshRbacConfig'
+  servicemeshrbacconfigs: 'ServiceMeshRbacConfig',
+  peerauthentications: 'PeerAuthentication'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -158,6 +162,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
     serviceRoles: unfiltered.serviceRoles.filter(sr => includeName(sr.metadata.name, names)),
     serviceRoleBindings: unfiltered.serviceRoleBindings.filter(srb => includeName(srb.metadata.name, names)),
+    peerAuthentications: unfiltered.peerAuthentications.filter(srb => includeName(srb.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

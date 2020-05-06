@@ -700,3 +700,24 @@ export interface ServiceRoleBindingSubject {
   user: string;
   properties: Map<string, string>;
 }
+
+export interface PeerAuthentication extends IstioObject {
+  selector?: PeerAuthenticationWorkloadSelector;
+  mtls?: PeerAuthenticationMutualTls;
+  portLevelMtls?: Map<number, PeerAuthenticationMutualTls>;
+}
+
+export interface PeerAuthenticationWorkloadSelector {
+  matchLabels: Map<string, string>;
+}
+
+export interface PeerAuthenticationMutualTls {
+  mode: PeerAuthenticationMutualTLSMode;
+}
+
+export enum PeerAuthenticationMutualTLSMode {
+  UNSET = 'UNSET',
+  DISABLE = 'DISABLE',
+  PERMISSIVE = 'PERMISSIVE',
+  STRICT = 'STRICT'
+}
