@@ -185,6 +185,31 @@ func (in *IstioClient) getSecurityResources() map[string]bool {
 	return *in.securityResources
 }
 
+func (in *IstioClient) hasAuthenticationResource(resource string) bool {
+	return in.getAuthenticationResources()[resource]
+}
+
+func (in *IstioClient) getAuthenticationResources() map[string]bool {
+	if in.authenticationResources != nil {
+		return *in.authenticationResources
+	}
+
+	authenticationResources := map[string]bool{}
+	path := fmt.Sprintf("/apis/%s", ApiAuthenticationVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				authenticationResources[resource.Name] = true
+			}
+		}
+	}
+	in.authenticationResources = &authenticationResources
+
+	return *in.authenticationResources
+}
+
 // GetVirtualServices return all VirtualServices for a given namespace.
 // If serviceName param is provided it will filter all VirtualServices having a host defined on a particular service.
 // It returns an error on any problem.
@@ -508,6 +533,11 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
+	// In case Policies aren't present on Istio, return empty array.
+	if !in.hasAuthenticationResource(policies) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(policies).Do().Get()
 	if err != nil {
 		return nil, err
@@ -550,6 +580,11 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 }
 
 func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
+	// In case MeshPolicies aren't present on Istio, return empty array.
+	if !in.hasAuthenticationResource(meshPolicies) {
+		return []IstioObject{}, nil
+	}
+
 	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
 	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
 	// Update: Removed the namespace filter as it doesn't work well in all platforms

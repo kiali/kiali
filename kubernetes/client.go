@@ -141,13 +141,18 @@ type IstioClient struct {
 
 	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
 	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#HasRbacResource() for more details.
+	// See istio_details_service.go#hasRbacResource() for more details.
 	rbacResources *map[string]bool
 
 	// securityResources private variable will check which resources kiali has access to from security.istio.io group
 	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#HasSecurityResource() for more details.
+	// See istio_details_service.go#hasSecurityResource() for more details.
 	securityResources *map[string]bool
+
+	// authenticationResources private variable will check which resources kiali has access to from authentication.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasAuthenticationResource() for more details.
+	authenticationResources *map[string]bool
 
 	// isMixedDisabled private variable will check if mixed is enabled in the current istio deployment.
 	// It is represented with a pointer to a bool. True if mixer is disabled, false instead
