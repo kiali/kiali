@@ -389,6 +389,9 @@ var (
 		// Authorization Policies
 		AuthorizationPolicies: AuthorizationPoliciesType,
 
+		// Peer Authentications
+		PeerAuthentications: PeerAuthenticationsType,
+
 		// Iter8
 		iter8experiments: iter8experimentType,
 	}
