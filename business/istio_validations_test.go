@@ -141,8 +141,8 @@ func getGateway(name string) []kubernetes.IstioObject {
 
 func fakeMeshPolicies() []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{
-		data.CreateEmptyMeshPolicy("default", nil),
-		data.CreateEmptyMeshPolicy("test", nil),
+		data.CreateEmptyMeshPeerAuthentication("default", nil),
+		data.CreateEmptyMeshPeerAuthentication("test", nil),
 	}
 }
 

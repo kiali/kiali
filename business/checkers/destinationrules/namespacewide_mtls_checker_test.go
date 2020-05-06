@@ -24,7 +24,7 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLSPeers("PERMISSIVE")),
+			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -46,7 +46,7 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -70,7 +70,7 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 

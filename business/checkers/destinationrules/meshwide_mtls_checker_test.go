@@ -31,7 +31,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("PERMISSIVE")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -47,7 +47,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -63,7 +63,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -79,7 +79,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("PERMISSIVE")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -94,7 +94,7 @@ func TestMTLSDRDisabledWithMeshPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -109,7 +109,7 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("PERMISSIVE")),
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 

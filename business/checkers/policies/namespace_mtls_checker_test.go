@@ -22,7 +22,7 @@ func TestPolicymTLSEnabled(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("STRICT"))
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
@@ -51,7 +51,7 @@ func TestPolicymTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 	assert := assert.New(t)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("STRICT"))
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -75,7 +75,7 @@ func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 	assert := assert.New(t)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("STRICT"))
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
 
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
@@ -101,7 +101,7 @@ func TestPolicyPermissive(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("PERMISSIVE"))
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),

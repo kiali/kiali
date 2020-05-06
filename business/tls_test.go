@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
+	"github.com/stretchr/testify/mock"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -17,11 +18,11 @@ func TestCorrectMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.NoError(err)
 	assert.Equal(true, meshPolicyEnabled)
@@ -31,134 +32,105 @@ func TestMeshPolicyWithoutNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	// Update: KIALI-3223, now this API doesn't require a list of namespaces, as it has a MeshPolicy it will return true
 	// Perhaps this test can be removed in the future
-	meshPolicyEnabled, _ := (tlsService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, _ := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.Equal(true, meshPolicyEnabled)
 }
 
-func TestPolicyWithWrongName(t *testing.T) {
+func TestPeerAuthnWithPermissiveMode(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakePermissiveMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
+	isGloballyEnabled, err := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, isGloballyEnabled)
 }
 
-func TestPolicyWithPermissiveMode(t *testing.T) {
+func TestPeerAuthnWithStrictMode(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakePermissiveMeshPolicy("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
-
-	assert.NoError(err)
-	assert.Equal(false, isGloballyEnabled)
-}
-
-func TestPolicyWithStrictMode(t *testing.T) {
-	assert := assert.New(t)
-
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeStrictMeshPolicy("default"), nil)
-	k8s.On("IsMaistraApi").Return(false)
-
-	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
+	isGloballyEnabled, err := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.NoError(err)
 	assert.Equal(true, isGloballyEnabled)
 }
 
-func fakeMeshPolicyEmptyMTLS(name string) []kubernetes.IstioObject {
-	mtls := []interface{}{
-		map[string]interface{}{
-			"mtls": nil,
-		},
+func fakeMeshPeerAuthenticationEmptyMTLS(name string) []kubernetes.IstioObject {
+	return fakeMeshPeerAuthentication(name, map[string]interface{}{})
+}
+
+func fakePermissiveMeshPeerAuthentication(name string) []kubernetes.IstioObject {
+	return fakeMeshPeerAuthenticationWithMtlsMode(name, "PERMISSIVE")
+}
+
+func fakeStrictMeshPeerAuthentication(name string) []kubernetes.IstioObject {
+	return fakeMeshPeerAuthenticationWithMtlsMode(name, "STRICT")
+}
+
+func fakeMeshPeerAuthenticationWithMtlsMode(name, mTLSmode string) []kubernetes.IstioObject {
+	mtls := map[string]interface{}{
+			"mode": mTLSmode,
 	}
-	return fakeMeshPolicy(name, mtls)
+	return fakeMeshPeerAuthentication(name, mtls)
 }
 
-func fakePermissiveMeshPolicy(name string) []kubernetes.IstioObject {
-	return fakeMeshPolicyWithMtlsMode(name, "PERMISSIVE")
+func fakeMeshPeerAuthentication(name string, mtls interface{}) []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{data.CreateEmptyMeshPeerAuthentication(name, mtls)}
 }
 
-func fakeStrictMeshPolicy(name string) []kubernetes.IstioObject {
-	return fakeMeshPolicyWithMtlsMode(name, "STRICT")
-}
-
-func fakeMeshPolicyWithMtlsMode(name, mTLSmode string) []kubernetes.IstioObject {
-	mtls := []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": mTLSmode,
-			},
-		},
-	}
-	return fakeMeshPolicy(name, mtls)
-}
-
-func fakeMeshPolicy(name string, peers []interface{}) []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{data.CreateEmptyMeshPolicy(name, peers)}
-}
-
-func TestWithoutMeshPolicy(t *testing.T) {
+func TestWithoutMeshPeerAuthn(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
 }
 
-func TestMeshPolicyWithTargets(t *testing.T) {
+func TestMeshPeerAuthnWithSelector(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthnEnablingMTLSSpecificTarget(), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (tlsService).hasMeshPeerAuthnEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
 }
 
-func fakeMeshPolicyEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
-	targets := []interface{}{
-		map[string]interface{}{
-			"name": "productpage",
+func fakeMeshPeerAuthnEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
+	selector := map[string]interface{}{
+		"matchLabels": map[string]interface{}{
+			"app": "productpage",
 		},
 	}
 
-	mtls := []interface{}{
-		map[string]interface{}{
-			"mtls": "",
-		},
-	}
-
-	policy := data.AddTargetsToMeshPolicy(targets,
-		data.CreateEmptyMeshPolicy("non-global-tls-enabled", mtls))
+	policy := data.AddSelectorToPolicy(selector,
+		data.CreateEmptyMeshPeerAuthentication("non-global-tls-enabled", data.CreateMTLS("STRICT")))
 
 	return []kubernetes.IstioObject{policy}
 }
@@ -225,7 +197,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -243,7 +215,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -261,7 +233,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -272,7 +244,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 }
 
 func TestNamespaceHasMTLSEnabled(t *testing.T) {
-	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
@@ -282,7 +254,7 @@ func TestNamespaceHasMTLSEnabled(t *testing.T) {
 }
 
 func TestNamespaceHasPolicyDisabled(t *testing.T) {
-	ps := fakePermissivePolicy("default", "bookinfo")
+	ps := fakePermissivePeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
@@ -291,7 +263,7 @@ func TestNamespaceHasPolicyDisabled(t *testing.T) {
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
-	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
@@ -308,7 +280,7 @@ func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
 
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
 
-	ps = fakeTargetedPolicy("default", "bookinfo", "productpage")
+	ps = fakePeerAuthnWithSelector("default", "bookinfo", "productpage")
 	drs = []kubernetes.IstioObject{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
@@ -317,7 +289,7 @@ func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
 }
 
 func TestNamespaceHasMTLSDisabled(t *testing.T) {
-	ps := fakePermissivePolicy("default", "bookinfo")
+	ps := fakePermissivePeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
@@ -327,7 +299,7 @@ func TestNamespaceHasMTLSDisabled(t *testing.T) {
 }
 
 func TestNamespaceHasSimpleTls(t *testing.T) {
-	ps := fakePermissivePolicy("default", "bookinfo")
+	ps := fakePermissivePeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateSimpleTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
@@ -339,7 +311,7 @@ func TestNamespaceHasSimpleTls(t *testing.T) {
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	assert := assert.New(t)
 
-	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("foo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
@@ -393,40 +365,22 @@ func fakeProjects() []osproject_v1.Project {
 	}
 }
 
-func fakePolicyEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
-	mtls := []interface{}{
-		map[string]interface{}{
-			"mtls": nil,
-		},
-	}
-	return fakePolicy(name, namespace, mtls)
+func fakePeerAuthnEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
+	return fakePeerAuthn(name, namespace, map[string]interface{}{})
 }
 
-func fakeTargetedPolicy(name, namespace, target string) []kubernetes.IstioObject {
-	targets := []interface{}{
-		map[string]interface{}{
-			"name": target,
-		},
-	}
-
-	return []kubernetes.IstioObject{data.CreateEmptyPolicyWithTargets(name, namespace, targets)}
+func fakePeerAuthnWithSelector(name, namespace, target string) []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{data.CreateEmptyPolicyWithTargets(name, namespace, data.CreateOneLabelSelector(target))}
 }
 
-func fakePermissivePolicy(name, namespace string) []kubernetes.IstioObject {
-	return fakePolicyWithMtlsMode(name, namespace, "PERMISSIVE")
+func fakePermissivePeerAuthn(name, namespace string) []kubernetes.IstioObject {
+	return fakePeerAuthnWithMtlsMode(name, namespace, "PERMISSIVE")
 }
 
-func fakePolicyWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.IstioObject {
-	mtls := []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": mTLSmode,
-			},
-		},
-	}
-	return fakePolicy(name, namespace, mtls)
+func fakePeerAuthnWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.IstioObject {
+	return fakePeerAuthn(name, namespace, data.CreateMTLS(mTLSmode))
 }
 
-func fakePolicy(name, namespace string, peers []interface{}) []kubernetes.IstioObject {
+func fakePeerAuthn(name, namespace string, peers interface{}) []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{data.CreateEmptyPolicy(name, namespace, peers)}
 }
