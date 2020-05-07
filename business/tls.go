@@ -154,6 +154,11 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 }
 
 func (in TLSService) hasPeerAuthnNamespacemTLSDefinition(namespace string) (string, error) {
+	// PeerAuthn at istio control plane level, are considered mesh-wide objects
+	if namespace == config.Get().IstioNamespace {
+		return "", nil
+	}
+
 	ps, err := in.k8s.GetPeerAuthentications(namespace)
 	if err != nil {
 		return "", err
