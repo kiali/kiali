@@ -9,7 +9,7 @@ import (
 //
 // This is used for returning an array of PeerAuthentication
 //
-// swagger:model authorizationRules
+// swagger:model peerAuthentications
 // An array of peerAuthentication
 // swagger:allOf
 type PeerAuthentications []PeerAuthentication

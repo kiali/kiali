@@ -411,6 +411,26 @@ func (o *K8SClientMock) GetPeerAuthentication(namespace string, policyName strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetRequestAuthentications(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetRequestAuthentication(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetWorkloadEntries(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetWorkloadEntry(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.RBACDetails, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*kubernetes.RBACDetails), args.Error(1)

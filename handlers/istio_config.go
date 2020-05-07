@@ -109,6 +109,8 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeSidecars = defaultInclude
 	criteria.IncludeAuthorizationPolicies = defaultInclude
 	criteria.IncludePeerAuthentication = defaultInclude
+	criteria.IncludeWorkloadEntries = defaultInclude
+	criteria.IncludeRequestAuthentications = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -174,6 +176,12 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, business.PeerAuthentications) {
 		criteria.IncludePeerAuthentication = true
+	}
+	if checkType(types, business.WorkloadEntries) {
+		criteria.IncludeWorkloadEntries = true
+	}
+	if checkType(types, business.RequestAuthentications) {
+		criteria.IncludeRequestAuthentications = true
 	}
 	return criteria
 }

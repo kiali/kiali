@@ -101,6 +101,10 @@ type IstioClientInterface interface {
 	GetAuthorizationPolicies(namespace string) ([]IstioObject, error)
 	GetPeerAuthentication(namespace string, name string) (IstioObject, error)
 	GetPeerAuthentications(namespace string) ([]IstioObject, error)
+	GetWorkloadEntry(namespace string, name string) (IstioObject, error)
+	GetWorkloadEntries(namespace string) ([]IstioObject, error)
+	GetRequestAuthentication(namespace string, name string) (IstioObject, error)
+	GetRequestAuthentications(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
