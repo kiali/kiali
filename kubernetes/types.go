@@ -43,6 +43,10 @@ const (
 	VirtualServiceType     = "VirtualService"
 	VirtualServiceTypeList = "VirtualServiceList"
 
+	WorkloadEntries       = "workloadentries"
+	WorkloadEntryType     = "WorkloadEntry"
+	WorkloadEntryTypeList = "WorkloadEntryList"
+
 	// Quotas
 
 	quotaspecs        = "quotaspecs"
@@ -101,6 +105,11 @@ const (
 	PeerAuthentications         = "peerauthentications"
 	PeerAuthenticationsType     = "PeerAuthentication"
 	PeerAuthenticationsTypeList = "PeerAuthenticationList"
+
+	// Request Authentications
+	RequestAuthentications         = "requestauthentications"
+	RequestAuthenticationsType     = "RequestAuthentication"
+	RequestAuthenticationsTypeList = "RequestAuthenticationList"
 
 	// Config - Rules
 
@@ -209,6 +218,10 @@ var (
 			objectKind:     SidecarType,
 			collectionKind: SidecarTypeList,
 		},
+		{
+			objectKind:     WorkloadEntryType,
+			collectionKind: WorkloadEntryTypeList,
+		},
 	}
 
 	configTypes = []struct {
@@ -265,6 +278,10 @@ var (
 		{
 			objectKind:     AuthorizationPoliciesType,
 			collectionKind: AuthorizationPoliciesTypeList,
+		},
+		{
+			objectKind:     RequestAuthenticationsType,
+			collectionKind: RequestAuthenticationsTypeList,
 		},
 	}
 
@@ -360,6 +377,7 @@ var (
 		DestinationRules: DestinationRuleType,
 		Serviceentries:   ServiceentryType,
 		Sidecars:         SidecarType,
+		WorkloadEntries:  WorkloadEntryType,
 
 		// Main Config files
 		rules:             ruleType,
@@ -386,11 +404,10 @@ var (
 		servicerolebindings:    servicerolebindingType,
 		serviceMeshRbacConfigs: serviceMeshRbacConfigType,
 
-		// Authorization Policies
-		AuthorizationPolicies: AuthorizationPoliciesType,
-
-		// Peer Authentications
-		PeerAuthentications: PeerAuthenticationsType,
+		// Security
+		AuthorizationPolicies:  AuthorizationPoliciesType,
+		PeerAuthentications:    PeerAuthenticationsType,
+		RequestAuthentications: RequestAuthenticationsType,
 
 		// Iter8
 		iter8experiments: iter8experimentType,

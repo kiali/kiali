@@ -4230,6 +4230,9 @@
         "rbacConfig": {
           "$ref": "#/definitions/RbacConfig"
         },
+        "requestAuthentication": {
+          "$ref": "#/definitions/requestAuthentication"
+        },
         "rule": {
           "$ref": "#/definitions/istioRule"
         },
@@ -4259,6 +4262,9 @@
         },
         "virtualService": {
           "$ref": "#/definitions/virtualService"
+        },
+        "workloadEntry": {
+          "$ref": "#/definitions/workloadEntry"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4275,7 +4281,7 @@
           "$ref": "#/definitions/istioAdapters"
         },
         "authorizationPolicies": {
-          "$ref": "#/definitions/authorizationRules"
+          "$ref": "#/definitions/authorizationPolicies"
         },
         "clusterRbacConfigs": {
           "$ref": "#/definitions/ClusterRbacConfigs"
@@ -4293,7 +4299,7 @@
           "$ref": "#/definitions/namespace"
         },
         "peerAuthentications": {
-          "$ref": "#/definitions/authorizationRules"
+          "$ref": "#/definitions/peerAuthentications"
         },
         "policies": {
           "$ref": "#/definitions/Policies"
@@ -4306,6 +4312,9 @@
         },
         "rbacConfigs": {
           "$ref": "#/definitions/RbacConfigs"
+        },
+        "requestAuthentications": {
+          "$ref": "#/definitions/requestAuthentications"
         },
         "rules": {
           "$ref": "#/definitions/istioRules"
@@ -4336,6 +4345,9 @@
         },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
+        },
+        "workloadEntries": {
+          "$ref": "#/definitions/workloadEntries"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6742,6 +6754,16 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "authorizationPolicies": {
+      "description": "This is used for returning an array of AuthorizationPolicies",
+      "type": "array",
+      "title": "AuthorizationPolicies authorizationPolicies",
+      "items": {
+        "$ref": "#/definitions/authorizationPolicy"
+      },
+      "x-go-name": "AuthorizationPolicies",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "authorizationPolicy": {
       "description": "This is used for returning an AuthorizationPolicy",
       "type": "object",
@@ -6780,16 +6802,6 @@
         }
       },
       "x-go-name": "AuthorizationPolicy",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "authorizationRules": {
-      "description": "This is used for returning an array of PeerAuthentication",
-      "type": "array",
-      "title": "PeerAuthentications peerAuthentications",
-      "items": {
-        "$ref": "#/definitions/peerAuthentication"
-      },
-      "x-go-name": "PeerAuthentications",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "destinationRule": {
@@ -7082,6 +7094,62 @@
       "x-go-name": "PeerAuthentication",
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "peerAuthentications": {
+      "description": "This is used for returning an array of PeerAuthentication",
+      "type": "array",
+      "title": "PeerAuthentications peerAuthentications",
+      "items": {
+        "$ref": "#/definitions/peerAuthentication"
+      },
+      "x-go-name": "PeerAuthentications",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "requestAuthentication": {
+      "description": "This is used for returning an RequestAuthentication",
+      "type": "object",
+      "title": "RequestAuthentication requestAuthentication",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "jwtRules": {
+              "type": "object",
+              "x-go-name": "JwtRules"
+            },
+            "selector": {
+              "type": "object",
+              "x-go-name": "Selector"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "RequestAuthentication",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "requestAuthentications": {
+      "description": "This is used for returning an array of RequestAuthentication",
+      "type": "array",
+      "title": "RequestAuthentications requestAuthentications",
+      "items": {
+        "$ref": "#/definitions/requestAuthentication"
+      },
+      "x-go-name": "RequestAuthentications",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "virtualService": {
       "description": "This type is used for returning a VirtualService",
       "type": "object",
@@ -7151,6 +7219,72 @@
         }
       },
       "x-go-name": "VirtualServices",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadEntries": {
+      "description": "This is used for returning an array of WorkloadEntry",
+      "type": "array",
+      "title": "WorkloadEntries workloadEntries",
+      "items": {
+        "$ref": "#/definitions/workloadEntry"
+      },
+      "x-go-name": "WorkloadEntries",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadEntry": {
+      "description": "This is used for returning an WorkloadEntry",
+      "type": "object",
+      "title": "WorkloadEntry workloadEntry",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "object",
+              "x-go-name": "Address"
+            },
+            "labels": {
+              "type": "object",
+              "x-go-name": "Labels"
+            },
+            "locality": {
+              "type": "object",
+              "x-go-name": "Locality"
+            },
+            "network": {
+              "type": "object",
+              "x-go-name": "Network"
+            },
+            "ports": {
+              "type": "object",
+              "x-go-name": "Ports"
+            },
+            "serviceAccount": {
+              "type": "object",
+              "x-go-name": "ServiceAccount"
+            },
+            "weight": {
+              "type": "object",
+              "x-go-name": "Weight"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "WorkloadEntry",
       "x-go-package": "github.com/kiali/kiali/models"
     }
   },

@@ -214,6 +214,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{roleBindChecker}
 	case PeerAuthentications:
 		// Validations on PeerAuthentications
+	case WorkloadEntries:
+		// Validation on WorkloadEntries
+	case RequestAuthentications:
+		// Validation on RequestAuthentications
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}

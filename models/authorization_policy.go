@@ -9,7 +9,7 @@ import (
 //
 // This is used for returning an array of AuthorizationPolicies
 //
-// swagger:model authorizationRules
+// swagger:model authorizationPolicies
 // An array of authorizationPolicy
 // swagger:allOf
 type AuthorizationPolicies []AuthorizationPolicy
