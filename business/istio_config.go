@@ -877,6 +877,12 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case PeerAuthentications:
 		istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
 		istioConfigDetail.PeerAuthentication.Parse(result)
+	case RequestAuthentications:
+		istioConfigDetail.RequestAuthentication = &models.RequestAuthentication{}
+		istioConfigDetail.RequestAuthentication.Parse(result)
+	case WorkloadEntries:
+		istioConfigDetail.WorkloadEntry = &models.WorkloadEntry{}
+		istioConfigDetail.WorkloadEntry.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
