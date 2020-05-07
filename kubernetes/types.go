@@ -281,7 +281,7 @@ var (
 		},
 		{
 			objectKind:     RequestAuthenticationsType,
-			collectionKind: PeerAuthenticationsTypeList,
+			collectionKind: RequestAuthenticationsTypeList,
 		},
 	}
 
