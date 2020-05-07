@@ -138,7 +138,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 }
 
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	plMode, pErr := in.hasPolicyNamespacemTLSDefinition(namespace)
+	plMode, pErr := in.hasPeerAuthnNamespacemTLSDefinition(namespace)
 	if pErr != nil {
 		return models.MTLSStatus{}, pErr
 	}
@@ -153,8 +153,8 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 	}, nil
 }
 
-func (in TLSService) hasPolicyNamespacemTLSDefinition(namespace string) (string, error) {
-	ps, err := in.k8s.GetPolicies(namespace)
+func (in TLSService) hasPeerAuthnNamespacemTLSDefinition(namespace string) (string, error) {
+	ps, err := in.k8s.GetPeerAuthentications(namespace)
 	if err != nil {
 		return "", err
 	}

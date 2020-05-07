@@ -100,6 +100,7 @@ var ObjectTypeSingular = map[string]string{
 	"clusterrbacconfigs":    "clusterrbacconfig",
 	"authorizationpolicies": "authorizationpolicy",
 	"sidecars":              "sidecar",
+	"peerauthentications":   "peerauthentication",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -171,7 +172,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0401 Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
-	"policies.mtls.destinationrulemissing": {
+	"peerauthentications.mtls.destinationrulemissing": {
 		Message:  "KIA0501 Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},

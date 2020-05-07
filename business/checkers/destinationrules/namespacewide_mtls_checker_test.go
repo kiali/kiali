@@ -23,8 +23,8 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -45,8 +45,8 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("STRICT")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -69,7 +69,7 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPolicies: []kubernetes.IstioObject{
+		MeshPeerAuthentications: []kubernetes.IstioObject{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}

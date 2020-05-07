@@ -22,8 +22,8 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -42,10 +42,10 @@ func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
-		MeshPolicies: []kubernetes.IstioObject{
+		MeshPeerAuthentications: []kubernetes.IstioObject{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -64,8 +64,8 @@ func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLS("STRICT")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -81,7 +81,7 @@ func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPolicies: []kubernetes.IstioObject{
+		MeshPeerAuthentications: []kubernetes.IstioObject{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -98,7 +98,7 @@ func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPolicies: []kubernetes.IstioObject{
+		MeshPeerAuthentications: []kubernetes.IstioObject{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}

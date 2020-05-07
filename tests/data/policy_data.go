@@ -6,7 +6,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func CreateEmptyPolicy(name, namespace string, mtls interface{}) kubernetes.IstioObject {
+func CreateEmptyPeerAuthentication(name, namespace string, mtls interface{}) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
@@ -19,10 +19,10 @@ func CreateEmptyPolicy(name, namespace string, mtls interface{}) kubernetes.Isti
 }
 
 func CreateEmptyMeshPeerAuthentication(name string, mtls interface{}) kubernetes.IstioObject {
-	return CreateEmptyPolicy(name, "istio-system", mtls)
+	return CreateEmptyPeerAuthentication(name, "istio-system", mtls)
 }
 
-func CreateEmptyPolicyWithTargets(name, namespace string, selector interface{}) kubernetes.IstioObject {
+func CreateEmptyPeerAuthenticationWithSelector(name, namespace string, selector interface{}) kubernetes.IstioObject {
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
@@ -34,7 +34,7 @@ func CreateEmptyPolicyWithTargets(name, namespace string, selector interface{}) 
 	}).DeepCopyIstioObject()
 }
 
-func AddSelectorToPolicy(selector map[string]interface{}, mp kubernetes.IstioObject) kubernetes.IstioObject {
+func AddSelectorToPeerAuthn(selector map[string]interface{}, mp kubernetes.IstioObject) kubernetes.IstioObject {
 	mp.GetSpec()["selector"] = selector
 	return mp
 }

@@ -60,7 +60,7 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -88,7 +88,7 @@ func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name stri
 	if apiClient == nil {
 		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -116,7 +116,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	if apiClient == nil {
 		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -666,7 +666,7 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
-	// In case Policies aren't present on Istio, return empty array.
+	// In case PeerAuthentications aren't present on Istio, return empty array.
 	if !in.hasAuthenticationResource(policies) {
 		return []IstioObject{}, nil
 	}
@@ -713,12 +713,12 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 }
 
 func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
-	// In case MeshPolicies aren't present on Istio, return empty array.
+	// In case MeshPeerAuthentications aren't present on Istio, return empty array.
 	if !in.hasAuthenticationResource(meshPolicies) {
 		return []IstioObject{}, nil
 	}
 
-	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
+	// MeshPeerAuthentications are not namespaced. However, API returns all the instances even asking for one specific namespace.
 	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223

@@ -1,4 +1,4 @@
-package policies
+package peerauthentications
 
 import (
 	"testing"
@@ -22,7 +22,7 @@ func TestPolicymTLSEnabled(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
+	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
@@ -41,8 +41,8 @@ func TestPolicymTLSEnabled(t *testing.T) {
 	validation := validations[0]
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/peers/mtls", validation.Path)
-	assert.Equal(models.CheckMessage("policies.mtls.destinationrulemissing"), validation.Message)
+	assert.Equal("spec/mtls", validation.Path)
+	assert.Equal(models.CheckMessage("peerauthentications.mtls.destinationrulemissing"), validation.Message)
 }
 
 // Context: Policy enables mTLS for a namespace
@@ -51,7 +51,7 @@ func TestPolicymTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 	assert := assert.New(t)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
+	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -75,7 +75,7 @@ func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 	assert := assert.New(t)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("STRICT"))
+	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("STRICT"))
 
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
@@ -101,7 +101,7 @@ func TestPolicyPermissive(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLS("PERMISSIVE"))
+	policy := data.CreateEmptyPeerAuthentication("default", "bar", data.CreateMTLS("PERMISSIVE"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
 			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),

@@ -85,7 +85,7 @@ func fakeStrictMeshPeerAuthentication(name string) []kubernetes.IstioObject {
 
 func fakeMeshPeerAuthenticationWithMtlsMode(name, mTLSmode string) []kubernetes.IstioObject {
 	mtls := map[string]interface{}{
-			"mode": mTLSmode,
+		"mode": mTLSmode,
 	}
 	return fakeMeshPeerAuthentication(name, mtls)
 }
@@ -129,7 +129,7 @@ func fakeMeshPeerAuthnEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
 		},
 	}
 
-	policy := data.AddSelectorToPolicy(selector,
+	policy := data.AddSelectorToPeerAuthn(selector,
 		data.CreateEmptyMeshPeerAuthentication("non-global-tls-enabled", data.CreateMTLS("STRICT")))
 
 	return []kubernetes.IstioObject{policy}
@@ -323,7 +323,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s.On("GetProjects").Return(fakeProjects(), nil)
 	k8s.On("GetDestinationRules", "foo", "").Return(drs, nil)
 	k8s.On("GetDestinationRules", "bookinfo", "").Return([]kubernetes.IstioObject{}, nil)
-	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
+	k8s.On("GetPeerAuthentications", "bookinfo").Return(ps, nil)
 
 	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
@@ -341,7 +341,7 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 	k8s.On("GetProjects").Return(fakeProjects(), nil)
 	k8s.On("GetDestinationRules", "bookinfo", "").Return(drs, nil)
 	k8s.On("GetDestinationRules", "foo", "").Return([]kubernetes.IstioObject{}, nil)
-	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
+	k8s.On("GetPeerAuthentications", "bookinfo").Return(ps, nil)
 
 	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
@@ -370,7 +370,7 @@ func fakePeerAuthnEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
 }
 
 func fakePeerAuthnWithSelector(name, namespace, target string) []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{data.CreateEmptyPolicyWithTargets(name, namespace, data.CreateOneLabelSelector(target))}
+	return []kubernetes.IstioObject{data.CreateEmptyPeerAuthenticationWithSelector(name, namespace, data.CreateOneLabelSelector(target))}
 }
 
 func fakePermissivePeerAuthn(name, namespace string) []kubernetes.IstioObject {
@@ -382,5 +382,5 @@ func fakePeerAuthnWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.Is
 }
 
 func fakePeerAuthn(name, namespace string, peers interface{}) []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{data.CreateEmptyPolicy(name, namespace, peers)}
+	return []kubernetes.IstioObject{data.CreateEmptyPeerAuthentication(name, namespace, peers)}
 }

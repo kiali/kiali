@@ -1,4 +1,4 @@
-package policies
+package peerauthentications
 
 import (
 	"github.com/kiali/kiali/kubernetes"
@@ -32,7 +32,7 @@ func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	check := models.Build("policies.mtls.destinationrulemissing", "spec/peers/mtls")
+	check := models.Build("peerauthentications.mtls.destinationrulemissing", "spec/mtls")
 	validations = append(validations, &check)
 
 	return validations, false

@@ -57,13 +57,13 @@ const (
 	quotaspecbindingType     = "QuotaSpecBinding"
 	quotaspecbindingTypeList = "QuotaSpecBindingList"
 
-	// Policies
+	// PeerAuthentications
 
 	policies       = "policies"
 	policyType     = "Policy"
 	policyTypeList = "PolicyList"
 
-	//MeshPolicies
+	//MeshPeerAuthentications
 
 	meshPolicies       = "meshpolicies"
 	meshPolicyType     = "MeshPolicy"
@@ -96,7 +96,7 @@ const (
 	serviceMeshRbacConfigType     = "ServiceMeshRbacConfig"
 	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
-	// Authorization Policies
+	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
 	AuthorizationPoliciesType     = "AuthorizationPolicy"
 	AuthorizationPoliciesTypeList = "AuthorizationPolicyList"
@@ -392,7 +392,7 @@ var (
 		instances: instanceType,
 		templates: templateType,
 
-		// Policies
+		// PeerAuthentications
 		policies:            policyType,
 		meshPolicies:        meshPolicyType,
 		serviceMeshPolicies: serviceMeshPolicyType,
@@ -465,10 +465,10 @@ type IstioDetails struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules    []IstioObject `json:"destinationrules"`
-	MeshPolicies        []IstioObject `json:"meshpolicies"`
-	ServiceMeshPolicies []IstioObject `json:"servicemeshpolicies"`
-	Policies            []IstioObject `json:"policies"`
+	DestinationRules        []IstioObject `json:"destinationrules"`
+	MeshPeerAuthentications []IstioObject `json:"meshpeerauthentications"`
+	ServiceMeshPolicies     []IstioObject `json:"servicemeshpolicies"`
+	PeerAuthentications     []IstioObject `json:"peerauthentications"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
