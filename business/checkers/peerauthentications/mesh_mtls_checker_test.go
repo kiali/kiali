@@ -1,4 +1,4 @@
-package meshpolicies
+package peerauthentications
 
 import (
 	"testing"
@@ -140,8 +140,8 @@ func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDe
 	validation := validations[0]
 	assert.NotNil(validation)
 	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/peers/mtls", validation.Path)
-	assert.Equal(models.CheckMessage("meshpolicies.mtls.destinationrulemissing"), validation.Message)
+	assert.Equal("spec/mtls", validation.Path)
+	assert.Equal(models.CheckMessage("peerauthentication.mtls.destinationrulemissing"), validation.Message)
 }
 
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {

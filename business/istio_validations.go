@@ -111,7 +111,6 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
-		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPeerAuthentications, MTLSDetails: mtlsDetails},
 		checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
@@ -209,8 +208,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case PeerAuthentications:
 		// Validations on PeerAuthentications
 		policiesChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails}
-		meshPoliciesChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPeerAuthentications, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{policiesChecker, meshPoliciesChecker}
+		objectCheckers = []ObjectChecker{policiesChecker}
 	case WorkloadEntries:
 		// Validation on WorkloadEntries
 	case RequestAuthentications:

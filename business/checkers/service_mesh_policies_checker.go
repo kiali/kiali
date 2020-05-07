@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/business/checkers/meshpolicies"
+	"github.com/kiali/kiali/business/checkers/peerauthentications"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -30,7 +30,7 @@ func (m ServiceMeshPolicyChecker) runChecks(smPolicy kubernetes.IstioObject) mod
 
 	enabledCheckers := []Checker{
 		// ServiceMeshPolicy is a clone of MeshPolicy so we can reuse the MeshMtlsChecker
-		meshpolicies.MeshMtlsChecker{MeshPolicy: smPolicy, MTLSDetails: m.MTLSDetails, IsServiceMesh: true},
+		peerauthentications.MeshMtlsChecker{MeshPolicy: smPolicy, MTLSDetails: m.MTLSDetails, IsServiceMesh: true},
 	}
 
 	for _, checker := range enabledCheckers {

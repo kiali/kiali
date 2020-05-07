@@ -32,7 +32,10 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 	var enabledCheckers []Checker
 
 	// PeerAuthentications into istio control plane namespace are considered Mesh-wide objects
-	if peerAuthn.GetObjectMeta().Namespace != config.Get().IstioNamespace {
+	if peerAuthn.GetObjectMeta().Namespace == config.Get().IstioNamespace {
+		enabledCheckers = append(enabledCheckers,
+			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
+	} else {
 		enabledCheckers = append(enabledCheckers,
 			peerauthentications.NamespaceMtlsChecker{Policy: peerAuthn, MTLSDetails: m.MTLSDetails})
 	}

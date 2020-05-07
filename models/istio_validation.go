@@ -92,7 +92,6 @@ var ObjectTypeSingular = map[string]string{
 	"rules":                 "rule",
 	"quotaspecs":            "quotaspec",
 	"quotaspecbindings":     "quotaspecbinding",
-	"meshpolicies":          "meshpolicy",
 	"servicemeshpolicies":   "servicemeshpolicy",
 	"policies":              "policy",
 	"serviceroles":          "servicerole",
@@ -137,19 +136,19 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"destinationrules.mtls.meshpolicymissing": {
-		Message:  "KIA0205 MeshPolicy enabling mTLS is missing",
+		Message:  "KIA0205 PeerAuthentication enabling mTLS at mesh level is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.nspolicymissing": {
-		Message:  "KIA0206 Policy enabling namespace-wide mTLS is missing",
+		Message:  "KIA0206 PeerAuthentication enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.policymtlsenabled": {
-		Message:  "KIA0207 Policy with TLS strict mode found, it should be permissive",
+		Message:  "KIA0207 PeerAuthentication with TLS strict mode found, it should be permissive",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.meshpolicymtlsenabled": {
-		Message:  "KIA0208 MeshPolicy enabling mTLS found, permissive policy is needed",
+		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive policy is needed",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.servicemeshpolicymissing": {
@@ -168,7 +167,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0302 No matching workload found for gateway selector in this namespace",
 		Severity: WarningSeverity,
 	},
-	"meshpolicies.mtls.destinationrulemissing": {
+	"peerauthentication.mtls.destinationrulemissing": {
 		Message:  "KIA0401 Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
