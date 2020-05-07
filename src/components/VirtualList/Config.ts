@@ -181,7 +181,9 @@ export const IstioTypes = {
   sidecar: { name: 'Sidecar', url: 'sidecars', icon: 'S' },
   servicerole: { name: 'ServiceRole', url: 'serviceroles', icon: 'SR' },
   servicerolebinding: { name: 'ServiceRoleBinding', url: 'servicerolebindings', icon: 'SRB' },
-  peerauthentication: { name: 'PeerAuthentication', url: 'peerauthentications', icon: 'PA' }
+  peerauthentication: { name: 'PeerAuthentication', url: 'peerauthentications', icon: 'PA' },
+  requestauthentication: { name: 'RequestAuthentication', url: 'requestauthentications', icon: 'RA' },
+  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', icon: 'WE' }
 };
 
 export type Resource = {

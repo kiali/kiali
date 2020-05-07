@@ -14,6 +14,7 @@ import {
   QuotaSpec,
   QuotaSpecBinding,
   RbacConfig,
+  RequestAuthentication,
   ServiceEntry,
   ServiceMeshRbacConfig,
   ServiceRole,
@@ -21,7 +22,8 @@ import {
   Sidecar,
   Validations,
   VirtualService,
-  VirtualServices
+  VirtualServices,
+  WorkloadEntry
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -48,6 +50,9 @@ export interface IstioConfigItem {
   sidecar?: Sidecar;
   serviceRole?: ServiceRole;
   serviceRoleBinding?: ServiceRoleBinding;
+  peerAuthentication?: PeerAuthentication;
+  requestAuthentication?: RequestAuthentication;
+  workloadEntry?: WorkloadEntry;
   validation?: ObjectValidation;
 }
 
@@ -57,6 +62,7 @@ export interface IstioConfigList {
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
   serviceEntries: ServiceEntry[];
+  workloadEntries: WorkloadEntry[];
   rules: IstioRule[];
   adapters: IstioAdapter[];
   templates: IstioTemplate[];
@@ -73,6 +79,7 @@ export interface IstioConfigList {
   serviceRoles: ServiceRole[];
   serviceRoleBindings: ServiceRoleBinding[];
   peerAuthentications: PeerAuthentication[];
+  requestAuthentications: RequestAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
   validations: Validations;
 }
@@ -98,6 +105,8 @@ export const dicIstioType = {
   ServiceMeshPolicy: 'servicemeshpolicies',
   ServiceMeshRbacConfig: 'servicemeshrbacconfigs',
   PeerAuthentication: 'peerauthentications',
+  RequestAuthentication: 'requestauthentications',
+  WorkloadEntry: 'workloadentries',
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
@@ -119,7 +128,9 @@ export const dicIstioType = {
   servicerolebindings: 'ServiceRoleBinding',
   servicemeshpolicies: 'ServiceMeshPolicy',
   servicemeshrbacconfigs: 'ServiceMeshRbacConfig',
-  peerauthentications: 'PeerAuthentication'
+  peerauthentications: 'PeerAuthentication',
+  requestauthentications: 'RequestAuthentication',
+  workloadentries: 'WorkloadEntry'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -162,7 +173,9 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
     serviceRoles: unfiltered.serviceRoles.filter(sr => includeName(sr.metadata.name, names)),
     serviceRoleBindings: unfiltered.serviceRoleBindings.filter(srb => includeName(srb.metadata.name, names)),
-    peerAuthentications: unfiltered.peerAuthentications.filter(srb => includeName(srb.metadata.name, names)),
+    peerAuthentications: unfiltered.peerAuthentications.filter(pa => includeName(pa.metadata.name, names)),
+    requestAuthentications: unfiltered.requestAuthentications.filter(ra => includeName(ra.metadata.name, names)),
+    workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

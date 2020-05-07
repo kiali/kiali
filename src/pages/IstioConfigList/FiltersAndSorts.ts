@@ -114,6 +114,10 @@ export const istioTypeFilter: FilterType = {
       title: 'MeshPolicy'
     },
     {
+      id: 'PeerAuthentication',
+      title: 'PeerAuthentication'
+    },
+    {
       id: 'Policy',
       title: 'Policy'
     },
@@ -126,12 +130,12 @@ export const istioTypeFilter: FilterType = {
       title: 'QuotaSpecBinding'
     },
     {
-      id: 'PeerAuthentication',
-      title: 'PeerAuthentication'
-    },
-    {
       id: 'RbacConfig',
       title: 'RbacConfig'
+    },
+    {
+      id: 'RequestAuthentication',
+      title: 'RequestAuthentication'
     },
     {
       id: 'Rule',
@@ -168,6 +172,10 @@ export const istioTypeFilter: FilterType = {
     {
       id: 'VirtualService',
       title: 'VirtualService'
+    },
+    {
+      id: 'WorkloadEntry',
+      title: 'WorkloadEntry'
     }
   ]
 };
