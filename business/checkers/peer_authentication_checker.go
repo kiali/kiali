@@ -2,6 +2,7 @@ package checkers
 
 import (
 	"github.com/kiali/kiali/business/checkers/peerauthentications"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -28,8 +29,12 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 	peerAuthnName := peerAuthn.GetObjectMeta().Name
 	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.GetObjectMeta().Namespace, PeerAuthenticationCheckerType)
 
-	enabledCheckers := []Checker{
-		peerauthentications.NamespaceMtlsChecker{Policy: peerAuthn, MTLSDetails: m.MTLSDetails},
+	var enabledCheckers []Checker
+
+	// PeerAuthentications into istio control plane namespace are considered Mesh-wide objects
+	if peerAuthn.GetObjectMeta().Namespace != config.Get().IstioNamespace {
+		enabledCheckers = append(enabledCheckers,
+			peerauthentications.NamespaceMtlsChecker{Policy: peerAuthn, MTLSDetails: m.MTLSDetails})
 	}
 
 	for _, checker := range enabledCheckers {
