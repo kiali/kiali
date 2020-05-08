@@ -286,8 +286,8 @@ fi
 for s in \
    "--set values.kiali.enabled=${KIALI_ENABLED}" \
    "${_KIALI_TAG_ARG}" \
-   "--set values.tracing.enabled=${DASHBOARDS_ENABLED}" \
-   "--set values.grafana.enabled=${DASHBOARDS_ENABLED}" \
+   "--set addonComponents.tracing.enabled=${DASHBOARDS_ENABLED}" \
+   "--set addonComponents.grafana.enabled=${DASHBOARDS_ENABLED}" \
    "--set values.global.mtls.enabled=${MTLS}" \
    "--set values.global.controlPlaneSecurityEnabled=${MTLS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
