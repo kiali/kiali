@@ -171,7 +171,7 @@ type IstioClient struct {
 	// See istio_details_service.go#hasAuthenticationResource() for more details.
 	authenticationResources *map[string]bool
 
-	// isMixedDisabled private variable will check if mixed is enabled in the current istio deployment.
+	// isMixedDisabled private variable will check if mixer is enabled in the current istio deployment.
 	// It is represented with a pointer to a bool. True if mixer is disabled, false instead
 	isMixerDisabled *bool
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCorrectMeshPolicy(t *testing.T) {
+func TestCorrectMeshPeerAuthn(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
@@ -28,7 +28,7 @@ func TestCorrectMeshPolicy(t *testing.T) {
 	assert.Equal(true, meshPolicyEnabled)
 }
 
-func TestMeshPolicyWithoutNamespaces(t *testing.T) {
+func TestMeshPeerAuthnWithoutNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
@@ -129,10 +129,10 @@ func fakeMeshPeerAuthnEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
 		},
 	}
 
-	policy := data.AddSelectorToPeerAuthn(selector,
+	peerAuthn := data.AddSelectorToPeerAuthn(selector,
 		data.CreateEmptyMeshPeerAuthentication("non-global-tls-enabled", data.CreateMTLS("STRICT")))
 
-	return []kubernetes.IstioObject{policy}
+	return []kubernetes.IstioObject{peerAuthn}
 }
 
 func TestDestinationRuleEnabled(t *testing.T) {
@@ -200,7 +200,22 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
-	tlsService := TLSService{k8s: k8s}
+	tlsService := getTLSService(k8s, false)
+	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
+
+	assert.NoError(err)
+	assert.Equal(MTLSEnabled, status.Status)
+}
+
+func TestMeshStatusEnabledAutoMtls(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
+	k8s.On("GetIstioConfigMap").Return(fakeIstioMeshConfig(true))
+
+	tlsService := getTLSService(k8s, true)
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
@@ -218,7 +233,21 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
-	tlsService := TLSService{k8s: k8s}
+	tlsService := getTLSService(k8s, false)
+	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
+
+	assert.NoError(err)
+	assert.Equal(MTLSPartiallyEnabled, status.Status)
+}
+
+func TestMeshStatusPartiallyEnabledAutoMtls(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakePermissiveMeshPeerAuthentication("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
+
+	tlsService := getTLSService(k8s, true)
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
@@ -236,7 +265,21 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 
-	tlsService := TLSService{k8s: k8s}
+	tlsService := getTLSService(k8s, false)
+	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
+
+	assert.NoError(err)
+	assert.Equal(MTLSNotEnabled, status.Status)
+}
+
+func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("IsMaistraApi").Return(false)
+
+	tlsService := getTLSService(k8s, true)
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
@@ -383,4 +426,12 @@ func fakePeerAuthnWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.Is
 
 func fakePeerAuthn(name, namespace string, peers interface{}) []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{data.CreateEmptyPeerAuthentication(name, namespace, peers)}
+}
+
+func fakeIstioMeshConfig(autoMtls bool) kubernetes.IstioMeshConfig {
+	return kubernetes.IstioMeshConfig{EnableAutoMtls: autoMtls}
+}
+
+func getTLSService(k8s kubernetes.IstioClientInterface, autoMtls bool) *TLSService {
+	return &TLSService{k8s: k8s, enabledAutoMtls: &autoMtls}
 }

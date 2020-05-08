@@ -10,8 +10,9 @@ import (
 )
 
 type TLSService struct {
-	k8s           kubernetes.IstioClientInterface
-	businessLayer *Layer
+	k8s             kubernetes.IstioClientInterface
+	businessLayer   *Layer
+	enabledAutoMtls *bool
 }
 
 const (
@@ -22,21 +23,28 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	mpp, mpErr := in.hasMeshPeerAuthnEnabled()
-	if mpErr != nil {
-		return models.MTLSStatus{}, mpErr
+	var paErr, drErr error = nil, nil
+	var pap, drp = false, true
+
+	pap, paErr = in.hasMeshPeerAuthnEnabled()
+	if paErr != nil {
+		return models.MTLSStatus{}, paErr
 	}
 
-	drp, drErr := in.hasDestinationRuleEnabled(namespaces)
-	if drErr != nil {
-		return models.MTLSStatus{}, drErr
+	if !in.hasAutoMTLSEnabled() {
+		drp, drErr = in.hasDestinationRuleEnabled(namespaces)
+		if drErr != nil {
+			return models.MTLSStatus{}, drErr
+		}
 	}
 
 	finalStatus := MTLSNotEnabled
-	if drp && mpp {
+	if drp && pap {
 		finalStatus = MTLSEnabled
-	} else if drp || mpp {
-		finalStatus = MTLSPartiallyEnabled
+	} else if drp || pap {
+		if !in.hasAutoMTLSEnabled() {
+			finalStatus = MTLSPartiallyEnabled
+		}
 	}
 
 	return models.MTLSStatus{
@@ -210,4 +218,17 @@ func finalStatus(drStatus string, pStatus string) string {
 	}
 
 	return finalStatus
+}
+
+func (in TLSService) hasAutoMTLSEnabled() bool {
+	if in.enabledAutoMtls != nil {
+		return *in.enabledAutoMtls
+	}
+
+	mc, err := in.k8s.GetIstioConfigMap()
+	if err != nil {
+		return true
+	}
+
+	return mc.EnableAutoMtls
 }
