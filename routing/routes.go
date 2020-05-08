@@ -1444,6 +1444,25 @@ func NewRoutes() (r *Routes) {
 			HandlerFunc:   handlers.Iter8ExperimentDelete,
 			Authenticated: true,
 		},
+		// swagger:route GET /iter8/metrics
+		// ---
+		// Endpoint to get the analytics metrics
+		//
+		//              Produces:
+		//              - application/json
+		//
+		//              Schemes: http, https
+		//
+		// responses:
+		//              500: internalError
+		//              200: iter8StatusResponse
+		{
+			"Iter8Metrics",
+			"GET",
+			"/api/iter8/metrics",
+			handlers.Iter8Metrics,
+			true,
+		},
 	}
 
 	return
