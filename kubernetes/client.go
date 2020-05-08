@@ -109,6 +109,7 @@ type IstioClientInterface interface {
 	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
+	GetIstioConfigMap() (*IstioMeshConfig, error)
 	IsMaistraApi() bool
 	IsOpenShift() bool
 	IsMixerDisabled() bool

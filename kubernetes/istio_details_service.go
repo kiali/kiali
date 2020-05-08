@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	"gopkg.in/yaml.v2"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,8 +19,9 @@ import (
 )
 
 var (
-	portNameMatcher = regexp.MustCompile(`^[\-].*`)
-	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	portNameMatcher    = regexp.MustCompile(`^[\-].*`)
+	portProtocols      = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	istioConfigmapName = "istio"
 )
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
@@ -1244,6 +1246,53 @@ func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, 
 	}
 
 	return rb, nil
+}
+
+func (in *IstioClient) GetIstioConfigMap() (*IstioMeshConfig, error) {
+	meshConfig := &IstioMeshConfig{}
+
+	cfg := config.Get()
+	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, istioConfigmapName)
+	if err != nil {
+		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
+		return nil, err
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	log.Tracef("meshConfig: %v", meshConfigYaml)
+	if !ok {
+		log.Warningf("GetIstioConfigMap: Cannot find Istio mesh configuration.")
+		return nil, err
+	}
+
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		log.Warningf("GetIstioConfigMap: Cannot read Istio mesh configuration.")
+		return nil, err
+	}
+
+	return meshConfig, nil
+}
+
+func (in *IstioClient) IsMixerDisabled() bool {
+	if in.isMixerDisabled != nil {
+		return *in.isMixerDisabled
+	}
+
+	meshConfig, err := in.GetIstioConfigMap()
+	if err != nil {
+		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
+		return true
+	}
+
+	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
+
+	// References:
+	//   * https://github.com/istio/api/pull/1112
+	//   * https://github.com/istio/istio/pull/17695
+	//   * https://github.com/istio/istio/issues/15935
+	in.isMixerDisabled = &meshConfig.DisableMixerHttpReports
+	return *in.isMixerDisabled
 }
 
 func FilterByHost(host, serviceName, namespace string) bool {

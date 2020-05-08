@@ -436,6 +436,11 @@ type IstioObjectList interface {
 	GetItems() []IstioObject
 }
 
+type IstioMeshConfig struct {
+	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
+	EnableAutoMtls bool `yaml:"enableAutoMtls,omitempty"`
+}
+
 // ServiceList holds list of services, pods and deployments
 type ServiceList struct {
 	Services    *core_v1.ServiceList
