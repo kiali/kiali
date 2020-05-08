@@ -160,7 +160,7 @@ Valid command line arguments:
        If you have locally built your own development version of Kiali, set this to "dev".
        Default: the tag default defined by the Istio Helm chart
   -m|--mtls (true|false):
-       Indicate if you want global MTLS enabled.
+       Indicate if you want global MTLS auto enabled.
        Default: false
   -n|--namespace <name>:
        Install Istio in this namespace.
@@ -288,7 +288,7 @@ for s in \
    "${_KIALI_TAG_ARG}" \
    "--set addonComponents.tracing.enabled=${DASHBOARDS_ENABLED}" \
    "--set addonComponents.grafana.enabled=${DASHBOARDS_ENABLED}" \
-   "--set values.global.mtls.enabled=${MTLS}" \
+   "--set values.meshConfig.enableAutoMtls=${MTLS}" \
    "--set values.global.controlPlaneSecurityEnabled=${MTLS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "${CNI_OPTIONS}" \
