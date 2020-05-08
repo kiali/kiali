@@ -10,6 +10,11 @@ import (
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
 func (in *IstioClient) GetIstioRules(namespace string, labelSelector string) ([]IstioObject, error) {
+	// In case rules aren't present on Istio, return empty array.
+	if !in.hasConfigResource(rules) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Param("labelSelector", labelSelector).Do().Get()
 	if err != nil {
 		return nil, err
@@ -66,6 +71,7 @@ func (in *IstioClient) GetTemplate(namespace, templateType, templateName string)
 }
 
 func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, pluralsMap map[string]string, labelSelector string) ([]IstioObject, error) {
+	// getAdaptersTemplates is already protected on cases a template doesn't exist
 	resultsChan := make(chan istioResponse)
 	for name, plural := range pluralsMap {
 		go func(name, plural string) {

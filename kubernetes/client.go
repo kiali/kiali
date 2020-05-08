@@ -99,6 +99,12 @@ type IstioClientInterface interface {
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
 	GetAuthorizationPolicy(namespace string, name string) (IstioObject, error)
 	GetAuthorizationPolicies(namespace string) ([]IstioObject, error)
+	GetPeerAuthentication(namespace string, name string) (IstioObject, error)
+	GetPeerAuthentications(namespace string) ([]IstioObject, error)
+	GetWorkloadEntry(namespace string, name string) (IstioObject, error)
+	GetWorkloadEntries(namespace string) ([]IstioObject, error)
+	GetRequestAuthentication(namespace string, name string) (IstioObject, error)
+	GetRequestAuthentications(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
@@ -139,15 +145,30 @@ type IstioClient struct {
 	// See iter8.go#IsIter8Api() for more details
 	isIter8Api *bool
 
+	// networkingResources private variable will check which resources kiali has access to from networking.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasNetworkingResource() for more details.
+	networkingResources *map[string]bool
+
+	// configResources private variable will check which resources kiali has access to from config.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasConfigResource() for more details.
+	configResources *map[string]bool
+
 	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
 	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#HasRbacResource() for more details.
+	// See istio_details_service.go#hasRbacResource() for more details.
 	rbacResources *map[string]bool
 
 	// securityResources private variable will check which resources kiali has access to from security.istio.io group
 	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#HasSecurityResource() for more details.
+	// See istio_details_service.go#hasSecurityResource() for more details.
 	securityResources *map[string]bool
+
+	// authenticationResources private variable will check which resources kiali has access to from authentication.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasAuthenticationResource() for more details.
+	authenticationResources *map[string]bool
 
 	// isMixedDisabled private variable will check if mixed is enabled in the current istio deployment.
 	// It is represented with a pointer to a bool. True if mixer is disabled, false instead

@@ -14,6 +14,7 @@ type IstioConfigList struct {
 	VirtualServices        VirtualServices        `json:"virtualServices"`
 	DestinationRules       DestinationRules       `json:"destinationRules"`
 	ServiceEntries         ServiceEntries         `json:"serviceEntries"`
+	WorkloadEntries        WorkloadEntries        `json:"workloadEntries"`
 	Rules                  IstioRules             `json:"rules"`
 	Adapters               IstioAdapters          `json:"adapters"`
 	Templates              IstioTemplates         `json:"templates"`
@@ -29,6 +30,8 @@ type IstioConfigList struct {
 	ServiceRoleBindings    ServiceRoleBindings    `json:"serviceRoleBindings"`
 	Sidecars               Sidecars               `json:"sidecars"`
 	AuthorizationPolicies  AuthorizationPolicies  `json:"authorizationPolicies"`
+	PeerAuthentications    PeerAuthentications    `json:"peerAuthentications"`
+	RequestAuthentications RequestAuthentications `json:"requestAuthentications"`
 	IstioValidations       IstioValidations       `json:"validations"`
 }
 
@@ -39,6 +42,7 @@ type IstioConfigDetails struct {
 	VirtualService        *VirtualService        `json:"virtualService"`
 	DestinationRule       *DestinationRule       `json:"destinationRule"`
 	ServiceEntry          *ServiceEntry          `json:"serviceEntry"`
+	WorkloadEntry         *WorkloadEntry         `json:"workloadEntry"`
 	Rule                  *IstioRule             `json:"rule"`
 	Adapter               *IstioAdapter          `json:"adapter"`
 	Template              *IstioTemplate         `json:"template"`
@@ -54,6 +58,8 @@ type IstioConfigDetails struct {
 	ServiceRoleBinding    *ServiceRoleBinding    `json:"serviceRoleBinding"`
 	Sidecar               *Sidecar               `json:"sidecar"`
 	AuthorizationPolicy   *AuthorizationPolicy   `json:"authorizationPolicy"`
+	PeerAuthentication    *PeerAuthentication    `json:"peerAuthentication"`
+	RequestAuthentication *RequestAuthentication `json:"requestAuthentication"`
 	Permissions           ResourcePermissions    `json:"permissions"`
 	IstioValidation       *IstioValidation       `json:"validation"`
 }

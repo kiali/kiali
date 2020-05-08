@@ -56,6 +56,8 @@ RUN set -eux; \
     # Install tools: build tools, gosu, docker-cli \
     apt-get -qq update; \
     apt-get install --no-install-recommends -qq build-essential gosu docker-ce-cli; \
+    # Install some things to support generating operator all-in-one yaml (gettext-base has 'envsubst') \
+    apt-get -qq install gettext-base; \
     # Create Docker group \
     groupadd -r docker; \
     usermod -aG docker jenkins; \

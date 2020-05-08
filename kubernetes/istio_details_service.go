@@ -135,6 +135,56 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	return istioObject, err
 }
 
+func (in *IstioClient) hasNetworkingResource(resource string) bool {
+	return in.getNetworkingResources()[resource]
+}
+
+func (in *IstioClient) getNetworkingResources() map[string]bool {
+	if in.networkingResources != nil {
+		return *in.networkingResources
+	}
+
+	networkingResources := map[string]bool{}
+	path := fmt.Sprintf("/apis/%s", ApiNetworkingVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				networkingResources[resource.Name] = true
+			}
+		}
+	}
+	in.networkingResources = &networkingResources
+
+	return *in.networkingResources
+}
+
+func (in *IstioClient) hasConfigResource(resource string) bool {
+	return in.getConfigResources()[resource]
+}
+
+func (in *IstioClient) getConfigResources() map[string]bool {
+	if in.configResources != nil {
+		return *in.configResources
+	}
+
+	configResources := map[string]bool{}
+	path := fmt.Sprintf("/apis/%s", ApiConfigVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				configResources[resource.Name] = true
+			}
+		}
+	}
+	in.configResources = &configResources
+
+	return *in.configResources
+}
+
 func (in *IstioClient) hasRbacResource(resource string) bool {
 	return in.getRbacResources()[resource]
 }
@@ -185,10 +235,41 @@ func (in *IstioClient) getSecurityResources() map[string]bool {
 	return *in.securityResources
 }
 
+func (in *IstioClient) hasAuthenticationResource(resource string) bool {
+	return in.getAuthenticationResources()[resource]
+}
+
+func (in *IstioClient) getAuthenticationResources() map[string]bool {
+	if in.authenticationResources != nil {
+		return *in.authenticationResources
+	}
+
+	authenticationResources := map[string]bool{}
+	path := fmt.Sprintf("/apis/%s", ApiAuthenticationVersion)
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				authenticationResources[resource.Name] = true
+			}
+		}
+	}
+	in.authenticationResources = &authenticationResources
+
+	return *in.authenticationResources
+}
+
 // GetVirtualServices return all VirtualServices for a given namespace.
 // If serviceName param is provided it will filter all VirtualServices having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
+	// In case VirtualServices aren't present on Istio, return empty array.
+	// I know this is unlikely but just to apply these check in all list get methods
+	if !in.hasNetworkingResource(VirtualServices) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(VirtualServices).Do().Get()
 	if err != nil {
 		return nil, err
@@ -224,6 +305,11 @@ func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName st
 // GetSidecars return all Sidecars for a given namespace.
 // It returns an error on any problem
 func (in *IstioClient) GetSidecars(namespace string) ([]IstioObject, error) {
+	// In case Sidecars aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(Sidecars) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Sidecars).Do().Get()
 	if err != nil {
 		return nil, err
@@ -263,6 +349,53 @@ func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject
 	return sc, nil
 }
 
+// GetWorkloadEntries return all WorkloadEntries for a given namespace.
+// It returns an error on any problem
+func (in *IstioClient) GetWorkloadEntries(namespace string) ([]IstioObject, error) {
+	// In case WorkloadEntries aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(WorkloadEntries) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(WorkloadEntries).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	workloadEntriesList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a WorkloadEntry list", namespace)
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[WorkloadEntries],
+		APIVersion: ApiNetworkingVersion,
+	}
+	workloadEntries := make([]IstioObject, 0)
+	for _, workloadEntry := range workloadEntriesList.GetItems() {
+		we := workloadEntry.DeepCopyIstioObject()
+		we.SetTypeMeta(typeMeta)
+		workloadEntries = append(workloadEntries, we)
+	}
+	return workloadEntries, nil
+}
+
+func (in *IstioClient) GetWorkloadEntry(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(WorkloadEntries).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[WorkloadEntries],
+		APIVersion: ApiNetworkingVersion,
+	}
+	workloadEntryObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a WorkloadEntry object", namespace, name)
+	}
+	we := workloadEntryObject.DeepCopyIstioObject()
+	we.SetTypeMeta(typeMeta)
+	return we, nil
+}
+
 func (in *IstioClient) GetVirtualService(namespace string, virtualservice string) (IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(VirtualServices).SubResource(virtualservice).Do().Get()
 	if err != nil {
@@ -284,6 +417,11 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 // GetGateways return all Gateways for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
+	// In case Gateways aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(Gateways) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Gateways).Do().Get()
 	if err != nil {
 		return nil, err
@@ -326,6 +464,11 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 // GetServiceEntries return all ServiceEntry objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error) {
+	// In case Serviceentries aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(Serviceentries) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Serviceentries).Do().Get()
 	if err != nil {
 		return nil, err
@@ -370,6 +513,11 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
+	// In case DestinationRules aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(DestinationRules) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(DestinationRules).Do().Get()
 	if err != nil {
 		return nil, err
@@ -424,6 +572,11 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 // GetQuotaSpecs returns all QuotaSpecs objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
+	// In case quotaspecs aren't present on Istio, return empty array.
+	if !in.hasConfigResource(quotaspecs) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecs).Do().Get()
 	if err != nil {
 		return nil, err
@@ -467,6 +620,11 @@ func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (Ist
 // GetQuotaSpecBindings returns all QuotaSpecBindings objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, error) {
+	// In case quotaspecbindings aren't present on Istio, return empty array.
+	if !in.hasConfigResource(quotaspecbindings) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecbindings).Do().Get()
 	if err != nil {
 		return nil, err
@@ -508,6 +666,11 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
+	// In case Policies aren't present on Istio, return empty array.
+	if !in.hasAuthenticationResource(policies) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(policies).Do().Get()
 	if err != nil {
 		return nil, err
@@ -550,6 +713,11 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 }
 
 func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
+	// In case MeshPolicies aren't present on Istio, return empty array.
+	if !in.hasAuthenticationResource(meshPolicies) {
+		return []IstioObject{}, nil
+	}
+
 	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
 	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
@@ -598,6 +766,9 @@ func (in *IstioClient) GetMeshPolicy(policyName string) (IstioObject, error) {
 }
 
 func (in *IstioClient) GetServiceMeshPolicies(namespace string) ([]IstioObject, error) {
+	if !in.IsMaistraApi() {
+		return []IstioObject{}, nil
+	}
 	result, err := in.maistraAuthenticationApi.Get().Namespace(namespace).Resource(serviceMeshPolicies).Do().Get()
 	if err != nil {
 		return nil, err
@@ -690,6 +861,10 @@ func (in *IstioClient) GetClusterRbacConfig(name string) (IstioObject, error) {
 }
 
 func (in *IstioClient) GetServiceMeshRbacConfigs(namespace string) ([]IstioObject, error) {
+	if !in.IsMaistraApi() {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.maistraRbacApi.Get().Namespace(namespace).Resource(serviceMeshRbacConfigs).Do().Get()
 	if err != nil {
 		return nil, err
@@ -894,6 +1069,98 @@ func (in *IstioClient) GetAuthorizationPolicies(namespace string) ([]IstioObject
 		authorizationPolicies = append(authorizationPolicies, s)
 	}
 	return authorizationPolicies, nil
+}
+
+func (in *IstioClient) GetPeerAuthentications(namespace string) ([]IstioObject, error) {
+	// In case PeerAuthentication aren't present on Istio, return empty array.
+	if !in.hasSecurityResource(PeerAuthentications) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(PeerAuthentications).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[PeerAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	peerAuthenticationsList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PeerAuthentication list", namespace)
+	}
+
+	peerAuthentications := make([]IstioObject, 0)
+	for _, pa := range peerAuthenticationsList.GetItems() {
+		s := pa.DeepCopyIstioObject()
+		s.SetTypeMeta(typeMeta)
+		peerAuthentications = append(peerAuthentications, s)
+	}
+	return peerAuthentications, nil
+}
+
+func (in *IstioClient) GetPeerAuthentication(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(PeerAuthentications).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[PeerAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	peerAuthentication, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PeerAuthentication object", namespace)
+	}
+	p := peerAuthentication.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
+}
+
+func (in *IstioClient) GetRequestAuthentications(namespace string) ([]IstioObject, error) {
+	// In case RequestAuthentication aren't present on Istio, return empty array.
+	if !in.hasSecurityResource(RequestAuthentications) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(RequestAuthentications).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[RequestAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	requestAuthenticationsList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a RequestAuthentication list", namespace)
+	}
+
+	requestAuthentications := make([]IstioObject, 0)
+	for _, ra := range requestAuthenticationsList.GetItems() {
+		r := ra.DeepCopyIstioObject()
+		r.SetTypeMeta(typeMeta)
+		requestAuthentications = append(requestAuthentications, r)
+	}
+	return requestAuthentications, nil
+}
+
+func (in *IstioClient) GetRequestAuthentication(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioSecurityApi.Get().Namespace(namespace).Resource(RequestAuthentications).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[RequestAuthentications],
+		APIVersion: ApiSecurityVersion,
+	}
+	requestAuthentication, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PeerAuthentication object", namespace)
+	}
+	p := requestAuthentication.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
 }
 
 func (in *IstioClient) GetAuthorizationPolicy(namespace string, name string) (IstioObject, error) {
