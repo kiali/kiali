@@ -116,10 +116,11 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 					if errors.IsNotFound(err) {
 						// If a namespace is not found, then we skip it from the list of namespaces
 						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
-					} else if !errors.IsForbidden(err) {
+					} else if errors.IsForbidden(err) {
 						// Also, if namespace isn't readable, skip it.
-
-						// ...but if for some reason error is not "forbidden", abort and return the error.
+						log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
+					} else {
+						// On any other error, abort and return the error.
 						return nil, err
 					}
 				} else {
@@ -221,7 +222,7 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 }
 
 func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
-	// Check if we already are using the Kiali ServiceAccount token. If we do, no need to do further processing, since
+	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.
 	if kialiToken, err := kubernetes.GetKialiToken(); err != nil {
 		return nil, err
