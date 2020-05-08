@@ -213,7 +213,6 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
-	k8s.On("GetIstioConfigMap").Return(fakeIstioMeshConfig(true))
 
 	tlsService := getTLSService(k8s, true)
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
@@ -234,20 +233,6 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := getTLSService(k8s, false)
-	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
-
-	assert.NoError(err)
-	assert.Equal(MTLSPartiallyEnabled, status.Status)
-}
-
-func TestMeshStatusPartiallyEnabledAutoMtls(t *testing.T) {
-	assert := assert.New(t)
-
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakePermissiveMeshPeerAuthentication("default"), nil)
-	k8s.On("IsMaistraApi").Return(false)
-
-	tlsService := getTLSService(k8s, true)
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
@@ -293,16 +278,20 @@ func TestNamespaceHasMTLSEnabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
-	testNamespaceScenario(MTLSEnabled, drs, ps, t)
+	testNamespaceScenario(MTLSEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasPolicyDisabled(t *testing.T) {
-	ps := fakePermissivePeerAuthn("default", "bookinfo")
+	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
 	}
-	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
@@ -311,24 +300,28 @@ func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
-	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	ps := []kubernetes.IstioObject{}
-	drs := []kubernetes.IstioObject{}
+	var drs, ps []kubernetes.IstioObject
 
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
 
 	ps = fakePeerAuthnWithSelector("default", "bookinfo", "productpage")
 	drs = []kubernetes.IstioObject{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSNotEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasMTLSDisabled(t *testing.T) {
@@ -338,7 +331,9 @@ func TestNamespaceHasMTLSDisabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
-	testNamespaceScenario(MTLSDisabled, drs, ps, t)
+	testNamespaceScenario(MTLSDisabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSDisabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasSimpleTls(t *testing.T) {
@@ -348,7 +343,9 @@ func TestNamespaceHasSimpleTls(t *testing.T) {
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
-	testNamespaceScenario(MTLSDisabled, drs, ps, t)
+	testNamespaceScenario(MTLSDisabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSDisabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
@@ -368,14 +365,15 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s.On("GetDestinationRules", "bookinfo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPeerAuthentications", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	autoMtls := false
+	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil), enabledAutoMtls: &autoMtls}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
 	assert.Equal(MTLSEnabled, status.Status)
 }
 
-func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []kubernetes.IstioObject, t *testing.T) {
+func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []kubernetes.IstioObject, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
@@ -386,7 +384,10 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 	k8s.On("GetDestinationRules", "foo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPeerAuthentications", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	config.Set(config.NewConfig())
+
+	tlsService := TLSService{k8s: k8s, enabledAutoMtls: &autoMtls, businessLayer: NewWithBackends(k8s, nil, nil)}
+	tlsService.businessLayer.Namespace.isAccessibleNamespaces["**"] = true
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
@@ -426,10 +427,6 @@ func fakePeerAuthnWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.Is
 
 func fakePeerAuthn(name, namespace string, peers interface{}) []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{data.CreateEmptyPeerAuthentication(name, namespace, peers)}
-}
-
-func fakeIstioMeshConfig(autoMtls bool) kubernetes.IstioMeshConfig {
-	return kubernetes.IstioMeshConfig{EnableAutoMtls: autoMtls}
 }
 
 func getTLSService(k8s kubernetes.IstioClientInterface, autoMtls bool) *TLSService {

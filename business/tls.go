@@ -23,8 +23,8 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	var paErr, drErr error = nil, nil
 	var pap, drp = false, true
+	var paErr, drErr error = nil, nil
 
 	pap, paErr = in.hasMeshPeerAuthnEnabled()
 	if paErr != nil {
@@ -146,18 +146,21 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 }
 
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	plMode, pErr := in.hasPeerAuthnNamespacemTLSDefinition(namespace)
+	var plMode, drMode string
+	var pErr, dErr error
+
+	plMode, pErr = in.hasPeerAuthnNamespacemTLSDefinition(namespace)
 	if pErr != nil {
 		return models.MTLSStatus{}, pErr
 	}
 
-	drMode, dErr := in.hasDesinationRuleEnablingNamespacemTLS(namespace)
+	drMode, dErr = in.hasDesinationRuleEnablingNamespacemTLS(namespace)
 	if dErr != nil {
 		return models.MTLSStatus{}, dErr
 	}
 
 	return models.MTLSStatus{
-		Status: finalStatus(drMode, plMode),
+		Status: in.finalStatus(drMode, plMode),
 	}, nil
 }
 
@@ -206,14 +209,52 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (s
 	return "", nil
 }
 
-func finalStatus(drStatus string, pStatus string) string {
+func (in TLSService) finalStatus(drStatus string, paStatus string) string {
+	var status string
+	if in.hasAutoMTLSEnabled() {
+		status = finalStatusAutoMTLSEnabled(drStatus, paStatus)
+	} else {
+		status = finalStatusAutoMTLSDisabled(drStatus, paStatus)
+	}
+	return status
+}
+
+func finalStatusAutoMTLSEnabled(drStatus, paStatus string) string {
 	finalStatus := MTLSPartiallyEnabled
 
-	if pStatus == "STRICT" && drStatus == "ISTIO_MUTUAL" {
+	if paStatus == "STRICT" {
 		finalStatus = MTLSEnabled
-	} else if pStatus == "PERMISSIVE" && (drStatus == "DISABLE" || drStatus == "SIMPLE") {
+
+		if drStatus == "SIMPLE" || drStatus == "DISABLE" {
+			finalStatus = MTLSDisabled
+		}
+	} else if paStatus == "PERMISSIVE" {
+		finalStatus = MTLSEnabled
+
+		if drStatus == "SIMPLE" || drStatus == "DISABLE" {
+			finalStatus = MTLSDisabled
+		}
+	} else if paStatus == "DISABLE" {
 		finalStatus = MTLSDisabled
-	} else if drStatus == "" && pStatus == "" {
+
+		if drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" || drStatus == "" {
+			finalStatus = MTLSPartiallyEnabled
+		}
+	} else if paStatus == "" && drStatus == "" {
+		finalStatus = MTLSNotEnabled
+	}
+
+	return finalStatus
+}
+
+func finalStatusAutoMTLSDisabled(drStatus, paStatus string) string {
+	finalStatus := MTLSPartiallyEnabled
+
+	if paStatus == "STRICT" && drStatus == "ISTIO_MUTUAL" {
+		finalStatus = MTLSEnabled
+	} else if (paStatus == "DISABLE" || paStatus == "PERMISSIVE") && (drStatus == "DISABLE" || drStatus == "SIMPLE") {
+		finalStatus = MTLSDisabled
+	} else if drStatus == "" && paStatus == "" {
 		finalStatus = MTLSNotEnabled
 	}
 
