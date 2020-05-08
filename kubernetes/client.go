@@ -145,6 +145,16 @@ type IstioClient struct {
 	// See iter8.go#IsIter8Api() for more details
 	isIter8Api *bool
 
+	// networkingResources private variable will check which resources kiali has access to from networking.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasNetworkingResource() for more details.
+	networkingResources *map[string]bool
+
+	// configResources private variable will check which resources kiali has access to from config.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasConfigResource() for more details.
+	configResources *map[string]bool
+
 	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#hasRbacResource() for more details.
