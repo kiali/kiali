@@ -1,5 +1,15 @@
 import * as React from 'react';
-import { Card, CardBody, Grid, GridItem, Title, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  Grid,
+  GridItem,
+  Switch,
+  Title,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
@@ -19,6 +29,7 @@ export interface WorkloadPodLogsProps {
 
 interface ContainerInfo {
   container: string;
+  containerOptions: any[];
 }
 
 interface WorkloadPodLogsState {
@@ -32,6 +43,9 @@ interface WorkloadPodLogsState {
   appLogs?: PodLogs;
   proxyLogs?: PodLogs;
   tailLines: number;
+  isLogWindowSelectExpanded: boolean;
+  logWindowSelections: any[];
+  sideBySideOrientation: boolean;
 }
 
 const TailLinesDefault = 500;
@@ -46,16 +60,23 @@ const TailLinesOptions = {
   '5000': 'Last 5000 lines'
 };
 
-const appLogsDiv = style({
+const appLogsDivVertical = style({
   height: 'calc(100% + 30px)'
+});
+const appLogsDivHorizontal = style({
+  height: '100%'
 });
 
 const proxyLogsDiv = style({
   height: '100%'
 });
 
+const logsTitle = style({
+  marginLeft: '10px'
+});
+
 const logsTextarea = style({
-  width: '100%',
+  width: 'calc(100% - 15px)',
   height: 'calc(100% - 70px)',
   overflow: 'auto',
   resize: 'none',
@@ -64,7 +85,8 @@ const logsTextarea = style({
   fontFamily: 'monospace',
   fontSize: '11pt',
   padding: '10px',
-  whiteSpace: 'pre'
+  whiteSpace: 'pre',
+  margin: '0 10px 0 10px'
 });
 
 const toolbarRight = style({
@@ -89,7 +111,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   private loadContainerLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
   private readonly appLogsRef: any;
   private readonly proxyLogsRef: any;
-  private podOptions: object = {};
+  private podOptions: any[] = [];
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -103,7 +125,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         loadingProxyLogs: false,
         loadingAppLogsError: 'There are no logs to display because no pods are available.',
         loadingProxyLogsError: 'There are no logs to display because no container logs are available.',
-        tailLines: TailLinesDefault
+        tailLines: TailLinesDefault,
+        isLogWindowSelectExpanded: false,
+        logWindowSelections: [],
+        sideBySideOrientation: false
       };
       return;
     }
@@ -124,7 +149,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       loadingAppLogs: false,
       loadingProxyLogs: false,
       podValue: podValue,
-      tailLines: TailLinesDefault
+      tailLines: TailLinesDefault,
+      isLogWindowSelectExpanded: false,
+      logWindowSelections: [],
+      sideBySideOrientation: false
     };
   }
 
@@ -161,6 +189,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   render() {
+    const { sideBySideOrientation } = this.state;
     return (
       <RenderComponentScroll>
         {this.state.containerInfo && (
@@ -179,6 +208,16 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           value={this.state.podValue}
                           label={this.props.pods[this.state.podValue!].name}
                           options={this.podOptions!}
+                        />
+                      </ToolbarItem>
+                    </ToolbarGroup>
+                    <ToolbarGroup>
+                      <ToolbarItem>
+                        <Switch
+                          id="simple-switch"
+                          label="Side by Side"
+                          isChecked={sideBySideOrientation}
+                          onChange={this.handleOrientationChange}
                         />
                       </ToolbarItem>
                     </ToolbarGroup>
@@ -212,15 +251,15 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                     </ToolbarGroup>
                   </Toolbar>
                   <Splitter
-                    position="horizontal"
+                    position={!this.state.sideBySideOrientation ? 'horizontal' : 'vertical'}
                     primaryPaneMaxHeight="100%"
                     primaryPaneMinHeight={0}
                     primaryPaneHeight="50%"
                     dispatchResize={true}
                     postPoned={true}
                   >
-                    <div className={appLogsDiv}>
-                      <Title size="lg" headingLevel="h5">
+                    <div className={sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
+                      <Title size="lg" headingLevel="h5" className={logsTitle}>
                         {this.formatAppLogLabel(this.props.pods[this.state.podValue!])}
                       </Title>
                       <textarea
@@ -232,7 +271,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                       />
                     </div>
                     <div className={proxyLogsDiv}>
-                      <Title size="lg" headingLevel="h5">
+                      <Title size="lg" headingLevel="h5" className={logsTitle}>
                         Istio proxy
                       </Title>
                       <textarea
@@ -268,6 +307,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     this.setState({ tailLines: tailLines });
   };
 
+  private handleOrientationChange = (isChecked: boolean) => {
+    this.setState({ sideBySideOrientation: isChecked });
+  };
+
   private handleRefresh = () => {
     const pod = this.props.pods[this.state.podValue!];
     this.fetchLogs(
@@ -283,11 +326,11 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const containers = pod.containers ? pod.containers : [];
     containers.push(...(pod.istioContainers ? pod.istioContainers : []));
     const containerNames: string[] = containers.map(c => c.name);
-    const options: object = {};
+    const options: any[] = [];
     containerNames.forEach(c => {
       options[c] = c;
     });
-    return { container: containerNames[0] };
+    return { container: containerNames[0], containerOptions: options };
   };
 
   private formatAppLogLabel = (pod: Pod): string => {
