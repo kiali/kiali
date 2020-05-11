@@ -46,8 +46,10 @@ OPERATOR_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
 OPERATOR_QUAY_NAME ?= quay.io/${OPERATOR_CONTAINER_NAME}
 OPERATOR_QUAY_TAG = ${OPERATOR_QUAY_NAME}:${OPERATOR_CONTAINER_VERSION}
 
+# Where the control plane is
+ISTIO_NAMESPACE ?= istio-system
 # Declares the namespace/project where the objects are to be deployed.
-NAMESPACE ?= istio-system
+NAMESPACE ?= ${ISTIO_NAMESPACE}
 
 # A default go GOPATH if it isn't user defined
 GOPATH ?= ${HOME}/go
