@@ -288,7 +288,7 @@ type Iter8ClientInterface interface {
 }
 
 type iter8AnalyticsConfig struct {
-	Port int `yaml:"port,omitempty"`
+	Port       int `yaml:"port,omitempty"`
 	Prometheus struct {
 		Auth struct {
 			CAFile             string `yaml:"ca_file"`
