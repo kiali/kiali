@@ -160,7 +160,7 @@ Valid command line arguments:
        If you have locally built your own development version of Kiali, set this to "dev".
        Default: the tag default defined by the Istio Helm chart
   -m|--mtls (true|false):
-       Indicate if you want global MTLS enabled.
+       Indicate if you want global MTLS auto enabled.
        Default: false
   -n|--namespace <name>:
        Install Istio in this namespace.
@@ -239,6 +239,14 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
   else
     CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
     TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
+
+    # Istio 1.5 used global.mtls.auto, 1.6 renamed it
+    if ${ISTIOCTL} --remote=false version | grep -q "1\.5" ; then
+      MTLS_OPTIONS="--set values.global.mtls.auto=${MTLS}"
+    else
+      MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
+    fi
+    MTLS_OPTIONS="${MTLS_OPTIONS} --set values.global.controlPlaneSecurityEnabled=${MTLS}"
   fi
 fi
 
@@ -286,10 +294,9 @@ fi
 for s in \
    "--set values.kiali.enabled=${KIALI_ENABLED}" \
    "${_KIALI_TAG_ARG}" \
-   "--set values.tracing.enabled=${DASHBOARDS_ENABLED}" \
-   "--set values.grafana.enabled=${DASHBOARDS_ENABLED}" \
-   "--set values.global.mtls.enabled=${MTLS}" \
-   "--set values.global.controlPlaneSecurityEnabled=${MTLS}" \
+   "--set addonComponents.tracing.enabled=${DASHBOARDS_ENABLED}" \
+   "--set addonComponents.grafana.enabled=${DASHBOARDS_ENABLED}" \
+   "${MTLS_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "${CNI_OPTIONS}" \
    "${TELEMETRY_OPTIONS}" \
