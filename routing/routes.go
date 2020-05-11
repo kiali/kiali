@@ -1436,7 +1436,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//		500: internalError
-		//		200
+		//		200: iter8StatusResponse
 		{
 			Name:          "Iter8ExperimentDelete",
 			Method:        "DELETE",
