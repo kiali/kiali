@@ -51,8 +51,8 @@ func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Spec.Hosts = virtualService.GetSpec()["hosts"]
 	vService.Spec.Gateways = virtualService.GetSpec()["gateways"]
 	vService.Spec.Http = virtualService.GetSpec()["http"]
-	vService.Spec.Tcp = virtualService.GetSpec()["tcp"]
 	vService.Spec.Tls = virtualService.GetSpec()["tls"]
+	vService.Spec.Tcp = virtualService.GetSpec()["tcp"]
 	vService.Spec.ExportTo = virtualService.GetSpec()["exportTo"]
 }
 
