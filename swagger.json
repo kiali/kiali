@@ -5808,6 +5808,10 @@
             "subjectAltNames": {
               "type": "object",
               "x-go-name": "SubjectAltNames"
+            },
+            "workloadSelector": {
+              "type": "object",
+              "x-go-name": "WorkloadSelector"
             }
           },
           "x-go-name": "Spec"
@@ -6069,6 +6073,14 @@
             "ingress": {
               "type": "object",
               "x-go-name": "Ingress"
+            },
+            "localhost": {
+              "type": "object",
+              "x-go-name": "Localhost"
+            },
+            "outboundTrafficPolicy": {
+              "type": "object",
+              "x-go-name": "OutboundTrafficPolicy"
             },
             "workloadSelector": {
               "type": "object",
@@ -6825,6 +6837,10 @@
         "spec": {
           "type": "object",
           "properties": {
+            "exportTo": {
+              "type": "object",
+              "x-go-name": "ExportTo"
+            },
             "host": {
               "type": "object",
               "x-go-name": "Host"
