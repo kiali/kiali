@@ -115,7 +115,7 @@ func Iter8Metrics(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	metricNames, err := business.Iter8.GetIter8Metrics( )
+	metricNames, err := business.Iter8.GetIter8Metrics()
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

@@ -171,7 +171,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
-	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:"+strconv.Itoa(in.k8s.GetAnalyticPort())
+	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.k8s.GetAnalyticPort())
 	for _, criteria := range newExperimentSpec.Criterias {
 		min_max := struct {
 			Min float64 `json:"min,omitempty"`
@@ -195,7 +195,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 				MetricName:    criteria.Metric,
 				ToleranceType: criteria.ToleranceType,
 				Tolerance:     criteria.Tolerance,
-				SampleSize:	   criteria.SampleSize,
+				SampleSize:    criteria.SampleSize,
 				StopOnFailure: criteria.StopOnFailure,
 				MinMax:        min_max,
 			})
@@ -221,5 +221,5 @@ func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
 	defer promtimer.ObserveNow(&err)
 
 	metricNames, err = in.k8s.Iter8ConfigMap()
-	return metricNames, err;
+	return metricNames, err
 }

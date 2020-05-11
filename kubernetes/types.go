@@ -142,7 +142,7 @@ const (
 	iter8experiments        = "experiments"
 	iter8experimentType     = "Experiment"
 	iter8experimentTypeList = "ExperimentList"
-	iter8configMap 			= "iter8config-metrics"
+	iter8configMap          = "iter8config-metrics"
 )
 
 var (

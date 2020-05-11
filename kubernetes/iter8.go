@@ -291,12 +291,12 @@ type iter8AnalyticsConfig struct {
 	Port int `yaml:"port,omitempty"`
 	Prometheus struct {
 		Auth struct {
-			CAFile string `yaml:"ca_file"`
+			CAFile string           `yaml:"ca_file"`
 			InsecureSkipVerify bool `yaml:"insecure_skip_verify"`
-			Password string `yaml:"password"`
-			Token string `yaml:"token"`
-			Type string `yaml:"type"`
-			UserName string `yaml:"username"`
+			Password string         `yaml:"password"`
+			Token string            `yaml:"token"`
+			Type string             `yaml:"type"`
+			UserName string         `yaml:"username"`
 		} `yaml:"auth"`
 		URL string `yaml:"url"`
 	} `yaml:"prometheus"`
@@ -315,7 +315,7 @@ func (in *IstioClient) IsIter8Api() bool {
 	return *in.isIter8Api
 }
 
-func (in *IstioClient) GetAnalyticPort() (int) {
+func (in *IstioClient) GetAnalyticPort() int {
 	configMap, err := in.GetConfigMap("iter8", "iter8-analytics")
 	if err != nil {
 		log.Warningf("Iter8: Cannot find Iter8 Analytics configmap.")

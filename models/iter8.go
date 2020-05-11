@@ -126,8 +126,6 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
 	}
 
-	
-
 	targetServiceNamespace := spec.TargetService.Namespace
 	if targetServiceNamespace == "" {
 		targetServiceNamespace = iter8Object.GetObjectMeta().Namespace
