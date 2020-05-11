@@ -232,7 +232,7 @@ func TestValidateVersion(t *testing.T) {
 		t.Errorf("validateVersion was incorrect, got false, want true, 0.8.3-alpha is >= 0.8.3-alpha")
 	}
 
-	result = validateVersion("<= 1.5.0-alpha", "1.6.0-beta.0")
+	result = validateVersion("> 1.5.0-alpha", "1.6.0-beta.0")
 
 	if !result {
 		t.Errorf("validateVersion was incorrect, got false, want true, 1.5.0-alpha is <= 1.6.0-beta.0")
