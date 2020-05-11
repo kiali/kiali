@@ -107,7 +107,9 @@ func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
 }
 
 func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
-	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{})
+	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
+		"mode": "STRICT",
+	})
 
 	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)

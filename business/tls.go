@@ -23,10 +23,10 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	var pap, drp = false, true
-	var paErr, drErr error = nil, nil
+	var drp = true
+	var paErr, drErr error
 
-	pap, paErr = in.hasMeshPeerAuthnEnabled()
+	pap, paErr := in.hasMeshPeerAuthnEnabled()
 	if paErr != nil {
 		return models.MTLSStatus{}, paErr
 	}

@@ -1517,7 +1517,7 @@ func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 				}
 			} else {
 				// STRICT when mtls object is empty
-				return true, "STRICT"
+				return false, "PERMISSIVE"
 			}
 		}
 	}

@@ -18,7 +18,7 @@ func TestCorrectMeshPeerAuthn(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -32,7 +32,7 @@ func TestMeshPeerAuthnWithoutNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -69,10 +69,6 @@ func TestPeerAuthnWithStrictMode(t *testing.T) {
 
 	assert.NoError(err)
 	assert.Equal(true, isGloballyEnabled)
-}
-
-func fakeMeshPeerAuthenticationEmptyMTLS(name string) []kubernetes.IstioObject {
-	return fakeMeshPeerAuthentication(name, map[string]interface{}{})
 }
 
 func fakePermissiveMeshPeerAuthentication(name string) []kubernetes.IstioObject {
@@ -197,7 +193,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := getTLSService(k8s, false)
@@ -211,7 +207,7 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := getTLSService(k8s, true)
@@ -229,7 +225,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeMeshPeerAuthenticationEmptyMTLS("default"), nil)
+	k8s.On("GetPeerAuthentications", mock.AnythingOfType("string")).Return(fakeStrictMeshPeerAuthentication("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := getTLSService(k8s, false)
@@ -272,7 +268,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 }
 
 func TestNamespaceHasMTLSEnabled(t *testing.T) {
-	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
+	ps := fakeStrictPeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
@@ -295,7 +291,7 @@ func TestNamespaceHasPolicyDisabled(t *testing.T) {
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
-	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
+	ps := fakeStrictPeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
@@ -351,7 +347,7 @@ func TestNamespaceHasSimpleTls(t *testing.T) {
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	assert := assert.New(t)
 
-	ps := fakePeerAuthnEmptyMTLS("default", "bookinfo")
+	ps := fakeStrictPeerAuthn("default", "bookinfo")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("foo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
@@ -409,8 +405,8 @@ func fakeProjects() []osproject_v1.Project {
 	}
 }
 
-func fakePeerAuthnEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
-	return fakePeerAuthn(name, namespace, map[string]interface{}{})
+func fakeStrictPeerAuthn(name, namespace string) []kubernetes.IstioObject {
+	return fakePeerAuthnWithMtlsMode(name, namespace, "STRICT")
 }
 
 func fakePeerAuthnWithSelector(name, namespace, target string) []kubernetes.IstioObject {
