@@ -10,7 +10,7 @@ import (
 
 // Context: DestinationRule enables mesh-wide mTLS
 // Context: There is no MeshPolicy
-// It doesn't return any validation
+// It returns any validation
 func TestMTLSMeshWideDREnabledWithNoMeshPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
