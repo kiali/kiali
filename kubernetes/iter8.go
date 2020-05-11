@@ -291,12 +291,12 @@ type iter8AnalyticsConfig struct {
 	Port int `yaml:"port,omitempty"`
 	Prometheus struct {
 		Auth struct {
-			CAFile string           `yaml:"ca_file"`
-			InsecureSkipVerify bool `yaml:"insecure_skip_verify"`
-			Password string         `yaml:"password"`
-			Token string            `yaml:"token"`
-			Type string             `yaml:"type"`
-			UserName string         `yaml:"username"`
+			CAFile             string `yaml:"ca_file"`
+			InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
+			Password           string `yaml:"password"`
+			Token              string `yaml:"token"`
+			Type               string `yaml:"type"`
+			UserName           string `yaml:"username"`
 		} `yaml:"auth"`
 		URL string `yaml:"url"`
 	} `yaml:"prometheus"`
