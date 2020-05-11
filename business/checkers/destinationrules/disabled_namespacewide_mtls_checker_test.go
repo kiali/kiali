@@ -27,7 +27,8 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -50,16 +51,14 @@ func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
 // Context: PeerAuthn ns-wide in strict mode
 // It returns a policymtlsenabled validation
 func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
-	conf := config.NewConfig()
-	config.Set(conf)
-
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
@@ -69,7 +68,8 @@ func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 		},
 	}
 
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", destinationRule, mTlsDetails)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", destinationRule, mTlsDetails, false)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.policymtlsenabled", destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -86,7 +86,8 @@ func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
 		},
 	}
 
-	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", destinationRule, mTlsDetails)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", destinationRule, mTlsDetails, false)
+	testDisabledMtlsValidationsFound(t, "destinationrules.mtls.meshpolicymtlsenabled", destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -103,7 +104,8 @@ func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
 		},
 	}
 
-	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
@@ -116,7 +118,8 @@ func TestDRNSWideDisablingTLSWithoutPolicy(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{}
 
-	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
 // Context: There isn't any ns-wide DestinationRule defining mTLS connections
@@ -127,11 +130,17 @@ func TestDRNonTLSRelated(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{}
 
-	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
-func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
+func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
+
+	mTLSDetails.EnabledAutoMtls = autoMtls
 
 	validations, valid := DisabledNamespaceWideMTLSChecker{
 		DestinationRule: destinationRule,
@@ -142,8 +151,13 @@ func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule kubernetes
 	assert.True(valid)
 }
 
-func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
+func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
+
+	mTLSDetails.EnabledAutoMtls = autoMtls
 
 	validations, valid := DisabledNamespaceWideMTLSChecker{
 		DestinationRule: destinationRule,
