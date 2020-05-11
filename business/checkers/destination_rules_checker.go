@@ -31,7 +31,11 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 
 	enabledDRCheckers := []GroupChecker{
 		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, DestinationRules: in.DestinationRules, ServiceEntries: seHosts},
-		destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails},
+	}
+
+	// Appending validations that only applies to non-autoMTLS meshes
+	if !in.MTLSDetails.EnabledAutoMtls {
+		enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
 	}
 
 	for _, checker := range enabledDRCheckers {
@@ -56,9 +60,13 @@ func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObje
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.GetObjectMeta().Namespace, DestinationRuleCheckerType)
 
 	enabledCheckers := []Checker{
-		destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
-		destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+		destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+	}
+
+	// Appending validations that only applies to non-autoMTLS meshes
+	if !in.MTLSDetails.EnabledAutoMtls {
+		enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})
 	}
 
 	for _, checker := range enabledCheckers {
