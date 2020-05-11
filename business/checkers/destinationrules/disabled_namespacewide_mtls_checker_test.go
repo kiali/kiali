@@ -12,7 +12,7 @@ import (
 )
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Policy ns-wide in permissive mode
+// Context: PeerAuthn ns-wide in permissive mode
 // It doesn't return any validation
 func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 	conf := config.NewConfig()
@@ -31,7 +31,7 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Policy ns-wide in permissive mode
+// Context: PeerAuthn ns-wide in permissive mode
 // Context: Does have a MeshPolicy in strict mode
 // It doesn't return any validation
 func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
@@ -54,7 +54,7 @@ func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Policy ns-wide in strict mode
+// Context: PeerAuthn ns-wide in strict mode
 // It returns a policymtlsenabled validation
 func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 	conf := config.NewConfig()
@@ -73,7 +73,7 @@ func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Doesn't have Policy ns-wide defining TLS settings
+// Context: Doesn't have PeerAuthn ns-wide defining TLS settings
 // Context: Does have a MeshPolicy in strict mode
 // It returns a meshpolicymtlsenabled validation
 func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
@@ -90,7 +90,7 @@ func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Doesn't have Policy ns-wide defining TLS settings
+// Context: Doesn't have PeerAuthn ns-wide defining TLS settings
 // Context: Does have a MeshPolicy in permissive mode
 // It doesn't return any validation
 func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
@@ -107,7 +107,7 @@ func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
-// Context: Doesn't have Policy ns-wide defining TLS settings
+// Context: Doesn't have PeerAuthn ns-wide defining TLS settings
 // Context: Doesn't have a MeshPolicy defining TLS settings
 // It doesn't return any validation
 func TestDRNSWideDisablingTLSWithoutPolicy(t *testing.T) {

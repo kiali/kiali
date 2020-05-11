@@ -35,9 +35,9 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 	if peerAuthn.GetObjectMeta().Namespace == config.Get().IstioNamespace {
 		enabledCheckers = append(enabledCheckers,
 			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
-	} else {
+	} else if !m.MTLSDetails.EnabledAutoMtls {
 		enabledCheckers = append(enabledCheckers,
-			peerauthentications.NamespaceMtlsChecker{Policy: peerAuthn, MTLSDetails: m.MTLSDetails})
+			peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
 	}
 
 	for _, checker := range enabledCheckers {

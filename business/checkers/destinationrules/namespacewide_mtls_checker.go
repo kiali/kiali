@@ -25,7 +25,7 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	// In case any Policy enables mTLS, check among MeshPeerAuthentications for a rule enabling it
+	// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
 	// ServiceMeshPolicies are a clone of MeshPeerAuthentications but used in Maistra scenarios
 	// MeshPeerAuthentications and ServiceMeshPolicies won't co-exist, only ony array will be populated
 	mPolicies := m.MTLSDetails.MeshPeerAuthentications

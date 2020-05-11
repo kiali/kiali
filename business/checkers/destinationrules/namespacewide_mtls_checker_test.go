@@ -12,7 +12,7 @@ import (
 )
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy enabling PERMISSIVE mTLS
+// Context: There is one PeerAuthn enabling PERMISSIVE mTLS
 // It doesn't return any validation
 func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 	assert := assert.New(t)
@@ -38,7 +38,7 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy enabling STRICT mTLS
+// Context: There is one PeerAuthn enabling STRICT mTLS
 // It doesn't return any validation
 func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),

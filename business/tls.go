@@ -222,13 +222,7 @@ func (in TLSService) finalStatus(drStatus string, paStatus string) string {
 func finalStatusAutoMTLSEnabled(drStatus, paStatus string) string {
 	finalStatus := MTLSPartiallyEnabled
 
-	if paStatus == "STRICT" {
-		finalStatus = MTLSEnabled
-
-		if drStatus == "SIMPLE" || drStatus == "DISABLE" {
-			finalStatus = MTLSDisabled
-		}
-	} else if paStatus == "PERMISSIVE" {
+	if paStatus == "STRICT" || paStatus == "PERMISSIVE" {
 		finalStatus = MTLSEnabled
 
 		if drStatus == "SIMPLE" || drStatus == "DISABLE" {

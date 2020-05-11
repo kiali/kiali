@@ -10,7 +10,7 @@ type DisabledNamespaceWideMTLSChecker struct {
 	MTLSDetails     kubernetes.MTLSDetails
 }
 
-// Check if a the Policy is allows non-mtls traffic when DestinationRule explicitly disables mTLS ns-wide
+// Check if a the PeerAuthn is allows non-mtls traffic when DestinationRule explicitly disables mTLS ns-wide
 func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
@@ -22,13 +22,13 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	// otherwise, check among PeerAuthentications for a rule enabling mTLS
 	for _, mp := range m.MTLSDetails.PeerAuthentications {
 		if enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
-			// If Policy has mTLS enabled in STRICT mode
+			// If PeerAuthn has mTLS enabled in STRICT mode
 			// traffic going through DestinationRule won't work
 			if mode != "PERMISSIVE" {
 				check := models.Build("destinationrules.mtls.policymtlsenabled", "spec/trafficPolicy/tls/mode")
 				return append(validations, &check), false
 			} else {
-				// If Policy has mTLS enabled in PERMISSIVE mode
+				// If PeerAuthn has mTLS enabled in PERMISSIVE mode
 				// traffic going through DestinationRule will work
 				// no need for further analysis in MeshPeerAuthentications
 				return validations, true
@@ -36,7 +36,7 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	// In case any Policy enables mTLS, check among MeshPeerAuthentications for a rule enabling it
+	// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
 	// ServiceMeshPolicies are a clone of MeshPeerAuthentications but used in Maistra scenarios
 	// MeshPeerAuthentications and ServiceMeshPolicies won't co-exist, only ony array will be populated
 	mPolicies := m.MTLSDetails.MeshPeerAuthentications

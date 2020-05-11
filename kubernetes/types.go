@@ -474,6 +474,7 @@ type MTLSDetails struct {
 	MeshPeerAuthentications []IstioObject `json:"meshpeerauthentications"`
 	ServiceMeshPolicies     []IstioObject `json:"servicemeshpolicies"`
 	PeerAuthentications     []IstioObject `json:"peerauthentications"`
+	EnabledAutoMtls         bool          `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)

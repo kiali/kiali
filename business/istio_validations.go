@@ -207,8 +207,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{roleBindChecker}
 	case PeerAuthentications:
 		// Validations on PeerAuthentications
-		policiesChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{policiesChecker}
+		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{peerAuthnChecker}
 	case WorkloadEntries:
 		// Validation on WorkloadEntries
 	case RequestAuthentications:
@@ -470,7 +470,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		return
 	}
 
-	wg.Add(2)
+	wg.Add(3)
 
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
@@ -506,6 +506,17 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			errChan <- err
 		} else {
 			details.PeerAuthentications = peerAuthns
+		}
+	}(mtlsDetails)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
+		icm, err := in.k8s.GetIstioConfigMap()
+		if err != nil {
+			errChan <- err
+		} else {
+			details.EnabledAutoMtls = icm.EnableAutoMtls
 		}
 	}(mtlsDetails)
 
