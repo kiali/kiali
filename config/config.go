@@ -329,7 +329,7 @@ func NewConfig() (c *Config) {
 				IstioStatusEnabled:     true,
 				IstioIdentityDomain:    "svc.cluster.local",
 				IstioSidecarAnnotation: "sidecar.istio.io/status",
-				UrlServiceVersion:      "http://istio-pilot:8080/version",
+				UrlServiceVersion:      "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{

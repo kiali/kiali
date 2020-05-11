@@ -92,7 +92,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     curl -L https://git.io/getLatestIstio | sh -
   else
     # See https://github.com/istio/istio/wiki/Dev%20Builds
-    curl -L https://gcsweb.istio.io/gcs/istio-build/dev/${VERSION_WE_WANT}/istio-${VERSION_WE_WANT}-linux.tar.gz | tar xvfz -
+    curl -L https://gcsweb.istio.io/gcs/istio-build/dev/${VERSION_WE_WANT}/istio-${VERSION_WE_WANT}-linux-amd64.tar.gz | tar xvfz -
     if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
       echo "Could not download ${VERSION_WE_WANT}"
       exit 1
