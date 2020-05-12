@@ -98,7 +98,14 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 		if queryAllNamespaces {
 			nss, err := in.k8s.GetNamespaces(labelSelector)
 			if err != nil {
-				return nil, err
+				// Fallback to using the Kiali service account, if needed
+				if errors.IsForbidden(err) {
+					if nss, err = in.getNamespacesUsingKialiSA(labelSelector, err); err != nil {
+						return nil, err
+					}
+				} else {
+					return nil, err
+				}
 			}
 			namespaces = models.CastNamespaceCollection(nss)
 		} else {
@@ -106,10 +113,14 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 			for _, ans := range accessibleNamespaces {
 				k8sNs, err := in.k8s.GetNamespace(ans)
 				if err != nil {
-					// If a namespace is not found, then we skip it from the list of namespaces
 					if errors.IsNotFound(err) {
+						// If a namespace is not found, then we skip it from the list of namespaces
 						log.Warningf("Kiali has an accessible namespace [%s] which doesn't exist", ans)
+					} else if errors.IsForbidden(err) {
+						// Also, if namespace isn't readable, skip it.
+						log.Warningf("Kiali has an accessible namespace [%s] which is forbidden", ans)
 					} else {
+						// On any other error, abort and return the error.
 						return nil, err
 					}
 				} else {
@@ -208,4 +219,59 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 		}
 	}
 	return &result, nil
+}
+
+func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
+	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
+	// this would just circle back to the same results.
+	if kialiToken, err := kubernetes.GetKialiToken(); err != nil {
+		return nil, err
+	} else if in.k8s.GetToken() == kialiToken {
+		return nil, forwardedError
+	}
+
+	// Let's get the namespaces list using the Kiali Service Account
+	nss, err := getNamespacesForKialiSA(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only take namespaces where the user has privileges
+	var namespaces []core_v1.Namespace
+	for _, item := range nss {
+		if _, getNsErr := in.k8s.GetNamespace(item.Name); getNsErr == nil {
+			// Namespace is accessible
+			namespaces = append(namespaces, item)
+		} else if !errors.IsForbidden(getNsErr) {
+			// Since the returned error is NOT "forbidden", something bad happened
+			return nil, getNsErr
+		}
+	}
+
+	// Return the list of namespaces where the user has the 'get namespace' read privilege.
+	return namespaces, nil
+}
+
+func getNamespacesForKialiSA(labelSelector string) ([]core_v1.Namespace, error) {
+	clientFactory, err := kubernetes.GetClientFactory()
+	if err != nil {
+		return nil, err
+	}
+
+	kialiToken, err := kubernetes.GetKialiToken()
+	if err != nil {
+		return nil, err
+	}
+
+	k8s, err := clientFactory.GetClient(kialiToken)
+	if err != nil {
+		return nil, err
+	}
+
+	nss, err := k8s.GetNamespaces(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	return nss, nil
 }

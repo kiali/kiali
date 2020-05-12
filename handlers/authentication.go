@@ -228,9 +228,15 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	_, err = business.Namespace.GetNamespaces()
+	nsList, err := business.Namespace.GetNamespaces()
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+		return false
+	}
+
+	// If namespace list is empty, return unauthorized error
+	if len(nsList) == 0 {
+		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
 		return false
 	}
 
