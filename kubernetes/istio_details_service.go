@@ -1281,8 +1281,8 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 				for _, httpRoute := range aHttp {
 					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
 						if route, ok := mHttpRoute["route"]; ok {
-							if aDestinationWeight, ok := route.([]interface{}); ok {
-								for _, destination := range aDestinationWeight {
+							if aRouteDestination, ok := route.([]interface{}); ok {
+								for _, destination := range aRouteDestination {
 									if mDestination, ok := destination.(map[string]interface{}); ok {
 										if destinationW, ok := mDestination["destination"]; ok {
 											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
