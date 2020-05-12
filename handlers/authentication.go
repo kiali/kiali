@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -205,6 +206,80 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	return true
 }
 
+func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	err := r.ParseForm()
+
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
+		return false
+	}
+
+	token := r.Form.Get("id_token")
+	expiresIn := r.Form.Get("expires_in")
+	if token == "" || expiresIn == "" {
+		RespondWithError(w, http.StatusInternalServerError, "Token is empty or invalid.")
+		return false
+	}
+
+	expiresInNumber, err := strconv.Atoi(expiresIn)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Token is empty or invalid.", err.Error())
+		return false
+	}
+
+	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
+
+	business, err := business.Get(token)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		return false
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	nsList, err := business.Namespace.GetNamespaces()
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+		return false
+	}
+
+	// If namespace list is empty, return unauthorized error
+	if len(nsList) == 0 {
+		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
+		return false
+	}
+
+	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
+	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	tokenSubject := "token" // Set a default value
+
+	tokenClaims := config.IanaClaims{
+		SessionId: token,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   tokenSubject,
+			ExpiresAt: expiresOn.Unix(),
+			Issuer:    config.AuthStrategyOpenshiftIssuer, // TODO: Change
+		},
+	}
+	tokenString, err := config.GetSignedTokenString(tokenClaims)
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    tokenString,
+		Expires:  expiresOn,
+		HttpOnly: true,
+		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.Format(time.RFC1123Z), Username: tokenSubject})
+	return true
+}
+
 func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	err := r.ParseForm()
 
@@ -277,36 +352,6 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
 	return true
-}
-
-func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	tokenString := getTokenStringFromRequest(r)
-	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %s", err.Error())
-	} else {
-		// Session ID claim must be present
-		if len(claims.SessionId) == 0 {
-			log.Warning("Token is invalid: sid claim is required")
-			return http.StatusUnauthorized, ""
-		}
-
-		business, err := business.Get(claims.SessionId)
-		if err != nil {
-			log.Warning("Could not get the business layer : ", err)
-			return http.StatusInternalServerError, ""
-		}
-
-		_, err = business.OpenshiftOAuth.GetUserInfo(claims.SessionId)
-		if err == nil {
-			// Internal header used to propagate the subject of the request for audit purposes
-			r.Header.Add("Kiali-User", claims.Subject)
-			return http.StatusOK, claims.SessionId
-		}
-
-		log.Warning("Token error: ", err)
-	}
-
-	return http.StatusUnauthorized, ""
 }
 
 func performOpenshiftLogout(r *http.Request) (int, error) {
@@ -410,6 +455,66 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	return http.StatusOK
 }
 
+func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
+	} else {
+		// Session ID claim must be present
+		if len(claims.SessionId) == 0 {
+			log.Warning("Token is invalid: sid claim is required")
+			return http.StatusUnauthorized, ""
+		}
+
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return http.StatusInternalServerError, ""
+		}
+
+		_, err = business.OpenshiftOAuth.GetUserInfo(claims.SessionId)
+		if err == nil {
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", claims.Subject)
+			return http.StatusOK, claims.SessionId
+		}
+
+		log.Warning("Token error: ", err)
+	}
+
+	return http.StatusUnauthorized, ""
+}
+
+func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
+	} else {
+		// Session ID claim must be present
+		if len(claims.SessionId) == 0 {
+			log.Warning("Token is invalid: sid claim is required")
+			return http.StatusUnauthorized, ""
+		}
+
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return http.StatusInternalServerError, ""
+		}
+
+		_, err = business.Namespace.GetNamespaces()
+		if err == nil {
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", claims.Subject)
+			return http.StatusOK, claims.SessionId
+		}
+
+		log.Warning("Token error: ", err)
+	}
+
+	return http.StatusUnauthorized, ""
+}
+
 // checkLDAPSession is to check validity of the LDAP session
 func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	// Validate token
@@ -485,6 +590,8 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyOpenshift:
 			statusCode, token = checkOpenshiftSession(w, r)
+		case config.AuthStrategyOpenId:
+			statusCode, token = checkOpenIdSession(w, r)
 		case config.AuthStrategyLogin:
 			statusCode = checkKialiSession(w, r)
 			token = aHandler.saToken
@@ -528,6 +635,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
 		performOpenshiftAuthentication(w, r)
+	case config.AuthStrategyOpenId:
+		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyLogin:
 		if !performKialiAuthentication(w, r) {
 			writeAuthenticateHeader(w, r)
@@ -572,6 +681,11 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.AuthorizationEndpoint = metadata.AuthorizationEndpoint
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
+	case config.AuthStrategyOpenId:
+		response.AuthorizationEndpoint = fmt.Sprintf("https://dex.example.com:32000/auth?client_id=example-app&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
+			url.QueryEscape("http://172.17.0.2/kiali"),
+			"openid email profile",
+			"asdf123456")
 	case config.AuthStrategyLogin:
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
 			response.SecretMissing = true
