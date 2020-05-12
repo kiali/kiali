@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { default as DetailObject } from '../DetailObject';
-import { DestinationWeight, ValidationTypes } from '../../../types/IstioObjects';
+import { HTTPRouteDestination, ValidationTypes } from '../../../types/IstioObjects';
 import { shallowToJson } from 'enzyme-to-json';
 import Validation from '../../Validations/Validation';
 
 describe('DetailObject test', () => {
-  const detail: DestinationWeight = {
+  const detail: HTTPRouteDestination = {
     destination: {
       host: 'reviews',
       subset: 'v1',

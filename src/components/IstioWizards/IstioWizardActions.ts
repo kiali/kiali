@@ -10,7 +10,7 @@ import {
   Condition,
   DestinationRule,
   DestinationRules,
-  DestinationWeight,
+  HTTPRouteDestination,
   Gateway,
   HTTPMatchRequest,
   HTTPRoute,
@@ -296,7 +296,7 @@ export const buildIstioConfig = (
           const httpRoute: HTTPRoute = {};
           httpRoute.route = [];
           for (let iRoute = 0; iRoute < rule.routes.length; iRoute++) {
-            const destW: DestinationWeight = {
+            const destW: HTTPRouteDestination = {
               destination: {
                 host: fqdnServiceName(wProps.serviceName, wProps.namespace),
                 subset: wkdNameVersion[rule.routes[iRoute]]
@@ -331,7 +331,7 @@ export const buildIstioConfig = (
       if (closeRoutes < totalRoutes) {
         for (let i = 0; i < wState.suspendedRoutes.length; i++) {
           const suspendedRoute = wState.suspendedRoutes[i];
-          const destW: DestinationWeight = {
+          const destW: HTTPRouteDestination = {
             destination: {
               host: fqdnServiceName(wProps.serviceName, wProps.namespace),
               subset: wkdNameVersion[suspendedRoute.workload]

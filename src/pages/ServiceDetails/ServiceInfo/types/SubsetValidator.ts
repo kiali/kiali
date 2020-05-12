@@ -16,7 +16,11 @@ export default class SubsetValidator {
   }
 
   hasValidLabels() {
-    const valid = Object.keys(this.subset.labels).every((k, _i) => this.hasValidLabel(k, this.subset.labels[k]));
+    const valid =
+      this.subset.labels &&
+      Object.keys(this.subset.labels).every(
+        (k, _i) => this.subset.labels && this.hasValidLabel(k, this.subset.labels[k])
+      );
     return this.subset.labels instanceof Object && valid;
   }
 

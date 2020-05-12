@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Port, Service } from '../../../types/IstioObjects';
+import { Service } from '../../../types/IstioObjects';
 import { Link } from 'react-router-dom';
 import LocalTime from '../../../components/Time/LocalTime';
 import Labels from '../../../components/Label/Labels';
@@ -16,6 +16,7 @@ import {
   Title
 } from '@patternfly/react-core';
 import { ServiceIcon } from '@patternfly/react-icons';
+import { ServicePort } from '../../../types/ServiceInfo';
 
 type WorkloadServicesProps = {
   services: Service[];
@@ -49,7 +50,7 @@ class WorkloadServices extends React.Component<WorkloadServicesProps> {
     );
   }
 
-  renderPorts(ports: Port[]) {
+  renderPorts(ports: ServicePort[]) {
     return (
       <ul style={{ listStyleType: 'none' }}>
         {(ports || []).map((port, i) => (

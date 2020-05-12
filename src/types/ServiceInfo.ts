@@ -3,7 +3,6 @@ import {
   DestinationRules,
   ObjectCheck,
   ObjectValidation,
-  Port,
   Validations,
   ValidationTypes,
   VirtualServices
@@ -11,9 +10,15 @@ import {
 import { TLSStatus } from './TLSStatus';
 import { AdditionalItem } from './Workload';
 
+export interface ServicePort {
+  name: string;
+  port: number;
+  protocol: string;
+}
+
 export interface Endpoints {
   addresses?: EndpointAddress[];
-  ports?: Port[];
+  ports?: ServicePort[];
 }
 
 interface EndpointAddress {
@@ -37,7 +42,7 @@ export interface Service {
   createdAt: string;
   resourceVersion: string;
   ip: string;
-  ports?: Port[];
+  ports?: ServicePort[];
   externalName: string;
   labels?: { [key: string]: string };
   selectors?: { [key: string]: string };
