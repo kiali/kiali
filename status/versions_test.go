@@ -141,6 +141,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  true,
 		},
 		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/1.6.0-beta.0",
+			name:       "Istio RC",
+			version:    "1.6.0 (beta.0)",
+			supported:  true,
+		},
+		{
 			rawVersion: "some-unknown-version-string",
 			name:       "Unknown Istio Implementation",
 			version:    "some-unknown-version-string",
@@ -224,6 +230,12 @@ func TestValidateVersion(t *testing.T) {
 
 	if !result {
 		t.Errorf("validateVersion was incorrect, got false, want true, 0.8.3-alpha is >= 0.8.3-alpha")
+	}
+
+	result = validateVersion("> 1.5.0-alpha", "1.6.0-beta.0")
+
+	if !result {
+		t.Errorf("validateVersion was incorrect, got false, want true, 1.5.0-alpha is <= 1.6.0-beta.0")
 	}
 
 	// Longer releases
