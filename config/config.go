@@ -312,7 +312,7 @@ func NewConfig() (c *Config) {
 				AdapterName:    "threescale",
 				AdapterPort:    "3333",
 				AdapterService: "threescale-istio-adapter",
-				Enabled:        true,
+				Enabled:        false,
 			},
 			Iter8: Iter8Config{
 				Enabled: false,
