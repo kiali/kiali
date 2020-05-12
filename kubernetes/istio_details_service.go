@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	"gopkg.in/yaml.v2"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,8 +19,9 @@ import (
 )
 
 var (
-	portNameMatcher = regexp.MustCompile(`^[\-].*`)
-	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	portNameMatcher    = regexp.MustCompile(`^[\-].*`)
+	portProtocols      = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
+	istioConfigmapName = "istio"
 )
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
@@ -60,7 +62,7 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -88,7 +90,7 @@ func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name stri
 	if apiClient == nil {
 		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -116,7 +118,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	if apiClient == nil {
 		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
-	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
 	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
@@ -666,7 +668,7 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
-	// In case Policies aren't present on Istio, return empty array.
+	// In case PeerAuthentications aren't present on Istio, return empty array.
 	if !in.hasAuthenticationResource(policies) {
 		return []IstioObject{}, nil
 	}
@@ -713,12 +715,12 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 }
 
 func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
-	// In case MeshPolicies aren't present on Istio, return empty array.
+	// In case MeshPeerAuthentications aren't present on Istio, return empty array.
 	if !in.hasAuthenticationResource(meshPolicies) {
 		return []IstioObject{}, nil
 	}
 
-	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
+	// MeshPeerAuthentications are not namespaced. However, API returns all the instances even asking for one specific namespace.
 	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
 	// Update: Removed the namespace filter as it doesn't work well in all platforms
 	// https://issues.jboss.org/browse/KIALI-3223
@@ -1246,6 +1248,53 @@ func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, 
 	return rb, nil
 }
 
+func (in *IstioClient) GetIstioConfigMap() (*IstioMeshConfig, error) {
+	meshConfig := &IstioMeshConfig{}
+
+	cfg := config.Get()
+	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, istioConfigmapName)
+	if err != nil {
+		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
+		return nil, err
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	log.Tracef("meshConfig: %v", meshConfigYaml)
+	if !ok {
+		log.Warningf("GetIstioConfigMap: Cannot find Istio mesh configuration.")
+		return nil, err
+	}
+
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		log.Warningf("GetIstioConfigMap: Cannot read Istio mesh configuration.")
+		return nil, err
+	}
+
+	return meshConfig, nil
+}
+
+func (in *IstioClient) IsMixerDisabled() bool {
+	if in.isMixerDisabled != nil {
+		return *in.isMixerDisabled
+	}
+
+	meshConfig, err := in.GetIstioConfigMap()
+	if err != nil {
+		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
+		return true
+	}
+
+	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
+
+	// References:
+	//   * https://github.com/istio/api/pull/1112
+	//   * https://github.com/istio/istio/pull/17695
+	//   * https://github.com/istio/istio/issues/15935
+	in.isMixerDisabled = &meshConfig.DisableMixerHttpReports
+	return *in.isMixerDisabled
+}
+
 func FilterByHost(host, serviceName, namespace string) bool {
 	// Check single name
 	if host == serviceName {
@@ -1446,45 +1495,30 @@ func GatewayNames(gateways [][]IstioObject) map[string]struct{} {
 	return names
 }
 
-func PolicyHasStrictMTLS(policy IstioObject) bool {
-	_, mode := PolicyHasMTLSEnabled(policy)
+func PeerAuthnHasStrictMTLS(peerAuthn IstioObject) bool {
+	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
-	// It is mandatory to have default as a name
-	if policyMeta := policy.GetObjectMeta(); policyMeta.Name != "default" {
-		return false, ""
-	}
-
+func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 	// It is no globally enabled when has targets
-	targets, targetPresent := policy.GetSpec()["targets"]
-	specificTarget := targetPresent && len(targets.([]interface{})) > 0
-	if specificTarget {
+	if peerAuthn.HasMatchLabelsSelector() {
 		return false, ""
 	}
 
-	// It is globally enabled when a peer has mtls enabled
-	peers, peersPresent := policy.GetSpec()["peers"]
-	if !peersPresent {
-		return false, ""
-	}
-
-	for _, peer := range peers.([]interface{}) {
-		peerMap := peer.(map[string]interface{})
-		if mtls, present := peerMap["mtls"]; present {
-			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
-				if modeItf, found := mtlsMap["mode"]; found {
-					if mode, ok := modeItf.(string); ok {
-						return true, mode
-					} else {
-						return false, ""
-					}
+	// It is globally enabled when mtls is in STRICT mode
+	if mtls, mtlsPresent := peerAuthn.GetSpec()["mtls"]; mtlsPresent {
+		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
+			if modeItf, found := mtlsMap["mode"]; found {
+				if mode, ok := modeItf.(string); ok {
+					return true, mode
+				} else {
+					return false, ""
 				}
+			} else {
+				// STRICT when mtls object is empty
+				return false, "PERMISSIVE"
 			}
-
-			// STRICT mode when mtls object is empty
-			return true, "STRICT"
 		}
 	}
 

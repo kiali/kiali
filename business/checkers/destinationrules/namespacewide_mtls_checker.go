@@ -18,22 +18,22 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
-	// otherwise, check among Policies for a rule enabling ns-wide mTLS
-	for _, mp := range m.MTLSDetails.Policies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+	// otherwise, check among PeerAuthentications for a rule enabling ns-wide mTLS
+	for _, mp := range m.MTLSDetails.PeerAuthentications {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}
 
-	// In case any Policy enables mTLS, check among MeshPolicies for a rule enabling it
-	// ServiceMeshPolicies are a clone of MeshPolicies but used in Maistra scenarios
-	// MeshPolicies and ServiceMeshPolicies won't co-exist, only ony array will be populated
-	mPolicies := m.MTLSDetails.MeshPolicies
+	// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
+	// ServiceMeshPolicies are a clone of MeshPeerAuthentications but used in Maistra scenarios
+	// MeshPeerAuthentications and ServiceMeshPolicies won't co-exist, only ony array will be populated
+	mPolicies := m.MTLSDetails.MeshPeerAuthentications
 	if m.MTLSDetails.ServiceMeshPolicies != nil {
 		mPolicies = m.MTLSDetails.ServiceMeshPolicies
 	}
 	for _, mp := range mPolicies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}

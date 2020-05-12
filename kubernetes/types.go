@@ -57,13 +57,13 @@ const (
 	quotaspecbindingType     = "QuotaSpecBinding"
 	quotaspecbindingTypeList = "QuotaSpecBindingList"
 
-	// Policies
+	// PeerAuthentications
 
 	policies       = "policies"
 	policyType     = "Policy"
 	policyTypeList = "PolicyList"
 
-	//MeshPolicies
+	//MeshPeerAuthentications
 
 	meshPolicies       = "meshpolicies"
 	meshPolicyType     = "MeshPolicy"
@@ -96,7 +96,7 @@ const (
 	serviceMeshRbacConfigType     = "ServiceMeshRbacConfig"
 	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
-	// Authorization Policies
+	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
 	AuthorizationPoliciesType     = "AuthorizationPolicy"
 	AuthorizationPoliciesTypeList = "AuthorizationPolicyList"
@@ -392,7 +392,7 @@ var (
 		instances: instanceType,
 		templates: templateType,
 
-		// Policies
+		// PeerAuthentications
 		policies:            policyType,
 		meshPolicies:        meshPolicyType,
 		serviceMeshPolicies: serviceMeshPolicyType,
@@ -426,6 +426,7 @@ type IstioObject interface {
 	SetObjectMeta(meta_v1.ObjectMeta)
 	DeepCopyIstioObject() IstioObject
 	HasWorkloadSelectorLabels() bool
+	HasMatchLabelsSelector() bool
 }
 
 // IstioObjectList is a k8s wrapper interface for list config objects.
@@ -433,6 +434,11 @@ type IstioObject interface {
 type IstioObjectList interface {
 	runtime.Object
 	GetItems() []IstioObject
+}
+
+type IstioMeshConfig struct {
+	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
+	EnableAutoMtls          bool `yaml:"enableAutoMtls,omitempty"`
 }
 
 // ServiceList holds list of services, pods and deployments
@@ -464,10 +470,11 @@ type IstioDetails struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules    []IstioObject `json:"destinationrules"`
-	MeshPolicies        []IstioObject `json:"meshpolicies"`
-	ServiceMeshPolicies []IstioObject `json:"servicemeshpolicies"`
-	Policies            []IstioObject `json:"policies"`
+	DestinationRules        []IstioObject `json:"destinationrules"`
+	MeshPeerAuthentications []IstioObject `json:"meshpeerauthentications"`
+	ServiceMeshPolicies     []IstioObject `json:"servicemeshpolicies"`
+	PeerAuthentications     []IstioObject `json:"peerauthentications"`
+	EnabledAutoMtls         bool          `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
@@ -535,6 +542,24 @@ func (in *GenericIstioObject) HasWorkloadSelectorLabels() bool {
 		if wsCasted, ok := ws.(map[string]interface{}); ok {
 			if _, found := wsCasted["labels"]; found {
 				hwsl = true
+			}
+		}
+	}
+
+	return hwsl
+}
+
+func (in *GenericIstioObject) HasMatchLabelsSelector() bool {
+	hwsl := false
+
+	if s, found := in.GetSpec()["selector"]; found {
+		if sCasted, ok := s.(map[string]interface{}); ok {
+			if ml, found := sCasted["matchLabels"]; found {
+				if mlCasted, ok := ml.(map[string]interface{}); ok {
+					if len(mlCasted) > 0 {
+						hwsl = true
+					}
+				}
 			}
 		}
 	}

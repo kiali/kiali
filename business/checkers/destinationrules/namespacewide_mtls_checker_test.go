@@ -12,7 +12,7 @@ import (
 )
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy enabling PERMISSIVE mTLS
+// Context: There is one PeerAuthn enabling PERMISSIVE mTLS
 // It doesn't return any validation
 func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 	assert := assert.New(t)
@@ -23,8 +23,8 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLSPeers("PERMISSIVE")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
 
@@ -38,15 +38,15 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy enabling STRICT mTLS
+// Context: There is one PeerAuthn enabling STRICT mTLS
 // It doesn't return any validation
 func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		Policies: []kubernetes.IstioObject{
-			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLSPeers("STRICT")),
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
 
@@ -69,8 +69,8 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+		MeshPeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
 

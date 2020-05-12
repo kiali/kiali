@@ -310,7 +310,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
-		// MeshPolicies are not namespaced. They will be only listed for an Istio namespace.
+		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
 		if criteria.IncludeMeshPolicies && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
 			if mp, mpErr := in.k8s.GetMeshPolicies(); mpErr == nil {
@@ -576,7 +576,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			err = iErr
 		}
 	case MeshPolicies:
-		// MeshPolicies are not namespaced. They will be only listed for an Istio namespace.
+		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
 		if config.IsIstioNamespace(namespace) {
 			if mp, iErr := in.k8s.GetMeshPolicy(object); iErr == nil {
