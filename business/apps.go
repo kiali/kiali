@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -23,16 +24,28 @@ type AppService struct {
 	businessLayer *Layer
 }
 
-func joinMap(m1 map[string]string, m2 map[string]string) map[string]string {
-	result := m1
-	for k, v := range m2 {
-		value := v
-		if val, ok := result[k]; ok && !strings.Contains(val, v) {
-			value = fmt.Sprintf("%s,%s", val, value)
+func joinMap(m1 map[string][]string, m2 map[string]string) {
+	for k, v2 := range m2 {
+		dup := false
+		for _, v1 := range m1[k] {
+			if v1 == v2 {
+				dup = true
+				break
+			}
 		}
-		result[k] = value
+		if !dup {
+			m1[k] = append(m1[k], v2)
+		}
 	}
-	return result
+}
+
+func buildFinalLabels(m map[string][]string) map[string]string {
+	consolidated := make(map[string]string, len(m))
+	for k, list := range m {
+		sort.Strings(list)
+		consolidated[k] = strings.Join(list, ",")
+	}
+	return consolidated
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
@@ -51,16 +64,18 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	}
 
 	for keyApp, valueApp := range apps {
-		appItem := &models.AppListItem{Name: keyApp}
-		appItem.IstioSidecar = true
-		var labels = make(map[string]string)
+		appItem := &models.AppListItem{
+			Name:         keyApp,
+			IstioSidecar: true,
+		}
+		labels := make(map[string][]string)
 		for _, srv := range valueApp.Services {
-			labels = joinMap(labels, srv.Labels)
+			joinMap(labels, srv.Labels)
 		}
 		for _, wrk := range valueApp.Workloads {
-			labels = joinMap(labels, wrk.Labels)
+			joinMap(labels, wrk.Labels)
 		}
-		appItem.Labels = labels
+		appItem.Labels = buildFinalLabels(labels)
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break

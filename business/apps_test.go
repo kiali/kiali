@@ -145,3 +145,46 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	assert.Equal(1, len(appDetails.ServiceNames))
 	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }
+
+func TestJoinMap(t *testing.T) {
+	assert := assert.New(t)
+	tempLabels := map[string][]string{}
+	labelsA := map[string]string{
+		"key1": "val1",
+		"key2": "val2",
+	}
+
+	joinMap(tempLabels, labelsA)
+	assert.Len(tempLabels, 2)
+	assert.Equal([]string{"val1"}, tempLabels["key1"])
+	assert.Equal([]string{"val2"}, tempLabels["key2"])
+
+	// Test with an added value on key1
+	labelsB := map[string]string{
+		"key1": "val3",
+		"key3": "val4",
+	}
+	joinMap(tempLabels, labelsB)
+	assert.Len(tempLabels, 3)
+	assert.Equal([]string{"val1", "val3"}, tempLabels["key1"])
+	assert.Equal([]string{"val2"}, tempLabels["key2"])
+	assert.Equal([]string{"val4"}, tempLabels["key3"])
+
+	// Test with duplicates; val3 is duplicated, al4 is not (is substring)
+	// al4 must also appear before val4 on final labels (sorted)
+	labelsC := map[string]string{
+		"key1": "val3",
+		"key3": "al4",
+	}
+	joinMap(tempLabels, labelsC)
+	assert.Len(tempLabels, 3)
+	assert.Equal([]string{"val1", "val3"}, tempLabels["key1"])
+	assert.Equal([]string{"val2"}, tempLabels["key2"])
+	assert.Equal([]string{"val4", "al4"}, tempLabels["key3"])
+
+	labels := buildFinalLabels(tempLabels)
+	assert.Len(labels, 3)
+	assert.Equal("val1,val3", labels["key1"])
+	assert.Equal("val2", labels["key2"])
+	assert.Equal("al4,val4", labels["key3"])
+}
