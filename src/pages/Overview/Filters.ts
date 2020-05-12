@@ -49,10 +49,10 @@ export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: FilterTypeWithFilter<NamespaceInfo> = {
-  id: 'label',
-  title: 'Label',
+  id: 'nsLabel',
+  title: 'Namespace Label',
   placeholder: 'Filter by Label',
-  filterType: FilterTypes.label,
+  filterType: FilterTypes.nsLabel,
   customComponent: LabelFilters,
   action: FILTER_ACTION_APPEND,
   filterValues: [],

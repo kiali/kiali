@@ -10,7 +10,8 @@ export interface FilterValue {
 enum NonInputTypes {
   typeAhead = 'typeahead',
   select = 'select',
-  label = 'label'
+  label = 'label',
+  nsLabel = 'nsLabel'
 }
 
 export const FilterTypes = {
