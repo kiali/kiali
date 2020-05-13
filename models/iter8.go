@@ -79,6 +79,21 @@ type Iter8Criteria struct {
 	StopOnFailure bool    `json:"stopOnFailure"`
 }
 
+type Iter8AnalyticsConfig struct {
+	Port       int `yaml:"port,omitempty"`
+	Prometheus struct {
+		Auth struct {
+			CAFile             string `yaml:"ca_file"`
+			InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
+			Password           string `yaml:"password"`
+			Token              string `yaml:"token"`
+			Type               string `yaml:"type"`
+			UserName           string `yaml:"username"`
+		} `yaml:"auth"`
+		URL string `yaml:"url"`
+	} `yaml:"prometheus"`
+}
+
 func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 
 	spec := iter8Object.GetSpec()

@@ -2,6 +2,7 @@ package business
 
 import (
 	"encoding/json"
+	"gopkg.in/yaml.v2"
 	"strconv"
 	"sync"
 
@@ -171,7 +172,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
-	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.k8s.GetAnalyticPort())
+	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
 	for _, criteria := range newExperimentSpec.Criterias {
 		min_max := struct {
 			Min float64 `json:"min,omitempty"`
@@ -222,4 +223,21 @@ func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
 
 	metricNames, err = in.k8s.Iter8ConfigMap()
 	return metricNames, err
+}
+
+func (in *Iter8Service) GetAnalyticPort() int {
+	configMap, err := in.k8s.GetConfigMap("iter8", "iter8-analytics")
+	if err != nil {
+		return 80
+	}
+	configYaml, ok := configMap.Data["config.yaml"]
+	if !ok {
+		return 80
+	}
+	analyticConfig := models.Iter8AnalyticsConfig{}
+	err = yaml.Unmarshal([]byte(configYaml), &analyticConfig)
+	if err != nil {
+		return 80
+	}
+	return analyticConfig.Port
 }

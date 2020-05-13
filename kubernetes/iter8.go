@@ -5,7 +5,6 @@ import (
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/log"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -284,22 +283,6 @@ type Iter8ClientInterface interface {
 	GetIter8Experiments(namespace string) ([]Iter8Experiment, error)
 	IsIter8Api() bool
 	Iter8ConfigMap() ([]string, error)
-	GetAnalyticPort() int
-}
-
-type iter8AnalyticsConfig struct {
-	Port       int `yaml:"port,omitempty"`
-	Prometheus struct {
-		Auth struct {
-			CAFile             string `yaml:"ca_file"`
-			InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
-			Password           string `yaml:"password"`
-			Token              string `yaml:"token"`
-			Type               string `yaml:"type"`
-			UserName           string `yaml:"username"`
-		} `yaml:"auth"`
-		URL string `yaml:"url"`
-	} `yaml:"prometheus"`
 }
 
 func (in *IstioClient) IsIter8Api() bool {
@@ -313,26 +296,6 @@ func (in *IstioClient) IsIter8Api() bool {
 		in.isIter8Api = &isIter8Api
 	}
 	return *in.isIter8Api
-}
-
-func (in *IstioClient) GetAnalyticPort() int {
-	configMap, err := in.GetConfigMap("iter8", "iter8-analytics")
-	if err != nil {
-		log.Warningf("Iter8: Cannot find Iter8 Analytics configmap.")
-		return 80
-	}
-	configYaml, ok := configMap.Data["config.yaml"]
-	if !ok {
-		log.Warningf("Iter8: Cannot find Analytics configuration.")
-		return 80
-	}
-	analyticConfig := iter8AnalyticsConfig{}
-	err = yaml.Unmarshal([]byte(configYaml), &analyticConfig)
-	if err != nil {
-		log.Warningf("Iter8: Cannot read Iter8 Analytics configuration.")
-		return 80
-	}
-	return analyticConfig.Port
 }
 
 func (in *IstioClient) Iter8ConfigMap() ([]string, error) {
