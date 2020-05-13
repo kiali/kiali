@@ -289,6 +289,27 @@ func TestSecureComm(t *testing.T) {
 	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err != nil {
 		t.Fatalf("Failed: Basic API URL shouldn't have failed with no credentials: %v", err)
 	}
+
+	// Make sure the server rejects anything trying to use TLS 1.1 or under
+	httpConfigTLS11 := httpClientConfig{
+		Identity: &security.Identity{
+			CertFile:       testClientCertFile,
+			PrivateKeyFile: testClientKeyFile,
+		},
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS11,
+		},
+	}
+	httpClientTLS11, err := httpConfigTLS11.buildHTTPClient()
+	if err != nil {
+		t.Fatalf("Failed to create http client with TLS 1.1")
+	}
+	if _, err = getRequestResults(t, httpClientTLS11, apiURLWithAuthentication, basicCredentials); err == nil {
+		t.Fatalf("Failed: Should not have been able to use TLS 1.1")
+	}
+
 }
 
 func TestConfigureGzipHandler(t *testing.T) {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 
@@ -40,9 +41,15 @@ func NewServer() *Server {
 	http.DefaultServeMux = mux
 	http.Handle("/", handler)
 
+	// Clients must use TLS 1.2 or higher
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
-		Addr: fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
+		Addr:      fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
+		TLSConfig: tlsConfig,
 	}
 
 	// return our new Server
