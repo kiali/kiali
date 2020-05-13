@@ -112,7 +112,7 @@ export class ValidationSummary extends React.PureComponent<Props> {
   }
 
   tooltipBase() {
-    return typeof this.props.objectCount === 'undefined' || this.props.objectCount > 1 ? (
+    return typeof this.props.objectCount === 'undefined' || this.props.objectCount > 0 ? (
       <Validation iconStyle={this.props.style} severity={this.severity()} />
     ) : (
       <small style={{ fontSize: '65%', marginLeft: '5px' }}>N/A</small>

@@ -1,0 +1,488 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ValidationSummary renders N/A when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <Text
+      className="f12qq397"
+    >
+      No Istio configuration objects found in this namespace
+    </Text>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <small
+    style={
+      Object {
+        "fontSize": "65%",
+        "marginLeft": "5px",
+      }
+    }
+  >
+    N/A
+  </small>
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders error icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        1 object analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          1 error found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders error icon when all components are valid 2`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        3 objects analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          1 error found
+        </div>
+        <div>
+          2 warnings found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="error"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders success icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        1 object analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          No issues found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="correct"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders success icon when all components are valid 2`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        4 objects analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          No issues found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="correct"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders warning icon when all components are valid 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        1 object analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          1 warning found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders warning icon when all components are valid 2`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Validations list"
+  boundary="window"
+  className=""
+  content={
+    <React.Fragment>
+      <Text
+        component="h4"
+        style={
+          Object {
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        Istio Config Validation
+      </Text>
+      <Text
+        component="h5"
+        style={
+          Object {
+            "paddingLeft": "1em",
+            "textAlign": "left",
+            "textEmphasis": "strong",
+          }
+        }
+      >
+        3 objects analyzed
+      </Text>
+      <div
+        className="flhywg2"
+      >
+        <div>
+          1 warning found
+        </div>
+      </div>
+    </React.Fragment>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <Validation
+    severity="warning"
+  />
+</Tooltip>
+`;
