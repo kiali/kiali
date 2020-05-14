@@ -516,7 +516,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		if err != nil {
 			errChan <- err
 		} else {
-			details.EnabledAutoMtls = icm.EnableAutoMtls
+			details.EnabledAutoMtls = icm.GetEnableAutoMtls()
 		}
 	}(mtlsDetails)
 

@@ -265,5 +265,5 @@ func (in TLSService) hasAutoMTLSEnabled() bool {
 		return true
 	}
 
-	return mc.EnableAutoMtls
+	return mc.GetEnableAutoMtls()
 }

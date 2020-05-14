@@ -65,7 +65,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
-	k8s.On("GetIstioConfigMap").Return(&kubernetes.IstioMeshConfig{EnableAutoMtls: true}, nil)
+	k8s.On("GetIstioConfigMap").Return(&kubernetes.IstioMeshConfig{}, nil)
 
 	svc := setupWorkloadService(k8s)
 	return svc
