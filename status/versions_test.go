@@ -147,6 +147,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  true,
 		},
 		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/1.6.0-rc.0",
+			name:       "Istio RC",
+			version:    "1.6.0 (rc.0)",
+			supported:  true,
+		},
+		{
 			rawVersion: "some-unknown-version-string",
 			name:       "Unknown Istio Implementation",
 			version:    "some-unknown-version-string",
