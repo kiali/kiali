@@ -127,7 +127,7 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
   render() {
     return (
       <RenderComponentScroll>
-        <Grid gutter="md" style={{ margin: '30px' }}>
+        <Grid gutter="md" style={{ margin: '10px' }}>
           <GridItem span={12}>
             <Card>
               <CardBody>
