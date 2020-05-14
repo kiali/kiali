@@ -1,14 +1,16 @@
 import * as React from 'react';
+
+import ParameterizedTabs, { activeTab } from '../../../../components/Tab/Tabs';
 import { Link, RouteComponentProps } from 'react-router-dom';
+import { RenderHeader } from '../../../../components/Nav/Page';
 import {
   Breadcrumb,
   BreadcrumbItem,
   Card,
   CardBody,
-  Grid,
-  GridItem,
   Stack,
   StackItem,
+  Tab,
   Text,
   TextVariants,
   Title
@@ -20,6 +22,13 @@ import { Iter8ExpDetailsInfo } from '../../../../types/Iter8';
 import RefreshButtonContainer from '../../../../components/Refresh/RefreshButton';
 import Iter8Dropdown from './Iter8Dropdown';
 import history from '../../../../app/History';
+import * as FilterHelper from '../../../../components/FilterList/FilterHelper';
+import { connect } from 'react-redux';
+
+import ExperimentInfoDescription from './ExperimentInfoDescription';
+import CriteriaInfoDescription from './CriteriaInfoDescription';
+import { KialiAppState } from '../../../../store/Store';
+import { durationSelector } from '../../../../store/Selectors';
 import { PfColors } from '../../../../components/Pf/PfColors';
 
 interface Props {
@@ -29,25 +38,40 @@ interface Props {
 
 interface State {
   experiment?: Iter8ExpDetailsInfo;
+  currentTab: string;
   canDelete: boolean;
+  target: string;
+  baseline: string;
+  candidate: string;
 }
+
+const tabName = 'tab';
+const defaultTab = 'overview';
+
+const tabIndex: { [tab: string]: number } = {
+  info: 0,
+  criteria: 1
+};
 const extensionHeader = style({
-  padding: '0px 20px 18px 20px',
+  padding: '0px 20px 16px 0px',
   backgroundColor: PfColors.White
 });
 const breadcrumbPadding = style({
   padding: '22px 0 5px 0'
 });
 
-const containerPadding = style({ padding: '20px 20px 20px 20px' });
-const tabsPadding = style({ height: '40px', padding: '0px ', backgroundColor: 'white' });
-
 class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, State> {
   constructor(props: RouteComponentProps<Props>) {
     super(props);
+
+    const urlParams = new URLSearchParams(history.location.search);
     this.state = {
       experiment: undefined,
-      canDelete: false
+      canDelete: false,
+      currentTab: activeTab(tabName, defaultTab),
+      target: urlParams.get('target') || '',
+      baseline: urlParams.get('baseline') || '',
+      candidate: urlParams.get('candidate') || ''
     };
   }
 
@@ -81,29 +105,41 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
     this.fetchExperiment();
   }
 
+  componentDidUpdate() {
+    if (this.state.currentTab !== activeTab(tabName, defaultTab)) {
+      this.setState(
+        {
+          currentTab: activeTab(tabName, defaultTab)
+        },
+        () => this.doRefresh()
+      );
+    }
+  }
   // Extensions breadcrumb,
   // It is a simplified view of BreadcrumbView with fixed rendering
   breadcrumb = () => {
     return (
-      <Breadcrumb className={breadcrumbPadding}>
-        <BreadcrumbItem>
-          <Link to={`/extensions/iter8`}>Iter8 Experiments</Link>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <Link to={`/extensions/iter8?namespaces=${this.props.match.params.namespace}`}>
-            Namespace: {this.props.match.params.namespace}
-          </Link>
-        </BreadcrumbItem>
-        <BreadcrumbItem isActive={true}>
-          <Link
-            to={
-              '/extensions/namespaces/' + this.props.match.params.namespace + '/iter8/' + this.props.match.params.name
-            }
-          >
-            {this.props.match.params.name}
-          </Link>
-        </BreadcrumbItem>
-      </Breadcrumb>
+      <div className={extensionHeader}>
+        <Breadcrumb className={breadcrumbPadding}>
+          <BreadcrumbItem>
+            <Link to={`/extensions/iter8`}>Iter8 Experiments</Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            <Link to={`/extensions/iter8?namespaces=${this.props.match.params.namespace}`}>
+              Namespace: {this.props.match.params.namespace}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem isActive={true}>
+            <Link
+              to={
+                '/extensions/namespaces/' + this.props.match.params.namespace + '/iter8/' + this.props.match.params.name
+              }
+            >
+              {this.props.match.params.name}
+            </Link>
+          </BreadcrumbItem>
+        </Breadcrumb>
+      </div>
     );
   };
 
@@ -167,7 +203,7 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
             </StackItem>
             <StackItem id={'trafficStepSide'}>
               <Text component={TextVariants.h3}> Traffic Step Side </Text>
-              {this.state.experiment ? this.state.experiment.trafficControl.trafficStepSide : ''}
+              {this.state.experiment ? this.state.experiment.trafficControl.trafficStepSize : ''}
             </StackItem>
           </Stack>
         </CardBody>
@@ -237,28 +273,59 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
   };
 
   render() {
+    const overviewTab = (
+      <Tab eventKey={0} title="Overview" key="Overview">
+        <ExperimentInfoDescription
+          namespace={this.props.match.params.namespace}
+          experiment={this.props.match.params.name}
+          target={this.state.target}
+          experimentDetails={this.state.experiment}
+          duration={FilterHelper.currentDuration()}
+          baseline={this.state.baseline}
+          candidate={this.state.candidate}
+        />
+      </Tab>
+    );
+    const criteriaTab = (
+      <Tab eventKey={1} title="Criteria" key="Criteria">
+        <CriteriaInfoDescription criterias={this.state.experiment ? this.state.experiment.criterias : []} />
+      </Tab>
+    );
+    const tabsArray: any[] = [overviewTab, criteriaTab];
     return (
       <>
-        <div className={extensionHeader}>
+        <RenderHeader>
           {this.breadcrumb()}
-          {
-            // Iter8 details page doesn't share same components that App/Workload/Service/Istio Config detail
-            // So it requires some adjust to maintain same weight ratio
-          }
-          <div style={{ paddingBottom: 15 }} />
           {this.renderRightToolbar()}
-        </div>
-        <div className={tabsPadding} />
-        <div className={containerPadding}>
-          <Grid gutter={'md'}>
-            <GridItem span={4}>{this.renderOverview()}</GridItem>
-            <GridItem span={4}>{this.renderTrafficControl()}</GridItem>
-            <GridItem span={4}>{this.renderStatus()}</GridItem>
-          </Grid>
-        </div>
+        </RenderHeader>
+
+        <ParameterizedTabs
+          id="basic-tabs"
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+          }}
+          tabMap={tabIndex}
+          tabName={tabName}
+          defaultTab={defaultTab}
+          postHandler={this.fetchExperiment}
+          activeTab={this.state.currentTab}
+          mountOnEnter={false}
+          unmountOnExit={true}
+        >
+          {tabsArray}
+        </ParameterizedTabs>
       </>
     );
   }
 }
 
-export default ExperimentDetailsPage;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state)
+});
+
+const ExperimentDetailsPageContainer = connect(
+  mapStateToProps,
+  null
+)(ExperimentDetailsPage);
+
+export default ExperimentDetailsPageContainer;

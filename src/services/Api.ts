@@ -543,6 +543,10 @@ export const getIter8Info = () => {
   return newRequest<Iter8Info>(HTTP_VERBS.GET, urls.iter8, {}, {});
 };
 
+export const getIter8Metrics = () => {
+  return newRequest<string[]>(HTTP_VERBS.GET, urls.iter8Metrics, {}, {});
+};
+
 export const getExperiments = (namespaces: string[]) => {
   return newRequest<Iter8Experiment[]>(HTTP_VERBS.GET, urls.iter8Experiments, { namespaces: namespaces.join(',') }, {});
 };
@@ -560,7 +564,7 @@ export const deleteExperiment = (namespace: string, name: string) => {
 };
 
 export const createExperiment = (namespace: string, specBody: string) => {
-  return newRequest<Iter8Experiment>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), {}, specBody);
+  return newRequest<string>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), {}, specBody);
 };
 
 export const updateExperiment = (namespace: string, name: string, specBody: string) => {
