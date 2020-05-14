@@ -193,7 +193,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     return (
       <RenderComponentScroll>
         {this.state.containerInfo && (
-          <Grid style={{ padding: '20px', height: '100%' }}>
+          <Grid style={{ padding: '10px', height: '100%' }}>
             <GridItem span={12}>
               <Card style={{ height: '100%' }}>
                 <CardBody>

@@ -173,12 +173,10 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
 
   render() {
     return (
-      <div className="container-fluid container-cards-pf">
-        <Grid gutter={'md'}>
-          {this.rawConfig()}
-          {this.weights()}
-        </Grid>
-      </div>
+      <Grid style={{ margin: '10px' }} gutter={'md'}>
+        {this.rawConfig()}
+        {this.weights()}
+      </Grid>
     );
   }
 }

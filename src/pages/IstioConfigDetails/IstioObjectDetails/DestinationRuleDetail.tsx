@@ -175,13 +175,11 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
 
   render() {
     return (
-      <div className="container-fluid container-cards-pf">
-        <Grid gutter={'md'}>
-          {this.rawConfig()}
-          {this.trafficPolicy()}
-          {this.generateSubsets()}
-        </Grid>
-      </div>
+      <Grid style={{ margin: '10px' }} gutter={'md'}>
+        {this.rawConfig()}
+        {this.trafficPolicy()}
+        {this.generateSubsets()}
+      </Grid>
     );
   }
 }

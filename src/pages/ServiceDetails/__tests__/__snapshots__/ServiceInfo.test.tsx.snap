@@ -6,7 +6,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
     gutter="md"
     style={
       Object {
-        "margin": "30px",
+        "margin": "10px",
       }
     }
   >

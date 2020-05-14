@@ -35,7 +35,7 @@ class IstioActionButtons extends React.Component<Props, State> {
   render() {
     return (
       <>
-        <span style={{ float: 'left', paddingTop: '10px', paddingBottom: '10px' }}>
+        <span style={{ float: 'left', padding: '10px' }}>
           {!this.props.readOnly && (
             <span style={{ paddingRight: '5px' }}>
               <Button variant={ButtonVariant.primary} isDisabled={!this.props.canUpdate} onClick={this.props.onUpdate}>

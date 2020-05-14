@@ -27,7 +27,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
 
     return (
       <RenderComponentScroll>
-        <Grid style={{ margin: '30px' }} gutter={'md'}>
+        <Grid style={{ margin: '10px' }} gutter={'md'}>
           <GridItem span={12}>
             <AppDescription app={app} health={this.props.health} miniGraphDataSource={this.props.miniGraphDataSource} />
           </GridItem>

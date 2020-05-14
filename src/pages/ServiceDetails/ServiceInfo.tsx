@@ -157,7 +157,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
     return (
       <RenderComponentScroll>
-        <Grid style={{ margin: '30px' }} gutter={'md'}>
+        <Grid style={{ margin: '10px' }} gutter={'md'}>
           <GridItem span={12}>
             <ServiceInfoDescription
               name={this.props.serviceDetails.service.name}

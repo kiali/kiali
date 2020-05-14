@@ -374,8 +374,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
 
     return (
-      <div className="container-fluid container-cards-pf">
-        <Grid gutter={'md'}>
+      <>
+        <Grid style={{ margin: '10px' }} gutter={'md'}>
           <GridItem span={editorSpan}>
             {this.state.istioObjectDetails ? (
               <AceEditor
@@ -425,7 +425,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           )}
         </Grid>
         {this.renderActionButtons()}
-      </div>
+      </>
     );
   };
 
