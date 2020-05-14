@@ -437,7 +437,7 @@ type IstioObjectList interface {
 }
 
 type IstioMeshConfig struct {
-	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
+	DisableMixerHttpReports bool  `yaml:"disableMixerHttpReports,omitempty"`
 	EnableAutoMtls          *bool `yaml:"enableAutoMtls,omitempty"`
 }
 
