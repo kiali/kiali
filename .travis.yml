@@ -7,10 +7,11 @@ arch:
 go:
 - 1.14.2
 
+# The channel name "chat.freenode.net#kiali" is encrypted to prevent IRC spam from forks
 notifications:
   irc:
     channels:
-      - chat.freenode.net#kiali
+      - secure: dYuECNEpIWxWpC3J1VURDSEPM/XS29bX6bTPeaCQ+xHvek9QQ6n6e2SMHkmHYU2yXShY/AxTGKaxUrMqxsQx5VlU+tEk77zy3V9McvgxPrHLAvWsMsNkItHAD8xu6KqXDaXHhy1eYFqo0hvmycXmqOOQ/pRTGnBg4x4Gr151Ej2VgmufdKobFXFOS+VXnsitJr3GjvyLU4jIwu4oj+9svH9bI8cLyZuVFsI61ortKsAs2kjZcm8HlHCzxHCyHKlQ9JzyNXUiw6pMt19KXnzgRCkNNkCF2BbUhNSJmd97+oNb7ldvlfm7Gxx2uBiVUcOdQMO8MHJtqG1+7NDi08DrIyDPOnbN2EGPikPgHmyNjtGTKGw/M8MO97cNsBpA6jc8tWZ9dVeVHjQmy6/QzpNtKCM8u0d4Buk4+8IcAhkaP9Zdf1oKrTOYsmpjuPeGNU011NNj/O97hG9dUEqX6zfPvqgrx91KAyJeyoYaMHT9ZaRWVFUMN6kiJkmZnwAvuBOIYNH99w8LlO0SVf6ODGDIWfJybWBT/7jXfAFA9Z58yHdGmh2q8kvBXcXK+pYxmlrMKqxv52JTZCSfPBzfZfEVUd33ZocnQRINZKcgqxQQrdYJVmL07MEriuR8MxwsICz5ZkHBivHeJdSK6qUjk3f3waxletrPBW5hbnpnG0HhS+M=
     on_success: change
     on_failure: change
 
