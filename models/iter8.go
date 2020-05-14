@@ -1,9 +1,6 @@
 package models
 
 import (
-	"strings"
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -12,20 +9,20 @@ type Iter8Info struct {
 }
 
 type Iter8ExperimentItem struct {
-	Name                   string `json:"name"`
-	Phase                  string `json:"phase"`
-	CreatedAt              string `json:"createdAt"`
-	Status                 string `json:"status"`
-	Baseline               string `json:"baseline"`
-	BaselinePercentage     int    `json:"baselinePercentage"`
-	Candidate              string `json:"candidate"`
-	CandidatePercentage    int    `json:"candidatePercentage"`
-	Namespace              string `json:"namespace"`
-	StartedAt              string `json:"startedAt"`
-	EndedAt                string `json:"endedAt"`
-	TargetService          string `json:"targetService"`
-	TargetServiceNamespace string `json:"targetServiceNamespace"`
-	AssessmentConclusion   string `json:"assessmentConclusion"`
+	Name                   string   `json:"name"`
+	Phase                  string   `json:"phase"`
+	CreatedAt              int64    `json:"createdAt"`
+	Status                 string   `json:"status"`
+	Baseline               string   `json:"baseline"`
+	BaselinePercentage     int      `json:"baselinePercentage"`
+	Candidate              string   `json:"candidate"`
+	CandidatePercentage    int      `json:"candidatePercentage"`
+	Namespace              string   `json:"namespace"`
+	StartedAt              int64    `json:"startedAt"`
+	EndedAt                int64    `json:"endedAt"`
+	TargetService          string   `json:"targetService"`
+	TargetServiceNamespace string   `json:"targetServiceNamespace"`
+	AssessmentConclusion   []string `json:"assessmentConclusion"`
 }
 
 type Iter8ExperimentDetail struct {
@@ -36,9 +33,10 @@ type Iter8ExperimentDetail struct {
 }
 
 type Iter8CriteriaDetail struct {
-	Name     string        `json:"name"`
-	Criteria Iter8Criteria `json:"criteria"`
-	Metric   Iter8Metric   `json:"metric"`
+	Name     string                     `json:"name"`
+	Criteria Iter8Criteria              `json:"criteria"`
+	Metric   Iter8Metric                `json:"metric"`
+	Status   Iter8SuccessCrideriaStatus `json:"status"`
 }
 
 type Iter8Metric struct {
@@ -46,6 +44,12 @@ type Iter8Metric struct {
 	IsCounter          bool   `json:"is_counter"`
 	QueryTemplate      string `json:"query_template"`
 	SampleSizeTemplate string `json:"sample_size_template"`
+}
+
+type Iter8SuccessCrideriaStatus struct {
+	Conclusions         []string `json:"conclusions"`
+	SuccessCriterionMet bool     `json:"success_criterion_met"`
+	AbortExperiment     bool     `json:"abort_experiment"`
 }
 
 type Iter8ExperimentSpec struct {
@@ -75,6 +79,21 @@ type Iter8Criteria struct {
 	StopOnFailure bool    `json:"stopOnFailure"`
 }
 
+type Iter8AnalyticsConfig struct {
+	Port       int `yaml:"port,omitempty"`
+	Prometheus struct {
+		Auth struct {
+			CAFile             string `yaml:"ca_file"`
+			InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
+			Password           string `yaml:"password"`
+			Token              string `yaml:"token"`
+			Type               string `yaml:"type"`
+			UserName           string `yaml:"username"`
+		} `yaml:"auth"`
+		URL string `yaml:"url"`
+	} `yaml:"prometheus"`
+}
+
 func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 
 	spec := iter8Object.GetSpec()
@@ -84,6 +103,16 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	criterias := make([]Iter8CriteriaDetail, len(spec.Analysis.SuccessCriteria))
 	for i, c := range spec.Analysis.SuccessCriteria {
 		metricName := c.MetricName
+		successCrideriaStatus := Iter8SuccessCrideriaStatus{}
+		for j, a := range status.Assestment.SuccessCriteriaStatus {
+			if a.MetricName == c.MetricName {
+				successCrideriaStatus = Iter8SuccessCrideriaStatus{
+					status.Assestment.SuccessCriteriaStatus[j].Conclusions,
+					status.Assestment.SuccessCriteriaStatus[j].SuccessCriterionMet,
+					status.Assestment.SuccessCriteriaStatus[j].AbortExperiment,
+				}
+			}
+		}
 		criteriaDetail := Iter8CriteriaDetail{
 			Name: c.MetricName,
 			Criteria: Iter8Criteria{
@@ -99,6 +128,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 				QueryTemplate:      metrics[metricName].QueryTemplate,
 				SampleSizeTemplate: metrics[metricName].SampleSizeTemplate,
 			},
+			Status: successCrideriaStatus,
 		}
 		criterias[i] = criteriaDetail
 	}
@@ -109,15 +139,6 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		MaxIterations:        spec.TrafficControl.MaxIterations,
 		MaxTrafficPercentage: spec.TrafficControl.MaxTrafficPercentage,
 		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
-	}
-
-	startTimeString := ""
-	endTimeString := ""
-	if status.StartTimeStamp > 0 {
-		startTimeString = time.Unix(0, status.StartTimeStamp).Format(time.RFC1123)
-	}
-	if status.EndTimestamp > 0 {
-		endTimeString = time.Unix(0, status.EndTimestamp).Format(time.RFC1123)
 	}
 
 	targetServiceNamespace := spec.TargetService.Namespace
@@ -133,11 +154,12 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		BaselinePercentage:     status.TrafficSplitPercentage.Baseline,
 		Candidate:              spec.TargetService.Candidate,
 		CandidatePercentage:    status.TrafficSplitPercentage.Candidate,
-		StartedAt:              startTimeString,
-		EndedAt:                endTimeString,
+		CreatedAt:              status.CreateTimeStamp,
+		StartedAt:              status.StartTimeStamp,
+		EndedAt:                status.EndTimestamp,
 		TargetService:          spec.TargetService.Name,
 		TargetServiceNamespace: targetServiceNamespace,
-		AssessmentConclusion:   strings.Join(status.Assestment.Conclusions, ";"),
+		AssessmentConclusion:   status.Assestment.Conclusions,
 	}
 	i.CriteriaDetails = criterias
 	i.TrafficControl = trafficControl
@@ -152,7 +174,10 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 	i.Namespace = iter8Object.GetObjectMeta().Namespace
 	i.Phase = status.Phase
 	i.Status = status.Message
-	i.CreatedAt = iter8Object.GetObjectMeta().CreationTimestamp.UTC().Format(time.RFC3339)
+	i.CreatedAt = iter8Object.GetStatus().CreateTimeStamp
+	i.StartedAt = iter8Object.GetStatus().StartTimeStamp
+	i.EndedAt = iter8Object.GetStatus().EndTimestamp
+
 	i.Baseline = spec.TargetService.Baseline
 	i.BaselinePercentage = status.TrafficSplitPercentage.Baseline
 	i.Candidate = spec.TargetService.Candidate

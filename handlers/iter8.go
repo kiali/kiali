@@ -107,3 +107,18 @@ func Iter8ExperimentDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	RespondWithCode(w, http.StatusOK)
 }
+
+func Iter8Metrics(w http.ResponseWriter, r *http.Request) {
+
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	metricNames, err := business.Iter8.GetIter8Metrics()
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, metricNames)
+}
