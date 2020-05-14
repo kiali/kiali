@@ -437,8 +437,8 @@ type IstioObjectList interface {
 }
 
 type IstioMeshConfig struct {
-	DisableMixerHttpReports bool `yaml:"disableMixerHttpReports,omitempty"`
-	EnableAutoMtls          bool `yaml:"enableAutoMtls,omitempty"`
+	DisableMixerHttpReports bool  `yaml:"disableMixerHttpReports,omitempty"`
+	EnableAutoMtls          *bool `yaml:"enableAutoMtls,omitempty"`
 }
 
 // ServiceList holds list of services, pods and deployments
@@ -640,4 +640,11 @@ func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
+	if imc.EnableAutoMtls == nil {
+		return true
+	}
+	return *imc.EnableAutoMtls
 }
