@@ -12,7 +12,7 @@ import { WorkloadListItem } from '../../types/Workload';
 import { IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
-import { ActiveFilter, LabelFilter } from '../../types/Filters';
+import { ActiveFilter } from '../../types/Filters';
 import { PfColors } from '../Pf/PfColors';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
@@ -25,6 +25,7 @@ import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import OverviewCardLinks from '../../pages/Overview/OverviewCardLinks';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
+import { labelFilter } from 'components/Filters/CommonFilters';
 
 // Links
 
@@ -197,7 +198,7 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 
 const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
   return filters.some(filter => {
-    if (filter.category === LabelFilter.title) {
+    if (filter.id === labelFilter.id) {
       if (filter.value.includes(':')) {
         const [k, v] = filter.value.split(':');
         if (k === key) {
@@ -207,7 +208,7 @@ const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
       }
       return key === filter.value;
     } else {
-      if (filter.category === appLabelFilter.title) {
+      if (filter.id === appLabelFilter.id) {
         return filter.value === 'Present' && key === 'app';
       }
       return filter.value === 'Present' && key === 'version';
@@ -222,7 +223,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   ___?: Health,
   statefulFilter?: React.RefObject<StatefulFilters>
 ) => {
-  const filters = FilterHelper.getFiltersFromURL([LabelFilter, appLabelFilter, versionLabelFilter]);
+  const filters = FilterHelper.getFiltersFromURL([labelFilter, appLabelFilter, versionLabelFilter]);
   return (
     <td
       role="gridcell"
@@ -233,7 +234,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
         Object.entries(item.labels).map(([key, value]) => {
           const label = `${key}:${value}`;
           const labelAct = labelActivate(filters.filters, key, value);
-          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([LabelFilter]).filters.some(f =>
+          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilter]).filters.some(f =>
             f.value.includes(label)
           );
           const badgeComponent = (
@@ -247,8 +248,8 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               onClick={() =>
                 statefulFilter
                   ? labelAct
-                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(LabelFilter.title, label)
-                    : statefulFilter.current!.filterAdded(LabelFilter, label)
+                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilter.id, label)
+                    : statefulFilter.current!.filterAdded(labelFilter, label)
                   : {}
               }
             >

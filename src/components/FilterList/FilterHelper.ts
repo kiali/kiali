@@ -25,7 +25,8 @@ export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo 
   filterTypes.forEach(filter => {
     urlParams.getAll(filter.id).forEach(value => {
       activeFilters.push({
-        category: filter.title,
+        id: filter.id,
+        title: filter.title,
         value: value
       });
     });
@@ -42,11 +43,10 @@ export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter
   filterTypes.forEach(type => {
     urlParams.delete(type.id);
   });
-  urlParams.delete(ID_LABEL_OPERATION);
   const cleanFilters: ActiveFilter[] = [];
 
   filters.filters.forEach(activeFilter => {
-    const filterType = filterTypes.find(filter => filter.title === activeFilter.category);
+    const filterType = filterTypes.find(filter => filter.id === activeFilter.id);
     if (!filterType) {
       return;
     }
@@ -63,8 +63,8 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
   // This can probably be improved and/or simplified?
   const fromFilters: Map<string, string[]> = new Map<string, string[]>();
   filters.filters.forEach(activeFilter => {
-    const existingValue = fromFilters.get(activeFilter.category) || [];
-    fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
+    const existingValue = fromFilters.get(activeFilter.id) || [];
+    fromFilters.set(activeFilter.id, existingValue.concat(activeFilter.value));
   });
 
   const fromURL: Map<string, string[]> = new Map<string, string[]>();
@@ -72,8 +72,8 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
   filterTypes.forEach(filter => {
     const values = urlParams.getAll(filter.id);
     if (values.length > 0) {
-      const existing = fromURL.get(filter.title) || [];
-      fromURL.set(filter.title, existing.concat(values));
+      const existing = fromURL.get(filter.id) || [];
+      fromURL.set(filter.id, existing.concat(values));
     }
   });
 

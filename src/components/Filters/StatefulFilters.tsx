@@ -13,7 +13,8 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  ToolbarSection
+  ToolbarSection,
+  SelectOptionObject
 } from '@patternfly/react-core';
 import {
   ActiveFilter,
@@ -22,12 +23,14 @@ import {
   FILTER_ACTION_UPDATE,
   FilterType,
   FilterTypes,
-  LabelFilter,
   LabelOperation
 } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
+import { LabelFilters } from './LabelFilter';
+import { groupBy } from 'utils/Common';
+import { labelFilter } from './CommonFilters';
 
 var classNames = require('classnames');
 
@@ -76,6 +79,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   constructor(props: StatefulFiltersProps) {
     super(props);
+
     let active = FilterSelected.getSelected();
     if (!FilterSelected.isInitialized()) {
       active = FilterHelper.getFiltersFromURL(this.props.initialFilters);
@@ -137,18 +141,15 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   filterAdded = (field: FilterType, value: string) => {
     const activeFilters = this.state.activeFilters;
     const activeFilter: ActiveFilter = {
-      category: field.title,
+      id: field.id,
+      title: field.title,
       value: value
     };
 
-    const typeFilterPresent = activeFilters.filters.filter(filter => filter.category === field.title).length > 0;
-
-    if (field.action === FILTER_ACTION_UPDATE && typeFilterPresent) {
-      activeFilters.filters.forEach(filter => {
-        if (filter.category === field.title) {
-          filter.value = value;
-        }
-      });
+    // For filters that need to be updated in place instead of added, we check if it is already defined in activeFilters
+    const current = activeFilters.filters.filter(filter => filter.id === field.id);
+    if (field.action === FILTER_ACTION_UPDATE && current.length > 0) {
+      current.forEach(filter => (filter.value = value));
     } else {
       activeFilters.filters.push(activeFilter);
     }
@@ -168,20 +169,16 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  filterValueAheadSelected = (_event: any, value: any) => {
-    this.filterValueSelected(value);
+  filterValueAheadSelected = (_event: any, valueId: string | SelectOptionObject) => {
+    this.filterValueSelected(valueId);
     this.setState({ isExpanded: false });
   };
 
-  filterValueSelected = (value: any) => {
+  filterValueSelected = (valueId: string | SelectOptionObject) => {
     const { currentFilterType, currentValue } = this.state;
-    const filterValue = currentFilterType.filterValues.filter(filter => filter.id === value)[0];
+    const filterValue = currentFilterType.filterValues.find(filter => filter.id === valueId);
 
-    if (
-      filterValue &&
-      filterValue.id !== currentValue &&
-      !this.duplicatesFilter(currentFilterType, filterValue.title)
-    ) {
+    if (filterValue && filterValue.id !== currentValue && !this.isActive(currentFilterType, filterValue.title)) {
       this.filterAdded(currentFilterType, filterValue.title);
     }
   };
@@ -194,7 +191,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const { currentValue, currentFilterType } = this.state;
 
     if (keyEvent.key === 'Enter') {
-      if (currentValue && currentValue.length > 0 && !this.duplicatesFilter(currentFilterType, currentValue)) {
+      if (currentValue && currentValue.length > 0 && !this.isActive(currentFilterType, currentValue)) {
         this.filterAdded(currentFilterType, currentValue);
       }
 
@@ -204,20 +201,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  duplicatesFilter = (filterType: FilterType, filterValue: string): boolean => {
-    const filter = this.state.activeFilters.filters.find(activeFilter => {
-      return filterValue === activeFilter.value && filterType.title === activeFilter.category;
-    });
-    return !!filter;
+  isActive = (type: FilterType, value: string): boolean => {
+    return this.state.activeFilters.filters.some(active => value === active.value && type.id === active.id);
   };
 
-  removeFilter = (category: string, value: string) => {
-    const { activeFilters } = this.state;
-    const index = activeFilters.filters.findIndex(x => x.category === category && x.value === value);
-
-    if (index > -1) {
-      const updated = [...activeFilters.filters.slice(0, index), ...activeFilters.filters.slice(index + 1)];
-      this.updateActiveFilters({ filters: updated, op: activeFilters.op });
+  removeFilter = (id: string, value: string) => {
+    const updated = this.state.activeFilters.filters.filter(x => x.id !== id || x.value !== value);
+    if (updated.length !== this.state.activeFilters.filters.length) {
+      this.updateActiveFilters({ filters: updated, op: this.state.activeFilters.op });
     }
   };
 
@@ -262,14 +253,18 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           ))}
         </FormSelect>
       );
-    } else if (currentFilterType.filterType === FilterTypes.label) {
-      const instance = new currentFilterType.customComponent({
-        value: currentValue,
-        onChange: this.updateCurrentValue,
-        filterAdd: value => this.filterAdded(currentFilterType, value),
-        duplicatesFilter: value => this.duplicatesFilter(currentFilterType, value)
-      });
-      return instance.render();
+    } else if (
+      currentFilterType.filterType === FilterTypes.label ||
+      currentFilterType.filterType === FilterTypes.nsLabel
+    ) {
+      return (
+        <LabelFilters
+          value={currentValue}
+          onChange={this.updateCurrentValue}
+          filterAdd={value => this.filterAdded(currentFilterType, value)}
+          isActive={value => this.isActive(currentFilterType, value)}
+        />
+      );
     } else {
       return (
         <TextInput
@@ -284,15 +279,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       );
     }
   }
-
-  groupBy = (items, key) =>
-    items.reduce(
-      (result, item) => ({
-        ...result,
-        [item[key]]: [...(result[item[key]] || []), item]
-      }),
-      {}
-    );
 
   renderChildren = () => {
     return (
@@ -357,7 +343,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             </ToolbarItem>
           </ToolbarGroup>
           {this.renderChildren()}
-          {(this.state.activeFilters.filters.filter(f => f.category === LabelFilter.title).length > 0 ||
+          {(this.state.activeFilters.filters.filter(f => f.id === labelFilter.id).length > 0 ||
             this.state.currentFilterType.filterType === FilterTypes.label) && (
             <ToolbarGroup>
               <ToolbarItem className={classNames('pf-u-mr-md')}>
@@ -383,18 +369,22 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             <>{'Active Filters:'}</>
             <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
               <ChipGroup defaultIsOpen={true} withToolbar={true}>
-                {Object.entries(this.groupBy(activeFilters.filters, 'category')).map(([category, item]) => (
-                  <ChipGroupToolbarItem key={category} categoryName={category}>
-                    {(item as Array<ActiveFilter>).map(subItem => (
-                      <Chip
-                        key={'filter_' + category + '_' + subItem.value}
-                        onClick={() => this.removeFilter(category, subItem.value)}
-                      >
-                        {subItem.value}
-                      </Chip>
-                    ))}
-                  </ChipGroupToolbarItem>
-                ))}
+                {Object.entries(groupBy(activeFilters.filters, 'id')).map(([category, items]) => {
+                  // At least one item is present after groupBy, and all items inside category share the same title
+                  const title = items[0].title;
+                  return (
+                    <ChipGroupToolbarItem key={category} categoryName={title}>
+                      {items.map(item => (
+                        <Chip
+                          key={'filter_' + category + '_' + item.value}
+                          onClick={() => this.removeFilter(category, item.value)}
+                        >
+                          {item.value}
+                        </Chip>
+                      ))}
+                    </ChipGroupToolbarItem>
+                  );
+                })}
               </ChipGroup>
             </div>
             <a

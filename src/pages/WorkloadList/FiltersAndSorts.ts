@@ -3,8 +3,7 @@ import {
   FILTER_ACTION_APPEND,
   FILTER_ACTION_UPDATE,
   FilterType,
-  FilterTypes,
-  LabelFilter
+  FilterTypes
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
@@ -13,6 +12,7 @@ import {
   presenceValues,
   istioSidecarFilter,
   healthFilter,
+  labelFilter,
   getFilterSelectedValues,
   getPresenceFilterValue,
   filterByHealth
@@ -251,7 +251,7 @@ export const availableFilters: FilterType[] = [
   healthFilter,
   appLabelFilter,
   versionLabelFilter,
-  LabelFilter
+  labelFilter
 ];
 
 /** Filter Method */
@@ -306,7 +306,7 @@ export const filterBy = (
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
   const appLabel = getPresenceFilterValue(appLabelFilter, filters);
   const versionLabel = getPresenceFilterValue(versionLabelFilter, filters);
-  const labelFilters = getFilterSelectedValues(LabelFilter, filters);
+  const labelFilters = getFilterSelectedValues(labelFilter, filters);
 
   let ret = items;
   ret = filterByType(ret, workloadTypeFilters);

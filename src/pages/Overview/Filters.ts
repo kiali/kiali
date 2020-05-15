@@ -9,7 +9,6 @@ import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
-import { LabelFilters } from '../../components/Filters/LabelFilter';
 
 export const nameFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'namespace_search',
@@ -55,7 +54,6 @@ export const labelFilter: FilterTypeWithFilter<NamespaceInfo> = {
   title: 'Namespace Label',
   placeholder: 'Filter by Label',
   filterType: FilterTypes.nsLabel,
-  customComponent: LabelFilters,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
   filter: (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
@@ -144,7 +142,7 @@ export const filterBy = (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo
   let filteredNamespaces: NamespaceInfo[] = namespaces;
 
   availableFilters.forEach(availableFilter => {
-    const activeFilters = filters.filters.filter(af => af.category === availableFilter.title);
+    const activeFilters = filters.filters.filter(af => af.id === availableFilter.id);
     if (activeFilters.length) {
       filteredNamespaces = availableFilter.filter(filteredNamespaces, { filters: activeFilters, op: filters.op });
     }

@@ -16,3 +16,13 @@ export const arrayEquals = <T>(a1: T[], a2: T[], comparator: (v1: T, v2: T) => b
 
 export const namespaceEquals = (ns1: Namespace[], ns2: Namespace[]): boolean =>
   arrayEquals(ns1, ns2, (n1, n2) => n1.name === n2.name);
+
+export function groupBy<T>(items: T[], key: keyof T): { [key: string]: T[] } {
+  return items.reduce(
+    (result, item) => ({
+      ...result,
+      [item[key as string]]: [...(result[item[key as string]] || []), item]
+    }),
+    {} as { [key: string]: T[] }
+  );
+}

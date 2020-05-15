@@ -20,10 +20,10 @@ type Props = {
 
 class OverviewStatus extends React.Component<Props, {}> {
   setFilters = () => {
-    const filters: (ActiveFilter & { id: string })[] = [
+    const filters: ActiveFilter[] = [
       {
         id: healthFilter.id,
-        category: healthFilter.title,
+        title: healthFilter.title,
         value: this.props.status.name
       }
     ];

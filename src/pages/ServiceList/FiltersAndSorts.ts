@@ -1,10 +1,11 @@
-import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, LabelFilter } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
 import { getRequestErrorsStatus, WithServiceHealth, hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import {
   istioSidecarFilter,
   healthFilter,
+  labelFilter,
   getPresenceFilterValue,
   getFilterSelectedValues,
   filterByHealth
@@ -126,7 +127,7 @@ const serviceNameFilter: FilterType = {
   filterValues: []
 };
 
-export const availableFilters: FilterType[] = [serviceNameFilter, istioSidecarFilter, healthFilter, LabelFilter];
+export const availableFilters: FilterType[] = [serviceNameFilter, istioSidecarFilter, healthFilter, labelFilter];
 
 const filterByIstioSidecar = (items: ServiceListItem[], istioSidecar: boolean): ServiceListItem[] => {
   return items.filter(item => item.istioSidecar === istioSidecar);
@@ -163,7 +164,7 @@ export const filterBy = (
     ret = filterByName(ret, serviceNamesSelected);
   }
 
-  const serviceFilterSelected = getFilterSelectedValues(LabelFilter, filters);
+  const serviceFilterSelected = getFilterSelectedValues(labelFilter, filters);
   if (serviceFilterSelected.length > 0) {
     ret = filterByLabel(ret, serviceFilterSelected, filters.op) as ServiceListItem[];
   }
