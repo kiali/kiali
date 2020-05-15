@@ -2,7 +2,6 @@ package virtual_services
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -36,17 +35,7 @@ func (s NoGatewayChecker) ValidateVirtualServiceGateways(spec map[string]interfa
 					if gate == "mesh" {
 						continue GatewaySearch
 					}
-					var hostname string
-					if strings.Contains(gate, "/") {
-						parts := strings.Split(gate, "/")
-						hostname = kubernetes.Host{
-							Service:   parts[1],
-							Namespace: parts[0],
-							Cluster:   clusterName,
-						}.String()
-					} else {
-						hostname = kubernetes.ParseHost(gate, namespace, clusterName).String()
-					}
+					hostname := kubernetes.ParseGatewayAsHost(gate, namespace, clusterName).String()
 					for gw := range s.GatewayNames {
 						if found := kubernetes.FilterByHost(hostname, gw, namespace); found {
 							continue GatewaySearch

@@ -70,6 +70,28 @@ func TestFoundGateway(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestFoundGatewayTwoPartNaming(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test", "mesh"}, data.CreateVirtualService())
+	gatewayNames := kubernetes.GatewayNames([][]kubernetes.IstioObject{
+		{
+			data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
+		},
+	})
+
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
+	}
+
+	validations, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
 func TestFQDNFoundGateway(t *testing.T) {
 	assert := assert.New(t)
 

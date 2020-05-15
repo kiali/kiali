@@ -143,3 +143,31 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 
 	return false
 }
+
+func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
+	host := Host{
+		Service:   gateway,
+		Namespace: currentNamespace,
+		Cluster:   currentCluster,
+		CompleteInput: true,
+	}
+
+	if strings.Contains(gateway, ".") {
+		parts := strings.Split(gateway, ".")
+		host.Service = parts[0]
+
+		if len(parts) > 1 {
+			host.Namespace = parts[1]
+
+			if len(parts) > 2 {
+				host.Cluster = strings.Join(parts[2:], ".")
+			}
+		}
+	} else if strings.Contains(gateway, "/") {
+		parts := strings.Split(gateway, "/")
+		host.Namespace = parts[0]
+		host.Service = parts[1]
+	}
+
+	return host
+}
