@@ -31,6 +31,7 @@ type DestinationRule struct {
 		Host          interface{} `json:"host,omitempty"`
 		TrafficPolicy interface{} `json:"trafficPolicy,omitempty"`
 		Subsets       interface{} `json:"subsets,omitempty"`
+		ExportTo      interface{} `json:"exportTo,omitempty"`
 	} `json:"spec"`
 }
 
@@ -49,6 +50,7 @@ func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
 	dRule.Spec.Host = destinationRule.GetSpec()["host"]
 	dRule.Spec.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
 	dRule.Spec.Subsets = destinationRule.GetSpec()["subsets"]
+	dRule.Spec.ExportTo = destinationRule.GetSpec()["exportTo"]
 }
 
 func (dRule *DestinationRule) HasCircuitBreaker(namespace string, serviceName string, version string) bool {

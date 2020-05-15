@@ -312,7 +312,7 @@ func NewConfig() (c *Config) {
 				AdapterName:    "threescale",
 				AdapterPort:    "3333",
 				AdapterService: "threescale-istio-adapter",
-				Enabled:        true,
+				Enabled:        false,
 			},
 			Iter8: Iter8Config{
 				Enabled: false,
@@ -329,7 +329,7 @@ func NewConfig() (c *Config) {
 				IstioStatusEnabled:     true,
 				IstioIdentityDomain:    "svc.cluster.local",
 				IstioSidecarAnnotation: "sidecar.istio.io/status",
-				UrlServiceVersion:      "http://istio-pilot:8080/version",
+				UrlServiceVersion:      "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{

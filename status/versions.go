@@ -37,9 +37,10 @@ var (
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
 	ossmVersionExpr           = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
 	maistraProjectVersionExpr = regexp.MustCompile(`(?:Maistra_|openshift-istio.*-)([0-9]+\.[0-9]+\.[0-9]+)`)
-	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
-	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
 	istioDevVersionExpr       = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*`)
+	istioRCVersionExpr        = regexp.MustCompile(`(\d+\.\d+.\d+)-((?:alpha|beta|rc|RC)\.\d+)`)
+	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
+	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 )
 
 func getVersions() {
@@ -172,23 +173,8 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		}
 	}
 
-	// see if it is a released version of Istio
-	istioVersionStringArr := istioVersionExpr.FindStringSubmatch(rawVersion)
-	if istioVersionStringArr != nil {
-		log.Debugf("Detected Istio version [%v]", rawVersion)
-		if len(istioVersionStringArr) > 1 {
-			product.Name = "Istio"
-			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			if !validateVersion(config.IstioVersionSupported, product.Version) {
-				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
-			}
-			// we know this is Istio upstream - either a supported or unsupported version - return now
-			return &product, nil
-		}
-	}
-
 	// see if it is a snapshot version of Istio
-	istioVersionStringArr = istioSnapshotVersionExpr.FindStringSubmatch(rawVersion)
+	istioVersionStringArr := istioSnapshotVersionExpr.FindStringSubmatch(rawVersion)
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio snapshot version [%v]", rawVersion)
 		if len(istioVersionStringArr) > 2 {
@@ -215,6 +201,38 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
 			if !validateVersion(config.IstioVersionSupported, majorMinor) {
 				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	// see if it is an RC version of Istio
+	istioVersionStringArr = istioRCVersionExpr.FindStringSubmatch(rawVersion)
+	if istioVersionStringArr != nil {
+		log.Debugf("Detected Istio RC version [%v]", rawVersion)
+		if len(istioVersionStringArr) > 2 {
+			product.Name = "Istio RC"
+			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#.#" version numbers
+			rc := istioVersionStringArr[2]         // regex group #2 is the alpha or beta version
+			product.Version = fmt.Sprintf("%s (%s)", majorMinor, rc)
+			if !validateVersion(config.IstioVersionSupported, majorMinor) {
+				info.WarningMessages = append(info.WarningMessages, "Istio release candidate version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	// see if it is a released version of Istio
+	istioVersionStringArr = istioVersionExpr.FindStringSubmatch(rawVersion)
+	if istioVersionStringArr != nil {
+		log.Debugf("Detected Istio version [%v]", rawVersion)
+		if len(istioVersionStringArr) > 1 {
+			product.Name = "Istio"
+			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
+			if !validateVersion(config.IstioVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
 			return &product, nil

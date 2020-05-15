@@ -1,4 +1,4 @@
-package meshpolicies
+package peerauthentications
 
 import (
 	"github.com/kiali/kiali/kubernetes"
@@ -17,7 +17,7 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// if MeshPolicy doesn't have mtls in strict mode, stop validation with any check.
-	if strictMode := kubernetes.PolicyHasStrictMTLS(t.MeshPolicy); !strictMode {
+	if strictMode := kubernetes.PeerAuthnHasStrictMTLS(t.MeshPolicy); !strictMode {
 		return validations, true
 	}
 
@@ -28,12 +28,14 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	checkerId := "meshpolicies.mtls.destinationrulemissing"
+	checkerId := "peerauthentication.mtls.destinationrulemissing"
+	path := "spec/mtls"
 	if t.IsServiceMesh {
 		checkerId = "servicemeshpolicies.mtls.destinationrulemissing"
+		path = "spec/peers/mtls"
 	}
 
-	check := models.Build(checkerId, "spec/peers/mtls")
+	check := models.Build(checkerId, path)
 	validations = append(validations, &check)
 
 	return validations, false

@@ -306,6 +306,9 @@
           }
         ],
         "responses": {
+          "200": {
+            "$ref": "#/responses/iter8StatusResponse"
+          },
           "500": {
             "$ref": "#/responses/internalError"
           }
@@ -4502,6 +4505,9 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "status": {
+          "$ref": "#/definitions/Iter8SuccessCrideriaStatus"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4532,7 +4538,10 @@
       "type": "object",
       "properties": {
         "assessmentConclusion": {
-          "type": "string",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
           "x-go-name": "AssessmentConclusion"
         },
         "baseline": {
@@ -4554,11 +4563,13 @@
           "x-go-name": "CandidatePercentage"
         },
         "createdAt": {
-          "type": "string",
+          "type": "integer",
+          "format": "int64",
           "x-go-name": "CreatedAt"
         },
         "endedAt": {
-          "type": "string",
+          "type": "integer",
+          "format": "int64",
           "x-go-name": "EndedAt"
         },
         "name": {
@@ -4574,7 +4585,8 @@
           "x-go-name": "Phase"
         },
         "startedAt": {
-          "type": "string",
+          "type": "integer",
+          "format": "int64",
           "x-go-name": "StartedAt"
         },
         "status": {
@@ -4620,6 +4632,27 @@
         "sample_size_template": {
           "type": "string",
           "x-go-name": "SampleSizeTemplate"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8SuccessCrideriaStatus": {
+      "type": "object",
+      "properties": {
+        "abort_experiment": {
+          "type": "boolean",
+          "x-go-name": "AbortExperiment"
+        },
+        "conclusions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Conclusions"
+        },
+        "success_criterion_met": {
+          "type": "boolean",
+          "x-go-name": "SuccessCriterionMet"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5808,6 +5841,10 @@
             "subjectAltNames": {
               "type": "object",
               "x-go-name": "SubjectAltNames"
+            },
+            "workloadSelector": {
+              "type": "object",
+              "x-go-name": "WorkloadSelector"
             }
           },
           "x-go-name": "Spec"
@@ -6069,6 +6106,14 @@
             "ingress": {
               "type": "object",
               "x-go-name": "Ingress"
+            },
+            "localhost": {
+              "type": "object",
+              "x-go-name": "Localhost"
+            },
+            "outboundTrafficPolicy": {
+              "type": "object",
+              "x-go-name": "OutboundTrafficPolicy"
             },
             "workloadSelector": {
               "type": "object",
@@ -6825,6 +6870,10 @@
         "spec": {
           "type": "object",
           "properties": {
+            "exportTo": {
+              "type": "object",
+              "x-go-name": "ExportTo"
+            },
             "host": {
               "type": "object",
               "x-go-name": "Host"

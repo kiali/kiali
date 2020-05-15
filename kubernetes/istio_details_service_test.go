@@ -87,81 +87,53 @@ func TestInvalidPortNameMatcher(t *testing.T) {
 }
 
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
-	policy := createPolicy("default", "bookinfo", []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": map[string]interface{}{},
-			},
-		},
+	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
+		"mode": map[string]interface{}{},
 	})
 
-	enabled, mode := PolicyHasMTLSEnabled(policy)
-	assert.False(t, enabled)
-	assert.Equal(t, "", mode)
-}
-
-func TestPolicyHasMTLSEnabledNonDefaultName(t *testing.T) {
-	policy := createPolicy("non-default", "bookinfo", []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": "STRICT",
-			},
-		},
-	})
-
-	enabled, mode := PolicyHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.False(t, enabled)
 	assert.Equal(t, "", mode)
 }
 
 func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
-	policy := createPolicy("default", "bookinfo", []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": "STRICT",
-			},
-		},
+	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
+		"mode": "STRICT",
 	})
 
-	enabled, mode := PolicyHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
 
 func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
-	policy := createPolicy("default", "bookinfo", []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{},
-		},
+	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
+		"mode": "STRICT",
 	})
 
-	enabled, mode := PolicyHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "STRICT", mode)
 }
 
 func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
-	policy := createPolicy("default", "bookinfo", []interface{}{
-		map[string]interface{}{
-			"mtls": map[string]interface{}{
-				"mode": "PERMISSIVE",
-			},
-		},
+	policy := createPeerAuthn("default", "bookinfo", map[string]interface{}{
+		"mode": "PERMISSIVE",
 	})
 
-	enabled, mode := PolicyHasMTLSEnabled(policy)
+	enabled, mode := PeerAuthnHasMTLSEnabled(policy)
 	assert.True(t, enabled)
 	assert.Equal(t, "PERMISSIVE", mode)
 }
 
-func createPolicy(name, namespace string, peers interface{}) IstioObject {
+func createPeerAuthn(name, namespace string, mtls interface{}) IstioObject {
 	return (&GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: map[string]interface{}{
-			"peers": peers,
+			"mtls": mtls,
 		},
 	}).DeepCopyIstioObject()
 }

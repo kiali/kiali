@@ -29,7 +29,7 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
-GO_VERSION_KIALI = 1.14
+GO_VERSION_KIALI = 1.14.2
 
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
@@ -46,8 +46,10 @@ OPERATOR_CONTAINER_VERSION ?= ${CONTAINER_VERSION}
 OPERATOR_QUAY_NAME ?= quay.io/${OPERATOR_CONTAINER_NAME}
 OPERATOR_QUAY_TAG = ${OPERATOR_QUAY_NAME}:${OPERATOR_CONTAINER_VERSION}
 
+# Where the control plane is
+ISTIO_NAMESPACE ?= istio-system
 # Declares the namespace/project where the objects are to be deployed.
-NAMESPACE ?= istio-system
+NAMESPACE ?= ${ISTIO_NAMESPACE}
 
 # A default go GOPATH if it isn't user defined
 GOPATH ?= ${HOME}/go

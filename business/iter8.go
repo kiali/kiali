@@ -2,6 +2,8 @@ package business
 
 import (
 	"encoding/json"
+	"gopkg.in/yaml.v2"
+	"strconv"
 	"sync"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -170,6 +172,35 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
+	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
+	for _, criteria := range newExperimentSpec.Criterias {
+		min_max := struct {
+			Min float64 `json:"min,omitempty"`
+			Max float64 `json:"max,omitempty"`
+		}{
+			Min: 0.1,
+			Max: 1.0,
+		}
+		object.Spec.Analysis.SuccessCriteria = append(object.Spec.Analysis.SuccessCriteria,
+			struct {
+				MetricName    string  `json:"metricName,omitempty"`
+				ToleranceType string  `json:"toleranceType,omitempty"`
+				Tolerance     float64 `json:"tolerance,omitempty"`
+				SampleSize    int     `json:"sampleSize,omitempty"`
+				MinMax        struct {
+					Min float64 `json:"min,omitempty"`
+					Max float64 `json:"max,omitempty"`
+				} `json:"min_max,omitempty"`
+				StopOnFailure bool `json:"stopOnFailure,omitempty"`
+			}{
+				MetricName:    criteria.Metric,
+				ToleranceType: criteria.ToleranceType,
+				Tolerance:     criteria.Tolerance,
+				SampleSize:    criteria.SampleSize,
+				StopOnFailure: criteria.StopOnFailure,
+				MinMax:        min_max,
+			})
+	}
 
 	b, err2 := json.Marshal(object)
 	if err2 != nil {
@@ -184,4 +215,29 @@ func (in *Iter8Service) DeleteIter8Experiment(namespace string, name string) (er
 
 	err = in.k8s.DeleteIter8Experiment(namespace, name)
 	return err
+}
+
+func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
+	defer promtimer.ObserveNow(&err)
+
+	metricNames, err = in.k8s.Iter8ConfigMap()
+	return metricNames, err
+}
+
+func (in *Iter8Service) GetAnalyticPort() int {
+	configMap, err := in.k8s.GetConfigMap("iter8", "iter8-analytics")
+	if err != nil {
+		return 80
+	}
+	configYaml, ok := configMap.Data["config.yaml"]
+	if !ok {
+		return 80
+	}
+	analyticConfig := models.Iter8AnalyticsConfig{}
+	err = yaml.Unmarshal([]byte(configYaml), &analyticConfig)
+	if err != nil {
+		return 80
+	}
+	return analyticConfig.Port
 }

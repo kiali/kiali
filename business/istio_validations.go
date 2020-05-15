@@ -111,9 +111,8 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
-		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
 		checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails},
-		checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails},
+		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads},
@@ -169,15 +168,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
-	case MeshPolicies:
-		meshPoliciesChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{meshPoliciesChecker}
 	case ServiceMeshPolicies:
 		smPoliciesChecker := checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{smPoliciesChecker}
-	case Policies:
-		policiesChecker := checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{policiesChecker}
 	case ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
@@ -214,6 +207,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{roleBindChecker}
 	case PeerAuthentications:
 		// Validations on PeerAuthentications
+		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{peerAuthnChecker}
 	case WorkloadEntries:
 		// Validation on WorkloadEntries
 	case RequestAuthentications:
@@ -475,15 +470,15 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		return
 	}
 
-	wg.Add(2)
+	wg.Add(3)
 
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
 		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
 		if !in.k8s.IsMaistraApi() {
-			if meshPolicies, iErr := in.k8s.GetMeshPolicies(); iErr == nil {
-				details.MeshPolicies = meshPolicies
+			if meshpeerAuthns, iErr := in.k8s.GetPeerAuthentications(config.Get().IstioNamespace); iErr == nil {
+				details.MeshPeerAuthentications = meshpeerAuthns
 			} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
 				errChan <- iErr
 			}
@@ -506,11 +501,22 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		policies, err := in.k8s.GetPolicies(namespace)
+		peerAuthns, err := in.k8s.GetPeerAuthentications(namespace)
 		if err != nil {
 			errChan <- err
 		} else {
-			details.Policies = policies
+			details.PeerAuthentications = peerAuthns
+		}
+	}(mtlsDetails)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
+		icm, err := in.k8s.GetIstioConfigMap()
+		if err != nil {
+			errChan <- err
+		} else {
+			details.EnabledAutoMtls = icm.GetEnableAutoMtls()
 		}
 	}(mtlsDetails)
 

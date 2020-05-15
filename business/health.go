@@ -200,12 +200,9 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 	lblDestSvc := model.LabelName("destination_service_name")
 	for _, sample := range rates {
 		service := string(sample.Metric[lblDestSvc])
-		health, ok := allHealth[service]
-		if !ok {
-			health = &models.ServiceHealth{Requests: models.NewEmptyRequestHealth()}
-			allHealth[service] = health
+		if health, ok := allHealth[service]; ok {
+			health.Requests.AggregateInbound(sample)
 		}
-		health.Requests.AggregateInbound(sample)
 	}
 
 	return allHealth

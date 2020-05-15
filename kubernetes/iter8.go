@@ -2,6 +2,8 @@ package kubernetes
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	core_v1 "k8s.io/api/core/v1"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,7 +76,23 @@ type Iter8ExperimentStatus struct {
 	AnalysisState     map[string]interface{} `json:"analysisState"`
 	GrafanaURL        string                 `json:"grafanaURL"`
 	Assestment        struct {
-		Conclusions []string `json:"conclusions"`
+		Conclusions           []string `json:"conclusions"`
+		AllSuccessCriteriaMet bool     `json:"all_success_criteria_met,omitempty"`
+		AbortExperiment       bool     `json:"abort_experiment,omitempty"`
+		SuccessCriteriaStatus []struct {
+			// Name of the metric to which the criterion applies
+			// example: iter8_latency
+			MetricName string `json:"metric_name"`
+
+			// Assessment of this success criteria in plain English
+			Conclusions []string `json:"conclusions"`
+
+			// Indicates whether or not the success criterion for the corresponding metric has been met
+			SuccessCriterionMet bool `json:"success_criterion_met"`
+
+			// Indicates whether or not the experiment must be aborted on the basis of the criterion for this metric
+			AbortExperiment bool `json:"abort_experiment"`
+		} `json:"success_criteria,omitempty"`
 	} `json:"assessment"`
 	TrafficSplitPercentage struct {
 		Baseline  int `json:"baseline"`
@@ -250,12 +268,21 @@ func (in *Iter8ExperimentObjectList) DeepCopyObject() runtime.Object {
 	return nil
 }
 
+// Metric structure of cm/iter8_metric
+type Iter8AnalyticMetric struct {
+	Name               string `yaml:"name"`
+	IsCounter          bool   `yaml:"is_counter"`
+	AbsentValue        string `yaml:"absent_value"`
+	SampleSizeTemplate string `yaml:"sample_size_query_template"`
+}
+
 type Iter8ClientInterface interface {
 	CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error)
 	DeleteIter8Experiment(namespace string, name string) error
 	GetIter8Experiment(namespace string, name string) (Iter8Experiment, error)
 	GetIter8Experiments(namespace string) ([]Iter8Experiment, error)
 	IsIter8Api() bool
+	Iter8ConfigMap() ([]string, error)
 }
 
 func (in *IstioClient) IsIter8Api() bool {
@@ -263,11 +290,30 @@ func (in *IstioClient) IsIter8Api() bool {
 		isIter8Api := false
 		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/iter8.tools").Do().Raw()
 		if err == nil {
+
 			isIter8Api = true
 		}
 		in.isIter8Api = &isIter8Api
 	}
 	return *in.isIter8Api
+}
+
+func (in *IstioClient) Iter8ConfigMap() ([]string, error) {
+	mnames := make([]string, 0)
+	var result = &core_v1.ConfigMap{}
+	err := in.k8s.CoreV1().RESTClient().Get().Namespace("iter8").Resource("configmaps").
+		Name(iter8configMap).Do().Into(result)
+	if err == nil {
+		metrics := []Iter8AnalyticMetric{}
+		err = yaml.Unmarshal([]byte(result.Data["metrics"]), &metrics)
+		if err == nil {
+			for _, m := range metrics {
+				mnames = append(mnames, m.Name)
+			}
+
+		}
+	}
+	return mnames, err
 }
 
 func (in *IstioClient) CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error) {
