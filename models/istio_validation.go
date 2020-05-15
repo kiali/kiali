@@ -223,6 +223,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA1006 Global default sidecar should not have workloadSelector",
 		Severity: WarningSeverity,
 	},
+	"virtualservices.gateway.oldnomenclature": {
+		Message:  "KIA1109 Preferred nomenclature: <gateway namespace>/<gateway name>",
+		Severity: Unknown,
+	},
 	"virtualservices.nohost.hostnotfound": {
 		Message:  "KIA1101 DestinationWeight on route doesn't have a valid service (host not found)",
 		Severity: ErrorSeverity,

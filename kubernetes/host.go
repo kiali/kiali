@@ -146,9 +146,9 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 
 func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
 	host := Host{
-		Service:   gateway,
-		Namespace: currentNamespace,
-		Cluster:   currentCluster,
+		Service:       gateway,
+		Namespace:     currentNamespace,
+		Cluster:       currentCluster,
 		CompleteInput: true,
 	}
 

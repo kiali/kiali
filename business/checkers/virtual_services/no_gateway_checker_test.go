@@ -89,7 +89,9 @@ func TestFoundGatewayTwoPartNaming(t *testing.T) {
 
 	validations, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
 }
 
 func TestFQDNFoundGateway(t *testing.T) {
@@ -112,7 +114,9 @@ func TestFQDNFoundGateway(t *testing.T) {
 
 	validations, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
 }
 
 func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
@@ -136,7 +140,9 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 
 	validations, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
 }
 
 func TestNewIstioGatewayNameFormat(t *testing.T) {
