@@ -53,11 +53,20 @@ import { Paths } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
 
-const gridStyle = style({
+const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
   paddingBottom: '20px',
   marginTop: '20px'
 });
+
+const gridStyleList = style({
+  backgroundColor: '#f5f5f5',
+  // The VirtualTable component has a different style than cards
+  // We need to adjust the grid style if we are on compact vs list view
+  padding: '0 !important',
+  marginTop: '20px'
+});
+
 const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '20px' });
 
 const emptyStateStyle = style({
@@ -392,7 +401,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           />
         </div>
         {filteredNamespaces.length > 0 ? (
-          <RenderComponentScroll className={gridStyle}>
+          <RenderComponentScroll
+            className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
+          >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList rows={filteredNamespaces} sort={this.sort} />
             ) : (
