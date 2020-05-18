@@ -148,7 +148,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.meshpolicymtlsenabled": {
-		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive policy is needed",
+		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive mode needed",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.mtls.servicemeshpolicymissing": {
@@ -224,7 +224,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"virtualservices.gateway.oldnomenclature": {
-		Message:  "KIA1109 Preferred nomenclature: <gateway namespace>/<gateway name>",
+		Message:  "KIA1108 Preferred nomenclature: <gateway namespace>/<gateway name>",
 		Severity: Unknown,
 	},
 	"virtualservices.nohost.hostnotfound": {
@@ -254,10 +254,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"virtualservices.subsetpresent.subsetnotfound": {
 		Message:  "KIA1107 Subset not found",
 		Severity: WarningSeverity,
-	},
-	"virtualservices.subsetpresent.destinationmandatory": {
-		Message:  "KIA1108 Destination field is mandatory",
-		Severity: ErrorSeverity,
 	},
 	"validation.unable.cross-namespace": {
 		Message:  "KIA0001 Unable to verify the validity, cross-namespace validation is not supported for this field",

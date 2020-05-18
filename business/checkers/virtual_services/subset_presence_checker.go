@@ -47,10 +47,6 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
 				destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
 				if !ok || destinationWeight["destination"] == nil {
-					valid = false
-					path := fmt.Sprintf("spec/%s[%d]/route[%d]", protocol, routeIdx, destWeightIdx)
-					validation := models.Build("virtualservices.subsetpresent.destinationmandatory", path)
-					validations = append(validations, &validation)
 					continue
 				}
 

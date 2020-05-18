@@ -201,48 +201,6 @@ func fakeWrongSubsetsServiceNamespace(protocol string) kubernetes.IstioObject {
 	return validVirtualService
 }
 
-func TestVirtualServiceWithoutDestination(t *testing.T) {
-	assert := assert.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	// Setup mocks
-	destinationList := []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "testrule", "reviews"),
-	}
-
-	protocols := [3]string{"http", "tcp", "tls"}
-	for _, protocol := range protocols {
-		validations, valid := SubsetPresenceChecker{
-			Namespace:        "bookinfo",
-			DestinationRules: destinationList,
-			VirtualService:   fakeNilDestination(protocol),
-		}.Check()
-
-		// There are no pods no deployments
-		assert.False(valid)
-		assert.NotEmpty(validations)
-		assert.Len(validations, 1)
-		assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.subsetpresent.destinationmandatory"))
-		assert.Equal(validations[0].Severity, models.ErrorSeverity)
-		assert.Equal(validations[0].Path, "spec/"+protocol+"[0]/route[0]")
-	}
-}
-
-func fakeNilDestination(protocol string) kubernetes.IstioObject {
-	emptyRoute := make(map[string]interface{})
-	emptyRoute["weight"] = uint64(55)
-
-	validVirtualService :=
-		data.AddRoutesToVirtualService(protocol, data.CreateRoute("reviews.bookinfo.svc.cluster.local", "v2", 45),
-			data.AddRoutesToVirtualService(protocol, emptyRoute,
-				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews"}),
-			),
-		)
-
-	return validVirtualService
-}
-
 func TestVirtualServiceWithoutSpec(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
