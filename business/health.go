@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/models/threshold"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/status"
@@ -29,8 +30,8 @@ func (in *HealthService) GetServiceHealth(namespace, service, rateInterval strin
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetServiceHealth")
 	defer promtimer.ObserveNow(&err)
 
-	rqHealth, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
-	return models.ServiceHealth{Requests: rqHealth}, err
+	rqHealth, thresholds, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
+	return models.ServiceHealth{Requests: rqHealth, Thresholds: thresholds}, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
@@ -56,7 +57,6 @@ func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, query
 
 func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
-
 	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
 	fetchRate := false
 	for _, w := range ws {
@@ -69,8 +69,9 @@ func (in *HealthService) getAppHealth(namespace, app, rateInterval string, query
 	// Fetch services requests rates
 	var errRate error
 	if fetchRate {
-		rate, err := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
+		rate, thresholdAux, err := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
 		health.Requests = rate
+		health.Thresholds = thresholdAux
 		errRate = err
 	}
 
@@ -105,10 +106,11 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 		}, nil
 	}
 
-	rate, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
+	rate, threshold, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
 	return models.WorkloadHealth{
 		WorkloadStatus: status,
 		Requests:       rate,
+		Thresholds:     threshold,
 	}, err
 }
 
@@ -287,17 +289,19 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	}
 }
 
-func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
+func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, []models.Threshold, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	srv, _ := in.businessLayer.Svc.GetServiceDefinition(namespace, service)
 	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
-	return rqHealth, err
+	return rqHealth, generateThreshold(inbound, namespace, service, "service", srv.Service.Labels), err
 }
 
-func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
+func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) (models.RequestHealth, []models.Threshold, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	appInfo, _ := fetchNamespaceApps(in.businessLayer, namespace, app)
 	inbound, outbound, err := in.prom.GetAppRequestRates(namespace, app, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
@@ -305,11 +309,12 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth, err
+	return rqHealth, generateThreshold(inbound, namespace, app, "app", getLabelsApp(appInfo[app].Workloads, appInfo[app].Services)), err
 }
 
-func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
+func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, []models.Threshold, error) {
 	rqHealth := models.NewEmptyRequestHealth()
+	wInfo, _ := in.businessLayer.Workload.GetWorkload(namespace, workload, false)
 	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
@@ -317,7 +322,7 @@ func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInte
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth, err
+	return rqHealth, generateThreshold(inbound, namespace, workload, "workload", wInfo.Labels), err
 }
 
 func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
@@ -332,4 +337,11 @@ func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
 
 	}
 	return statuses
+}
+
+func generateThreshold(requests model.Vector, ns string, srv string, kind string, labels map[string]string) models.Thresholds {
+	thAlerts := threshold.FilterBy(config.Get().ThresholdsHealth, ns, srv, kind, labels)
+	thresholds := models.Thresholds{}
+	thresholds.Parse(thAlerts, &requests, "service")
+	return thresholds
 }

@@ -281,6 +281,33 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
+// Threshold configuration
+type ThresholdHealth struct {
+	Namespace       string           `yaml:"namespace"`
+	ThresholdChecks []ThresholdCheck `yaml:"threshold_checks"`
+}
+
+type ThresholdCheck struct {
+	Rule       string          `yaml:"rule"`
+	Kind       string          `yaml:"kind"`
+	Label      string          `yaml:"label"`
+	Filter     ThresholdFilter `yaml:"filter,omitempty"`
+	Expression string          `yaml:"exp"`
+	Alert      string          `yaml:"alert"`
+}
+
+type ThresholdFilter struct {
+	Regex       string                `yaml:"regex,omitempty"`
+	LabelFilter *ThresholdLabelFilter `yaml:"label_filter,omitempty"`
+	OptProm     *ThresholdLabelFilter `yaml:"prom_filter,omitempty"`
+}
+
+type ThresholdLabelFilter struct {
+	LabelFilter *[]ThresholdLabelFilter `yaml:"label_filter,omitempty"`
+	Labels      map[string]string       `yaml:"labels,omitempty"`
+	Operation   string                  `yaml:"operation,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
@@ -298,6 +325,7 @@ type Config struct {
 	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
 	Server                   Server                   `yaml:",omitempty"`
+	ThresholdsHealth         []ThresholdHealth        `yaml:"thresholds_health,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -407,6 +435,7 @@ func NewConfig() (c *Config) {
 			WebRoot:                    "/",
 			WebSchema:                  "",
 		},
+		ThresholdsHealth: []ThresholdHealth{},
 	}
 
 	return

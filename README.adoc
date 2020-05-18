@@ -343,6 +343,10 @@ spec:
 For now, only REST APIs have their spec displayed but we are working to support gRpc and GraphQL soon.
 A live console to test your APIs directly with Kiali is also being worked on.
 
+=== Configure ThresholdHealths
+
+If you want to customize ThresholdHealth in Kiali, follow this documentation link:./models/threshold/Threshold.adoc[documentation].
+
 === Customize API docs annotations
 
 You can configure Kiali to use your own annotation names with the Kiali CR

@@ -17,13 +17,15 @@ type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
-	Requests RequestHealth `json:"requests"`
+	Requests   RequestHealth `json:"requests"`
+	Thresholds []Threshold   `json:"thresholds"`
 }
 
 // AppHealth contains aggregated health from various sources, for a given app
 type AppHealth struct {
 	WorkloadStatuses []WorkloadStatus `json:"workloadStatuses"`
 	Requests         RequestHealth    `json:"requests"`
+	Thresholds       []Threshold      `json:"thresholds"`
 }
 
 var (
@@ -40,6 +42,7 @@ func EmptyAppHealth() AppHealth {
 	return AppHealth{
 		WorkloadStatuses: []WorkloadStatus{},
 		Requests:         NewEmptyRequestHealth(),
+		Thresholds:       []Threshold{},
 	}
 }
 
@@ -54,6 +57,7 @@ func EmptyServiceHealth() ServiceHealth {
 type WorkloadHealth struct {
 	WorkloadStatus WorkloadStatus `json:"workloadStatus"`
 	Requests       RequestHealth  `json:"requests"`
+	Thresholds     []Threshold    `json:"thresholds"`
 }
 
 // WorkloadStatus gives

@@ -64,18 +64,9 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	}
 
 	for keyApp, valueApp := range apps {
-		appItem := &models.AppListItem{
-			Name:         keyApp,
-			IstioSidecar: true,
-		}
-		labels := make(map[string][]string)
-		for _, srv := range valueApp.Services {
-			joinMap(labels, srv.Labels)
-		}
-		for _, wrk := range valueApp.Workloads {
-			joinMap(labels, wrk.Labels)
-		}
-		appItem.Labels = buildFinalLabels(labels)
+		appItem := &models.AppListItem{Name: keyApp}
+		appItem.IstioSidecar = true
+		appItem.Labels = getLabelsApp(valueApp.Workloads, valueApp.Services)
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break
@@ -227,4 +218,15 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 	}
 
 	return castAppDetails(services, ws), nil
+}
+
+func getLabelsApp(workloads models.Workloads, services []core_v1.Service) map[string]string {
+	var labels = make(map[string][]string)
+	for _, srv := range services {
+		joinMap(labels, srv.Labels)
+	}
+	for _, wrk := range workloads {
+		joinMap(labels, wrk.Labels)
+	}
+	return buildFinalLabels(labels)
 }

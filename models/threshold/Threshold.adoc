@@ -1,0 +1,83 @@
+= ThresholdHealth
+:toc: macro
+:toc-title:
+
+== Introduction
+
+Kiali provides a customize configuration for ThresholdAlert from requests in your environment.
+
+== Table of contents
+
+toc::[]
+
+== Configuration
+
+[source,yaml]
+----
+thresholds_health:
+  - namespace: "bookinfo"
+    threshold_checks:
+      - rule: ">20"
+        kind: "all"
+        label: "response_code"
+        filter:
+          reg: "views"
+          label_filter:
+            labels:
+              - app: "^details$"
+                version: "^v1$"
+            operation: "and"
+        expression: "400>x"
+        alert: "warning"
+----
+
+- *namespace*: Namespace to apply the ThresholdHealth
+- *theshold_checks*: List of Checks for that namespace
+  * *rule*: The expression to match.(In the sample the selected requests must be greater than the 20%)
+  * *kind*: Resources to apply. Options (`service`, `workload`, `app`, `all`/`""`)
+  * *label*: Label of request in Prometheus that we want to have the ThresholdHealth
+  * *filter*: Options for filter requests
+    ** *reg*: Regex that the `name` of the resource must match
+    ** *label_filter*: Filter by labels of the resource (See <<LabelFilter and PromFilter configuration>>)
+    ** *prom_filter*: Filter requests by prometheus label (See <<LabelFilter and PromFilter configuration>>)
+  * *expression*: The condition for requests for `label` (In example, requests where `response_code` is greater than `400`)
+  * *alert*: The alert that we want to show in the UI. (The message in UI will be [`alert`] `format message provided by kiali`. Options should be something like `INFO`, `WARNING` ....)
+
+
+=== Filter configuration
+
+We can filter the Threshold by:
+
+- Regex: Match the resource name by this regex
+- LabelFilter: Filter by labels of the resource
+- PromFilter: Filter by Prometheus Labels of each request
+
+
+==== LabelFilter and PromFilter configuration
+
+LabelFilter and PromFilter work with Regex patterns (https://www.w3schools.com/jsref/jsref_obj_regexp.asp[Some docs about]).
+
+So if we want to match exactly the name we must to set the value to `^name$` otherwise kiali will match the label value with the regex that you set.
+
+Kiali provide an option to set the operation of filter, `and`/`or` (`and` by default)so the filter support find requests with some complex options.
+
+For example if we want to filter by (app:details || app:reviews) && (version:v1 || project:backendProjectA)
+
+[source,yaml]
+----
+label_filter:
+    operation: "and"
+    label_filter:
+      - labels:
+        - app: "(details|reviews)"
+      - labels:
+        - version: "^v1$"
+          project: "backendProjectA$"
+        operation: "or"
+
+----
+ * *operation*: Operation `and`/`or` to apply to filter (Default: `and`)
+ * *label_filter*: SubObject for complexes filters
+ * *labels*: List of labels to apply like `key`: `regular expr` (This must be empty if we have a label_filter defined.)
+
+The same way kiali provide the filter for Prometheus Labels in requests.

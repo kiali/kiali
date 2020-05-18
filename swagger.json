@@ -5909,6 +5909,13 @@
       "properties": {
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Thresholds"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6474,6 +6481,26 @@
         "threeScaleHandlerName": {
           "type": "string",
           "x-go-name": "ThreeScaleHandlerName"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Threshold": {
+      "description": "Customize Thresholds error rates",
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string",
+          "x-go-name": "Alert"
+        },
+        "percent": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Percent"
+        },
+        "rule": {
+          "type": "string",
+          "x-go-name": "Rule"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
