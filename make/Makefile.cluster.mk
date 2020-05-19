@@ -26,7 +26,7 @@
 
 .prepare-minikube: .ensure-oc-exists .ensure-minikube-exists
 	@$(eval CLUSTER_REPO_INTERNAL ?= localhost:5000)
-	@$(eval CLUSTER_REPO ?= $(shell ${MINIKUBE} ip 2>/dev/null):5000)
+	@$(eval CLUSTER_REPO ?= $(shell ${MINIKUBE} -p ${MINIKUBE_PROFILE} ip 2>/dev/null):5000)
 	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${CONTAINER_NAME})
 	@$(eval CLUSTER_KIALI_NAME ?= ${CLUSTER_REPO}/${CONTAINER_NAME})
 	@$(eval CLUSTER_KIALI_TAG ?= ${CLUSTER_KIALI_NAME}:${CONTAINER_VERSION})
@@ -36,7 +36,7 @@
 	@if [ "${CLUSTER_REPO_INTERNAL}" == "" ]; then echo "Cannot determine minikube internal registry hostname."; exit 1; fi
 	@if [ "${CLUSTER_REPO}" == "" ]; then echo "Cannot determine minikube external registry hostname. Make sure minikube is running."; exit 1; fi
 	@echo "Minikube repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
-	@if ! ${MINIKUBE} addons list | grep "registry" | grep "enabled"; then \
+	@if ! ${MINIKUBE} -p ${MINIKUBE_PROFILE} addons list | grep "registry" | grep "enabled"; then \
 	   echo "Minikube does not have the registry addon enabled. Run 'minikube addons enable registry' in order for the make targets to work."; \
 		exit 1 ;\
 	 fi

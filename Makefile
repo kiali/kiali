@@ -84,6 +84,7 @@ endif
 
 # Find the minikube executable (this is optional - if not using minikube we won't need this)
 MINIKUBE ?= $(shell which minikube 2>/dev/null || echo "MISSING-MINIKUBE-FROM-PATH")
+MINIKUBE_PROFILE ?= minikube
 
 # Details about the Kiali operator image used when deploying to remote cluster
 OPERATOR_IMAGE_PULL_POLICY ?= Always
