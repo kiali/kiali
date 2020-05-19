@@ -115,6 +115,13 @@ get_status() {
     ${CRC_OC} version
     echo "====================================================================="
     echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
+    echo "Uptime of VM: $(exec_ssh 'uptime --pretty') (since $(exec_ssh 'uptime --since'))"
+    echo "====================================================================="
+    echo "Memory usage:"
+    printf "%s\n" "$(exec_ssh 'free -ht')"
+    echo "====================================================================="
+    echo "TOP output:"
+    printf "%s\n" "$(exec_ssh 'top -b -n 1 | head -n 5')"
     echo "====================================================================="
     echo "whoami: $(${CRC_OC} whoami)"
     echo "====================================================================="
@@ -231,15 +238,20 @@ print_all_service_endpoints() {
   done
 }
 
+exec_ssh() {
+  local sshcmd=${1}
+  ssh -y -i ${CRC_ROOT_DIR}/machines/crc/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
+}
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.8.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.10.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.3.8"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.4.3"
 
 # The default virtual CPUs assigned to the CRC VM (CRC requires a minimum of 4)
 DEFAULT_CRC_CPUS="4"
@@ -762,7 +774,7 @@ elif [ "$_CMD" = "status" ]; then
 elif [ "$_CMD" = "ssh" ]; then
 
   infomsg "Logging into the CRC VM via ssh..."
-  ssh -i ${CRC_ROOT_DIR}/machines/crc/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip)
+  exec_ssh ""
 
 elif [ "$_CMD" = "sshoc" ]; then
 
