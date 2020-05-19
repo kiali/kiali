@@ -108,7 +108,7 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		cfg := Get()
 		claims := token.Claims.(*IanaClaims)
 
-		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer && claims.Issuer != AuthStrategyTokenIssuer {
+		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer && claims.Issuer != AuthStrategyTokenIssuer && claims.Issuer != AuthStrategyOpenIdIssuer {
 			return nil, errors.New("token has invalid issuer (auth strategy)")
 		}
 		if claims.Issuer == AuthStrategyLoginIssuer && cfg.Auth.Strategy != AuthStrategyLogin {
@@ -118,6 +118,9 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
 		if claims.Issuer == AuthStrategyTokenIssuer && cfg.Auth.Strategy != AuthStrategyToken {
+			return nil, errors.New("token is invalid because of authentication strategy mismatch")
+		}
+		if claims.Issuer == AuthStrategyOpenIdIssuer && cfg.Auth.Strategy != AuthStrategyOpenId {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
 

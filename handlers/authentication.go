@@ -258,7 +258,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   tokenSubject,
 			ExpiresAt: expiresOn.Unix(),
-			Issuer:    config.AuthStrategyOpenshiftIssuer, // TODO: Change
+			Issuer:    config.AuthStrategyOpenIdIssuer,
 		},
 	}
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
