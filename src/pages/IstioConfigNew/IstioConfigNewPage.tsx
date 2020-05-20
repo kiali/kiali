@@ -120,7 +120,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             () => {
               this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
-                  AlertUtils.addInfo('User has not permissions to create Istio Config on namespace: ' + ns.name);
+                  AlertUtils.addWarning('User has not permissions to create Istio Config on namespace: ' + ns.name);
                 }
               });
             }
@@ -256,15 +256,36 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   };
 
   render() {
+    const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = this.state.name.length > 0;
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
     const isFormValid =
+      canCreate &&
       isNameValid &&
       isNamespacesValid &&
       (this.isGatewayValid() || this.isSidecarValid() || this.isAuthorizationPolicyValid());
     return (
       <RenderContent>
         <Form className={formPadding} isHorizontal={true}>
+          <FormGroup
+            label="Namespaces"
+            isRequired={true}
+            fieldId="namespaces"
+            helperText={'Select namespace(s) where this configuration will be applied'}
+            helperTextInvalid={'At least one namespace should be selected'}
+            isValid={isNamespacesValid}
+          >
+            <TextInput
+              value={this.props.activeNamespaces.map(n => n.name).join(',')}
+              isRequired={true}
+              type="text"
+              id="namespaces"
+              aria-describedby="namespaces"
+              name="namespaces"
+              isDisabled={true}
+              isValid={isNamespacesValid}
+            />
+          </FormGroup>
           <FormGroup label="Istio Resource" fieldId="istio-resource">
             <FormSelect
               value={this.state.istioResource}
@@ -294,25 +315,6 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               name="name"
               onChange={this.onNameChange}
               isValid={isNameValid}
-            />
-          </FormGroup>
-          <FormGroup
-            label="Namespaces"
-            isRequired={true}
-            fieldId="namespaces"
-            helperText={'Select namespace(s) where this configuration will be applied'}
-            helperTextInvalid={'At least one namespace should be selected'}
-            isValid={isNamespacesValid}
-          >
-            <TextInput
-              value={this.props.activeNamespaces.map(n => n.name).join(',')}
-              isRequired={true}
-              type="text"
-              id="namespaces"
-              aria-describedby="namespaces"
-              name="namespaces"
-              isDisabled={true}
-              isValid={isNamespacesValid}
             />
           </FormGroup>
           {this.state.istioResource === AUTHORIZACION_POLICY && (
