@@ -71,7 +71,7 @@ export type JaegerTrace = TraceData & {
   services: { name: string; numberOfSpans: number }[];
 };
 
-export type JaegerErrors = {
+export type JaegerError = {
   code?: number;
   msg: string;
   traceID?: string;
@@ -79,5 +79,10 @@ export type JaegerErrors = {
 
 export type JaegerResponse = {
   data: JaegerTrace[] | null;
-  errors: JaegerErrors[];
+  errors: JaegerError[];
+};
+
+export type JaegerSingleResponse = {
+  data: JaegerTrace | null;
+  errors: JaegerError[];
 };

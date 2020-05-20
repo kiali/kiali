@@ -25,6 +25,7 @@ import { GrafanaLinks } from './GrafanaLinks';
 import { SpanOverlay } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
+import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -172,9 +173,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   onClickDataPoint = (_, datum: VCDataPoint) => {
     if ('traceId' in datum) {
       history.push(
-        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${
-          datum.traceId
-        }`
+        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${datum.traceId}`
       );
     }
   };
@@ -191,36 +190,45 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   }
 
   render() {
-    if (!this.state.dashboard) {
-      return this.renderOptionsBar();
-    }
-
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
     return (
-      <RenderComponentScroll>
-        <Grid style={{ padding: '10px' }}>
-          <GridItem span={12}>
-            <Card>
-              <CardBody>
-                {this.renderOptionsBar()}
-                <Dashboard
-                  dashboard={this.state.dashboard}
-                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                  expandedChart={expandedChart}
-                  expandHandler={this.expandHandler}
-                  onClick={this.onClickDataPoint}
-                  labelPrettifier={MetricsHelper.prettyLabelValues}
-                  overlay={this.state.spanOverlay}
-                  timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
-                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                />
-              </CardBody>
-            </Card>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
+      <>
+        <RightActionBar>
+          <TimeRangeComponent
+            range={this.state.timeRange}
+            onChanged={this.onTimeFrameChanged}
+            tooltip={'Time range'}
+            allowCustom={true}
+          />
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.refresh} hideLabel={true} />
+        </RightActionBar>
+        <RenderComponentScroll>
+          <Grid style={{ padding: '10px' }}>
+            <GridItem span={12}>
+              <Card>
+                <CardBody>
+                  {this.renderOptionsBar()}
+                  {this.state.dashboard && (
+                    <Dashboard
+                      dashboard={this.state.dashboard}
+                      labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                      expandedChart={expandedChart}
+                      expandHandler={this.expandHandler}
+                      onClick={this.onClickDataPoint}
+                      labelPrettifier={MetricsHelper.prettyLabelValues}
+                      overlay={this.state.spanOverlay}
+                      timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
+                      brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                    />
+                  )}
+                </CardBody>
+              </Card>
+            </GridItem>
+          </Grid>
+        </RenderComponentScroll>
+      </>
     );
   }
 
@@ -249,19 +257,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
             object={this.props.object}
             objectType={this.props.objectType}
           />
-        </ToolbarGroup>
-        <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
-          <ToolbarItem>
-            <TimeRangeComponent
-              range={this.state.timeRange}
-              onChanged={this.onTimeFrameChanged}
-              tooltip={'Time range for metrics'}
-              allowCustom={true}
-            />
-          </ToolbarItem>
-          <ToolbarItem>
-            <RefreshContainer id="metrics-refresh" handleRefresh={this.refresh} hideLabel={true} />
-          </ToolbarItem>
         </ToolbarGroup>
       </Toolbar>
     );

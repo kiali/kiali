@@ -28,9 +28,8 @@ const titleStyle = style({
 });
 
 type WorkloadDescriptionProps = {
-  workload: Workload;
+  workload?: Workload;
   namespace: string;
-  istioEnabled: boolean;
   health?: WorkloadHealth;
   miniGraphDataSource: GraphDataSource;
 };
@@ -42,7 +41,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
       workload &&
       ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
         0;
-    const runtimes = workload.runtimes.map(r => r.name).filter(name => name !== '');
+    const runtimes = (workload?.runtimes || []).map(r => r.name).filter(name => name !== '');
     return workload ? (
       <Grid gutter="md">
         <GridItem span={4}>
@@ -59,7 +58,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                     Name{' '}
                   </Title>
                   {workload.name}
-                  {!this.props.istioEnabled && (
+                  {!this.props.workload?.istioSidecar && (
                     <span style={{ marginLeft: '10px' }}>
                       <MissingSidecar namespace={this.props.namespace} />
                     </span>

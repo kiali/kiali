@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChartWithLegend, makeLegend, VCDataPoint } from '@kiali/k-charted-pf4';
 import { ChartScatter } from '@patternfly/react-charts';
-import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
+import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { isErrorTag } from './RouteHelper';
 import { PfColors } from '../Pf/PfColors';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
@@ -16,7 +16,7 @@ interface JaegerScatterProps {
   onClick: (traceId) => void;
   fixedTime: boolean;
   errorTraces?: boolean;
-  errorFetchTraces?: JaegerErrors[];
+  errorFetchTraces?: JaegerError[];
 }
 
 const ONE_MILLISECOND = 1000000;

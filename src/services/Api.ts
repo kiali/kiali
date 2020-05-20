@@ -8,7 +8,7 @@ import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetail
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
-import { JaegerInfo, JaegerResponse } from '../types/JaegerInfo';
+import { JaegerInfo, JaegerResponse, JaegerSingleResponse } from '../types/JaegerInfo';
 import { LoginSession } from '../store/Store';
 import {
   AppHealth,
@@ -372,7 +372,7 @@ export const getJaegerErrorTraces = (namespace: string, service: string, duratio
 };
 
 export const getJaegerTrace = (namespace: string, service: string, idTrace: string) => {
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTrace(namespace, service, idTrace), {}, {});
+  return newRequest<JaegerSingleResponse>(HTTP_VERBS.GET, urls.jaegerTrace(namespace, service, idTrace), {}, {});
 };
 
 export const getGraphElements = (params: any) => {

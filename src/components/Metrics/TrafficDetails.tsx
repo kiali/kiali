@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
+import * as AlertUtils from '../../utils/AlertUtils';
+import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from 'components/Refresh/RefreshButton';
+import GraphDataSource from 'services/GraphDataSource';
+import { DurationInSeconds } from 'types/Common';
+import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
@@ -24,7 +30,7 @@ type WorkloadProps = {
 };
 
 type TrafficDetailsProps = {
-  trafficData: GraphDefinition | null;
+  duration: DurationInSeconds;
 } & (AppProps | WorkloadProps | ServiceProps);
 
 type TrafficDetailsState = {
@@ -37,6 +43,8 @@ type ServiceTraffic = {
 };
 
 class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
+  private graphDataSource = new GraphDataSource();
+
   constructor(props: TrafficDetailsProps) {
     super(props);
     this.state = {
@@ -45,8 +53,15 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     };
   }
 
-  componentDidMount(): void {
-    this.processTrafficData(this.props.trafficData);
+  componentDidMount() {
+    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.on('fetchError', this.graphDsFetchError);
+    this.fetchDataSource();
+  }
+
+  componentWillUnmount() {
+    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
   }
 
   componentDidUpdate(prevProps: TrafficDetailsProps) {
@@ -63,30 +78,60 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       this.props.itemType === prevProps.itemType &&
       (prevProps.namespace !== this.props.namespace || prevProps.serviceName !== this.props.serviceName);
 
-    if (isWorkloadSet || isAppSet || isServiceSet || prevProps.trafficData !== this.props.trafficData) {
-      this.processTrafficData(this.props.trafficData);
+    if (isWorkloadSet || isAppSet || isServiceSet || prevProps.duration !== this.props.duration) {
+      this.fetchDataSource();
     }
   }
 
-  render() {
-    if (this.props.trafficData === null) {
-      return null;
+  private fetchDataSource = () => {
+    switch (this.props.itemType) {
+      case MetricsObjectTypes.SERVICE:
+        this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.serviceName);
+        break;
+      case MetricsObjectTypes.WORKLOAD:
+        this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workloadName);
+        break;
+      case MetricsObjectTypes.APP:
+        this.graphDataSource.fetchForApp(this.props.duration, this.props.namespace, this.props.appName);
+        break;
+    }
+  };
+
+  private graphDsFetchSuccess = () => {
+    this.processTrafficData(this.graphDataSource.graphDefinition);
+  };
+
+  private graphDsFetchError = (errorMessage: string | null) => {
+    if (errorMessage !== '') {
+      errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+    } else {
+      errorMessage = 'Could not fetch traffic data.';
     }
 
+    AlertUtils.addError(errorMessage);
+  };
+
+  render() {
     return (
-      <RenderComponentScroll>
-        <Grid style={{ padding: '10px' }}>
-          <GridItem span={12}>
-            <Card>
-              <CardBody>
-                <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
-                <div style={{ marginTop: '2em' }} />
-                <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
-              </CardBody>
-            </Card>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
+      <>
+        <RightActionBar>
+          <DurationDropdownContainer id="service-traffic-duration-dropdown" prefix="Last" />
+          <RefreshButtonContainer handleRefresh={this.fetchDataSource} />
+        </RightActionBar>
+        <RenderComponentScroll>
+          <Grid style={{ padding: '10px' }}>
+            <GridItem span={12}>
+              <Card>
+                <CardBody>
+                  <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
+                  <div style={{ marginTop: '2em' }} />
+                  <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
+                </CardBody>
+              </Card>
+            </GridItem>
+          </Grid>
+        </RenderComponentScroll>
+      </>
     );
   }
 
