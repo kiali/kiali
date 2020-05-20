@@ -274,7 +274,7 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
 			GroupVersion:         &groupVersion,
-			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
+			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
 			ContentType:          runtime.ContentTypeJSON,
 		},
 		BearerToken:     fromCfg.BearerToken,
