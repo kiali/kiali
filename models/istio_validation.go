@@ -177,11 +177,11 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"peerauthentication.multimatch.selectorless": {
 		Message:  "KIA0502 More than one selector-less PeerAuthentication in the same namespace",
-		Severity: ErrorSeverity,
+		Severity: WarningSeverity,
 	},
 	"peerauthentication.multimatch.selector": {
 		Message:  "KIA0503 More than one PeerAuthentication applied to the same workload",
-		Severity: ErrorSeverity,
+		Severity: WarningSeverity,
 	},
 	"peerauthentication.selector.workloadnotfound": {
 		Message:  "KIA0504 No matching workload found for PeerAuthentication selector in this namespace",
