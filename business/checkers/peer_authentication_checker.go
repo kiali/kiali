@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/peerauthentications"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -12,10 +13,13 @@ const PeerAuthenticationCheckerType = "peerauthentication"
 type PeerAuthenticationChecker struct {
 	PeerAuthentications []kubernetes.IstioObject
 	MTLSDetails         kubernetes.MTLSDetails
+	WorkloadList        models.WorkloadList
 }
 
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
+
+	validations.MergeValidations(common.SelectorMultiMatchChecker(PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadList).Check())
 
 	for _, peerAuthn := range m.PeerAuthentications {
 		validations.MergeValidations(m.runChecks(peerAuthn))

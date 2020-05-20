@@ -4,6 +4,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )

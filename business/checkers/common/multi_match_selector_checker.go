@@ -1,17 +1,41 @@
-package sidecars
+package common
 
 import (
-	"k8s.io/apimachinery/pkg/labels"
-
+	"fmt"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-const SidecarCheckerType = "sidecar"
+type GenericMultiMatchChecker struct {
+	SubjectType       string
+	Subjects          []kubernetes.IstioObject
+	WorkloadList      models.WorkloadList
+	HasSelector       func(s kubernetes.IstioObject) bool
+	GetSelectorLabels func(s kubernetes.IstioObject) map[string]string
+	Path              string
+}
 
-type MultiMatchChecker struct {
-	Sidecars     []kubernetes.IstioObject
-	WorkloadList models.WorkloadList
+func SelectorMultiMatchChecker(subjectType string, subjects []kubernetes.IstioObject, workloadList models.WorkloadList) GenericMultiMatchChecker {
+	return GenericMultiMatchChecker{
+		SubjectType:       subjectType,
+		Subjects:          subjects,
+		WorkloadList:      workloadList,
+		HasSelector:       HasSelector,
+		GetSelectorLabels: GetSelectorLabels,
+		Path:              "spec/selector",
+	}
+}
+
+func WorkloadSelectorMultiMatchChecker(subjectType string, subjects []kubernetes.IstioObject, workloadList models.WorkloadList) GenericMultiMatchChecker {
+	return GenericMultiMatchChecker{
+		SubjectType:       subjectType,
+		Subjects:          subjects,
+		WorkloadList:      workloadList,
+		HasSelector:       HasWorkloadSelector,
+		GetSelectorLabels: GetWorkloadSelectorLabels,
+		Path:              "spec/workloadSelector",
+	}
 }
 
 type KeyWithIndex struct {
@@ -33,7 +57,7 @@ func (ws ReferenceMap) HasMultipleReferences(wk models.IstioValidationKey) bool 
 	return len(ws.Get(wk)) > 1
 }
 
-func (m MultiMatchChecker) Check() models.IstioValidations {
+func (m GenericMultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	validations.MergeValidations(m.analyzeSelectorLessSidecars())
@@ -42,22 +66,21 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (m MultiMatchChecker) analyzeSelectorLessSidecars() models.IstioValidations {
-	swi := m.selectorLessSidecars()
-	return buildSelectorLessSidecarValidations(swi)
+func (m GenericMultiMatchChecker) analyzeSelectorLessSidecars() models.IstioValidations {
+	return m.buildSelectorLessSidecarValidations(m.selectorLessSidecars())
 }
 
-func (m MultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
-	swi := make([]KeyWithIndex, 0, len(m.Sidecars))
+func (m GenericMultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
+	swi := make([]KeyWithIndex, 0, len(m.Subjects))
 
-	for i, s := range m.Sidecars {
-		if !s.HasWorkloadSelectorLabels() {
+	for i, s := range m.Subjects {
+		if !m.HasSelector(s) {
 			swi = append(swi, KeyWithIndex{
 				Index: i,
 				Key: &models.IstioValidationKey{
 					Name:       s.GetObjectMeta().Name,
 					Namespace:  s.GetObjectMeta().Namespace,
-					ObjectType: SidecarCheckerType,
+					ObjectType: m.SubjectType,
 				},
 			},
 			)
@@ -66,7 +89,7 @@ func (m MultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
 	return swi
 }
 
-func buildSelectorLessSidecarValidations(sidecars []KeyWithIndex) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildSelectorLessSidecarValidations(sidecars []KeyWithIndex) models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	if len(sidecars) < 2 {
@@ -75,7 +98,7 @@ func buildSelectorLessSidecarValidations(sidecars []KeyWithIndex) models.IstioVa
 
 	for _, sidecarWithIndex := range sidecars {
 		references := extractReferences(sidecarWithIndex.Index, sidecars)
-		checks := models.Build("sidecar.multimatch.selectorless", "spec/workloadSelector")
+		checks := models.Build(fmt.Sprintf("%s.multimatch.selectorless", m.SubjectType), m.Path)
 		validations.MergeValidations(
 			models.IstioValidations{
 				*sidecarWithIndex.Key: &models.IstioValidation{
@@ -110,18 +133,18 @@ func extractReferences(index int, sidecars []KeyWithIndex) []models.IstioValidat
 	return references
 }
 
-func (m MultiMatchChecker) analyzeSelectorSidecars() models.IstioValidations {
+func (m GenericMultiMatchChecker) analyzeSelectorSidecars() models.IstioValidations {
 	sidecars := m.multiMatchSidecars()
 	return m.buildSidecarValidations(sidecars)
 }
 
-func (m MultiMatchChecker) multiMatchSidecars() ReferenceMap {
+func (m GenericMultiMatchChecker) multiMatchSidecars() ReferenceMap {
 	workloadSidecars := ReferenceMap{}
 
-	for _, s := range m.Sidecars {
-		sidecarKey := models.BuildKey(SidecarCheckerType, s.GetObjectMeta().Name, s.GetObjectMeta().Namespace)
+	for _, s := range m.Subjects {
+		sidecarKey := models.BuildKey(m.SubjectType, s.GetObjectMeta().Name, s.GetObjectMeta().Namespace)
 
-		selector := labels.SelectorFromSet(labels.Set(getWorkloadSelectorLabels(s)))
+		selector := labels.SelectorFromSet(m.GetSelectorLabels(s))
 		if selector.Empty() {
 			continue
 		}
@@ -139,7 +162,7 @@ func (m MultiMatchChecker) multiMatchSidecars() ReferenceMap {
 	return workloadSidecars
 }
 
-func (m MultiMatchChecker) buildSidecarValidations(workloadSidecar ReferenceMap) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildSidecarValidations(workloadSidecar ReferenceMap) models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for wk, scs := range workloadSidecar {
@@ -147,13 +170,13 @@ func (m MultiMatchChecker) buildSidecarValidations(workloadSidecar ReferenceMap)
 			continue
 		}
 
-		validations.MergeValidations(buildMultipleSidecarsValidation(scs))
+		validations.MergeValidations(m.buildMultipleSidecarsValidation(scs))
 	}
 
 	return validations
 }
 
-func buildMultipleSidecarsValidation(scs []models.IstioValidationKey) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildMultipleSidecarsValidation(scs []models.IstioValidationKey) models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for i, sck := range scs {
@@ -164,11 +187,11 @@ func buildMultipleSidecarsValidation(scs []models.IstioValidationKey) models.Ist
 			refs = append(refs, scs[i+1:]...)
 		}
 
-		checks := models.Build("sidecar.multimatch.selector", "spec/workloadSelector")
+		checks := models.Build(fmt.Sprintf("%s.multimatch.selector", m.SubjectType), m.Path)
 		validation := models.IstioValidations{
 			sck: &models.IstioValidation{
 				Name:       sck.Name,
-				ObjectType: SidecarCheckerType,
+				ObjectType: m.SubjectType,
 				Valid:      false,
 				References: refs,
 				Checks: []*models.IstioCheck{
@@ -183,8 +206,24 @@ func buildMultipleSidecarsValidation(scs []models.IstioValidationKey) models.Ist
 	return validations
 }
 
-func getWorkloadSelectorLabels(s kubernetes.IstioObject) map[string]string {
-	ws, found := s.GetSpec()["workloadSelector"]
+func GetWorkloadSelectorLabels(s kubernetes.IstioObject) map[string]string {
+	return getLabels("workloadSelector", "labels", s)
+}
+
+func GetSelectorLabels(s kubernetes.IstioObject) map[string]string {
+	return getLabels("selector", "matchLabels", s)
+}
+
+func HasSelector(s kubernetes.IstioObject) bool {
+	return s.HasMatchLabelsSelector()
+}
+
+func HasWorkloadSelector(s kubernetes.IstioObject) bool {
+	return s.HasWorkloadSelectorLabels()
+}
+
+func getLabels(first, second string, s kubernetes.IstioObject) map[string]string {
+	ws, found := s.GetSpec()[first]
 	if !found {
 		return nil
 	}
@@ -194,7 +233,7 @@ func getWorkloadSelectorLabels(s kubernetes.IstioObject) map[string]string {
 		return nil
 	}
 
-	labels, found := wsCasted["labels"]
+	labels, found := wsCasted[second]
 	if !found {
 		return nil
 	}

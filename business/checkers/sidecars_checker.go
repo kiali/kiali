@@ -3,6 +3,7 @@ package checkers
 import (
 	core_v1 "k8s.io/api/core/v1"
 
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -31,7 +32,7 @@ func (s SidecarChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		sidecars.MultiMatchChecker{Sidecars: s.Sidecars, WorkloadList: s.WorkloadList},
+		common.WorkloadSelectorMultiMatchChecker(SidecarCheckerType, s.Sidecars, s.WorkloadList),
 	}
 
 	for _, checker := range enabledDRCheckers {
