@@ -96,14 +96,14 @@ get_api_server_url() {
 get_status() {
   check_crc_running
   echo "====================================================================="
+  echo "oc:  ${CRC_OC}"
+  echo "crc: ${CRC_COMMAND}"
+  echo "====================================================================="
   echo "Version from crc command [${CRC_COMMAND}]"
   ${CRC_COMMAND} version
   echo "====================================================================="
   echo "Status from crc command [${CRC_COMMAND}]"
   ${CRC_COMMAND} status
-  echo "====================================================================="
-  echo "oc:  ${CRC_OC}"
-  echo "crc: ${CRC_COMMAND}"
   echo "====================================================================="
 
   if [ "${_CRC_RUNNING}" == "true" ]; then
@@ -111,30 +111,30 @@ get_status() {
     check_insecure_registry
     get_console_url
     get_api_server_url
+    echo "To install 'oc' in your environment:"
+    ${CRC_COMMAND} oc-env
+    echo "====================================================================="
     echo "Version from oc command [${CRC_OC}]"
     ${CRC_OC} version
     echo "====================================================================="
-    echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
-    echo "Uptime of VM: $(exec_ssh 'uptime --pretty') (since $(exec_ssh 'uptime --since'))"
-    echo "====================================================================="
-    echo "Memory usage:"
-    printf "%s\n" "$(exec_ssh 'free -ht')"
+    echo "Status from oc command [${CRC_OC}]"
+    ${CRC_OC} status
     echo "====================================================================="
     echo "TOP output:"
     printf "%s\n" "$(exec_ssh 'top -b -n 1 | head -n 5')"
     echo "====================================================================="
-    echo "whoami: $(${CRC_OC} whoami)"
+    echo "Memory usage:"
+    printf "%s\n" "$(exec_ssh 'free -ht')"
     echo "====================================================================="
-    echo "Status from oc command [${CRC_OC}]"
-    ${CRC_OC} status
+    echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
+    echo "Uptime of VM: $(exec_ssh 'uptime --pretty') (since $(exec_ssh 'uptime --since'))"
+    echo "====================================================================="
+    echo "whoami: $(${CRC_OC} whoami)"
     echo "====================================================================="
     echo "Console:    ${CONSOLE_URL}"
     echo "API URL:    ${OPENSHIFT_API_SERVER_URL}"
     echo "IP address: $(${CRC_COMMAND} ip)"
     echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
-    echo "====================================================================="
-    echo "To install 'oc' in your environment:"
-    ${CRC_COMMAND} oc-env
     echo "====================================================================="
     echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
     echo "kiali password:     kiali"
@@ -692,7 +692,7 @@ if [ "$_CMD" = "start" ]; then
     infomsg "VM has been rebooted with the new configuration and OpenShift is ready."
   fi
 
-  # see https://docs.openshift.com/container-platform/4.1/authentication/identity_providers/configuring-htpasswd-identity-provider.html
+  # see https://docs.openshift.com/container-platform/4.4/authentication/identity_providers/configuring-htpasswd-identity-provider.html
   # we need to be admin in order to create the htpasswd oauth and users
   infomsg "Creating users 'kiali' and 'johndoe'"
   ${CRC_OC} login -u system:admin
@@ -739,9 +739,23 @@ EOM
     done
   fi
 
+  # If kiali user is to be assigned cluster admin role, we need to first check that the kiali user is ready.
+  # In order to check this, a login attempt must succeed and the kiali user must be in the list of valid users.
+  # Once confirmed the kiali user is ready, then the cluster admin role can be added to it.
   if [ "${KIALI_USER_IS_CLUSTER_ADMIN}" == "true" ]; then
-    infomsg "Will assign the cluster-admin role to the kiali user."
-    ${CRC_OC} adm policy add-cluster-role-to-user cluster-admin kiali
+    for i in {1..100}
+    do
+      infomsg "Waiting for kiali user to be created before attempting to assign it cluster-admin role..."
+      sleep 10
+      if ${CRC_OC} login -u kiali -p kiali > /dev/null 2>&1 ; then
+        ${CRC_OC} login -u system:admin > /dev/null 2>&1
+        if ${CRC_OC} get user kiali > /dev/null 2>&1 ; then
+          infomsg "Will assign the cluster-admin role to the kiali user."
+          ${CRC_OC} adm policy add-cluster-role-to-user cluster-admin kiali
+          break
+        fi
+      fi
+    done
   else
     infomsg "Kiali user will not be assigned the cluster-admin role."
   fi
