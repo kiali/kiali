@@ -117,17 +117,12 @@ func (m GenericMultiMatchChecker) buildSelectorLessSidecarValidations(sidecars [
 }
 
 func extractReferences(index int, sidecars []KeyWithIndex) []models.IstioValidationKey {
-	references := make([]models.IstioValidationKey, 0, len(sidecars))
-	filtered := make([]KeyWithIndex, 0, len(sidecars)-1)
+	references := make([]models.IstioValidationKey, 0, len(sidecars)-1)
 
-	// Exclude item at index position
-	filtered = append(filtered, sidecars[:index]...)
-	if len(sidecars) > index+1 {
-		filtered = append(filtered, sidecars[index+1:]...)
-	}
-
-	for _, s := range filtered {
-		references = append(references, *s.Key)
+	for _, s := range sidecars {
+		if s.Index != index {
+			references = append(references, *s.Key)
+		}
 	}
 
 	return references
