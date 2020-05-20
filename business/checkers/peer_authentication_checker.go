@@ -35,6 +35,8 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 
 	var enabledCheckers []Checker
 
+	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(PeerAuthenticationCheckerType, peerAuthn, m.WorkloadList))
+
 	// MeshWide and NamespaceWide validations are only needed with autoMtls disabled
 	if !m.MTLSDetails.EnabledAutoMtls {
 		// PeerAuthentications into istio control plane namespace are considered Mesh-wide objects

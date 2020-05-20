@@ -1,11 +1,10 @@
-package authorization
+package common
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -13,24 +12,26 @@ import (
 func TestPresentWorkloads(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := WorkloadSelectorChecker{
-		WorkloadList: workloadList(),
-		AuthorizationPolicy: workloadSelectorAuthPolicy(map[string]interface{}{
+	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
+		"sidecar",
+		workloadSelectorSidecar("sidecar", map[string]interface{}{
 			"app":     "details",
 			"version": "v1",
 		}),
-	}.Check()
+		workloadList(),
+	).Check()
 
 	// Well configured object
 	assert.True(valid)
 	assert.Empty(validations)
 
-	validations, valid = WorkloadSelectorChecker{
-		WorkloadList: workloadList(),
-		AuthorizationPolicy: workloadSelectorAuthPolicy(map[string]interface{}{
+	validations, valid = WorkloadSelectorNoWorkloadFoundChecker(
+		"sidecar",
+		workloadSelectorSidecar("sidecar", map[string]interface{}{
 			"app": "details",
 		}),
-	}.Check()
+		workloadList(),
+	).Check()
 
 	// Well configured object
 	assert.True(valid)
@@ -47,35 +48,25 @@ func TestWorkloadNotFound(t *testing.T) {
 	testFailureWithEmptyWorkloadList(assert, map[string]interface{}{"app": "wrong"})
 }
 
-func workloadSelectorAuthPolicy(selector map[string]interface{}) kubernetes.IstioObject {
-	methods := []interface{}{"GET", "PUT", "PATCH"}
-	nss := []interface{}{"bookinfo"}
-	hosts := []interface{}{"details"}
-	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
-}
-
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
-	testFailure(assert, selector, workloadList())
+	testFailure(assert, selector, workloadList(), "sidecar.selector.workloadnotfound")
 }
 
 func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]interface{}) {
-	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}))
+	testFailure(assert, selector, data.CreateWorkloadList("test", models.WorkloadListItem{}), "sidecar.selector.workloadnotfound")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList) {
-	validations, valid := WorkloadSelectorChecker{
-		WorkloadList:        wl,
-		AuthorizationPolicy: workloadSelectorAuthPolicy(selector),
-	}.Check()
+func testFailure(assert *assert.Assertions, selector map[string]interface{}, wl models.WorkloadList, code string) {
+	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
+		"sidecar",
+		workloadSelectorSidecar("sidecar", selector),
+		wl,
+	).Check()
 
 	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, models.CheckMessage("authorizationpolicy.selector.workloadnotfound"))
+	assert.Equal(validations[0].Message, models.CheckMessage(code))
 	assert.Equal(validations[0].Severity, models.WarningSeverity)
-	assert.Equal(validations[0].Path, "spec/selector")
-}
-
-func workloadList() models.WorkloadList {
-	return data.CreateWorkloadList("test", data.CreateWorkloadListItem("details", map[string]string{"app": "details", "version": "v1"}))
+	assert.Equal(validations[0].Path, "spec/workloadSelector/labels")
 }

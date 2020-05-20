@@ -183,6 +183,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0503 More than one PeerAuthentication applied to the same workload",
 		Severity: ErrorSeverity,
 	},
+	"peerauthentication.selector.workloadnotfound": {
+		Message:  "KIA0504 No matching workload found for PeerAuthentication selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,

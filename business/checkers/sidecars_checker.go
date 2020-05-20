@@ -58,7 +58,7 @@ func (s SidecarChecker) runChecks(sidecar kubernetes.IstioObject) models.IstioVa
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
 
 	enabledCheckers := []Checker{
-		sidecars.WorkloadSelectorChecker{Sidecar: sidecar, WorkloadList: s.WorkloadList},
+		common.WorkloadSelectorNoWorkloadFoundChecker(SidecarCheckerType, sidecar, s.WorkloadList),
 		sidecars.EgressHostChecker{Sidecar: sidecar, Services: s.Services, ServiceEntries: serviceHosts},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 	}

@@ -37,8 +37,8 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
 
 	enabledCheckers := []Checker{
+		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, authPolicy,a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
-		authorization.WorkloadSelectorChecker{AuthorizationPolicy: authPolicy, WorkloadList: a.WorkloadList},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, Services: a.Services},
 	}
