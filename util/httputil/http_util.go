@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 func HttpMethods() []string {
@@ -83,4 +86,46 @@ func AuthTransport(auth *config.Auth, transportConfig *http.Transport) (http.Rou
 	}
 
 	return newAuthRoundTripper(auth, transportConfig), nil
+}
+
+func GuessKialiURL(r *http.Request) string {
+	cfg := config.Get()
+
+	// Take "default" values from where we are listening withing the pod
+	schema := r.URL.Scheme
+	port := strconv.Itoa(cfg.Server.Port)
+	host := "" // Blank host. If "guessing" fails, it's unkknow.
+
+	log.Debugf("GuessKialiURL defaults: schema=%s port=%s", schema, port)
+
+	// Guess the schema
+	if fwdSchema, ok := r.Header["X-Forwarded-Proto"]; ok && len(fwdSchema) == 1 {
+		schema = fwdSchema[0]
+	}
+
+	// Guess the public Kiali hostname
+	if fwdHost, ok := r.Header["X-Forwarded-Host"]; ok && len(fwdHost) == 1 {
+		host = fwdHost[0]
+	} else if len(r.URL.Hostname()) != 0 {
+		host = r.URL.Hostname()
+	} else if len(r.Host) != 0 {
+		// r.Host could be of the form host:port. Split it if this is the case.
+		colon := strings.LastIndexByte(r.Host, ':')
+		if colon != -1 {
+			host, port = r.Host[:colon], r.Host[colon+1:]
+		} else {
+			host = r.Host
+		}
+	}
+
+	// Guess the port
+	if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
+		port = fwdPort[0]
+	} else if len(r.URL.Port()) != 0 {
+		port = r.URL.Port()
+	}
+
+	log.Debugf("GuessKialiURL: %s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
+
+	return fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
 }

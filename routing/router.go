@@ -20,7 +20,7 @@ func NewRouter() *mux.Router {
 	rootRouter := mux.NewRouter().StrictSlash(false)
 	appRouter := rootRouter
 
-	// Due to PathPrefix matching behavoir on sub-routers
+	// Due to PathPrefix matching behavior on sub-routers
 	// we need to explicitly redirect /foo -> /foo/
 	// See https://github.com/gorilla/mux/issues/31
 	if webRoot != "/" {

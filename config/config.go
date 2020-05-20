@@ -237,7 +237,16 @@ type ApiNamespacesConfig struct {
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
 	LDAP     LDAPConfig `yaml:"ldap,omitempty"`
+	OpenId   OpenIdConfig `yaml:"openid,omitempty"`
 	Strategy string     `yaml:"strategy,omitempty"`
+}
+
+type OpenIdConfig struct {
+	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
+	ClientId              string   `yaml:"client_id,omitempty"`
+	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
+	Scopes                []string `yaml:"scopes,omitempty"`
+	UsernameClaim         string   `yaml:"username_claim,omitempty"`
 }
 
 // LDAPConfig provides the details of the LDAP related configuration
@@ -304,6 +313,13 @@ func NewConfig() (c *Config) {
 		},
 		Auth: AuthConfig{
 			Strategy: "login",
+			OpenId: OpenIdConfig{
+				AuthorizationEndpoint: "",
+				ClientId:              "",
+				IssuerUri:             "",
+				Scopes:                []string{"profile", "email"},
+				UsernameClaim:         "sub",
+			},
 		},
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},

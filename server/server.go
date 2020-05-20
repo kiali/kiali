@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/NYTimes/gziphandler"
+	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -15,6 +16,7 @@ import (
 
 type Server struct {
 	httpServer *http.Server
+	router     *mux.Router
 }
 
 // NewServer creates a new server configured with the given settings.
@@ -55,6 +57,7 @@ func NewServer() *Server {
 	// return our new Server
 	return &Server{
 		httpServer: httpServer,
+		router: router,
 	}
 }
 
@@ -68,8 +71,10 @@ func (s *Server) Start() {
 		var err error
 		if secure {
 			log.Infof("Server endpoint will require https")
+			s.router.Use(secureHttpsMiddleware)
 			err = s.httpServer.ListenAndServeTLS(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
 		} else {
+			s.router.Use(plainHttpMiddleware)
 			err = s.httpServer.ListenAndServe()
 		}
 		log.Warning(err)
@@ -111,4 +116,18 @@ func configureGzipHandler(handler http.Handler) http.Handler {
 		// This could happen by a wrong configuration being sent to GzipHandlerWithOpts
 		panic(err)
 	}
+}
+
+func plainHttpMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Scheme = "http"
+		next.ServeHTTP(w, r)
+	})
+}
+
+func secureHttpsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Scheme = "https"
+		next.ServeHTTP(w, r)
+	})
 }

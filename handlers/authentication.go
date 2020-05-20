@@ -17,6 +17,7 @@ import (
 	"github.com/kiali/kiali/ldap"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 const (
@@ -682,9 +683,16 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
-		response.AuthorizationEndpoint = fmt.Sprintf("https://dex.example.com:32000/auth?client_id=example-app&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
-			url.QueryEscape("http://172.17.0.2/kiali"),
-			"openid email profile",
+		scopes := strings.Join(conf.Auth.OpenId.Scopes, " ")
+		if !strings.Contains(scopes, "openid") {
+			scopes = "openid " + scopes
+		}
+
+		response.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
+			conf.Auth.OpenId.AuthorizationEndpoint,
+			url.QueryEscape(conf.Auth.OpenId.ClientId),
+			url.QueryEscape(httputil.GuessKialiURL(r)),
+			url.QueryEscape(scopes),
 			"asdf123456")
 	case config.AuthStrategyLogin:
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
