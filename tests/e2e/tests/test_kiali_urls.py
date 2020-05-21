@@ -19,7 +19,7 @@ def test_jaeger_url_endpoint(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo')
     if response.status_code == 200:
         url = response.json().get('url')
-        assert url != None and 'jaeger' in url
+        assert url != None or 'jaeger' in url
     elif response.status_code == 503:
         pytest.skip()
 
