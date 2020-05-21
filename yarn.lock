@@ -4853,10 +4853,10 @@ csstype@^2.2.0, csstype@^2.4.0, csstype@^2.5.1, csstype@^2.5.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-2.6.7.tgz#20b0024c20b6718f4eda3853a1f5a1cce7f5e4a5"
   integrity sha512-9Mcn9sFbGBAdmimWb2gLVDtFJzeKtDGIr76TUqmjZrw9LFXBMSU70lcs+C0/7fyCd6iBDqmksUcCOUIkisPHsQ==
 
-csx@9.0.0:
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/csx/-/csx-9.0.0.tgz#490ea99eac6834a8c90ecfc555e5e77e7eb00a03"
-  integrity sha512-E56kZ+pipmPBkiBDCYsOPHCFDpa01lJ2A7JmUpZ0bK8Mwmx316qlU0KHi4f5eMiN34U752RZ8OoWEFyHjNG+Vg==
+csx@9.1.0:
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/csx/-/csx-9.1.0.tgz#add8e5102857fbe81c0edd76c672cf593067a79a"
+  integrity sha512-klhvUgpPYdZIM8WshgDqDrgiBr/j8hMpv9+RflCxdsSfvdynF1IKYOCoXGW0io8GeqHqDONn6LnZdmtzxpDYUQ==
   dependencies:
     csstype "^2.5.1"
 
