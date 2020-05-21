@@ -126,6 +126,8 @@ get_status() {
     echo "Memory usage:"
     printf "%s\n" "$(exec_ssh 'free -ht')"
     echo "====================================================================="
+    echo "Number of CPUs: $(${CRC_OC} get $(${CRC_OC} get nodes -o name) -o jsonpath={.status.capacity.cpu})"
+    echo "====================================================================="
     echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
     echo "Uptime of VM: $(exec_ssh 'uptime --pretty') (since $(exec_ssh 'uptime --since'))"
     echo "====================================================================="
@@ -253,8 +255,8 @@ DEFAULT_CRC_DOWNLOAD_VERSION="1.10.0"
 # The default version of the crc bundle - this is typically the version included with the CRC download
 DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.4.3"
 
-# The default virtual CPUs assigned to the CRC VM (CRC requires a minimum of 4)
-DEFAULT_CRC_CPUS="4"
+# The default virtual CPUs assigned to the CRC VM
+DEFAULT_CRC_CPUS="5"
 
 # The default memory (in GB) assigned to the CRC VM
 DEFAULT_CRC_MEMORY="16"
