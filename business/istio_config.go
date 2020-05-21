@@ -117,6 +117,8 @@ var newIstioConfigTypes = []string{
 	kubernetes.AuthorizationPolicies,
 	kubernetes.Sidecars,
 	kubernetes.Gateways,
+	kubernetes.PeerAuthentications,
+	kubernetes.RequestAuthentications,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -734,6 +736,12 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
+	case PeerAuthentications:
+		istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
+		err = json.Unmarshal(body, istioConfigDetail.PeerAuthentication)
+	case RequestAuthentications:
+		istioConfigDetail.RequestAuthentication = &models.RequestAuthentication{}
+		err = json.Unmarshal(body, istioConfigDetail.RequestAuthentication)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
