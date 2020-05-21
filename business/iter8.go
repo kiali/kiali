@@ -3,9 +3,12 @@ package business
 import (
 	"encoding/json"
 	"gopkg.in/yaml.v2"
+
+	"sort"
 	"strconv"
 	"sync"
 
+	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -145,6 +148,37 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 	return iter8ExperimentDetail, nil
 }
 
+func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, body []byte) (models.Iter8ExperimentDetail, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "CreateIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+
+	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
+	action := models.ExperimentAction{}
+	err = json.Unmarshal(body, &action)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+	experiment, err := in.GetIter8Experiment(namespace, name)
+	newExperimentSpec := models.Iter8ExperimentSpec{}
+	newExperimentSpec.Parse(experiment)
+	newExperimentSpec.Action = action.Action
+	var newObject []byte
+	newObject, err = json.Marshal(newExperimentSpec)
+	json, err := in.ParseJsonForCreate(newObject)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+
+	iter8ExperimentObject, err := in.k8s.UpdateIter8Experiment(namespace, name, string(json))
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+
+	iter8ExperimentDetail.Parse(iter8ExperimentObject)
+	return iter8ExperimentDetail, nil
+}
+
 func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 
 	newExperimentSpec := models.Iter8ExperimentSpec{}
@@ -172,7 +206,18 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
+	object.Spec.TrafficControl.Interval = newExperimentSpec.TrafficControl.Interval
 	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
+	rr, err := in.GetIter8RoutingReferences(newExperimentSpec.Namespace, newExperimentSpec.Service)
+	if err == nil && len(rr) == 1 {
+		rrptr := core_v1.ObjectReference{
+			Name:       rr[0].Name,
+			APIVersion: rr[0].ApiVersion,
+			Kind:       rr[0].Kind,
+		}
+		object.Spec.RoutingReference = &rrptr
+	}
+
 	for _, criteria := range newExperimentSpec.Criterias {
 		min_max := struct {
 			Min float64 `json:"min,omitempty"`
@@ -200,6 +245,9 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 				StopOnFailure: criteria.StopOnFailure,
 				MinMax:        min_max,
 			})
+	}
+	if newExperimentSpec.Action != "" {
+		object.Action = kubernetes.Iter8ExperimentAction(newExperimentSpec.Action)
 	}
 
 	b, err2 := json.Marshal(object)
@@ -240,4 +288,91 @@ func (in *Iter8Service) GetAnalyticPort() int {
 		return 80
 	}
 	return analyticConfig.Port
+}
+
+func (in *Iter8Service) GetIter8RoutingReferences(namespace string, servicename string) (routingReferences []models.RoutingReference, err error) {
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
+	defer promtimer.ObserveNow(&err)
+	Gateways := &models.Gateways{}
+	gws, err := in.k8s.GetGateways(namespace)
+	VirtualServices := &models.VirtualServices{Items: []models.VirtualService{}}
+	routingReferences = make([]models.RoutingReference, 0)
+	gwNames := make([]string, 0)
+	if err != nil {
+		return routingReferences, err
+	}
+
+	Gateways.Parse(gws)
+	for _, gw := range gws {
+		gwNames = append(gwNames, gw.GetObjectMeta().Name)
+	}
+	vs, err := in.k8s.GetVirtualServices(namespace, servicename)
+	if err != nil {
+		return routingReferences, err
+	}
+
+	VirtualServices.Parse(vs)
+	for _, item := range VirtualServices.Items {
+		docheck := false
+		if item.IsValidHost(namespace, servicename) {
+			gws := item.Spec.Gateways
+			rf := models.RoutingReference{}
+			if gateways, ok := gws.([]interface{}); ok {
+				for _, g := range gateways {
+					if gate, ok := g.(string); ok {
+						if contains(gwNames, gate) {
+
+							rf.ApiVersion = item.APIVersion
+							rf.Name = item.Metadata.Name
+							rf.Kind = item.Kind
+
+							docheck = true
+						}
+					}
+				}
+			}
+			if docheck {
+				proto := item.Spec.Http
+				if aHttp, ok := proto.([]interface{}); ok {
+					for _, httpRoute := range aHttp {
+						if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
+							if route, ok := mHttpRoute["route"]; ok {
+								if aDestinationWeight, ok := route.([]interface{}); ok {
+									for _, destination := range aDestinationWeight {
+										host := parseHost(destination)
+										if host == "" {
+											continue
+										} else if host == servicename {
+											routingReferences = append(routingReferences, rf)
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return routingReferences, err
+}
+
+func contains(s []string, searchterm string) bool {
+	i := sort.SearchStrings(s, searchterm)
+	return i < len(s) && s[i] == searchterm
+}
+
+func parseHost(destination interface{}) string {
+	if mDestination, ok := destination.(map[string]interface{}); ok {
+		if destinationW, ok := mDestination["destination"]; ok {
+			if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
+				if host, ok := mDestinationW["host"]; ok {
+					if sHost, ok := host.(string); ok {
+						return sHost
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
