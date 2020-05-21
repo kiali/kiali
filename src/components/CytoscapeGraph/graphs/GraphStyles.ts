@@ -367,11 +367,15 @@ export class GraphStyles {
       }
 
       const mtlsPercentage = edgeData.isMTLS;
-      if (cyGlobal.showSecurity && mtlsPercentage && mtlsPercentage >= 0) {
-        if (mtlsPercentage > 0 && !cyGlobal.mtlsEnabled) {
-          content = `${EdgeIconMTLS} ${content}`;
-        } else if (mtlsPercentage < 100 && cyGlobal.mtlsEnabled) {
-          content = `${EdgeIconDisabledMTLS} ${content}`;
+      if (cyGlobal.showSecurity && edgeData.hasTraffic) {
+        if (cyGlobal.mtlsEnabled) {
+          if (!mtlsPercentage || mtlsPercentage < 100) {
+            content = `${EdgeIconDisabledMTLS} ${content}`;
+          }
+        } else {
+          if (mtlsPercentage && mtlsPercentage > 0) {
+            content = `${EdgeIconMTLS} ${content}`;
+          }
         }
       }
 
