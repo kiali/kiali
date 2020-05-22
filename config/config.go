@@ -558,14 +558,6 @@ func GetIstioNamespaces(exclude []string) []string {
 	return result
 }
 
-// GetIstioComponentNamespace returns the Istio component namespace (defaulting to IstioNamespace)
-func GetIstioComponentNamespace(component string) string {
-	if ns, found := configuration.IstioComponentNamespaces[component]; found {
-		return ns
-	}
-	return configuration.IstioNamespace
-}
-
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
 func IsIstioNamespace(namespace string) bool {
 	if namespace == configuration.IstioNamespace {

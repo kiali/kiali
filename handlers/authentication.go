@@ -688,8 +688,18 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 			scopes = "openid " + scopes
 		}
 
+		authorizationEndpont := conf.Auth.OpenId.AuthorizationEndpoint
+		if len(authorizationEndpont) == 0 {
+			openIdMetadata, err := business.GetOpenIdMetadata(conf.Auth.OpenId.IssuerUri, true)
+			if err != nil {
+				RespondWithDetailedError(w, http.StatusInternalServerError, "Error fetching OpenID provider metadata.", err.Error())
+				return
+			}
+			authorizationEndpont = openIdMetadata.AuthURL
+		}
+
 		response.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
-			conf.Auth.OpenId.AuthorizationEndpoint,
+			authorizationEndpont,
 			url.QueryEscape(conf.Auth.OpenId.ClientId),
 			url.QueryEscape(httputil.GuessKialiURL(r)),
 			url.QueryEscape(scopes),

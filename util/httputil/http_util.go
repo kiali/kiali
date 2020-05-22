@@ -91,10 +91,10 @@ func AuthTransport(auth *config.Auth, transportConfig *http.Transport) (http.Rou
 func GuessKialiURL(r *http.Request) string {
 	cfg := config.Get()
 
-	// Take "default" values from where we are listening withing the pod
+	// Take "default" values from where we are listening within the pod
 	schema := r.URL.Scheme
 	port := strconv.Itoa(cfg.Server.Port)
-	host := "" // Blank host. If "guessing" fails, it's unkknow.
+	host := "" // Blank host. If "guessing" fails, it's unknown.
 
 	log.Debugf("GuessKialiURL defaults: schema=%s port=%s", schema, port)
 
