@@ -279,7 +279,7 @@ func TestNamespaceHasMTLSEnabled(t *testing.T) {
 	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
-func TestNamespaceHasPolicyDisabled(t *testing.T) {
+func TestNamespaceHasPeerAuthnDisabled(t *testing.T) {
 	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -287,7 +287,7 @@ func TestNamespaceHasPolicyDisabled(t *testing.T) {
 	}
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSPartiallyEnabled, []kubernetes.IstioObject{}, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
@@ -320,8 +320,32 @@ func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
 	testNamespaceScenario(MTLSNotEnabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
-func TestNamespaceHasMTLSDisabled(t *testing.T) {
+func TestNamespaceHasPermissivePeerAuthDisableDestRule(t *testing.T) {
 	ps := fakePermissivePeerAuthn("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, []kubernetes.IstioObject{}, ps, true, t)
+}
+
+func TestNamespaceHasPermissivePeerAuthStrictDestRule(t *testing.T) {
+	ps := fakePermissivePeerAuthn("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "strict-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, []kubernetes.IstioObject{}, ps, true, t)
+}
+
+func TestNamespaceHasMTLSDisabled(t *testing.T) {
+	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
 	drs := []kubernetes.IstioObject{
 		data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
@@ -329,19 +353,19 @@ func TestNamespaceHasMTLSDisabled(t *testing.T) {
 
 	testNamespaceScenario(MTLSDisabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSDisabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
-func TestNamespaceHasSimpleTls(t *testing.T) {
-	ps := fakePermissivePeerAuthn("default", "bookinfo")
+func TestNamespaceHasPeerAuthnDisabledMtlsDestRule(t *testing.T) {
+	ps := fakePeerAuthnWithMtlsMode("default", "bookinfo", "DISABLE")
 	drs := []kubernetes.IstioObject{
-		data.AddTrafficPolicyToDestinationRule(data.CreateSimpleTLSTrafficPolicyForDestinationRules(),
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
 	}
 
-	testNamespaceScenario(MTLSDisabled, drs, ps, false, t)
-	testNamespaceScenario(MTLSDisabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSEnabled, []kubernetes.IstioObject{}, ps, true, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
+	testNamespaceScenario(MTLSDisabled, []kubernetes.IstioObject{}, ps, true, t)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
