@@ -27,14 +27,17 @@ type OpenIdMetadata struct {
 	ResponseTypesSupported []string `json:"response_types_supported"`
 }
 
-func GetOpenIdMetadata(issuerUri string, insecureTls bool) (*OpenIdMetadata, error) {
-	trimmedIssuerUri := strings.TrimRight(issuerUri, "/")
+func GetOpenIdMetadata() (*OpenIdMetadata, error) {
+	cfg := config.Get().Auth.OpenId
+
+	// Remove trailing slash from issuer URI, if needed
+	trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
 	// Create HTTP client
 	httpTransport := &http.Transport{}
-	if insecureTls {
+	if cfg.InsecureSkipVerifyTLS {
 		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: insecureTls,
+			InsecureSkipVerify: true,
 		}
 	}
 
@@ -61,7 +64,7 @@ func GetOpenIdMetadata(issuerUri string, insecureTls bool) (*OpenIdMetadata, err
 	}
 
 	// Validate issuer == issuerUri
-	if metadata.Issuer != issuerUri {
+	if metadata.Issuer != cfg.IssuerUri {
 		return nil, errors.New("mismatch between the configured issuer_uri and the exposed Issuer URI in OpenId provider metadata")
 	}
 
@@ -79,7 +82,7 @@ func GetOpenIdMetadata(issuerUri string, insecureTls bool) (*OpenIdMetadata, err
 
 	// Log warning if OpenId provider informs that some of the configured scopes are not supported
 	// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
-	scopes := config.Get().Auth.OpenId.Scopes
+	scopes := cfg.Scopes
 	if !strings.Contains(strings.Join(scopes, " "), "openid") {
 		scopes = append(scopes, "openid")
 	}

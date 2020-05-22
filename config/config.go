@@ -242,8 +242,10 @@ type AuthConfig struct {
 }
 
 type OpenIdConfig struct {
+	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
 	ClientId              string   `yaml:"client_id,omitempty"`
+	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
 	Scopes                []string `yaml:"scopes,omitempty"`
 	UsernameClaim         string   `yaml:"username_claim,omitempty"`
@@ -314,8 +316,10 @@ func NewConfig() (c *Config) {
 		Auth: AuthConfig{
 			Strategy: "login",
 			OpenId: OpenIdConfig{
+				AuthenticationTimeout: 300,
 				AuthorizationEndpoint: "",
 				ClientId:              "",
+				InsecureSkipVerifyTLS: false,
 				IssuerUri:             "",
 				Scopes:                []string{"profile", "email"},
 				UsernameClaim:         "sub",

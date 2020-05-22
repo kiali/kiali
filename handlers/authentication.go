@@ -683,27 +683,9 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
-		scopes := strings.Join(conf.Auth.OpenId.Scopes, " ")
-		if !strings.Contains(scopes, "openid") {
-			scopes = "openid " + scopes
-		}
-
-		authorizationEndpont := conf.Auth.OpenId.AuthorizationEndpoint
-		if len(authorizationEndpont) == 0 {
-			openIdMetadata, err := business.GetOpenIdMetadata(conf.Auth.OpenId.IssuerUri, true)
-			if err != nil {
-				RespondWithDetailedError(w, http.StatusInternalServerError, "Error fetching OpenID provider metadata.", err.Error())
-				return
-			}
-			authorizationEndpont = openIdMetadata.AuthURL
-		}
-
-		response.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
-			authorizationEndpont,
-			url.QueryEscape(conf.Auth.OpenId.ClientId),
-			url.QueryEscape(httputil.GuessKialiURL(r)),
-			url.QueryEscape(scopes),
-			"asdf123456")
+		// Do the redirection through an intermediary own endpoint
+		response.AuthorizationEndpoint = fmt.Sprintf("%s/",
+			httputil.GuessKialiURL(r) + "/api/auth/openid_redirect")
 	case config.AuthStrategyLogin:
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
 			response.SecretMissing = true
@@ -747,4 +729,35 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	} else {
 		RespondWithCode(w, http.StatusNoContent)
 	}
+}
+
+func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
+	conf := config.Get()
+	if conf.Auth.Strategy != config.AuthStrategyOpenId {
+		RespondWithError(w, http.StatusNotFound, "OpenId strategy is not enabled")
+		return
+	}
+
+	scopes := strings.Join(conf.Auth.OpenId.Scopes, " ")
+	if !strings.Contains(scopes, "openid") {
+		scopes = "openid " + scopes
+	}
+
+	authorizationEndpoint := conf.Auth.OpenId.AuthorizationEndpoint
+	if len(authorizationEndpoint) == 0 {
+		openIdMetadata, err := business.GetOpenIdMetadata()
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusInternalServerError, "Error fetching OpenID provider metadata.", err.Error())
+			return
+		}
+		authorizationEndpoint = openIdMetadata.AuthURL
+	}
+
+	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
+		authorizationEndpoint,
+		url.QueryEscape(conf.Auth.OpenId.ClientId),
+		url.QueryEscape(httputil.GuessKialiURL(r)),
+		url.QueryEscape(scopes),
+		"asdf123456")
+	http.Redirect(w, r, redirectUri, http.StatusFound)
 }

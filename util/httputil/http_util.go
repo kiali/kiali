@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 )
 
 func HttpMethods() []string {
@@ -96,8 +95,6 @@ func GuessKialiURL(r *http.Request) string {
 	port := strconv.Itoa(cfg.Server.Port)
 	host := "" // Blank host. If "guessing" fails, it's unknown.
 
-	log.Debugf("GuessKialiURL defaults: schema=%s port=%s", schema, port)
-
 	// Guess the schema
 	if fwdSchema, ok := r.Header["X-Forwarded-Proto"]; ok && len(fwdSchema) == 1 {
 		schema = fwdSchema[0]
@@ -125,7 +122,13 @@ func GuessKialiURL(r *http.Request) string {
 		port = r.URL.Port()
 	}
 
-	log.Debugf("GuessKialiURL: %s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
+	// If using standard ports, don't specify the port component part on the URL
+	var guessedKialiURL string
+	if (schema == "http" && port == "80") || (schema == "https" && port == "443") {
+		guessedKialiURL = fmt.Sprintf("%s://%s%s", schema, host, cfg.Server.WebRoot)
+	} else {
+		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
+	}
 
-	return fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
+	return guessedKialiURL
 }
