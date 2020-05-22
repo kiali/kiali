@@ -15,7 +15,7 @@ import (
 type ClientInterface interface {
 	GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error)
 	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error)
-	GetTraceDetail(traceId string) (trace *JaegerResponse, err error)
+	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
 	GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error)
 }
 
@@ -72,7 +72,7 @@ func (in *Client) GetTraces(namespace string, service string, rawQuery string) (
 // GetTraceDetail jaeger to fetch a specific trace
 // requests for a specific trace detail
 //  Returns (traces, code, error)
-func (in *Client) GetTraceDetail(traceId string) (trace *JaegerResponse, err error) {
+func (in *Client) GetTraceDetail(traceId string) (*JaegerSingleTrace, error) {
 	return getTraceDetail(in.client, in.endpoint, traceId)
 }
 

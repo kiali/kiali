@@ -82,12 +82,12 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	traceID := params["traceID"]
-	traces, err := business.Jaeger.GetJaegerTraceDetail(traceID)
+	trace, err := business.Jaeger.GetJaegerTraceDetail(traceID)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, traces)
+	RespondWithJSON(w, http.StatusOK, trace)
 }
 
 // ServiceSpans is the API handler to fetch Jaeger spans of a specific service
