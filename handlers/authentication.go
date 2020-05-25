@@ -22,6 +22,7 @@ import (
 
 const (
 	missingSecretStatusCode = 520
+	openIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
 )
 
 type AuthenticationHandler struct {
@@ -35,6 +36,11 @@ type AuthInfo struct {
 	LogoutRedirect        string      `json:"logoutRedirect,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
 	SecretMissing         bool        `json:"secretMissing,omitempty"`
+}
+
+type OpenIdClaims struct {
+	NOnce string `json:"nonce,omitempty"`
+	jwt.StandardClaims
 }
 
 type sessionInfo struct {
@@ -137,7 +143,7 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    token.Token,
 		Expires:  token.ExpiresOn,
 		HttpOnly: true,
-		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -199,7 +205,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 		Value:    tokenString,
 		Expires:  expiresOn,
 		HttpOnly: true,
-		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -208,7 +214,15 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 }
 
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	err := r.ParseForm()
+	// Check if the nonce cookie is present
+	nonceCookie, err := r.Cookie(openIdNonceCookieName)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "No nonce code present. Login window timed out.")
+		return false
+	}
+
+	// Parse/fetch received login parameters
+	err = r.ParseForm()
 
 	if err != nil {
 		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
@@ -228,6 +242,19 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
+	// Parse the received id_token from the IdP and check nonce code
+	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, &OpenIdClaims{})
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Cannot parse received id_token from the OpenId provider", err.Error())
+		return false
+	}
+	idTokenClaims := parsedIdToken.Claims.(*OpenIdClaims)
+	if nonceCookie.Value != idTokenClaims.NOnce {
+		RespondWithError(w, http.StatusUnauthorized, "Received token from the OpenID provider is invalid (nonce code mismatch)")
+		return false
+	}
+
+	// Create business layer using the received id_token
 	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
 
 	business, err := business.Get(token)
@@ -273,7 +300,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  expiresOn,
 		HttpOnly: true,
-		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -684,8 +711,8 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyOpenId:
 		// Do the redirection through an intermediary own endpoint
-		response.AuthorizationEndpoint = fmt.Sprintf("%s/",
-			httputil.GuessKialiURL(r) + "/api/auth/openid_redirect")
+		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect",
+			httputil.GuessKialiURL(r))
 	case config.AuthStrategyLogin:
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
 			response.SecretMissing = true
@@ -712,7 +739,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 			Value:    "",
 			Expires:  time.Unix(0, 0),
 			HttpOnly: true,
-			// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+			SameSite: http.SameSiteStrictMode,
 		}
 		http.SetCookie(w, &tokenCookie)
 	}
@@ -733,16 +760,20 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
+
+	// This endpoint should be available only when OpenId strategy
 	if conf.Auth.Strategy != config.AuthStrategyOpenId {
 		RespondWithError(w, http.StatusNotFound, "OpenId strategy is not enabled")
 		return
 	}
 
+	// Build scopes string
 	scopes := strings.Join(conf.Auth.OpenId.Scopes, " ")
 	if !strings.Contains(scopes, "openid") {
 		scopes = "openid " + scopes
 	}
 
+	// Determine authorization endpoint
 	authorizationEndpoint := conf.Auth.OpenId.AuthorizationEndpoint
 	if len(authorizationEndpoint) == 0 {
 		openIdMetadata, err := business.GetOpenIdMetadata()
@@ -753,11 +784,29 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 		authorizationEndpoint = openIdMetadata.AuthURL
 	}
 
+	// Create a "nonce" code and set a cookie with the code
+	// It was chosen 15 chars arbitrarily. Probably, it's not worth to make this value configurable.
+	nonceCode, err := util.CryptoRandomString(15)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Random number generator failed")
+		return
+	}
+
+	nonceCookie := http.Cookie{
+		Expires:  util.Clock.Now().Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout)* time.Second),
+		HttpOnly: true,
+		Name:     openIdNonceCookieName,
+		Path:     conf.Server.WebRoot,
+		Value:    nonceCode,
+	}
+	http.SetCookie(w, &nonceCookie)
+
+	// Send redirection to browser
 	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
 		url.QueryEscape(httputil.GuessKialiURL(r)),
 		url.QueryEscape(scopes),
-		"asdf123456")
+		url.QueryEscape(nonceCode))
 	http.Redirect(w, r, redirectUri, http.StatusFound)
 }
