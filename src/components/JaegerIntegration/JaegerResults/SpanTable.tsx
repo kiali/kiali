@@ -72,14 +72,15 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
       node = sp.tags.filter(tag => tag.key === 'node_id')[0].value;
     }
     const srv = sp.process.serviceName.split('.')[0];
-    const regex = new RegExp(`${srv}-v[0-9]*`);
-    const result = node !== '' ? regex.exec(node) : null;
-    if (result) {
+    const regex = new RegExp(`([a-z0-9-\\.]+)-[a-z0-9]+-[a-z0-9]+\\.[a-z0-9-]+`);
+    const result = node !== '' ? regex.exec(node.split('~')[2]) : null;
+    const workload = result ? result[1] : undefined;
+    if (workload) {
       return (
-        <Tooltip content={<>View logs of workload {result[0]}</>}>
+        <Tooltip content={<>View logs of workload {workload}</>}>
           <Link
-            to={this.goLogsWorkloads(result[0], sp.operationName)}
-            onClick={() => history.push(this.goLogsWorkloads(result[0], sp.operationName))}
+            to={this.goLogsWorkloads(workload, sp.operationName)}
+            onClick={() => history.push(this.goLogsWorkloads(workload, sp.operationName))}
           >
             View logs
           </Link>
