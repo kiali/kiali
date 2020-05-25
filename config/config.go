@@ -236,9 +236,9 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	LDAP     LDAPConfig `yaml:"ldap,omitempty"`
+	LDAP     LDAPConfig   `yaml:"ldap,omitempty"`
 	OpenId   OpenIdConfig `yaml:"openid,omitempty"`
-	Strategy string     `yaml:"strategy,omitempty"`
+	Strategy string       `yaml:"strategy,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider

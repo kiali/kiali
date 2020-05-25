@@ -57,7 +57,7 @@ func NewServer() *Server {
 	// return our new Server
 	return &Server{
 		httpServer: httpServer,
-		router: router,
+		router:     router,
 	}
 }
 

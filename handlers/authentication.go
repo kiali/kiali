@@ -22,7 +22,7 @@ import (
 
 const (
 	missingSecretStatusCode = 520
-	openIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
+	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
 )
 
 type AuthenticationHandler struct {
@@ -788,7 +788,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nonceCookie := http.Cookie{
-		Expires:  util.Clock.Now().Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout)* time.Second),
+		Expires:  util.Clock.Now().Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout) * time.Second),
 		HttpOnly: true,
 		Name:     openIdNonceCookieName,
 		Path:     conf.Server.WebRoot,

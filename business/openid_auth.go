@@ -83,16 +83,20 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
-		return nil, errors.New(fmt.Sprintf("cannot fetch OpenId Metadata (HTTP response status = %s)", response.Status))
+		return nil, fmt.Errorf("cannot fetch OpenId Metadata (HTTP response status = %s)", response.Status)
 	}
 
 	// Parse JSON document
 	var metadata OpenIdMetadata
 
 	rawMetadata, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OpenId Metadata: %s", err.Error())
+	}
+
 	err = json.Unmarshal(rawMetadata, &metadata)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("cannot parse OpenId Metadata: %v", err.Error()))
+		return nil, fmt.Errorf("cannot parse OpenId Metadata: %s", err.Error())
 	}
 
 	// Validate issuer == issuerUri
