@@ -70,6 +70,30 @@ func TestFoundGateway(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestFoundGatewayTwoPartNaming(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test", "mesh"}, data.CreateVirtualService())
+	gatewayNames := kubernetes.GatewayNames([][]kubernetes.IstioObject{
+		{
+			data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
+		},
+	})
+
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
+	}
+
+	validations, valid := checker.Check()
+	assert.True(valid)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
+}
+
 func TestFQDNFoundGateway(t *testing.T) {
 	assert := assert.New(t)
 
@@ -90,7 +114,9 @@ func TestFQDNFoundGateway(t *testing.T) {
 
 	validations, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
 }
 
 func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
@@ -114,7 +140,9 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 
 	validations, valid := checker.Check()
 	assert.True(valid)
-	assert.Empty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.gateway.oldnomenclature"), validations[0].Message)
 }
 
 func TestNewIstioGatewayNameFormat(t *testing.T) {
