@@ -24,7 +24,7 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		if enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
 			// If PeerAuthn has mTLS enabled in STRICT mode
 			// traffic going through DestinationRule won't work
-			if mode != "PERMISSIVE" {
+			if mode == "STRICT" {
 				check := models.Build("destinationrules.mtls.policymtlsenabled", "spec/trafficPolicy/tls/mode")
 				return append(validations, &check), false
 			} else {
