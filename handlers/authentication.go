@@ -766,10 +766,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build scopes string
-	scopes := strings.Join(conf.Auth.OpenId.Scopes, " ")
-	if !strings.Contains(scopes, "openid") {
-		scopes = "openid " + scopes
-	}
+	scopes := strings.Join(business.GetConfiguredOpenIdScopes(), " ")
 
 	// Determine authorization endpoint
 	authorizationEndpoint := conf.Auth.OpenId.AuthorizationEndpoint

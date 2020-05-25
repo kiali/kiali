@@ -241,6 +241,7 @@ type AuthConfig struct {
 	Strategy string     `yaml:"strategy,omitempty"`
 }
 
+// OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
 	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`

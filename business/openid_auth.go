@@ -27,7 +27,39 @@ type OpenIdMetadata struct {
 	ResponseTypesSupported []string `json:"response_types_supported"`
 }
 
+var cachedOpenIdMetadata *OpenIdMetadata
+
+// GetConfiguredOpenIdScopes gets the list of scopes set in Kiali configuration making sure
+// that the mandatory "openid" scope is present in the returned list.
+func GetConfiguredOpenIdScopes() []string {
+	cfg := config.Get().Auth.OpenId
+	scopes := cfg.Scopes
+
+	isOpenIdScopePresent := false
+	for _, s := range scopes {
+		if s == "openid" {
+			isOpenIdScopePresent = true
+			break
+		}
+	}
+
+	if !isOpenIdScopePresent {
+		scopes = append(scopes, "openid")
+	}
+
+	return scopes
+}
+
+// GetOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
+// downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
+// validations are performed and the parsed metadata is returned. Since the metadata should be
+// rare to change, the retrieved metadata is cached on first call and subsequent calls return
+// the cached metadata.
 func GetOpenIdMetadata() (*OpenIdMetadata, error) {
+	if cachedOpenIdMetadata != nil {
+		return cachedOpenIdMetadata, nil
+	}
+
 	cfg := config.Get().Auth.OpenId
 
 	// Remove trailing slash from issuer URI, if needed
@@ -82,10 +114,7 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 
 	// Log warning if OpenId provider informs that some of the configured scopes are not supported
 	// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
-	scopes := cfg.Scopes
-	if !strings.Contains(strings.Join(scopes, " "), "openid") {
-		scopes = append(scopes, "openid")
-	}
+	scopes := GetConfiguredOpenIdScopes()
 	for _, scope := range scopes {
 		isScopeSupported := false
 		for _, supportedScope := range metadata.ScopesSupported {
@@ -102,5 +131,6 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 	}
 
 	// Return parsed metadata
-	return &metadata, nil
+	cachedOpenIdMetadata = &metadata
+	return cachedOpenIdMetadata, nil
 }
