@@ -38,11 +38,6 @@ type AuthInfo struct {
 	SecretMissing         bool        `json:"secretMissing,omitempty"`
 }
 
-type OpenIdClaims struct {
-	NOnce string `json:"nonce,omitempty"`
-	jwt.StandardClaims
-}
-
 type sessionInfo struct {
 	Username  string `json:"username,omitempty"`
 	ExpiresOn string `json:"expiresOn,omitempty"`
@@ -243,13 +238,13 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Parse the received id_token from the IdP and check nonce code
-	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, &OpenIdClaims{})
+	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusUnauthorized, "Cannot parse received id_token from the OpenId provider", err.Error())
 		return false
 	}
-	idTokenClaims := parsedIdToken.Claims.(*OpenIdClaims)
-	if nonceCookie.Value != idTokenClaims.NOnce {
+	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
+	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || nonceCookie.Value != nonceClaim.(string) {
 		RespondWithError(w, http.StatusUnauthorized, "Received token from the OpenID provider is invalid (nonce code mismatch)")
 		return false
 	}
@@ -279,7 +274,10 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
 	// the name of the service account. The "subject" is passed to the front-end to be displayed.
-	tokenSubject := "token" // Set a default value
+	tokenSubject := "OpenId User" // Set a default value
+	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
+		tokenSubject = userClaim.(string)
+	}
 
 	tokenClaims := config.IanaClaims{
 		SessionId: token,
