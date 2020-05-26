@@ -6,20 +6,44 @@ import Namespace from '../../types/Namespace';
 import { ActionGroup, Button, Form, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
-import GatewayForm, { GatewayState } from './GatewayForm';
-import SidecarForm, { SidecarState } from './SidecarForm';
+import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
+import SidecarForm, { initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import history from '../../app/History';
-import { buildAuthorizationPolicy, buildGateway, buildSidecar } from '../../components/IstioWizards/IstioWizardActions';
+import {
+  buildAuthorizationPolicy,
+  buildGateway,
+  buildPeerAuthentication,
+  buildRequestAuthentication,
+  buildSidecar,
+} from '../../components/IstioWizards/IstioWizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import AuthorizationPolicyForm, {
+  AUTHORIZACION_POLICY,
+  AUTHORIZATION_POLICIES,
   AuthorizationPolicyState,
-  INIT_AUTHORIZATION_POLICY
+  initAuthorizationPolicy,
+  isAuthorizationPolicyStateValid,
 } from './AuthorizationPolicyForm';
+import PeerAuthenticationForm, {
+  initPeerAuthentication,
+  isPeerAuthenticationStateValid,
+  PEER_AUTHENTICATION,
+  PEER_AUTHENTICATIONS,
+  PeerAuthenticationState,
+} from './PeerAuthenticationForm';
+import RequestAuthenticationForm, {
+  initRequestAuthentication,
+  isRequestAuthenticationStateValid,
+  REQUEST_AUTHENTICATION,
+  REQUEST_AUTHENTICATIONS,
+  RequestAuthenticationState,
+} from './RequestAuthenticationForm';
+import { isValidK8SName } from '../../helpers/ValidationHelpers';
 
 type Props = {
   activeNamespaces: Namespace[];
@@ -31,49 +55,39 @@ type State = {
   istioPermissions: IstioPermissions;
   authorizationPolicy: AuthorizationPolicyState;
   gateway: GatewayState;
+  peerAuthentication: PeerAuthenticationState;
+  requestAuthentication: RequestAuthenticationState;
   sidecar: SidecarState;
 };
 
 const formPadding = style({ padding: '30px 20px 30px 20px' });
 
-const AUTHORIZACION_POLICY = 'AuthorizationPolicy';
-const AUTHORIZATION_POLICIES = 'authorizationpolicies';
-const GATEWAY = 'Gateway';
-const GATEWAYS = 'gateways';
-const SIDECAR = 'Sidecar';
-const SIDECARS = 'sidecars';
-
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
   Gateway: GATEWAYS,
-  Sidecar: SIDECARS
+  PeerAuthentication: PEER_AUTHENTICATIONS,
+  RequestAuthentication: REQUEST_AUTHENTICATIONS,
+  Sidecar: SIDECARS,
 };
 
 const istioResourceOptions = [
   { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
   { value: GATEWAY, label: GATEWAY, disabled: false },
-  { value: SIDECAR, label: SIDECAR, disabled: false }
+  { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
+  { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
+  { value: SIDECAR, label: SIDECAR, disabled: false },
 ];
 
-const INIT_STATE = (): State => ({
+const initState = (): State => ({
   istioResource: istioResourceOptions[0].value,
   name: '',
   istioPermissions: {},
-  authorizationPolicy: INIT_AUTHORIZATION_POLICY(),
-  gateway: {
-    gatewayServers: []
-  },
-  sidecar: {
-    egressHosts: [
-      // Init with the istio-system/* for sidecar
-      {
-        host: serverConfig.istioNamespace + '/*'
-      }
-    ],
-    addWorkloadSelector: false,
-    workloadSelectorValid: false,
-    workloadSelectorLabels: ''
-  }
+  authorizationPolicy: initAuthorizationPolicy(),
+  gateway: initGateway(),
+  peerAuthentication: initPeerAuthentication(),
+  requestAuthentication: initRequestAuthentication(),
+  // Init with the istio-system/* for sidecar
+  sidecar: initSidecar(serverConfig.istioNamespace + '/*'),
 });
 
 class IstioConfigNewPage extends React.Component<Props, State> {
@@ -81,7 +95,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = INIT_STATE();
+    this.state = initState();
   }
 
   componentWillUnmount() {
@@ -90,7 +104,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
   componentDidMount() {
     // Init component state
-    this.setState(Object.assign({}, INIT_STATE));
+    this.setState(Object.assign({}, initState));
     this.fetchPermissions();
   }
 
@@ -111,14 +125,14 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   fetchPermissions = () => {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
-        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map(n => n.name)))
-        .then(permResponse => {
+        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map((n) => n.name)))
+        .then((permResponse) => {
           this.setState(
             {
-              istioPermissions: permResponse.data
+              istioPermissions: permResponse.data,
             },
             () => {
-              this.props.activeNamespaces.forEach(ns => {
+              this.props.activeNamespaces.forEach((ns) => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning('User has not permissions to create Istio Config on namespace: ' + ns.name);
                 }
@@ -126,7 +140,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             }
           );
         })
-        .catch(error => {
+        .catch((error) => {
           // Canceled errors are expected on this query when page is unmounted
           if (!error.isCanceled) {
             AlertUtils.addError('Could not fetch Permissions.', error);
@@ -138,132 +152,151 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   onIstioResourceChange = (value, _) => {
     this.setState({
       istioResource: value,
-      name: ''
+      name: '',
     });
   };
 
   onNameChange = (value, _) => {
     this.setState({
-      name: value
+      name: value,
     });
   };
 
   onIstioResourceCreate = () => {
-    switch (this.state.istioResource) {
-      case AUTHORIZACION_POLICY:
-        this.promises
-          .registerAll(
-            'Create AuthorizationPolicies',
-            this.props.activeNamespaces.map(ns =>
-              API.createIstioConfigDetail(
-                ns.name,
-                'authorizationpolicies',
-                JSON.stringify(buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy))
-              )
-            )
-          )
-          .then(results => {
-            if (results.length > 0) {
-              AlertUtils.add('Istio AuthorizationPolicy created', 'default', MessageType.SUCCESS);
-            }
-            this.backToList();
-          })
-          .catch(error => {
-            AlertUtils.addError('Could not create Istio AuthorizationPolicy objects.', error);
+    const jsonIstioObjects: { namespace: string; json: string }[] = [];
+    this.props.activeNamespaces.forEach((ns) => {
+      switch (this.state.istioResource) {
+        case AUTHORIZACION_POLICY:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)),
           });
-        break;
-      case GATEWAY:
-        this.promises
-          .registerAll(
-            'Create Gateways',
-            this.props.activeNamespaces.map(ns =>
-              API.createIstioConfigDetail(
-                ns.name,
-                'gateways',
-                JSON.stringify(buildGateway(this.state.name, ns.name, this.state.gateway))
-              )
-            )
-          )
-          .then(results => {
-            if (results.length > 0) {
-              AlertUtils.add('Istio Gateway created', 'default', MessageType.SUCCESS);
-            }
-            this.backToList();
-          })
-          .catch(error => {
-            AlertUtils.addError('Could not create Istio Gateway objects.', error);
+          break;
+        case GATEWAY:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(buildGateway(this.state.name, ns.name, this.state.gateway)),
           });
-        break;
-      case SIDECAR:
-        this.promises
-          .registerAll(
-            'Create Sidecars',
-            this.props.activeNamespaces.map(ns =>
-              API.createIstioConfigDetail(
-                ns.name,
-                'sidecars',
-                JSON.stringify(buildSidecar(this.state.name, ns.name, this.state.sidecar))
-              )
-            )
-          )
-          .then(results => {
-            if (results.length > 0) {
-              AlertUtils.add('Istio Sidecar created', 'default', MessageType.SUCCESS);
-            }
-            this.backToList();
-          })
-          .catch(error => {
-            AlertUtils.addError('Could not create Istio Sidecar objects.', error);
+          break;
+        case PEER_AUTHENTICATION:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)),
           });
-        break;
-    }
+          break;
+        case REQUEST_AUTHENTICATION:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(
+              buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)
+            ),
+          });
+          break;
+        case SIDECAR:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(buildSidecar(this.state.name, ns.name, this.state.sidecar)),
+          });
+          break;
+      }
+    });
+
+    this.promises
+      .registerAll(
+        'Create ' + DIC[this.state.istioResource],
+        jsonIstioObjects.map((o) => API.createIstioConfigDetail(o.namespace, DIC[this.state.istioResource], o.json))
+      )
+      .then((results) => {
+        if (results.length > 0) {
+          AlertUtils.add('Istio ' + this.state.istioResource + ' created', 'default', MessageType.SUCCESS);
+        }
+        this.backToList();
+      })
+      .catch((error) => {
+        AlertUtils.addError('Could not create Istio ' + this.state.istioResource + ' objects.', error);
+      });
   };
 
   backToList = () => {
-    this.setState(INIT_STATE(), () => {
+    this.setState(initState(), () => {
       // Back to list page
       history.push(`/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.join(',')}`);
     });
   };
 
-  isAuthorizationPolicyValid = (): boolean => {
-    return this.state.istioResource === AUTHORIZACION_POLICY;
-  };
-
-  isGatewayValid = (): boolean => {
-    return this.state.istioResource === GATEWAY && this.state.gateway.gatewayServers.length > 0;
-  };
-
-  isSidecarValid = (): boolean => {
-    return (
-      this.state.istioResource === SIDECAR &&
-      this.state.sidecar.egressHosts.length > 0 &&
-      (!this.state.sidecar.addWorkloadSelector ||
-        (this.state.sidecar.addWorkloadSelector && this.state.sidecar.workloadSelectorValid))
-    );
+  isIstioFormValid = (): boolean => {
+    switch (this.state.istioResource) {
+      case AUTHORIZACION_POLICY:
+        return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
+      case GATEWAY:
+        return isGatewayStateValid(this.state.gateway);
+      case PEER_AUTHENTICATION:
+        return isPeerAuthenticationStateValid(this.state.peerAuthentication);
+      case REQUEST_AUTHENTICATION:
+        return isRequestAuthenticationStateValid(this.state.requestAuthentication);
+      case SIDECAR:
+        return isSidecarStateValid(this.state.sidecar);
+      default:
+        return false;
+    }
   };
 
   onChangeAuthorizationPolicy = (authorizationPolicy: AuthorizationPolicyState) => {
-    this.setState(prevState => {
-      prevState.authorizationPolicy.workloadSelector = authorizationPolicy.workloadSelector;
-      prevState.authorizationPolicy.action = authorizationPolicy.action;
-      prevState.authorizationPolicy.policy = authorizationPolicy.policy;
-      prevState.authorizationPolicy.rules = authorizationPolicy.rules;
+    this.setState((prevState) => {
+      Object.keys(prevState.authorizationPolicy).forEach(
+        (key) => (prevState.authorizationPolicy[key] = authorizationPolicy[key])
+      );
       return {
-        authorizationPolicy: prevState.authorizationPolicy
+        authorizationPolicy: prevState.authorizationPolicy,
+      };
+    });
+  };
+
+  onChangeGateway = (gateway: GatewayState) => {
+    this.setState((prevState) => {
+      Object.keys(prevState.gateway).forEach((key) => (prevState.gateway[key] = gateway[key]));
+      return {
+        gateway: prevState.gateway,
+      };
+    });
+  };
+
+  onChangePeerAuthentication = (peerAuthentication: PeerAuthenticationState) => {
+    this.setState((prevState) => {
+      Object.keys(prevState.peerAuthentication).forEach(
+        (key) => (prevState.peerAuthentication[key] = peerAuthentication[key])
+      );
+      return {
+        peerAuthentication: prevState.peerAuthentication,
+      };
+    });
+  };
+
+  onChangeRequestAuthentication = (requestAuthentication: RequestAuthenticationState) => {
+    this.setState((prevState) => {
+      Object.keys(prevState.requestAuthentication).forEach(
+        (key) => (prevState.requestAuthentication[key] = requestAuthentication[key])
+      );
+      return {
+        requestAuthentication: prevState.requestAuthentication,
+      };
+    });
+  };
+
+  onChangeSidecar = (sidecar: SidecarState) => {
+    this.setState((prevState) => {
+      Object.keys(prevState.sidecar).forEach((key) => (prevState.sidecar[key] = sidecar[key]));
+      return {
+        sidecar: prevState.sidecar,
       };
     });
   };
 
   render() {
-    const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
-    const isNameValid = this.state.name.length > 0;
+    const canCreate = this.props.activeNamespaces.every((ns) => this.canCreate(ns.name));
+    const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isFormValid =
-      canCreate &&
-      isNameValid &&
-      isNamespacesValid &&
-      (this.isGatewayValid() || this.isSidecarValid() || this.isAuthorizationPolicyValid());
+    const isFormValid = canCreate && isNameValid && isNamespacesValid && this.isIstioFormValid();
     return (
       <RenderContent>
         <Form className={formPadding} isHorizontal={true}>
@@ -276,7 +309,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             isValid={isNamespacesValid}
           >
             <TextInput
-              value={this.props.activeNamespaces.map(n => n.name).join(',')}
+              value={this.props.activeNamespaces.map((n) => n.name).join(',')}
               isRequired={true}
               type="text"
               id="namespaces"
@@ -303,7 +336,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             isRequired={true}
             fieldId="name"
             helperText={this.state.istioResource + ' name'}
-            helperTextInvalid={this.state.istioResource + ' name is required'}
+            helperTextInvalid={'A valid ' + this.state.istioResource + ' name is required'}
             isValid={isNameValid}
           >
             <TextInput
@@ -324,74 +357,22 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             />
           )}
           {this.state.istioResource === GATEWAY && (
-            <GatewayForm
-              gatewayServers={this.state.gateway.gatewayServers}
-              onAdd={gatewayServer => {
-                this.setState(prevState => {
-                  prevState.gateway.gatewayServers.push(gatewayServer);
-                  return {
-                    gateway: {
-                      gatewayServers: prevState.gateway.gatewayServers
-                    }
-                  };
-                });
-              }}
-              onRemove={index => {
-                this.setState(prevState => {
-                  prevState.gateway.gatewayServers.splice(index, 1);
-                  return {
-                    gateway: {
-                      gatewayServers: prevState.gateway.gatewayServers
-                    }
-                  };
-                });
-              }}
+            <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
+          )}
+          {this.state.istioResource === PEER_AUTHENTICATION && (
+            <PeerAuthenticationForm
+              peerAuthentication={this.state.peerAuthentication}
+              onChange={this.onChangePeerAuthentication}
+            />
+          )}
+          {this.state.istioResource === REQUEST_AUTHENTICATION && (
+            <RequestAuthenticationForm
+              requestAuthentication={this.state.requestAuthentication}
+              onChange={this.onChangeRequestAuthentication}
             />
           )}
           {this.state.istioResource === SIDECAR && (
-            <SidecarForm
-              egressHosts={this.state.sidecar.egressHosts}
-              addWorkloadSelector={this.state.sidecar.addWorkloadSelector}
-              workloadSelectorLabels={this.state.sidecar.workloadSelectorLabels}
-              onAddEgressHost={egressHost => {
-                this.setState(prevState => {
-                  prevState.sidecar.egressHosts.push(egressHost);
-                  return {
-                    sidecar: {
-                      egressHosts: prevState.sidecar.egressHosts,
-                      addWorkloadSelector: prevState.sidecar.addWorkloadSelector,
-                      workloadSelectorValid: prevState.sidecar.workloadSelectorValid,
-                      workloadSelectorLabels: prevState.sidecar.workloadSelectorLabels
-                    }
-                  };
-                });
-              }}
-              onChangeSelector={(addWorkloadSelector, workloadSelectorValid, workloadSelectorLabels) => {
-                this.setState(prevState => {
-                  return {
-                    sidecar: {
-                      egressHosts: prevState.sidecar.egressHosts,
-                      addWorkloadSelector: addWorkloadSelector,
-                      workloadSelectorValid: workloadSelectorValid,
-                      workloadSelectorLabels: workloadSelectorLabels
-                    }
-                  };
-                });
-              }}
-              onRemoveEgressHost={index => {
-                this.setState(prevState => {
-                  prevState.sidecar.egressHosts.splice(index, 1);
-                  return {
-                    sidecar: {
-                      egressHosts: prevState.sidecar.egressHosts,
-                      addWorkloadSelector: prevState.sidecar.addWorkloadSelector,
-                      workloadSelectorValid: prevState.sidecar.workloadSelectorValid,
-                      workloadSelectorLabels: prevState.sidecar.workloadSelectorLabels
-                    }
-                  };
-                });
-              }}
-            />
+            <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
           )}
           <ActionGroup>
             <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.onIstioResourceCreate()}>
@@ -409,13 +390,10 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    activeNamespaces: activeNamespacesSelector(state)
+    activeNamespaces: activeNamespacesSelector(state),
   };
 };
 
-const IstioConfigNewPageContainer = connect(
-  mapStateToProps,
-  null
-)(IstioConfigNewPage);
+const IstioConfigNewPageContainer = connect(mapStateToProps, null)(IstioConfigNewPage);
 
 export default IstioConfigNewPageContainer;

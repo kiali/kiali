@@ -25,24 +25,24 @@ const INIT_OPERATION_FIELDS = [
   'methods',
   'notMethods',
   'paths',
-  'notPaths'
+  'notPaths',
 ].sort();
 
 const headerCells: ICell[] = [
   {
     title: 'Operation Field',
     transforms: [cellWidth(20) as any],
-    props: {}
+    props: {},
   },
   {
     title: 'Values',
     transforms: [cellWidth(80) as any],
-    props: {}
+    props: {},
   },
   {
     title: '',
-    props: {}
-  }
+    props: {},
+  },
 ];
 
 class OperationBuilder extends React.Component<Props, State> {
@@ -52,24 +52,24 @@ class OperationBuilder extends React.Component<Props, State> {
       operationFields: Object.assign([], INIT_OPERATION_FIELDS),
       operation: {},
       newOperationField: INIT_OPERATION_FIELDS[0],
-      newValues: ''
+      newValues: '',
     };
   }
 
   onAddNewOperationField = (value: string, _) => {
     this.setState({
-      newOperationField: value
+      newOperationField: value,
     });
   };
 
   onAddNewValues = (value: string, _) => {
     this.setState({
-      newValues: value
+      newValues: value,
     });
   };
 
   onAddOperation = () => {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const i = prevState.operationFields.indexOf(prevState.newOperationField);
       if (i > -1) {
         prevState.operationFields.splice(i, 1);
@@ -79,7 +79,7 @@ class OperationBuilder extends React.Component<Props, State> {
         operationFields: prevState.operationFields,
         operation: prevState.operation,
         newOperationField: prevState.operationFields[0],
-        newValues: ''
+        newValues: '',
       };
     });
   };
@@ -91,7 +91,7 @@ class OperationBuilder extends React.Component<Props, State> {
         operationFields: Object.assign([], INIT_OPERATION_FIELDS),
         operation: {},
         newOperationField: INIT_OPERATION_FIELDS[0],
-        newValues: ''
+        newValues: '',
       },
       () => {
         this.props.onAddTo(toItem);
@@ -107,7 +107,7 @@ class OperationBuilder extends React.Component<Props, State> {
       onClick: (event, rowIndex, rowData, extraData) => {
         // Fetch sourceField from rowData, it's a fixed string on children
         const removeOperationField = rowData.cells[0].props.children.toString();
-        this.setState(prevState => {
+        this.setState((prevState) => {
           prevState.operationFields.push(removeOperationField);
           delete prevState.operation[removeOperationField];
           const newOperationFields = prevState.operationFields.sort();
@@ -115,10 +115,10 @@ class OperationBuilder extends React.Component<Props, State> {
             operationFields: newOperationFields,
             operation: prevState.operation,
             newOperationField: newOperationFields[0],
-            newValues: ''
+            newValues: '',
           };
         });
-      }
+      },
     };
     if (rowIndex < Object.keys(this.state.operation).length) {
       return [removeAction];
@@ -127,14 +127,14 @@ class OperationBuilder extends React.Component<Props, State> {
   };
 
   rows = () => {
-    return Object.keys(this.state.operation)
-      .map((operationField, i) => {
-        return {
-          key: 'operationKey' + i,
-          cells: [<>{operationField}</>, <>{this.state.operation[operationField].join(',')}</>, <></>]
-        };
-      })
-      .concat([
+    const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
+      return {
+        key: 'operationKey' + i,
+        cells: [<>{operationField}</>, <>{this.state.operation[operationField].join(',')}</>, <></>],
+      };
+    });
+    if (this.state.operationFields.length > 0) {
+      return operatorRows.concat([
         {
           key: 'operationKeyNew',
           cells: [
@@ -165,10 +165,12 @@ class OperationBuilder extends React.Component<Props, State> {
               {this.state.operationFields.length > 0 && (
                 <Button variant="link" icon={<PlusCircleIcon />} onClick={this.onAddOperation} />
               )}
-            </>
-          ]
-        }
+            </>,
+          ],
+        },
       ]);
+    }
+    return operatorRows;
   };
 
   render() {

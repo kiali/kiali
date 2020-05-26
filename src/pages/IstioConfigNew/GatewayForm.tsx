@@ -4,48 +4,50 @@ import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/rea
 import { Button, FormSelect, FormSelectOption, TextInputBase as TextInput } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { PfColors } from '../../components/Pf/PfColors';
-import { isServerHostValid } from '../../utils/IstioConfigUtils';
+import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 
 const headerCells: ICell[] = [
   {
     title: 'Hosts',
     transforms: [cellWidth(60) as any],
-    props: {}
+    props: {},
   },
   {
     title: 'Port Number',
     transforms: [cellWidth(10) as any],
-    props: {}
+    props: {},
   },
   {
     title: 'Port Name',
     transforms: [cellWidth(10) as any],
-    props: {}
+    props: {},
   },
   {
     title: 'Port Protocol',
     transforms: [cellWidth(10) as any],
-    props: {}
+    props: {},
   },
   {
     title: '',
-    props: {}
-  }
+    props: {},
+  },
 ];
+
+export const GATEWAY = 'Gateway';
+export const GATEWAYS = 'gateways';
 
 const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 
 const noGatewayServerStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PfColors.Red100,
 });
 
 const hostsHelperText = 'One or more valid FQDN host separated by comma.';
 
 type Props = {
-  gatewayServers: GatewayServer[];
-  onAdd: (server: GatewayServer) => void;
-  onRemove: (index: number) => void;
+  gateway: GatewayState;
+  onChange: (gateway: GatewayState) => void;
 };
 
 export type GatewayServer = {
@@ -58,25 +60,33 @@ export type GatewayServer = {
 // Gateway and Sidecar states are consolidated in the parent page
 export type GatewayState = {
   gatewayServers: GatewayServer[];
-};
-
-type State = {
   addGatewayServer: GatewayServer;
   validHosts: boolean;
 };
 
-class GatewayForm extends React.Component<Props, State> {
+export const initGateway = (): GatewayState => ({
+  gatewayServers: [],
+  addGatewayServer: {
+    hosts: [],
+    portNumber: '80',
+    portName: 'http',
+    portProtocol: 'HTTP',
+  },
+  validHosts: false,
+});
+
+export const isGatewayStateValid = (g: GatewayState): boolean => {
+  return g.gatewayServers.length > 0;
+};
+
+class GatewayForm extends React.Component<Props, GatewayState> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      addGatewayServer: {
-        hosts: [],
-        portNumber: '80',
-        portName: 'http',
-        portProtocol: 'HTTP'
-      },
-      validHosts: false
-    };
+    this.state = initGateway();
+  }
+
+  componentDidMount() {
+    this.setState(this.props.gateway);
   }
 
   // @ts-ignore
@@ -85,71 +95,85 @@ class GatewayForm extends React.Component<Props, State> {
       title: 'Remove Server',
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
-        this.props.onRemove(rowIndex);
-      }
+        this.setState(
+          (prevState) => {
+            prevState.gatewayServers.splice(rowIndex, 1);
+            return {
+              gatewayServers: prevState.gatewayServers,
+            };
+          },
+          () => this.props.onChange(this.state)
+        );
+      },
     };
-    if (rowIndex < this.props.gatewayServers.length) {
+    if (rowIndex < this.state.gatewayServers.length) {
       return [removeAction];
     }
     return [];
   };
 
   onAddHosts = (value: string, _) => {
-    const hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
-    this.setState(prevState => ({
+    const hosts = value.trim().length === 0 ? [] : value.split(',').map((host) => host.trim());
+    this.setState((prevState) => ({
       addGatewayServer: {
         hosts: hosts,
         portNumber: prevState.addGatewayServer.portNumber,
         portName: prevState.addGatewayServer.portName,
-        portProtocol: prevState.addGatewayServer.portProtocol
+        portProtocol: prevState.addGatewayServer.portProtocol,
       },
-      validHosts: this.areValidHosts(hosts)
+      validHosts: this.areValidHosts(hosts),
     }));
   };
 
   onAddPortNumber = (value: string, _) => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       addGatewayServer: {
         hosts: prevState.addGatewayServer.hosts,
         portNumber: value.trim(),
         portName: prevState.addGatewayServer.portName,
-        portProtocol: prevState.addGatewayServer.portProtocol
-      }
+        portProtocol: prevState.addGatewayServer.portProtocol,
+      },
     }));
   };
 
   onAddPortName = (value: string, _) => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       addGatewayServer: {
         hosts: prevState.addGatewayServer.hosts,
         portNumber: prevState.addGatewayServer.portNumber,
         portName: value.trim(),
-        portProtocol: prevState.addGatewayServer.portProtocol
-      }
+        portProtocol: prevState.addGatewayServer.portProtocol,
+      },
     }));
   };
 
   onAddPortProtocol = (value: string, _) => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       addGatewayServer: {
         hosts: prevState.addGatewayServer.hosts,
         portNumber: prevState.addGatewayServer.portNumber,
         portName: prevState.addGatewayServer.portName,
-        portProtocol: value.trim()
-      }
+        portProtocol: value.trim(),
+      },
     }));
   };
 
   onAddServer = () => {
-    this.props.onAdd(this.state.addGatewayServer);
-    this.setState({
-      addGatewayServer: {
-        hosts: [],
-        portNumber: '80',
-        portName: 'http',
-        portProtocol: 'HTTP'
-      }
-    });
+    this.setState(
+      (prevState) => {
+        prevState.gatewayServers.push(prevState.addGatewayServer);
+        return {
+          gatewayServers: prevState.gatewayServers,
+          addGatewayServer: {
+            hosts: [],
+            portNumber: '80',
+            portName: 'http',
+            portProtocol: 'HTTP',
+          },
+        };
+      },
+      () => this.props.onChange(this.state)
+    );
   };
 
   areValidHosts = (hosts: string[]): boolean => {
@@ -158,7 +182,7 @@ class GatewayForm extends React.Component<Props, State> {
     }
     let isValid = true;
     for (let i = 0; i < hosts.length; i++) {
-      if (!isServerHostValid(hosts[i])) {
+      if (!isGatewayHostValid(hosts[i])) {
         isValid = false;
         break;
       }
@@ -167,7 +191,7 @@ class GatewayForm extends React.Component<Props, State> {
   };
 
   rows() {
-    return this.props.gatewayServers
+    return this.state.gatewayServers
       .map((gw, i) => ({
         key: 'gatewayServer' + i,
         cells: [
@@ -179,8 +203,8 @@ class GatewayForm extends React.Component<Props, State> {
           <>{gw.portNumber}</>,
           <>{gw.portName}</>,
           <>{gw.portProtocol}</>,
-          ''
-        ]
+          '',
+        ],
       }))
       .concat([
         {
@@ -254,9 +278,9 @@ class GatewayForm extends React.Component<Props, State> {
               >
                 Add Server
               </Button>
-            </>
-          ]
-        }
+            </>,
+          ],
+        },
       ]);
   }
 
@@ -274,7 +298,7 @@ class GatewayForm extends React.Component<Props, State> {
           <TableHeader />
           <TableBody />
         </Table>
-        {this.props.gatewayServers.length === 0 && (
+        {this.state.gatewayServers.length === 0 && (
           <div className={noGatewayServerStyle}>Gateway has no Servers Defined</div>
         )}
       </>

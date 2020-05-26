@@ -3,6 +3,9 @@ import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/rea
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { Button, FormSelect, FormSelectOption, TextInputBase as TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
+import { isValidIp } from '../../../../utils/IstioConfigUtils';
+import { style } from 'typestyle';
+import { PfColors } from '../../../../components/Pf/PfColors';
 
 type Props = {
   onAddFrom: (source: { [key: string]: string[] }) => void;
@@ -25,24 +28,28 @@ const INIT_SOURCE_FIELDS = [
   'namespaces',
   'notNamespaces',
   'ipBlocks',
-  'notIpBlocks'
+  'notIpBlocks',
 ].sort();
+
+const noSourceStyle = style({
+  color: PfColors.Red100,
+});
 
 const headerCells: ICell[] = [
   {
     title: 'Source Field',
     transforms: [cellWidth(20) as any],
-    props: {}
+    props: {},
   },
   {
     title: 'Values',
     transforms: [cellWidth(80) as any],
-    props: {}
+    props: {},
   },
   {
     title: '',
-    props: {}
-  }
+    props: {},
+  },
 ];
 
 class SourceBuilder extends React.Component<Props, State> {
@@ -52,24 +59,24 @@ class SourceBuilder extends React.Component<Props, State> {
       sourceFields: Object.assign([], INIT_SOURCE_FIELDS),
       source: {},
       newSourceField: INIT_SOURCE_FIELDS[0],
-      newValues: ''
+      newValues: '',
     };
   }
 
   onAddNewSourceField = (value: string, _) => {
     this.setState({
-      newSourceField: value
+      newSourceField: value,
     });
   };
 
   onAddNewValues = (value: string, _) => {
     this.setState({
-      newValues: value
+      newValues: value,
     });
   };
 
   onAddSource = () => {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const i = prevState.sourceFields.indexOf(prevState.newSourceField);
       if (i > -1) {
         prevState.sourceFields.splice(i, 1);
@@ -79,7 +86,7 @@ class SourceBuilder extends React.Component<Props, State> {
         sourceFields: prevState.sourceFields,
         source: prevState.source,
         newSourceField: prevState.sourceFields[0],
-        newValues: ''
+        newValues: '',
       };
     });
   };
@@ -91,12 +98,27 @@ class SourceBuilder extends React.Component<Props, State> {
         sourceFields: Object.assign([], INIT_SOURCE_FIELDS),
         source: {},
         newSourceField: INIT_SOURCE_FIELDS[0],
-        newValues: ''
+        newValues: '',
       },
       () => {
         this.props.onAddFrom(fromItem);
       }
     );
+  };
+
+  // Helper to identify when some values are valid
+  isValidSource = (): [boolean, string] => {
+    if (this.state.newSourceField === 'ipBlocks' || this.state.newSourceField === 'notIpBlocks') {
+      const validIp = this.state.newValues.split(',').every((ip) => isValidIp(ip));
+      if (!validIp) {
+        return [false, 'Not valid IP'];
+      }
+    }
+    const emptyValues = this.state.newValues.split(',').every((v) => v.length === 0);
+    if (emptyValues) {
+      return [false, 'Empty value'];
+    }
+    return [true, ''];
   };
 
   // @ts-ignore
@@ -107,7 +129,7 @@ class SourceBuilder extends React.Component<Props, State> {
       onClick: (event, rowIndex, rowData, extraData) => {
         // Fetch sourceField from rowData, it's a fixed string on children
         const removeSourceField = rowData.cells[0].props.children.toString();
-        this.setState(prevState => {
+        this.setState((prevState) => {
           prevState.sourceFields.push(removeSourceField);
           delete prevState.source[removeSourceField];
           const newSourceFields = prevState.sourceFields.sort();
@@ -115,10 +137,10 @@ class SourceBuilder extends React.Component<Props, State> {
             sourceFields: newSourceFields,
             source: prevState.source,
             newSourceField: newSourceFields[0],
-            newValues: ''
+            newValues: '',
           };
         });
-      }
+      },
     };
     if (rowIndex < Object.keys(this.state.source).length) {
       return [removeAction];
@@ -127,14 +149,16 @@ class SourceBuilder extends React.Component<Props, State> {
   };
 
   rows = () => {
-    return Object.keys(this.state.source)
-      .map((sourceField, i) => {
-        return {
-          key: 'sourceKey' + i,
-          cells: [<>{sourceField}</>, <>{this.state.source[sourceField].join(',')}</>, <></>]
-        };
-      })
-      .concat([
+    const [isValidSource, invalidText] = this.isValidSource();
+
+    const sourceRows = Object.keys(this.state.source).map((sourceField, i) => {
+      return {
+        key: 'sourceKey' + i,
+        cells: [<>{sourceField}</>, <>{this.state.source[sourceField].join(',')}</>, <></>],
+      };
+    });
+    if (this.state.sourceFields.length > 0) {
+      return sourceRows.concat([
         {
           key: 'sourceKeyNew',
           cells: [
@@ -159,16 +183,29 @@ class SourceBuilder extends React.Component<Props, State> {
                 aria-describedby="add new source values"
                 name="addNewValues"
                 onChange={this.onAddNewValues}
+                isValid={isValidSource}
               />
+              {!isValidSource && (
+                <div key="hostsHelperText" className={noSourceStyle}>
+                  {invalidText}
+                </div>
+              )}
             </>,
             <>
               {this.state.sourceFields.length > 0 && (
-                <Button variant="link" icon={<PlusCircleIcon />} onClick={this.onAddSource} />
+                <Button
+                  variant="link"
+                  icon={<PlusCircleIcon />}
+                  onClick={this.onAddSource}
+                  isDisabled={!isValidSource}
+                />
               )}
-            </>
-          ]
-        }
+            </>,
+          ],
+        },
       ]);
+    }
+    return sourceRows;
   };
 
   render() {

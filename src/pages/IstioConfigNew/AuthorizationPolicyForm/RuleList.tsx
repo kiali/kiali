@@ -5,6 +5,7 @@ import { style } from 'typestyle';
 import { PfColors } from '../../../components/Pf/PfColors';
 
 type Props = {
+  action: string;
   ruleList: Rule[];
   onRemoveRule: (index: number) => void;
 };
@@ -13,22 +14,22 @@ const headerCells: ICell[] = [
   {
     title: 'Rules to match the request',
     transforms: [cellWidth(100) as any],
-    props: {}
+    props: {},
   },
   {
     title: '',
-    props: {}
-  }
+    props: {},
+  },
 ];
 
 const rulesPadding = style({
-  paddingLeft: 10
+  paddingLeft: 10,
 });
 
 const noRulesStyle = style({
   color: PfColors.Red100,
   textAlign: 'center',
-  width: '100%'
+  width: '100%',
 });
 
 class RuleList extends React.Component<Props> {
@@ -101,8 +102,8 @@ class RuleList extends React.Component<Props> {
               </>
             )}
           </>,
-          <></>
-        ]
+          <></>,
+        ],
       };
     });
   };
@@ -114,12 +115,14 @@ class RuleList extends React.Component<Props> {
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.props.onRemoveRule(rowIndex);
-      }
+      },
     };
     return [removeAction];
   };
 
   render() {
+    const noRulesMessage =
+      this.props.action === 'DENY' ? ' DENY action requires at least one Rule' : 'No Rules Defined.';
     return (
       <>
         <Table
@@ -132,7 +135,7 @@ class RuleList extends React.Component<Props> {
           <TableHeader />
           <TableBody />
         </Table>
-        {this.props.ruleList.length === 0 && <div className={noRulesStyle}>No Rules Defined</div>}
+        {this.props.ruleList.length === 0 && <div className={noRulesStyle}>{noRulesMessage}</div>}
       </>
     );
   }

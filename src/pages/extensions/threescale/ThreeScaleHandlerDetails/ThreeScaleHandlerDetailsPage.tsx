@@ -18,7 +18,7 @@ import {
   TextVariants,
   Title,
   Toolbar,
-  ToolbarSection
+  ToolbarSection,
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { PfColors } from '../../../../components/Pf/PfColors';
@@ -28,6 +28,7 @@ import { ThreeScaleHandler, ThreeScaleInfo } from '../../../../types/ThreeScale'
 import { RenderContent } from '../../../../components/Nav/Page';
 import history from '../../../../app/History';
 import RefreshButtonContainer from '../../../../components/Refresh/RefreshButton';
+import { isValidK8SName } from '../../../../helpers/ValidationHelpers';
 
 // Properties handled by the component/page
 // Note that ThreeScaleHandlerDetailsPage uses a RouteComponentProps<Props> used to capture the parameters in the route
@@ -53,10 +54,10 @@ interface State {
 // i.e. no namespaces controllers, then some styles need to be adjusted manually
 const extensionHeader = style({
   padding: '0px 20px 18px 20px',
-  backgroundColor: PfColors.White
+  backgroundColor: PfColors.White,
 });
 const breadcrumbPadding = style({
-  padding: '22px 0 5px 0'
+  padding: '22px 0 5px 0',
 });
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
 // Toolbar in 3scale details page is added manually.
@@ -66,14 +67,8 @@ const rightToolbarStyle = style({
   right: '20px',
   zIndex: 1,
   marginTop: '-30px',
-  backgroundColor: PfColors.White
+  backgroundColor: PfColors.White,
 });
-
-// Kubernetes ID validation helper, used to allow mark a warning in the form edition
-const k8sRegExpName = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
-const isValidK8SName = (name: string) => {
-  return name === '' ? false : name.search(k8sRegExpName) === 0;
-};
 
 class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<Props>, State> {
   constructor(props: RouteComponentProps<Props>) {
@@ -86,17 +81,17 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
         permissions: {
           create: false,
           update: false,
-          delete: false
-        }
+          delete: false,
+        },
       },
       handler: {
         name: '',
         serviceId: '',
         systemUrl: '',
-        accessToken: ''
+        accessToken: '',
       },
       dropdownOpen: false,
-      deleteModalOpen: false
+      deleteModalOpen: false,
     };
   }
 
@@ -104,12 +99,12 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
   // It fetches the specific handler to edit. It ignores handler when creating a new Threescale handler.
   fetchHandler = (handlerName: string | undefined) => {
     API.getThreeScaleInfo()
-      .then(result => {
+      .then((result) => {
         const threeScaleInfo = result.data;
         if (threeScaleInfo.enabled) {
           if (handlerName) {
             API.getThreeScaleHandlers()
-              .then(results => {
+              .then((results) => {
                 let handler: ThreeScaleHandler | undefined = undefined;
                 for (let i = 0; results.data.length; i++) {
                   if (results.data[i].name === handlerName) {
@@ -121,25 +116,25 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
                   this.setState({
                     isNew: false,
                     threeScaleInfo: threeScaleInfo,
-                    handler: handler
+                    handler: handler,
                   });
                 } else {
                   AlertUtils.addError('Could not fetch ThreeScaleHandler ' + handlerName + '.');
                 }
               })
-              .catch(error => {
+              .catch((error) => {
                 AlertUtils.addError('Could not fetch ThreeScaleHandlers.', error);
               });
           } else {
             this.setState({
-              threeScaleInfo: threeScaleInfo
+              threeScaleInfo: threeScaleInfo,
             });
           }
         } else {
           AlertUtils.addError('Kiali has 3scale extension enabled but 3scale adapter is not detected in the cluster');
         }
       })
-      .catch(error => {
+      .catch((error) => {
         AlertUtils.addError('Could not fetch ThreeScaleInfo.', error);
       });
   };
@@ -168,7 +163,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
           dropdownItems={[
             <DropdownItem key="createIstioConfig" onClick={() => this.setState({ deleteModalOpen: true })}>
               Delete
-            </DropdownItem>
+            </DropdownItem>,
           ]}
         />
         <Modal
@@ -182,7 +177,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
             </Button>,
             <Button key="confirm" variant="danger" onClick={() => this.deleteHandler()}>
               Delete
-            </Button>
+            </Button>,
           ]}
         >
           <Text component={TextVariants.p}>
@@ -245,7 +240,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
 
   // Updates state with modifications of the new/editing handler
   changeHandler = (field: string, value: string) => {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const newThreeScaleHandler = prevState.handler;
       switch (field) {
         case 'handlerName':
@@ -265,7 +260,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
       return {
         isNew: prevState.isNew,
         isModified: true,
-        handler: newThreeScaleHandler
+        handler: newThreeScaleHandler,
       };
     });
   };
@@ -274,20 +269,20 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
   updateHandler = () => {
     if (this.state.isNew) {
       API.createThreeScaleHandler(JSON.stringify(this.state.handler))
-        .then(_ => this.goHandlersPage())
-        .catch(error => AlertUtils.addError('Could not create ThreeScaleHandlers.', error));
+        .then((_) => this.goHandlersPage())
+        .catch((error) => AlertUtils.addError('Could not create ThreeScaleHandlers.', error));
     } else {
       API.updateThreeScaleHandler(this.state.handler.name, JSON.stringify(this.state.handler))
-        .then(_ => this.goHandlersPage())
-        .catch(error => AlertUtils.addError('Could not update ThreeScaleHandlers.', error));
+        .then((_) => this.goHandlersPage())
+        .catch((error) => AlertUtils.addError('Could not update ThreeScaleHandlers.', error));
     }
   };
 
   // It invokes backend to delete a 3scale handler
   deleteHandler = () => {
     API.deleteThreeScaleHandler(this.state.handler.name)
-      .then(_ => this.goHandlersPage())
-      .catch(error => AlertUtils.addError('Could not delete ThreeScaleHandlers.', error));
+      .then((_) => this.goHandlersPage())
+      .catch((error) => AlertUtils.addError('Could not delete ThreeScaleHandlers.', error));
   };
 
   render() {
@@ -334,7 +329,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
                   id="handlerName"
                   value={this.state.handler.name}
                   placeholder="3scale Handler Name"
-                  onChange={value => this.changeHandler('handlerName', value)}
+                  onChange={(value) => this.changeHandler('handlerName', value)}
                   isDisabled={!this.state.isNew}
                 />
               </FormGroup>
@@ -348,7 +343,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
                   id="serviceId"
                   value={this.state.handler.serviceId}
                   placeholder="3scale ID for API calls"
-                  onChange={value => this.changeHandler('serviceId', value)}
+                  onChange={(value) => this.changeHandler('serviceId', value)}
                 />
               </FormGroup>
               <FormGroup
@@ -361,7 +356,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
                   id="systemUrl"
                   value={this.state.handler.systemUrl}
                   placeholder="3scale System Url for API"
-                  onChange={value => this.changeHandler('systemUrl', value)}
+                  onChange={(value) => this.changeHandler('systemUrl', value)}
                 />
               </FormGroup>
               <FormGroup
@@ -374,7 +369,7 @@ class ThreeScaleHandlerDetailsPage extends React.Component<RouteComponentProps<P
                   id="accessToken"
                   value={this.state.handler.accessToken}
                   placeholder="3scale access token"
-                  onChange={value => this.changeHandler('accessToken', value)}
+                  onChange={(value) => this.changeHandler('accessToken', value)}
                 />
               </FormGroup>
               <ActionGroup>

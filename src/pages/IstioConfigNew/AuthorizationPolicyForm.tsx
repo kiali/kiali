@@ -13,68 +13,79 @@ export type AuthorizationPolicyState = {
   workloadSelector: string;
   action: string;
   rules: Rule[];
-};
-
-type State = {
   // Used to identify DENY_ALL, ALLOW_ALL or RULES
   rulesForm: string;
   addWorkloadSelector: boolean;
   workloadSelectorValid: boolean;
-  workloadSelectorLabels: string;
-  action: string;
-  rules: Rule[];
 };
 
-const DENY_ALL = 'DENY_ALL';
-const ALLOW_ALL = 'ALLOW_ALL';
-const RULES = 'RULES';
-const ALLOW = 'ALLOW';
-const DENY = 'DENY';
+export const AUTHORIZACION_POLICY = 'AuthorizationPolicy';
+export const AUTHORIZATION_POLICIES = 'authorizationpolicies';
+export const DENY_ALL = 'DENY_ALL';
+export const ALLOW_ALL = 'ALLOW_ALL';
+export const RULES = 'RULES';
+export const ALLOW = 'ALLOW';
+export const DENY = 'DENY';
 
 const HELPER_TEXT = {
   DENY_ALL: 'Denies all requests to workloads in given namespace(s)',
   ALLOW_ALL: 'Allows all requests to workloads in given namespace(s)',
-  RULES: 'Builds an Authorization Policy based on Rules'
+  RULES: 'Builds an Authorization Policy based on Rules',
 };
 
 const rulesFormValues = [DENY_ALL, ALLOW_ALL, RULES];
 const actions = [ALLOW, DENY];
 
-export const INIT_AUTHORIZATION_POLICY = (): AuthorizationPolicyState => ({
-  policy: DENY_ALL,
+export const initAuthorizationPolicy = (): AuthorizationPolicyState => ({
+  policy: DENY,
   workloadSelector: '',
   action: ALLOW,
-  rules: []
+  rules: [],
+  rulesForm: DENY_ALL,
+  addWorkloadSelector: false,
+  workloadSelectorValid: false,
 });
 
-class AuthorizationPolicyForm extends React.Component<Props, State> {
+export const isAuthorizationPolicyStateValid = (ap: AuthorizationPolicyState): boolean => {
+  const workloadSelectorRule = ap.addWorkloadSelector ? ap.workloadSelectorValid : true;
+  const denyRule = ap.action === DENY ? ap.rules.length > 0 : true;
+
+  return workloadSelectorRule && denyRule;
+};
+
+class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicyState> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      rulesForm: this.props.authorizationPolicy.policy,
-      addWorkloadSelector: false,
-      workloadSelectorValid: false,
-      workloadSelectorLabels: this.props.authorizationPolicy.workloadSelector,
-      action: this.props.authorizationPolicy.action,
-      rules: []
-    };
+    this.state = initAuthorizationPolicy();
   }
 
   componentDidMount() {
     this.setState({
-      rulesForm: this.props.authorizationPolicy.policy,
-      addWorkloadSelector: false,
-      workloadSelectorValid: false,
-      workloadSelectorLabels: this.props.authorizationPolicy.workloadSelector,
+      policy: this.props.authorizationPolicy.policy,
+      workloadSelector: this.props.authorizationPolicy.workloadSelector,
       action: this.props.authorizationPolicy.action,
-      rules: []
+      rules: [],
+      rulesForm: this.props.authorizationPolicy.rulesForm,
+      addWorkloadSelector: this.props.authorizationPolicy.addWorkloadSelector,
+      workloadSelectorValid: this.props.authorizationPolicy.workloadSelectorValid,
     });
   }
 
   onRulesFormChange = (value, _) => {
     this.setState(
       {
-        rulesForm: value
+        rulesForm: value,
+      },
+      () => this.onAuthorizationChange()
+    );
+  };
+
+  onChangeWorkloadSelector = () => {
+    this.setState(
+      (prevState) => {
+        return {
+          addWorkloadSelector: !prevState.addWorkloadSelector,
+        };
       },
       () => this.onAuthorizationChange()
     );
@@ -82,10 +93,13 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
 
   addWorkloadLabels = (value: string, _) => {
     if (value.length === 0) {
-      this.setState({
-        workloadSelectorValid: false,
-        workloadSelectorLabels: ''
-      });
+      this.setState(
+        {
+          workloadSelectorValid: false,
+          workloadSelector: '',
+        },
+        () => this.onAuthorizationChange()
+      );
       return;
     }
     value = value.trim();
@@ -111,7 +125,7 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
     this.setState(
       {
         workloadSelectorValid: isValid,
-        workloadSelectorLabels: value
+        workloadSelector: value,
       },
       () => this.onAuthorizationChange()
     );
@@ -120,7 +134,7 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
   onActionChange = (value, _) => {
     this.setState(
       {
-        action: value
+        action: value,
       },
       () => this.onAuthorizationChange()
     );
@@ -128,10 +142,10 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
 
   onAddRule = (rule: Rule) => {
     this.setState(
-      prevState => {
+      (prevState) => {
         prevState.rules.push(rule);
         return {
-          rules: prevState.rules
+          rules: prevState.rules,
         };
       },
       () => this.onAuthorizationChange()
@@ -140,10 +154,10 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
 
   onRemoveRule = (index: number) => {
     this.setState(
-      prevState => {
+      (prevState) => {
         prevState.rules.splice(index, 1);
         return {
-          rules: prevState.rules
+          rules: prevState.rules,
         };
       },
       () => this.onAuthorizationChange()
@@ -151,13 +165,7 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
   };
 
   onAuthorizationChange = () => {
-    const authorizationPolicy: AuthorizationPolicyState = {
-      policy: this.state.rulesForm,
-      workloadSelector: this.state.workloadSelectorLabels,
-      action: this.state.action,
-      rules: this.state.rules
-    };
-    this.props.onChange(authorizationPolicy);
+    this.props.onChange(this.state);
   };
 
   render() {
@@ -177,11 +185,7 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
               label={' '}
               labelOff={' '}
               isChecked={this.state.addWorkloadSelector}
-              onChange={() => {
-                this.setState(prevState => ({
-                  addWorkloadSelector: !prevState.addWorkloadSelector
-                }));
-              }}
+              onChange={this.onChangeWorkloadSelector}
             />
           </FormGroup>
         )}
@@ -197,7 +201,7 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
               id="gwHosts"
               name="gwHosts"
               isDisabled={!this.state.addWorkloadSelector}
-              value={this.state.workloadSelectorLabels}
+              value={this.state.workloadSelector}
               onChange={this.addWorkloadLabels}
               isValid={this.state.workloadSelectorValid}
             />
@@ -213,7 +217,9 @@ class AuthorizationPolicyForm extends React.Component<Props, State> {
           </FormGroup>
         )}
         {this.state.rulesForm === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
-        {this.state.rulesForm === RULES && <RuleList ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />}
+        {this.state.rulesForm === RULES && (
+          <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
+        )}
       </>
     );
   }

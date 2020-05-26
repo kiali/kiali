@@ -1,26 +1,26 @@
-import { isServerHostValid, mergeJsonPatch } from '../IstioConfigUtils';
+import { isServerHostValid, isValidUrl, mergeJsonPatch } from '../IstioConfigUtils';
 
 describe('Validate JSON Patchs', () => {
   const gateway: object = {
     kind: 'Gateway',
     namespace: {
-      name: 'bookinfo'
+      name: 'bookinfo',
     },
     spec: {
       selector: {
-        istio: 'ingressgateway'
+        istio: 'ingressgateway',
       },
       servers: [
         {
           port: {
             number: 80,
             name: 'http',
-            protocol: 'HTTP'
+            protocol: 'HTTP',
           },
-          hosts: ['*']
-        }
-      ]
-    }
+          hosts: ['*'],
+        },
+      ],
+    },
   };
 
   const gatewayModified: object = {
@@ -28,19 +28,19 @@ describe('Validate JSON Patchs', () => {
     kind: 'Gateway',
     spec: {
       selector: {
-        app: 'myapp'
+        app: 'myapp',
       },
       servers: [
         {
           port: {
             number: 80,
             name: 'http',
-            protocol: 'HTTP'
+            protocol: 'HTTP',
           },
-          hosts: ['*']
-        }
-      ]
-    }
+          hosts: ['*'],
+        },
+      ],
+    },
   };
 
   it('Basic Test', () => {
@@ -56,29 +56,42 @@ describe('Validate JSON Patchs', () => {
 
 describe('Validate Gateway/Sidecar Server Host ', () => {
   it('No Namespace prefix', () => {
-    expect(isServerHostValid('*')).toBeTruthy();
-    expect(isServerHostValid('productpage')).toBeFalsy();
-    expect(isServerHostValid('productpage.example.com')).toBeTruthy();
-    expect(isServerHostValid('*.example.com')).toBeTruthy();
+    expect(isServerHostValid('*', false)).toBeTruthy();
+    expect(isServerHostValid('*', true)).toBeFalsy();
+    expect(isServerHostValid('productpage', false)).toBeFalsy();
+    expect(isServerHostValid('productpage.example.com', false)).toBeTruthy();
+    expect(isServerHostValid('*.example.com', false)).toBeTruthy();
   });
 
   it('Namespace prefix', () => {
-    expect(isServerHostValid('bookinfo/*')).toBeTruthy();
-    expect(isServerHostValid('*/*')).toBeTruthy();
-    expect(isServerHostValid('./*')).toBeTruthy();
-    expect(isServerHostValid('bookinfo/productpage')).toBeFalsy();
-    expect(isServerHostValid('*/productpage')).toBeFalsy();
-    expect(isServerHostValid('./productpage')).toBeFalsy();
-    expect(isServerHostValid('bookinfo/productpage.example.com')).toBeTruthy();
-    expect(isServerHostValid('*/productpage.example.com')).toBeTruthy();
-    expect(isServerHostValid('./productpage.example.com')).toBeTruthy();
-    expect(isServerHostValid('bookinfo/*.example.com')).toBeTruthy();
-    expect(isServerHostValid('*/*.example.com')).toBeTruthy();
-    expect(isServerHostValid('./*.example.com')).toBeTruthy();
+    expect(isServerHostValid('bookinfo/*', true)).toBeTruthy();
+    expect(isServerHostValid('*/*', true)).toBeTruthy();
+    expect(isServerHostValid('./*', true)).toBeTruthy();
+    expect(isServerHostValid('bookinfo/productpage', true)).toBeFalsy();
+    expect(isServerHostValid('*/productpage', true)).toBeFalsy();
+    expect(isServerHostValid('./productpage', true)).toBeFalsy();
+    expect(isServerHostValid('bookinfo/productpage.example.com', true)).toBeTruthy();
+    expect(isServerHostValid('*/productpage.example.com', true)).toBeTruthy();
+    expect(isServerHostValid('./productpage.example.com', true)).toBeTruthy();
+    expect(isServerHostValid('bookinfo/*.example.com', true)).toBeTruthy();
+    expect(isServerHostValid('*/*.example.com', true)).toBeTruthy();
+    expect(isServerHostValid('./*.example.com', true)).toBeTruthy();
   });
 
   it('Catch bad urls', () => {
-    expect(isServerHostValid('bookinfo//reviews')).toBeFalsy();
-    expect(isServerHostValid('bookinf*/reviews')).toBeFalsy();
+    expect(isServerHostValid('bookinfo//reviews', true)).toBeFalsy();
+    expect(isServerHostValid('bookinf*/reviews', true)).toBeFalsy();
+  });
+});
+
+describe('Validate bad urls', () => {
+  it('Good urls', () => {
+    expect(isValidUrl('http://www.googleapis.com/oauth2/v1/certs')).toBeTruthy();
+    expect(isValidUrl('https://www.googleapis.com/oauth2/v1/certs')).toBeTruthy();
+  });
+
+  it('Bad urls', () => {
+    expect(isValidUrl('ramdom')).toBeFalsy();
+    expect(isValidUrl('123test')).toBeFalsy();
   });
 });

@@ -73,9 +73,20 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
 
 const nsRegexp = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.)+[a-zA-Z]{2,63}$)/;
+const ipRegexp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
+
+// Gateway hosts have namespace/dnsName with namespace optional
+export const isGatewayHostValid = (gatewayHost: string): boolean => {
+  return isServerHostValid(gatewayHost, false);
+};
+
+// Sidecar host have namespace/dnsName with both namespace/dnsName mandatory
+export const isSidecarHostValid = (sidecarHost: string): boolean => {
+  return isServerHostValid(sidecarHost, true);
+};
 
 // Used to check if Sidecar and Gateway host expressions are valid
-export const isServerHostValid = (serverHost: string): boolean => {
+export const isServerHostValid = (serverHost: string, nsMandatory: boolean): boolean => {
   if (serverHost.length === 0) {
     return false;
   }
@@ -85,6 +96,11 @@ export const isServerHostValid = (serverHost: string): boolean => {
   if (parts.length > 2) {
     return false;
   }
+  // Force that namespace/dnsName are present
+  if (nsMandatory && parts.length < 2) {
+    return false;
+  }
+
   // parts[0] is a dns
   let dnsValid = true;
   let hostValid = true;
@@ -105,4 +121,17 @@ export const isServerHostValid = (serverHost: string): boolean => {
     hostValid = host.search(hostRegexp) === 0;
   }
   return dnsValid && hostValid;
+};
+
+export const isValidIp = (ip: string): boolean => {
+  return ipRegexp.test(ip);
+};
+
+export const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+  } catch (_) {
+    return false;
+  }
+  return true;
 };
