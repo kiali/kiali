@@ -210,45 +210,17 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (s
 }
 
 func (in TLSService) finalStatus(drStatus string, paStatus string) string {
-	var status string
-	if in.hasAutoMTLSEnabled() {
-		status = finalStatusAutoMTLSEnabled(drStatus, paStatus)
-	} else {
-		status = finalStatusAutoMTLSDisabled(drStatus, paStatus)
-	}
-	return status
-}
-
-func finalStatusAutoMTLSEnabled(drStatus, paStatus string) string {
 	finalStatus := MTLSPartiallyEnabled
+	autoMtls := in.hasAutoMTLSEnabled()
 
-	if paStatus == "STRICT" || paStatus == "PERMISSIVE" {
+	mtlsEnabled := drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" || (drStatus == "" && autoMtls)
+	mtlsDisabled := drStatus == "DISABLE" || (drStatus == "" && autoMtls)
+
+	if paStatus == "STRICT" && mtlsEnabled {
 		finalStatus = MTLSEnabled
-
-		if drStatus == "SIMPLE" || drStatus == "DISABLE" {
-			finalStatus = MTLSDisabled
-		}
-	} else if paStatus == "DISABLE" {
+	} else if paStatus == "DISABLE" && mtlsDisabled {
 		finalStatus = MTLSDisabled
-
-		if drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" || drStatus == "" {
-			finalStatus = MTLSPartiallyEnabled
-		}
 	} else if paStatus == "" && drStatus == "" {
-		finalStatus = MTLSNotEnabled
-	}
-
-	return finalStatus
-}
-
-func finalStatusAutoMTLSDisabled(drStatus, paStatus string) string {
-	finalStatus := MTLSPartiallyEnabled
-
-	if paStatus == "STRICT" && drStatus == "ISTIO_MUTUAL" {
-		finalStatus = MTLSEnabled
-	} else if (paStatus == "DISABLE" || paStatus == "PERMISSIVE") && (drStatus == "DISABLE" || drStatus == "SIMPLE") {
-		finalStatus = MTLSDisabled
-	} else if drStatus == "" && paStatus == "" {
 		finalStatus = MTLSNotEnabled
 	}
 
