@@ -217,8 +217,14 @@ func HasWorkloadSelector(s kubernetes.IstioObject) bool {
 	return s.HasWorkloadSelectorLabels()
 }
 
-func getLabels(first, second string, s kubernetes.IstioObject) map[string]string {
-	ws, found := s.GetSpec()[first]
+// getLabels return the labels of the workloads that the rule be applied to.
+// There are two possible ways to define those labels:
+// 1. selector: matchLabels: app: productpage
+// 2. workloadSelector: labels: app: productpage
+// selectorName param: name of the first key (selector, workloadSelector)
+// labelsName param: name of the second key (matchLabels, labels)
+func getLabels(selectorName, labelsName string, s kubernetes.IstioObject) map[string]string {
+	ws, found := s.GetSpec()[selectorName]
 	if !found {
 		return nil
 	}
@@ -228,7 +234,7 @@ func getLabels(first, second string, s kubernetes.IstioObject) map[string]string
 		return nil
 	}
 
-	labels, found := wsCasted[second]
+	labels, found := wsCasted[labelsName]
 	if !found {
 		return nil
 	}
