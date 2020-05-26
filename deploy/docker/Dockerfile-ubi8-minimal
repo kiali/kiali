@@ -7,15 +7,16 @@ ENV KIALI_HOME=/opt/kiali \
 
 WORKDIR $KIALI_HOME
 
+RUN microdnf install -y shadow-utils && \
+    microdnf clean all && \
+    rm -rf /var/cache/yum && \
+    adduser kiali
+
 COPY kiali $KIALI_HOME/
 
 ADD console $KIALI_HOME/console/
 
-RUN microdnf install -y shadow-utils && \
-    microdnf clean all && \
-    rm -rf /var/cache/yum && \
-    adduser kiali && \
-    chown -R kiali:kiali $KIALI_HOME/console && \
+RUN chown -R kiali:kiali $KIALI_HOME/console && \
     chmod -R g=u $KIALI_HOME/console
 
 USER kiali
