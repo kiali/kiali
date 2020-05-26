@@ -399,6 +399,9 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           },
           "fetchDataForNamespaces": [Function],
           "fetchDataForNode": [Function],
+          "fetchForApp": [Function],
+          "fetchForService": [Function],
+          "fetchForWorkload": [Function],
           "fetchGraphData": [Function],
           "graphDuration": 0,
           "graphElements": Object {

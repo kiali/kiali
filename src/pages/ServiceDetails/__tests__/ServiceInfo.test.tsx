@@ -1,44 +1,22 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
-import { shallowToJson } from 'enzyme-to-json';
-
-import * as ActualAPI from '../../../services/Api';
 import ServiceInfo from '../ServiceInfo';
-import GraphDataSource from '../../../services/GraphDataSource';
-
-jest.mock('../../../services/Api');
-
-const API = require('../../../services/Api') as typeof ActualAPI;
+import MounterMocker from 'services/__mocks__/MounterMocker';
+import { SERVICE_DETAILS } from 'services/__mockData__/getServiceDetail';
 
 describe('#ServiceInfo render correctly with data', () => {
-  it('should render serviceInfo with data', () => {
-    return API.getServiceDetail('istio-system', 'reviews', true).then(data => {
-      const miniGraphDS = new GraphDataSource();
-      const wrapper = shallow(
-        <ServiceInfo
-          namespace="istio-system"
-          service="reviews"
-          serviceDetails={data}
-          gateways={[]}
-          validations={data.validations}
-          onRefresh={jest.fn()}
-          threeScaleInfo={{
-            enabled: false,
-            permissions: {
-              create: false,
-              update: false,
-              delete: false
-            }
-          }}
-          miniGraphDataSource={miniGraphDS}
-        />
-      );
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('ServiceInfoDescription').length === 1).toBeTruthy();
-      expect(wrapper.find('InfoRoutes').length === 1).toBeFalsy();
-      expect(wrapper.find('ServiceInfoVirtualServices').length === 1).toBeTruthy();
-      expect(wrapper.find('ServiceInfoDestinationRules').length === 1).toBeTruthy();
-    });
+  it('should render serviceInfo with data', (done) => {
+    new MounterMocker()
+      .addMock('getServiceDetail', SERVICE_DETAILS, false)
+      .mountWithStore(<ServiceInfo namespace="istio-system" service="reviews" duration={600} />)
+      .run(done, (wrapper) => {
+        expect(wrapper.find('ServiceInfoDescription')).toHaveLength(1);
+        expect(wrapper.find('div#name').text()).toContain('reviews');
+        expect(wrapper.find('div#endpoints').find('StackItem')).toHaveLength(3);
+        const tabs = wrapper.find('div#service-tabs').find('li');
+        expect(tabs).toHaveLength(3);
+        expect(tabs.at(0).text().trim()).toEqual('Workloads (0)');
+        expect(tabs.at(1).text().trim()).toEqual('Virtual Services (1)');
+        expect(tabs.at(2).text().trim()).toEqual('Destination Rules (1)');
+      });
   });
 });
