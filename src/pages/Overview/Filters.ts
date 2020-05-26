@@ -1,5 +1,5 @@
 import {
-  ActiveFilter,
+  ActiveFiltersInfo,
   FILTER_ACTION_APPEND,
   FilterTypes,
   FilterTypeWithFilter,
@@ -18,8 +18,8 @@ export const nameFilter: FilterTypeWithFilter<NamespaceInfo> = {
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
-  filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
-    return namespaces.filter(ns => filters.some(f => ns.name.includes(f.value)));
+  filter: (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
+    return namespaces.filter(ns => filters.filters.some(f => ns.name.includes(f.value)));
   }
 };
 
@@ -43,8 +43,10 @@ export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {
   filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
-  filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
-    return namespaces.filter(ns => ns.tlsStatus && filters.some(f => statusMap.get(ns.tlsStatus!.status) === f.value));
+  filter: (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
+    return namespaces.filter(
+      ns => ns.tlsStatus && filters.filters.some(f => statusMap.get(ns.tlsStatus!.status) === f.value)
+    );
   }
 };
 
@@ -56,9 +58,9 @@ export const labelFilter: FilterTypeWithFilter<NamespaceInfo> = {
   customComponent: LabelFilters,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
-  filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
+  filter: (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
     return namespaces.filter(ns =>
-      filters.some(f => {
+      filters.filters.some(f => {
         if (f.value.includes(':')) {
           const [k, v] = f.value.split(':');
           return v.split(',').some(val => !!ns.labels && k in ns.labels && ns.labels[k].startsWith(val));
@@ -76,8 +78,8 @@ const healthValues: FilterValue[] = [
   { id: HEALTHY.name, title: HEALTHY.name }
 ];
 
-const summarizeHealthFilters = (healthFilters: ActiveFilter[]) => {
-  if (healthFilters.length === 0) {
+const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
+  if (healthFilters.filters.length === 0) {
     return {
       noFilter: true,
       showInError: true,
@@ -88,7 +90,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFilter[]) => {
   let showInError = false,
     showInWarning = false,
     showInSuccess = false;
-  healthFilters.forEach(f => {
+  healthFilters.filters.forEach(f => {
     switch (f.value) {
       case FAILURE.name:
         showInError = true;
@@ -117,7 +119,7 @@ export const healthFilter: FilterTypeWithFilter<NamespaceInfo> = {
   filterType: FilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
-  filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
+  filter: (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
     const { showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
     return namespaces.filter(ns => {
       return (
@@ -138,13 +140,13 @@ export const availableFilters: FilterTypeWithFilter<NamespaceInfo>[] = [
   labelFilter
 ];
 
-export const filterBy = (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
+export const filterBy = (namespaces: NamespaceInfo[], filters: ActiveFiltersInfo) => {
   let filteredNamespaces: NamespaceInfo[] = namespaces;
 
   availableFilters.forEach(availableFilter => {
-    const activeFilters = filters.filter(af => af.category === availableFilter.title);
+    const activeFilters = filters.filters.filter(af => af.category === availableFilter.title);
     if (activeFilters.length) {
-      filteredNamespaces = availableFilter.filter(filteredNamespaces, activeFilters);
+      filteredNamespaces = availableFilter.filter(filteredNamespaces, { filters: activeFilters, op: filters.op });
     }
   });
 

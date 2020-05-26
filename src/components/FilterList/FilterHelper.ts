@@ -1,6 +1,13 @@
 import history, { URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
-import { ActiveFilter, FilterType } from '../../types/Filters';
+import {
+  ActiveFilter,
+  ActiveFiltersInfo,
+  DEFAULT_LABEL_OPERATION,
+  FilterType,
+  ID_LABEL_OPERATION,
+  LabelOperation
+} from '../../types/Filters';
 import { SortField } from '../../types/SortFilters';
 import * as AlertUtils from '../../utils/AlertUtils';
 
@@ -12,7 +19,7 @@ export const handleError = (error: string) => {
   AlertUtils.add(error);
 };
 
-export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFilter[] => {
+export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo => {
   const urlParams = new URLSearchParams(history.location.search);
   const activeFilters: ActiveFilter[] = [];
   filterTypes.forEach(filter => {
@@ -23,16 +30,22 @@ export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFilter[] => 
       });
     });
   });
-  return activeFilters;
+
+  return {
+    filters: activeFilters,
+    op: (urlParams.get(ID_LABEL_OPERATION) as LabelOperation) || DEFAULT_LABEL_OPERATION
+  };
 };
 
-export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter[]): ActiveFilter[] => {
+export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFiltersInfo): ActiveFiltersInfo => {
   const urlParams = new URLSearchParams(history.location.search);
   filterTypes.forEach(type => {
     urlParams.delete(type.id);
   });
+  urlParams.delete(ID_LABEL_OPERATION);
   const cleanFilters: ActiveFilter[] = [];
-  filters.forEach(activeFilter => {
+
+  filters.filters.forEach(activeFilter => {
     const filterType = filterTypes.find(filter => filter.title === activeFilter.category);
     if (!filterType) {
       return;
@@ -40,15 +53,16 @@ export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter
     cleanFilters.push(activeFilter);
     urlParams.append(filterType.id, activeFilter.value);
   });
+  urlParams.append(ID_LABEL_OPERATION, filters.op);
   // Resetting pagination when filters change
   history.push(history.location.pathname + '?' + urlParams.toString());
-  return cleanFilters;
+  return { filters: cleanFilters, op: filters.op || DEFAULT_LABEL_OPERATION };
 };
 
-export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter[]): boolean => {
+export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFiltersInfo): boolean => {
   // This can probably be improved and/or simplified?
   const fromFilters: Map<string, string[]> = new Map<string, string[]>();
-  filters.forEach(activeFilter => {
+  filters.filters.forEach(activeFilter => {
     const existingValue = fromFilters.get(activeFilter.category) || [];
     fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
   });

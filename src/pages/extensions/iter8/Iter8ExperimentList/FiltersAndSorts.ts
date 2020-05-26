@@ -1,4 +1,4 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../../types/Filters';
+import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../../types/Filters';
 import { SortField } from '../../../../types/SortFilters';
 import { Iter8Experiment } from '../../../../types/Iter8';
 import { TextInputTypes } from '@patternfly/react-core';
@@ -112,7 +112,7 @@ const filterByPhase = (items: Iter8Experiment[], names: string[]): Iter8Experime
   });
 };
 
-export const filterBy = (iter8Experiment: Iter8Experiment[], filters: ActiveFilter[]): Iter8Experiment[] => {
+export const filterBy = (iter8Experiment: Iter8Experiment[], filters: ActiveFiltersInfo): Iter8Experiment[] => {
   let ret = iter8Experiment;
 
   const targetServiceSelected = getFilterSelectedValues(targetServiceFilter, filters);

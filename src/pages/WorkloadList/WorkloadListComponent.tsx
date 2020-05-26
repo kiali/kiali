@@ -5,7 +5,7 @@ import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFiltersInfo } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { SortField } from '../../types/SortFilters';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
@@ -82,7 +82,7 @@ class WorkloadListComponent extends FilterComponent.Component<
   updateListItems() {
     this.promises.cancelAll();
 
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
     if (namespacesSelected.length === 0) {
@@ -124,7 +124,7 @@ class WorkloadListComponent extends FilterComponent.Component<
     return [];
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFilter[]) {
+  fetchWorkloads(namespaces: string[], filters: ActiveFiltersInfo) {
     const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(namespace));
     this.promises
       .registerAll('workloads', workloadsConfigPromises)

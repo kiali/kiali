@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFiltersInfo } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as ServiceListFilters from './FiltersAndSorts';
@@ -85,7 +85,7 @@ class ServiceListComponent extends FilterComponent.Component<
   updateListItems() {
     this.promises.cancelAll();
 
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
     if (namespacesSelected.length === 0) {
@@ -120,7 +120,7 @@ class ServiceListComponent extends FilterComponent.Component<
     return [];
   }
 
-  fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
+  fetchServices(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
     const servicesPromises = namespaces.map(ns => API.getServices(ns));
 
     this.promises

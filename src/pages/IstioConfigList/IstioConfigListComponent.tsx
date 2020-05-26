@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFiltersInfo } from '../../types/Filters';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import {
@@ -87,7 +87,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
   updateListItems() {
     this.promises.cancelAll();
 
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
       value => dicIstioType[value]

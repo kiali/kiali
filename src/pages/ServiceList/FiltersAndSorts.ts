@@ -1,4 +1,4 @@
-import { ActiveFilter, FilterType, FILTER_ACTION_APPEND, LabelFilter } from '../../types/Filters';
+import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND, LabelFilter } from '../../types/Filters';
 import { getRequestErrorsStatus, WithServiceHealth, hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
@@ -150,7 +150,7 @@ const filterByName = (items: ServiceListItem[], names: string[]): ServiceListIte
 
 export const filterBy = (
   items: ServiceListItem[],
-  filters: ActiveFilter[]
+  filters: ActiveFiltersInfo
 ): Promise<ServiceListItem[]> | ServiceListItem[] => {
   let ret = items;
   const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
@@ -165,7 +165,7 @@ export const filterBy = (
 
   const serviceFilterSelected = getFilterSelectedValues(LabelFilter, filters);
   if (serviceFilterSelected.length > 0) {
-    ret = filterByLabel(ret, serviceFilterSelected) as ServiceListItem[];
+    ret = filterByLabel(ret, serviceFilterSelected, filters.op) as ServiceListItem[];
   }
   // We may have to perform a second round of filtering, using data fetched asynchronously (health)
   // If not, exit fast

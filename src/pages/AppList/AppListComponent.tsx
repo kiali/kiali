@@ -6,7 +6,7 @@ import { AppListItem } from '../../types/AppList';
 import * as AppListFilters from './FiltersAndSorts';
 import * as AppListClass from './AppListClass';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFiltersInfo } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { SortField } from '../../types/SortFilters';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
@@ -78,7 +78,7 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
   updateListItems() {
     this.promises.cancelAll();
 
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
     if (namespacesSelected.length === 0) {
@@ -98,7 +98,7 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
     }
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
+  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, rateInterval: number) {
     const appsPromises = namespaces.map(namespace => API.getApps(namespace));
     this.promises
       .registerAll('apps', appsPromises)

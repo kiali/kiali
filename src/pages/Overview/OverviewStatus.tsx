@@ -3,7 +3,7 @@ import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-
 import { Link } from 'react-router-dom';
 import { Status } from '../../types/Health';
 import { Paths } from '../../config';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../types/Filters';
 import { healthFilter } from '../../components/Filters/CommonFilters';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { createIcon } from '../../components/Health/Helper';
@@ -27,7 +27,7 @@ class OverviewStatus extends React.Component<Props, {}> {
         value: this.props.status.name
       }
     ];
-    FilterSelected.setSelected(filters);
+    FilterSelected.setSelected({ filters: filters, op: DEFAULT_LABEL_OPERATION });
   };
 
   render() {

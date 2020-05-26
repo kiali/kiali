@@ -232,7 +232,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (item: SortResourc
           <Badge
             key={`labelbadge_${key}_${value}_${item.name}`}
             isRead={true}
-            style={{ backgroundColor: labelActivate(filters, key, value) ? PfColors.Blue200 : undefined }}
+            style={{ backgroundColor: labelActivate(filters.filters, key, value) ? PfColors.Blue200 : undefined }}
           >
             {key}: {value}
           </Badge>

@@ -9,7 +9,12 @@ interface LabelFiltersProps {
   duplicatesFilter: (value: string) => boolean;
 }
 
-export class LabelFilters extends React.Component<LabelFiltersProps> {
+export class LabelFilters extends React.Component<LabelFiltersProps, { sortOperation: string }> {
+  constructor(props) {
+    super(props);
+    this.state = { sortOperation: 'or' };
+  }
+
   onkeyPress = (e: any) => {
     if (e.key === 'Enter') {
       if (this.props.value && this.props.value.length > 0) {

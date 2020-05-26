@@ -3,7 +3,7 @@ import {
   FilterType,
   FILTER_ACTION_UPDATE,
   FilterValue,
-  ActiveFilter,
+  ActiveFiltersInfo,
   FilterTypes
 } from '../../types/Filters';
 import { HEALTHY, DEGRADED, FAILURE, NA, Health } from '../../types/Health';
@@ -55,15 +55,15 @@ export const healthFilter: FilterType = {
   ]
 };
 
-export const getFilterSelectedValues = (filter: FilterType, activeFilters: ActiveFilter[]): string[] => {
-  const selected: string[] = activeFilters
+export const getFilterSelectedValues = (filter: FilterType, activeFilters: ActiveFiltersInfo): string[] => {
+  const selected: string[] = activeFilters.filters
     .filter(activeFilter => activeFilter.category === filter.title)
     .map(activeFilter => activeFilter.value);
   return removeDuplicatesArray(selected);
 };
 
-export const getPresenceFilterValue = (filter: FilterType, activeFilters: ActiveFilter[]): boolean | undefined => {
-  const presenceFilters = activeFilters.filter(activeFilter => activeFilter.category === filter.title);
+export const getPresenceFilterValue = (filter: FilterType, activeFilters: ActiveFiltersInfo): boolean | undefined => {
+  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.category === filter.title);
   if (presenceFilters.length > 0) {
     return presenceFilters[0].value === 'Present';
   }

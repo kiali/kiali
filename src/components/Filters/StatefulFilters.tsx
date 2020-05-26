@@ -15,7 +15,16 @@ import {
   ToolbarItem,
   ToolbarSection
 } from '@patternfly/react-core';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterTypes } from '../../types/Filters';
+import {
+  ActiveFilter,
+  ActiveFiltersInfo,
+  DEFAULT_LABEL_OPERATION,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterTypes,
+  LabelFilter,
+  LabelOperation
+} from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
@@ -31,26 +40,29 @@ export interface StatefulFiltersProps {
 export interface StatefulFiltersState {
   filterTypes: FilterType[];
   currentFilterType: FilterType;
-  activeFilters: ActiveFilter[];
+  activeFilters: ActiveFiltersInfo;
   currentValue: string;
   isExpanded: boolean;
 }
 
 export class FilterSelected {
   static selectedFilters: ActiveFilter[] | undefined = undefined;
+  static opSelected: LabelOperation;
 
-  static setSelected = (activeFilters: ActiveFilter[]) => {
-    FilterSelected.selectedFilters = activeFilters;
+  static setSelected = (activeFilters: ActiveFiltersInfo) => {
+    FilterSelected.selectedFilters = activeFilters.filters;
+    FilterSelected.opSelected = activeFilters.op;
   };
 
-  static getSelected = (): ActiveFilter[] => {
-    return FilterSelected.selectedFilters || [];
+  static getSelected = (): ActiveFiltersInfo => {
+    return { filters: FilterSelected.selectedFilters || [], op: FilterSelected.opSelected || 'or' };
   };
 
   static isInitialized = () => {
     return FilterSelected.selectedFilters !== undefined;
   };
 }
+
 const rightToolbar = style({
   marginLeft: 'auto'
 });
@@ -63,7 +75,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   constructor(props: StatefulFiltersProps) {
     super(props);
-
     let active = FilterSelected.getSelected();
     if (!FilterSelected.isInitialized()) {
       active = FilterHelper.getFiltersFromURL(this.props.initialFilters);
@@ -115,7 +126,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.promises.cancelAll();
   }
 
-  updateActiveFilters(activeFilters: ActiveFilter[]) {
+  updateActiveFilters(activeFilters: ActiveFiltersInfo) {
     const cleanFilters = FilterHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
     FilterSelected.setSelected(cleanFilters);
     this.setState({ activeFilters: cleanFilters });
@@ -129,16 +140,16 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       value: value
     };
 
-    const typeFilterPresent = activeFilters.filter(filter => filter.category === field.title).length > 0;
+    const typeFilterPresent = activeFilters.filters.filter(filter => filter.category === field.title).length > 0;
 
     if (field.action === FILTER_ACTION_UPDATE && typeFilterPresent) {
-      activeFilters.forEach(filter => {
+      activeFilters.filters.forEach(filter => {
         if (filter.category === field.title) {
           filter.value = value;
         }
       });
     } else {
-      activeFilters.push(activeFilter);
+      activeFilters.filters.push(activeFilter);
     }
 
     this.updateActiveFilters(activeFilters);
@@ -164,7 +175,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   filterValueSelected = (value: any) => {
     const { currentFilterType, currentValue } = this.state;
     const filterValue = currentFilterType.filterValues.filter(filter => filter.id === value)[0];
-
     if (
       filterValue &&
       filterValue.id !== currentValue &&
@@ -193,24 +203,24 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   };
 
   duplicatesFilter = (filterType: FilterType, filterValue: string): boolean => {
-    const filter = this.state.activeFilters.find(activeFilter => {
+    const filter = this.state.activeFilters.filters.find(activeFilter => {
       return filterValue === activeFilter.value && filterType.title === activeFilter.category;
     });
     return !!filter;
   };
 
   removeFilter = (category: string, value: string) => {
-    const { activeFilters } = this.state;
-    const index = activeFilters.findIndex(x => x.category === category && x.value === value);
+    const activeFilters = this.state.activeFilters;
+    const index = activeFilters.filters.findIndex(x => x.category === category && x.value === value);
 
     if (index > -1) {
-      const updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
-      this.updateActiveFilters(updated);
+      const updated = [...activeFilters.filters.slice(0, index), ...activeFilters.filters.slice(index + 1)];
+      this.updateActiveFilters({ filters: updated, op: activeFilters.op });
     }
   };
 
   clearFilters = () => {
-    this.updateActiveFilters([]);
+    this.updateActiveFilters({ filters: [], op: DEFAULT_LABEL_OPERATION });
   };
 
   renderInput() {
@@ -284,26 +294,28 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   renderChildren = () => {
     return (
-      <ToolbarGroup>
-        {Array.isArray(this.props.children) ? (
-          (this.props.children as Array<any>).map(
-            (child, index) =>
-              child && (
-                <ToolbarItem
-                  key={'toolbar_statefulFilters_' + index}
-                  className={classNames(
-                    'pf-u-mr-md',
-                    index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
-                  )}
-                >
-                  {child}
-                </ToolbarItem>
-              )
-          )
-        ) : (
-          <ToolbarItem>{this.props.children}</ToolbarItem>
-        )}
-      </ToolbarGroup>
+      this.props.children && (
+        <ToolbarGroup>
+          {Array.isArray(this.props.children) ? (
+            (this.props.children as Array<any>).map(
+              (child, index) =>
+                child && (
+                  <ToolbarItem
+                    key={'toolbar_statefulFilters_' + index}
+                    className={classNames(
+                      'pf-u-mr-md',
+                      index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
+                    )}
+                  >
+                    {child}
+                  </ToolbarItem>
+                )
+            )
+          ) : (
+            <ToolbarItem>{this.props.children}</ToolbarItem>
+          )}
+        </ToolbarGroup>
+      )
     );
   };
 
@@ -324,7 +336,6 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   render() {
     const { currentFilterType, activeFilters } = this.state;
-
     return (
       <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
         <ToolbarSection aria-label="ToolbarSection">
@@ -344,14 +355,33 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             </ToolbarItem>
           </ToolbarGroup>
           {this.renderChildren()}
+          {(this.state.activeFilters.filters.filter(f => f.category === LabelFilter.title).length > 0 ||
+            this.state.currentFilterType.filterType === FilterTypes.label) && (
+            <ToolbarGroup>
+              <ToolbarItem className={classNames('pf-u-mr-md')}>
+                <span className={classNames(paddingStyle)}>Label Operation</span>
+                <FormSelect
+                  value={activeFilters.op}
+                  onChange={value =>
+                    this.updateActiveFilters({ filters: this.state.activeFilters.filters, op: value as LabelOperation })
+                  }
+                  aria-label="filter_select_value"
+                  style={{ width: 'auto' }}
+                >
+                  <FormSelectOption key={'filter_or'} value={'or'} label={'or'} />
+                  <FormSelectOption key={'filter_and'} value={'and'} label={'and'} />
+                </FormSelect>
+              </ToolbarItem>
+            </ToolbarGroup>
+          )}
           {this.props.rightToolbar && this.renderRightToolbar()}
         </ToolbarSection>
-        {activeFilters && activeFilters.length > 0 && (
+        {activeFilters && activeFilters.filters.length > 0 && (
           <ToolbarSection aria-label="FiltersSection">
             <>{'Active Filters:'}</>
             <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
               <ChipGroup defaultIsOpen={true} withToolbar={true}>
-                {Object.entries(this.groupBy(activeFilters, 'category')).map(([category, item]) => (
+                {Object.entries(this.groupBy(activeFilters.filters, 'category')).map(([category, item]) => (
                   <ChipGroupToolbarItem key={category} categoryName={category}>
                     {(item as Array<ActiveFilter>).map(subItem => (
                       <Chip

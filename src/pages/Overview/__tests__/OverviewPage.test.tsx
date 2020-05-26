@@ -11,6 +11,7 @@ import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
 import { MTLSStatuses } from '../../../types/TLSStatus';
+import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -76,7 +77,7 @@ describe('Overview page', () => {
   });
 
   it('renders all without filters', done => {
-    FilterSelected.setSelected([]);
+    FilterSelected.setSelected({ filters: [], op: DEFAULT_LABEL_OPERATION });
     Promise.all([
       mockNamespaces(['a', 'b', 'c']),
       mockNamespaceHealth({
@@ -97,12 +98,15 @@ describe('Overview page', () => {
   });
 
   it('filters failures match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Health',
-        value: 'Failure'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Health',
+          value: 'Failure'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['a']),
       mockNamespaceHealth({
@@ -125,12 +129,15 @@ describe('Overview page', () => {
   });
 
   it('filters failures no match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Health',
-        value: 'Failure'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Health',
+          value: 'Failure'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['a']),
       mockNamespaceHealth({
@@ -153,16 +160,19 @@ describe('Overview page', () => {
   });
 
   it('multi-filters health match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Health',
-        value: 'Failure'
-      },
-      {
-        category: 'Health',
-        value: 'Degraded'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Health',
+          value: 'Failure'
+        },
+        {
+          category: 'Health',
+          value: 'Degraded'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['a']),
       mockNamespaceHealth({
@@ -182,16 +192,19 @@ describe('Overview page', () => {
   });
 
   it('multi-filters health no match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Health',
-        value: 'Failure'
-      },
-      {
-        category: 'Health',
-        value: 'Degraded'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Health',
+          value: 'Failure'
+        },
+        {
+          category: 'Health',
+          value: 'Degraded'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['a']),
       mockNamespaceHealth({
@@ -211,12 +224,15 @@ describe('Overview page', () => {
   });
 
   it('filters namespaces info name match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: 'bc'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Namespace',
+          value: 'bc'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth({
@@ -233,12 +249,15 @@ describe('Overview page', () => {
   });
 
   it('filters namespaces info name no match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: 'yz'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Namespace',
+          value: 'yz'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     mockNamespaces(['abc', 'bce', 'ced']).then(() => {
       mounted!.update();
       expect(mounted!.find('Card')).toHaveLength(0);
@@ -248,16 +267,19 @@ describe('Overview page', () => {
   });
 
   it('filters namespaces info name and health match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: 'bc'
-      },
-      {
-        category: 'Health',
-        value: 'Healthy'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Namespace',
+          value: 'bc'
+        },
+        {
+          category: 'Health',
+          value: 'Healthy'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth({
@@ -274,16 +296,19 @@ describe('Overview page', () => {
   });
 
   it('filters namespaces info name and health no match', done => {
-    FilterSelected.setSelected([
-      {
-        category: 'Name',
-        value: 'bc'
-      },
-      {
-        category: 'Health',
-        value: 'Healthy'
-      }
-    ]);
+    FilterSelected.setSelected({
+      filters: [
+        {
+          category: 'Name',
+          value: 'bc'
+        },
+        {
+          category: 'Health',
+          value: 'Healthy'
+        }
+      ],
+      op: DEFAULT_LABEL_OPERATION
+    });
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth({

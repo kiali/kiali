@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Paths } from '../../config';
 import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
-import { ActiveFilter } from '../../types/Filters';
+import { ActiveFiltersInfo, DEFAULT_LABEL_OPERATION } from '../../types/Filters';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { dicIstioType } from '../../types/IstioConfigList';
 
@@ -76,14 +76,14 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   }
 
   cleanFilters = () => {
-    FilterSelected.setSelected([]);
+    FilterSelected.setSelected({ filters: [], op: DEFAULT_LABEL_OPERATION });
   };
 
   updateTypeFilter = () => {
     this.cleanFilters();
     // When updateTypeFilter is called, selected filters are already updated with namespace. Just push additional type obj
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    activeFilters.push({
+    const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
+    activeFilters.filters.push({
       category: 'Istio Type',
       value: dicIstioType[this.state.istioType || '']
     });
