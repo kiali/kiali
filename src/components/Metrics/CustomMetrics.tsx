@@ -46,7 +46,7 @@ type Props = CustomMetricsProps & {
 };
 
 const displayFlex = style({
-  display: 'flex'
+  display: 'flex',
 });
 
 export class CustomMetrics extends React.Component<Props, MetricsState> {
@@ -61,18 +61,18 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay((changed) => this.setState({ spanOverlay: changed }));
   }
 
   initOptions(settings: MetricsSettings): DashboardQuery {
     const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
     const options: DashboardQuery = this.props.version
       ? {
-          labelsFilters: `${filters},${serverConfig.istioLabels.versionLabelName}:${this.props.version}`
+          labelsFilters: `${filters},${serverConfig.istioLabels.versionLabelName}:${this.props.version}`,
         }
       : {
           labelsFilters: filters,
-          additionalLabels: 'version:Version'
+          additionalLabels: 'version:Version',
         };
     MetricsHelper.settingsToOptions(settings, options);
     return options;
@@ -93,15 +93,15 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.state.timeRange, this.options);
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
-      .then(response => {
+      .then((response) => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings,
-          grafanaLinks: response.data.externalLinks
+          grafanaLinks: response.data.externalLinks,
         });
       })
-      .catch(error => {
+      .catch((error) => {
         AlertUtils.addError('Could not fetch custom dashboard.', error);
       });
   };
@@ -131,7 +131,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     if (dates && dates[0] && dates[1]) {
       const range: TimeRange = {
         from: dates[0].getTime(),
-        to: dates[1].getTime()
+        to: dates[1].getTime(),
       };
       storeBounds(range);
       this.onTimeFrameChanged(range);
@@ -182,8 +182,8 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   renderOptionsBar() {
     const hasHistograms =
       this.state.dashboard !== undefined &&
-      this.state.dashboard.charts.some(chart => {
-        return chart.metrics.some(m => m.labelSet.hasOwnProperty(statLabel));
+      this.state.dashboard.charts.some((chart) => {
+        return chart.metrics.some((m) => m.labelSet.hasOwnProperty(statLabel));
       });
     return (
       <Toolbar style={{ paddingBottom: 8 }}>
@@ -227,7 +227,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
+    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
   };
 };
 

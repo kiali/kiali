@@ -40,7 +40,7 @@ const tabIndex: { [tab: string]: number } = {
   info: 0,
   traffic: 1,
   metrics: 2,
-  traces: 3
+  traces: 3,
 };
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
@@ -48,7 +48,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     super(props);
     this.state = {
       currentTab: activeTab(tabName, defaultTab),
-      nbErrorTraces: 0
+      nbErrorTraces: 0,
     };
   }
 
@@ -70,10 +70,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   private fetchJaegerErrors = () => {
     if (this.props.jaegerInfo && this.props.jaegerInfo.integration) {
       API.getJaegerErrorTraces(this.props.match.params.namespace, this.props.match.params.service, this.props.duration)
-        .then(inError => {
+        .then((inError) => {
           this.setState({ nbErrorTraces: inError.data });
         })
-        .catch(error => {
+        .catch((error) => {
           AlertUtils.addError('Could not fetch Jaeger errors.', error);
         });
     }
@@ -165,7 +165,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
-          onSelect={tabValue => {
+          onSelect={(tabValue) => {
             this.setState({ currentTab: tabValue });
           }}
           tabMap={tabIndex}
@@ -184,7 +184,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState || undefined,
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

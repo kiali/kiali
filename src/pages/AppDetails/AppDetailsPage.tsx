@@ -36,7 +36,7 @@ const paramToTab: { [key: string]: number } = {
   info: 0,
   traffic: 1,
   in_metrics: 2,
-  out_metrics: 3
+  out_metrics: 3,
 };
 
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
@@ -63,8 +63,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private fetchApp = () => {
     API.getApp(this.props.match.params.namespace, this.props.match.params.app)
-      .then(details => this.setState({ app: details.data }))
-      .catch(error => AlertUtils.addError('Could not fetch App Details.', error));
+      .then((details) => this.setState({ app: details.data }))
+      .catch((error) => AlertUtils.addError('Could not fetch App Details.', error));
   };
 
   private runtimeTabs() {
@@ -73,8 +73,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     const tabs: JSX.Element[] = [];
     if (this.state.app) {
-      this.state.app.runtimes.forEach(runtime => {
-        runtime.dashboardRefs.forEach(dashboard => {
+      this.state.app.runtimes.forEach((runtime) => {
+        runtime.dashboardRefs.forEach((dashboard) => {
           const tabKey = dynamicTabsCount + staticTabsCount;
           paramToTab[dashboard.template] = tabKey;
 
@@ -155,7 +155,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
-          onSelect={tabValue => {
+          onSelect={(tabValue) => {
             this.setState({ currentTab: tabValue });
           }}
           tabMap={paramToTab}
@@ -173,7 +173,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state)
+  duration: durationSelector(state),
 });
 
 const AppDetailsContainer = connect(mapStateToProps)(AppDetails);

@@ -49,7 +49,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     super(props);
     this.state = {
       inboundTraffic: [],
-      outboundTraffic: []
+      outboundTraffic: [],
     };
   }
 
@@ -143,7 +143,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           type: node.nodeType,
           namespace: node.namespace,
           name: node.workload || 'unknown',
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
         };
       case NodeType.APP:
         return {
@@ -152,7 +152,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           namespace: node.namespace,
           name: node.app || 'unknown',
           version: node.version || '',
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
         };
       case NodeType.SERVICE:
         return {
@@ -162,14 +162,14 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
-          destServices: node.destServices
+          destServices: node.destServices,
         };
       default:
         return {
           id: `${prefix}-${node.id}`,
           type: NodeType.UNKNOWN,
           namespace: node.namespace,
-          name: 'unknown'
+          name: 'unknown',
         };
     }
   };
@@ -183,7 +183,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const inboundTraffic: TrafficItem[] = [];
     const outboundTraffic: TrafficItem[] = [];
 
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const sourceNode = nodes['id-' + edge.data.source];
       const targetNode = nodes['id-' + edge.data.target];
 
@@ -197,7 +197,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           inboundTraffic.push({
             traffic: edge.data.traffic,
             proxy: serviceTraffic[svcId],
-            node: this.buildTrafficNode('in', sourceNode)
+            node: this.buildTrafficNode('in', sourceNode),
           });
         }
       } else if (sourceNode.nodeType === NodeType.SERVICE) {
@@ -206,7 +206,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           outboundTraffic.push({
             traffic: edge.data.traffic,
             proxy: serviceTraffic[svcId],
-            node: this.buildTrafficNode('out', targetNode)
+            node: this.buildTrafficNode('out', targetNode),
           });
         }
       }
@@ -224,13 +224,13 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const inboundTraffic: TrafficItem[] = [];
     const outboundTraffic: TrafficItem[] = [];
 
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const sourceNode = nodes['id-' + edge.data.source];
       const targetNode = nodes['id-' + edge.data.target];
       if (myNode.id === edge.data.source) {
         const trafficItem: TrafficItem = {
           traffic: edge.data.traffic!,
-          node: this.buildTrafficNode('out', targetNode)
+          node: this.buildTrafficNode('out', targetNode),
         };
         outboundTraffic.push(trafficItem);
 
@@ -243,7 +243,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       } else if (myNode.id === edge.data.target) {
         const trafficItem: TrafficItem = {
           traffic: edge.data.traffic!,
-          node: this.buildTrafficNode('in', sourceNode)
+          node: this.buildTrafficNode('in', sourceNode),
         };
         inboundTraffic.push(trafficItem);
 
@@ -275,7 +275,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const nodes: { [key: string]: GraphNodeData } = {};
     let myNode: GraphNodeData = { id: '', nodeType: NodeType.UNKNOWN, namespace: '' };
 
-    traffic.elements.nodes.forEach(element => {
+    traffic.elements.nodes.forEach((element) => {
       // Ignore group nodes. They are not relevant for the traffic list because we
       // are interested in the actual apps.
       if (!element.data.isGroup) {
@@ -312,7 +312,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const {
       serviceTraffic,
       inboundTraffic: firstLevelInbound,
-      outboundTraffic: firstLevelOutbound
+      outboundTraffic: firstLevelOutbound,
     } = this.processFirstLevelTraffic(traffic.elements.edges!, nodes, myNode);
 
     // Then, process second level traffic.

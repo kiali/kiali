@@ -16,7 +16,7 @@ import {
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
   ServiceHealth,
-  WorkloadHealth
+  WorkloadHealth,
 } from '../types/Health';
 import { App } from '../types/App';
 import { ServerStatus } from '../types/ServerStatus';
@@ -65,7 +65,7 @@ const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: 
     url: url,
     data: data,
     headers: getHeaders(),
-    params: queryParams
+    params: queryParams,
   });
 
 interface LoginRequest {
@@ -90,7 +90,7 @@ export const login = async (
     url: urls.authenticate,
     headers: getHeaders(),
     auth: basicAuth(request.username, request.password),
-    data: params
+    data: params,
   });
 };
 
@@ -271,7 +271,7 @@ export const getServiceHealth = (
   hasSidecar: boolean
 ): Promise<ServiceHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}).then(response =>
+  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}).then((response) =>
     ServiceHealth.fromJson(response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
   );
 };
@@ -283,7 +283,7 @@ export const getAppHealth = (
   hasSidecar: boolean
 ): Promise<AppHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.appHealth(namespace, app), params, {}).then(response =>
+  return newRequest(HTTP_VERBS.GET, urls.appHealth(namespace, app), params, {}).then((response) =>
     AppHealth.fromJson(response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
   );
 };
@@ -295,38 +295,40 @@ export const getWorkloadHealth = (
   hasSidecar: boolean
 ): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}).then(response =>
+  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}).then((response) =>
     WorkloadHealth.fromJson(response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
   );
 };
 
 export const getNamespaceAppHealth = (namespace: string, durationSec: number): Promise<NamespaceAppHealth> => {
   const params: any = {
-    type: 'app'
+    type: 'app',
   };
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    const ret: NamespaceAppHealth = {};
-    Object.keys(response.data).forEach(k => {
-      ret[k] = AppHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
-    });
-    return ret;
-  });
+  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+    (response) => {
+      const ret: NamespaceAppHealth = {};
+      Object.keys(response.data).forEach((k) => {
+        ret[k] = AppHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
+      });
+      return ret;
+    }
+  );
 };
 
 export const getNamespaceServiceHealth = (namespace: string, durationSec: number): Promise<NamespaceServiceHealth> => {
   const params: any = {
-    type: 'service'
+    type: 'service',
   };
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
   return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
-    response => {
+    (response) => {
       const ret: NamespaceServiceHealth = {};
-      Object.keys(response.data).forEach(k => {
+      Object.keys(response.data).forEach((k) => {
         ret[k] = ServiceHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
       });
       return ret;
@@ -339,15 +341,15 @@ export const getNamespaceWorkloadHealth = (
   durationSec: number
 ): Promise<NamespaceWorkloadHealth> => {
   const params: any = {
-    type: 'workload'
+    type: 'workload',
   };
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
   return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
-    response => {
+    (response) => {
       const ret: NamespaceWorkloadHealth = {};
-      Object.keys(response.data).forEach(k => {
+      Object.keys(response.data).forEach((k) => {
         ret[k] = WorkloadHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
       });
       return ret;
@@ -425,13 +427,13 @@ export const getServiceDetail = (
   if (rateInterval) {
     params.rateInterval = `${rateInterval}s`;
   }
-  return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}).then(r => {
+  return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}).then((r) => {
     const info: ServiceDetailsInfo = r.data;
     if (info.health) {
       // Default rate interval in backend = 600s
       info.health = ServiceHealth.fromJson(info.health, {
         rateInterval: rateInterval || 600,
-        hasSidecar: info.istioSidecar
+        hasSidecar: info.istioSidecar,
       });
     }
     return info;

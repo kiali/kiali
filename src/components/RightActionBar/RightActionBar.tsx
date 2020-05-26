@@ -6,9 +6,9 @@ export const actionBarStyle = style({
   marginTop: -60,
   right: 18,
   zIndex: 1,
-  display: 'flex'
+  display: 'flex',
 });
 
-export const RightActionBar: React.SFC<{}> = props => {
+export const RightActionBar: React.SFC<{}> = (props) => {
   return <span className={actionBarStyle}>{props.children}</span>;
 };
