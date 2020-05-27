@@ -5,7 +5,10 @@
 # If using OpenShift, you must expose the image registry externally.
 #
 
-.prepare-ocp: .ensure-oc-exists
+.prepare-ocp-image-registry: .ensure-oc-exists
+	@if [ "$(shell ${OC} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.defaultRoute}')" != "true" ]; then echo "Manually patching image registry operator to expose the cluster internal image registry"; ${OC} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; while [ "$${routehost}" == "<none>" -o "$${routehost}" == "" ]; do echo "Waiting for image registry route to start..."; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; done; fi
+
+.prepare-ocp: .ensure-oc-exists .prepare-ocp-image-registry
 	@$(eval CLUSTER_REPO_INTERNAL ?= $(shell ${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null))
 	@$(eval CLUSTER_REPO ?= $(shell ${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null))
 	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${CONTAINER_NAME})
@@ -61,20 +64,34 @@ endif
 
 ## cluster-status: Outputs details of the client and server for the cluster
 cluster-status: .prepare-cluster
-	@echo "==============="
+	@echo "================================================================="
 	@echo "CLUSTER DETAILS"
-	@echo "==============="
+	@echo "================================================================="
 	@echo "Client executable: ${OC}"
-	@echo "==============="
+	@echo "================================================================="
 	${OC} version
-	@echo "==============="
+	@echo "================================================================="
 	${OC} cluster-info
-	@echo "==============="
-	@if [[ "${OC}" = *"oc" ]]; then echo "${OC} whoami -c"; ${OC} whoami -c; echo "==============="; fi
+	@echo "================================================================="
+	@echo "Age of cluster: $(shell ${OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
+	@echo "================================================================="
+	@echo "Cluster nodes:"
+	@for n in $(shell ${OC} get nodes -o name); do echo "Node=[$${n}]" "CPUs=[$$(${OC} get $${n} -o jsonpath='{.status.capacity.cpu}')] Memory=[$$(${OC} get $${n} -o jsonpath='{.status.capacity.memory}')]"; done
+	@echo "================================================================="
+	@echo "Console URL: $(shell ${OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
+	@echo "API Server:  $(shell ${OC} whoami --show-server 2>/dev/null)"
+	@echo "================================================================="
 	@echo "Kiali image as seen from inside the cluster:       ${CLUSTER_KIALI_INTERNAL_NAME}"
 	@echo "Kiali image that will be pushed to the cluster:    ${CLUSTER_KIALI_TAG}"
 	@echo "Operator image as seen from inside the cluster:    ${CLUSTER_OPERATOR_INTERNAL_NAME}"
 	@echo "Operator image that will be pushed to the cluster: ${CLUSTER_OPERATOR_TAG}"
+	@echo "================================================================="
+	@if [[ "${OC}" = *"oc" ]]; then echo "${OC} whoami -c"; ${OC} whoami -c; echo "================================================================="; fi
+ifeq ($(DORP),docker)
+	@if [[ "${OC}" = *"oc" ]]; then echo "Image Registry login: docker login -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"; echo "================================================================="; fi
+else
+	@if [[ "${OC}" = *"oc" ]]; then echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"; echo "================================================================="; fi
+endif
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
 cluster-build-operator: .ensure-operator-repo-exists .prepare-cluster container-build-operator
