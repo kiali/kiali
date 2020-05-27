@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
+import { StatefulFilters } from '../Filters/StatefulFilters';
 
 type VirtualItemProps = {
   item: RenderResource;
@@ -9,6 +10,7 @@ type VirtualItemProps = {
   className?: string;
   index: number;
   config: Resource;
+  statefulFilter?: React.RefObject<StatefulFilters>;
 };
 
 type VirtualItemState = {
@@ -42,10 +44,10 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   onHealthPromiseChanged = async (promise: Promise<Health>): Promise<void> => {
     this.promises
       .register('health', promise)
-      .then(h => {
+      .then((h) => {
         this.setState({ health: h });
       })
-      .catch(err => {
+      .catch((err) => {
         if (!err.isCanceled) {
           this.setState({ health: undefined });
           throw err;
@@ -55,7 +57,9 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
 
   renderDetails = (item: RenderResource, health?: Health) => {
     const icon = this.getIcon();
-    return this.props.config.columns.map(object => object.renderer(item, this.props.config, icon, health));
+    return this.props.config.columns.map((object) =>
+      object.renderer(item, this.props.config, icon, health, this.props.statefulFilter)
+    );
   };
 
   getIcon = () => {

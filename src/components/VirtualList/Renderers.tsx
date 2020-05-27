@@ -23,6 +23,7 @@ import ValidationSummary from '../Validations/ValidationSummary';
 import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardContentExpanded';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import OverviewCardLinks from '../../pages/Overview/OverviewCardLinks';
+import { StatefulFilters } from '../Filters/StatefulFilters';
 
 // Links
 
@@ -200,12 +201,12 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 };
 
 const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
-  return filters.some(filter => {
+  return filters.some((filter) => {
     if (filter.category === LabelFilter.title) {
       if (filter.value.includes(':')) {
         const [k, v] = filter.value.split(':');
         if (k === key) {
-          return v.split(',').some(val => value.split(',').some(vl => vl.trim().startsWith(val.trim())));
+          return v.split(',').some((val) => value.split(',').some((vl) => vl.trim().startsWith(val.trim())));
         }
         return false;
       }
@@ -219,7 +220,13 @@ const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
   });
 };
 
-export const labels: Renderer<SortResource | NamespaceInfo> = (item: SortResource | NamespaceInfo) => {
+export const labels: Renderer<SortResource | NamespaceInfo> = (
+  item: SortResource | NamespaceInfo,
+  _: Resource,
+  __: string,
+  ___?: Health,
+  statefulFilter?: React.RefObject<StatefulFilters>
+) => {
   const filters = FilterHelper.getFiltersFromURL([LabelFilter, appLabelFilter, versionLabelFilter]);
   return (
     <td
@@ -228,15 +235,52 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (item: SortResourc
       style={{ verticalAlign: 'middle' }}
     >
       {item.labels &&
-        Object.entries(item.labels).map(([key, value]) => (
-          <Badge
-            key={`labelbadge_${key}_${value}_${item.name}`}
-            isRead={true}
-            style={{ backgroundColor: labelActivate(filters.filters, key, value) ? PfColors.Blue200 : undefined }}
-          >
-            {key}: {value}
-          </Badge>
-        ))}
+        Object.entries(item.labels).map(([key, value]) => {
+          const label = `${key}:${value}`;
+          const labelAct = labelActivate(filters.filters, key, value);
+          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([LabelFilter]).filters.some((f) =>
+            f.value.includes(label)
+          );
+          const badgeComponent = (
+            <Badge
+              key={`labelbadge_${key}_${value}_${item.name}`}
+              isRead={true}
+              style={{
+                backgroundColor: labelAct ? PfColors.Blue200 : undefined,
+                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed',
+              }}
+              onClick={() =>
+                statefulFilter
+                  ? labelAct
+                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(LabelFilter.title, label)
+                    : statefulFilter.current!.filterAdded(LabelFilter, label)
+                  : {}
+              }
+            >
+              {key}: {value}
+            </Badge>
+          );
+
+          return statefulFilter ? (
+            <Tooltip
+              content={
+                labelAct ? (
+                  isExactlyLabelFilter ? (
+                    <>Remove label from Filters</>
+                  ) : (
+                    <>Kiali can't remove the filter if is an expression</>
+                  )
+                ) : (
+                  <>Add label to Filters</>
+                )
+              }
+            >
+              {badgeComponent}
+            </Tooltip>
+          ) : (
+            badgeComponent
+          );
+        })}
     </td>
   );
 };

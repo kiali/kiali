@@ -12,6 +12,7 @@ import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
+import { StatefulFilters } from '../Filters/StatefulFilters';
 
 type Direction = 'asc' | 'desc' | undefined;
 
@@ -36,6 +37,8 @@ type VirtualListState = {
 const listRegex = /\/([a-z0-9-]+)/;
 
 class VirtualListC<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
+  private statefulFilters: React.RefObject<StatefulFilters> = React.createRef();
+
   constructor(props: VirtualListProps<R>) {
     super(props);
     const match = history.location.pathname.match(listRegex) || [];
@@ -43,7 +46,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     const conf = config[type] as Resource;
     const columns =
       conf.columns && config.headerTable
-        ? conf.columns.map(info => {
+        ? conf.columns.map((info) => {
             let config = { title: info.column };
             if (info.transforms) {
               config['transforms'] = info.transforms;
@@ -57,16 +60,16 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
     if (sortParam) {
-      index = conf.columns.findIndex(column => column.param === sortParam);
+      index = conf.columns.findIndex((column) => column.param === sortParam);
     }
     this.state = {
       type,
       sortBy: {
         index,
-        direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
+        direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction,
       },
       columns,
-      conf
+      conf,
     };
   }
 
@@ -74,8 +77,8 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
     this.setState({
       sortBy: {
         index,
-        direction
-      }
+        direction,
+      },
     });
     if (direction) {
       HistoryManager.setParam(URLParam.DIRECTION, direction);
@@ -92,24 +95,41 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
       rows: [],
       gridBreakPoint: TableGridBreakpoint.none,
       role: 'presentation',
-      caption: conf.caption ? conf.caption : undefined
+      caption: conf.caption ? conf.caption : undefined,
     };
     const typeDisplay = this.state.type === 'istio' ? 'Istio config' : this.state.type;
+
+    const childrenWithProps = React.Children.map(this.props.children, (child) => {
+      // Checking isValidElement is the safe way and avoids a TS error too.
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, { ref: this.statefulFilters });
+      }
+
+      return child;
+    });
 
     return (
       <div
         style={{
           padding: '20px',
-          marginBottom: '20px'
+          marginBottom: '20px',
         }}
       >
-        {this.props.children}
+        {childrenWithProps}
         <Table {...tableProps} sortBy={sortBy} onSort={this.onSort}>
           <TableHeader />
           <tbody>
             {this.props.rows.length > 0 ? (
               rows.map((r, i) => {
-                return <VirtualItem key={'vItem' + i} item={r} index={i} config={conf} />;
+                return (
+                  <VirtualItem
+                    key={'vItem' + i}
+                    item={r}
+                    index={i}
+                    config={conf}
+                    statefulFilter={this.statefulFilters}
+                  />
+                );
               })
             ) : (
               <tr>
@@ -122,7 +142,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
                       No {typeDisplay} in namespace
                       {this.props.activeNamespaces.length === 1
                         ? ` ${this.props.activeNamespaces[0].name}`
-                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                        : `s: ${this.props.activeNamespaces.map((ns) => ns.name).join(', ')}`}
                     </EmptyStateBody>
                   </EmptyState>
                 </td>
@@ -136,7 +156,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
 });
 
 const VirtualList = connect(mapStateToProps)(VirtualListC);

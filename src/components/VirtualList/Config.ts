@@ -9,6 +9,8 @@ import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
+import * as React from 'react';
+import { StatefulFilters } from '../Filters/StatefulFilters';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -17,7 +19,8 @@ export type Renderer<R extends RenderResource> = (
   item: R,
   config: Resource,
   icon: string,
-  health?: Health
+  health?: Health,
+  statefulFilter?: React.RefObject<StatefulFilters>
 ) => JSX.Element | undefined;
 
 // Health type guard
@@ -44,7 +47,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
   param: 'tls',
   column: 'TLS',
   transforms: [sortable, cellWidth(5)],
-  renderer: Renderers.tls
+  renderer: Renderers.tls,
 };
 
 const istioConfiguration: ResourceType<NamespaceInfo> = {
@@ -52,7 +55,7 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
   param: 'ic',
   column: 'Config',
   transforms: [sortable, cellWidth(5)],
-  renderer: Renderers.istioConfig
+  renderer: Renderers.istioConfig,
 };
 
 const status: ResourceType<NamespaceInfo> = {
@@ -61,7 +64,7 @@ const status: ResourceType<NamespaceInfo> = {
   column: 'Status',
   transforms: [sortable, cellWidth(40)],
   cellTransforms: [textCenter],
-  renderer: Renderers.status
+  renderer: Renderers.status,
 };
 
 const links: ResourceType<NamespaceInfo> = {
@@ -69,7 +72,7 @@ const links: ResourceType<NamespaceInfo> = {
   param: 'links',
   column: 'Links',
   transforms: [cellWidth(15)],
-  renderer: Renderers.links
+  renderer: Renderers.links,
 };
 
 const nsItem: ResourceType<NamespaceInfo> = {
@@ -77,7 +80,7 @@ const nsItem: ResourceType<NamespaceInfo> = {
   param: 'ns',
   column: 'Namespace',
   transforms: [sortable, cellWidth(15)],
-  renderer: Renderers.nsItem
+  renderer: Renderers.nsItem,
 };
 // General
 
@@ -86,7 +89,7 @@ const item: ResourceType<TResource> = {
   param: 'wn',
   column: 'Name',
   transforms: [sortable, cellWidth(15)],
-  renderer: Renderers.item
+  renderer: Renderers.item,
 };
 
 const serviceItem: ResourceType<ServiceListItem> = {
@@ -94,7 +97,7 @@ const serviceItem: ResourceType<ServiceListItem> = {
   param: 'sn',
   column: 'Name',
   transforms: [sortable],
-  renderer: Renderers.item
+  renderer: Renderers.item,
 };
 
 const istioItem: ResourceType<IstioConfigItem> = {
@@ -102,7 +105,7 @@ const istioItem: ResourceType<IstioConfigItem> = {
   param: 'in',
   column: 'Name',
   transforms: [sortable],
-  renderer: Renderers.item
+  renderer: Renderers.item,
 };
 
 const namespace: ResourceType<TResource> = {
@@ -110,7 +113,7 @@ const namespace: ResourceType<TResource> = {
   param: 'ns',
   column: 'Namespace',
   transforms: [sortable],
-  renderer: Renderers.namespace
+  renderer: Renderers.namespace,
 };
 
 const labels: ResourceType<RenderResource> = {
@@ -118,7 +121,7 @@ const labels: ResourceType<RenderResource> = {
   param: 'lb',
   column: 'Labels',
   transforms: [cellWidth(30)],
-  renderer: Renderers.labels
+  renderer: Renderers.labels,
 };
 
 const health: ResourceType<TResource> = {
@@ -126,7 +129,7 @@ const health: ResourceType<TResource> = {
   param: 'he',
   column: 'Health',
   transforms: [sortable],
-  renderer: Renderers.health
+  renderer: Renderers.health,
 };
 
 const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = {
@@ -134,7 +137,7 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
   param: 'is',
   column: 'Details',
   transforms: [sortable],
-  renderer: Renderers.details
+  renderer: Renderers.details,
 };
 
 const configuration: ResourceType<ServiceListItem | IstioConfigItem> = {
@@ -142,7 +145,7 @@ const configuration: ResourceType<ServiceListItem | IstioConfigItem> = {
   param: 'cv',
   column: 'Configuration',
   transforms: [sortable],
-  renderer: Renderers.configuration
+  renderer: Renderers.configuration,
 };
 
 const workloadType: ResourceType<WorkloadListItem> = {
@@ -150,7 +153,7 @@ const workloadType: ResourceType<WorkloadListItem> = {
   param: 'wt',
   column: 'Type',
   transforms: [sortable],
-  renderer: Renderers.workloadType
+  renderer: Renderers.workloadType,
 };
 
 const istioType: ResourceType<IstioConfigItem> = {
@@ -158,7 +161,7 @@ const istioType: ResourceType<IstioConfigItem> = {
   param: 'it',
   column: 'Type',
   transforms: [sortable],
-  renderer: Renderers.istioType
+  renderer: Renderers.istioType,
 };
 
 export const IstioTypes = {
@@ -183,7 +186,7 @@ export const IstioTypes = {
   servicerolebinding: { name: 'ServiceRoleBinding', url: 'servicerolebindings', icon: 'SRB' },
   peerauthentication: { name: 'PeerAuthentication', url: 'peerauthentications', icon: 'PA' },
   requestauthentication: { name: 'RequestAuthentication', url: 'requestauthentications', icon: 'RA' },
-  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', icon: 'WE' }
+  workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', icon: 'WE' },
 };
 
 export type Resource = {
@@ -196,30 +199,30 @@ export type Resource = {
 const namespaces: Resource = {
   name: 'namespaces',
   columns: [tlsStatus, nsItem, istioConfiguration, labels, status, links],
-  icon: 'NS'
+  icon: 'NS',
 };
 
 const workloads: Resource = {
   name: 'workloads',
   columns: [item, namespace, workloadType, labels, health, details],
-  icon: 'W'
+  icon: 'W',
 };
 
 const applications: Resource = {
   name: 'applications',
   columns: [item, namespace, labels, health, details],
-  icon: 'A'
+  icon: 'A',
 };
 
 const services: Resource = {
   name: 'services',
   columns: [serviceItem, namespace, labels, health, configuration, details],
-  icon: 'S'
+  icon: 'S',
 };
 
 const istio: Resource = {
   name: 'istio',
-  columns: [istioItem, namespace, istioType, configuration]
+  columns: [istioItem, namespace, istioType, configuration],
 };
 
 const conf = {
@@ -228,7 +231,7 @@ const conf = {
   workloads: workloads,
   overview: namespaces,
   services: services,
-  istio: istio
+  istio: istio,
 };
 
 export const config = deepFreeze(conf) as typeof conf;
