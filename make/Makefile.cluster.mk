@@ -93,6 +93,58 @@ else
 	@if [[ "${OC}" = *"oc" ]]; then echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"; echo "================================================================="; fi
 endif
 
+## cluster-add-users: Add two users to an OpenShift cluster - kiali (cluster admin) and johndoe (no additional permissions)
+ifeq ($(CLUSTER_TYPE),openshift)
+define HTPASSWD
+---
+# Secret containing two htpasswd credentials:
+#   kiali:kiali
+#   johndoe:johndoe
+apiVersion: v1
+metadata:
+  name: htpasswd
+  namespace: openshift-config
+data:
+  htpasswd: a2lhbGk6JDJ5JDA1JHhrV1NNY0ZIUXkwZ2RDMUltLnJDZnVsV2NuYkhDQ2w2bDhEdjFETWEwV1hLRzc4U2tVcHQ2CmpvaG5kb2U6JGFwcjEkRzhhL2x1My4kRnc5RjJUczFKNUFKRUNJc05KN1RWLgo=
+kind: Secret
+type: Opaque
+---
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: htpasswd
+    type: HTPasswd
+    mappingMethod: claim
+    htpasswd:
+      fileData:
+        name: htpasswd
+endef
+export HTPASSWD
+
+cluster-add-users: .ensure-oc-exists
+	@echo "Creating users 'kiali' and 'johndoe'"
+	@echo "$${HTPASSWD}" | oc apply -f -
+	@admintoken="$$(${OC} whoami -t)" ;\
+   for i in {1..100} ; do \
+     echo "Waiting for kiali user to be created before attempting to assign it cluster-admin role..." ;\
+     sleep 10 ;\
+     if ${OC} login -u kiali -p kiali > /dev/null 2>&1 ; then \
+       ${OC} login --token=$${admintoken} > /dev/null 2>&1 ;\
+       if ${OC} get user kiali > /dev/null 2>&1 ; then \
+         echo "Will assign the cluster-admin role to the kiali user." ;\
+         ${OC} adm policy add-cluster-role-to-user cluster-admin kiali ;\
+         break ;\
+       fi \
+     fi \
+   done
+else
+cluster-add-users:
+	@echo "This target is only available when working with OpenShift (i.e. CLUSTER_TYPE=openshift)"
+endif
+
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
 cluster-build-operator: .ensure-operator-repo-exists .prepare-cluster container-build-operator
 	@echo Building container image for Kiali operator using operator-sdk tagged for a remote cluster
