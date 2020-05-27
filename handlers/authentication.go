@@ -792,6 +792,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Name:     openIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
 		Value:    nonceCode,
 	}
 	http.SetCookie(w, &nonceCookie)
