@@ -150,11 +150,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   appState: state
 });
 
-const DebugInformationContainer = connect(
-  mapStateToProps,
-  null,
-  null,
-  { forwardRef: true }
-)(DebugInformation);
+const DebugInformationContainer = connect(mapStateToProps, null, null, { forwardRef: true })(DebugInformation);
 
 export default DebugInformationContainer;

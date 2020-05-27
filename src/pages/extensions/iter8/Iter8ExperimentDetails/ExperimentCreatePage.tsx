@@ -738,9 +738,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state)
 });
 
-const ExperimentCreatePageContainer = connect(
-  mapStateToProps,
-  null
-)(ExperimentCreatePage);
+const ExperimentCreatePageContainer = connect(mapStateToProps, null)(ExperimentCreatePage);
 
 export default ExperimentCreatePageContainer;

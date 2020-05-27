@@ -161,8 +161,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const AlertDrawerContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AlertDrawer);
+const AlertDrawerContainer = connect(mapStateToProps, mapDispatchToProps)(AlertDrawer);
 export default AlertDrawerContainer;

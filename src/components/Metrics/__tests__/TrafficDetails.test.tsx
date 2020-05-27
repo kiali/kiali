@@ -9,7 +9,7 @@ import {
   GraphNodeData,
   GraphNodeWrapper,
   GraphType,
-  NodeType,
+  NodeType
 } from '../../../types/Graph';
 import MounterMocker from 'services/__mocks__/MounterMocker';
 
@@ -22,7 +22,7 @@ describe('TrafficDetails', () => {
     namespace: 'ns',
     onDurationChanged: jest.fn(),
     onRefresh: jest.fn(),
-    workloadName: 'wk',
+    workloadName: 'wk'
   };
 
   const buildGraph = (nodes: GraphNodeData[][]): GraphDefinition => {
@@ -39,19 +39,19 @@ describe('TrafficDetails', () => {
               source: tuple[0].id,
               target: tuple[1].id,
               traffic: {
-                protocol: 'http',
-              },
-            },
+                protocol: 'http'
+              }
+            }
           })
         ),
         nodes: uniqNodes.map(
           (value): GraphNodeWrapper => ({
-            data: value,
+            data: value
           })
-        ),
+        )
       },
       graphType: GraphType.WORKLOAD,
-      timestamp: 0,
+      timestamp: 0
     };
   };
 
@@ -62,9 +62,9 @@ describe('TrafficDetails', () => {
     workload: name,
     traffic: [
       {
-        protocol: 'http',
-      },
-    ],
+        protocol: 'http'
+      }
+    ]
   });
 
   const buildServiceNode = (name: string): GraphNodeData => ({
@@ -74,9 +74,9 @@ describe('TrafficDetails', () => {
     service: name,
     traffic: [
       {
-        protocol: 'http',
-      },
-    ],
+        protocol: 'http'
+      }
+    ]
   });
 
   const buildServiceEntryNode = (name: string): GraphNodeData => ({
@@ -87,9 +87,9 @@ describe('TrafficDetails', () => {
     isServiceEntry: 'MESH_INTERNAL',
     traffic: [
       {
-        protocol: 'http',
-      },
-    ],
+        protocol: 'http'
+      }
+    ]
   });
 
   const resolveTrafficLists = (wrapper: ReactWrapper): { inboundList: string[]; outboundList: string[] } => {
@@ -97,7 +97,7 @@ describe('TrafficDetails', () => {
     if (lists.length !== 2) {
       return {
         inboundList: [],
-        outboundList: [],
+        outboundList: []
       };
     }
 
@@ -113,10 +113,10 @@ describe('TrafficDetails', () => {
         'InfoAltIcon',
         'CheckCircleIcon',
         'UnknownIcon',
-        'WarningTriangleIcon',
+        'WarningTriangleIcon'
       ];
       const elementIcons = iconsType.filter(
-        (iconT) =>
+        iconT =>
           item.find(iconT).length > 0 && item.find(iconT).prop('style')! && item.find(iconT).prop('style')!.marginLeft
       );
       const icon = elementIcons.length > 0 ? item.find(elementIcons[0]).at(0) : undefined;
@@ -137,20 +137,20 @@ describe('TrafficDetails', () => {
 
     return {
       inboundList: inboundList,
-      outboundList: outboundList,
+      outboundList: outboundList
     };
   };
 
-  it('pass down empty traffic if graph is empty', (done) => {
+  it('pass down empty traffic if graph is empty', done => {
     new MounterMocker()
       .addMock('getNodeGraphElements', {
         duration: 60,
         elements: {},
         graphType: GraphType.WORKLOAD,
-        timestamp: 0,
+        timestamp: 0
       })
       .mountWithStore(<TrafficDetails {...trafficDetailProps} />)
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         const lists = wrapper.find('DetailedTrafficList');
         const inboundList = lists.at(INBOUND_IDX);
         const outboundList = lists.at(OUTBOUND_IDX);
@@ -159,17 +159,17 @@ describe('TrafficDetails', () => {
       });
   });
 
-  it('pass down empty traffic if graph does not have target node', (done) => {
+  it('pass down empty traffic if graph does not have target node', done => {
     const wk1 = buildWorkloadNode('wk1');
     const wk2 = buildWorkloadNode('wk2');
     const traffic = buildGraph([
-      [wk1, wk2], // traffic from wk1 to wk2 (no wk involved)
+      [wk1, wk2] // traffic from wk1 to wk2 (no wk involved)
     ]);
 
     new MounterMocker()
       .addMock('getNodeGraphElements', traffic)
       .mountWithStore(<TrafficDetails {...trafficDetailProps} />)
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         const lists = wrapper.find('DetailedTrafficList');
         const inboundList = lists.at(INBOUND_IDX);
         const outboundList = lists.at(OUTBOUND_IDX);
@@ -178,7 +178,7 @@ describe('TrafficDetails', () => {
       });
   });
 
-  it('pass down traffic - simple in-out graph one level', (done) => {
+  it('pass down traffic - simple in-out graph one level', done => {
     const wk1 = buildWorkloadNode('wk1');
     const wk2 = buildWorkloadNode('wk2');
     const wk = buildWorkloadNode('wk');
@@ -186,13 +186,13 @@ describe('TrafficDetails', () => {
     const traffic = buildGraph([
       [wk1, wk], // traffic from wk1 to wk (inbound)
       [wk, wk2], // traffic from wk to wk2 (outbound)
-      [wk, se], // traffic from wk to seNode (outbound)
+      [wk, se] // traffic from wk to seNode (outbound)
     ]);
 
     new MounterMocker()
       .addMock('getNodeGraphElements', traffic)
       .mountWithStore(<TrafficDetails {...trafficDetailProps} />)
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         const { inboundList, outboundList } = resolveTrafficLists(wrapper);
         expect(inboundList).toHaveLength(1);
         expect(inboundList.join()).toEqual('wk1');
@@ -201,7 +201,7 @@ describe('TrafficDetails', () => {
       });
   });
 
-  it('pass down traffic - simple in-out graph two levels', (done) => {
+  it('pass down traffic - simple in-out graph two levels', done => {
     const wk1 = buildWorkloadNode('wk1');
     const svc1 = buildServiceNode('svc1');
     const wk2 = buildWorkloadNode('wk2');
@@ -211,13 +211,13 @@ describe('TrafficDetails', () => {
       [wk1, svc1], // traffic from wk1 to svc1 (inbound)
       [svc1, wk], // traffic from svc1 to wk (inbound)
       [wk, svc2], // traffic from wk to svc2 (outbound)
-      [svc2, wk2], // traffic from svc2 to wk2 (outbound)
+      [svc2, wk2] // traffic from svc2 to wk2 (outbound)
     ]);
 
     new MounterMocker()
       .addMock('getNodeGraphElements', traffic)
       .mountWithStore(<TrafficDetails {...trafficDetailProps} />)
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         const { inboundList, outboundList } = resolveTrafficLists(wrapper);
         expect(inboundList).toHaveLength(2);
         expect(inboundList.join()).toEqual('svc1,->wk1');
@@ -226,7 +226,7 @@ describe('TrafficDetails', () => {
       });
   });
 
-  it('pass down traffic - slightly more complex inbound', (done) => {
+  it('pass down traffic - slightly more complex inbound', done => {
     const wk1 = buildWorkloadNode('wk1');
     const wk2 = buildWorkloadNode('wk2');
     const wk3 = buildWorkloadNode('wk3');
@@ -239,13 +239,13 @@ describe('TrafficDetails', () => {
       [wk2, svc2], // traffic from wk2 to svc2
       [svc2, wk], // traffic from svc2 to wk
       [svc1, wk], // traffic from svc1 to wk
-      [wk3, wk], // traffic from wk3 to wk (direct workload to workload traffic)
+      [wk3, wk] // traffic from wk3 to wk (direct workload to workload traffic)
     ]);
 
     new MounterMocker()
       .addMock('getNodeGraphElements', traffic)
       .mountWithStore(<TrafficDetails {...trafficDetailProps} />)
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         const { inboundList } = resolveTrafficLists(wrapper);
         expect(inboundList).toHaveLength(6);
         expect(inboundList.join()).toEqual('svc1,->wk1,->wk2,svc2,->wk2,wk3');

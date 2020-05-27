@@ -39,9 +39,7 @@ class AnonymousLogin implements LoginStrategy<unknown> {
       status: AuthResult.FAILURE,
       session: {
         username: API.ANONYMOUS_USER,
-        expiresOn: moment()
-          .add(1, 'd')
-          .toISOString()
+        expiresOn: moment().add(1, 'd').toISOString()
       }
     };
   }

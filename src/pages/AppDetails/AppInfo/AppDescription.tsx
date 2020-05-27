@@ -20,7 +20,7 @@ import {
   PopoverPosition,
   Stack,
   StackItem,
-  Title,
+  Title
 } from '@patternfly/react-core';
 import GraphDataSource from '../../../services/GraphDataSource';
 import MiniGraphCard from '../../../components/CytoscapeGraph/MiniGraphCard';
@@ -29,15 +29,15 @@ import { style } from 'typestyle';
 
 const iconStyle = style({
   margin: '0 16px 0 0',
-  padding: '24px 0 0 0',
+  padding: '24px 0 0 0'
 });
 
 const resourceListStyle = style({
-  margin: '0px 0 11px 0',
+  margin: '0px 0 11px 0'
 });
 
 const titleStyle = style({
-  margin: '15px 0 11px 0',
+  margin: '15px 0 11px 0'
 });
 
 type AppDescriptionProps = {
@@ -83,9 +83,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
     const ns = this.props.app?.namespace.name || '';
     const workloads = this.props.app?.workloads || [];
     const workloadList =
-      workloads.length > 0
-        ? workloads.map((wkd) => this.renderWorkloadItem(ns, wkd))
-        : this.renderEmptyItem('workloads');
+      workloads.length > 0 ? workloads.map(wkd => this.renderWorkloadItem(ns, wkd)) : this.renderEmptyItem('workloads');
 
     return [
       <div key="workload-icon" className={iconStyle}>
@@ -96,7 +94,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
           Workloads
         </Title>
         <List>{workloadList}</List>
-      </div>,
+      </div>
     ];
   }
 
@@ -105,7 +103,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
     const services = this.props.app?.serviceNames || [];
     const serviceList =
       services.length > 0
-        ? services.map((sn) => this.renderServiceItem(ns, this.props.app!.name, sn))
+        ? services.map(sn => this.renderServiceItem(ns, this.props.app!.name, sn))
         : this.renderEmptyItem('services');
 
     return [
@@ -117,7 +115,7 @@ class AppDescription extends React.Component<AppDescriptionProps> {
           Services
         </Title>
         <List>{serviceList}</List>
-      </div>,
+      </div>
     ];
   }
 

@@ -86,7 +86,11 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchApps(namespaces.map(namespace => namespace.name), activeFilters, this.props.duration);
+          this.fetchApps(
+            namespaces.map(namespace => namespace.name),
+            activeFilters,
+            this.props.duration
+          );
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {

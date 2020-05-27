@@ -69,8 +69,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setInitialAuthentication: (session: LoginSession) => dispatch(LoginActions.loginSuccess(session))
 });
 
-const StartupInitializer = connect(
-  null,
-  mapDispatchToProps
-)(InitializerComponent);
+const StartupInitializer = connect(null, mapDispatchToProps)(InitializerComponent);
 export default StartupInitializer;

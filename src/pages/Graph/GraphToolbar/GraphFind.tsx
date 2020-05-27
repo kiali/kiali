@@ -733,9 +733,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const GraphFindContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(GraphFind);
+const GraphFindContainer = connect(mapStateToProps, mapDispatchToProps)(GraphFind);
 
 export default GraphFindContainer;

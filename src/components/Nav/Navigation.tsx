@@ -127,8 +127,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
 });
 
-const NavigationContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Navigation);
+const NavigationContainer = connect(mapStateToProps, mapDispatchToProps)(Navigation);
 export default NavigationContainer;

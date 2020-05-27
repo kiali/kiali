@@ -36,13 +36,13 @@ type AlertDrawerMessageProps = ReduxProps & {
 
 class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
   static readonly body = style({
-    paddingTop: 0,
+    paddingTop: 0
   });
   static readonly left = style({
-    float: 'left',
+    float: 'left'
   });
   static readonly right = style({
-    float: 'right',
+    float: 'right'
   });
 
   render() {
@@ -77,8 +77,8 @@ class AlertDrawerMessage extends React.PureComponent<AlertDrawerMessageProps> {
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    markAsRead: (message) => dispatch(MessageCenterActions.markAsRead(message.id)),
-    toggleMessageDetail: (message) => dispatch(MessageCenterActions.toggleMessageDetail(message.id)),
+    markAsRead: message => dispatch(MessageCenterActions.markAsRead(message.id)),
+    toggleMessageDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id))
   };
 };
 

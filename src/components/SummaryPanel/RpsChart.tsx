@@ -147,7 +147,10 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
     if (thereIsTrafficData(sentLine) || thereIsTrafficData(receivedLine)) {
       return (
         <>
-          {this.renderMinMaxStats(sentLine.datapoints.map(dp => dp.y), receivedLine.datapoints.map(dp => dp.y))}
+          {this.renderMinMaxStats(
+            sentLine.datapoints.map(dp => dp.y),
+            receivedLine.datapoints.map(dp => dp.y)
+          )}
           {renderSparklines([sentLine, receivedLine], val => {
             return this.abbreviateBytes(val).format(true) + '/s';
           })}

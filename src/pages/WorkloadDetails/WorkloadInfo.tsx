@@ -38,14 +38,14 @@ type WorkloadInfoState = {
 };
 
 const tabIconStyle = style({
-  fontSize: '0.9em',
+  fontSize: '0.9em'
 });
 
 const tabName = 'list';
 const defaultTab = 'pods';
 const paramToTab: { [key: string]: number } = {
   pods: 0,
-  services: 1,
+  services: 1
 };
 
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
@@ -54,7 +54,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   constructor(props: WorkloadInfoProps) {
     super(props);
     this.state = {
-      currentTab: activeTab(tabName, defaultTab),
+      currentTab: activeTab(tabName, defaultTab)
     };
   }
 
@@ -67,7 +67,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     if (this.state.currentTab !== aTab) {
       this.setState({
-        currentTab: aTab,
+        currentTab: aTab
       });
     }
     if (prev.duration !== this.props.duration || prev.workload !== this.props.workload) {
@@ -86,19 +86,19 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       this.props.duration,
       this.props.workload.istioSidecar
     )
-      .then((health) => this.setState({ health: health }))
-      .catch((error) => AlertUtils.addError('Could not fetch Health.', error));
+      .then(health => this.setState({ health: health }))
+      .catch(error => AlertUtils.addError('Could not fetch Health.', error));
   };
 
   private validationChecks(): ValidationChecks {
     const validationChecks = {
-      hasPodsChecks: false,
+      hasPodsChecks: false
     };
 
     const pods = this.props.workload?.pods || [];
 
     validationChecks.hasPodsChecks = pods.some(
-      (pod) =>
+      pod =>
         this.props.validations?.pod &&
         this.props.validations.pod[pod.name] &&
         this.props.validations.pod[pod.name].checks.length > 0
@@ -126,7 +126,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = ValidationTypes.Warning;
-      keys.forEach((key) => {
+      keys.forEach(key => {
         const validations = this.props.validations![type][key];
         if (validationToSeverity(validations) === ValidationTypes.Error) {
           severity = ValidationTypes.Error;
@@ -140,7 +140,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         Pods ({pods.length}){' '}
         {validationChecks.hasPodsChecks
           ? getValidationIcon(
-              pods.map((a) => a.name),
+              pods.map(a => a.name),
               'pod'
             )
           : undefined}
@@ -166,7 +166,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             <GridItem span={12}>
               <ParameterizedTabs
                 id="service-tabs"
-                onSelect={(tabValue) => {
+                onSelect={tabValue => {
                   this.setState({ currentTab: tabValue });
                 }}
                 tabMap={paramToTab}

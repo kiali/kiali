@@ -4,7 +4,7 @@ import {
   FILTER_ACTION_UPDATE,
   FilterValue,
   ActiveFiltersInfo,
-  FilterTypes,
+  FilterTypes
 } from '../../types/Filters';
 import { HEALTHY, DEGRADED, FAILURE, NA, Health } from '../../types/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
@@ -12,12 +12,12 @@ import { removeDuplicatesArray } from '../../utils/Common';
 export const presenceValues: FilterValue[] = [
   {
     id: 'present',
-    title: 'Present',
+    title: 'Present'
   },
   {
     id: 'notpresent',
-    title: 'Not Present',
-  },
+    title: 'Not Present'
+  }
 ];
 
 export const istioSidecarFilter: FilterType = {
@@ -26,7 +26,7 @@ export const istioSidecarFilter: FilterType = {
   placeholder: 'Filter by IstioSidecar Validation',
   filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
-  filterValues: presenceValues,
+  filterValues: presenceValues
 };
 
 export const healthFilter: FilterType = {
@@ -38,32 +38,32 @@ export const healthFilter: FilterType = {
   filterValues: [
     {
       id: HEALTHY.name,
-      title: HEALTHY.name,
+      title: HEALTHY.name
     },
     {
       id: DEGRADED.name,
-      title: DEGRADED.name,
+      title: DEGRADED.name
     },
     {
       id: FAILURE.name,
-      title: FAILURE.name,
+      title: FAILURE.name
     },
     {
       id: 'na',
-      title: NA.name,
-    },
-  ],
+      title: NA.name
+    }
+  ]
 };
 
 export const getFilterSelectedValues = (filter: FilterType, activeFilters: ActiveFiltersInfo): string[] => {
   const selected: string[] = activeFilters.filters
-    .filter((activeFilter) => activeFilter.category === filter.title)
-    .map((activeFilter) => activeFilter.value);
+    .filter(activeFilter => activeFilter.category === filter.title)
+    .map(activeFilter => activeFilter.value);
   return removeDuplicatesArray(selected);
 };
 
 export const getPresenceFilterValue = (filter: FilterType, activeFilters: ActiveFiltersInfo): boolean | undefined => {
-  const presenceFilters = activeFilters.filters.filter((activeFilter) => activeFilter.category === filter.title);
+  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.category === filter.title);
 
   if (presenceFilters.length > 0) {
     return presenceFilters[0].value === 'Present';
@@ -75,10 +75,10 @@ export const filterByHealth = <T extends { healthPromise: Promise<Health> }>(
   items: T[],
   filterValues: string[]
 ): Promise<T[]> => {
-  const itemsWithHealthPromises = items.map((item) => item.healthPromise.then((h) => ({ health: h, item: item })));
-  return Promise.all(itemsWithHealthPromises).then((itemsWithHealth) => {
+  const itemsWithHealthPromises = items.map(item => item.healthPromise.then(h => ({ health: h, item: item })));
+  return Promise.all(itemsWithHealthPromises).then(itemsWithHealth => {
     return itemsWithHealth
-      .filter((itemWithHealth) => filterValues.includes(itemWithHealth.health.getGlobalStatus().name))
-      .map((itemWithHealth) => itemWithHealth.item);
+      .filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getGlobalStatus().name))
+      .map(itemWithHealth => itemWithHealth.item);
   });
 };

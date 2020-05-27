@@ -73,7 +73,11 @@ export default class TimeRangeComponent extends React.Component<Props> {
   };
 
   render() {
-    return guardTimeRange(this.range, d => this.renderDuration(d), ft => this.renderWithCustom(ft));
+    return guardTimeRange(
+      this.range,
+      d => this.renderDuration(d),
+      ft => this.renderWithCustom(ft)
+    );
   }
 
   renderDuration(d?: DurationInSeconds) {

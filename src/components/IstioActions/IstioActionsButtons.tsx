@@ -72,9 +72,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const IstioActionButtonsContainer = connect(
-  null,
-  mapDispatchToProps
-)(IstioActionButtons);
+const IstioActionButtonsContainer = connect(null, mapDispatchToProps)(IstioActionButtons);
 
 export default IstioActionButtonsContainer;

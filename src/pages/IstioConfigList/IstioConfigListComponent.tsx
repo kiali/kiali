@@ -158,7 +158,10 @@ class IstioConfigListComponent extends FilterComponent.Component<
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
     return this.promises
-      .registerAll('configs', namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true)))
+      .registerAll(
+        'configs',
+        namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true))
+      )
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
         responses.forEach(response => {
@@ -188,8 +191,5 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state)
 });
 
-const IstioConfigListContainer = connect(
-  mapStateToProps,
-  null
-)(IstioConfigListComponent);
+const IstioConfigListContainer = connect(mapStateToProps, null)(IstioConfigListComponent);
 export default IstioConfigListContainer;

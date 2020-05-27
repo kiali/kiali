@@ -14,8 +14,8 @@ export default class MounterMocker {
     store.subscribe(() => {
       this.caughtErrors = [];
       const state = store.getState();
-      state.messageCenter.groups.forEach((g) => {
-        g.messages.forEach((m) => {
+      state.messageCenter.groups.forEach(g => {
+        g.messages.forEach(m => {
           this.caughtErrors.push(m.content + ' [' + m.detail + ']');
         });
       });
@@ -29,7 +29,7 @@ export default class MounterMocker {
     this.promises.push(
       new Promise((resolve, reject) => {
         jest.spyOn(API, func).mockImplementation(() => {
-          return new Promise((r) => {
+          return new Promise(r => {
             nestData ? r({ data: obj }) : r(obj);
             setTimeout(() => {
               try {
@@ -54,7 +54,7 @@ export default class MounterMocker {
     this.toMount = (
       <Provider store={store}>
         <MemoryRouter>
-          <Route render={(props) => React.cloneElement(elem, props)} />
+          <Route render={props => React.cloneElement(elem, props)} />
         </MemoryRouter>
       </Provider>
     );
@@ -76,7 +76,7 @@ export default class MounterMocker {
 
   private checkErrors() {
     if (this.caughtErrors.length > 0) {
-      console.warn('MounterMocker caught some errors:' + this.caughtErrors.map((e) => '\n- ' + e).join(''));
+      console.warn('MounterMocker caught some errors:' + this.caughtErrors.map(e => '\n- ' + e).join(''));
     }
   }
 }

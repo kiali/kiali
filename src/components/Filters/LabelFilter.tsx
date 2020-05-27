@@ -18,7 +18,7 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
   onkeyPress = (e: any) => {
     if (e.key === 'Enter') {
       if (this.props.value && this.props.value.length > 0) {
-        this.props.value.split(' ').map((val) => !this.props.duplicatesFilter(val) && this.props.filterAdd(val));
+        this.props.value.split(' ').map(val => !this.props.duplicatesFilter(val) && this.props.filterAdd(val));
       }
     }
   };
@@ -31,8 +31,8 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
           value={this.props.value}
           aria-label={'filter_input_label_key'}
           placeholder={'Set Label'}
-          onChange={(value) => this.props.onChange(value)}
-          onKeyPress={(e) => this.onkeyPress(e)}
+          onChange={value => this.props.onChange(value)}
+          onKeyPress={e => this.onkeyPress(e)}
           style={{ width: 'auto' }}
         />
         <Popover

@@ -12,7 +12,7 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip,
+  Tooltip
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Logs, Pod, PodLogs } from '../../../types/IstioObjects';
@@ -71,31 +71,31 @@ const TailLinesOptions = {
   '300': 'Last 300 lines',
   '500': 'Last 500 lines',
   '1000': 'Last 1000 lines',
-  '5000': 'Last 5000 lines',
+  '5000': 'Last 5000 lines'
 };
 
 const appLogsDivVertical = style({
-  height: 'calc(100% + 30px)',
+  height: 'calc(100% + 30px)'
 });
 const appLogsDivHorizontal = style({
   height: '100%',
-  marginRight: '5px',
+  marginRight: '5px'
 });
 
 const proxyLogsDiv = style({
-  height: '100%',
+  height: '100%'
 });
 
 const logsTitle = style({
-  margin: '15px 0 0 10px',
+  margin: '15px 0 0 10px'
 });
 
 const hideLogHelp = style({
-  width: '24px',
+  width: '24px'
 });
 
 const containerDropdown = style({
-  margin: '0 0 3px 10px',
+  margin: '0 0 3px 10px'
 });
 
 const logTextAreaBackground = (enabled = true) => ({ backgroundColor: enabled ? '#003145' : 'gray' });
@@ -111,24 +111,24 @@ const logsTextarea = (enabled = true) =>
     fontSize: '11pt',
     padding: '10px',
     whiteSpace: 'pre',
-    margin: '0 10px 0 10px',
+    margin: '0 10px 0 10px'
   });
 
 const toolbarRight = style({
   right: '50px',
-  position: 'absolute',
+  position: 'absolute'
 });
 
 const displayFlex = style({
-  display: 'flex',
+  display: 'flex'
 });
 
 const toolbarMargin = style({
-  margin: '10px',
+  margin: '10px'
 });
 
 const tailToolbarMargin = style({
-  marginTop: '2px',
+  marginTop: '2px'
 });
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
@@ -156,7 +156,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         sideBySideOrientation: false,
         hideLogValue: '',
         showClearHideLogButton: false,
-        splitPercent: '50%',
+        splitPercent: '50%'
       };
       return;
     }
@@ -183,7 +183,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       sideBySideOrientation: false,
       hideLogValue: '',
       showClearHideLogButton: false,
-      splitPercent: '50%',
+      splitPercent: '50%'
     };
   }
 
@@ -215,7 +215,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
   }
 
-  renderItem = (object) => {
+  renderItem = object => {
     return <ToolbarItem className={displayFlex}>{object}</ToolbarItem>;
   };
 
@@ -235,7 +235,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           id={'wpl_pods'}
                           nameDropdown="Pod"
                           tooltip="Display logs for the selected pod"
-                          handleSelect={(key) => this.setPod(key)}
+                          handleSelect={key => this.setPod(key)}
                           value={this.state.podValue}
                           label={this.props.pods[this.state.podValue!].name}
                           options={this.podOptions!}
@@ -285,7 +285,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                       <ToolbarItem className={displayFlex}>
                         <ToolbarDropdown
                           id={'wpl_tailLines'}
-                          handleSelect={(key) => this.setTailLines(Number(key))}
+                          handleSelect={key => this.setTailLines(Number(key))}
                           value={this.state.tailLines}
                           label={TailLinesOptions[this.state.tailLines]}
                           options={TailLinesOptions}
@@ -323,7 +323,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                         id={'wpl_containers'}
                         tooltip="Choose container for selected pod"
                         classNameSelect={containerDropdown}
-                        handleSelect={(key) => this.setContainer(key)}
+                        handleSelect={key => this.setContainer(key)}
                         value={this.state.containerInfo.container}
                         label={this.state.containerInfo.container}
                         options={this.state.containerInfo.containerOptions!}
@@ -369,7 +369,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
   private setContainer = (container: string) => {
     this.setState({
-      containerInfo: { container: container, containerOptions: this.state.containerInfo!.containerOptions },
+      containerInfo: { container: container, containerOptions: this.state.containerInfo!.containerOptions }
     });
   };
 
@@ -408,7 +408,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         .map((line: string) => {
           return !line.toLowerCase().includes(filterValue.toLowerCase()) ? line : undefined;
         })
-        .filter((line) => {
+        .filter(line => {
           // return non-undefined lines
           return line;
         })
@@ -418,7 +418,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         .map((line: string) => {
           return !line.toLowerCase().includes(filterValue.toLowerCase()) ? line : undefined;
         })
-        .filter((line) => {
+        .filter(line => {
           // return non-undefined lines
           return line;
         })
@@ -428,7 +428,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         hideLogValue: filterValue,
         showClearHideLogButton: true,
         filteredAppLogs: filteredAppLogLines,
-        filteredProxyLogs: filteredProxyLogLines,
+        filteredProxyLogs: filteredProxyLogLines
       });
     }
   };
@@ -447,10 +447,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   private getContainerInfo = (pod: Pod): ContainerInfo => {
     const containers = pod.containers ? pod.containers : [];
     containers.push(...(pod.istioContainers ? pod.istioContainers : []));
-    const containerNames: string[] = containers.map((c) => c.name);
+    const containerNames: string[] = containers.map(c => c.name);
     const options: string[] = [];
 
-    containerNames.forEach((c) => {
+    containerNames.forEach(c => {
       // ignore the proxy
       if (c !== 'istio-proxy') {
         if (pod.appLabel && pod.labels) {
@@ -483,16 +483,16 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     this.loadPodLogsPromise = makeCancelablePromise(Promise.all([promise]));
 
     this.loadPodLogsPromise.promise
-      .then((response) => {
+      .then(response => {
         const podLogs = response[0].data;
         this.setState({
           loadingAppLogs: false,
-          appLogs: podLogs.logs ? podLogs : { logs: NoAppLogsFoundMessage },
+          appLogs: podLogs.logs ? podLogs : { logs: NoAppLogsFoundMessage }
         });
         this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
         return;
       })
-      .catch((error) => {
+      .catch(error => {
         if (error.isCanceled) {
           console.debug('PodLogs: Ignore fetch error (canceled).');
           this.setState({ loadingAppLogs: false });
@@ -501,21 +501,21 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
           loadingAppLogs: false,
-          appLogs: { logs: `Failed to fetch pod logs: ${errorMsg}` },
+          appLogs: { logs: `Failed to fetch pod logs: ${errorMsg}` }
         });
       });
 
     this.loadContainerLogsPromise.promise
-      .then((response) => {
+      .then(response => {
         const containerLogs = response[0].data;
         this.setState({
           loadingProxyLogs: false,
-          proxyLogs: containerLogs.logs ? containerLogs : { logs: NoProxyLogsFoundMessage },
+          proxyLogs: containerLogs.logs ? containerLogs : { logs: NoProxyLogsFoundMessage }
         });
         this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
         return;
       })
-      .catch((error) => {
+      .catch(error => {
         if (error.isCanceled) {
           console.debug('ContainerLogs: Ignore fetch error (canceled).');
           this.setState({ loadingProxyLogs: false });
@@ -524,7 +524,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
           loadingProxyLogs: false,
-          proxyLogs: { logs: `Failed to fetch container logs: ${errorMsg}` },
+          proxyLogs: { logs: `Failed to fetch container logs: ${errorMsg}` }
         });
       });
 
@@ -532,7 +532,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       loadingAppLogs: true,
       loadingProxyLogs: true,
       appLogs: undefined,
-      proxyLogs: undefined,
+      proxyLogs: undefined
     });
   };
 }

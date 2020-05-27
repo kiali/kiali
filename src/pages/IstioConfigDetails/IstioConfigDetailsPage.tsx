@@ -420,9 +420,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                 </CardBody>
               </Card>
             </GridItem>
-          ) : (
-            undefined
-          )}
+          ) : undefined}
         </Grid>
         {this.renderActionButtons()}
       </>

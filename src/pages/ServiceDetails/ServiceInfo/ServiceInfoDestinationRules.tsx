@@ -153,12 +153,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   }
 
   generateKey() {
-    return (
-      'key_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9)
-    );
+    return 'key_' + Math.random().toString(36).substr(2, 9);
   }
 
   generateSubsets(subsets: Subset[]) {

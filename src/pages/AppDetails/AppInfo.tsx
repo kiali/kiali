@@ -46,10 +46,10 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
       return;
     }
     this.graphDataSource.fetchForApp(this.props.duration, this.props.app.namespace.name, this.props.app.name);
-    const hasSidecar = this.props.app.workloads.some((w) => w.istioSidecar);
+    const hasSidecar = this.props.app.workloads.some(w => w.istioSidecar);
     API.getAppHealth(this.props.app.namespace.name, this.props.app.name, this.props.duration, hasSidecar)
-      .then((health) => this.setState({ health: health }))
-      .catch((error) => AlertUtils.addError('Could not fetch Health.', error));
+      .then(health => this.setState({ health: health }))
+      .catch(error => AlertUtils.addError('Could not fetch Health.', error));
   };
 
   render() {

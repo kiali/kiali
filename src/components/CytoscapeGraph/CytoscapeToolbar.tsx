@@ -241,8 +241,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch)
 });
 
-const CytoscapeToolbarContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(CytoscapeToolbar);
+const CytoscapeToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(CytoscapeToolbar);
 export default CytoscapeToolbarContainer;

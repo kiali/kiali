@@ -47,7 +47,7 @@ const overviewTypes = {
 };
 
 // TODO Use Object.fromEntries when available
-const sortTypes = (function() {
+const sortTypes = (function () {
   let o = {};
   Sorts.sortFields.forEach(sortType => {
     let id: string = sortType.id;
@@ -215,9 +215,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const OverviewToolbarContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(OverviewToolbar);
+const OverviewToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(OverviewToolbar);
 
 export default OverviewToolbarContainer;

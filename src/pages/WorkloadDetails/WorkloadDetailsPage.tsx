@@ -38,7 +38,7 @@ const paramToTab: { [key: string]: number } = {
   traffic: 1,
   logs: 2,
   in_metrics: 3,
-  out_metrics: 4,
+  out_metrics: 4
 };
 
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
@@ -66,13 +66,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   private fetchWorkload = () => {
     API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload)
-      .then((details) =>
+      .then(details =>
         this.setState({
           workload: details.data,
-          validations: this.workloadValidations(details.data),
+          validations: this.workloadValidations(details.data)
         })
       )
-      .catch((error) => AlertUtils.addError('Could not fetch Workload.', error));
+      .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
   };
 
   // All information for validations is fetched in the workload, no need to add another call
@@ -80,13 +80,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const noIstiosidecar: ObjectCheck = {
       message: 'Pod has no Istio sidecar',
       severity: ValidationTypes.Warning,
-      path: '',
+      path: ''
     };
     const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
     const noVersionLabel: ObjectCheck = {
       message: 'Pod has no version label',
       severity: ValidationTypes.Warning,
-      path: '',
+      path: ''
     };
     const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
     const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
@@ -95,12 +95,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const validations: Validations = {};
     if (workload.pods.length > 0) {
       validations.pod = {};
-      workload.pods.forEach((pod) => {
+      workload.pods.forEach(pod => {
         validations.pod[pod.name] = {
           name: pod.name,
           objectType: 'pod',
           valid: true,
-          checks: [],
+          checks: []
         };
         if (!isIstioNamespace(this.props.match.params.namespace)) {
           if (!pod.istioContainers || pod.istioContainers.length === 0) {
@@ -211,8 +211,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       const isLabeled = app && version;
       if (isLabeled) {
         let dynamicTabsCount: number = 0;
-        this.state.workload.runtimes.forEach((runtime) => {
-          runtime.dashboardRefs.forEach((dashboard) => {
+        this.state.workload.runtimes.forEach(runtime => {
+          runtime.dashboardRefs.forEach(dashboard => {
             const tabKey = dynamicTabsCount + staticTabsCount;
             paramToTab[dashboard.template] = tabKey;
             const tab = (
@@ -251,7 +251,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
-          onSelect={(tabValue) => {
+          onSelect={tabValue => {
             this.setState({ currentTab: tabValue });
           }}
           tabMap={paramToTab}
@@ -269,7 +269,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state),
+  duration: durationSelector(state)
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);

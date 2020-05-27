@@ -6,10 +6,7 @@ import { isMTLSEnabled } from '../types/TLSStatus';
 type Selector<T> = (state: KialiAppState) => T;
 
 const createIdentitySelector = <T extends unknown>(selector: Selector<T>): Selector<T> =>
-  createSelector(
-    selector,
-    (x: T): T => x
-  );
+  createSelector(selector, (x: T): T => x);
 
 // select the proper field from Redux State
 const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamespaces;

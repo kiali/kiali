@@ -96,7 +96,13 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
 
   syncNamespacesURLParam = () => {
     const namespaces = (HistoryManager.getParam(URLParam.NAMESPACES) || '').split(',').filter(Boolean);
-    if (namespaces.length > 0 && _.difference(namespaces, this.props.activeNamespaces.map(item => item.name))) {
+    if (
+      namespaces.length > 0 &&
+      _.difference(
+        namespaces,
+        this.props.activeNamespaces.map(item => item.name)
+      )
+    ) {
       // We must change the props of namespaces
       const items = namespaces.map(ns => ({ name: ns } as Namespace));
       this.props.setNamespaces(items);
@@ -277,8 +283,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const NamespaceDropdownContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(NamespaceDropdown);
+const NamespaceDropdownContainer = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdown);
 export default NamespaceDropdownContainer;

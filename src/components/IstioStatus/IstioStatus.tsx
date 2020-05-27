@@ -111,9 +111,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch)
 });
 
-const IstioStatusConnected = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(IstioStatus);
+const IstioStatusConnected = connect(mapStateToProps, mapDispatchToProps)(IstioStatus);
 
 export default IstioStatusConnected;

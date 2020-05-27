@@ -442,9 +442,7 @@ export default class TrafficRenderer {
       edgeLengthFactor = BASE_LENGTH / Math.max(edgeLength, 1);
     } catch (error) {
       console.error(
-        `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${
-          error.message
-        }`
+        `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${error.message}`
       );
     }
 

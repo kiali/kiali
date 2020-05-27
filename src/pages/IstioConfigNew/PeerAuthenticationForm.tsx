@@ -8,24 +8,24 @@ import { PfColors } from '../../components/Pf/PfColors';
 
 const noPortMtlsStyle = style({
   marginTop: 15,
-  color: PfColors.Red100,
+  color: PfColors.Red100
 });
 
 const headerCells: ICell[] = [
   {
     title: 'Port Number',
     transforms: [cellWidth(20) as any],
-    props: {},
+    props: {}
   },
   {
     title: 'Mutual TLS Mode',
     transforms: [cellWidth(20) as any],
-    props: {},
+    props: {}
   },
   {
     title: '',
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 type Props = {
@@ -60,8 +60,8 @@ export const initPeerAuthentication = (): PeerAuthenticationState => ({
   addPortMtls: false,
   addNewPortMtls: {
     port: '',
-    mtls: PeerAuthenticationMutualTLSMode.UNSET,
-  },
+    mtls: PeerAuthenticationMutualTLSMode.UNSET
+  }
 });
 
 export const isPeerAuthenticationStateValid = (pa: PeerAuthenticationState): boolean => {
@@ -83,8 +83,8 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
       portLevelMtls: this.props.peerAuthentication.portLevelMtls,
       addNewPortMtls: {
         port: '',
-        mtls: PeerAuthenticationMutualTLSMode.UNSET,
-      },
+        mtls: PeerAuthenticationMutualTLSMode.UNSET
+      }
     };
   }
 
@@ -96,15 +96,15 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
       mtls: this.props.peerAuthentication.mtls,
       addPortMtls: this.props.peerAuthentication.addPortMtls,
       portLevelMtls: this.props.peerAuthentication.portLevelMtls,
-      addNewPortMtls: this.props.peerAuthentication.addNewPortMtls,
+      addNewPortMtls: this.props.peerAuthentication.addNewPortMtls
     });
   }
 
   onChangeWorkloadSelector = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
-          addWorkloadSelector: !prevState.addWorkloadSelector,
+          addWorkloadSelector: !prevState.addWorkloadSelector
         };
       },
       () => this.onPeerAuthenticationChange()
@@ -113,9 +113,9 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
 
   onChangeAddPortMtls = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
-          addPortMtls: !prevState.addPortMtls,
+          addPortMtls: !prevState.addPortMtls
         };
       },
       () => this.onPeerAuthenticationChange()
@@ -127,7 +127,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
       this.setState(
         {
           workloadSelectorValid: false,
-          workloadSelector: '',
+          workloadSelector: ''
         },
         () => this.onPeerAuthenticationChange()
       );
@@ -156,7 +156,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
     this.setState(
       {
         workloadSelectorValid: isValid,
-        workloadSelector: value,
+        workloadSelector: value
       },
       () => this.onPeerAuthenticationChange()
     );
@@ -169,7 +169,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
   onMutualTlsChange = (value, _) => {
     this.setState(
       {
-        mtls: value,
+        mtls: value
       },
       () => this.onPeerAuthenticationChange()
     );
@@ -177,12 +177,12 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
 
   onAddPortNumber = (value: string, _) => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
           addNewPortMtls: {
             port: value.trim(),
-            mtls: prevState.addNewPortMtls.mtls,
-          },
+            mtls: prevState.addNewPortMtls.mtls
+          }
         };
       },
       () => this.onPeerAuthenticationChange()
@@ -191,12 +191,12 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
 
   onAddPortMtlsMode = (value: string, _) => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
           addNewPortMtls: {
             port: prevState.addNewPortMtls.port,
-            mtls: value,
-          },
+            mtls: value
+          }
         };
       },
       () => this.onPeerAuthenticationChange()
@@ -205,14 +205,14 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
 
   onAddPortMtls = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         prevState.portLevelMtls.push(prevState.addNewPortMtls);
         return {
           portLevelMtls: prevState.portLevelMtls,
           addNewPortMtls: {
             port: '',
-            mtls: PeerAuthenticationMutualTLSMode.UNSET,
-          },
+            mtls: PeerAuthenticationMutualTLSMode.UNSET
+          }
         };
       },
       () => this.onPeerAuthenticationChange()
@@ -226,15 +226,15 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.setState(
-          (prevState) => {
+          prevState => {
             prevState.portLevelMtls.splice(rowIndex, 1);
             return {
-              portLevelMtls: prevState.portLevelMtls,
+              portLevelMtls: prevState.portLevelMtls
             };
           },
           () => this.onPeerAuthenticationChange()
         );
-      },
+      }
     };
     if (rowIndex < this.props.peerAuthentication.portLevelMtls.length) {
       return [removeAction];
@@ -246,7 +246,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
     return this.props.peerAuthentication.portLevelMtls
       .map((pmtls, i) => ({
         key: 'portMtls' + i,
-        cells: [<>{pmtls.port}</>, <>{pmtls.mtls}</>, ''],
+        cells: [<>{pmtls.port}</>, <>{pmtls.mtls}</>, '']
       }))
       .concat([
         {
@@ -285,9 +285,9 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
               >
                 Add Port MTLS
               </Button>
-            </>,
-          ],
-        },
+            </>
+          ]
+        }
       ]);
   }
 

@@ -44,10 +44,10 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   onHealthPromiseChanged = async (promise: Promise<Health>): Promise<void> => {
     this.promises
       .register('health', promise)
-      .then((h) => {
+      .then(h => {
         this.setState({ health: h });
       })
-      .catch((err) => {
+      .catch(err => {
         if (!err.isCanceled) {
           this.setState({ health: undefined });
           throw err;
@@ -57,7 +57,7 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
 
   renderDetails = (item: RenderResource, health?: Health) => {
     const icon = this.getIcon();
-    return this.props.config.columns.map((object) =>
+    return this.props.config.columns.map(object =>
       object.renderer(item, this.props.config, icon, health, this.props.statefulFilter)
     );
   };

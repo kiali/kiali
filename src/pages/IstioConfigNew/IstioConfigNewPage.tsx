@@ -19,7 +19,7 @@ import {
   buildGateway,
   buildPeerAuthentication,
   buildRequestAuthentication,
-  buildSidecar,
+  buildSidecar
 } from '../../components/IstioWizards/IstioWizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import AuthorizationPolicyForm, {
@@ -27,21 +27,21 @@ import AuthorizationPolicyForm, {
   AUTHORIZATION_POLICIES,
   AuthorizationPolicyState,
   initAuthorizationPolicy,
-  isAuthorizationPolicyStateValid,
+  isAuthorizationPolicyStateValid
 } from './AuthorizationPolicyForm';
 import PeerAuthenticationForm, {
   initPeerAuthentication,
   isPeerAuthenticationStateValid,
   PEER_AUTHENTICATION,
   PEER_AUTHENTICATIONS,
-  PeerAuthenticationState,
+  PeerAuthenticationState
 } from './PeerAuthenticationForm';
 import RequestAuthenticationForm, {
   initRequestAuthentication,
   isRequestAuthenticationStateValid,
   REQUEST_AUTHENTICATION,
   REQUEST_AUTHENTICATIONS,
-  RequestAuthenticationState,
+  RequestAuthenticationState
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 
@@ -67,7 +67,7 @@ const DIC = {
   Gateway: GATEWAYS,
   PeerAuthentication: PEER_AUTHENTICATIONS,
   RequestAuthentication: REQUEST_AUTHENTICATIONS,
-  Sidecar: SIDECARS,
+  Sidecar: SIDECARS
 };
 
 const istioResourceOptions = [
@@ -75,7 +75,7 @@ const istioResourceOptions = [
   { value: GATEWAY, label: GATEWAY, disabled: false },
   { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
   { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
-  { value: SIDECAR, label: SIDECAR, disabled: false },
+  { value: SIDECAR, label: SIDECAR, disabled: false }
 ];
 
 const initState = (): State => ({
@@ -87,7 +87,7 @@ const initState = (): State => ({
   peerAuthentication: initPeerAuthentication(),
   requestAuthentication: initRequestAuthentication(),
   // Init with the istio-system/* for sidecar
-  sidecar: initSidecar(serverConfig.istioNamespace + '/*'),
+  sidecar: initSidecar(serverConfig.istioNamespace + '/*')
 });
 
 class IstioConfigNewPage extends React.Component<Props, State> {
@@ -125,14 +125,14 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   fetchPermissions = () => {
     if (this.props.activeNamespaces.length > 0) {
       this.promises
-        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map((n) => n.name)))
-        .then((permResponse) => {
+        .register('permissions', API.getIstioPermissions(this.props.activeNamespaces.map(n => n.name)))
+        .then(permResponse => {
           this.setState(
             {
-              istioPermissions: permResponse.data,
+              istioPermissions: permResponse.data
             },
             () => {
-              this.props.activeNamespaces.forEach((ns) => {
+              this.props.activeNamespaces.forEach(ns => {
                 if (!this.canCreate(ns.name)) {
                   AlertUtils.addWarning('User has not permissions to create Istio Config on namespace: ' + ns.name);
                 }
@@ -140,7 +140,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             }
           );
         })
-        .catch((error) => {
+        .catch(error => {
           // Canceled errors are expected on this query when page is unmounted
           if (!error.isCanceled) {
             AlertUtils.addError('Could not fetch Permissions.', error);
@@ -152,50 +152,48 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   onIstioResourceChange = (value, _) => {
     this.setState({
       istioResource: value,
-      name: '',
+      name: ''
     });
   };
 
   onNameChange = (value, _) => {
     this.setState({
-      name: value,
+      name: value
     });
   };
 
   onIstioResourceCreate = () => {
     const jsonIstioObjects: { namespace: string; json: string }[] = [];
-    this.props.activeNamespaces.forEach((ns) => {
+    this.props.activeNamespaces.forEach(ns => {
       switch (this.state.istioResource) {
         case AUTHORIZACION_POLICY:
           jsonIstioObjects.push({
             namespace: ns.name,
-            json: JSON.stringify(buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy)),
+            json: JSON.stringify(buildAuthorizationPolicy(this.state.name, ns.name, this.state.authorizationPolicy))
           });
           break;
         case GATEWAY:
           jsonIstioObjects.push({
             namespace: ns.name,
-            json: JSON.stringify(buildGateway(this.state.name, ns.name, this.state.gateway)),
+            json: JSON.stringify(buildGateway(this.state.name, ns.name, this.state.gateway))
           });
           break;
         case PEER_AUTHENTICATION:
           jsonIstioObjects.push({
             namespace: ns.name,
-            json: JSON.stringify(buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication)),
+            json: JSON.stringify(buildPeerAuthentication(this.state.name, ns.name, this.state.peerAuthentication))
           });
           break;
         case REQUEST_AUTHENTICATION:
           jsonIstioObjects.push({
             namespace: ns.name,
-            json: JSON.stringify(
-              buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication)
-            ),
+            json: JSON.stringify(buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication))
           });
           break;
         case SIDECAR:
           jsonIstioObjects.push({
             namespace: ns.name,
-            json: JSON.stringify(buildSidecar(this.state.name, ns.name, this.state.sidecar)),
+            json: JSON.stringify(buildSidecar(this.state.name, ns.name, this.state.sidecar))
           });
           break;
       }
@@ -204,15 +202,15 @@ class IstioConfigNewPage extends React.Component<Props, State> {
     this.promises
       .registerAll(
         'Create ' + DIC[this.state.istioResource],
-        jsonIstioObjects.map((o) => API.createIstioConfigDetail(o.namespace, DIC[this.state.istioResource], o.json))
+        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.state.istioResource], o.json))
       )
-      .then((results) => {
+      .then(results => {
         if (results.length > 0) {
           AlertUtils.add('Istio ' + this.state.istioResource + ' created', 'default', MessageType.SUCCESS);
         }
         this.backToList();
       })
-      .catch((error) => {
+      .catch(error => {
         AlertUtils.addError('Could not create Istio ' + this.state.istioResource + ' objects.', error);
       });
   };
@@ -242,58 +240,58 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   };
 
   onChangeAuthorizationPolicy = (authorizationPolicy: AuthorizationPolicyState) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       Object.keys(prevState.authorizationPolicy).forEach(
-        (key) => (prevState.authorizationPolicy[key] = authorizationPolicy[key])
+        key => (prevState.authorizationPolicy[key] = authorizationPolicy[key])
       );
       return {
-        authorizationPolicy: prevState.authorizationPolicy,
+        authorizationPolicy: prevState.authorizationPolicy
       };
     });
   };
 
   onChangeGateway = (gateway: GatewayState) => {
-    this.setState((prevState) => {
-      Object.keys(prevState.gateway).forEach((key) => (prevState.gateway[key] = gateway[key]));
+    this.setState(prevState => {
+      Object.keys(prevState.gateway).forEach(key => (prevState.gateway[key] = gateway[key]));
       return {
-        gateway: prevState.gateway,
+        gateway: prevState.gateway
       };
     });
   };
 
   onChangePeerAuthentication = (peerAuthentication: PeerAuthenticationState) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       Object.keys(prevState.peerAuthentication).forEach(
-        (key) => (prevState.peerAuthentication[key] = peerAuthentication[key])
+        key => (prevState.peerAuthentication[key] = peerAuthentication[key])
       );
       return {
-        peerAuthentication: prevState.peerAuthentication,
+        peerAuthentication: prevState.peerAuthentication
       };
     });
   };
 
   onChangeRequestAuthentication = (requestAuthentication: RequestAuthenticationState) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       Object.keys(prevState.requestAuthentication).forEach(
-        (key) => (prevState.requestAuthentication[key] = requestAuthentication[key])
+        key => (prevState.requestAuthentication[key] = requestAuthentication[key])
       );
       return {
-        requestAuthentication: prevState.requestAuthentication,
+        requestAuthentication: prevState.requestAuthentication
       };
     });
   };
 
   onChangeSidecar = (sidecar: SidecarState) => {
-    this.setState((prevState) => {
-      Object.keys(prevState.sidecar).forEach((key) => (prevState.sidecar[key] = sidecar[key]));
+    this.setState(prevState => {
+      Object.keys(prevState.sidecar).forEach(key => (prevState.sidecar[key] = sidecar[key]));
       return {
-        sidecar: prevState.sidecar,
+        sidecar: prevState.sidecar
       };
     });
   };
 
   render() {
-    const canCreate = this.props.activeNamespaces.every((ns) => this.canCreate(ns.name));
+    const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
     const isNameValid = isValidK8SName(this.state.name);
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
     const isFormValid = canCreate && isNameValid && isNamespacesValid && this.isIstioFormValid();
@@ -309,7 +307,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             isValid={isNamespacesValid}
           >
             <TextInput
-              value={this.props.activeNamespaces.map((n) => n.name).join(',')}
+              value={this.props.activeNamespaces.map(n => n.name).join(',')}
               isRequired={true}
               type="text"
               id="namespaces"
@@ -390,7 +388,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    activeNamespaces: activeNamespacesSelector(state),
+    activeNamespaces: activeNamespacesSelector(state)
   };
 };
 

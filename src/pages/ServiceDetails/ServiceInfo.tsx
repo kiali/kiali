@@ -46,7 +46,7 @@ interface ValidationChecks {
 }
 
 const tabIconStyle = style({
-  fontSize: '0.9em',
+  fontSize: '0.9em'
 });
 
 const tabName = 'list';
@@ -54,12 +54,12 @@ const defaultTab = 'workloads';
 const paramToTab: { [key: string]: number } = {
   workloads: 0,
   virtualservices: 1,
-  destinationrules: 2,
+  destinationrules: 2
 };
 
 const emptyThreeScale: ThreeScaleInfo = {
   enabled: false,
-  permissions: { create: false, update: false, delete: false },
+  permissions: { create: false, update: false, delete: false }
 };
 
 class ServiceInfo extends React.Component<Props, ServiceInfoState> {
@@ -72,7 +72,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       gateways: [],
       validations: {},
       threeScaleInfo: emptyThreeScale,
-      currentTab: activeTab(tabName, defaultTab),
+      currentTab: activeTab(tabName, defaultTab)
     };
   }
 
@@ -94,39 +94,39 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     this.promises.cancelAll();
     this.promises
       .register('namespaces', API.getNamespaces())
-      .then((namespacesResponse) => {
+      .then(namespacesResponse => {
         const namespaces: Namespace[] = namespacesResponse.data;
         this.promises
           .registerAll(
             'gateways',
-            namespaces.map((ns) => API.getIstioConfig(ns.name, ['gateways'], false))
+            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false))
           )
-          .then((responses) => {
+          .then(responses => {
             let gatewayList: string[] = [];
-            responses.forEach((response) => {
+            responses.forEach(response => {
               const ns = response.data.namespace;
-              response.data.gateways.forEach((gw) => {
+              response.data.gateways.forEach(gw => {
                 gatewayList = gatewayList.concat(ns.name + '/' + gw.metadata.name);
               });
             });
             this.setState({ gateways: gatewayList });
           })
-          .catch((gwError) => {
+          .catch(gwError => {
             AlertUtils.addError('Could not fetch Gateways list.', gwError);
           });
       })
-      .catch((error) => {
+      .catch(error => {
         AlertUtils.addError('Could not fetch Namespaces list.', error);
       });
 
     API.getServiceDetail(this.props.namespace, this.props.service, true, this.props.duration)
-      .then((results) => {
+      .then(results => {
         this.setState({
           serviceDetails: results,
-          validations: ServiceInfo.addFormatValidation(results, results.validations),
+          validations: ServiceInfo.addFormatValidation(results, results.validations)
         });
       })
-      .catch((error) => {
+      .catch(error => {
         AlertUtils.addError('Could not fetch Service Details.', error);
       });
 
@@ -134,20 +134,20 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
     if (serverConfig.extensions?.threescale?.enabled) {
       API.getThreeScaleInfo()
-        .then((results) => {
+        .then(results => {
           this.setState({
-            threeScaleInfo: results.data,
+            threeScaleInfo: results.data
           });
           if (results.data.enabled) {
             API.getThreeScaleServiceRule(this.props.namespace, this.props.service)
-              .then((result) => {
+              .then(result => {
                 this.setState({
-                  threeScaleServiceRule: result.data,
+                  threeScaleServiceRule: result.data
                 });
               })
-              .catch((error) => {
+              .catch(error => {
                 this.setState({
-                  threeScaleServiceRule: undefined,
+                  threeScaleServiceRule: undefined
                 });
                 // Only log 500 errors. 404 response is a valid response on this composition case
                 if (error.response && error.response.status >= 500) {
@@ -156,7 +156,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
               });
           }
         })
-        .catch((error) => {
+        .catch(error => {
           AlertUtils.addError(
             'Could not fetch 3scale info. Turning off 3scale integration.',
             error,
@@ -168,7 +168,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   };
 
   static addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
-    details.destinationRules.items.forEach((destinationRule) => {
+    details.destinationRules.items.forEach(destinationRule => {
       const dr = new DestinationRuleValidator(destinationRule);
       const formatValidation = dr.formatValidation();
 
@@ -177,7 +177,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         if (
           formatValidation !== null &&
           objectValidations.checks &&
-          !objectValidations.checks.some((check) => check.message === formatValidation.message)
+          !objectValidations.checks.some(check => check.message === formatValidation.message)
         ) {
           objectValidations.checks.push(formatValidation);
           objectValidations.valid = false;
@@ -190,19 +190,19 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   private validationChecks(): ValidationChecks {
     const validationChecks = {
       hasVirtualServiceChecks: false,
-      hasDestinationRuleChecks: false,
+      hasDestinationRuleChecks: false
     };
     const validations = this.state.validations || {};
     if (this.state.serviceDetails) {
       validationChecks.hasVirtualServiceChecks = this.state.serviceDetails.virtualServices.items.some(
-        (virtualService) =>
+        virtualService =>
           validations.virtualservice &&
           validations.virtualservice[virtualService.metadata.name] &&
           validations.virtualservice[virtualService.metadata.name].checks &&
           validations.virtualservice[virtualService.metadata.name].checks.length > 0
       );
       validationChecks.hasDestinationRuleChecks = this.state.serviceDetails.destinationRules.items.some(
-        (destinationRule) =>
+        destinationRule =>
           validations.destinationrule &&
           destinationRule.metadata &&
           validations.destinationrule[destinationRule.metadata.name] &&
@@ -238,7 +238,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = ValidationTypes.Warning;
-      keys.forEach((key) => {
+      keys.forEach(key => {
         const validationsForIcon = (this.state.validations || {})![type][key];
         if (validationToSeverity(validationsForIcon) === ValidationTypes.Error) {
           severity = ValidationTypes.Error;
@@ -254,7 +254,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           Virtual Services ({this.state.serviceDetails.virtualServices.items.length})
           {validationChecks.hasVirtualServiceChecks
             ? getValidationIcon(
-                (this.state.serviceDetails.virtualServices.items || []).map((a) => a.metadata.name),
+                (this.state.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
                 'virtualservice'
               )
             : undefined}
@@ -266,7 +266,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
           Destination Rules ({this.state.serviceDetails.destinationRules.items.length})
           {validationChecks.hasDestinationRuleChecks
             ? getValidationIcon(
-                (this.state.serviceDetails.destinationRules.items || []).map((a) => a.metadata.name),
+                (this.state.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
                 'destinationrule'
               )
             : undefined}
@@ -304,7 +304,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
               <GridItem span={12}>
                 <ParameterizedTabs
                   id="service-tabs"
-                  onSelect={(tabValue) => {
+                  onSelect={tabValue => {
                     this.setState({ currentTab: tabValue });
                   }}
                   tabMap={paramToTab}

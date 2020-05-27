@@ -14,22 +14,22 @@ const headerCells: ICell[] = [
   {
     title: 'Rules to match the request',
     transforms: [cellWidth(100) as any],
-    props: {},
+    props: {}
   },
   {
     title: '',
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 const rulesPadding = style({
-  paddingLeft: 10,
+  paddingLeft: 10
 });
 
 const noRulesStyle = style({
   color: PfColors.Red100,
   textAlign: 'center',
-  width: '100%',
+  width: '100%'
 });
 
 class RuleList extends React.Component<Props> {
@@ -102,8 +102,8 @@ class RuleList extends React.Component<Props> {
               </>
             )}
           </>,
-          <></>,
-        ],
+          <></>
+        ]
       };
     });
   };
@@ -115,7 +115,7 @@ class RuleList extends React.Component<Props> {
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.props.onRemoveRule(rowIndex);
-      },
+      }
     };
     return [removeAction];
   };

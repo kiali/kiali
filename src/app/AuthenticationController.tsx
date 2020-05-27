@@ -152,8 +152,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-const AuthenticationControllerContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AuthenticationController);
+const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);
 export default AuthenticationControllerContainer;

@@ -13,13 +13,13 @@ describe('WorkloadDescription', () => {
       runtimes: [
         {
           name: 'Vert.x',
-          dashboardRefs: [],
+          dashboardRefs: []
         },
         {
           name: '42',
-          dashboardRefs: [],
-        },
-      ],
+          dashboardRefs: []
+        }
+      ]
     };
     const wrapper = shallow(
       <WorkloadDescription workload={workload} namespace={'my-namespace'} miniGraphDataSource={miniGraphDS} />
@@ -35,13 +35,13 @@ describe('WorkloadDescription', () => {
       additionalDetails: [
         {
           title: 'SHA-256',
-          value: '2a1525fff0cc8e1dfee38ab6f41e57effa2051d7',
+          value: '2a1525fff0cc8e1dfee38ab6f41e57effa2051d7'
         },
         {
           title: 'URL',
-          value: 'https://my-service.com',
-        },
-      ],
+          value: 'https://my-service.com'
+        }
+      ]
     };
     const wrapper = mount(
       <WorkloadDescription workload={workload} namespace={'my-namespace'} miniGraphDataSource={miniGraphDS} />

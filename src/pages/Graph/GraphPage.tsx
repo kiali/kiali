@@ -576,8 +576,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
-const GraphPageContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(GraphPage);
+const GraphPageContainer = connect(mapStateToProps, mapDispatchToProps)(GraphPage);
 export default GraphPageContainer;

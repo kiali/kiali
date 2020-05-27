@@ -209,9 +209,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const GraphToolbarContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(GraphToolbar);
+const GraphToolbarContainer = connect(mapStateToProps, mapDispatchToProps)(GraphToolbar);
 
 export default GraphToolbarContainer;

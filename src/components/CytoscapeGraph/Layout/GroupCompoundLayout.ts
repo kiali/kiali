@@ -165,11 +165,7 @@ export default class GroupCompoundLayout {
     const removedElements = this.cy.remove(children);
 
     // Ensure we only touch the requested elements and not the whole graph.
-    const layoutElements = this.cy
-      .collection()
-      .add(this.elements)
-      .subtract(removedElements)
-      .add(syntheticEdges);
+    const layoutElements = this.cy.collection().add(this.elements).subtract(removedElements).add(syntheticEdges);
 
     // Before running the layout, reset the elements positions.
     // This is not absolutely necessary, but without this we have seen some problems with

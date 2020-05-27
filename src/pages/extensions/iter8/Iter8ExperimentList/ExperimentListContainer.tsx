@@ -398,9 +398,7 @@ class ExperimentListPage extends React.Component<Props, State> {
               <Badge className={'virtualitem_badge_definition'}>IT8</Badge>
             </Tooltip>
             <Link
-              to={`/extensions/namespaces/${h.namespace}/iter8/${h.name}?target=${h.targetService}&startTime=${
-                h.startedAt
-              }&endTime=${h.endedAt}&baseline=${h.baseline}&candidate=${h.candidate}`}
+              to={`/extensions/namespaces/${h.namespace}/iter8/${h.name}?target=${h.targetService}&startTime=${h.startedAt}&endTime=${h.endedAt}&baseline=${h.baseline}&candidate=${h.candidate}`}
               key={'Experiment_' + h.namespace + '_' + h.namespace}
             >
               {h.name}
@@ -483,9 +481,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state)
 });
 
-const ExperimentListPageContainer = connect(
-  mapStateToProps,
-  null
-)(ExperimentListPage);
+const ExperimentListPageContainer = connect(mapStateToProps, null)(ExperimentListPage);
 
 export default ExperimentListPageContainer;

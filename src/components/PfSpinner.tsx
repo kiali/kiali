@@ -18,8 +18,5 @@ export const PfSpinner: React.SFC<PfSpinnerProps> = props => {
 };
 
 // hook up to Redux for our State to be mapped to props
-const PfSpinnerContainer = connect(
-  mapStateToProps,
-  null
-)(PfSpinner);
+const PfSpinnerContainer = connect(mapStateToProps, null)(PfSpinner);
 export default PfSpinnerContainer;

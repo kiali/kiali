@@ -90,7 +90,10 @@ class WorkloadListComponent extends FilterComponent.Component<
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters);
+          this.fetchWorkloads(
+            namespaces.map(namespace => namespace.name),
+            activeFilters
+          );
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {

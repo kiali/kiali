@@ -4,23 +4,23 @@ describe('Validate JSON Patchs', () => {
   const gateway: object = {
     kind: 'Gateway',
     namespace: {
-      name: 'bookinfo',
+      name: 'bookinfo'
     },
     spec: {
       selector: {
-        istio: 'ingressgateway',
+        istio: 'ingressgateway'
       },
       servers: [
         {
           port: {
             number: 80,
             name: 'http',
-            protocol: 'HTTP',
+            protocol: 'HTTP'
           },
-          hosts: ['*'],
-        },
-      ],
-    },
+          hosts: ['*']
+        }
+      ]
+    }
   };
 
   const gatewayModified: object = {
@@ -28,19 +28,19 @@ describe('Validate JSON Patchs', () => {
     kind: 'Gateway',
     spec: {
       selector: {
-        app: 'myapp',
+        app: 'myapp'
       },
       servers: [
         {
           port: {
             number: 80,
             name: 'http',
-            protocol: 'HTTP',
+            protocol: 'HTTP'
           },
-          hosts: ['*'],
-        },
-      ],
-    },
+          hosts: ['*']
+        }
+      ]
+    }
   };
 
   it('Basic Test', () => {

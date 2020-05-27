@@ -82,10 +82,7 @@ export class GraphHighlighter {
 
     toHighlight.addClass(HIGHLIGHT_CLASS);
 
-    this.cy
-      .elements()
-      .difference(toHighlight)
-      .addClass(DIM_CLASS);
+    this.cy.elements().difference(toHighlight).addClass(DIM_CLASS);
   };
 
   // Returns the nodes to highlight. Highlighting for a hovered element
@@ -131,10 +128,7 @@ export class GraphHighlighter {
     } else {
       const source = edge.source();
       const target = edge.target();
-      elems = source
-        .add(target)
-        .add(source.predecessors())
-        .add(target.successors());
+      elems = source.add(target).add(source.predecessors()).add(target.successors());
     }
     return this.includeParentNodes(elems.add(edge));
   }

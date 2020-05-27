@@ -9,7 +9,7 @@ import {
   Dropdown,
   DropdownItem,
   KebabToggle,
-  Title,
+  Title
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
@@ -53,7 +53,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     const graphCardActions = [
       <DropdownItem key="viewGraph" onClick={this.onViewGraph}>
         Show full graph
-      </DropdownItem>,
+      </DropdownItem>
     ];
 
     return (
@@ -85,7 +85,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
                 isError: this.props.dataSource.isError,
                 isLoading: this.props.dataSource.isLoading,
                 fetchParams: this.props.dataSource.fetchParameters,
-                timestamp: this.props.dataSource.graphTimestamp,
+                timestamp: this.props.dataSource.graphTimestamp
               }}
               displayUnusedNodes={() => undefined}
               edgeLabelMode={EdgeLabelMode.NONE}
@@ -110,7 +110,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
 
   private onGraphActionsToggle = (isOpen: boolean) => {
     this.setState({
-      isKebabOpen: isOpen,
+      isKebabOpen: isOpen
     });
   };
 

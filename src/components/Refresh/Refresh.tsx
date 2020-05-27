@@ -134,9 +134,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const RefreshContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Refresh);
+const RefreshContainer = connect(mapStateToProps, mapDispatchToProps)(Refresh);
 
 export default RefreshContainer;

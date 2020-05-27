@@ -26,22 +26,22 @@ const headerCells: ICell[] = [
   {
     title: 'Condition Key',
     transforms: [cellWidth(30) as any],
-    props: {},
+    props: {}
   },
   {
     title: 'Values',
     transforms: [cellWidth(30) as any],
-    props: {},
+    props: {}
   },
   {
     title: 'Not Values',
     transforms: [cellWidth(30) as any],
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 const noValidKeyStyle = style({
-  color: PfColors.Red100,
+  color: PfColors.Red100
 });
 
 const conditionFixedKeys = [
@@ -53,7 +53,7 @@ const conditionFixedKeys = [
   'request.auth.presenter',
   'destination.ip',
   'destination.port',
-  'connection.sni',
+  'connection.sni'
 ];
 
 class ConditionBuilder extends React.Component<Props, State> {
@@ -61,34 +61,34 @@ class ConditionBuilder extends React.Component<Props, State> {
     super(props);
     this.state = {
       condition: {
-        key: '',
-      },
+        key: ''
+      }
     };
   }
 
   onAddNewConditionKey = (key: string, _) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       prevState.condition.key = key;
       return {
-        condition: prevState.condition,
+        condition: prevState.condition
       };
     });
   };
 
   onAddNewValues = (value: string, _) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       prevState.condition.values = value.length === 0 ? [] : value.split(',');
       return {
-        condition: prevState.condition,
+        condition: prevState.condition
       };
     });
   };
 
   onAddNewNotValues = (notValues: string, _) => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       prevState.condition.notValues = notValues.length === 0 ? [] : notValues.split(',');
       return {
-        condition: prevState.condition,
+        condition: prevState.condition
       };
     });
   };
@@ -98,8 +98,8 @@ class ConditionBuilder extends React.Component<Props, State> {
     this.setState(
       {
         condition: {
-          key: '',
-        },
+          key: ''
+        }
       },
       () => {
         this.props.onAddCondition(conditionItem);
@@ -138,9 +138,9 @@ class ConditionBuilder extends React.Component<Props, State> {
     if (key === 'source.ip' || key === 'destination.ip') {
       // If some value is not an IP, then is not valid
       // @ts-ignore
-      const valuesValid = values ? !values.some((value) => !isValidIp(value)) : true;
+      const valuesValid = values ? !values.some(value => !isValidIp(value)) : true;
       // @ts-ignore
-      const notValuesValid = notValues ? !notValues.some((value) => !isValidIp(value)) : true;
+      const notValuesValid = notValues ? !notValues.some(value => !isValidIp(value)) : true;
       return [true, valuesValid, notValuesValid, 'Not valid IP'];
     }
     return [true, true, true, ''];
@@ -199,9 +199,9 @@ class ConditionBuilder extends React.Component<Props, State> {
                 {validText}
               </div>
             )}
-          </>,
-        ],
-      },
+          </>
+        ]
+      }
     ];
   };
 

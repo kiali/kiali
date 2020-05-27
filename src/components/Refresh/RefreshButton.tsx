@@ -59,9 +59,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const RefreshButtonContainer = connect(
-  null,
-  mapDispatchToProps
-)(RefreshButton);
+const RefreshButtonContainer = connect(null, mapDispatchToProps)(RefreshButton);
 
 export default RefreshButtonContainer;

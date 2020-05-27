@@ -14,19 +14,19 @@ const headerCells: ICell[] = [
   {
     title: 'JWT Rules to be validated',
     transforms: [cellWidth(100) as any],
-    props: {},
+    props: {}
   },
   {
     title: '',
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 const noJWTRulesStyle = style({
   marginTop: 10,
   color: PfColors.Red100,
   textAlign: 'center',
-  width: '100%',
+  width: '100%'
 });
 
 class JwtRuleList extends React.Component<Props> {
@@ -77,8 +77,8 @@ class JwtRuleList extends React.Component<Props> {
               </div>
             ) : undefined}
           </>,
-          <></>,
-        ],
+          <></>
+        ]
       };
     });
   };
@@ -90,7 +90,7 @@ class JwtRuleList extends React.Component<Props> {
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
         this.props.onRemoveJwtRule(rowIndex);
-      },
+      }
     };
     return [removeAction];
   };

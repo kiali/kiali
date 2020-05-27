@@ -201,12 +201,12 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 };
 
 const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
-  return filters.some((filter) => {
+  return filters.some(filter => {
     if (filter.category === LabelFilter.title) {
       if (filter.value.includes(':')) {
         const [k, v] = filter.value.split(':');
         if (k === key) {
-          return v.split(',').some((val) => value.split(',').some((vl) => vl.trim().startsWith(val.trim())));
+          return v.split(',').some(val => value.split(',').some(vl => vl.trim().startsWith(val.trim())));
         }
         return false;
       }
@@ -238,7 +238,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
         Object.entries(item.labels).map(([key, value]) => {
           const label = `${key}:${value}`;
           const labelAct = labelActivate(filters.filters, key, value);
-          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([LabelFilter]).filters.some((f) =>
+          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([LabelFilter]).filters.some(f =>
             f.value.includes(label)
           );
           const badgeComponent = (
@@ -247,7 +247,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               isRead={true}
               style={{
                 backgroundColor: labelAct ? PfColors.Blue200 : undefined,
-                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed',
+                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed'
               }}
               onClick={() =>
                 statefulFilter

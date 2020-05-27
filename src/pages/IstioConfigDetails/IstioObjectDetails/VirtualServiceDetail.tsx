@@ -123,9 +123,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
                     </Title>
                     <DetailObject name="" detail={virtualService.spec.hosts} validation={this.hostStatusMessage()} />
                   </>
-                ) : (
-                  undefined
-                )}
+                ) : undefined}
               </StackItem>
               <StackItem id={'gateways'}>
                 {virtualService.spec.gateways && virtualService.spec.gateways.length > 0

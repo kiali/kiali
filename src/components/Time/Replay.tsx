@@ -434,9 +434,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 
-const ReplayContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Replay);
+const ReplayContainer = connect(mapStateToProps, mapDispatchToProps)(Replay);
 
 export default ReplayContainer;

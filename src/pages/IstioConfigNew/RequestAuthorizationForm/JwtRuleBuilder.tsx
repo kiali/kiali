@@ -27,34 +27,34 @@ const INIT_JWT_RULE_FIELDS = [
   'fromHeaders',
   'fromParams',
   'outputPayloadToHeader',
-  'forwardOriginalToken',
+  'forwardOriginalToken'
 ].sort();
 
 const headerCells: ICell[] = [
   {
     title: 'JWT Rule Field',
     transforms: [cellWidth(30) as any],
-    props: {},
+    props: {}
   },
   {
     title: 'Values',
     transforms: [cellWidth(70) as any],
-    props: {},
+    props: {}
   },
   {
     title: '',
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 const noValidStyle = style({
-  color: PfColors.Red100,
+  color: PfColors.Red100
 });
 
 const warningStyle = style({
   marginLeft: 25,
   color: PfColors.Red100,
-  textAlign: 'center',
+  textAlign: 'center'
 });
 
 export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
@@ -70,7 +70,7 @@ export const formatJwtField = (jwtField: string, jwtRule: JWTRule): string => {
     case 'fromHeaders':
       return jwtRule.fromHeaders
         ? jwtRule.fromHeaders
-            .map((header) => {
+            .map(header => {
               if (header.prefix) {
                 return header.name + ': ' + header.prefix;
               } else {
@@ -97,24 +97,24 @@ class JwtRuleBuilder extends React.Component<Props, State> {
       jwtRuleFields: Object.assign([], INIT_JWT_RULE_FIELDS),
       jwtRule: {},
       newJwtField: 'issuer',
-      newValues: '',
+      newValues: ''
     };
   }
 
   onAddJwtField = (value: string, _) => {
     this.setState({
-      newJwtField: value,
+      newJwtField: value
     });
   };
 
   onAddNewValues = (value: string, _) => {
     this.setState({
-      newValues: value,
+      newValues: value
     });
   };
 
   onUpdateJwtRule = () => {
-    this.setState((prevState) => {
+    this.setState(prevState => {
       const i = prevState.jwtRuleFields.indexOf(prevState.newJwtField);
       if (i > -1) {
         prevState.jwtRuleFields.splice(i, 1);
@@ -137,10 +137,10 @@ class JwtRuleBuilder extends React.Component<Props, State> {
           // "Authorization: Bearer , Authorization: Bearer, Security "
           // In [{name: 'Authorization', prefix: 'Bearer '}, {name: 'Authorization', prefix: 'Bearer'}, {name: 'Security}]
           prevState.jwtRule.fromHeaders = [];
-          prevState.newValues.split(',').forEach((value) => {
+          prevState.newValues.split(',').forEach(value => {
             const values = value.split(':');
             const header: JWTHeader = {
-              name: values[0],
+              name: values[0]
             };
             if (values.length > 1) {
               header.prefix = values[1].trimLeft();
@@ -167,7 +167,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
         jwtRuleFields: prevState.jwtRuleFields,
         jwtRule: prevState.jwtRule,
         newJwtField: prevState.jwtRuleFields[0],
-        newValues: '',
+        newValues: ''
       };
     });
   };
@@ -179,7 +179,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
         jwtRuleFields: Object.assign([], INIT_JWT_RULE_FIELDS),
         jwtRule: {},
         newJwtField: INIT_JWT_RULE_FIELDS[0],
-        newValues: '',
+        newValues: ''
       },
       () => this.props.onAddJwtRule(oldJwtRule)
     );
@@ -193,7 +193,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
       onClick: (event, rowIndex, rowData, extraData) => {
         // Fetch sourceField from rowData, it's a fixed string on children
         const removeJwtRuleField = rowData.cells[0].props.children.toString();
-        this.setState((prevState) => {
+        this.setState(prevState => {
           prevState.jwtRuleFields.push(removeJwtRuleField);
           delete prevState.jwtRule[removeJwtRuleField];
           const newJwtRuleFields = prevState.jwtRuleFields.sort();
@@ -201,10 +201,10 @@ class JwtRuleBuilder extends React.Component<Props, State> {
             jwtRuleFields: newJwtRuleFields,
             jwtRule: prevState.jwtRule,
             newJwtField: newJwtRuleFields[0],
-            newValues: '',
+            newValues: ''
           };
         });
-      },
+      }
     };
     if (rowIndex < Object.keys(this.state.jwtRule).length) {
       return [removeAction];
@@ -213,7 +213,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
   };
 
   isJwtFieldValid = (): [boolean, string] => {
-    const isEmptyValue = this.state.newValues.split(',').every((v) => v.length === 0);
+    const isEmptyValue = this.state.newValues.split(',').every(v => v.length === 0);
     if (isEmptyValue) {
       return [false, 'Value cannot be empty'];
     }
@@ -231,7 +231,7 @@ class JwtRuleBuilder extends React.Component<Props, State> {
     const jwtRuleRows = Object.keys(this.state.jwtRule).map((jwtField, i) => {
       return {
         key: 'jwtField' + i,
-        cells: [<>{jwtField}</>, <>{formatJwtField(jwtField, this.state.jwtRule)}</>, <></>],
+        cells: [<>{jwtField}</>, <>{formatJwtField(jwtField, this.state.jwtRule)}</>, <></>]
       };
     });
     if (this.state.jwtRuleFields.length > 0) {
@@ -283,9 +283,9 @@ class JwtRuleBuilder extends React.Component<Props, State> {
                   isDisabled={!isJwtFieldValid}
                 />
               )}
-            </>,
-          ],
-        },
+            </>
+          ]
+        }
       ]);
     }
     return jwtRuleRows;

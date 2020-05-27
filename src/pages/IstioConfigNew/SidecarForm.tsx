@@ -10,17 +10,17 @@ const headerCells: ICell[] = [
   {
     title: 'Egress Host',
     transforms: [cellWidth(60) as any],
-    props: {},
+    props: {}
   },
   {
     title: '',
-    props: {},
-  },
+    props: {}
+  }
 ];
 
 const noEgressHostsStyle = style({
   marginTop: 15,
-  color: PfColors.Red100,
+  color: PfColors.Red100
 });
 
 const hostsHelperText = 'Enter a valid namespace/FQDN Egress host.';
@@ -54,17 +54,17 @@ export const isSidecarStateValid = (s: SidecarState): boolean => {
 export const initSidecar = (initHost: string): SidecarState => {
   return {
     addEgressHost: {
-      host: '',
+      host: ''
     },
     addWorkloadSelector: false,
     egressHosts: [
       {
-        host: initHost,
-      },
+        host: initHost
+      }
     ],
     validEgressHost: false,
     workloadSelectorValid: false,
-    workloadSelectorLabels: '',
+    workloadSelectorLabels: ''
   };
 };
 
@@ -85,15 +85,15 @@ class SidecarForm extends React.Component<Props, SidecarState> {
       // @ts-ignore
       onClick: (event, rowIndex, _rowData, _extraData) => {
         this.setState(
-          (prevState) => {
+          prevState => {
             prevState.egressHosts.splice(rowIndex, 1);
             return {
-              egressHosts: prevState.egressHosts,
+              egressHosts: prevState.egressHosts
             };
           },
           () => this.props.onChange(this.state)
         );
-      },
+      }
     };
     if (rowIndex < this.state.egressHosts.length) {
       return [removeAction];
@@ -105,21 +105,21 @@ class SidecarForm extends React.Component<Props, SidecarState> {
     const host = value.trim();
     this.setState({
       addEgressHost: {
-        host: host,
+        host: host
       },
-      validEgressHost: isSidecarHostValid(host),
+      validEgressHost: isSidecarHostValid(host)
     });
   };
 
   onAddEgressHost = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         prevState.egressHosts.push(this.state.addEgressHost);
         return {
           egressHosts: prevState.egressHosts,
           addEgressHost: {
-            host: '',
-          },
+            host: ''
+          }
         };
       },
       () => this.props.onChange(this.state)
@@ -131,7 +131,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
       this.setState(
         {
           workloadSelectorValid: false,
-          workloadSelectorLabels: '',
+          workloadSelectorLabels: ''
         },
         () => this.props.onChange(this.state)
       );
@@ -160,7 +160,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
     this.setState(
       {
         workloadSelectorValid: isValid,
-        workloadSelectorLabels: value,
+        workloadSelectorLabels: value
       },
       () => this.props.onChange(this.state)
     );
@@ -170,7 +170,7 @@ class SidecarForm extends React.Component<Props, SidecarState> {
     return this.state.egressHosts
       .map((eHost, i) => ({
         key: 'eH' + i,
-        cells: [<>{eHost.host}</>, ''],
+        cells: [<>{eHost.host}</>, '']
       }))
       .concat([
         {
@@ -197,9 +197,9 @@ class SidecarForm extends React.Component<Props, SidecarState> {
               <Button variant="secondary" isDisabled={!this.state.validEgressHost} onClick={this.onAddEgressHost}>
                 Add Egress Host
               </Button>
-            </>,
-          ],
-        },
+            </>
+          ]
+        }
       ]);
   }
 
@@ -225,8 +225,8 @@ class SidecarForm extends React.Component<Props, SidecarState> {
             isChecked={this.state.addWorkloadSelector}
             onChange={() => {
               this.setState(
-                (prevState) => ({
-                  addWorkloadSelector: !prevState.addWorkloadSelector,
+                prevState => ({
+                  addWorkloadSelector: !prevState.addWorkloadSelector
                 }),
                 () => this.props.onChange(this.state)
               );

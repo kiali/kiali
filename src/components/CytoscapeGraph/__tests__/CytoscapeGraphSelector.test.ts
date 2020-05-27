@@ -48,10 +48,7 @@ describe('CytoscapeGraphSelector test', () => {
   });
 
   it('Generates selector for two properties', () => {
-    const selector = new CytoscapeGraphSelectorBuilder()
-      .workload('myworkload')
-      .app('myapp')
-      .build();
+    const selector = new CytoscapeGraphSelectorBuilder().workload('myworkload').app('myapp').build();
     expect(selector).toEqual('node[workload="myworkload"][app="myapp"]');
   });
 

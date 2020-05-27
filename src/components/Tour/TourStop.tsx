@@ -208,9 +208,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const TourStopContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TourStop);
+const TourStopContainer = connect(mapStateToProps, mapDispatchToProps)(TourStop);
 
 export default TourStopContainer;

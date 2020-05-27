@@ -283,8 +283,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
 });
 
-const LoginPageContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(LoginPage);
+const LoginPageContainer = connect(mapStateToProps, mapDispatchToProps)(LoginPage);
 export default LoginPageContainer;

@@ -379,36 +379,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private hasGrpcTraffic = (group): boolean => {
-    if (
-      group
-        .children()
-        .filter('[grpcIn > 0],[grpcOut > 0]')
-        .size() > 0
-    ) {
+    if (group.children().filter('[grpcIn > 0],[grpcOut > 0]').size() > 0) {
       return true;
     }
     return false;
   };
 
   private hasHttpTraffic = (group): boolean => {
-    if (
-      group
-        .children()
-        .filter('[httpIn > 0],[httpOut > 0]')
-        .size() > 0
-    ) {
+    if (group.children().filter('[httpIn > 0],[httpOut > 0]').size() > 0) {
       return true;
     }
     return false;
   };
 
   private hasTcpTraffic = (group): boolean => {
-    if (
-      group
-        .children()
-        .filter('[tcpIn > 0],[tcpOut > 0]')
-        .size() > 0
-    ) {
+    if (group.children().filter('[tcpIn > 0],[tcpOut > 0]').size() > 0) {
       return true;
     }
     return false;

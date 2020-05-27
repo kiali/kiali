@@ -134,10 +134,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const incomingEdges = cy.$(`node[?${CyNode.isRoot}]`).edgesTo('*');
     const incomingRateGrpc = getAccumulatedTrafficRateGrpc(incomingEdges);
     const incomingRateHttp = getAccumulatedTrafficRateHttp(incomingEdges);
-    const outgoingEdges = cy
-      .nodes()
-      .leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`)
-      .connectedEdges();
+    const outgoingEdges = cy.nodes().leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`).connectedEdges();
     const outgoingRateGrpc = getAccumulatedTrafficRateGrpc(outgoingEdges);
     const outgoingRateHttp = getAccumulatedTrafficRateHttp(outgoingEdges);
 

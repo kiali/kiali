@@ -127,7 +127,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     compare: (a: WorkloadListItem, b: WorkloadListItem) => {
       if (a.versionLabel && a.appLabel && !(b.versionLabel && b.appLabel)) {
         return -1;
-      } else if (!(a.versionLabel && a.appLabel) && (b.versionLabel && b.appLabel)) {
+      } else if (!(a.versionLabel && a.appLabel) && b.versionLabel && b.appLabel) {
         return 1;
       } else {
         if (a.appLabel && !b.appLabel) {

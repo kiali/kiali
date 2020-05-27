@@ -25,7 +25,7 @@ import {
   StringMatch,
   VirtualService,
   VirtualServices,
-  WorkloadEntrySelector,
+  WorkloadEntrySelector
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
@@ -48,14 +48,14 @@ export const WIZARD_TITLES = {
   [WIZARD_WEIGHTED_ROUTING]: 'Create Weighted Routing',
   [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing',
   [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic',
-  [WIZARD_THREESCALE_INTEGRATION]: 'Add 3scale API Management Rule',
+  [WIZARD_THREESCALE_INTEGRATION]: 'Add 3scale API Management Rule'
 };
 
 export const WIZARD_UPDATE_TITLES = {
   [WIZARD_WEIGHTED_ROUTING]: 'Update Weighted Routing',
   [WIZARD_MATCHING_ROUTING]: 'Update Matching Routing',
   [WIZARD_SUSPEND_TRAFFIC]: 'Update Suspended Traffic',
-  [WIZARD_THREESCALE_INTEGRATION]: 'Update 3scale API Management Rule',
+  [WIZARD_THREESCALE_INTEGRATION]: 'Update 3scale API Management Rule'
 };
 
 export type WizardProps = {
@@ -108,8 +108,8 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   const matchHeaders: HTTPMatchRequest = { headers: {} };
   // Headers are grouped
   matches
-    .filter((match) => match.startsWith('headers'))
-    .forEach((match) => {
+    .filter(match => match.startsWith('headers'))
+    .forEach(match => {
       // match follows format:  headers [<header-name>] <op> <value>
       const i0 = match.indexOf('[');
       const j0 = match.indexOf(']');
@@ -125,8 +125,8 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   }
   // Rest of matches
   matches
-    .filter((match) => !match.startsWith('headers'))
-    .forEach((match) => {
+    .filter(match => !match.startsWith('headers'))
+    .forEach(match => {
       // match follows format: <name> <op> <value>
       const i = match.indexOf(' ');
       const j = match.indexOf(' ', i + 1);
@@ -135,8 +135,8 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
       const value = match.substring(j + 1).trim();
       matchRequests.push({
         [name]: {
-          [op]: value,
-        },
+          [op]: value
+        }
       });
     });
   return matchRequests;
@@ -159,7 +159,7 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
   const matches: string[] = [];
   // Headers
   if (httpMatchRequest.headers) {
-    Object.keys(httpMatchRequest.headers).forEach((headerName) => {
+    Object.keys(httpMatchRequest.headers).forEach(headerName => {
       const value = httpMatchRequest.headers![headerName];
       matches.push('headers [' + headerName + '] ' + parseStringMatch(value));
     });
@@ -214,12 +214,12 @@ export const buildIstioConfig = (
       namespace: wProps.namespace,
       name: wProps.serviceName,
       labels: {
-        [KIALI_WIZARD_LABEL]: wProps.type,
-      },
+        [KIALI_WIZARD_LABEL]: wProps.type
+      }
     },
     spec: {
       host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-      subsets: wProps.workloads.map((workload) => {
+      subsets: wProps.workloads.map(workload => {
         // Using version
         const versionLabelName = serverConfig.istioLabels.versionLabelName;
         const versionValue = workload.labels![versionLabelName];
@@ -229,10 +229,10 @@ export const buildIstioConfig = (
         wkdNameVersion[workload.name] = versionValue;
         return {
           name: versionValue,
-          labels: labels,
+          labels: labels
         };
-      }),
-    },
+      })
+    }
   };
 
   const wizardVS: VirtualService = {
@@ -240,10 +240,10 @@ export const buildIstioConfig = (
       namespace: wProps.namespace,
       name: wProps.serviceName,
       labels: {
-        [KIALI_WIZARD_LABEL]: wProps.type,
-      },
+        [KIALI_WIZARD_LABEL]: wProps.type
+      }
     },
-    spec: {},
+    spec: {}
   };
 
   // Wizard is optional, only when user has explicitly selected "Create a Gateway"
@@ -255,24 +255,24 @@ export const buildIstioConfig = (
             namespace: wProps.namespace,
             name: fullNewGatewayName.substr(wProps.namespace.length + 1),
             labels: {
-              [KIALI_WIZARD_LABEL]: wProps.type,
-            },
+              [KIALI_WIZARD_LABEL]: wProps.type
+            }
           },
           spec: {
             selector: {
-              istio: 'ingressgateway',
+              istio: 'ingressgateway'
             },
             servers: [
               {
                 port: {
                   number: wState.gateway.port,
                   name: 'http',
-                  protocol: 'HTTP',
+                  protocol: 'HTTP'
                 },
-                hosts: wState.gateway.gwHosts.split(','),
-              },
-            ],
-          },
+                hosts: wState.gateway.gwHosts.split(',')
+              }
+            ]
+          }
         }
       : undefined;
 
@@ -282,32 +282,32 @@ export const buildIstioConfig = (
       wizardVS.spec = {
         http: [
           {
-            route: wState.workloads.map((workload) => {
+            route: wState.workloads.map(workload => {
               return {
                 destination: {
                   host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name],
+                  subset: wkdNameVersion[workload.name]
                 },
-                weight: workload.weight,
+                weight: workload.weight
               };
-            }),
-          },
-        ],
+            })
+          }
+        ]
       };
       break;
     }
     case WIZARD_MATCHING_ROUTING: {
       // VirtualService from the routes
       wizardVS.spec = {
-        http: wState.rules.map((rule) => {
+        http: wState.rules.map(rule => {
           const httpRoute: HTTPRoute = {};
           httpRoute.route = [];
           for (let iRoute = 0; iRoute < rule.routes.length; iRoute++) {
             const destW: HTTPRouteDestination = {
               destination: {
                 host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                subset: wkdNameVersion[rule.routes[iRoute]],
-              },
+                subset: wkdNameVersion[rule.routes[iRoute]]
+              }
             };
             destW.weight = Math.floor(100 / rule.routes.length);
             if (iRoute === 0) {
@@ -320,18 +320,18 @@ export const buildIstioConfig = (
             httpRoute.match = buildHTTPMatchRequest(rule.matches);
           }
           return httpRoute;
-        }),
+        })
       };
       break;
     }
     case WIZARD_SUSPEND_TRAFFIC: {
       // VirtualService from the suspendedRoutes
       const httpRoute: HTTPRoute = {
-        route: [],
+        route: []
       };
       // Let's use the # os suspended notes to create weights
       const totalRoutes = wState.suspendedRoutes.length;
-      const closeRoutes = wState.suspendedRoutes.filter((s) => s.suspended).length;
+      const closeRoutes = wState.suspendedRoutes.filter(s => s.suspended).length;
       const openRoutes = totalRoutes - closeRoutes;
       let firstValue = true;
       // If we have some suspended routes, we need to use weights
@@ -341,8 +341,8 @@ export const buildIstioConfig = (
           const destW: HTTPRouteDestination = {
             destination: {
               host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-              subset: wkdNameVersion[suspendedRoute.workload],
-            },
+              subset: wkdNameVersion[suspendedRoute.workload]
+            }
           };
           if (suspendedRoute.suspended) {
             // A suspended route has a 0 weight
@@ -362,21 +362,21 @@ export const buildIstioConfig = (
         httpRoute.route = [
           {
             destination: {
-              host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-            },
-          },
+              host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+            }
+          }
         ];
         httpRoute.fault = {
           abort: {
             httpStatus: SERVICE_UNAVAILABLE,
             percentage: {
-              value: 100,
-            },
-          },
+              value: 100
+            }
+          }
         };
       }
       wizardVS.spec = {
-        http: [httpRoute],
+        http: [httpRoute]
       };
       break;
     }
@@ -392,14 +392,14 @@ export const buildIstioConfig = (
   if (wState.trafficPolicy.tlsModified || wState.trafficPolicy.addLoadBalancer) {
     wizardDR.spec.trafficPolicy = {
       tls: null,
-      loadBalancer: null,
+      loadBalancer: null
     };
     if (wState.trafficPolicy.tlsModified) {
       wizardDR.spec.trafficPolicy.tls = {
         mode: wState.trafficPolicy.mtlsMode,
         clientCertificate: null,
         privateKey: null,
-        caCertificates: null,
+        caCertificates: null
       };
       if (wState.trafficPolicy.mtlsMode === MUTUAL) {
         wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
@@ -412,17 +412,17 @@ export const buildIstioConfig = (
         // Remember to put a null fields that need to be deleted on a JSON merge patch
         wizardDR.spec.trafficPolicy.loadBalancer = {
           simple: wState.trafficPolicy.loadBalancer.simple,
-          consistentHash: null,
+          consistentHash: null
         };
       } else {
         wizardDR.spec.trafficPolicy.loadBalancer = {
           simple: null,
-          consistentHash: {},
+          consistentHash: {}
         };
         wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
           httpHeaderName: null,
           httpCookie: null,
-          useSourceIp: null,
+          useSourceIp: null
         };
         if (wState.trafficPolicy.loadBalancer.consistentHash) {
           const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
@@ -460,18 +460,18 @@ export const buildIstioConfig = (
 const getWorkloadsByVersion = (workloads: WorkloadOverview[]): { [key: string]: string } => {
   const versionLabelName = serverConfig.istioLabels.versionLabelName;
   const wkdVersionName: { [key: string]: string } = {};
-  workloads.forEach((workload) => (wkdVersionName[workload.labels![versionLabelName]] = workload.name));
+  workloads.forEach(workload => (wkdVersionName[workload.labels![versionLabelName]] = workload.name));
   return wkdVersionName;
 };
 
 export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
   const wkTraffic = workloads.length < 100 ? Math.floor(100 / workloads.length) : 0;
   const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
-  const wkWeights: WorkloadWeight[] = workloads.map((workload) => ({
+  const wkWeights: WorkloadWeight[] = workloads.map(workload => ({
     name: workload.name,
     weight: wkTraffic,
     locked: false,
-    maxWeight: 100,
+    maxWeight: 100
   }));
   if (remainTraffic > 0) {
     wkWeights[wkWeights.length - 1].weight = wkWeights[wkWeights.length - 1].weight + remainTraffic;
@@ -484,7 +484,7 @@ export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: V
   const wkdWeights: WorkloadWeight[] = [];
   if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
     // Populate WorkloadWeights from a VirtualService
-    virtualServices.items[0].spec.http![0].route!.forEach((route) => {
+    virtualServices.items[0].spec.http![0].route!.forEach(route => {
       // A wkdVersionName[route.destination.subset] === undefined may indicate that a VS contains a removed workload
       // Checking before to add it to the Init Weights
       if (route.destination.subset && wkdVersionName[route.destination.subset]) {
@@ -492,7 +492,7 @@ export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: V
           name: wkdVersionName[route.destination.subset],
           weight: route.weight || 0,
           locked: false,
-          maxWeight: 100,
+          maxWeight: 100
         });
       }
     });
@@ -514,7 +514,7 @@ export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: V
           name: wkd.name,
           weight: 0,
           locked: false,
-          maxWeight: 100,
+          maxWeight: 100
         });
       }
     }
@@ -526,16 +526,16 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
   const wkdVersionName = getWorkloadsByVersion(workloads);
   const rules: Rule[] = [];
   if (virtualServices.items.length === 1) {
-    virtualServices.items[0].spec.http!.forEach((httpRoute) => {
+    virtualServices.items[0].spec.http!.forEach(httpRoute => {
       const rule: Rule = {
         matches: [],
-        routes: [],
+        routes: []
       };
       if (httpRoute.match) {
-        httpRoute.match.forEach((m) => (rule.matches = rule.matches.concat(parseHttpMatchRequest(m))));
+        httpRoute.match.forEach(m => (rule.matches = rule.matches.concat(parseHttpMatchRequest(m))));
       }
       if (httpRoute.route) {
-        httpRoute.route.forEach((r) => {
+        httpRoute.route.forEach(r => {
           const subset = r.destination.subset;
           const workload = wkdVersionName[subset || ''];
           // Not adding a route if a workload is not found with a destination subset
@@ -559,10 +559,10 @@ export const getInitSuspendedRoutes = (
   virtualServices: VirtualServices
 ): SuspendedRoute[] => {
   const wkdVersionName = getWorkloadsByVersion(workloads);
-  const routes: SuspendedRoute[] = workloads.map((wk) => ({
+  const routes: SuspendedRoute[] = workloads.map(wk => ({
     workload: wk.name,
     suspended: true,
-    httpStatus: SERVICE_UNAVAILABLE,
+    httpStatus: SERVICE_UNAVAILABLE
   }));
   if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
     // All routes are suspended default value is correct
@@ -570,10 +570,10 @@ export const getInitSuspendedRoutes = (
       return routes;
     }
     // Iterate on route weights to identify the suspended routes
-    virtualServices.items[0].spec.http![0].route!.forEach((route) => {
+    virtualServices.items[0].spec.http![0].route!.forEach(route => {
       if (route.weight && route.weight > 0) {
         const workloadName = wkdVersionName[route.destination.subset || ''];
-        routes.filter((w) => w.workload === workloadName).forEach((w) => (w.suspended = false));
+        routes.filter(w => w.workload === workloadName).forEach(w => (w.suspended = false));
       }
     });
   }
@@ -590,7 +590,7 @@ export const getInitTlsMode = (destinationRules: DestinationRules): [string, str
       destinationRules.items[0].spec.trafficPolicy.tls.mode || '',
       destinationRules.items[0].spec.trafficPolicy.tls.clientCertificate || '',
       destinationRules.items[0].spec.trafficPolicy.tls.privateKey || '',
-      destinationRules.items[0].spec.trafficPolicy.tls.caCertificates || '',
+      destinationRules.items[0].spec.trafficPolicy.tls.caCertificates || ''
     ];
   }
   return ['', '', '', ''];
@@ -661,10 +661,10 @@ export const buildAuthorizationPolicy = (
       name: name,
       namespace: namespace,
       labels: {
-        [KIALI_WIZARD_LABEL]: 'AuthorizationPolicy',
-      },
+        [KIALI_WIZARD_LABEL]: 'AuthorizationPolicy'
+      }
     },
-    spec: {},
+    spec: {}
   };
 
   // DENY_ALL and ALLOW_ALL are two specific cases
@@ -680,9 +680,9 @@ export const buildAuthorizationPolicy = (
   // RULES use case
   if (state.workloadSelector.length > 0) {
     const workloadSelector: AuthorizationPolicyWorkloadSelector = {
-      matchLabels: {},
+      matchLabels: {}
     };
-    state.workloadSelector.split(',').forEach((label) => {
+    state.workloadSelector.split(',').forEach(label => {
       label = label.trim();
       const labelDetails = label.split('=');
       if (labelDetails.length === 2) {
@@ -694,38 +694,38 @@ export const buildAuthorizationPolicy = (
 
   if (state.rules.length > 0) {
     ap.spec.rules = [];
-    state.rules.forEach((rule) => {
+    state.rules.forEach(rule => {
       const appRule: AuthorizationPolicyRule = {
         from: undefined,
         to: undefined,
-        when: undefined,
+        when: undefined
       };
       if (rule.from.length > 0) {
-        appRule.from = rule.from.map((fromItem) => {
+        appRule.from = rule.from.map(fromItem => {
           const source: Source = {};
-          Object.keys(fromItem).forEach((key) => {
+          Object.keys(fromItem).forEach(key => {
             source[key] = fromItem[key];
           });
           return {
-            source: source,
+            source: source
           };
         });
       }
       if (rule.to.length > 0) {
-        appRule.to = rule.to.map((toItem) => {
+        appRule.to = rule.to.map(toItem => {
           const operation: Operation = {};
-          Object.keys(toItem).forEach((key) => {
+          Object.keys(toItem).forEach(key => {
             operation[key] = toItem[key];
           });
           return {
-            operation: operation,
+            operation: operation
           };
         });
       }
       if (rule.when.length > 0) {
-        appRule.when = rule.when.map((condition) => {
+        appRule.when = rule.when.map(condition => {
           const cond: Condition = {
-            key: condition.key,
+            key: condition.key
           };
           if (condition.values && condition.values.length > 0) {
             cond.values = condition.values;
@@ -751,23 +751,23 @@ export const buildGateway = (name: string, namespace: string, state: GatewayStat
       name: name,
       namespace: namespace,
       labels: {
-        [KIALI_WIZARD_LABEL]: 'Gateway',
-      },
+        [KIALI_WIZARD_LABEL]: 'Gateway'
+      }
     },
     spec: {
       // Default for istio scenarios, user may change it editing YAML
       selector: {
-        istio: 'ingressgateway',
+        istio: 'ingressgateway'
       },
-      servers: state.gatewayServers.map((s) => ({
+      servers: state.gatewayServers.map(s => ({
         port: {
           number: +s.portNumber,
           protocol: s.portProtocol,
-          name: s.portName,
+          name: s.portName
         },
-        hosts: s.hosts,
-      })),
-    },
+        hosts: s.hosts
+      }))
+    }
   };
   return gw;
 };
@@ -782,17 +782,17 @@ export const buildPeerAuthentication = (
       name: name,
       namespace: namespace,
       labels: {
-        [KIALI_WIZARD_LABEL]: 'PeerAuthentication',
-      },
+        [KIALI_WIZARD_LABEL]: 'PeerAuthentication'
+      }
     },
-    spec: {},
+    spec: {}
   };
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: PeerAuthenticationWorkloadSelector = {
-      matchLabels: {},
+      matchLabels: {}
     };
-    state.workloadSelector.split(',').forEach((label) => {
+    state.workloadSelector.split(',').forEach(label => {
       label = label.trim();
       const labelDetails = label.split('=');
       if (labelDetails.length === 2) {
@@ -804,15 +804,15 @@ export const buildPeerAuthentication = (
 
   // Kiali is always adding this field
   pa.spec.mtls = {
-    mode: PeerAuthenticationMutualTLSMode[state.mtls],
+    mode: PeerAuthenticationMutualTLSMode[state.mtls]
   };
 
   if (state.portLevelMtls.length > 0) {
     pa.spec.portLevelMtls = {};
-    state.portLevelMtls.forEach((p) => {
+    state.portLevelMtls.forEach(p => {
       if (pa.spec.portLevelMtls) {
         pa.spec.portLevelMtls[Number(p.port)] = {
-          mode: PeerAuthenticationMutualTLSMode[p.mtls],
+          mode: PeerAuthenticationMutualTLSMode[p.mtls]
         };
       }
     });
@@ -831,19 +831,19 @@ export const buildRequestAuthentication = (
       name: name,
       namespace: namespace,
       labels: {
-        [KIALI_WIZARD_LABEL]: 'RequestAuthentication',
-      },
+        [KIALI_WIZARD_LABEL]: 'RequestAuthentication'
+      }
     },
     spec: {
-      jwtRules: [],
-    },
+      jwtRules: []
+    }
   };
 
   if (state.workloadSelector.length > 0) {
     const workloadSelector: WorkloadEntrySelector = {
-      matchLabels: {},
+      matchLabels: {}
     };
-    state.workloadSelector.split(',').forEach((label) => {
+    state.workloadSelector.split(',').forEach(label => {
       label = label.trim();
       const labelDetails = label.split('=');
       if (labelDetails.length === 2) {
@@ -865,25 +865,25 @@ export const buildSidecar = (name: string, namespace: string, state: SidecarStat
       name: name,
       namespace: namespace,
       labels: {
-        [KIALI_WIZARD_LABEL]: 'Sidecar',
-      },
+        [KIALI_WIZARD_LABEL]: 'Sidecar'
+      }
     },
     spec: {
       egress: [
         {
-          hosts: state.egressHosts.map((eh) => eh.host),
-        },
-      ],
-    },
+          hosts: state.egressHosts.map(eh => eh.host)
+        }
+      ]
+    }
   };
   if (state.addWorkloadSelector && state.workloadSelectorValid) {
     sc.spec.workloadSelector = {
-      labels: {},
+      labels: {}
     };
     state.workloadSelectorLabels
       .trim()
       .split(',')
-      .forEach((split) => {
+      .forEach(split => {
         const labels = split.trim().split('=');
         // It should be already validated with workloadSelectorValid, but just to add extra safe check
         if (sc.spec.workloadSelector && labels.length === 2) {

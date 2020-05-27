@@ -177,14 +177,38 @@ export const renderInOutRateChartHttp = (
 ) => {
   const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', dp: [{ x: 'In', y: percent2xxIn }, { x: 'Out', y: percent2xxOut }], color: colorVals.Success },
-    { name: '3xx', dp: [{ x: 'In', y: percent3xxIn }, { x: 'Out', y: percent3xxOut }], color: colorVals.Info },
+    {
+      name: 'OK',
+      dp: [
+        { x: 'In', y: percent2xxIn },
+        { x: 'Out', y: percent2xxOut }
+      ],
+      color: colorVals.Success
+    },
+    {
+      name: '3xx',
+      dp: [
+        { x: 'In', y: percent3xxIn },
+        { x: 'Out', y: percent3xxOut }
+      ],
+      color: colorVals.Info
+    },
     {
       name: '4xx',
-      dp: [{ x: 'In', y: percent4xxIn }, { x: 'Out', y: percent4xxOut }],
+      dp: [
+        { x: 'In', y: percent4xxIn },
+        { x: 'Out', y: percent4xxOut }
+      ],
       color: colorVals.ChartWarning
     }, // 4xx is also an error use close but distinct color
-    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: colorVals.ChartDanger }
+    {
+      name: '5xx',
+      dp: [
+        { x: 'In', y: percent5xxIn },
+        { x: 'Out', y: percent5xxOut }
+      ],
+      color: colorVals.ChartDanger
+    }
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({
@@ -210,8 +234,22 @@ export const renderInOutRateChartGrpc = (
 ) => {
   const colorVals = getPFAlertColorVals();
   const vcLines: VCLines = [
-    { name: 'OK', dp: [{ x: 'In', y: percentOKIn }, { x: 'Out', y: percentOKOut }], color: colorVals.Success },
-    { name: 'Err', dp: [{ x: 'In', y: percentErrIn }, { x: 'Out', y: percentErrOut }], color: colorVals.Danger }
+    {
+      name: 'OK',
+      dp: [
+        { x: 'In', y: percentOKIn },
+        { x: 'Out', y: percentOKOut }
+      ],
+      color: colorVals.Success
+    },
+    {
+      name: 'Err',
+      dp: [
+        { x: 'In', y: percentErrIn },
+        { x: 'Out', y: percentErrOut }
+      ],
+      color: colorVals.Danger
+    }
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({

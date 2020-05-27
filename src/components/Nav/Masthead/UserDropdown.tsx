@@ -160,9 +160,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
 });
 
-const UserDropdown = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(UserDropdownConnected);
+const UserDropdown = connect(mapStateToProps, mapDispatchToProps)(UserDropdownConnected);
 
 export default UserDropdown;

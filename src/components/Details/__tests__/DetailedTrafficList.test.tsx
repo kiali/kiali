@@ -108,7 +108,10 @@ describe('DetailedTrafficList', () => {
       type: NodeType.SERVICE,
       isInaccessible: false,
       isServiceEntry: 'MESH_EXTERNAL',
-      destServices: [{ namespace: 'foo', name: 'foo.com' }, { namespace: 'foo', name: 'bar.com' }]
+      destServices: [
+        { namespace: 'foo', name: 'foo.com' },
+        { namespace: 'foo', name: 'bar.com' }
+      ]
     },
     traffic: {
       protocol: 'http'
@@ -132,12 +135,7 @@ describe('DetailedTrafficList', () => {
   it('renders "not enough traffic" row if empty traffic is received', () => {
     const wrapper = mount(<DetailedTrafficList direction={'inbound'} traffic={[]} />);
     const cell = wrapper.find('BodyCell').at(0);
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('Not enough inbound traffic to generate info');
+    expect(cell.render().text().trim()).toBe('Not enough inbound traffic to generate info');
   });
 
   it('renders "source" header if direction is inbound', () => {
@@ -346,12 +344,7 @@ describe('DetailedTrafficList', () => {
 
     expect(icon).toBeDefined();
     expect(link.length).toBe(0);
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('unknown');
+    expect(cell.render().text().trim()).toBe('unknown');
   });
 
   it('renders correctly the name of an app node with version', () => {
@@ -368,12 +361,7 @@ describe('DetailedTrafficList', () => {
 
     expect(icon).toBeDefined();
     expect(link.prop('to')).toBe('/namespaces/ns/applications/app3');
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('app3 / first');
+    expect(cell.render().text().trim()).toBe('app3 / first');
   });
 
   it('renders correctly the name of an app node without version', () => {
@@ -392,12 +380,7 @@ describe('DetailedTrafficList', () => {
 
     expect(icon).toBeDefined();
     expect(link.prop('to')).toBe('/namespaces/ns/applications/app3');
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('app3');
+    expect(cell.render().text().trim()).toBe('app3');
   });
 
   it('renders correctly the name of a workload node', () => {
@@ -414,12 +397,7 @@ describe('DetailedTrafficList', () => {
 
     expect(icon).toBeDefined();
     expect(link.prop('to')).toBe('/namespaces/ns/workloads/workload');
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('workload');
+    expect(cell.render().text().trim()).toBe('workload');
   });
 
   it('renders correctly the name of a service node', () => {
@@ -436,12 +414,7 @@ describe('DetailedTrafficList', () => {
 
     expect(icon).toBeDefined();
     expect(link.prop('to')).toBe('/namespaces/ns/services/svc1');
-    expect(
-      cell
-        .render()
-        .text()
-        .trim()
-    ).toBe('svc1');
+    expect(cell.render().text().trim()).toBe('svc1');
   });
 
   it('renders metrics link of an app node', () => {
@@ -465,11 +438,7 @@ describe('DetailedTrafficList', () => {
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_app%3Dapp3');
 
-    cell = wrapper
-      .find('DetailedTrafficList')
-      .last()
-      .find('BodyCell')
-      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    cell = wrapper.find('DetailedTrafficList').last().find('BodyCell').at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=in_metrics&bylbl=source_app%3Dapp3');
   });
@@ -494,11 +463,7 @@ describe('DetailedTrafficList', () => {
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=in_metrics');
 
-    cell = wrapper
-      .find('DetailedTrafficList')
-      .last()
-      .find('BodyCell')
-      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    cell = wrapper.find('DetailedTrafficList').last().find('BodyCell').at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=out_metrics');
   });
@@ -524,11 +489,7 @@ describe('DetailedTrafficList', () => {
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_service_name%3Dsvc1');
 
-    cell = wrapper
-      .find('DetailedTrafficList')
-      .last()
-      .find('BodyCell')
-      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    cell = wrapper.find('DetailedTrafficList').last().find('BodyCell').at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/services/svc1?tab=metrics');
   });
@@ -556,11 +517,7 @@ describe('DetailedTrafficList', () => {
       '/myPrefix/foo?tab=out_metrics&bylbl=destination_service_name%3Dfoo.com%2Cbar.com'
     );
 
-    cell = wrapper
-      .find('DetailedTrafficList')
-      .last()
-      .find('BodyCell')
-      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    cell = wrapper.find('DetailedTrafficList').last().find('BodyCell').at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.length).toBe(0);
   });
@@ -584,12 +541,7 @@ describe('DetailedTrafficList', () => {
       const link = cell.find('Link');
 
       expect(link.length).toBe(0);
-      expect(
-        cell
-          .render()
-          .text()
-          .trim()
-      ).toBe(trafficItem.node.name);
+      expect(cell.render().text().trim()).toBe(trafficItem.node.name);
     });
   });
 
@@ -617,12 +569,7 @@ describe('DetailedTrafficList', () => {
     const rowNames: string[] = [];
     rows.forEach(row => {
       const cell = row.find('BodyCell').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
-      rowNames.push(
-        cell
-          .render()
-          .text()
-          .trim()
-      );
+      rowNames.push(cell.render().text().trim());
     });
 
     expect(rowNames.join()).toBe('alpha,epsilon / first,gamma / first,theta');
@@ -663,12 +610,7 @@ describe('DetailedTrafficList', () => {
     const rowNames: string[] = [];
     rows.forEach(row => {
       const cell = row.find('BodyCell').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
-      rowNames.push(
-        cell
-          .render()
-          .text()
-          .trim()
-      );
+      rowNames.push(cell.render().text().trim());
     });
 
     expect(rowNames.join()).toBe('L1/1,L2/alpha/1,L2/beta/1,L1/2 / first,L2/alpha/2 / first');

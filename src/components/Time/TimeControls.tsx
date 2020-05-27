@@ -83,9 +83,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });
 
-const TimeControlsContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TimeControls);
+const TimeControlsContainer = connect(mapStateToProps, mapDispatchToProps)(TimeControls);
 
 export default TimeControlsContainer;

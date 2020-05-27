@@ -300,8 +300,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
 };
 
 // hook up to Redux for our State to be mapped to props
-const GraphSettingsContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(GraphSettings);
+const GraphSettingsContainer = connect(mapStateToProps, mapDispatchToProps)(GraphSettings);
 export default GraphSettingsContainer;

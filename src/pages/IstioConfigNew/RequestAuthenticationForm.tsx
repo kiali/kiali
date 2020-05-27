@@ -26,7 +26,7 @@ export const initRequestAuthentication = (): RequestAuthenticationState => ({
   jwtRules: [],
   addWorkloadSelector: false,
   workloadSelectorValid: false,
-  addJWTRules: false,
+  addJWTRules: false
 });
 
 export const isRequestAuthenticationStateValid = (ra: RequestAuthenticationState): boolean => {
@@ -48,7 +48,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
       jwtRules: this.props.requestAuthentication.jwtRules,
       addWorkloadSelector: this.props.requestAuthentication.addWorkloadSelector,
       workloadSelectorValid: this.props.requestAuthentication.workloadSelectorValid,
-      addJWTRules: this.props.requestAuthentication.addJWTRules,
+      addJWTRules: this.props.requestAuthentication.addJWTRules
     });
   }
 
@@ -58,9 +58,9 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
 
   onChangeWorkloadSelector = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
-          addWorkloadSelector: !prevState.addWorkloadSelector,
+          addWorkloadSelector: !prevState.addWorkloadSelector
         };
       },
       () => this.onRequestAuthenticationChange()
@@ -69,9 +69,9 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
 
   onChangeJwtRules = () => {
     this.setState(
-      (prevState) => {
+      prevState => {
         return {
-          addJWTRules: !prevState.addJWTRules,
+          addJWTRules: !prevState.addJWTRules
         };
       },
       () => this.onRequestAuthenticationChange()
@@ -83,7 +83,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
       this.setState(
         {
           workloadSelectorValid: false,
-          workloadSelector: '',
+          workloadSelector: ''
         },
         () => this.onRequestAuthenticationChange()
       );
@@ -112,7 +112,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
     this.setState(
       {
         workloadSelectorValid: isValid,
-        workloadSelector: value,
+        workloadSelector: value
       },
       () => this.onRequestAuthenticationChange()
     );
@@ -120,10 +120,10 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
 
   onAddJwtRule = (jwtRule: JWTRule) => {
     this.setState(
-      (prevState) => {
+      prevState => {
         prevState.jwtRules.push(jwtRule);
         return {
-          jwtRules: prevState.jwtRules,
+          jwtRules: prevState.jwtRules
         };
       },
       () => this.onRequestAuthenticationChange()
@@ -132,10 +132,10 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
 
   onRemoveJwtRule = (index: number) => {
     this.setState(
-      (prevState) => {
+      prevState => {
         prevState.jwtRules.splice(index, 1);
         return {
-          jwtRules: prevState.jwtRules,
+          jwtRules: prevState.jwtRules
         };
       },
       () => this.onRequestAuthenticationChange()

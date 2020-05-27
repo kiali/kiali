@@ -65,9 +65,7 @@ class Labels extends React.Component<Props, State> {
         <div key={'label_' + i}>
           <Label key={'label_' + i} name={key} value={this.props.labels ? this.props.labels[key] : ''} />
         </div>
-      ) : (
-        undefined
-      );
+      ) : undefined;
     });
   }
 

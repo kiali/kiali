@@ -569,16 +569,9 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       return;
     }
     if (this.cy) {
-      this.cy
-        .$(':selected')
-        .selectify()
-        .unselect()
-        .unselectify();
+      this.cy.$(':selected').selectify().unselect().unselectify();
       if (target && !isCore(target)) {
-        target
-          .selectify()
-          .select()
-          .unselectify();
+        target.selectify().select().unselectify();
       }
     }
   };
@@ -850,7 +843,10 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     promise: Promise<H.NamespaceAppHealth | H.NamespaceServiceHealth | H.NamespaceWorkloadHealth>,
     key: string
   ) {
-    ele.data('healthPromise', promise.then(nsHealth => nsHealth[key]));
+    ele.data(
+      'healthPromise',
+      promise.then(nsHealth => nsHealth[key])
+    );
     promise
       .then(nsHealth => {
         // Discard if the element is no longer valid

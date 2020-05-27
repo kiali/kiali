@@ -35,7 +35,11 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
 };
 
 const mockNamespaces = (names: string[]): Promise<void> => {
-  return mockAPIToPromise('getNamespaces', names.map(n => ({ name: n })), true);
+  return mockAPIToPromise(
+    'getNamespaces',
+    names.map(n => ({ name: n })),
+    true
+  );
 };
 
 const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {

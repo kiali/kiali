@@ -52,7 +52,7 @@ type Props = IstioMetricsProps & {
 };
 
 const displayFlex = style({
-  display: 'flex',
+  display: 'flex'
 });
 
 class IstioMetrics extends React.Component<Props, MetricsState> {
@@ -68,13 +68,13 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay((changed) => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
   initOptions(settings: MetricsSettings): IstioMetricsOptions {
     const options: IstioMetricsOptions = {
       reporter: MetricsReporter.initialReporter(this.props.direction),
-      direction: this.props.direction,
+      direction: this.props.direction
     };
     MetricsHelper.settingsToOptions(settings, options);
     return options;
@@ -109,14 +109,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         break;
     }
     return promise
-      .then((response) => {
+      .then(response => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
           dashboard: response.data,
-          labelsSettings: labelsSettings,
+          labelsSettings: labelsSettings
         });
       })
-      .catch((error) => {
+      .catch(error => {
         AlertUtils.addError('Could not fetch metrics.', error);
         throw error;
       });
@@ -124,7 +124,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   fetchGrafanaInfo() {
     if (!IstioMetrics.grafanaInfoPromise) {
-      IstioMetrics.grafanaInfoPromise = API.getGrafanaInfo().then((response) => {
+      IstioMetrics.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
           return undefined;
         }
@@ -132,14 +132,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       });
     }
     IstioMetrics.grafanaInfoPromise
-      .then((grafanaInfo) => {
+      .then(grafanaInfo => {
         if (grafanaInfo) {
           this.setState({ grafanaLinks: grafanaInfo.externalLinks });
         } else {
           this.setState({ grafanaLinks: [] });
         }
       })
-      .catch((err) => {
+      .catch(err => {
         AlertUtils.addError(
           'Could not fetch Grafana info. Turning off links to Grafana.',
           err,
@@ -182,7 +182,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     if (dates && dates[0] && dates[1]) {
       const range: TimeRange = {
         from: dates[0].getTime(),
-        to: dates[1].getTime(),
+        to: dates[1].getTime()
       };
       storeBounds(range);
       this.onTimeFrameChanged(range);
@@ -274,7 +274,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false,
+    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
   };
 };
 

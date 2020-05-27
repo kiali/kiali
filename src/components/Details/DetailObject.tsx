@@ -16,12 +16,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   // The recursive nature of buildList() requires uniques list keys.
   // Modified from https://gist.github.com/gordonbrander/2230317
   generateKey() {
-    return (
-      'key_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9)
-    );
+    return 'key_' + Math.random().toString(36).substr(2, 9);
   }
 
   label(key: string, value: string) {
@@ -92,9 +87,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
             message={this.props.validation.message}
             messageColor={true}
           />
-        ) : (
-          undefined
-        )}
+        ) : undefined}
         <ul className={'details'}>{childrenList}</ul>
       </div>
     ) : (

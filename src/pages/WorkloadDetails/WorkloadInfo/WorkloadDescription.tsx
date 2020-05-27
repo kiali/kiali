@@ -14,7 +14,7 @@ import {
   StackItem,
   Text,
   TextVariants,
-  Title,
+  Title
 } from '@patternfly/react-core';
 import { TextOrLink } from 'components/TextOrLink';
 import { renderRuntimeLogo, renderAPILogo } from 'components/Logo/Logos';
@@ -24,7 +24,7 @@ import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
 import { style } from 'typestyle';
 
 const titleStyle = style({
-  margin: '15px 0 11px 0',
+  margin: '15px 0 11px 0'
 });
 
 type WorkloadDescriptionProps = {
@@ -41,7 +41,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
       workload &&
       ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
         0;
-    const runtimes = (workload?.runtimes || []).map((r) => r.name).filter((name) => name !== '');
+    const runtimes = (workload?.runtimes || []).map(r => r.name).filter(name => name !== '');
     return workload ? (
       <Grid gutter="md">
         <GridItem span={4}>

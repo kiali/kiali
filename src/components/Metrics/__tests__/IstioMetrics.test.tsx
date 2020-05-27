@@ -12,7 +12,7 @@ import { MetricsObjectTypes } from '../../../types/Metrics';
 import MounterMocker from 'services/__mocks__/MounterMocker';
 
 jest.spyOn(API, 'getGrafanaInfo').mockImplementation(() => {
-  return new Promise((r) => {
+  return new Promise(r => {
     r({ data: { externalLinks: [] } });
   });
 });
@@ -27,10 +27,10 @@ const createMetricChart = (name: string): ChartModel => {
         labelSet: { __name__: name },
         values: [
           [1111, 5],
-          [2222, 10],
-        ],
-      },
-    ],
+          [2222, 10]
+        ]
+      }
+    ]
   };
 };
 
@@ -44,31 +44,31 @@ const createHistogramChart = (name: string): ChartModel => {
         labelSet: { __name__: name, __stat__: 'avg' },
         values: [
           [1111, 10],
-          [2222, 11],
-        ],
+          [2222, 11]
+        ]
       },
       {
         labelSet: { __name__: name, __stat__: '0.5' },
         values: [
           [1111, 20],
-          [2222, 21],
-        ],
+          [2222, 21]
+        ]
       },
       {
         labelSet: { __name__: name, __stat__: '0.95' },
         values: [
           [1111, 30],
-          [2222, 31],
-        ],
+          [2222, 31]
+        ]
       },
       {
         labelSet: { __name__: name, __stat__: '0.99' },
         values: [
           [1111, 40],
-          [2222, 41],
-        ],
-      },
-    ],
+          [2222, 41]
+        ]
+      }
+    ]
   };
 };
 
@@ -78,7 +78,7 @@ describe('Metrics for a service', () => {
       <Provider store={store}>
         <MemoryRouter>
           <Route
-            render={(props) => (
+            render={props => (
               <IstioMetrics
                 {...props}
                 namespace="ns"
@@ -94,19 +94,19 @@ describe('Metrics for a service', () => {
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
-  it('mounts and loads empty metrics', (done) => {
+  it('mounts and loads empty metrics', done => {
     const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [] };
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} />
       )
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         expect(wrapper.find('GridItem')).toHaveLength(1);
       });
   });
 
-  it('mounts and loads full metrics', (done) => {
+  it('mounts and loads full metrics', done => {
     const dashboard: DashboardModel = {
       title: 'foo',
       aggregations: [],
@@ -114,16 +114,16 @@ describe('Metrics for a service', () => {
         createMetricChart('m1'),
         createHistogramChart('m3'),
         createHistogramChart('m5'),
-        createHistogramChart('m7'),
+        createHistogramChart('m7')
       ],
-      externalLinks: [],
+      externalLinks: []
     };
     new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} />
       )
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         expect(wrapper.find('GridItem')).toHaveLength(5);
       });
   }, 10000); // Increase timeout for this test
@@ -134,7 +134,7 @@ describe('Inbound Metrics for a workload', () => {
     const wrapper = shallow(
       <Provider store={store}>
         <Route
-          render={(props) => (
+          render={props => (
             <IstioMetrics
               {...props}
               namespace="ns"
@@ -149,19 +149,19 @@ describe('Inbound Metrics for a workload', () => {
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
-  it('mounts and loads empty metrics', (done) => {
+  it('mounts and loads empty metrics', done => {
     const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [] };
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} />
       )
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         expect(wrapper.find('GridItem')).toHaveLength(1);
       });
   });
 
-  it('mounts and loads full metrics', (done) => {
+  it('mounts and loads full metrics', done => {
     const dashboard: DashboardModel = {
       title: 'foo',
       aggregations: [],
@@ -169,16 +169,16 @@ describe('Inbound Metrics for a workload', () => {
         createMetricChart('m1'),
         createHistogramChart('m3'),
         createHistogramChart('m5'),
-        createHistogramChart('m7'),
+        createHistogramChart('m7')
       ],
-      externalLinks: [],
+      externalLinks: []
     };
     new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} />
       )
-      .run(done, (wrapper) => {
+      .run(done, wrapper => {
         expect(wrapper.find('GridItem')).toHaveLength(5);
       });
   }, 10000); // Increase timeout for this test

@@ -93,7 +93,11 @@ class ServiceListComponent extends FilterComponent.Component<
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchServices(namespaces.map(namespace => namespace.name), activeFilters, this.props.duration);
+          this.fetchServices(
+            namespaces.map(namespace => namespace.name),
+            activeFilters,
+            this.props.duration
+          );
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {

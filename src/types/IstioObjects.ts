@@ -50,7 +50,7 @@ export type Validations = { [key1: string]: { [key2: string]: ObjectValidation }
 export enum ValidationTypes {
   Error = 'error',
   Warning = 'warning',
-  Correct = 'correct',
+  Correct = 'correct'
 }
 
 export interface ObjectValidation {
@@ -495,7 +495,7 @@ export interface Gateway extends IstioObject {
 export enum CaptureMode {
   DEFAULT = 'DEFAULT',
   IPTABLES = 'IPTABLES',
-  NONE = 'NONE',
+  NONE = 'NONE'
 }
 
 // 1.6
@@ -668,7 +668,7 @@ export interface TargetSelector {
 
 export enum MutualTlsMode {
   STRICT = 'STRICT',
-  PERMISSIVE = 'PERMISSIVE',
+  PERMISSIVE = 'PERMISSIVE'
 }
 
 export interface MutualTls {
@@ -694,7 +694,7 @@ export interface OriginAuthenticationMethod {
 
 export enum PrincipalBinding {
   USE_PEER = 'USE_PEER',
-  USE_ORIGIN = 'USE_ORIGIN',
+  USE_ORIGIN = 'USE_ORIGIN'
 }
 
 export interface PolicySpec {
@@ -856,7 +856,7 @@ export enum PeerAuthenticationMutualTLSMode {
   UNSET = 'UNSET',
   DISABLE = 'DISABLE',
   PERMISSIVE = 'PERMISSIVE',
-  STRICT = 'STRICT',
+  STRICT = 'STRICT'
 }
 
 // 1.6

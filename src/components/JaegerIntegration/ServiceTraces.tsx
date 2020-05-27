@@ -11,7 +11,7 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip,
+  Tooltip
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
@@ -60,7 +60,7 @@ interface ServiceTracesState {
 export const traceDurationUnits: { [key: string]: string } = {
   us: 'us', // is it µs ?
   ms: 'ms',
-  s: 's',
+  s: 's'
 };
 
 class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesState> {
@@ -96,7 +96,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
       showErrors: this.props.showErrors,
       options: {
         limit: limit,
-        tags: tags,
+        tags: tags
       },
       traceIntervalDurations: { none: 'none' },
       selectedTraceIntervalDuration: interval,
@@ -104,9 +104,9 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
       selectedLimitSpans: limit,
       traces: [],
       traceId: traceId,
-      jaegerErrors: [],
+      jaegerErrors: []
     };
-    this.fetcher = new TracesFetcher(this.onTracesUpdated, (errors) => this.setState({ jaegerErrors: errors }));
+    this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => this.setState({ jaegerErrors: errors }));
   }
 
   componentDidMount() {
@@ -122,7 +122,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
 
   private fetchSingle = (traceId: string) => {
     return API.getJaegerTrace(this.props.namespace, this.props.service, traceId)
-      .then((response) => {
+      .then(response => {
         if (response.data.data) {
           const trace = transformTraceData(response.data.data);
           if (trace) {
@@ -130,7 +130,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
           }
         }
       })
-      .catch((error) => AlertUtils.addError('Could not fetch trace.', error));
+      .catch(error => AlertUtils.addError('Could not fetch trace.', error));
   };
 
   private onTracesUpdated = (traces: JaegerTrace[]) => {
@@ -182,10 +182,10 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
       URLParam.JAEGER_START_TIME,
       URLParam.JAEGER_END_TIME,
       URLParam.JAEGER_TAGS,
-      URLParam.JAEGER_LIMIT_TRACES,
+      URLParam.JAEGER_LIMIT_TRACES
     ];
     let url = `${this.props.urlJaeger}/search?service=${service}`;
-    variables.forEach((query) => {
+    variables.forEach(query => {
       const value = HistoryManager.getParam(query);
       if (value) {
         url += `&${query}=${value}`;
@@ -231,7 +231,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
   private getIntervalTraceDurations = (traces: JaegerTrace[]) => {
     let maxDuration = Math.max.apply(
       Math,
-      traces.map((trace) => trace.duration)
+      traces.map(trace => trace.duration)
     );
     let intervals: { [key: string]: string } = { none: 'none' };
     let i = 0;
@@ -282,7 +282,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <ToolbarDropdown
                             options={this.state.traceIntervalDurations}
                             value={this.state.traceIntervalDurations[this.state.selectedTraceIntervalDuration]}
-                            handleSelect={(key) => this.handleIntervalDuration(key)}
+                            handleSelect={key => this.handleIntervalDuration(key)}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -297,7 +297,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <ToolbarDropdown
                             options={config.tracing.configuration.limitResults}
                             value={config.tracing.configuration.limitResults[this.state.selectedLimitSpans]}
-                            handleSelect={(key) => this.handleLimitDuration(key)}
+                            handleSelect={key => this.handleLimitDuration(key)}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -312,7 +312,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <ToolbarDropdown
                             options={config.tracing.configuration.statusCode}
                             value={config.tracing.configuration.statusCode[this.state.selectedStatusCode]}
-                            handleSelect={(key) => this.handleStatusCode(key)}
+                            handleSelect={key => this.handleStatusCode(key)}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -327,7 +327,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <ToolbarDropdown
                             options={{ 'All traces': 'All traces', 'Error traces': 'Error traces' }}
                             value={this.state.showErrors ? 'Error traces' : 'All traces'}
-                            handleSelect={(key) => this.setErrorTraces(key)}
+                            handleSelect={key => this.setErrorTraces(key)}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -336,7 +336,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <Checkbox
                             label="Adjust time"
                             isChecked={this.state.fixedTime}
-                            onChange={(checked) => {
+                            onChange={checked => {
                               this.setState({ fixedTime: checked });
                             }}
                             aria-label="adjust-time-chart"
@@ -368,7 +368,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                         fixedTime={this.state.fixedTime}
                         traces={this.state.traces}
                         errorFetchTraces={this.state.jaegerErrors}
-                        onClick={(traceId) => this.onClickScatter(traceId)}
+                        onClick={traceId => this.onClickScatter(traceId)}
                         errorTraces={true}
                       />
                     </GridItem>
@@ -405,7 +405,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
 const mapStateToProps = (state: KialiAppState) => {
   return {
     urlJaeger: state.jaegerState ? state.jaegerState.url : '',
-    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true,
+    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
   };
 };
 

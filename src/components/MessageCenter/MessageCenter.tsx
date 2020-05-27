@@ -68,8 +68,5 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const MessageCenterContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(MessageCenter);
+const MessageCenterContainer = connect(mapStateToProps, mapDispatchToProps)(MessageCenter);
 export default MessageCenterContainer;
