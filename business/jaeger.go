@@ -41,7 +41,7 @@ func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (t
 	return client.GetTraces(ns, srv, query)
 }
 
-func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerResponse, err error) {
+func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err

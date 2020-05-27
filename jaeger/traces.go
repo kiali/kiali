@@ -29,10 +29,20 @@ func getTraces(client http.Client, endpoint *url.URL, namespace string, service 
 	return queryTraces(client, u)
 }
 
-func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (response *JaegerResponse, err error) {
+func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
 	u := endpoint
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
-	return queryTraces(client, u)
+	response, err := queryTraces(client, u)
+	if err != nil {
+		return nil, err
+	}
+	if len(response.Data) == 0 {
+		return &JaegerSingleTrace{Errors: response.Errors}, nil
+	}
+	return &JaegerSingleTrace{
+		Data:   response.Data[0],
+		Errors: response.Errors,
+	}, nil
 }
 
 func getErrorTraces(client http.Client, endpoint *url.URL, namespace, service string, duration time.Duration) (errorTraces int, err error) {
