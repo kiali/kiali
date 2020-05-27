@@ -478,7 +478,7 @@ func NewRoutes() (r *Routes) {
 			"TracesList",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/traces",
-			handlers.TraceServiceDetails,
+			handlers.TracesList,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/errortraces traces errorTraces

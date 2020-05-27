@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/jaeger"
+	"github.com/kiali/kiali/models"
 )
 
 type JaegerLoader = func() (jaeger.ClientInterface, error)
@@ -25,15 +26,15 @@ func (in *JaegerService) client() (jaeger.ClientInterface, error) {
 	return in.jaeger, in.loaderErr
 }
 
-func (in *JaegerService) GetJaegerSpans(namespace, service, startMicros, endMicros string) ([]jaeger.Span, error) {
+func (in *JaegerService) GetJaegerSpans(ns, srv string, query models.TracingQuery) ([]jaeger.Span, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	return client.GetSpans(namespace, service, startMicros, endMicros)
+	return client.GetSpans(ns, srv, query)
 }
 
-func (in *JaegerService) GetJaegerTraces(ns string, srv string, query string) (traces *jaeger.JaegerResponse, err error) {
+func (in *JaegerService) GetJaegerTraces(ns, srv string, query models.TracingQuery) (traces *jaeger.JaegerResponse, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err

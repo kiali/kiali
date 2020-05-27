@@ -10,23 +10,13 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
-func getTraces(client http.Client, endpoint *url.URL, namespace string, service string, rawQuery string) (response *JaegerResponse, err error) {
-	u := endpoint
-	queryService := service
-	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
-		queryService = fmt.Sprintf("%s.%s", service, namespace)
-	}
-	u.Path = path.Join(u.Path, "/api/traces")
-	q, err := url.ParseQuery(rawQuery)
-	if err != nil {
-		log.Errorf("Jaeger parse query error: %s", err)
-		return
-	}
-	q.Add("service", queryService)
-	u.RawQuery = q.Encode()
-	return queryTraces(client, u)
+func getTraces(client http.Client, endpoint *url.URL, namespace, service string, query models.TracingQuery) (response *JaegerResponse, err error) {
+	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
+	prepareQuery(endpoint, namespace, service, query)
+	return queryTraces(client, endpoint)
 }
 
 func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {

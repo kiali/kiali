@@ -1,10 +1,39 @@
 package jaeger
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 )
+
+func prepareQuery(u *url.URL, namespace, service string, query models.TracingQuery) {
+	queryService := service
+	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
+		queryService = fmt.Sprintf("%s.%s", service, namespace)
+	}
+	q := url.Values{}
+	q.Set("service", queryService)
+	q.Set("start", query.StartMicros)
+	if query.EndMicros != "" {
+		q.Set("end", query.EndMicros)
+	}
+	if query.Tags != "" {
+		q.Set("tags", query.Tags)
+	}
+	if query.MinDuration != "" {
+		q.Set("minDuration", query.MinDuration)
+	}
+	if query.Limit > 0 {
+		q.Set("limit", strconv.Itoa(query.Limit))
+	}
+	u.RawQuery = q.Encode()
+}
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
 	response = nil

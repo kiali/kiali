@@ -6,47 +6,32 @@ import (
 	"net/url"
 	"path"
 	"sort"
-	"strconv"
 	"time"
 
 	jaegerModels "github.com/jaegertracing/jaeger/model/json"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
-
-// TODO / Question: make limit configurable? Selected from UI?
-const tracesLimit = 100
 
 type Span struct {
 	jaegerModels.Span
 	TraceSize int `json:"traceSize"`
 }
 
-func getSpans(client http.Client, endpoint *url.URL, namespace, service, startMicros, endMicros string) ([]Span, error) {
-	u := endpoint
-	queryService := service
-	if config.Get().ExternalServices.Tracing.NamespaceSelector {
-		queryService = service + "." + namespace
-	}
-	u.Path = path.Join(u.Path, "/api/traces")
-	q := u.Query()
-	q.Set("service", queryService)
-	q.Set("start", startMicros)
-	q.Set("end", endMicros)
-	q.Set("limit", strconv.Itoa(tracesLimit))
-
-	u.RawQuery = q.Encode()
-	response, err := queryTraces(client, u)
+func getSpans(client http.Client, endpoint *url.URL, namespace, service string, query models.TracingQuery) ([]Span, error) {
+	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
+	prepareQuery(endpoint, namespace, service, query)
+	response, err := queryTraces(client, endpoint)
 	if err != nil {
 		return []Span{}, err
 	}
 
 	spans := tracesToSpans(response.Data, service, namespace)
-	if len(response.Data) == tracesLimit {
+	if len(response.Data) == query.Limit {
 		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
 		log.Trace("Limit of traces was reached, trying to find more relevant spans...")
-		return findRelevantSpans(client, spans, u, q, service, namespace)
+		return findRelevantSpans(client, spans, endpoint, service, namespace, query)
 	}
 
 	return spans, nil
@@ -76,16 +61,19 @@ func tracesToSpans(traces []jaegerModels.Trace, service, namespace string) []Spa
 	return spans
 }
 
-func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url.Values, service, namespace string) ([]Span, error) {
+func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, service, namespace string, query models.TracingQuery) ([]Span, error) {
 	spansMap := make(map[jaegerModels.SpanID]Span)
 
-	// Query for errors
-	q.Set("tags", "{\"error\":\"true\"}")
-	u.RawQuery = q.Encode()
-	response, _ := queryTraces(client, u)
-	errSpans := tracesToSpans(response.Data, service, namespace)
-	for _, span := range errSpans {
-		spansMap[span.SpanID] = span
+	if query.Tags == "" {
+		// Query for errors
+		q := query
+		q.Tags = "{\"error\":\"true\"}"
+		prepareQuery(u, namespace, service, q)
+		response, _ := queryTraces(client, u)
+		errSpans := tracesToSpans(response.Data, service, namespace)
+		for _, span := range errSpans {
+			spansMap[span.SpanID] = span
+		}
 	}
 
 	// Find 90th percentile; sort per duration
@@ -100,11 +88,11 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, q url
 	}
 
 	// Query 90th percentile
-	q.Del("tags")
 	// %.1gms would print for instance 0.00012456 as 0.0001ms
-	q.Set("minDuration", fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000))
-	u.RawQuery = q.Encode()
-	response, _ = queryTraces(client, u)
+	q := query
+	q.MinDuration = fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000)
+	prepareQuery(u, namespace, service, q)
+	response, _ := queryTraces(client, u)
 	// TODO / Question: if limit is reached again we might limit to 99th percentile instead?
 	pct90Spans := tracesToSpans(response.Data, service, namespace)
 	for _, span := range pct90Spans {
