@@ -4,93 +4,32 @@ import { RouteComponentProps } from 'react-router-dom';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
+
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { Validations } from '../../types/IstioObjects';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
-import ServiceTraces from './ServiceTraces';
-import ServiceInfo from './ServiceInfo';
-import { EdgeLabelMode, GraphDefinition, GraphType, NodeType } from '../../types/Graph';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
-import { fetchTrace, fetchTraces } from '../../helpers/TracesHelper';
-import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import { durationSelector } from '../../store/Selectors';
-import { PromisesRegistry } from '../../utils/CancelablePromises';
-import Namespace from '../../types/Namespace';
-import { MessageType } from '../../types/MessageCenter';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
-import { JaegerErrors, JaegerTrace, JaegerInfo } from '../../types/JaegerInfo';
-import { changeParams, getQueryJaeger } from '../../components/JaegerIntegration/RouteHelper';
-import RefreshContainer from '../../components/Refresh/Refresh';
+import { JaegerInfo } from '../../types/JaegerInfo';
 import { PfColors } from '../../components/Pf/PfColors';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
-import { serverConfig } from '../../config';
-import GraphDataSource from '../../services/GraphDataSource';
-import { URLParam } from '../../app/History';
+import ServiceTraces from 'components/JaegerIntegration/ServiceTraces';
+import ServiceInfo from './ServiceInfo';
+import TrafficDetails from '../../components/Metrics/TrafficDetails';
 
 type ServiceDetailsState = {
-  serviceDetailsInfo: ServiceDetailsInfo;
   nbErrorTraces: number;
-  gateways: string[];
-  trafficData: GraphDefinition | null;
-  validations: Validations;
-  threeScaleInfo: ThreeScaleInfo;
-  threeScaleServiceRule?: ThreeScaleServiceRule;
   currentTab: string;
-  errorTraces?: JaegerErrors[];
-  selectedTrace?: JaegerTrace;
-  errorSelectedTrace?: JaegerErrors[];
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
 }
-
-interface ParsedSearch {
-  type?: string;
-  name?: string;
-}
-
-const emptyService: ServiceDetailsInfo = {
-  istioSidecar: true, // true until proven otherwise (workload with missing sidecar exists)
-  service: {
-    type: '',
-    name: '',
-    createdAt: '',
-    resourceVersion: '',
-    ip: '',
-    externalName: ''
-  },
-  virtualServices: {
-    items: [],
-    permissions: {
-      create: false,
-      update: false,
-      delete: false
-    }
-  },
-  destinationRules: {
-    items: [],
-    permissions: {
-      create: false,
-      update: false,
-      delete: false
-    }
-  },
-  validations: {},
-  additionalDetails: []
-};
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -101,74 +40,20 @@ const tabIndex: { [tab: string]: number } = {
   info: 0,
   traffic: 1,
   metrics: 2,
-  traces: 3
+  traces: 3,
 };
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
-  private promises = new PromisesRegistry();
-  private traces: JaegerTrace[] = [];
-  private traceParams: any = {};
-  private lastFetchTraceMicros: number | undefined = undefined;
-  private lastFetchTracesError = false;
-  private graphDataSource: GraphDataSource;
-
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
       currentTab: activeTab(tabName, defaultTab),
-      serviceDetailsInfo: emptyService,
       nbErrorTraces: 0,
-      gateways: [],
-      trafficData: null,
-      validations: {},
-      threeScaleInfo: {
-        enabled: false,
-        permissions: {
-          create: false,
-          update: false,
-          delete: false
-        }
-      }
     };
-
-    this.graphDataSource = new GraphDataSource();
-  }
-
-  componentWillUnmount() {
-    this.promises.cancelAll();
-
-    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
-    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
-  }
-
-  servicePageURL(parsedSearch?: ParsedSearch) {
-    let url = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
-    if (parsedSearch && parsedSearch.type) {
-      url += `?list=${parsedSearch.type}s`;
-    }
-    return url;
-  }
-
-  // Helper method to extract search urls with format
-  // ?virtualservice=name or ?destinationrule=name
-  parseSearch(): ParsedSearch {
-    const parsed: ParsedSearch = {};
-    if (this.props.location.search) {
-      const firstParams = this.props.location.search
-        .split('&')[0]
-        .replace('?', '')
-        .split('=');
-      parsed.type = firstParams[0];
-      parsed.name = firstParams[1];
-    }
-    return {};
   }
 
   componentDidMount() {
-    this.doRefresh();
-
-    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
-    this.graphDataSource.on('fetchError', this.graphDsFetchError);
+    this.fetchJaegerErrors();
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
@@ -178,303 +63,21 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       this.state.currentTab !== activeTab(tabName, defaultTab) ||
       prevProps.duration !== this.props.duration
     ) {
-      this.setState(
-        {
-          serviceDetailsInfo: emptyService,
-          trafficData: null,
-          currentTab: activeTab(tabName, defaultTab),
-          validations: {}
-        },
-        () => this.doRefresh()
-      );
+      this.setState({ currentTab: activeTab(tabName, defaultTab) }, () => this.fetchJaegerErrors());
     }
   }
 
-  fetchTrafficDataOnTabChange = (tabValue: string): void => {
-    if (tabValue === defaultTab && this.state.serviceDetailsInfo === emptyService) {
-      this.fetchBackend();
-    }
-  };
-
-  doRefresh = () => {
-    const currentTab = this.state.currentTab;
-
-    if (currentTab === defaultTab) {
-      this.setState({ trafficData: null });
-      this.fetchBackend();
-      this.loadMiniGraphData();
-    }
-
-    if (currentTab === trafficTabName) {
-      // Since traffic tab shares data with mini-graph, we reload mini-graph data.
-      this.loadMiniGraphData();
-    }
-
-    if (currentTab === tracesTabName) {
-      this.fetchTracesData();
-    }
-  };
-
-  fetchBackend = () => {
-    this.promises.cancelAll();
-    this.promises
-      .register('namespaces', API.getNamespaces())
-      .then(namespacesResponse => {
-        const namespaces: Namespace[] = namespacesResponse.data;
-        this.promises
-          .registerAll('gateways', namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false)))
-          .then(responses => {
-            let gatewayList: string[] = [];
-            responses.forEach(response => {
-              const ns = response.data.namespace;
-              response.data.gateways.forEach(gw => {
-                gatewayList = gatewayList.concat(ns.name + '/' + gw.metadata.name);
-              });
-            });
-            this.setState({
-              gateways: gatewayList
-            });
-          })
-          .catch(gwError => {
-            AlertUtils.addError('Could not fetch Namespaces list.', gwError);
-          });
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not fetch Namespaces list.', error);
-      });
-
-    API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
-      .then(results => {
-        this.setState({
-          serviceDetailsInfo: results,
-          validations: this.addFormatValidation(results, results.validations)
-        });
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not fetch Service Details.', error);
-      });
-
+  private fetchJaegerErrors = () => {
     if (this.props.jaegerInfo && this.props.jaegerInfo.integration) {
       API.getJaegerErrorTraces(this.props.match.params.namespace, this.props.match.params.service, this.props.duration)
-        .then(inError => {
+        .then((inError) => {
           this.setState({ nbErrorTraces: inError.data });
         })
-        .catch(error => {
+        .catch((error) => {
           AlertUtils.addError('Could not fetch Jaeger errors.', error);
         });
     }
-
-    if (serverConfig.extensions!.threescale!.enabled) {
-      API.getThreeScaleInfo()
-        .then(results => {
-          this.setState({
-            threeScaleInfo: results.data
-          });
-          if (results.data.enabled) {
-            API.getThreeScaleServiceRule(this.props.match.params.namespace, this.props.match.params.service)
-              .then(result => {
-                this.setState({
-                  threeScaleServiceRule: result.data
-                });
-              })
-              .catch(error => {
-                this.setState({
-                  threeScaleServiceRule: undefined
-                });
-                // Only log 500 errors. 404 response is a valid response on this composition case
-                if (error.response && error.response.status >= 500) {
-                  AlertUtils.addError('Could not fetch ThreeScaleServiceRule.', error);
-                }
-              });
-          }
-        })
-        .catch(error => {
-          AlertUtils.addError(
-            'Could not fetch 3scale info. Turning off 3scale integration.',
-            error,
-            'default',
-            MessageType.INFO
-          );
-        });
-    }
   };
-
-  fetchTracesData = (cleanTrace: boolean = false, traceId?: string) => {
-    /*
-     Remove selected trace
-    */
-    if (cleanTrace) {
-      this.setState({ selectedTrace: undefined });
-    }
-
-    /*
-      Fetch for a specific trace with ID traceId
-    */
-    if (traceId) {
-      fetchTrace(this.props.match.params.namespace, this.props.match.params.service, traceId)
-        .then(trace => {
-          this.lastFetchTracesError = false;
-          let myState = {};
-          if (trace && trace.data) {
-            myState['selectedTrace'] = trace.data[0];
-          }
-          myState['errorSelectedTrace'] = trace ? trace.errors : [{ msg: 'Error Getting Trace ' + traceId }];
-          this.setState(myState);
-        })
-        .catch(error => {
-          if (!this.lastFetchTracesError) {
-            AlertUtils.addError('Could not fetch traces.', error);
-            this.lastFetchTracesError = true;
-            throw error;
-          }
-        });
-    } else {
-      /*
-       Refresh traces
-       - params: Actual params that user selected in refresh moment like limit, tags, duration/frame
-       - traceParams: Params stored in the object
-       - lastFetchTraceMicros: In a interval from 't' to 't+1', we store in this value the last trace startTime,
-           so this value will be <= 't+1'
-      */
-      const params = getQueryJaeger();
-      /*
-       changeParams return true if the specific params like limit or tag changed. In this case the refresh must be a new search.
-          - we store the new params in traceParams
-          - we set to undefined the frame that we use to search the new traces
-      */
-      if (changeParams(this.traceParams)) {
-        // The user changed the params like tags or limit so we need to reset lastFetchTraceMicros
-        this.traceParams = params;
-        this.lastFetchTraceMicros = undefined;
-      }
-      const fetchParams = { ...params };
-      /*
-       If we are adding new traces to the frame we set the startTime param in the search to the last startTime trace that we have.
-       Why?
-       Think in the case that we have a frame from 't-5' to 't'. And our last trace has the startTime in 't-2'.
-       If we fetch traces from t to t+duration we can miss a trace in the t-1 moment. So we are going to fetch traces from the last trace that we got.
-      */
-      if (this.lastFetchTraceMicros) {
-        fetchParams[URLParam.JAEGER_START_TIME] = this.lastFetchTraceMicros;
-      }
-      fetchTraces(this.props.match.params.namespace, this.props.match.params.service, fetchParams)
-        .then(traces => {
-          /*
-            If lastFetchTraceMicros is defined that means that we are in a incremental refresh case.
-          */
-          const appendTraces = this.lastFetchTraceMicros !== undefined;
-          this.lastFetchTracesError = false;
-          let myState = {};
-          if (traces && traces.data) {
-            /*
-             In the case that we need to increment we are going to filter the traces in the frame and concatenate the results with the traces that we got
-            */
-            this.traces = appendTraces
-              ? this.traces.filter(t => t.startTime >= params[URLParam.JAEGER_START_TIME]).concat(traces.data)
-              : traces.data;
-            if (traces.data.length === 0) {
-              myState['selectedTrace'] = undefined;
-            } else {
-              /*
-                We store the last trace startTime that er got-
-              */
-              this.lastFetchTraceMicros = Math.max(...this.traces.map(t => t.startTime));
-            }
-          }
-          myState['errorTraces'] = traces
-            ? traces.errors
-            : [
-                {
-                  msg:
-                    'Error Getting Traces of service ' +
-                    this.props.match.params.service +
-                    ' in namespace ' +
-                    this.props.match.params.namespace
-                }
-              ];
-          this.setState(myState);
-        })
-        .catch(error => {
-          if (!this.lastFetchTracesError) {
-            AlertUtils.addError('Could not fetch traces.', error);
-            this.lastFetchTracesError = true;
-            throw error;
-          }
-        });
-    }
-  };
-
-  addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
-    details.destinationRules.items.forEach(destinationRule => {
-      const dr = new DestinationRuleValidator(destinationRule);
-      const formatValidation = dr.formatValidation();
-
-      if (validations.destinationrule) {
-        const objectValidations = validations.destinationrule[destinationRule.metadata.name];
-        if (
-          formatValidation !== null &&
-          objectValidations.checks &&
-          !objectValidations.checks.some(check => check.message === formatValidation.message)
-        ) {
-          objectValidations.checks.push(formatValidation);
-          objectValidations.valid = false;
-        }
-      }
-    });
-    return validations ? validations : {};
-  }
-
-  renderActions() {
-    let component;
-    switch (this.state.currentTab) {
-      case defaultTab:
-        component = <DurationDropdownContainer id="service-info-duration-dropdown" prefix="Last" />;
-        break;
-      case trafficTabName:
-        component = <DurationDropdownContainer id="service-traffic-duration-dropdown" prefix="Last" />;
-        break;
-      case tracesTabName:
-        component = (
-          <TimeRangeComponent
-            onChanged={() => this.fetchTracesData()}
-            allowCustom={false}
-            tooltip={'Time range for traces'}
-          />
-        );
-        break;
-      default:
-        return undefined;
-    }
-    const serviceDetails = this.state.serviceDetailsInfo;
-    const workloads = serviceDetails.workloads || [];
-    const virtualServices = serviceDetails.virtualServices || [];
-    const destinationRules = serviceDetails.destinationRules || [];
-    return (
-      <span style={{ position: 'absolute', right: '18px', zIndex: 1 }}>
-        {component}
-        {this.state.currentTab !== tracesTabName ? (
-          <RefreshButtonContainer handleRefresh={this.doRefresh} />
-        ) : (
-          <RefreshContainer id="metrics-refresh" handleRefresh={this.doRefresh} hideLabel={true} />
-        )}
-        {this.state.currentTab === defaultTab && (
-          <IstioWizardDropdown
-            namespace={this.props.match.params.namespace}
-            serviceName={serviceDetails.service.name}
-            show={false}
-            workloads={workloads}
-            virtualServices={virtualServices}
-            destinationRules={destinationRules}
-            gateways={this.state.gateways}
-            tlsStatus={serviceDetails.namespaceMTLS}
-            onChange={this.doRefresh}
-            threeScaleInfo={this.state.threeScaleInfo}
-            threeScaleServiceRule={this.state.threeScaleServiceRule}
-          />
-        )}
-      </span>
-    );
-  }
 
   render() {
     const overviewTab = (
@@ -482,23 +85,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         <ServiceInfo
           namespace={this.props.match.params.namespace}
           service={this.props.match.params.service}
-          serviceDetails={this.state.serviceDetailsInfo}
-          gateways={this.state.gateways}
-          validations={this.state.validations}
-          onRefresh={this.doRefresh}
-          threeScaleInfo={this.state.threeScaleInfo}
-          threeScaleServiceRule={this.state.threeScaleServiceRule}
-          miniGraphDataSource={this.graphDataSource}
+          duration={this.props.duration}
         />
       </Tab>
     );
     const trafficTab = (
-      <Tab eventKey={1} title="Traffic" key="Traffic">
+      <Tab eventKey={1} title="Traffic" key={trafficTabName}>
         <TrafficDetails
-          trafficData={this.state.trafficData}
           itemType={MetricsObjectTypes.SERVICE}
           namespace={this.props.match.params.namespace}
           serviceName={this.props.match.params.service}
+          duration={this.props.duration}
         />
       </Tab>
     );
@@ -529,26 +126,16 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             'Traces'
           );
         jaegerTag = (
-          <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key="traces">
+          <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key={tracesTabName}>
             <ServiceTraces
               namespace={this.props.match.params.namespace}
               service={this.props.match.params.service}
-              errorTags={this.state.nbErrorTraces > 0}
+              showErrors={this.state.nbErrorTraces > 0}
               duration={this.props.duration}
-              traces={this.traces}
-              errorTraces={this.state.errorTraces}
-              selectedTrace={this.state.selectedTrace}
-              selectedErrorTrace={this.state.errorSelectedTrace}
-              onRefresh={this.fetchTracesData}
             />
           </Tab>
         );
       } else {
-        const jaegerTitle: any = (
-          <>
-            Traces <ExternalLinkAltIcon />
-          </>
-        );
         const service = this.props.jaegerInfo.namespaceSelector
           ? this.props.match.params.service + '.' + this.props.match.params.namespace
           : this.props.match.params.service;
@@ -557,7 +144,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             eventKey={3}
             href={this.props.jaegerInfo.url + `/search?service=${service}`}
             target="_blank"
-            title={jaegerTitle}
+            title={
+              <>
+                Traces <ExternalLinkAltIcon />
+              </>
+            }
           />
         );
       }
@@ -571,19 +162,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             // This magic space will align details header width with Graph, List pages
           }
           <div style={{ paddingBottom: 14 }} />
-          {this.renderActions()}
         </RenderHeader>
         <ParameterizedTabs
           id="basic-tabs"
-          onSelect={tabValue => {
+          onSelect={(tabValue) => {
             this.setState({ currentTab: tabValue });
           }}
           tabMap={tabIndex}
           tabName={tabName}
           defaultTab={defaultTab}
-          postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
-          mountOnEnter={false}
+          mountOnEnter={true}
           unmountOnExit={true}
         >
           {tabsArray}
@@ -591,49 +180,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       </>
     );
   }
-
-  private loadMiniGraphData = () => {
-    this.graphDataSource.fetchGraphData({
-      namespaces: [{ name: this.props.match.params.namespace }],
-      duration: this.props.duration,
-      graphType: GraphType.WORKLOAD,
-      injectServiceNodes: true,
-      edgeLabelMode: EdgeLabelMode.NONE,
-      showSecurity: false,
-      showUnusedNodes: false,
-      node: {
-        app: '',
-        namespace: { name: this.props.match.params.namespace },
-        nodeType: NodeType.SERVICE,
-        service: this.props.match.params.service,
-        version: '',
-        workload: ''
-      }
-    });
-  };
-
-  private graphDsFetchSuccess = () => {
-    this.setState({
-      trafficData: this.graphDataSource.graphDefinition
-    });
-  };
-
-  private graphDsFetchError = (errorMessage: string | null) => {
-    if (this.state.currentTab === trafficTabName) {
-      if (errorMessage !== '') {
-        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
-      } else {
-        errorMessage = 'Could not fetch traffic data.';
-      }
-
-      AlertUtils.addError(errorMessage);
-    }
-  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState || undefined,
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

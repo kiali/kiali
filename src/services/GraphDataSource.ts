@@ -6,7 +6,8 @@ import {
   GraphElements,
   GraphType,
   GroupByType,
-  NodeParamsType
+  NodeParamsType,
+  NodeType,
 } from '../types/Graph';
 import Namespace from '../types/Namespace';
 import * as AlertUtils from '../utils/AlertUtils';
@@ -91,7 +92,7 @@ export default class GraphDataSource {
   private promiseRegistry: PromisesRegistry;
   private decoratedData = createSelector(
     (graphData: GraphElements) => graphData,
-    graphData => decorateGraphData(graphData)
+    (graphData) => decorateGraphData(graphData)
   );
 
   // Public methods
@@ -112,7 +113,7 @@ export default class GraphDataSource {
       injectServiceNodes: true,
       namespaces: [],
       showSecurity: false,
-      showUnusedNodes: false
+      showUnusedNodes: false,
     };
     this._isError = this._isLoading = false;
   }
@@ -135,7 +136,7 @@ export default class GraphDataSource {
     const restParams: any = {
       duration: fetchParams.duration + 's',
       graphType: fetchParams.graphType,
-      injectServiceNodes: fetchParams.injectServiceNodes
+      injectServiceNodes: fetchParams.injectServiceNodes,
     };
 
     if (fetchParams.graphType === GraphType.APP || fetchParams.graphType === GraphType.VERSIONED_APP) {
@@ -176,8 +177,8 @@ export default class GraphDataSource {
     this._isError = false;
 
     const isPreviousDataInvalid =
-      previousFetchParams.namespaces.map(ns => ns.name).join() !==
-        this.fetchParameters.namespaces.map(ns => ns.name).join() ||
+      previousFetchParams.namespaces.map((ns) => ns.name).join() !==
+        this.fetchParameters.namespaces.map((ns) => ns.name).join() ||
       previousFetchParams.node !== this.fetchParameters.node ||
       previousFetchParams.graphType !== this.fetchParameters.graphType ||
       previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes;
@@ -205,16 +206,62 @@ export default class GraphDataSource {
     this.eventEmitter.removeListener(eventName, callback);
   };
 
+  // Some helpers
+
+  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string) => {
+    const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.graphType = GraphType.APP;
+    params.node!.nodeType = NodeType.APP;
+    params.node!.app = app;
+    this.fetchGraphData(params);
+  };
+
+  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string) => {
+    const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.graphType = GraphType.WORKLOAD;
+    params.node!.nodeType = NodeType.WORKLOAD;
+    params.node!.workload = workload;
+    this.fetchGraphData(params);
+  };
+
+  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string) => {
+    const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.graphType = GraphType.WORKLOAD;
+    params.node!.nodeType = NodeType.SERVICE;
+    params.node!.service = service;
+    this.fetchGraphData(params);
+  };
+
   // Private methods
+
+  private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {
+    return {
+      namespaces: [{ name: namespace }],
+      duration: duration,
+      graphType: GraphType.WORKLOAD,
+      injectServiceNodes: true,
+      edgeLabelMode: EdgeLabelMode.NONE,
+      showSecurity: false,
+      showUnusedNodes: false,
+      node: {
+        app: '',
+        namespace: { name: namespace },
+        nodeType: NodeType.UNKNOWN,
+        service: '',
+        version: '',
+        workload: '',
+      },
+    };
+  }
 
   private emit: EmitEvents = (eventName: any, ...args) => {
     this.eventEmitter.emit(eventName, ...args);
   };
 
   private fetchDataForNamespaces = (restParams: any) => {
-    restParams.namespaces = this.fetchParameters.namespaces.map(namespace => namespace.name).join(',');
+    restParams.namespaces = this.fetchParameters.namespaces.map((namespace) => namespace.name).join(',');
     this.promiseRegistry.register(PROMISE_KEY, API.getGraphElements(restParams)).then(
-      response => {
+      (response) => {
         const responseData: any = response.data;
         this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
@@ -222,7 +269,7 @@ export default class GraphDataSource {
         this._isLoading = this._isError = false;
         this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData, this.fetchParameters);
       },
-      error => {
+      (error) => {
         this._isLoading = false;
         if (error.isCanceled) {
           return;
@@ -238,7 +285,7 @@ export default class GraphDataSource {
 
   private fetchDataForNode = (restParams: any) => {
     this.promiseRegistry.register(PROMISE_KEY, API.getNodeGraphElements(this.fetchParameters.node!, restParams)).then(
-      response => {
+      (response) => {
         const responseData: any = response.data;
         this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
@@ -246,7 +293,7 @@ export default class GraphDataSource {
         this._isLoading = this._isError = false;
         this.emit('fetchSuccess', this.graphTimestamp, this.graphDuration, this.graphData, this.fetchParameters);
       },
-      error => {
+      (error) => {
         this._isLoading = false;
         if (error.isCanceled) {
           return;
@@ -270,7 +317,7 @@ export default class GraphDataSource {
       duration: this.graphDuration,
       elements: this.graphElements,
       timestamp: this.graphTimestamp,
-      graphType: this.fetchParameters.graphType
+      graphType: this.fetchParameters.graphType,
     };
   }
 

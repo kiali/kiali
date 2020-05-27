@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChartWithLegend, makeLegend, VCDataPoint } from '@kiali/k-charted-pf4';
 import { ChartScatter } from '@patternfly/react-charts';
-import { JaegerErrors, JaegerTrace } from '../../types/JaegerInfo';
+import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { isErrorTag } from './RouteHelper';
 import { PfColors } from '../Pf/PfColors';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
@@ -16,7 +16,7 @@ interface JaegerScatterProps {
   onClick: (traceId) => void;
   fixedTime: boolean;
   errorTraces?: boolean;
-  errorFetchTraces?: JaegerErrors[];
+  errorFetchTraces?: JaegerError[];
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -39,8 +39,8 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
     let tracesRaw: VCDataPoint[] = [];
     let tracesError: VCDataPoint[] = [];
 
-    this.props.traces.forEach(trace => {
-      let traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
+    this.props.traces.forEach((trace) => {
+      let traceError = trace.spans.filter((sp) => sp.tags.some(isErrorTag)).length > 0;
       let traceItem = {
         x: new Date(trace.startTime / 1000),
         y: Number(trace.duration / ONE_MILLISECOND),
@@ -51,7 +51,7 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
         color: PfColors.Blue200,
         unit: 'seconds',
         id: trace.traceID,
-        size: trace.spans.length + MINIMAL_SIZE
+        size: trace.spans.length + MINIMAL_SIZE,
       };
       if (traceError) {
         traceItem.color = PfColors.Red200;
@@ -63,13 +63,13 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
     const traces = {
       datapoints: tracesRaw,
       color: (({ datum }) => datum.color) as any,
-      legendItem: makeLegend('Traces', PfColors.Blue200)
+      legendItem: makeLegend('Traces', PfColors.Blue200),
     };
 
     const errorTraces = {
       datapoints: tracesError,
       color: (({ datum }) => datum.color) as any,
-      legendItem: makeLegend('Error Traces', PfColors.Red200)
+      legendItem: makeLegend('Error Traces', PfColors.Red200),
     };
 
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
@@ -83,7 +83,7 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
         timeWindow={
           this.props.fixedTime ? evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration) : undefined
         }
-        onClick={dp => this.props.onClick(dp.id)}
+        onClick={(dp) => this.props.onClick(dp.id)}
       />
     ) : (
       this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')

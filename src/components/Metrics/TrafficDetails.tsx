@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
+import * as AlertUtils from '../../utils/AlertUtils';
+import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from 'components/Refresh/RefreshButton';
+import GraphDataSource from 'services/GraphDataSource';
+import { DurationInSeconds } from 'types/Common';
+import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
@@ -24,7 +30,7 @@ type WorkloadProps = {
 };
 
 type TrafficDetailsProps = {
-  trafficData: GraphDefinition | null;
+  duration: DurationInSeconds;
 } & (AppProps | WorkloadProps | ServiceProps);
 
 type TrafficDetailsState = {
@@ -37,16 +43,25 @@ type ServiceTraffic = {
 };
 
 class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
+  private graphDataSource = new GraphDataSource();
+
   constructor(props: TrafficDetailsProps) {
     super(props);
     this.state = {
       inboundTraffic: [],
-      outboundTraffic: []
+      outboundTraffic: [],
     };
   }
 
-  componentDidMount(): void {
-    this.processTrafficData(this.props.trafficData);
+  componentDidMount() {
+    this.graphDataSource.on('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.on('fetchError', this.graphDsFetchError);
+    this.fetchDataSource();
+  }
+
+  componentWillUnmount() {
+    this.graphDataSource.removeListener('fetchSuccess', this.graphDsFetchSuccess);
+    this.graphDataSource.removeListener('fetchError', this.graphDsFetchError);
   }
 
   componentDidUpdate(prevProps: TrafficDetailsProps) {
@@ -63,30 +78,60 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       this.props.itemType === prevProps.itemType &&
       (prevProps.namespace !== this.props.namespace || prevProps.serviceName !== this.props.serviceName);
 
-    if (isWorkloadSet || isAppSet || isServiceSet || prevProps.trafficData !== this.props.trafficData) {
-      this.processTrafficData(this.props.trafficData);
+    if (isWorkloadSet || isAppSet || isServiceSet || prevProps.duration !== this.props.duration) {
+      this.fetchDataSource();
     }
   }
 
-  render() {
-    if (this.props.trafficData === null) {
-      return null;
+  private fetchDataSource = () => {
+    switch (this.props.itemType) {
+      case MetricsObjectTypes.SERVICE:
+        this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.serviceName);
+        break;
+      case MetricsObjectTypes.WORKLOAD:
+        this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workloadName);
+        break;
+      case MetricsObjectTypes.APP:
+        this.graphDataSource.fetchForApp(this.props.duration, this.props.namespace, this.props.appName);
+        break;
+    }
+  };
+
+  private graphDsFetchSuccess = () => {
+    this.processTrafficData(this.graphDataSource.graphDefinition);
+  };
+
+  private graphDsFetchError = (errorMessage: string | null) => {
+    if (errorMessage !== '') {
+      errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+    } else {
+      errorMessage = 'Could not fetch traffic data.';
     }
 
+    AlertUtils.addError(errorMessage);
+  };
+
+  render() {
     return (
-      <RenderComponentScroll>
-        <Grid style={{ padding: '10px' }}>
-          <GridItem span={12}>
-            <Card>
-              <CardBody>
-                <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
-                <div style={{ marginTop: '2em' }} />
-                <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
-              </CardBody>
-            </Card>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
+      <>
+        <RightActionBar>
+          <DurationDropdownContainer id="service-traffic-duration-dropdown" prefix="Last" />
+          <RefreshButtonContainer handleRefresh={this.fetchDataSource} />
+        </RightActionBar>
+        <RenderComponentScroll>
+          <Grid style={{ padding: '10px' }}>
+            <GridItem span={12}>
+              <Card>
+                <CardBody>
+                  <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
+                  <div style={{ marginTop: '2em' }} />
+                  <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
+                </CardBody>
+              </Card>
+            </GridItem>
+          </Grid>
+        </RenderComponentScroll>
+      </>
     );
   }
 
@@ -98,7 +143,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           type: node.nodeType,
           namespace: node.namespace,
           name: node.workload || 'unknown',
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
         };
       case NodeType.APP:
         return {
@@ -107,7 +152,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           namespace: node.namespace,
           name: node.app || 'unknown',
           version: node.version || '',
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
         };
       case NodeType.SERVICE:
         return {
@@ -117,14 +162,14 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
-          destServices: node.destServices
+          destServices: node.destServices,
         };
       default:
         return {
           id: `${prefix}-${node.id}`,
           type: NodeType.UNKNOWN,
           namespace: node.namespace,
-          name: 'unknown'
+          name: 'unknown',
         };
     }
   };
@@ -138,7 +183,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const inboundTraffic: TrafficItem[] = [];
     const outboundTraffic: TrafficItem[] = [];
 
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const sourceNode = nodes['id-' + edge.data.source];
       const targetNode = nodes['id-' + edge.data.target];
 
@@ -152,7 +197,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           inboundTraffic.push({
             traffic: edge.data.traffic,
             proxy: serviceTraffic[svcId],
-            node: this.buildTrafficNode('in', sourceNode)
+            node: this.buildTrafficNode('in', sourceNode),
           });
         }
       } else if (sourceNode.nodeType === NodeType.SERVICE) {
@@ -161,7 +206,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           outboundTraffic.push({
             traffic: edge.data.traffic,
             proxy: serviceTraffic[svcId],
-            node: this.buildTrafficNode('out', targetNode)
+            node: this.buildTrafficNode('out', targetNode),
           });
         }
       }
@@ -179,13 +224,13 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const inboundTraffic: TrafficItem[] = [];
     const outboundTraffic: TrafficItem[] = [];
 
-    edges.forEach(edge => {
+    edges.forEach((edge) => {
       const sourceNode = nodes['id-' + edge.data.source];
       const targetNode = nodes['id-' + edge.data.target];
       if (myNode.id === edge.data.source) {
         const trafficItem: TrafficItem = {
           traffic: edge.data.traffic!,
-          node: this.buildTrafficNode('out', targetNode)
+          node: this.buildTrafficNode('out', targetNode),
         };
         outboundTraffic.push(trafficItem);
 
@@ -198,7 +243,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       } else if (myNode.id === edge.data.target) {
         const trafficItem: TrafficItem = {
           traffic: edge.data.traffic!,
-          node: this.buildTrafficNode('in', sourceNode)
+          node: this.buildTrafficNode('in', sourceNode),
         };
         inboundTraffic.push(trafficItem);
 
@@ -230,7 +275,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const nodes: { [key: string]: GraphNodeData } = {};
     let myNode: GraphNodeData = { id: '', nodeType: NodeType.UNKNOWN, namespace: '' };
 
-    traffic.elements.nodes.forEach(element => {
+    traffic.elements.nodes.forEach((element) => {
       // Ignore group nodes. They are not relevant for the traffic list because we
       // are interested in the actual apps.
       if (!element.data.isGroup) {
@@ -267,7 +312,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const {
       serviceTraffic,
       inboundTraffic: firstLevelInbound,
-      outboundTraffic: firstLevelOutbound
+      outboundTraffic: firstLevelOutbound,
     } = this.processFirstLevelTraffic(traffic.elements.edges!, nodes, myNode);
 
     // Then, process second level traffic.

@@ -9,11 +9,11 @@ import {
   Dropdown,
   DropdownItem,
   KebabToggle,
-  Title
+  Title,
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
-import { EdgeLabelMode, GraphType, NodeType } from '../../types/Graph';
+import { EdgeLabelMode, GraphType, NodeType, DecoratedGraphElements } from '../../types/Graph';
 import CytoscapeGraph from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { DagreGraph } from './graphs/DagreGraph';
@@ -26,19 +26,34 @@ type MiniGraphCardProps = {
 
 type MiniGraphCardState = {
   isKebabOpen: boolean;
+  graphData: DecoratedGraphElements;
 };
 
 export default class MiniGraphCard extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
   constructor(props) {
     super(props);
-    this.state = { isKebabOpen: false };
+    this.state = { isKebabOpen: false, graphData: props.dataSource.graphData };
   }
+
+  componentDidMount() {
+    this.props.dataSource.on('fetchSuccess', this.refresh);
+    this.props.dataSource.on('fetchError', this.refresh);
+  }
+
+  componentWillUnmount() {
+    this.props.dataSource.removeListener('fetchSuccess', this.refresh);
+    this.props.dataSource.removeListener('fetchError', this.refresh);
+  }
+
+  private refresh = () => {
+    this.setState({ graphData: this.props.dataSource.graphData });
+  };
 
   render() {
     const graphCardActions = [
       <DropdownItem key="viewGraph" onClick={this.onViewGraph}>
         Show full graph
-      </DropdownItem>
+      </DropdownItem>,
     ];
 
     return (
@@ -65,12 +80,12 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               compressOnHide={true}
               containerClassName={miniGraphContainerStyle}
               graphData={{
-                elements: this.props.dataSource.graphData,
+                elements: this.state.graphData,
                 errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
                 isError: this.props.dataSource.isError,
                 isLoading: this.props.dataSource.isLoading,
                 fetchParams: this.props.dataSource.fetchParameters,
-                timestamp: this.props.dataSource.graphTimestamp
+                timestamp: this.props.dataSource.graphTimestamp,
               }}
               displayUnusedNodes={() => undefined}
               edgeLabelMode={EdgeLabelMode.NONE}
@@ -95,7 +110,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
 
   private onGraphActionsToggle = (isOpen: boolean) => {
     this.setState({
-      isKebabOpen: isOpen
+      isKebabOpen: isOpen,
     });
   };
 

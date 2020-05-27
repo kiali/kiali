@@ -42,22 +42,6 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
               Name
                
             </Title>
-            <span
-              style={
-                Object {
-                  "marginLeft": "10px",
-                }
-              }
-            >
-              <MissingSidecar
-                color="red"
-                icon={[Function]}
-                namespace="my-namespace"
-                text="Missing Sidecar"
-                textTooltip="Missing Sidecar"
-                tooltip={false}
-              />
-            </span>
           </StackItem>
           <StackItem
             id="labels"
@@ -169,6 +153,9 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
           },
           "fetchDataForNamespaces": [Function],
           "fetchDataForNode": [Function],
+          "fetchForApp": [Function],
+          "fetchForService": [Function],
+          "fetchForWorkload": [Function],
           "fetchGraphData": [Function],
           "graphDuration": 0,
           "graphElements": Object {
