@@ -78,19 +78,29 @@ cluster-status: .prepare-cluster
 	@echo "Cluster nodes:"
 	@for n in $(shell ${OC} get nodes -o name); do echo "Node=[$${n}]" "CPUs=[$$(${OC} get $${n} -o jsonpath='{.status.capacity.cpu}')] Memory=[$$(${OC} get $${n} -o jsonpath='{.status.capacity.memory}')]"; done
 	@echo "================================================================="
+ifeq ($(CLUSTER_TYPE),openshift)
 	@echo "Console URL: $(shell ${OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
 	@echo "API Server:  $(shell ${OC} whoami --show-server 2>/dev/null)"
 	@echo "================================================================="
+else ifeq ($(CLUSTER_TYPE),minikube)
+	@echo "Console URL: Run 'minikube dashboard' to access the UI console"
+	@echo "================================================================="
+endif
 	@echo "Kiali image as seen from inside the cluster:       ${CLUSTER_KIALI_INTERNAL_NAME}"
 	@echo "Kiali image that will be pushed to the cluster:    ${CLUSTER_KIALI_TAG}"
 	@echo "Operator image as seen from inside the cluster:    ${CLUSTER_OPERATOR_INTERNAL_NAME}"
 	@echo "Operator image that will be pushed to the cluster: ${CLUSTER_OPERATOR_TAG}"
 	@echo "================================================================="
-	@if [[ "${OC}" = *"oc" ]]; then echo "${OC} whoami -c"; ${OC} whoami -c; echo "================================================================="; fi
+ifeq ($(CLUSTER_TYPE),openshift)
+	@echo "oc whoami -c: $(shell ${OC} whoami -c 2>/dev/null)"
+	@echo "================================================================="
 ifeq ($(DORP),docker)
-	@if [[ "${OC}" = *"oc" ]]; then echo "Image Registry login: docker login -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"; echo "================================================================="; fi
+	@echo "Image Registry login: docker login -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"
+	@echo "================================================================="
 else
-	@if [[ "${OC}" = *"oc" ]]; then echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"; echo "================================================================="; fi
+	@echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"
+	@echo "================================================================="
+endif
 endif
 
 ## cluster-add-users: Add two users to an OpenShift cluster - kiali (cluster admin) and johndoe (no additional permissions)
