@@ -363,7 +363,7 @@ export const getJaegerInfo = () => {
   return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
 };
 
-export const getJaegerTraces = (namespace: string, service: string, params: any) => {
+export const getJaegerTraces = (namespace: string, service: string, params: TracingQuery) => {
   return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTraces(namespace, service), params, {});
 };
 

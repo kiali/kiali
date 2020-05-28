@@ -24,13 +24,13 @@ import { KialiAppState } from '../../store/Store';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { JaegerItem, transformTraceData } from './JaegerResults';
 import { JaegerScatter } from './JaegerScatter';
-import { JaegerSearchOptions, convTagsLogfmt } from './RouteHelper';
 import { HistoryManager, URLParam } from '../../app/History';
-import { serverConfig, config } from '../../config';
+import { config, serverConfig } from '../../config';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import RefreshContainer from 'components/Refresh/Refresh';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
+import { getTimeRangeMicros, buildTags } from './RouteHelper';
 
 interface ServiceTracesProps {
   namespace: string;
@@ -46,7 +46,6 @@ interface ServiceTracesState {
   width: number;
   showErrors: boolean;
   fixedTime: boolean;
-  options: JaegerSearchOptions;
   traceIntervalDurations: { [key: string]: string };
   selectedTraceIntervalDuration: string;
   selectedStatusCode: string;
@@ -58,46 +57,36 @@ interface ServiceTracesState {
 }
 
 export const traceDurationUnits: { [key: string]: string } = {
-  us: 'us', // is it µs ?
+  us: 'us',
   ms: 'ms',
   s: 's'
 };
 
 class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesState> {
   private fetcher: TracesFetcher;
+
   constructor(props: ServiceTracesProps) {
     super(props);
     const limit =
       HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) ||
       sessionStorage.getItem(URLParam.JAEGER_LIMIT_TRACES) ||
       '20';
-    this.saveValue('JAEGER_LIMIT_TRACES', limit);
-    let tags = '';
+    this.saveValue(URLParam.JAEGER_LIMIT_TRACES, limit);
     const statusCode =
       HistoryManager.getParam(URLParam.JAEGER_STATUS_CODE) ||
       sessionStorage.getItem(URLParam.JAEGER_STATUS_CODE) ||
       'none';
-    if (this.props.showErrors) {
-      tags += 'error=true';
-    }
-    if (statusCode !== 'none') {
-      tags += ' http.status_code=' + statusCode;
-    }
-    HistoryManager.setParam(URLParam.JAEGER_TAGS, convTagsLogfmt(tags));
     const interval =
       HistoryManager.getParam(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
       sessionStorage.getItem(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
       'none';
+
     const traceId = HistoryManager.getParam(URLParam.JAEGER_TRACE_ID) || undefined;
     this.state = {
       url: '',
       width: 0,
       fixedTime: true,
       showErrors: this.props.showErrors,
-      options: {
-        limit: limit,
-        tags: tags
-      },
       traceIntervalDurations: { none: 'none' },
       selectedTraceIntervalDuration: interval,
       selectedStatusCode: statusCode,
@@ -117,7 +106,13 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
   }
 
   private refresh = () => {
-    this.fetcher.fetch(this.props.namespace, this.props.service, this.state.selectedTraceIntervalDuration);
+    this.fetcher.fetch({
+      namespace: this.props.namespace,
+      service: this.props.service,
+      spanLimit: Number(this.state.selectedLimitSpans),
+      intervalDuration: this.state.selectedTraceIntervalDuration,
+      tags: buildTags(this.state.showErrors, this.state.selectedStatusCode)
+    });
   };
 
   private fetchSingle = (traceId: string) => {
@@ -138,39 +133,19 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
     this.setState({ traces: traces, traceIntervalDurations: durations });
   };
 
-  private setErrorTraces = (key: string) => {
-    let showErrors = false;
-    let tags = this.state.options.tags || '';
-    if (key === 'Error traces') {
-      showErrors = true;
-      tags === '' ? (tags = 'error=true') : (tags += ' error=true');
-    } else {
-      tags = tags.replace(/ ?error=true/, '');
-    }
-    this.setState({ showErrors: showErrors });
-    this.onOptionsChange('JAEGER_TAGS', tags);
-    this.refresh();
+  private setErrorTraces = (value: string) => {
+    this.fetcher.resetLastFetchTime();
+    this.setState({ showErrors: value === 'Error traces' }, this.refresh);
   };
 
-  private saveValue = (key: string, value: string) => {
-    sessionStorage.setItem(URLParam[key], value);
-    HistoryManager.setParam(URLParam[key], value);
+  private saveValue = (key: URLParam, value: string) => {
+    sessionStorage.setItem(key, value);
+    HistoryManager.setParam(key, value);
   };
 
-  private removeValue = (key: string) => {
-    sessionStorage.removeItem(URLParam[key]);
-    HistoryManager.deleteParam(URLParam[key]);
-  };
-
-  private onOptionsChange = (key: string, value: string) => {
-    let options = this.state.options;
-    options[URLParam[key]] = value;
-    value !== ''
-      ? key !== 'JAEGER_TAGS'
-        ? this.saveValue(key, value)
-        : this.saveValue(key, convTagsLogfmt(value))
-      : this.removeValue(key);
-    this.setState({ options: options });
+  private removeValue = (key: URLParam) => {
+    sessionStorage.removeItem(key);
+    HistoryManager.deleteParam(key);
   };
 
   private getJaegerUrl = () => {
@@ -178,54 +153,43 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
       this.props.namespaceSelector && serverConfig.istioNamespace !== this.props.namespace
         ? `${this.props.service}.${this.props.namespace}`
         : `${this.props.service}`;
-    const variables = [
-      URLParam.JAEGER_START_TIME,
-      URLParam.JAEGER_END_TIME,
-      URLParam.JAEGER_TAGS,
-      URLParam.JAEGER_LIMIT_TRACES
-    ];
-    let url = `${this.props.urlJaeger}/search?service=${service}`;
-    variables.forEach(query => {
-      const value = HistoryManager.getParam(query);
-      if (value) {
-        url += `&${query}=${value}`;
-      }
-    });
+
+    const range = getTimeRangeMicros();
+    let url = `${this.props.urlJaeger}/search?service=${service}&start=${range.from}&limit=${this.state.selectedLimitSpans}`;
+    if (range.to) {
+      url += `&end=${range.to}`;
+    }
+    const tags = buildTags(this.state.showErrors, this.state.selectedStatusCode);
+    if (tags) {
+      url += `&tags=${tags}`;
+    }
     return url;
   };
 
-  private handleStatusCode = (key: string) => {
-    this.setState({ selectedStatusCode: key });
-    this.saveValue('JAEGER_STATUS_CODE', key);
-    let tags = this.state.options.tags || '';
-    if (key === 'none') {
-      tags = tags.replace(/ ?http\.status_code=[0-9][0-9][0-9]/, '');
-    } else {
-      const new_tag = `http.status_code=${key}`;
-      tags.includes('http.status_code')
-        ? (tags = tags.replace(/http\.status_code=[0-9][0-9][0-9]/, new_tag))
-        : tags === ''
-        ? (tags = new_tag)
-        : (tags += ' ' + new_tag);
-    }
-    this.onOptionsChange('JAEGER_TAGS', tags);
-    this.refresh();
+  private handleStatusCode = (value: string) => {
+    this.fetcher.resetLastFetchTime();
+    this.saveValue(URLParam.JAEGER_STATUS_CODE, value);
+    this.setState({ selectedStatusCode: value }, this.refresh);
   };
 
   private handleIntervalDuration = (key: string) => {
     if (key === 'none') {
-      this.removeValue('JAEGER_TRACE_INTERVAL_SELECTED');
+      this.removeValue(URLParam.JAEGER_TRACE_INTERVAL_SELECTED);
     } else {
-      this.saveValue('JAEGER_TRACE_INTERVAL_SELECTED', key);
+      this.saveValue(URLParam.JAEGER_TRACE_INTERVAL_SELECTED, key);
     }
     const refiltered = this.fetcher.filterTraces(key);
     this.setState({ selectedTraceIntervalDuration: key, traces: refiltered });
   };
 
-  private handleLimitDuration = (key: string) => {
-    this.setState({ selectedLimitSpans: key });
-    this.onOptionsChange('JAEGER_LIMIT_TRACES', key);
-    this.refresh();
+  private handleLimit = (value: string) => {
+    this.fetcher.resetLastFetchTime();
+    if (value) {
+      this.saveValue(URLParam.JAEGER_LIMIT_TRACES, value);
+    } else {
+      this.removeValue(URLParam.JAEGER_LIMIT_TRACES);
+    }
+    this.setState({ selectedLimitSpans: value }, this.refresh);
   };
 
   private getIntervalTraceDurations = (traces: JaegerTrace[]) => {
@@ -297,7 +261,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                           <ToolbarDropdown
                             options={config.tracing.configuration.limitResults}
                             value={config.tracing.configuration.limitResults[this.state.selectedLimitSpans]}
-                            handleSelect={key => this.handleLimitDuration(key)}
+                            handleSelect={key => this.handleLimit(key)}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
