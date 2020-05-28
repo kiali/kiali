@@ -7,7 +7,8 @@
 # The typical order of commands used is the following:
 #   up - starts the Kubernetes cluster via minikube
 #   istio - installs Istio using Kiali's install hack script
-#   docker - shows what is needed to put images in minikube's docker daemon
+#   docker - shows what is needed to put images in minikube's image registry
+#   podman - shows what is needed to put images in minikube's image registry
 #   (at this point, you can install Kiali into your Kubernetes environment)
 #   dashboard - shows the Kubernetes GUI console
 #   port-forward - forward a local port to the Kiali server
@@ -22,7 +23,7 @@ DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="virtualbox"
 DEFAULT_K8S_MEMORY="16384"
-DEFAULT_K8S_VERSION="v1.14.2"
+DEFAULT_K8S_VERSION="stable"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 
 debug() {
@@ -105,6 +106,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     docker)
       _CMD="docker"
+      shift
+      ;;
+    podman)
+      _CMD="podman"
       shift
       ;;
     dashboard)
@@ -202,6 +207,7 @@ The command must be either:
   status:       gets the status of the minikube cluster
   delete:       completely removes the minikube cluster VM destroying all state
   docker:       information on the minikube docker environment
+  podman:       information on the minikube podman environment
   dashboard:    enables access to the Kubernetes GUI within minikube
   port-forward: forward a local port to the Kiali server
   ingress:      enables access to the Kubernetes ingress URL within minikube
@@ -246,7 +252,7 @@ debug "minikube is located at $(which minikube)"
 
 if [ "$_CMD" = "up" ]; then
   echo 'Starting minikube...'
-  minikube start --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION} -p ${MINIKUBE_PROFILE}
+  minikube start --insecure-registry 192.168.99.100:5000 --cpus=${K8S_CPU} --memory=${K8S_MEMORY} --disk-size=${K8S_DISK} --vm-driver=${K8S_DRIVER} --kubernetes-version=${K8S_VERSION} -p ${MINIKUBE_PROFILE}
   echo 'Enabling the ingress addon'
   minikube addons enable ingress
   echo 'Enabling the image registry'
@@ -281,7 +287,7 @@ elif [ "$_CMD" = "port-forward" ]; then
 elif [ "$_CMD" = "ingress" ]; then
   ensure_minikube_is_running
   echo 'Accessing the Kubernetes Ingress URL.'
-  xdg-open "http://$(minikube ip)"
+  gio open "http://$(minikube ip)"
 
 elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
@@ -312,7 +318,13 @@ elif [ "$_CMD" = "docker" ]; then
   ensure_minikube_is_running
   echo 'Your current minikube docker environment is the following:'
   minikube docker-env
-  echo 'Run the above command in your shell before building docker images so your images will go in the minikube docker daemon'
+  echo 'Run the above command in your shell before building container images so your images will go in the minikube image registry'
+
+elif [ "$_CMD" = "podman" ]; then
+  ensure_minikube_is_running
+  echo 'Your current minikube podman environment is the following:'
+  minikube podman-env
+  echo 'Run the above command in your shell before building container images so your images will go in the minikube image registry'
 
 else
   echo "ERROR: Missing required command"
