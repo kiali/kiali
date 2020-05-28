@@ -102,13 +102,26 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 		return
 	}
 
-	for _, s := range trafficMap {
+	for _, n := range trafficMap {
 		goodEdges := []*graph.Edge{}
-		for _, e := range s.Edges {
+		for _, e := range n.Edges {
 			if _, found := trafficMap[e.Dest.ID]; found {
 				goodEdges = append(goodEdges, e)
 			}
 		}
-		s.Edges = goodEdges
+		n.Edges = goodEdges
+	}
+
+	// now, after removing edges, remove any orphaned nodes (no incoming or outgoing edges)
+	destNodes := graph.NewTrafficMap()
+	for _, n := range trafficMap {
+		for _, e := range n.Edges {
+			destNodes[e.Dest.ID] = e.Dest
+		}
+	}
+	for _, n := range trafficMap {
+		if _, found := destNodes[n.ID]; !found && len(n.Edges) == 0 {
+			delete(trafficMap, n.ID)
+		}
 	}
 }
