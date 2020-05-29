@@ -48,6 +48,7 @@ type PublicConfig struct {
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
 	CanonicalMetrics         bool                            `json:"canonicalMetrics"`
+	IsMixerDisabled          bool                            `json:"isMixerDisabled"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -77,7 +78,8 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
 		},
-		CanonicalMetrics: 		  status.AreCanonicalMetricsAvailable(),
+		CanonicalMetrics: status.AreCanonicalMetricsAvailable(),
+		IsMixerDisabled:  status.IsMixerDisabled(),
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
