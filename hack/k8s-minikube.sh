@@ -140,6 +140,10 @@ while [[ $# -gt 0 ]]; do
       fi
       shift
       ;;
+    resetclock)
+      _CMD="resetclock"
+      shift
+      ;;
     -kc|--kubernetes-cpu)
       K8S_CPU="$2"
       shift;shift
@@ -216,6 +220,7 @@ The command must be either:
   gwurl [<portName>|'all']:
                 displays the Ingress Gateway URL. If a port name is given, the gateway port is also shown.
                 If the port name is "all" then all the URLs for all known ports are shown.
+  resetclock:   If the VM's clock gets skewed (e.g. by sleeping) run this to reset it to the current time.
 HELPMSG
       exit 1
       ;;
@@ -325,6 +330,11 @@ elif [ "$_CMD" = "podman" ]; then
   echo 'Your current minikube podman environment is the following:'
   minikube podman-env
   echo 'Run the above command in your shell before building container images so your images will go in the minikube image registry'
+
+elif [ "$_CMD" = "resetclock" ]; then
+  ensure_minikube_is_running
+  echo "Resetting the clock in the minikube VM"
+  minikube ssh -- docker run -i --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
 
 else
   echo "ERROR: Missing required command"
