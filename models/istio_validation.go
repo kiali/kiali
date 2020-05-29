@@ -187,6 +187,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0504 No matching workload found for PeerAuthentication selector in this namespace",
 		Severity: WarningSeverity,
 	},
+	"peerauthentications.mtls.disabledestinationrulemissing": {
+		Message:  "KIA0502 Destination Rule disabling namespace-wide mTLS is missing",
+		Severity: ErrorSeverity,
+	},
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,

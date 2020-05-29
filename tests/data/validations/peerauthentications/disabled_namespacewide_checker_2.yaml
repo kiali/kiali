@@ -1,0 +1,30 @@
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
+metadata:
+  name: "disable-mtls-bookinfo"
+  namespace: "bookinfo"
+spec:
+  mtls:
+    mode: DISABLE
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "bookinfo-enable-mtls"
+  namespace: "bookinfo"
+spec:
+  host: "*.bookinfo.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "details-enable-mtls"
+  namespace: "bookinfo"
+spec:
+  host: "details"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

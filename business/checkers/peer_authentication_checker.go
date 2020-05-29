@@ -46,6 +46,8 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 		} else {
 			enabledCheckers = append(enabledCheckers,
 				peerauthentications.NamespaceMtlsChecker{PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
+			enabledCheckers = append(enabledCheckers,
+				peerauthentications.DisabledNamespaceWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 		}
 	}
 
