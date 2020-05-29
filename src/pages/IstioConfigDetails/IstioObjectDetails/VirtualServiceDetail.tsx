@@ -4,9 +4,9 @@ import { Host, ObjectValidation, VirtualService } from '../../../types/IstioObje
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
-import { Link } from 'react-router-dom';
 import { Card, CardBody, Grid, GridItem, Stack, StackItem, Text, TextVariants, Title } from '@patternfly/react-core';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
+import IstioObjectLink from '../../../components/Link/IstioObjectLink';
 
 interface VirtualServiceProps {
   namespace: string;
@@ -69,7 +69,9 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
           {host.service === 'mesh' || !isValid ? (
             host.service
           ) : (
-            <Link to={`/namespaces/${host.namespace}/istio/gateways/${host.service}`}>{gateways[key]}</Link>
+            <IstioObjectLink name={host.service} namespace={host.namespace} type={'gateway'}>
+              {gateways[key]}
+            </IstioObjectLink>
           )}
         </li>
       );

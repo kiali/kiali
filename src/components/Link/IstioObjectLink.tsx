@@ -9,10 +9,16 @@ interface Props {
   namespace: string;
   type: string;
   subType?: string;
+  query?: string;
 }
 
-const IstioObjectLink = (props: Props) => {
-  const { name, namespace, type, subType } = props;
+export const GetIstioObjectUrl = (
+  name: string,
+  namespace: string,
+  type: string,
+  subType?: string,
+  query?: string
+): string => {
   const istioType = IstioTypes[type];
   let to = '/namespaces/' + namespace + '/' + Paths.ISTIO;
 
@@ -22,16 +28,37 @@ const IstioObjectLink = (props: Props) => {
     to = to + '/' + istioType.url + '/' + name;
   }
 
-  return (
-    <>
-      <Tooltip position={TooltipPosition.top} content={<>{istioType.name}</>}>
-        <Badge className={'virtualitem_badge_definition'}>{istioType.icon}</Badge>
-      </Tooltip>
-      <Link to={to}>
-        {namespace}/{name}
-      </Link>
-    </>
-  );
+  if (!!query) {
+    to = to + '?' + query;
+  }
+
+  return to;
 };
+
+export class ReferenceIstioObjectLink extends React.Component<Props> {
+  render() {
+    const { name, namespace, type, subType } = this.props;
+    const istioType = IstioTypes[type];
+
+    return (
+      <>
+        <Tooltip position={TooltipPosition.top} content={<>{istioType.name}</>}>
+          <Badge className={'virtualitem_badge_definition'}>{istioType.icon}</Badge>
+        </Tooltip>
+        <IstioObjectLink name={name} namespace={namespace} type={type} subType={subType}>
+          {namespace}/{name}
+        </IstioObjectLink>
+      </>
+    );
+  }
+}
+
+class IstioObjectLink extends React.Component<Props> {
+  render() {
+    const { name, namespace, type, subType, query } = this.props;
+
+    return <Link to={GetIstioObjectUrl(name, namespace, type, subType, query)}>{this.props.children}</Link>;
+  }
+}
 
 export default IstioObjectLink;

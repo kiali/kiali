@@ -5,11 +5,11 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { hasMissingSidecar, IstioTypes, Renderer, Resource, TResource, SortResource } from './Config';
+import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
 import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { WorkloadListItem } from '../../types/Workload';
-import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
+import { IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
 import { ActiveFilter, LabelFilter } from '../../types/Filters';
@@ -24,6 +24,7 @@ import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardConten
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import OverviewCardLinks from '../../pages/Overview/OverviewCardLinks';
 import { StatefulFilters } from '../Filters/StatefulFilters';
+import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 
 // Links
 
@@ -33,21 +34,15 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 };
 
 const getIstioLink = (item: TResource) => {
-  let to = '/namespaces/' + item.namespace + '/istio';
-  const name = item.name;
   const type = item['type'];
+  let subType;
 
   // Adapters and Templates need to pass subtype
   if (type === 'adapter' || type === 'template') {
-    // Build a /adapters/<adapter_type_plural>/<adapter_name> or
-    //         /templates/<template_type_plural>/<template_name>
-    const istioType = type + 's';
-    const subtype = type === 'adapter' ? item['adapter']!.adapters : item['template']!.templates;
-    to = to + '/' + istioType + '/' + subtype + '/' + name;
-  } else {
-    to = to + '/' + dicIstioType[IstioTypes[type].name] + '/' + name;
+    subType = type === 'adapter' ? item['adapter']!.adapters : item['template']!.templates;
   }
-  return to;
+
+  return GetIstioObjectUrl(item.name, item.namespace, type, subType);
 };
 
 // Cells

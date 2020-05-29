@@ -5,6 +5,7 @@ const virtualServices: VirtualService[] = [
   {
     metadata: {
       name: 'reviews-default',
+      namespace: 'bookinfo',
       resourceVersion: '1234',
       creationTimestamp: '2018-03-14T10:17:52Z'
     },

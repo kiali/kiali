@@ -59,11 +59,13 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
                     />,
                   },
                   Object {
-                    "title": <Link
-                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
+                    "title": <IstioObjectLink
+                      name="reviews-default"
+                      namespace="bookinfo"
+                      type="virtualservice"
                     >
                       reviews-default
-                    </Link>,
+                    </IstioObjectLink>,
                   },
                   Object {
                     "title": <LocalTime
@@ -74,11 +76,14 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
                     "title": "1234",
                   },
                   Object {
-                    "title": <Link
-                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
+                    "title": <IstioObjectLink
+                      name="reviews-default"
+                      namespace="bookinfo"
+                      query="list=yaml"
+                      type="virtualservice"
                     >
                       View YAML
-                    </Link>,
+                    </IstioObjectLink>,
                   },
                 ],
               },

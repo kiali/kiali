@@ -15,7 +15,7 @@ import 'brace/theme/eclipse';
 import { ObjectReference, ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
-import { RenderHeader, RenderComponentScroll } from '../../components/Nav/Page';
+import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
 import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
@@ -31,9 +31,9 @@ import {
   CardBody,
   CardHeader,
   EmptyState,
+  EmptyStateBody,
   EmptyStateIcon,
   EmptyStateVariant,
-  EmptyStateBody,
   Grid,
   GridItem,
   Stack,
@@ -47,7 +47,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { PfColors } from '../../components/Pf/PfColors';
-import IstioObjectLink from '../../components/Link/IstioObjectLink';
+import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -408,7 +408,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                     {objectReferences.map((reference, i) => {
                       return (
                         <StackItem key={'rel-object-' + i}>
-                          <IstioObjectLink
+                          <ReferenceIstioObjectLink
                             name={reference.name}
                             type={reference.objectType}
                             namespace={reference.namespace}

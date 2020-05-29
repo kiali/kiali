@@ -4,22 +4,22 @@ import {
   CardBody,
   EmptyState,
   EmptyStateBody,
-  EmptyStateVariant,
   EmptyStateIcon,
+  EmptyStateVariant,
   Grid,
   GridItem,
   Title
 } from '@patternfly/react-core';
-import { ICell, IRow, Table, TableHeader, TableBody, TableVariant, cellWidth } from '@patternfly/react-table';
+import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { NetworkIcon } from '@patternfly/react-icons';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
-import { Link } from 'react-router-dom';
 import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
 import Labels from '../../../components/Label/Labels';
 import { safeRender } from '../../../utils/SafeRender';
 import { ServiceDetailsInfo } from '../../../types/ServiceInfo';
+import IstioObjectLink from '../../../components/Link/IstioObjectLink';
 
 interface ServiceInfoDestinationRulesProps {
   destinationRules?: DestinationRule[];
@@ -45,17 +45,14 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   yamlLink(destinationRule: DestinationRule) {
     return (
-      <Link
-        to={
-          '/namespaces/' +
-          destinationRule.metadata.namespace +
-          '/istio/destinationrules/' +
-          destinationRule.metadata.name +
-          '?list=yaml'
-        }
+      <IstioObjectLink
+        name={destinationRule.metadata.name}
+        namespace={destinationRule.metadata.namespace || ''}
+        type={'destinationrule'}
+        query={'list=yaml'}
       >
         View YAML
-      </Link>
+      </IstioObjectLink>
     );
   }
 
@@ -69,17 +66,13 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   overviewLink(destinationRule: DestinationRule) {
     return (
-      <Link
-        to={
-          '/namespaces/' +
-          destinationRule.metadata.namespace +
-          '/istio/destinationrules/' +
-          destinationRule.metadata.name +
-          '?list=overview'
-        }
+      <IstioObjectLink
+        name={destinationRule.metadata.name}
+        namespace={destinationRule.metadata.namespace || ''}
+        type={'destinationrule'}
       >
         {destinationRule.metadata.name}
-      </Link>
+      </IstioObjectLink>
     );
   }
 

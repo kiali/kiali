@@ -4,20 +4,20 @@ import {
   CardBody,
   EmptyState,
   EmptyStateBody,
-  EmptyStateVariant,
   EmptyStateIcon,
+  EmptyStateVariant,
   Grid,
   GridItem,
   Title
 } from '@patternfly/react-core';
-import { ICell, IRow, Table, TableHeader, TableBody, TableVariant, cellWidth } from '@patternfly/react-table';
+import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { CodeBranchIcon } from '@patternfly/react-icons';
-import { Link } from 'react-router-dom';
 import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import { ServiceDetailsInfo } from '../../../types/ServiceInfo';
+import IstioObjectLink from '../../../components/Link/IstioObjectLink';
 
 interface ServiceInfoVirtualServicesProps {
   virtualServices?: VirtualService[];
@@ -49,33 +49,26 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
 
   overviewLink(virtualService: VirtualService) {
     return (
-      <Link
-        to={
-          '/namespaces/' +
-          virtualService.metadata.namespace +
-          '/istio/virtualservices/' +
-          virtualService.metadata.name +
-          '?list=overview'
-        }
+      <IstioObjectLink
+        name={virtualService.metadata.name}
+        namespace={virtualService.metadata.namespace || ''}
+        type={'virtualservice'}
       >
         {virtualService.metadata.name}
-      </Link>
+      </IstioObjectLink>
     );
   }
 
   yamlLink(virtualService: VirtualService) {
     return (
-      <Link
-        to={
-          '/namespaces/' +
-          virtualService.metadata.namespace +
-          '/istio/virtualservices/' +
-          virtualService.metadata.name +
-          '?list=yaml'
-        }
+      <IstioObjectLink
+        name={virtualService.metadata.name}
+        namespace={virtualService.metadata.namespace || ''}
+        type={'virtualservice'}
+        query={'list=yaml'}
       >
         View YAML
-      </Link>
+      </IstioObjectLink>
     );
   }
 
