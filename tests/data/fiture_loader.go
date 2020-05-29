@@ -2,6 +2,7 @@ package data
 
 import (
 	"bytes"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 
@@ -37,6 +38,7 @@ func (l *YamlFixtureLoader) Load() error {
 
 		err = dec.Decode(&resource)
 		if err == nil {
+			resource.Spec = cleanUpStringInterfaceMap(resource.Spec)
 			resources = append(resources, resource)
 		}
 	}
@@ -73,4 +75,45 @@ func (l YamlFixtureLoader) GetResource(kind string) kubernetes.IstioObject {
 		return l.GetResources(kind)[0]
 	}
 	return nil
+}
+
+// Needed due to Yaml.Decode default map type is map[interface{}]interface{}
+// We need to convert it to map[string]interface{} to be compliant with real Istio Objects.
+// Known issue: https://github.com/go-yaml/yaml/issues/139
+
+func cleanUpInterfaceArray(in []interface{}) []interface{} {
+	result := make([]interface{}, len(in))
+	for i, v := range in {
+		result[i] = cleanUpMapValue(v)
+	}
+	return result
+}
+
+func cleanUpInterfaceMap(in map[interface{}]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range in {
+		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
+	}
+	return result
+}
+
+func cleanUpStringInterfaceMap(in map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range in {
+		result[k] = cleanUpMapValue(v)
+	}
+	return result
+}
+
+func cleanUpMapValue(v interface{}) interface{} {
+	switch v := v.(type) {
+	case []interface{}:
+		return cleanUpInterfaceArray(v)
+	case map[interface{}]interface{}:
+		return cleanUpInterfaceMap(v)
+	case map[string]interface{}:
+		return cleanUpStringInterfaceMap(v)
+	default:
+		return v
+	}
 }
