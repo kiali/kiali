@@ -191,6 +191,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0502 Destination Rule disabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"peerauthentications.mtls.disablemeshdestinationrulemissing": {
+		Message:  "KIA0506 Destination Rule disabling mesh-wide mTLS is missing",
+		Severity: ErrorSeverity,
+	},
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
