@@ -1,4 +1,4 @@
-package sidecars
+package common
 
 import (
 	"testing"
@@ -13,9 +13,9 @@ import (
 func TestTwoSidecarsWithSelector(t *testing.T) {
 	assert := assert.New(t)
 
-	validations := MultiMatchChecker{
-		WorkloadList: workloadList(),
-		Sidecars: []kubernetes.IstioObject{
+	validations := WorkloadSelectorMultiMatchChecker(
+		"sidecar",
+		[]kubernetes.IstioObject{
 			data.AddSelectorToSidecar(map[string]interface{}{
 				"labels": map[string]interface{}{
 					"app": "reviews",
@@ -27,33 +27,39 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 				},
 			}, data.CreateSidecar("sidecar2", "bookinfo")),
 		},
-	}.Check()
+		workloadList(),
+	).Check()
 
 	assert.Empty(validations)
 }
 
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
-	validations := MultiMatchChecker{
-		WorkloadList: workloadList(),
-		Sidecars: []kubernetes.IstioObject{
+	validations := WorkloadSelectorMultiMatchChecker(
+		"sidecar",
+		[]kubernetes.IstioObject{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo"),
 		},
-	}.Check()
+		workloadList(),
+	).Check()
 
 	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
 	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar2", []string{"sidecar1"})
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
-	validations := MultiMatchChecker{
-		WorkloadList: workloadList(),
-		Sidecars: []kubernetes.IstioObject{
+	validations := GenericMultiMatchChecker{
+		SubjectType: "sidecar",
+		Subjects: []kubernetes.IstioObject{
 			workloadSelectorSidecar("sidecar1", map[string]interface{}{"app": "details", "version": "v1"}),
 			workloadSelectorSidecar("sidecar2", map[string]interface{}{"app": "reviews", "version": "v1"}),
 			workloadSelectorSidecar("sidecar3", map[string]interface{}{"app": "details"}),
 			workloadSelectorSidecar("sidecar4", map[string]interface{}{"version": "v1"}),
 		},
+		WorkloadList:      workloadList(),
+		HasSelector:       HasWorkloadSelector,
+		GetSelectorLabels: GetWorkloadSelectorLabels,
+		Path:              "spec/workloadSelector",
 	}.Check()
 
 	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
@@ -81,5 +87,21 @@ func assertMultimatchFailure(t *testing.T, code string, validations models.Istio
 	assert.Len(validation.References, len(references))
 	for i, ref := range references {
 		assert.Equal(ref, validation.References[i].Name)
+		assert.Equal("sidecar", validation.References[i].ObjectType)
 	}
+}
+
+func workloadList() models.WorkloadList {
+	wli := []models.WorkloadListItem{
+		data.CreateWorkloadListItem("details-v1", map[string]string{"app": "details", "version": "v1"}),
+		data.CreateWorkloadListItem("details-v2", map[string]string{"app": "details", "version": "v2"}),
+		data.CreateWorkloadListItem("details-v3", map[string]string{"app": "details", "version": "v3"}),
+	}
+
+	return data.CreateWorkloadList("test", wli...)
+}
+
+func workloadSelectorSidecar(name string, selector map[string]interface{}) kubernetes.IstioObject {
+	workloadSelector := map[string]interface{}{"labels": selector}
+	return data.AddSelectorToSidecar(workloadSelector, data.CreateSidecar(name, "bookinfo"))
 }

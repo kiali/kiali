@@ -175,6 +175,18 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0501 Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"peerauthentication.multimatch.selectorless": {
+		Message:  "KIA0502 More than one selector-less PeerAuthentication in the same namespace",
+		Severity: WarningSeverity,
+	},
+	"peerauthentication.multimatch.selector": {
+		Message:  "KIA0503 More than one PeerAuthentication applied to the same workload",
+		Severity: WarningSeverity,
+	},
+	"peerauthentication.selector.workloadnotfound": {
+		Message:  "KIA0504 No matching workload found for PeerAuthentication selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
