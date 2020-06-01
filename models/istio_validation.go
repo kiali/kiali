@@ -188,7 +188,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"peerauthentications.mtls.disabledestinationrulemissing": {
-		Message:  "KIA0502 Destination Rule disabling namespace-wide mTLS is missing",
+		Message:  "KIA0505 Destination Rule disabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentications.mtls.disablemeshdestinationrulemissing": {

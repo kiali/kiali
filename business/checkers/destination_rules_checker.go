@@ -61,6 +61,7 @@ func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObje
 
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
 	}
 
 	// Appending validations that only applies to non-autoMTLS meshes
