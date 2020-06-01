@@ -92,3 +92,20 @@ func TestGuessKialiURLOmitsStandardSecureHttpsPort(t *testing.T) {
 
 	assert.Equal(t, "https://kiali/custom/kiali", guessedUrl)
 }
+
+func TestGuessKialiURLPrioritizesConfig(t *testing.T) {
+	request := setupAndCreateRequest()
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/foo/bar"
+	conf.Server.WebFQDN = "subdomain.domain.dev"
+	conf.Server.WebSchema = "http"
+	conf.Server.Port = 700
+	config.Set(conf)
+
+	request.Header.Add("X-Forwarded-Port", "443")
+	request.Header.Add("X-Forwarded-Proto", "https")
+	guessedUrl := GuessKialiURL(request)
+
+	assert.Equal(t, "http://subdomain.domain.dev:443/foo/bar", guessedUrl)
+}

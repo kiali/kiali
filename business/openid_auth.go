@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -73,7 +74,10 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 		}
 	}
 
-	httpClient := http.Client{Transport: httpTransport}
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
+	}
 
 	// Fetch IdP metadata
 	response, err := httpClient.Get(trimmedIssuerUri + "/.well-known/openid-configuration")
@@ -101,7 +105,7 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 
 	// Validate issuer == issuerUri
 	if metadata.Issuer != cfg.IssuerUri {
-		return nil, errors.New("mismatch between the configured issuer_uri and the exposed Issuer URI in OpenId provider metadata")
+		return nil, fmt.Errorf("mismatch between the configured issuer_uri (%s) and the exposed Issuer URI in OpenId provider metadata (%s)", cfg.IssuerUri, metadata.Issuer)
 	}
 
 	// Validate there is an authorization endpoint
@@ -113,7 +117,7 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 	// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
 	responseTypes := strings.Join(metadata.ResponseTypesSupported, " ")
 	if !strings.Contains(responseTypes, "id_token") {
-		log.Warning("Configured OpenID provider informs response_type=id_token is unsupported. Users may not able to login.")
+		log.Warning("Configured OpenID provider informs response_type=id_token is unsupported. Users may not be able to login.")
 	}
 
 	// Log warning if OpenId provider informs that some of the configured scopes are not supported
@@ -129,7 +133,7 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 		}
 
 		if !isScopeSupported {
-			log.Warning("Configured OpenID provider informs some of the configured scopes are unsupported. Users may not able to login.")
+			log.Warning("Configured OpenID provider informs some of the configured scopes are unsupported. Users may not be able to login.")
 			break
 		}
 	}

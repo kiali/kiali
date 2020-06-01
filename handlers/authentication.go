@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/http"
@@ -216,6 +217,20 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
+	// Calculate the hash of the nonce code
+	nonceHash := sha256.Sum224([]byte(nonceCookie.Value))
+
+	// Delete the nonce cookie since we no longer need it.
+	deleteNonceCookie := http.Cookie{
+		Name:     openIdNonceCookieName,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteNonceCookie)
+
 	// Parse/fetch received login parameters
 	err = r.ParseForm()
 
@@ -244,7 +259,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
-	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || nonceCookie.Value != nonceClaim.(string) {
+	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || fmt.Sprintf("%x", nonceHash) != nonceClaim.(string) {
 		RespondWithError(w, http.StatusUnauthorized, "Received token from the OpenID provider is invalid (nonce code mismatch)")
 		return false
 	}
@@ -797,12 +812,18 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &nonceCookie)
 
+	// Instead of sending the nonce code to the IdP, send a cryptographic hash.
+	// This way, if an attacker manages to steal the id_token returned by the IdP, he still
+	// needs to craft the cookie (which is hopefully very, very hard to do).
+	nonceHash := sha256.Sum224([]byte(nonceCode))
+
 	// Send redirection to browser
 	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
 		url.QueryEscape(httputil.GuessKialiURL(r)),
 		url.QueryEscape(scopes),
-		url.QueryEscape(nonceCode))
+		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
+	)
 	http.Redirect(w, r, redirectUri, http.StatusFound)
 }

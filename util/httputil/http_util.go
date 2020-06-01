@@ -90,32 +90,41 @@ func AuthTransport(auth *config.Auth, transportConfig *http.Transport) (http.Rou
 func GuessKialiURL(r *http.Request) string {
 	cfg := config.Get()
 
-	// Take "default" values from where we are listening within the pod
-	schema := r.URL.Scheme
+	// Take default values from configuration
+	schema := cfg.Server.WebSchema
 	port := strconv.Itoa(cfg.Server.Port)
-	host := "" // Blank host. If "guessing" fails, it's unknown.
+	host := cfg.Server.WebFQDN
 
-	// Guess the schema
-	if fwdSchema, ok := r.Header["X-Forwarded-Proto"]; ok && len(fwdSchema) == 1 {
-		schema = fwdSchema[0]
-	}
-
-	// Guess the public Kiali hostname
-	if fwdHost, ok := r.Header["X-Forwarded-Host"]; ok && len(fwdHost) == 1 {
-		host = fwdHost[0]
-	} else if len(r.URL.Hostname()) != 0 {
-		host = r.URL.Hostname()
-	} else if len(r.Host) != 0 {
-		// r.Host could be of the form host:port. Split it if this is the case.
-		colon := strings.LastIndexByte(r.Host, ':')
-		if colon != -1 {
-			host, port = r.Host[:colon], r.Host[colon+1:]
-		} else {
-			host = r.Host
+	// Guess the schema. If there is a value in configuration, it always takes priority.
+	if len(schema) == 0 {
+		if fwdSchema, ok := r.Header["X-Forwarded-Proto"]; ok && len(fwdSchema) == 1 {
+			schema = fwdSchema[0]
+		} else if len(r.URL.Scheme) > 0 {
+			schema = r.URL.Scheme
 		}
 	}
 
-	// Guess the port
+	// Guess the public Kiali hostname. If there is a value in configuration, it always takes priority.
+	if len(host) == 0 {
+		if fwdHost, ok := r.Header["X-Forwarded-Host"]; ok && len(fwdHost) == 1 {
+			host = fwdHost[0]
+		} else if len(r.URL.Hostname()) != 0 {
+			host = r.URL.Hostname()
+		} else if len(r.Host) != 0 {
+			// r.Host could be of the form host:port. Split it if this is the case.
+			colon := strings.LastIndexByte(r.Host, ':')
+			if colon != -1 {
+				host, port = r.Host[:colon], r.Host[colon+1:]
+			} else {
+				host = r.Host
+			}
+		}
+	}
+
+	// Guess the port. In this case, the port in configuration doesn't take
+	// priority, because this is the port where the pod is listening, which may
+	// be mapped to another public port via the Service/Ingress. So, HTTP headers
+	// take priority.
 	if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
 		port = fwdPort[0]
 	} else if len(r.URL.Port()) != 0 {

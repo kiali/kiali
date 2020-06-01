@@ -80,7 +80,9 @@ type Server struct {
 	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
 	Port                       int                  `yaml:",omitempty"`
 	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string               `yaml:"web_fqdn,omitempty"`
 	WebRoot                    string               `yaml:"web_root,omitempty"`
+	WebSchema                  string               `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -322,7 +324,7 @@ func NewConfig() (c *Config) {
 				ClientId:              "",
 				InsecureSkipVerifyTLS: false,
 				IssuerUri:             "",
-				Scopes:                []string{"profile", "email"},
+				Scopes:                []string{"openid", "profile", "email"},
 				UsernameClaim:         "sub",
 			},
 		},
@@ -401,7 +403,9 @@ func NewConfig() (c *Config) {
 			MetricsPort:                9090,
 			Port:                       20001,
 			StaticContentRootDirectory: "/opt/kiali/console",
+			WebFQDN:                    "",
 			WebRoot:                    "/",
+			WebSchema:                  "",
 		},
 	}
 

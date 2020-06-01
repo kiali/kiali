@@ -11,7 +11,7 @@ import (
 // Found at https://ispycode.com/Blog/golang/2016-10/How-to-generate-a-random-string-of-a-fixed-length
 //  - Adapted for more characters
 func RandomString(n int) string {
-	var letterRunes = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+	var letterRunes = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-!@#$%^&*()")
 
 	b := make([]rune, n)
 	for i := range b {
@@ -44,7 +44,7 @@ func CryptoRandomBytes(n int) ([]byte, error) {
 //
 // Found at https://gist.github.com/dopey/c69559607800d2f2f90b1b1ed4e550fb
 func CryptoRandomString(n int) (string, error) {
-	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-!@#$%^&*()"
 	bytes, err := CryptoRandomBytes(n)
 	if err != nil {
 		return "", err
