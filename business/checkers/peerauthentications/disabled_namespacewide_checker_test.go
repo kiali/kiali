@@ -7,7 +7,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
+	"github.com/kiali/kiali/tests/data/validations"
 )
 
 // This validations works only with AutoMTls disabled
@@ -47,7 +47,7 @@ func TestPeerAuthnDisabledNoDestRule(t *testing.T) {
 	testNoDisabledNsValidations("disabled_namespacewide_checker_5.yaml", t)
 }
 
-func disabledNamespacetestPrep(scenario string) ([]*models.IstioCheck, bool, error) {
+func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -59,34 +59,26 @@ func disabledNamespacetestPrep(scenario string) ([]*models.IstioCheck, bool, err
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
-	return validations, valid, err
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	return validations, valid
 }
 
 func testNoDisabledNsValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
+	vals, valid := disabledNamespacetestPrep(scenario, t)
 
-	validations, valid, error := disabledNamespacetestPrep(scenario)
-
-	assert.NoError(error)
-	assert.Empty(validations)
-	assert.True(valid)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertNoValidations()
 }
 
 func testWithDisabledNsValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
+	vals, valid := disabledNamespacetestPrep(scenario, t)
 
-	validations, valid, error := disabledNamespacetestPrep(scenario)
-
-	assert.NoError(error)
-	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-
-	validation := validations[0]
-	assert.NotNil(validation)
-	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/mtls", validation.Path)
-	assert.Equal(models.CheckMessage("peerauthentications.mtls.disabledestinationrulemissing"), validation.Message)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertValidationsPresent(1)
+	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disabledestinationrulemissing")
 }
 
 func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {

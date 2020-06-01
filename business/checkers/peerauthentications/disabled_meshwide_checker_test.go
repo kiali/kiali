@@ -5,7 +5,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/stretchr/testify/assert"
+	"github.com/kiali/kiali/tests/data/validations"
 )
 
 // This validations works only with AutoMTls disabled
@@ -31,44 +31,33 @@ func TestMeshPeerAuthnNoDestRule(t *testing.T) {
 	testNoDisabledMeshValidations("disabled_meshwide_checker_3.yaml", t)
 }
 
-func disabledMeshTestPrep(scenario string) ([]*models.IstioCheck, bool, error) {
+func disabledMeshTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
 
 	validations, valid := DisabledMeshWideChecker{
 		PeerAuthn:        loader.GetResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
-	return validations, valid, err
+	return validations, valid
 }
 
 func testNoDisabledMeshValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
-
-	validations, valid, error := disabledMeshTestPrep(scenario)
-
-	assert.NoError(error)
-	assert.Empty(validations)
-	assert.True(valid)
+	vals, valid := disabledMeshTestPrep(scenario, t)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertNoValidations()
 }
 
 func testWithDisabledMeshValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
-
-	validations, valid, error := disabledMeshTestPrep(scenario)
-
-	assert.NoError(error)
-	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-
-	validation := validations[0]
-	assert.NotNil(validation)
-	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/mtls", validation.Path)
-	assert.Equal(models.CheckMessage("peerauthentications.mtls.disablemeshdestinationrulemissing"), validation.Message)
+	vals, valid := disabledMeshTestPrep(scenario, t)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertValidationsPresent(1)
+	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disablemeshdestinationrulemissing")
 }

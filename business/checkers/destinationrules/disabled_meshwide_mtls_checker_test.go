@@ -7,7 +7,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
+	"github.com/kiali/kiali/tests/data/validations"
 )
 
 // Context: DestinationRule at mesh-level disabling mTLS
@@ -38,46 +38,37 @@ func TestDestRuleDisabledPeerAuthnEnabled(t *testing.T) {
 	testWithDestRuleDisabledValidations("disabled_meshwide_checker_2.yaml", t)
 }
 
-func disabledMeshDestRuleTestPrep(scenario string) ([]*models.IstioCheck, bool, error) {
+func disabledMeshDestRuleTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
 	loader := yamlFixtureLoaderFor(scenario)
 	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
 
 	validations, valid := DisabledMeshWideMTLSChecker{
 		DestinationRule: loader.GetResource("DestinationRule"),
 		MeshPeerAuthns:  loader.GetResources("PeerAuthentication"),
 	}.Check()
 
-	return validations, valid, err
+	return validations, valid
 }
 
 func testNoDestRuleDisabledValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
+	vals, valid := disabledMeshDestRuleTestPrep(scenario, t)
 
-	validations, valid, error := disabledMeshDestRuleTestPrep(scenario)
-
-	assert.NoError(error)
-	assert.Empty(validations)
-	assert.True(valid)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertNoValidations()
 }
 
 func testWithDestRuleDisabledValidations(scenario string, t *testing.T) {
-	assert := assert.New(t)
+	vals, valid := disabledMeshDestRuleTestPrep(scenario, t)
 
-	validations, valid, error := disabledMeshDestRuleTestPrep(scenario)
-
-	assert.NoError(error)
-	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Len(validations, 1)
-
-	validation := validations[0]
-	assert.NotNil(validation)
-	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.Equal(models.CheckMessage("destinationrules.mtls.meshpolicymtlsenabled"), validation.Message)
+	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb.AssertValidationsPresent(1)
+	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/trafficPolicy/tls/mode", "destinationrules.mtls.meshpolicymtlsenabled")
 }
 
 func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
