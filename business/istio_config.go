@@ -979,6 +979,18 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case WorkloadEntries:
 		istioConfigDetail.WorkloadEntry = &models.WorkloadEntry{}
 		istioConfigDetail.WorkloadEntry.Parse(result)
+	case EnvoyFilters:
+		istioConfigDetail.EnvoyFilter = &models.EnvoyFilter{}
+		istioConfigDetail.EnvoyFilter.Parse(result)
+	case AttributeManifests:
+		istioConfigDetail.AttributeManifest = &models.AttributeManifest{}
+		istioConfigDetail.AttributeManifest.Parse(result)
+	case HttpApiSpecs:
+		istioConfigDetail.HttpApiSpec = &models.HttpApiSpec{}
+		istioConfigDetail.HttpApiSpec.Parse(result)
+	case HttpApiSpecBindings:
+		istioConfigDetail.HttpApiSpecBinding = &models.HttpApiSpecBinding{}
+		istioConfigDetail.HttpApiSpecBinding.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
