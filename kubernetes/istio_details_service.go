@@ -351,6 +351,53 @@ func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject
 	return sc, nil
 }
 
+// GetEnvoyFilters return all EnvoyFilters for a given namespace.
+// It returns an error on any problem
+func (in *IstioClient) GetEnvoyFilters(namespace string) ([]IstioObject, error) {
+	// In case EnvoyFilters aren't present on Istio, return empty array.
+	if !in.hasNetworkingResource(EnvoyFilters) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(EnvoyFilters).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	envoyFilterList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a EnvoyFilter list", namespace)
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[EnvoyFilters],
+		APIVersion: ApiNetworkingVersion,
+	}
+	envoyFilters := make([]IstioObject, 0)
+	for _, envoyFilter := range envoyFilterList.GetItems() {
+		ef := envoyFilter.DeepCopyIstioObject()
+		ef.SetTypeMeta(typeMeta)
+		envoyFilters = append(envoyFilters, ef)
+	}
+	return envoyFilters, nil
+}
+
+func (in *IstioClient) GetEnvoyFilter(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(EnvoyFilters).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[EnvoyFilters],
+		APIVersion: ApiNetworkingVersion,
+	}
+	envoyFilterObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return an EnvoyFilter object", namespace, name)
+	}
+	ef := envoyFilterObject.DeepCopyIstioObject()
+	ef.SetTypeMeta(typeMeta)
+	return ef, nil
+}
+
 // GetWorkloadEntries return all WorkloadEntries for a given namespace.
 // It returns an error on any problem
 func (in *IstioClient) GetWorkloadEntries(namespace string) ([]IstioObject, error) {
@@ -569,6 +616,150 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 	dr := destinationRule.DeepCopyIstioObject()
 	dr.SetTypeMeta(typeMeta)
 	return dr, nil
+}
+
+// GetAttributeManifests returns all AttributeManifest objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetAttributeManifests(namespace string) ([]IstioObject, error) {
+	// In case AttributeManifests aren't present on Istio, return empty array.
+	if !in.hasConfigResource(AttributeManifests) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(AttributeManifests).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[AttributeManifests],
+		APIVersion: ApiConfigVersion,
+	}
+	attributeManifestList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a AttributeManifestList list", namespace)
+	}
+
+	attributeManifests := make([]IstioObject, 0)
+	for _, am := range attributeManifestList.GetItems() {
+		a := am.DeepCopyIstioObject()
+		a.SetTypeMeta(typeMeta)
+		attributeManifests = append(attributeManifests, a)
+	}
+	return attributeManifests, nil
+}
+
+func (in *IstioClient) GetAttributeManifest(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(AttributeManifests).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[AttributeManifests],
+		APIVersion: ApiConfigVersion,
+	}
+	attributeManifest, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a AttributeManifest object", namespace, name)
+	}
+	qs := attributeManifest.DeepCopyIstioObject()
+	qs.SetTypeMeta(typeMeta)
+	return qs, nil
+}
+
+// GetHttpApiSpecBindings returns all HttpApiSpecBindings objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetHttpApiSpecBindings(namespace string) ([]IstioObject, error) {
+	// In case HttpApiSpecBindings aren't present on Istio, return empty array.
+	if !in.hasConfigResource(HttpApiSpecBindings) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(HttpApiSpecBindings).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[HttpApiSpecBindings],
+		APIVersion: ApiConfigVersion,
+	}
+	httpApiSpecBindingList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a HttpApiSpecBindingList list", namespace)
+	}
+
+	httpApiSpecBindings := make([]IstioObject, 0)
+	for _, ha := range httpApiSpecBindingList.GetItems() {
+		h := ha.DeepCopyIstioObject()
+		h.SetTypeMeta(typeMeta)
+		httpApiSpecBindings = append(httpApiSpecBindings, h)
+	}
+	return httpApiSpecBindings, nil
+}
+
+func (in *IstioClient) GetHttpApiSpecBinding(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(HttpApiSpecBindings).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[HttpApiSpecBindings],
+		APIVersion: ApiConfigVersion,
+	}
+	httpApiSpecBinding, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a HttpApiSpecBinding object", namespace, name)
+	}
+	ha := httpApiSpecBinding.DeepCopyIstioObject()
+	ha.SetTypeMeta(typeMeta)
+	return ha, nil
+}
+
+// GetHttpApiSpecs returns all HttpApiSpec objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetHttpApiSpecs(namespace string) ([]IstioObject, error) {
+	// In case HttpApiSpecs aren't present on Istio, return empty array.
+	if !in.hasConfigResource(HttpApiSpecs) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(HttpApiSpecs).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[HttpApiSpecs],
+		APIVersion: ApiConfigVersion,
+	}
+	httpApiSpecList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a HttpApiSpecList list", namespace)
+	}
+
+	httpApiSpecs := make([]IstioObject, 0)
+	for _, ha := range httpApiSpecList.GetItems() {
+		h := ha.DeepCopyIstioObject()
+		h.SetTypeMeta(typeMeta)
+		httpApiSpecs = append(httpApiSpecs, h)
+	}
+	return httpApiSpecs, nil
+}
+
+func (in *IstioClient) GetHttpApiSpec(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(HttpApiSpecs).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[HttpApiSpecs],
+		APIVersion: ApiConfigVersion,
+	}
+	httpApiSpec, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a HttpApiSpec object", namespace, name)
+	}
+	ha := httpApiSpec.DeepCopyIstioObject()
+	ha.SetTypeMeta(typeMeta)
+	return ha, nil
 }
 
 // GetQuotaSpecs returns all QuotaSpecs objects for a given namespace.

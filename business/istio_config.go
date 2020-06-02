@@ -46,6 +46,10 @@ type IstioConfigCriteria struct {
 	IncludePeerAuthentication     bool
 	IncludeWorkloadEntries        bool
 	IncludeRequestAuthentications bool
+	IncludeEnvoyFilters           bool
+	IncludeAttributeManifests     bool
+	IncludeHttpApiSpecBindings    bool
+	IncludeHttpApiSpecs           bool
 }
 
 const (
@@ -71,6 +75,10 @@ const (
 	PeerAuthentications    = "peerauthentications"
 	WorkloadEntries        = "workloadentries"
 	RequestAuthentications = "requestauthentications"
+	EnvoyFilters           = "envoyfilters"
+	AttributeManifests     = "attributemanifests"
+	HttpApiSpecBindings    = "httpapispecbindings"
+	HttpApiSpecs           = "httpapispecs"
 	// Extensions
 	Experiments = "experiments"
 )
@@ -82,11 +90,15 @@ var resourceTypesToAPI = map[string]string{
 	Gateways:               kubernetes.NetworkingGroupVersion.Group,
 	Sidecars:               kubernetes.NetworkingGroupVersion.Group,
 	WorkloadEntries:        kubernetes.NetworkingGroupVersion.Group,
+	EnvoyFilters:           kubernetes.NetworkingGroupVersion.Group,
 	Adapters:               kubernetes.ConfigGroupVersion.Group,
 	Templates:              kubernetes.ConfigGroupVersion.Group,
 	Rules:                  kubernetes.ConfigGroupVersion.Group,
 	QuotaSpecs:             kubernetes.ConfigGroupVersion.Group,
 	QuotaSpecBindings:      kubernetes.ConfigGroupVersion.Group,
+	AttributeManifests:     kubernetes.ConfigGroupVersion.Group,
+	HttpApiSpecBindings:    kubernetes.ConfigGroupVersion.Group,
+	HttpApiSpecs:           kubernetes.ConfigGroupVersion.Group,
 	Policies:               kubernetes.AuthenticationGroupVersion.Group,
 	MeshPolicies:           kubernetes.AuthenticationGroupVersion.Group,
 	ClusterRbacConfigs:     kubernetes.RbacGroupVersion.Group,
@@ -155,6 +167,10 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		PeerAuthentications:    models.PeerAuthentications{},
 		WorkloadEntries:        models.WorkloadEntries{},
 		RequestAuthentications: models.RequestAuthentications{},
+		EnvoyFilters:           models.EnvoyFilters{},
+		AttributeManifests:     models.AttributeManifests{},
+		HttpApiSpecBindings:    models.HttpApiSpecBindings{},
+		HttpApiSpecs:           models.HttpApiSpecs{},
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -163,10 +179,10 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, err
 	}
 
-	errChan := make(chan error, 20)
+	errChan := make(chan error, 24)
 
 	var wg sync.WaitGroup
-	wg.Add(22)
+	wg.Add(26)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -452,6 +468,50 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		}
 	}(errChan)
 
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludeEnvoyFilters {
+			if ef, efErr := in.k8s.GetEnvoyFilters(criteria.Namespace); efErr == nil {
+				(&istioConfigList.EnvoyFilters).Parse(ef)
+			} else {
+				errChan <- efErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludeAttributeManifests {
+			if am, amErr := in.k8s.GetAttributeManifests(criteria.Namespace); amErr == nil {
+				(&istioConfigList.AttributeManifests).Parse(am)
+			} else {
+				errChan <- amErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludeHttpApiSpecBindings {
+			if hb, hbErr := in.k8s.GetHttpApiSpecBindings(criteria.Namespace); hbErr == nil {
+				(&istioConfigList.HttpApiSpecBindings).Parse(hb)
+			} else {
+				errChan <- hbErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		if criteria.IncludeHttpApiSpecs {
+			if hs, hsErr := in.k8s.GetHttpApiSpecs(criteria.Namespace); hsErr == nil {
+				(&istioConfigList.HttpApiSpecs).Parse(hs)
+			} else {
+				errChan <- hsErr
+			}
+		}
+	}(errChan)
+
 	wg.Wait()
 
 	close(errChan)
@@ -659,6 +719,34 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if ra, iErr := in.k8s.GetRequestAuthentication(namespace, object); iErr == nil {
 			istioConfigDetail.RequestAuthentication = &models.RequestAuthentication{}
 			istioConfigDetail.RequestAuthentication.Parse(ra)
+		} else {
+			err = iErr
+		}
+	case EnvoyFilters:
+		if ef, iErr := in.k8s.GetEnvoyFilter(namespace, object); iErr == nil {
+			istioConfigDetail.EnvoyFilter = &models.EnvoyFilter{}
+			istioConfigDetail.EnvoyFilter.Parse(ef)
+		} else {
+			err = iErr
+		}
+	case AttributeManifests:
+		if am, iErr := in.k8s.GetAttributeManifest(namespace, object); iErr == nil {
+			istioConfigDetail.AttributeManifest = &models.AttributeManifest{}
+			istioConfigDetail.AttributeManifest.Parse(am)
+		} else {
+			err = iErr
+		}
+	case HttpApiSpecBindings:
+		if hb, iErr := in.k8s.GetHttpApiSpecBinding(namespace, object); iErr == nil {
+			istioConfigDetail.HttpApiSpecBinding = &models.HttpApiSpecBinding{}
+			istioConfigDetail.HttpApiSpecBinding.Parse(hb)
+		} else {
+			err = iErr
+		}
+	case HttpApiSpecs:
+		if hs, iErr := in.k8s.GetHttpApiSpec(namespace, object); iErr == nil {
+			istioConfigDetail.HttpApiSpec = &models.HttpApiSpec{}
+			istioConfigDetail.HttpApiSpec.Parse(hs)
 		} else {
 			err = iErr
 		}

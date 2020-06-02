@@ -4193,6 +4193,9 @@
         "adapter": {
           "$ref": "#/definitions/istioAdapter"
         },
+        "attributeManifest": {
+          "$ref": "#/definitions/attributeManifest"
+        },
         "authorizationPolicy": {
           "$ref": "#/definitions/authorizationPolicy"
         },
@@ -4202,8 +4205,17 @@
         "destinationRule": {
           "$ref": "#/definitions/destinationRule"
         },
+        "envoyFilter": {
+          "$ref": "#/definitions/envoyFilter"
+        },
         "gateway": {
           "$ref": "#/definitions/Gateway"
+        },
+        "httpApiSpec": {
+          "$ref": "#/definitions/httpApiSpec"
+        },
+        "httpApiSpecBinding": {
+          "$ref": "#/definitions/httpApiSpecBinding"
         },
         "meshPolicy": {
           "$ref": "#/definitions/MeshPolicy"
@@ -4283,6 +4295,9 @@
         "adapters": {
           "$ref": "#/definitions/istioAdapters"
         },
+        "attributeManifests": {
+          "$ref": "#/definitions/attributeManifests"
+        },
         "authorizationPolicies": {
           "$ref": "#/definitions/authorizationPolicies"
         },
@@ -4292,8 +4307,17 @@
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
+        "envoyFilters": {
+          "$ref": "#/definitions/envoyFilters"
+        },
         "gateways": {
           "$ref": "#/definitions/Gateways"
+        },
+        "httpApiSpecBindings": {
+          "$ref": "#/definitions/httpApiSpecBindings"
+        },
+        "httpApiSpecs": {
+          "$ref": "#/definitions/httpApiSpecs"
         },
         "meshPolicies": {
           "$ref": "#/definitions/MeshPolicies"
@@ -6799,6 +6823,56 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "attributeManifest": {
+      "description": "This is used for returning an AttributeManifest",
+      "type": "object",
+      "title": "AttributeManifest attributeManifest",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "attributes": {
+              "type": "object",
+              "x-go-name": "Attributes"
+            },
+            "name": {
+              "type": "object",
+              "x-go-name": "Name"
+            },
+            "revision": {
+              "type": "object",
+              "x-go-name": "Revision"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "AttributeManifest",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "attributeManifests": {
+      "description": "This is used for returning an array of AttributeManifest",
+      "type": "array",
+      "title": "AttributeManifests attributeManifests",
+      "items": {
+        "$ref": "#/definitions/attributeManifest"
+      },
+      "x-go-name": "AttributeManifests",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "authorizationPolicies": {
       "description": "This is used for returning an array of AuthorizationPolicies",
       "type": "array",
@@ -6912,6 +6986,52 @@
       "x-go-name": "DestinationRules",
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "envoyFilter": {
+      "description": "This is used for returning an EnvoyFilter",
+      "type": "object",
+      "title": "EnvoyFilter envoyFilter",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "configPatches": {
+              "type": "object",
+              "x-go-name": "ConfigPatches"
+            },
+            "workloadSelector": {
+              "type": "object",
+              "x-go-name": "WorkloadSelector"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "EnvoyFilter",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "envoyFilters": {
+      "description": "This is used for returning an array of EnvoyFilter",
+      "type": "array",
+      "title": "EnvoyFilters envoyFilters",
+      "items": {
+        "$ref": "#/definitions/envoyFilter"
+      },
+      "x-go-name": "EnvoyFilters",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "externalServiceInfo": {
       "description": "This is used for returning a response of Kiali Status",
       "type": "object",
@@ -6941,6 +7061,102 @@
       },
       "x-go-name": "ExternalServiceInfo",
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "httpApiSpec": {
+      "description": "This is used for returning an HttpApiSpec",
+      "type": "object",
+      "title": "HttpApiSpec httpApiSpec",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "apiKeys": {
+              "type": "object",
+              "x-go-name": "ApiKeys"
+            },
+            "attributes": {
+              "type": "object",
+              "x-go-name": "Attributes"
+            },
+            "patterns": {
+              "type": "object",
+              "x-go-name": "Patterns"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "HttpApiSpec",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "httpApiSpecBinding": {
+      "description": "This is used for returning an HttpApiSpecBinding",
+      "type": "object",
+      "title": "HttpApiSpecBinding httpApiSpecBinding",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "apiSpecs": {
+              "type": "object",
+              "x-go-name": "ApiSpecs"
+            },
+            "services": {
+              "type": "object",
+              "x-go-name": "Services"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "HttpApiSpecBinding",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "httpApiSpecBindings": {
+      "description": "This is used for returning an array of HttpApiSpecBinding",
+      "type": "array",
+      "title": "HttpApiSpecBindings httpApiSpecBindings",
+      "items": {
+        "$ref": "#/definitions/httpApiSpecBinding"
+      },
+      "x-go-name": "HttpApiSpecBindings",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "httpApiSpecs": {
+      "description": "This is used for returning an array of HttpApiSpec",
+      "type": "array",
+      "title": "HttpApiSpecs httpApiSpecs",
+      "items": {
+        "$ref": "#/definitions/httpApiSpec"
+      },
+      "x-go-name": "HttpApiSpecs",
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "istioAdapter": {
       "description": "This type type is used for returning a IstioAdapter",

@@ -214,9 +214,17 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads}
 		objectCheckers = []ObjectChecker{peerAuthnChecker}
 	case WorkloadEntries:
-		// Validation on WorkloadEntries
+		// Validation on WorkloadEntries are not yet in place
 	case RequestAuthentications:
-		// Validation on RequestAuthentications
+		// Validation on RequestAuthentications are not yet in place
+	case EnvoyFilters:
+		// Validation on EnvoyFilters are not yet in place
+	case AttributeManifests:
+		// Validation on AttributeManifests are not yet in place
+	case HttpApiSpecBindings:
+		// Validation on HttpApiSpecBindings are not yet in place
+	case HttpApiSpecs:
+		// Validation on HttpApiSpecs are not yet in place
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
