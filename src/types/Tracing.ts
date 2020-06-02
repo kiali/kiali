@@ -1,8 +1,8 @@
 export type TracingQuery = {
   startMicros: number;
   endMicros?: number;
-  // TODO: tags?
-  // tags?: {[key: string]: string}
+  tags?: string;
+  limit?: number;
 };
 
 export type Span = {
@@ -14,7 +14,6 @@ export type Span = {
   tags: Tag[];
   warnings?: string[];
   traceSize: number;
-  // TODO: more meta-data? logs ...
 };
 
 export type Tag = {

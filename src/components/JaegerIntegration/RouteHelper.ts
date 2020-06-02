@@ -1,21 +1,22 @@
 import logfmtParser from 'logfmt/lib/logfmt_parser';
-import { HistoryManager, URLParam } from '../../app/History';
 import { KeyValuePair } from '../../types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
-import { defaultMetricsDuration } from 'components/Metrics/Helper';
-import { evalTimeRange } from 'types/Common';
+import { guardTimeRange, durationToBounds } from 'types/Common';
 
-export interface JaegerSearchOptions {
-  limit: string;
-  start?: string;
-  end?: string;
-  lookback?: string;
-  tags?: string;
-}
+export const buildTags = (showErrors: boolean, statusCode: string): string => {
+  let tags = '';
+  if (showErrors) {
+    tags += 'error=true';
+  }
+  if (statusCode !== 'none') {
+    tags += ' http.status_code=' + statusCode;
+  }
+  return convTagsLogfmt(tags);
+};
 
 export const isErrorTag = ({ key, value }: KeyValuePair) => key === 'error' && (value === true || value === 'true');
 
-export const convTagsLogfmt = (tags: string) => {
+const convTagsLogfmt = (tags: string) => {
   if (!tags) {
     return '';
   }
@@ -29,30 +30,13 @@ export const convTagsLogfmt = (tags: string) => {
   return JSON.stringify(data);
 };
 
-export const getQueryJaeger = () => {
-  let params: any = {
-    limit: HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) || '20'
+export const getTimeRangeMicros = () => {
+  const range = retrieveTimeRange() || 600;
+  // Convert any time range (like duration) to bounded from/to
+  const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
+  // Convert to microseconds
+  return {
+    from: boundsMillis.from * 1000,
+    to: boundsMillis.to ? boundsMillis.to * 1000 : undefined
   };
-
-  const optionsQuery = [URLParam.JAEGER_TAGS];
-  optionsQuery.forEach(opt => {
-    if (HistoryManager.getParam(opt)) {
-      params[opt] = HistoryManager.getParam(opt);
-    }
-  });
-
-  const rangeMicros = evalTimeRange(retrieveTimeRange() || defaultMetricsDuration).map(d => d.getTime() * 1000);
-  params[URLParam.JAEGER_START_TIME] = rangeMicros[0];
-  params[URLParam.JAEGER_END_TIME] = rangeMicros[1];
-  HistoryManager.setParam(URLParam.JAEGER_START_TIME, String(rangeMicros[0]));
-  HistoryManager.setParam(URLParam.JAEGER_END_TIME, String(rangeMicros[1]));
-  return params;
-};
-
-export const changeParams = (params: any) => {
-  const newParams = getQueryJaeger();
-  return (
-    newParams[URLParam.JAEGER_TAGS] !== params[URLParam.JAEGER_TAGS] ||
-    newParams[URLParam.JAEGER_LIMIT_TRACES] !== params[URLParam.JAEGER_LIMIT_TRACES]
-  );
 };
