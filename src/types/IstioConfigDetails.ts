@@ -23,7 +23,11 @@ import {
   IstioObject,
   PeerAuthentication,
   RequestAuthentication,
-  WorkloadEntry
+  WorkloadEntry,
+  EnvoyFilter,
+  AttributeManifest,
+  HTTPAPISpec,
+  HTTPAPISpecBinding
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -41,11 +45,15 @@ export interface IstioConfigDetails {
   serviceEntry: ServiceEntry;
   sidecar: Sidecar;
   workloadEntry: WorkloadEntry;
+  envoyFilter: EnvoyFilter;
   rule: IstioRule;
   adapter: IstioAdapter;
   template: IstioTemplate;
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
+  attributeManifest: AttributeManifest;
+  httpApiSpec: HTTPAPISpec;
+  httpApiSpecBinding: HTTPAPISpecBinding;
   policy: Policy;
   meshPolicy: Policy;
   serviceMeshPolicy: Policy;

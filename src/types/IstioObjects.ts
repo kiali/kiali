@@ -904,3 +904,144 @@ export interface RequestAuthenticationSpec {
   selector?: WorkloadEntrySelector;
   jwtRules: JWTRule[];
 }
+
+export interface ProxyMatch {
+  proxyVersion?: string;
+  metadata?: { [key: string]: string };
+}
+
+export interface SubFilterMatch {
+  name?: string;
+}
+
+export interface FilterMatch {
+  name?: string;
+  subFilter?: SubFilterMatch;
+}
+
+export interface FilterChainMatch {
+  name?: string;
+  sni?: string;
+  transportProtocol?: string;
+  applicationProtocols?: string;
+  filter?: FilterMatch;
+}
+
+export interface ListenerMatch {
+  portNumber?: number;
+  filterChain?: FilterChainMatch;
+}
+
+export interface RouteMatch {
+  name?: string;
+  action?: string;
+}
+
+export interface VirtualHostMatch {
+  name?: string;
+  route?: RouteMatch;
+}
+
+export interface RouteConfigurationMatch {
+  portNumber?: number;
+  portName?: string;
+  gateway?: string;
+  vhost?: VirtualHostMatch;
+  name?: string;
+}
+
+export interface ClusterMatch {
+  portNumber?: number;
+  service?: string;
+  subset?: string;
+  name?: string;
+}
+
+export interface EnvoyConfigObjectMatch {
+  context?: string;
+  proxy?: ProxyMatch;
+  listener?: ListenerMatch;
+  routeConfiguration?: RouteConfigurationMatch;
+  cluster?: ClusterMatch;
+}
+
+export interface Patch {
+  operation?: string;
+  value?: any;
+}
+
+export interface EnvoyConfigObjectPatch {
+  applyTo?: string;
+  match?: EnvoyConfigObjectMatch;
+  patch?: Patch;
+}
+
+export interface EnvoyFilterSpec {
+  workloadSelector?: WorkloadSelector;
+  configPatches: EnvoyConfigObjectPatch[];
+}
+
+export interface EnvoyFilter extends IstioObject {
+  spec: EnvoyFilterSpec;
+}
+
+export interface AttributeInfo {
+  description?: string;
+  valueType: string;
+}
+
+export interface AttributeManifestSpec {
+  revision?: string;
+  name: string;
+  attributes?: { [key: string]: AttributeInfo };
+}
+
+export interface AttributeManifest extends IstioObject {
+  spec: AttributeManifestSpec;
+}
+
+export interface HTTPAPISpecPattern {
+  attributes?: { [key: string]: { [key: string]: string } };
+  httpMethod?: string;
+  uriTemplate?: string;
+  regex?: string;
+}
+
+export interface APIKey {
+  query?: string;
+  header?: string;
+  cookie?: string;
+}
+
+// Attribute Value is mapped as an inner map of string
+export interface HTTPAPISpecSpec {
+  attributes?: { [key: string]: { [key: string]: string } };
+  patterns?: HTTPAPISpecPattern[];
+  apiKeys?: APIKey[];
+}
+
+export interface HTTPAPISpec extends IstioObject {
+  spec: HTTPAPISpecSpec;
+}
+
+export interface IstioService {
+  name?: string;
+  namespace?: string;
+  domain?: string;
+  service?: string;
+  labels?: { [key: string]: string };
+}
+
+export interface HTTPAPISpecReference {
+  name: string;
+  namespace?: string;
+}
+
+export interface HTTPAPISpecBindingSpec {
+  services: IstioService[];
+  apiSpecs: HTTPAPISpecReference[];
+}
+
+export interface HTTPAPISpecBinding extends IstioObject {
+  spec: HTTPAPISpecBindingSpec;
+}

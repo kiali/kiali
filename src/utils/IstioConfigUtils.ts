@@ -32,6 +32,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.serviceEntry;
     } else if (istioObjectDetails.workloadEntry) {
       istioObject = istioObjectDetails.workloadEntry;
+    } else if (istioObjectDetails.envoyFilter) {
+      istioObject = istioObjectDetails.envoyFilter;
     } else if (istioObjectDetails.rule) {
       istioObject = istioObjectDetails.rule;
     } else if (istioObjectDetails.adapter) {
@@ -42,6 +44,12 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.quotaSpec;
     } else if (istioObjectDetails.quotaSpecBinding) {
       istioObject = istioObjectDetails.quotaSpecBinding;
+    } else if (istioObjectDetails.attributeManifest) {
+      istioObject = istioObjectDetails.attributeManifest;
+    } else if (istioObjectDetails.httpApiSpec) {
+      istioObject = istioObjectDetails.httpApiSpec;
+    } else if (istioObjectDetails.httpApiSpecBinding) {
+      istioObject = istioObjectDetails.httpApiSpecBinding;
     } else if (istioObjectDetails.policy) {
       istioObject = istioObjectDetails.policy;
     } else if (istioObjectDetails.meshPolicy) {

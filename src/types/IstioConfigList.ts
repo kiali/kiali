@@ -1,10 +1,14 @@
 import Namespace from './Namespace';
 import {
+  AttributeManifest,
   AuthorizationPolicy,
   ClusterRbacConfig,
   DestinationRule,
   DestinationRules,
+  EnvoyFilter,
   Gateway,
+  HTTPAPISpec,
+  HTTPAPISpecBinding,
   IstioAdapter,
   IstioRule,
   IstioTemplate,
@@ -53,6 +57,10 @@ export interface IstioConfigItem {
   peerAuthentication?: PeerAuthentication;
   requestAuthentication?: RequestAuthentication;
   workloadEntry?: WorkloadEntry;
+  envoyFilter?: EnvoyFilter;
+  attributeManifest?: AttributeManifest;
+  httpApiSpec?: HTTPAPISpec;
+  httpApiSpecBinding?: HTTPAPISpecBinding;
   validation?: ObjectValidation;
 }
 
@@ -63,11 +71,15 @@ export interface IstioConfigList {
   destinationRules: DestinationRules;
   serviceEntries: ServiceEntry[];
   workloadEntries: WorkloadEntry[];
+  envoyFilters: EnvoyFilter[];
   rules: IstioRule[];
   adapters: IstioAdapter[];
   templates: IstioTemplate[];
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
+  attributeManifests: AttributeManifest[];
+  httpApiSpecs: HTTPAPISpec[];
+  httpApiSpecBindings: HTTPAPISpecBinding[];
   policies: Policy[];
   meshPolicies: Policy[];
   serviceMeshPolicies: Policy[];
@@ -107,6 +119,10 @@ export const dicIstioType = {
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   WorkloadEntry: 'workloadentries',
+  EnvoyFilter: 'envoyfilters',
+  AttributeManifest: 'attributemanifests',
+  HTTPAPISpec: 'httpapispecs',
+  HTTPAPISpecBinding: 'httpapispecbindings',
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
@@ -130,7 +146,11 @@ export const dicIstioType = {
   servicemeshrbacconfigs: 'ServiceMeshRbacConfig',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
-  workloadentries: 'WorkloadEntry'
+  workloadentries: 'WorkloadEntry',
+  envoyfilters: 'EnvoyFilter',
+  attributemanifests: 'AttributeManifest',
+  httpapispecs: 'HTTPAPISpec',
+  httpapispecbindings: 'HTTPAPISpecBinding'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -176,6 +196,10 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     peerAuthentications: unfiltered.peerAuthentications.filter(pa => includeName(pa.metadata.name, names)),
     requestAuthentications: unfiltered.requestAuthentications.filter(ra => includeName(ra.metadata.name, names)),
     workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
+    envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
+    attributeManifests: unfiltered.attributeManifests.filter(am => includeName(am.metadata.name, names)),
+    httpApiSpecs: unfiltered.httpApiSpecs.filter(ha => includeName(ha.metadata.name, names)),
+    httpApiSpecBindings: unfiltered.httpApiSpecBindings.filter(hb => includeName(hb.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

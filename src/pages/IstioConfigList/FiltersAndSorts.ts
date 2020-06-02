@@ -94,6 +94,10 @@ export const istioTypeFilter: FilterType = {
       title: 'Adapter'
     },
     {
+      id: 'AttributeManifest',
+      title: 'AttributeManifest'
+    },
+    {
       id: 'AuthorizationPolicy',
       title: 'AuthorizationPolicy'
     },
@@ -106,8 +110,20 @@ export const istioTypeFilter: FilterType = {
       title: 'DestinationRule'
     },
     {
+      id: 'EnvoyFilter',
+      title: 'EnvoyFilter'
+    },
+    {
       id: 'Gateway',
       title: 'Gateway'
+    },
+    {
+      id: 'HTTPAPISpec',
+      title: 'HTTPAPISpec'
+    },
+    {
+      id: 'HTTPAPISpecBinding',
+      title: 'HTTPAPISpecBinding'
     },
     {
       id: 'MeshPolicy',
