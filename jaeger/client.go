@@ -8,13 +8,14 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error)
-	GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error)
+	GetSpans(ns, srv string, query models.TracingQuery) ([]Span, error)
+	GetTraces(ns, srv string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
 	GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error)
 }
@@ -58,15 +59,15 @@ func NewClient(token string) (*Client, error) {
 
 // GetSpans fetches Jaeger traces of a service and extract related spans
 // Returns (spans, error)
-func (in *Client) GetSpans(namespace, service, startMicros, endMicros string) ([]Span, error) {
-	return getSpans(in.client, in.endpoint, namespace, service, startMicros, endMicros)
+func (in *Client) GetSpans(ns, srv string, query models.TracingQuery) ([]Span, error) {
+	return getSpans(in.client, in.endpoint, ns, srv, query)
 }
 
 // GetTraces Jaeger to fetch traces of a service
 // requests for traces of a service
 // Returns (traces, code, error)
-func (in *Client) GetTraces(namespace string, service string, rawQuery string) (traces *JaegerResponse, err error) {
-	return getTraces(in.client, in.endpoint, namespace, service, rawQuery)
+func (in *Client) GetTraces(ns, srv string, query models.TracingQuery) (traces *JaegerResponse, err error) {
+	return getTraces(in.client, in.endpoint, ns, srv, query)
 }
 
 // GetTraceDetail jaeger to fetch a specific trace

@@ -7,3 +7,11 @@ type JaegerInfo struct {
 	NamespaceSelector    bool     `json:"namespaceSelector"`
 	WhiteListIstioSystem []string `json:"whiteListIstioSystem"`
 }
+
+type TracingQuery struct {
+	StartMicros string `json:"startMicros"`
+	EndMicros   string `json:"endMicros"`
+	Tags        string `json:"tags"`
+	MinDuration string `json:"minDuration"`
+	Limit       int    `json:"limit"`
+}

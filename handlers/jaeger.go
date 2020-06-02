@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -33,16 +35,21 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, info)
 }
 
-func TraceServiceDetails(w http.ResponseWriter, r *http.Request) {
+func TracesList(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Trace Service Details initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "TracesList initialization error: "+err.Error())
 		return
 	}
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
-	traces, err := business.Jaeger.GetJaegerTraces(namespace, service, r.URL.RawQuery)
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	traces, err := business.Jaeger.GetJaegerTraces(namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -101,15 +108,40 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	service := params["service"]
-	queryParams := r.URL.Query()
-	startMicros := queryParams.Get("startMicros")
-	endMicros := queryParams.Get("endMicros")
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	spans, err := business.Jaeger.GetJaegerSpans(namespace, service, startMicros, endMicros)
+	spans, err := business.Jaeger.GetJaegerSpans(namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
 
 	RespondWithJSON(w, http.StatusOK, spans)
+}
+
+func readQuery(values url.Values) (models.TracingQuery, error) {
+	startMicros := values.Get("startMicros")
+	endMicros := values.Get("endMicros")
+	tags := values.Get("tags")
+	strLimit := values.Get("limit")
+	limit := 100
+	if strLimit != "" {
+		var err error
+		limit, err = strconv.Atoi(strLimit)
+		if err != nil {
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'limit': " + err.Error())
+		}
+	}
+	minDuration := values.Get("minDuration")
+	return models.TracingQuery{
+		StartMicros: startMicros,
+		EndMicros:   endMicros,
+		Tags:        tags,
+		Limit:       limit,
+		MinDuration: minDuration,
+	}, nil
 }
