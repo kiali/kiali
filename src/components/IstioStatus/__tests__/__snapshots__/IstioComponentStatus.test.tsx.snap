@@ -55,7 +55,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
     isito-ingress
   </SplitItem>
   <SplitItem>
-    Not healty
+    Not healthy
   </SplitItem>
 </Split>
 `;
@@ -171,7 +171,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
     prometheus
   </SplitItem>
   <SplitItem>
-    Not healty
+    Not healthy
   </SplitItem>
 </Split>
 `;
