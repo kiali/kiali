@@ -4515,6 +4515,10 @@
     "Iter8ExperimentDetail": {
       "type": "object",
       "properties": {
+        "action": {
+          "type": "string",
+          "x-go-name": "Action"
+        },
         "criterias": {
           "type": "array",
           "items": {
@@ -4553,6 +4557,10 @@
           "format": "int64",
           "x-go-name": "BaselinePercentage"
         },
+        "baselineVersion": {
+          "type": "string",
+          "x-go-name": "BaselineVersion"
+        },
         "candidate": {
           "type": "string",
           "x-go-name": "Candidate"
@@ -4561,6 +4569,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "CandidatePercentage"
+        },
+        "candidateVersion": {
+          "type": "string",
+          "x-go-name": "CandidateVersion"
         },
         "createdAt": {
           "type": "integer",
