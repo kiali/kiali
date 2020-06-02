@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -56,10 +57,11 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 	}
 	workloads := workloadList.Workloads
 	for _, w := range workloads {
+		conf := config.Get()
 		if w.Name == experiment.ExperimentItem.Baseline {
-			experiment.ExperimentItem.BaselineVersion = w.Labels["version"]
+			experiment.ExperimentItem.BaselineVersion = w.Labels[conf.IstioLabels.VersionLabelName]
 		} else if w.Name == experiment.ExperimentItem.Candidate {
-			experiment.ExperimentItem.CandidateVersion = w.Labels["version"]
+			experiment.ExperimentItem.CandidateVersion = w.Labels[conf.IstioLabels.VersionLabelName]
 		}
 	}
 	RespondWithJSON(w, http.StatusOK, experiment)

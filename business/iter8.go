@@ -133,11 +133,15 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
-
-	json, err := in.ParseJsonForCreate(body)
+	// get RoutingReference
+	newExperimentSpec := models.Iter8ExperimentSpec{}
+	err = json.Unmarshal(body, &newExperimentSpec)
 	if err != nil {
 		return iter8ExperimentDetail, err
 	}
+	rr, _ := in.GetIter8RoutingReferences(namespace, newExperimentSpec.Service)
+
+	json, err := in.ParseJsonForCreate(body, rr)
 
 	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, json)
 	if err != nil {
@@ -150,7 +154,7 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 
 func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, body []byte) (models.Iter8ExperimentDetail, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "CreateIter8Experiment")
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
@@ -163,9 +167,12 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	newExperimentSpec.Parse(experiment)
 	newExperimentSpec.Action = action.Action
+	// get RoutingReference
+	rr, _ := in.GetIter8RoutingReferences(newExperimentSpec.Namespace, newExperimentSpec.Service)
+
 	var newObject []byte
 	newObject, err = json.Marshal(newExperimentSpec)
-	json, err := in.ParseJsonForCreate(newObject)
+	json, err := in.ParseJsonForCreate(newObject, rr)
 	if err != nil {
 		return iter8ExperimentDetail, err
 	}
@@ -179,7 +186,7 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	return iter8ExperimentDetail, nil
 }
 
-func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
+func (in *Iter8Service) ParseJsonForCreate(body []byte, rr []models.RoutingReference) (string, error) {
 
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	err := json.Unmarshal(body, &newExperimentSpec)
@@ -208,8 +215,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
 	object.Spec.TrafficControl.Interval = newExperimentSpec.TrafficControl.Interval
 	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
-	rr, err := in.GetIter8RoutingReferences(newExperimentSpec.Namespace, newExperimentSpec.Service)
-	if err == nil && len(rr) == 1 {
+	if len(rr) == 1 {
 		rrptr := core_v1.ObjectReference{
 			Name:       rr[0].Name,
 			APIVersion: rr[0].ApiVersion,
@@ -293,26 +299,20 @@ func (in *Iter8Service) GetAnalyticPort() int {
 func (in *Iter8Service) GetIter8RoutingReferences(namespace string, servicename string) (routingReferences []models.RoutingReference, err error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
 	defer promtimer.ObserveNow(&err)
-	Gateways := &models.Gateways{}
-	gws, err := in.k8s.GetGateways(namespace)
-	VirtualServices := &models.VirtualServices{Items: []models.VirtualService{}}
+	istioCfg, err := in.businessLayer.IstioConfig.GetIstioConfigList(IstioConfigCriteria{
+		IncludeGateways:        true,
+		IncludeVirtualServices: true,
+		Namespace:              namespace,
+	})
+
 	routingReferences = make([]models.RoutingReference, 0)
 	gwNames := make([]string, 0)
-	if err != nil {
-		return routingReferences, err
+
+	for _, gw := range istioCfg.Gateways {
+		gwNames = append(gwNames, gw.Metadata.Name)
 	}
 
-	Gateways.Parse(gws)
-	for _, gw := range gws {
-		gwNames = append(gwNames, gw.GetObjectMeta().Name)
-	}
-	vs, err := in.k8s.GetVirtualServices(namespace, servicename)
-	if err != nil {
-		return routingReferences, err
-	}
-
-	VirtualServices.Parse(vs)
-	for _, item := range VirtualServices.Items {
+	for _, item := range istioCfg.VirtualServices.Items {
 		docheck := false
 		if item.IsValidHost(namespace, servicename) {
 			gws := item.Spec.Gateways
@@ -354,6 +354,7 @@ func (in *Iter8Service) GetIter8RoutingReferences(namespace string, servicename 
 			}
 		}
 	}
+
 	return routingReferences, err
 }
 
