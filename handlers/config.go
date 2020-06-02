@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/status"
 )
 
 const (
@@ -45,6 +46,7 @@ type PublicConfig struct {
 	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
 	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
+	IstioTelemetryV2         bool                            `json:"istioTelemetryV2"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
 }
 
@@ -75,6 +77,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
 		},
+		IstioTelemetryV2: status.IsMixerDisabled(),
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
