@@ -141,9 +141,9 @@ def test_istio_config_list(kiali_client):
 
 
 def test_istio_config_details(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': 'promtcp'})
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': 'threescale'})
 
-def test_istio_config_details_subtype(kiali_client):
+def __test_istio_config_details_subtype(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': control_plane_namespace, 'object_type': 'destinationrules', 'object_subtype': 'istio-policy', 'object': 'istio-policy'} )
 
 def test_service_list(kiali_client):
