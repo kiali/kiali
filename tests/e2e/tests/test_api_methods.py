@@ -10,7 +10,7 @@ def before_all_tests(kiali_client):
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
     tested_method_list = ['root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'authenticate',
-                          'namespaceList', 'namespaceMetrics','namespaceHealth',
+                          'namespaceList', 'namespaceMetrics','namespaceHealth','istioStatus','iter8Experiments',
                           'istioConfigList', 'istioConfigDetails', 'istioConfigCreate', 'istioConfigDelete', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
@@ -111,6 +111,12 @@ def test_pod_logs(kiali_client):
 
 def test_grafana_info(kiali_client):
     evaluate_response(kiali_client, method_name='grafanaInfo')
+    
+def test_iter8_experiments(kiali_client):
+    evaluate_response(kiali_client, method_name='iter8Experiments')
+
+def test_istio_status(kiali_client):
+    evaluate_response(kiali_client, method_name='istioStatus')        
 
 def test_get_status(kiali_client):
     evaluate_response(kiali_client, method_name='getStatus')
