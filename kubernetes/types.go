@@ -31,6 +31,10 @@ const (
 	GatewayType     = "Gateway"
 	GatewayTypeList = "GatewayList"
 
+	EnvoyFilters        = "envoyfilters"
+	EnvoyFilterType     = "EnvoyFilter"
+	EnvoyFilterTypeList = "EnvoyFilterList"
+
 	Sidecars        = "sidecars"
 	SidecarType     = "Sidecar"
 	SidecarTypeList = "SidecarList"
@@ -110,6 +114,21 @@ const (
 	RequestAuthentications         = "requestauthentications"
 	RequestAuthenticationsType     = "RequestAuthentication"
 	RequestAuthenticationsTypeList = "RequestAuthenticationList"
+
+	// AttributeManifest
+	AttributeManifests        = "attributemanifests"
+	AttributeManifestType     = "attributemanifest"
+	AttributeManifestTypeList = "attributemanifestList"
+
+	// HttpApiSpecBinding
+	HttpApiSpecBindings        = "httpapispecbindings"
+	HttpApiSpecBindingType     = "HTTPAPISpecBinding"
+	HttpApiSpecBindingTypeList = "HTTPAPISpecBindingList"
+
+	// HttpApiSpec
+	HttpApiSpecs        = "httpapispecs"
+	HttpApiSpecType     = "HTTPAPISpec"
+	HttpApiSpecTypeList = "HTTPAPISpecList"
 
 	// Config - Rules
 
@@ -223,6 +242,10 @@ var (
 			objectKind:     WorkloadEntryType,
 			collectionKind: WorkloadEntryTypeList,
 		},
+		{
+			objectKind:     EnvoyFilterType,
+			collectionKind: EnvoyFilterTypeList,
+		},
 	}
 
 	configTypes = []struct {
@@ -241,6 +264,18 @@ var (
 		{
 			objectKind:     quotaspecbindingType,
 			collectionKind: quotaspecbindingTypeList,
+		},
+		{
+			objectKind:     AttributeManifestType,
+			collectionKind: AttributeManifestTypeList,
+		},
+		{
+			objectKind:     HttpApiSpecBindingType,
+			collectionKind: HttpApiSpecBindingTypeList,
+		},
+		{
+			objectKind:     HttpApiSpecType,
+			collectionKind: HttpApiSpecTypeList,
 		},
 	}
 
@@ -379,11 +414,15 @@ var (
 		Serviceentries:   ServiceentryType,
 		Sidecars:         SidecarType,
 		WorkloadEntries:  WorkloadEntryType,
+		EnvoyFilters:     EnvoyFilterType,
 
 		// Main Config files
-		rules:             ruleType,
-		quotaspecs:        quotaspecType,
-		quotaspecbindings: quotaspecbindingType,
+		rules:               ruleType,
+		quotaspecs:          quotaspecType,
+		quotaspecbindings:   quotaspecbindingType,
+		AttributeManifests:  AttributeManifestType,
+		HttpApiSpecBindings: HttpApiSpecBindingType,
+		HttpApiSpecs:        HttpApiSpecType,
 
 		// Adapters
 		adapters: adapterType,

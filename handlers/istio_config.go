@@ -111,6 +111,10 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludePeerAuthentication = defaultInclude
 	criteria.IncludeWorkloadEntries = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
+	criteria.IncludeEnvoyFilters = defaultInclude
+	criteria.IncludeAttributeManifests = defaultInclude
+	criteria.IncludeHttpApiSpecBindings = defaultInclude
+	criteria.IncludeHttpApiSpecs = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -182,6 +186,18 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, business.RequestAuthentications) {
 		criteria.IncludeRequestAuthentications = true
+	}
+	if checkType(types, business.EnvoyFilters) {
+		criteria.IncludeEnvoyFilters = true
+	}
+	if checkType(types, business.AttributeManifests) {
+		criteria.IncludeAttributeManifests = true
+	}
+	if checkType(types, business.HttpApiSpecBindings) {
+		criteria.IncludeHttpApiSpecBindings = true
+	}
+	if checkType(types, business.HttpApiSpecs) {
+		criteria.IncludeHttpApiSpecs = true
 	}
 	return criteria
 }
