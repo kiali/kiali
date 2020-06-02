@@ -26,4 +26,5 @@ export interface ServerConfig {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;
   };
+  istioTelemetryV2: boolean;
 }
