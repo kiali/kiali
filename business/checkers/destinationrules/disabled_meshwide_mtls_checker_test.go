@@ -59,14 +59,14 @@ func disabledMeshDestRuleTestPrep(scenario string, t *testing.T) ([]*models.Isti
 func testNoDestRuleDisabledValidations(scenario string, t *testing.T) {
 	vals, valid := disabledMeshDestRuleTestPrep(scenario, t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertNoValidations()
 }
 
 func testWithDestRuleDisabledValidations(scenario string, t *testing.T) {
 	vals, valid := disabledMeshDestRuleTestPrep(scenario, t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertValidationsPresent(1, false)
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/trafficPolicy/tls/mode", "destinationrules.mtls.meshpolicymtlsenabled")
 }

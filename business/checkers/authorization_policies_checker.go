@@ -18,14 +18,22 @@ type AuthorizationPolicyChecker struct {
 	ServiceEntries        []kubernetes.IstioObject
 	Services              []core_v1.Service
 	WorkloadList          models.WorkloadList
+	MtlsDetails           kubernetes.MTLSDetails
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	// Individual validations
 	for _, authPolicy := range a.AuthorizationPolicies {
 		validations.MergeValidations(a.runChecks(authPolicy))
 	}
+
+	// Group Validations
+	validations.MergeValidations(authorization.MtlsEnabledChecker{
+		AuthorizationPolicies: a.AuthorizationPolicies,
+		MtlsDetails:           a.MtlsDetails,
+	}.Check())
 
 	return validations
 }
