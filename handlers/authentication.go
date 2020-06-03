@@ -543,6 +543,17 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 			return http.StatusInternalServerError, ""
 		}
 
+		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
+		parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
+		if err != nil {
+			log.Warning("Cannot parse sid claim of the Kiali token : ", err)
+			return http.StatusInternalServerError, ""
+		}
+		if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
+			log.Warning("Kiali token rejected because of subject claim mismatch")
+			return http.StatusUnauthorized, ""
+		}
+
 		_, err = business.Namespace.GetNamespaces()
 		if err == nil {
 			// Internal header used to propagate the subject of the request for audit purposes
