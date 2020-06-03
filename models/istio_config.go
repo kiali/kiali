@@ -15,11 +15,15 @@ type IstioConfigList struct {
 	DestinationRules       DestinationRules       `json:"destinationRules"`
 	ServiceEntries         ServiceEntries         `json:"serviceEntries"`
 	WorkloadEntries        WorkloadEntries        `json:"workloadEntries"`
+	EnvoyFilters           EnvoyFilters           `json:"envoyFilters"`
 	Rules                  IstioRules             `json:"rules"`
 	Adapters               IstioAdapters          `json:"adapters"`
 	Templates              IstioTemplates         `json:"templates"`
 	QuotaSpecs             QuotaSpecs             `json:"quotaSpecs"`
 	QuotaSpecBindings      QuotaSpecBindings      `json:"quotaSpecBindings"`
+	AttributeManifests     AttributeManifests     `json:"attributeManifests"`
+	HttpApiSpecs           HttpApiSpecs           `json:"httpApiSpecs"`
+	HttpApiSpecBindings    HttpApiSpecBindings    `json:"httpApiSpecBindings"`
 	Policies               Policies               `json:"policies"`
 	MeshPolicies           MeshPolicies           `json:"meshPolicies"`
 	ServiceMeshPolicies    ServiceMeshPolicies    `json:"serviceMeshPolicies"`
@@ -43,11 +47,15 @@ type IstioConfigDetails struct {
 	DestinationRule       *DestinationRule       `json:"destinationRule"`
 	ServiceEntry          *ServiceEntry          `json:"serviceEntry"`
 	WorkloadEntry         *WorkloadEntry         `json:"workloadEntry"`
+	EnvoyFilter           *EnvoyFilter           `json:"envoyFilter"`
 	Rule                  *IstioRule             `json:"rule"`
 	Adapter               *IstioAdapter          `json:"adapter"`
 	Template              *IstioTemplate         `json:"template"`
 	QuotaSpec             *QuotaSpec             `json:"quotaSpec"`
 	QuotaSpecBinding      *QuotaSpecBinding      `json:"quotaSpecBinding"`
+	AttributeManifest     *AttributeManifest     `json:"attributeManifest"`
+	HttpApiSpec           *HttpApiSpec           `json:"httpApiSpec"`
+	HttpApiSpecBinding    *HttpApiSpecBinding    `json:"httpApiSpecBinding"`
 	Policy                *Policy                `json:"policy"`
 	MeshPolicy            *MeshPolicy            `json:"meshPolicy"`
 	ServiceMeshPolicy     *ServiceMeshPolicy     `json:"serviceMeshPolicy"`

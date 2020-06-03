@@ -431,6 +431,46 @@ func (o *K8SClientMock) GetWorkloadEntry(namespace string, name string) (kuberne
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetEnvoyFilters(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetEnvoyFilter(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetAttributeManifests(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetAttributeManifest(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetHttpApiSpecBindings(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetHttpApiSpecBinding(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetHttpApiSpecs(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetHttpApiSpec(namespace string, name string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.RBACDetails, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*kubernetes.RBACDetails), args.Error(1)
