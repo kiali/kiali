@@ -15,7 +15,8 @@ export enum AuthStrategy {
   anonymous = 'anonymous',
   openshift = 'openshift',
   ldap = 'ldap',
-  token = 'token'
+  token = 'token',
+  openid = 'openid'
 }
 
 // Stores the result of a computation:

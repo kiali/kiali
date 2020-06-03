@@ -3,9 +3,9 @@ import { KialiAppState, LoginSession, LoginState } from '../store/Store';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
 import * as Login from '../services/Login';
-import { AuthResult, AuthStrategy } from '../types/Auth';
+import { AuthResult } from '../types/Auth';
 import { KialiDispatch } from '../types/Redux';
-import authenticationConfig from '../config/AuthenticationConfig';
+import { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
 import * as AlertUtils from '../utils/AlertUtils';
 
 const Dispatcher = new Login.LoginDispatcher();
@@ -22,7 +22,7 @@ const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession) => {
 // different kinds of data (such as e-mail/password, tokens).
 const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any) => {
   const bail = (loginResult: Login.LoginResult) => {
-    if (authenticationConfig.strategy === AuthStrategy.openshift) {
+    if (isAuthStrategyOAuth()) {
       dispatch(LoginActions.loginFailure(loginResult.error));
     } else {
       data ? dispatch(LoginActions.loginFailure(loginResult.error)) : dispatch(LoginActions.logoutSuccess());
@@ -50,19 +50,14 @@ const LoginThunkActions = {
   },
   checkCredentials: () => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
-      // If Openshift login strategy is enabled, or anonymous mode is enabled,
-      // perform the login cycle. Else, it doesn't make sense to login with
-      // blank credentials.
-      if (authenticationConfig.strategy !== AuthStrategy.login) {
-        const state: KialiAppState = getState();
+      const state: KialiAppState = getState();
 
-        dispatch(LoginActions.loginRequest());
+      dispatch(LoginActions.loginRequest());
 
-        if (shouldRelogin(state.authentication)) {
-          performLogin(dispatch, state);
-        } else {
-          loginSuccess(dispatch, state.authentication!.session!);
-        }
+      if (shouldRelogin(state.authentication)) {
+        performLogin(dispatch, state);
+      } else {
+        loginSuccess(dispatch, state.authentication!.session!);
       }
     };
   },

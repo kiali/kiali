@@ -20,6 +20,7 @@ import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import LoginThunkActions from '../../actions/LoginThunkActions';
+import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
 
 type LoginProps = {
   status: LoginStatus;
@@ -27,7 +28,6 @@ type LoginProps = {
   message?: string;
   error?: any;
   authenticate: (username: string, password: string) => void;
-  checkCredentials: () => void;
   isPostLoginPerforming: boolean;
   postLoginErrorMsg?: string;
 };
@@ -63,9 +63,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
   }
 
   componentDidMount() {
-    // handle initial path from the browser
-    this.props.checkCredentials();
-
     const loginInput = document.getElementById('pf-login-username-id');
     if (loginInput) {
       loginInput.focus();
@@ -83,8 +80,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
   handleSubmit = (e: any) => {
     e.preventDefault();
 
-    if (authenticationConfig.strategy === AuthStrategy.openshift) {
-      // If we are using OpenShift OAuth, take the user back to the OpenShift OAuth login
+    if (isAuthStrategyOAuth()) {
+      // If we are using OpenShift or OpenId strategy, take the user back to the authorization endpoint
       window.location.href = authenticationConfig.authorizationEndpoint!;
     } else if (authenticationConfig.strategy === AuthStrategy.token) {
       if (this.state.password.trim().length !== 0 && this.props.authenticate) {
@@ -184,6 +181,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     let loginLabel = 'Log In';
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
       loginLabel = 'Log In With OpenShift';
+    } else if (authenticationConfig.strategy === AuthStrategy.openid) {
+      loginLabel = 'Log In With OpenID';
     }
 
     const messages = this.getHelperMessage();
@@ -252,9 +251,19 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       );
     } else {
       loginPane = (
-        <Button onClick={this.handleSubmit} style={{ width: '100%' }} variant="primary">
-          {loginLabel}
-        </Button>
+        <Form>
+          <FormHelperText
+            isError={this.props.status === LoginStatus.error}
+            isHidden={this.props.status !== LoginStatus.error && this.props.message === '' && messages.length === 0}
+          >
+            {messages}
+          </FormHelperText>
+          <ActionGroup>
+            <Button type="submit" onClick={this.handleSubmit} style={{ width: '100%' }} variant="primary">
+              {loginLabel}
+            </Button>
+          </ActionGroup>
+        </Form>
       );
     }
 
@@ -279,8 +288,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password)),
-  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
+  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password))
 });
 
 const LoginPageContainer = connect(mapStateToProps, mapDispatchToProps)(LoginPage);

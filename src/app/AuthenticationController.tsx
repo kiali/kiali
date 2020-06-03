@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import authenticationConfig, { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
 import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { JaegerActions } from '../actions/JaegerActions';
+import LoginThunkActions from '../actions/LoginThunkActions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
@@ -15,10 +17,13 @@ import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig } from '../config/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
+import { AuthStrategy } from '../types/Auth';
 import { JaegerInfo } from '../types/JaegerInfo';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
+  checkCredentials: () => void;
+  isLoginError: boolean;
   setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
@@ -57,6 +62,33 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
   componentDidMount(): void {
     if (this.state.stage === LoginStage.LOGGED_IN_AT_LOAD) {
       this.doPostLoginActions();
+    } else {
+      let dispatchLoginCycleOnLoad = false;
+
+      // If login strategy is "anonymous", dispatch login cycle
+      // because there is no need to ask for any credentials
+      if (authenticationConfig.strategy === AuthStrategy.anonymous) {
+        dispatchLoginCycleOnLoad = true;
+      }
+
+      // If login strategy is Openshift, OpenId, check if there is an
+      // "access_token" or "id_token" hash parameter in the URL. If there is,
+      // this means the IdP is calling back. Dispatch the login cycle to finish
+      // the authentication.
+      if (isAuthStrategyOAuth()) {
+        const pattern = /[#&](access_token|id_token)=/;
+        dispatchLoginCycleOnLoad = pattern.test(window.location.hash);
+      }
+
+      if (dispatchLoginCycleOnLoad) {
+        this.props.checkCredentials();
+
+        // This state shows the initializing screen while doing the login cycle. This
+        // prevents from briefly showing the login form while the trip to the back-end completes.
+        this.setState({
+          stage: LoginStage.LOGGED_IN_AT_LOAD
+        });
+      }
     }
 
     this.setDocLayout();
@@ -73,6 +105,10 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       this.setState({ stage: LoginStage.LOGIN });
     }
 
+    if (!prevProps.isLoginError && this.props.isLoginError) {
+      this.setState({ stage: LoginStage.LOGIN });
+    }
+
     this.setDocLayout();
   }
 
@@ -86,6 +122,12 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         <InitializingScreen errorMsg={AuthenticationController.PostLoginErrorMsg} />
       );
     } else if (this.state.stage === LoginStage.POST_LOGIN) {
+      // For OAuth/OpenID auth strategies, show/keep the initializing screen unless there
+      // is an error.
+      if (!this.state.isPostLoginError && isAuthStrategyOAuth()) {
+        return <InitializingScreen />;
+      }
+
       return !this.state.isPostLoginError
         ? this.props.publicAreaComponent(true)
         : this.props.publicAreaComponent(false, AuthenticationController.PostLoginErrorMsg);
@@ -141,16 +183,16 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  authenticated: state.authentication.status === LoginStatus.loggedIn
+  authenticated: state.authentication.status === LoginStatus.loggedIn,
+  isLoginError: state.authentication.status === LoginStatus.error
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
-  return {
-    setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
-    setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
-    setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
-  };
-};
+const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
+  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
+  setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch),
+  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
+});
 
 const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);
 export default AuthenticationControllerContainer;

@@ -156,8 +156,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   logout: () => dispatch(LoginThunkActions.logout()),
-  extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session)),
-  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
+  extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session))
 });
 
 const UserDropdown = connect(mapStateToProps, mapDispatchToProps)(UserDropdownConnected);

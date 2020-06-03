@@ -95,7 +95,7 @@ class LdapLogin implements LoginStrategy<WebLoginData> {
   }
 }
 
-class OpenshiftLogin implements LoginStrategy<unknown> {
+class OAuthLogin implements LoginStrategy<unknown> {
   public async prepare(info: AuthConfig) {
     if (!info.authorizationEndpoint) {
       return AuthResult.FAILURE;
@@ -132,9 +132,10 @@ export class LoginDispatcher {
 
     this.strategyMapping.set(AuthStrategy.anonymous, new AnonymousLogin());
     this.strategyMapping.set(AuthStrategy.login, new WebLogin());
-    this.strategyMapping.set(AuthStrategy.openshift, new OpenshiftLogin());
+    this.strategyMapping.set(AuthStrategy.openshift, new OAuthLogin());
     this.strategyMapping.set(AuthStrategy.ldap, new LdapLogin());
     this.strategyMapping.set(AuthStrategy.token, new TokenLogin());
+    this.strategyMapping.set(AuthStrategy.openid, new OAuthLogin());
   }
 
   public async prepare(): Promise<AuthResult> {
