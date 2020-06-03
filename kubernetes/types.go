@@ -533,8 +533,8 @@ type istioResponse struct {
 
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
 type GenericIstioObject struct {
-	meta_v1.TypeMeta   `json:",inline"`
-	meta_v1.ObjectMeta `json:"metadata"`
+	meta_v1.TypeMeta   `json:",inline" yaml:",inline"`
+	meta_v1.ObjectMeta `json:"metadata" yaml:"metadata"`
 	Spec               map[string]interface{} `json:"spec"`
 }
 

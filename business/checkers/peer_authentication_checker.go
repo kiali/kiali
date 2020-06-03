@@ -36,6 +36,11 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn kubernetes.IstioObject) m
 	var enabledCheckers []Checker
 
 	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(PeerAuthenticationCheckerType, peerAuthn, m.WorkloadList))
+	if peerAuthn.GetObjectMeta().Namespace == config.Get().IstioNamespace {
+		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
+	} else {
+		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
+	}
 
 	// MeshWide and NamespaceWide validations are only needed with autoMtls disabled
 	if !m.MTLSDetails.EnabledAutoMtls {

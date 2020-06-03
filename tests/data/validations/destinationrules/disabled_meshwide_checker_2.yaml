@@ -1,0 +1,19 @@
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "disable-mesh-mtls"
+  namespace: "bookinfo"
+spec:
+  host: "*.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
+metadata:
+  name: "disable-mesh-mtls"
+  namespace: "istio-system"
+spec:
+  mtls:
+    mode: STRICT

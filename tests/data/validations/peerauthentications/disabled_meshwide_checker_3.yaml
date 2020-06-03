@@ -1,0 +1,19 @@
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
+metadata:
+  name: "disable-mesh-mtls"
+  namespace: "istio-system"
+spec:
+  mtls:
+    mode: DISABLE
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "grafana-enable-mtls"
+  namespace: "istio-system"
+spec:
+  host: "grafana.istio-system.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE

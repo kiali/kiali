@@ -1702,13 +1702,12 @@ func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
 			if modeItf, found := mtlsMap["mode"]; found {
 				if mode, ok := modeItf.(string); ok {
-					return true, mode
+					return mode == "STRICT" || mode == "PERMISSIVE", mode
 				} else {
 					return false, ""
 				}
 			} else {
-				// STRICT when mtls object is empty
-				return false, "PERMISSIVE"
+				return true, "PERMISSIVE"
 			}
 		}
 	}

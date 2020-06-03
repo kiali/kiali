@@ -176,7 +176,7 @@ func (in TLSService) hasPeerAuthnNamespacemTLSDefinition(namespace string) (stri
 	}
 
 	for _, p := range ps {
-		if enabled, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); enabled {
+		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); mode != "" {
 			return mode, nil
 		}
 	}

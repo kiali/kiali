@@ -1,0 +1,43 @@
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
+metadata:
+  name: "disable-mesh-mtls"
+  namespace: "istio-system"
+spec:
+  mtls:
+    mode: DISABLE
+---
+kind: "PeerAuthentication"
+apiVersion: "security.istio.io/v1beta1"
+metadata:
+  name: "grafana-ports-mtls-disabled"
+  namespace: "istio-system"
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  portLevelMtls:
+    '3000':
+      mode: DISABLE
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "enable-mesh-mtls"
+  namespace: "bookinfo"
+spec:
+  host: "*.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "grafana-enable-mtls"
+  namespace: "istio-system"
+spec:
+  host: "grafana.istio-system.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
