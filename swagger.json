@@ -68,6 +68,33 @@
         }
       }
     },
+    "/auth/openid_redirect": {
+      "get": {
+        "description": "Endpoint to redirect the browser of the user to the authentication\nendpoint of the configured OpenId provider.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/html"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "openidRedirect",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/noContent"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/authenticate": {
       "get": {
         "security": [

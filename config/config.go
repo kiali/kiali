@@ -40,12 +40,14 @@ const (
 	AuthStrategyAnonymous = "anonymous"
 	AuthStrategyLDAP      = "ldap"
 	AuthStrategyToken     = "token"
+	AuthStrategyOpenId    = "openid"
 
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
 	AuthStrategyTokenIssuer     = "kiali-token"
 	AuthStrategyLDAPIssuer      = "kiali-ldap"
+	AuthStrategyOpenIdIssuer    = "kiali-open-id"
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
@@ -78,7 +80,9 @@ type Server struct {
 	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
 	Port                       int                  `yaml:",omitempty"`
 	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string               `yaml:"web_fqdn,omitempty"`
 	WebRoot                    string               `yaml:"web_root,omitempty"`
+	WebSchema                  string               `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -234,8 +238,20 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	LDAP     LDAPConfig `yaml:"ldap,omitempty"`
-	Strategy string     `yaml:"strategy,omitempty"`
+	LDAP     LDAPConfig   `yaml:"ldap,omitempty"`
+	OpenId   OpenIdConfig `yaml:"openid,omitempty"`
+	Strategy string       `yaml:"strategy,omitempty"`
+}
+
+// OpenIdConfig contains specific configuration for authentication using an OpenID provider
+type OpenIdConfig struct {
+	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
+	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
+	ClientId              string   `yaml:"client_id,omitempty"`
+	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
+	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
+	Scopes                []string `yaml:"scopes,omitempty"`
+	UsernameClaim         string   `yaml:"username_claim,omitempty"`
 }
 
 // LDAPConfig provides the details of the LDAP related configuration
@@ -302,6 +318,15 @@ func NewConfig() (c *Config) {
 		},
 		Auth: AuthConfig{
 			Strategy: "login",
+			OpenId: OpenIdConfig{
+				AuthenticationTimeout: 300,
+				AuthorizationEndpoint: "",
+				ClientId:              "",
+				InsecureSkipVerifyTLS: false,
+				IssuerUri:             "",
+				Scopes:                []string{"openid", "profile", "email"},
+				UsernameClaim:         "sub",
+			},
 		},
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
@@ -378,7 +403,9 @@ func NewConfig() (c *Config) {
 			MetricsPort:                9090,
 			Port:                       20001,
 			StaticContentRootDirectory: "/opt/kiali/console",
+			WebFQDN:                    "",
 			WebRoot:                    "/",
+			WebSchema:                  "",
 		},
 	}
 
@@ -538,14 +565,6 @@ func GetIstioNamespaces(exclude []string) []string {
 		}
 	}
 	return result
-}
-
-// GetIstioComponentNamespace returns the Istio component namespace (defaulting to IstioNamespace)
-func GetIstioComponentNamespace(component string) string {
-	if ns, found := configuration.IstioComponentNamespaces[component]; found {
-		return ns
-	}
-	return configuration.IstioNamespace
 }
 
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
