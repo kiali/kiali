@@ -130,7 +130,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       }
     }
   };
-  renderMessage = (message: string | undefined, type?: string) => {
+  renderMessage = (message: React.ReactNode | undefined, type: string | undefined, key: string) => {
     if (!message) {
       return '';
     }
@@ -141,10 +141,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       : 'warning';
     const icon = variant === 'danger' ? <ExclamationCircleIcon /> : <ExclamationTriangleIcon />;
     return (
-      <span
-        key={message}
-        style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}
-      >
+      <span key={key} style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}>
         {icon}
         &nbsp; {message}
       </span>
@@ -154,25 +151,58 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
   getHelperMessage = () => {
     const messages: any[] = [];
     if (this.state.showHelperText) {
-      messages.push(this.renderMessage(this.state.errorInput));
+      messages.push(this.renderMessage(this.state.errorInput, undefined, 'helperText'));
     }
     if (authenticationConfig.secretMissing) {
       messages.push(
         this.renderMessage(
           `The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
           creates a valid secret. Please refer to the Kiali documentation for more details.`,
-          'danger'
+          'danger',
+          'secretMissing'
         )
       );
     }
     if (this.props.status === LoginStatus.expired) {
-      messages.push(this.renderMessage('Your session has expired or was terminated in another window.', 'warning'));
+      messages.push(
+        this.renderMessage('Your session has expired or was terminated in another window.', 'warning', 'sessionExpired')
+      );
     }
     if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
     if (this.props.postLoginErrorMsg) {
-      messages.push(this.renderMessage(this.props.postLoginErrorMsg));
+      messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
+    }
+    if (authenticationConfig.strategy === AuthStrategy.ldap) {
+      messages.push(
+        this.renderMessage(
+          <>
+            Authentication with LDAP strategy is deprecated and will be removed in a following release. As an
+            alternative, use the "openid" strategy using an OpenId provider with an LDAP connector. See{' '}
+            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
+              release notes for version 1.19.
+            </a>
+          </>,
+          'warning',
+          'deprecatedLdap'
+        )
+      );
+    }
+    if (authenticationConfig.strategy === AuthStrategy.login) {
+      messages.push(
+        this.renderMessage(
+          <>
+            Authentication with "login" strategy is deprecated and will be removed in a following release. As an
+            alternative, use the "token" strategy. See{' '}
+            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
+              release notes for version 1.19.
+            </a>
+          </>,
+          'warning',
+          'deprecatedLogin'
+        )
+      );
     }
     return messages;
   };
