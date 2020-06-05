@@ -22,20 +22,13 @@ Edge-snapshots (or snapshots after merged PRs) are also handled in the Pipeline.
 
 == Finished product
 
-When the release process is complete, a new DockerHub image will be available in the
-link:https://hub.docker.com/r/kiali/kiali/tags/[Kiali Docker Hub repo].
+When the release process is complete, a new container image will be available in the
+link:https://quay.io/repository/kiali/kiali?tab=tags[Kiali Quay.io repository].
 
 == Actions before creating a release
 
 These actions are not performed by the release process. Please, do
 these actions manually before running the release process.
-
-=== Creating a new JIRA issue
-
-If you know that you'll spend a considerable amount of time doing
-the release, create a new issue on
-link:https://issues.jboss.org/browse/KIALI[JIRA] detailing the
-release, and add sub-tasks if necessary.
 
 === Updating Docs
 
@@ -50,59 +43,16 @@ Update the document, and create a PR.
 These actions are not performed by the release process. Please, do
 these actions manually after the release process finishes successfully.
 
-=== Updating JIRA issues
-
-Edit all issues in `Awaiting Release` state with `Fix-Version`:
-
-* Use this query https://issues.jboss.org/issues/?filter=12336798
-* Use Tools>Bulk Change>All XX issue(s)
-* Select all issues and press `Next`
-* `Edit issues`
-* `Change Fix Version/s`>`Add to existing`>Pick the version to release>Unselect `Send mail for this update`>Next>Confirm
-
-Transition all issues to `Released`:
-
-* Use this query https://issues.jboss.org/issues/?filter=12337486
-* Use Tools>Bulk Change>All XX issue(s)
-* Select all issues and press `Next`
-* `Transition issues`
-* `Released`>Next
-* Unselect `Send mail for this update`>Next>Confirm
-
-After that, close the release issues, and then, create a new `Release` in JIRA
-for the next release.
-
-Mark the current version as released, and create a new minor version:
-https://issues.jboss.org/projects/KIALI?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page
-
-=== Notify Istio and Openshift Istio Teams for changes
-
-There are no fixed steps for releasing a new version on the Istio installer,
-each release is kind of different.
-
-This has been done a few times before, so they can be used as references:
-
-* https://github.com/istio/istio/pull/5869
-* https://github.com/istio/istio/pull/5921
-* https://github.com/istio/istio/pull/6192
-* https://github.com/istio/istio/pull/6592
-* https://github.com/istio/istio/pull/6594
-* https://github.com/istio/istio/pull/7042
-* https://github.com/istio/istio/pull/7007
-
-Those PRs cover both the ansible-installer and the helm installer updates.
-
 === Send out notifications
 
 Finally, we just need to send the notifications to create awareness of the new
-release.
+release:
 
-Post an email about the release on our
-link:https://groups.google.com/forum/#!search/kiali-dev[Mailing List].
-
-Send a message on our channel at Freenode, #kiali.
-
-Post a message on our twitter,
+* Post an email about the release on our
+link:https://groups.google.com/forum/#!search/kiali-dev[Mailing List]. This is done
+automatically if you are doing a minor or major release.
+* Send a message on our channel at Freenode, #kiali.
+* Post a message on our twitter,
 link:https://www.twitter.com/KialiProject[@KialiProject]. If you don't know
 who's responsible for the account, ask on IRC.
 
@@ -119,8 +69,8 @@ The Pipeline performs the following actions to do the release:
 * Run tests for back-end and front-end
 * If all tests pass:
 ** The front-end is released to NPM
-** A docker image integrating the back-end and the front-end is built
-   and pushed to DockerHub
+** A container image integrating the back-end and the front-end is built
+   and pushed to Quay.io
 ** Tags for the new releases are created
 ** If a _minor_ release was done, _master_ branches are prepared for the
     next version and a version branches named of the form _vX.Y_ are created
@@ -161,8 +111,8 @@ https://github.com/kiali/kiali[kiali/kiali GitHub repository].
 ** Please, follow the https://github.com/kiali/kiali-ui/blob/master/RELEASING.adoc[releasing guide for the front-end]
 ** You can omit this step if there is no need to release the front-end. Kiali
    will be released using the specified version of the front-end.
-. Login to DockerHub
-** `docker login docker.io`
+. Login to Quay.io
+** `docker login quay.io`
 . Checkout the code that you want to release:
 ** `git checkout branch_to_release` (usually, you should release "master")
 ** Be advised that the release process will commit changes locally.
@@ -198,9 +148,9 @@ don't change the version in the `Makefile`).
 
 === Available options
 
-* The generated Docker image is published to kiali/kiali DockerHub repository.
+* The generated container image is published to kiali/kiali Quay.io repository.
   If you want to publish to another repository:
-** `DOCKER_NAME="{repository}" make -f deploy/jenkins-ci/Makefile release``
+** `QUAY_NAME="{repository}" make -f deploy/jenkins-ci/Makefile release``
 * In _major_, _minor_ or _patch_ mode, the release process updates or creates
   a version branch in the kiali-ui repository (the branch name is like
   "vMAJOR.MINOR"). You can omit the creation of this branch:
