@@ -97,7 +97,7 @@ OPERATOR_INSTALL_KIALI ?= false
 # When installing Kiali to a remote cluster via make, here are some configuration settings for it.
 ACCESSIBLE_NAMESPACES ?= **
 ifneq ($(CLUSTER_TYPE),openshift)
-AUTH_STRATEGY ?= login
+AUTH_STRATEGY ?= anonymous
 else
 AUTH_STRATEGY ?= openshift
 endif
