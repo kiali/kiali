@@ -6,6 +6,7 @@
 : ${NAMESPACE_AGENCY:=travel-agency}
 : ${NAMESPACE_PORTAL:=travel-portal}
 : ${ENABLE_OPERATION_METRICS:=false}
+: ${INSTALL_VERSION:=v1}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -16,6 +17,10 @@ while [ $# -gt 0 ]; do
       ;;
     -eo|--enable-operation-metrics)
       ENABLE_OPERATION_METRICS="$2"
+      shift;shift
+      ;;
+    -iv|--install-version)
+      INSTALL_VERSION="$2"
       shift;shift
       ;;
     -na|--namespace-agency)
@@ -30,9 +35,10 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
-  -eo|--enable-operation-metrics: either 'true' or 'false'. Only works on Istio 1.6 installed in istio-system.
+  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.6 installed in istio-system.
   -na|--namespace-agency: where to install the travel agency demo resources
   -np|--namespace-portal: where to install the travel portal demo resources
+  -iv|--install-version: either 'v1' or 'v2' (default is v1)
 HELPMSG
       exit 1
       ;;
@@ -48,41 +54,58 @@ echo CLIENT_EXE=${CLIENT_EXE}
 echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
+echo INSTALL_VERSION=${INSTALL_VERSION}
 
-# Create the demo namespaces
-
-${CLIENT_EXE} create namespace ${NAMESPACE_AGENCY}
-${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
-
-${CLIENT_EXE} create namespace ${NAMESPACE_PORTAL}
-${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
-
-# Prepare the new demo namespaces for CNI
-
-if [ "${CLIENT_EXE}" == "oc" ]; then
-${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
-${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
-cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_AGENCY} create -f -
-apiVersion: "k8s.cni.cncf.io/v1"
-kind: NetworkAttachmentDefinition
-metadata:
-  name: istio-cni
-EOF
-
-${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
-${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
-cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_PORTAL} create -f -
-apiVersion: "k8s.cni.cncf.io/v1"
-kind: NetworkAttachmentDefinition
-metadata:
-  name: istio-cni
-EOF
+if [ "${INSTALL_VERSION}" != "v1" -a "${INSTALL_VERSION}" != "v2" ]; then
+  echo "Version must be one of 'v1' or 'v2'. Aborting."
+  exit 1
 fi
 
-# Deploy the demo
+# Create and prepare the demo namespaces
 
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_agency.yaml) -n ${NAMESPACE_AGENCY}
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
+if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
+  ${CLIENT_EXE} create namespace ${NAMESPACE_AGENCY}
+  ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
+  if [ "${CLIENT_EXE}" == "oc" ]; then
+    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
+    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_AGENCY} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+  fi
+fi
+
+if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
+  ${CLIENT_EXE} create namespace ${NAMESPACE_PORTAL}
+  ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
+  if [ "${CLIENT_EXE}" == "oc" ]; then
+    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
+    cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_PORTAL} create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: istio-cni
+EOF
+  fi
+fi
+
+# Deploy the demo v1
+
+if [ "${INSTALL_VERSION}" == "v1" ]; then
+  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_agency.yaml) -n ${NAMESPACE_AGENCY}
+  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
+fi
+
+# Deploy the demo v2
+
+if [ "${INSTALL_VERSION}" == "v2" ]; then
+  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_agency_v2.yaml) -n ${NAMESPACE_AGENCY}
+  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/master/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
+fi
 
 # Set up metric classification
 
