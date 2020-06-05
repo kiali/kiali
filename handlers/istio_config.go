@@ -32,7 +32,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
-	criteria := parseCriteria(namespace, objects)
+	criteria := business.ParseIstioConfigCriteria(namespace, objects)
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -76,137 +76,10 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioConfig)
 }
 
-func checkType(types []string, name string) bool {
-	for _, typeName := range types {
-		if typeName == name {
-			return true
-		}
-	}
-	return false
-}
-
-func parseCriteria(namespace string, objects string) business.IstioConfigCriteria {
-	defaultInclude := objects == ""
-	criteria := business.IstioConfigCriteria{}
-	criteria.Namespace = namespace
-	criteria.IncludeGateways = defaultInclude
-	criteria.IncludeVirtualServices = defaultInclude
-	criteria.IncludeDestinationRules = defaultInclude
-	criteria.IncludeServiceEntries = defaultInclude
-	criteria.IncludeRules = defaultInclude
-	criteria.IncludeAdapters = defaultInclude
-	criteria.IncludeTemplates = defaultInclude
-	criteria.IncludeQuotaSpecs = defaultInclude
-	criteria.IncludeQuotaSpecBindings = defaultInclude
-	criteria.IncludePolicies = defaultInclude
-	criteria.IncludeMeshPolicies = defaultInclude
-	criteria.IncludeServiceMeshPolicies = defaultInclude
-	criteria.IncludeClusterRbacConfigs = defaultInclude
-	criteria.IncludeRbacConfigs = defaultInclude
-	criteria.IncludeServiceMeshRbacConfigs = defaultInclude
-	criteria.IncludeServiceRoles = defaultInclude
-	criteria.IncludeServiceRoleBindings = defaultInclude
-	criteria.IncludeSidecars = defaultInclude
-	criteria.IncludeAuthorizationPolicies = defaultInclude
-	criteria.IncludePeerAuthentication = defaultInclude
-	criteria.IncludeWorkloadEntries = defaultInclude
-	criteria.IncludeRequestAuthentications = defaultInclude
-	criteria.IncludeEnvoyFilters = defaultInclude
-	criteria.IncludeAttributeManifests = defaultInclude
-	criteria.IncludeHttpApiSpecBindings = defaultInclude
-	criteria.IncludeHttpApiSpecs = defaultInclude
-
-	if defaultInclude {
-		return criteria
-	}
-
-	types := strings.Split(objects, ",")
-	if checkType(types, business.Gateways) {
-		criteria.IncludeGateways = true
-	}
-	if checkType(types, business.VirtualServices) {
-		criteria.IncludeVirtualServices = true
-	}
-	if checkType(types, business.DestinationRules) {
-		criteria.IncludeDestinationRules = true
-	}
-	if checkType(types, business.ServiceEntries) {
-		criteria.IncludeServiceEntries = true
-	}
-	if checkType(types, business.Rules) {
-		criteria.IncludeRules = true
-	}
-	if checkType(types, business.Adapters) {
-		criteria.IncludeAdapters = true
-	}
-	if checkType(types, business.Templates) {
-		criteria.IncludeTemplates = true
-	}
-	if checkType(types, business.QuotaSpecs) {
-		criteria.IncludeQuotaSpecs = true
-	}
-	if checkType(types, business.QuotaSpecBindings) {
-		criteria.IncludeQuotaSpecBindings = true
-	}
-	if checkType(types, business.Policies) {
-		criteria.IncludePolicies = true
-	}
-	if checkType(types, business.MeshPolicies) {
-		criteria.IncludeMeshPolicies = true
-	}
-	if checkType(types, business.ServiceMeshPolicies) {
-		criteria.IncludeServiceMeshPolicies = true
-	}
-	if checkType(types, business.ClusterRbacConfigs) {
-		criteria.IncludeClusterRbacConfigs = true
-	}
-	if checkType(types, business.RbacConfigs) {
-		criteria.IncludeRbacConfigs = true
-	}
-	if checkType(types, business.ServiceMeshRbacConfigs) {
-		criteria.IncludeServiceMeshRbacConfigs = true
-	}
-	if checkType(types, business.ServiceRoles) {
-		criteria.IncludeServiceRoles = true
-	}
-	if checkType(types, business.ServiceRoleBindings) {
-		criteria.IncludeServiceRoleBindings = true
-	}
-	if checkType(types, business.Sidecars) {
-		criteria.IncludeSidecars = true
-	}
-	if checkType(types, business.AuthorizationPolicies) {
-		criteria.IncludeAuthorizationPolicies = true
-	}
-	if checkType(types, business.PeerAuthentications) {
-		criteria.IncludePeerAuthentication = true
-	}
-	if checkType(types, business.WorkloadEntries) {
-		criteria.IncludeWorkloadEntries = true
-	}
-	if checkType(types, business.RequestAuthentications) {
-		criteria.IncludeRequestAuthentications = true
-	}
-	if checkType(types, business.EnvoyFilters) {
-		criteria.IncludeEnvoyFilters = true
-	}
-	if checkType(types, business.AttributeManifests) {
-		criteria.IncludeAttributeManifests = true
-	}
-	if checkType(types, business.HttpApiSpecBindings) {
-		criteria.IncludeHttpApiSpecBindings = true
-	}
-	if checkType(types, business.HttpApiSpecs) {
-		criteria.IncludeHttpApiSpecs = true
-	}
-	return criteria
-}
-
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
-	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
 	includeValidations := false
@@ -243,7 +116,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		}(&istioConfigValidations, &err)
 	}
 
-	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, objectSubtype, object)
+	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, object)
 
 	if includeValidations && err == nil {
 		wg.Wait()
@@ -265,7 +138,6 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
-	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
 	api := business.GetIstioAPI(objectType)
@@ -280,12 +152,12 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, objectSubtype, object)
+	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	} else {
-		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object)
+		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Name: "+object)
 		RespondWithCode(w, http.StatusOK)
 	}
 }
@@ -294,7 +166,6 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
-	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
 	api := business.GetIstioAPI(objectType)
@@ -315,14 +186,14 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, jsonPatch)
+	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, object, jsonPatch)
 
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
 
-	audit(r, "UPDATE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object+" Patch: "+jsonPatch)
+	audit(r, "UPDATE on Namespace: "+namespace+" Type: "+objectType+" Name: "+object+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 }
 
@@ -331,7 +202,6 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
-	objectSubtype := params["object_subtype"]
 
 	api := business.GetIstioAPI(objectType)
 	if api == "" {
@@ -351,13 +221,13 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, body)
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, body)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
 
-	audit(r, "CREATE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Object: "+string(body))
+	audit(r, "CREATE on Namespace: "+namespace+" Type: "+objectType+" Object: "+string(body))
 	RespondWithJSON(w, http.StatusOK, createdConfigDetails)
 }
 

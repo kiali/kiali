@@ -16,7 +16,7 @@ import (
 
 // Namespace deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	k8s                    kubernetes.IstioClientInterface
+	k8s                    kubernetes.ClientInterface
 	hasProjects            bool
 	isAccessibleNamespaces map[string]bool
 }
@@ -34,7 +34,7 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(k8s kubernetes.IstioClientInterface) NamespaceService {
+func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
 
 	var hasProjects bool
 

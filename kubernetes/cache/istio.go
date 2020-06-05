@@ -34,8 +34,8 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	if c.CheckIstioResource(kubernetes.GatewayType) {
 		(*informer)[kubernetes.GatewayType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Gateways, c.refreshDuration, namespace)
 	}
-	if c.CheckIstioResource(kubernetes.ServiceentryType) {
-		(*informer)[kubernetes.ServiceentryType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Serviceentries, c.refreshDuration, namespace)
+	if c.CheckIstioResource(kubernetes.ServiceEntryType) {
+		(*informer)[kubernetes.ServiceEntryType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.ServiceEntries, c.refreshDuration, namespace)
 	}
 }
 
@@ -45,7 +45,7 @@ func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
 		isSynced = nsCache[kubernetes.VirtualServiceType].HasSynced() &&
 			nsCache[kubernetes.DestinationRuleType].HasSynced() &&
 			nsCache[kubernetes.GatewayType].HasSynced() &&
-			nsCache[kubernetes.ServiceentryType].HasSynced()
+			nsCache[kubernetes.ServiceEntryType].HasSynced()
 	} else {
 		isSynced = false
 	}

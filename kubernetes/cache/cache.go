@@ -47,7 +47,7 @@ type (
 	}
 
 	kialiCacheImpl struct {
-		istioClient            kubernetes.IstioClient
+		istioClient            kubernetes.K8SClient
 		k8sApi                 kube.Interface
 		istioNetworkingGetter  cache.Getter
 		refreshDuration        time.Duration

@@ -43,7 +43,7 @@ func setupServiceEntries() *business.Layer {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&externalSE,
 		&internalSE},
 		nil)
@@ -249,7 +249,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&remoteSE},
 		nil)
 	config.Set(config.NewConfig())

@@ -2,11 +2,8 @@ package kubetest
 
 import (
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
-	osroutes_v1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
-	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
@@ -22,18 +19,18 @@ import (
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	k8s kubernetes.IstioClientInterface
+	k8s kubernetes.ClientInterface
 }
 
 // Constructor
-func NewK8SClientFactoryMock(k8s kubernetes.IstioClientInterface) *K8SClientFactoryMock {
+func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
 	k8sClientFactory := new(K8SClientFactoryMock)
 	k8sClientFactory.k8s = k8s
 	return k8sClientFactory
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(token string) (kubernetes.IstioClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(token string) (kubernetes.ClientInterface, error) {
 	return o.k8s, nil
 }
 
@@ -80,407 +77,6 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
 }
 
-func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, json string) (kubernetes.IstioObject, error) {
-	args := o.Called(api, namespace, resourceType, json)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) DeleteIstioObject(api, namespace, objectType, objectName string) error {
-	args := o.Called(api, namespace, objectType, objectName)
-	return args.Error(0)
-}
-
-func (o *K8SClientMock) GetAdapter(namespace, adapterType, adapterName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, adapterType, adapterName)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAdapters(namespace, labelSelector string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {
-	args := o.Called(namespace, configName)
-	return args.Get(0).(*core_v1.ConfigMap), args.Error(1)
-}
-
-func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_apps_v1.CronJob, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]batch_apps_v1.CronJob), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error) {
-	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(*apps_v1.Deployment), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
-}
-
-// It returns an error on any problem.
-func (o *K8SClientMock) GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
-	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRoute(namespace, name string) (*osroutes_v1.Route, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(*osroutes_v1.Route), args.Error(1)
-}
-
-func (o *K8SClientMock) GetSidecar(namespace string, sidecar string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetSidecars(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osapps_v1.DeploymentConfig, error) {
-	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(*osapps_v1.DeploymentConfig), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]osapps_v1.DeploymentConfig), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDestinationRules(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDestinationRule(namespace string, destinationrule string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, destinationrule)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*core_v1.Endpoints, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).(*core_v1.Endpoints), args.Error(1)
-}
-
-func (o *K8SClientMock) GetGateways(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetGateway(namespace string, gateway string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, gateway)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetIstioRule(namespace string, istiorule string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, istiorule)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetIstioRules(namespace string, labelSelector string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]batch_v1.Job), args.Error(1)
-}
-
-func (o *K8SClientMock) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(*core_v1.Namespace), args.Error(1)
-}
-
-func (o *K8SClientMock) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
-	args := o.Called()
-	return args.Get(0).([]core_v1.Namespace), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
-	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]core_v1.Pod), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPod(namespace, name string) (*core_v1.Pod, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(*core_v1.Pod), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
-	args := o.Called(namespace, name, opts)
-	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
-}
-
-func (o *K8SClientMock) GetProject(project string) (*osproject_v1.Project, error) {
-	args := o.Called(project)
-	return args.Get(0).(*osproject_v1.Project), args.Error(1)
-}
-
-func (o *K8SClientMock) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
-	args := o.Called()
-	return args.Get(0).([]osproject_v1.Project), args.Error(1)
-}
-
-func (o *K8SClientMock) GetQuotaSpec(namespace string, quotaSpecName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, quotaSpecName)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetQuotaSpecs(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, quotaSpecBindingName)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetQuotaSpecBindings(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]core_v1.ReplicationController), args.Error(1)
-}
-
-func (o *K8SClientMock) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]apps_v1.ReplicaSet), args.Error(1)
-}
-
-func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
-	args := o.Called(namespace, api, resourceType, verbs)
-	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
-}
-
-func (o *K8SClientMock) GetService(namespace string, serviceName string) (*core_v1.Service, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).(*core_v1.Service), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	args := o.Called(namespace, selectorLabels)
-	return args.Get(0).([]core_v1.Service), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceEntries(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceEntry(namespace string, serviceEntryName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, serviceEntryName)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
-	args := o.Called(namespace, statefulsetName)
-	return args.Get(0).(*apps_v1.StatefulSet), args.Error(1)
-}
-
-func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
-}
-
-func (o *K8SClientMock) GetTemplate(namespace, templateType, templateName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, templateType, templateName)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetTemplates(namespace, labelSelector string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetVirtualServices(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetVirtualService(namespace string, virtualservice string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, virtualservice)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPolicies(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetMeshPolicies() ([]kubernetes.IstioObject, error) {
-	args := o.Called()
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetMeshPolicy(policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called()
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceMeshPolicies(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceMeshPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetClusterRbacConfigs() ([]kubernetes.IstioObject, error) {
-	args := o.Called()
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetClusterRbacConfig(policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called()
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceMeshRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceMeshRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceRoles(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceRole(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceRoleBindings(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetServiceRoleBinding(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAuthorizationPolicies(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAuthorizationPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPeerAuthentications(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetPeerAuthentication(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRequestAuthentications(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRequestAuthentication(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetWorkloadEntries(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetWorkloadEntry(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetEnvoyFilters(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetEnvoyFilter(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAttributeManifests(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAttributeManifest(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetHttpApiSpecBindings(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetHttpApiSpecBinding(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetHttpApiSpecs(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetHttpApiSpec(namespace string, name string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.RBACDetails, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(*kubernetes.RBACDetails), args.Error(1)
-}
-
-func (o *K8SClientMock) GetIstioConfigMap() (*kubernetes.IstioMeshConfig, error) {
-	args := o.Called()
-	return args.Get(0).(*kubernetes.IstioMeshConfig), args.Error(1)
-}
-
 func (o *K8SClientMock) IsOpenShift() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
@@ -501,11 +97,6 @@ func (o *K8SClientMock) GetToken() string {
 	return args.Get(0).(string)
 }
 
-func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {
-	args := o.Called(api, namespace, resourceType, name, jsonPatch)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
 func (o *K8SClientMock) MockService(namespace, name string) {
 	s := fakeService(namespace, name)
 	o.On("GetService", namespace, name).Return(&s, nil)
@@ -518,36 +109,6 @@ func (o *K8SClientMock) MockServices(namespace string, names []string) {
 	}
 	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
 	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
-}
-
-func (o *K8SClientMock) CreateIter8Experiment(namespace string, json string) (kubernetes.Iter8Experiment, error) {
-	args := o.Called(namespace, json)
-	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
-}
-
-func (o *K8SClientMock) GetIter8Experiment(namespace string, name string) (kubernetes.Iter8Experiment, error) {
-	args := o.Called(namespace, name)
-	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
-}
-
-func (o *K8SClientMock) GetIter8Experiments(namespace string) ([]kubernetes.Iter8Experiment, error) {
-	args := o.Called(namespace)
-	return args.Get(0).([]kubernetes.Iter8Experiment), args.Error(1)
-}
-
-func (o *K8SClientMock) IsIter8Api() bool {
-	args := o.Called()
-	return args.Get(0).(bool)
-}
-
-func (o *K8SClientMock) DeleteIter8Experiment(namespace string, name string) error {
-	args := o.Called(namespace, name)
-	return args.Error(0)
-}
-
-func (o *K8SClientMock) Iter8ConfigMap() ([]string, error) {
-	args := o.Called()
-	return args.Get(0).([]string), args.Error(1)
 }
 
 func (o *K8SClientMock) IsMixerDisabled() bool {
@@ -580,48 +141,6 @@ func fakeService(namespace, name string) core_v1.Service {
 					Port:     3000,
 				},
 			},
-		},
-	}
-}
-
-func FakePodListWithoutSidecar() []core_v1.Pod {
-	return []core_v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:   "reviews-v1",
-				Labels: map[string]string{"app": "reviews", "version": "v1"}}},
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:   "reviews-v2",
-				Labels: map[string]string{"app": "reviews", "version": "v2"}}},
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:   "httpbin-v1",
-				Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
-	}
-}
-
-func FakePod(name string, labels map[string]string, podPhase core_v1.PodPhase) core_v1.Pod {
-	return core_v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:   name,
-			Labels: labels,
-		},
-		Status: core_v1.PodStatus{
-			Phase: podPhase,
-		},
-	}
-}
-
-func FakePodWithContainers(name string, labels map[string]string, podPhase core_v1.PodPhase, containerStatuses []core_v1.ContainerStatus) core_v1.Pod {
-	return core_v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:   name,
-			Labels: labels,
-		},
-		Status: core_v1.PodStatus{
-			Phase:             podPhase,
-			ContainerStatuses: containerStatuses,
 		},
 	}
 }

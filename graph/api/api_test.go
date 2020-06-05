@@ -37,7 +37,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 
 	k8s := new(kubetest.K8SClientMock)
 
-	k8s.On("GetNamespaces").Return(
+	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(
 		&core_v1.NamespaceList{
 			Items: []core_v1.Namespace{
 				{
@@ -54,7 +54,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 		}, nil)
 
 	fmt.Println("!!! Set up standard mock")
-	k8s.On("GetProjects").Return(
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(
 		[]osproject_v1.Project{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -91,7 +91,7 @@ func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheust
 	k8s := new(kubetest.K8SClientMock)
 
 	fmt.Println("!!! Set up complex mock")
-	k8s.On("GetNamespaces").Return(
+	k8s.On("GetNamespaces", mock.AnythingOfType("string")).Return(
 		&core_v1.NamespaceList{
 			Items: []core_v1.Namespace{
 				{
@@ -117,7 +117,7 @@ func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheust
 			},
 		}, nil)
 
-	k8s.On("GetProjects").Return(
+	k8s.On("GetProjects", mock.AnythingOfType("string")).Return(
 		[]osproject_v1.Project{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{

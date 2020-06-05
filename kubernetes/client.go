@@ -34,13 +34,22 @@ type PodLogs struct {
 	Logs string `json:"logs,omitempty"`
 }
 
-// IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
+	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
 	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
-	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
-	GetAdapters(namespace, labelSelector string) ([]IstioObject, error)
-	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
+	GetClusterRbacConfig(name string) (IstioObject, error)
+	GetClusterRbacConfigs() ([]IstioObject, error)
+	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
+	GetMeshPolicy(policyName string) (IstioObject, error)
+	GetMeshPolicies() ([]IstioObject, error)
+	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
+	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
+	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
+	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+}
+
+type K8SClientInterface interface {
 	GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
@@ -48,87 +57,46 @@ type IstioClientInterface interface {
 	GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error)
 	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error)
 	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
-	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
-	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
 	GetEndpoints(namespace string, serviceName string) (*core_v1.Endpoints, error)
-	GetGateway(namespace string, gateway string) (IstioObject, error)
-	GetGateways(namespace string) ([]IstioObject, error)
-	GetIstioRule(namespace string, istiorule string) (IstioObject, error)
-	GetIstioRules(namespace string, labelSelector string) ([]IstioObject, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
-	GetProject(project string) (*osproject_v1.Project, error)
-	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
-	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
-	GetQuotaSpecs(namespace string) ([]IstioObject, error)
-	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
-	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
-	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
-	GetSidecar(namespace string, sidecar string) (IstioObject, error)
-	GetSidecars(namespace string) ([]IstioObject, error)
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*core_v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
-	GetServiceEntries(namespace string) ([]IstioObject, error)
-	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
-	GetTemplate(namespace, templateType, templateName string) (IstioObject, error)
-	GetTemplates(namespace, labelSelector string) ([]IstioObject, error)
-	GetPolicy(namespace string, policyName string) (IstioObject, error)
-	GetPolicies(namespace string) ([]IstioObject, error)
-	GetMeshPolicy(policyName string) (IstioObject, error)
-	GetMeshPolicies() ([]IstioObject, error)
-	GetClusterRbacConfig(name string) (IstioObject, error)
-	GetClusterRbacConfigs() ([]IstioObject, error)
-	GetRbacConfig(namespace string, name string) (IstioObject, error)
-	GetRbacConfigs(namespace string) ([]IstioObject, error)
-	GetServiceMeshPolicy(namespace string, name string) (IstioObject, error)
-	GetServiceMeshPolicies(namespace string) ([]IstioObject, error)
-	GetServiceMeshRbacConfig(namespace string, name string) (IstioObject, error)
-	GetServiceMeshRbacConfigs(namespace string) ([]IstioObject, error)
-	GetServiceRole(namespace string, name string) (IstioObject, error)
-	GetServiceRoles(namespace string) ([]IstioObject, error)
-	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
-	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
-	GetAuthorizationPolicy(namespace string, name string) (IstioObject, error)
-	GetAuthorizationPolicies(namespace string) ([]IstioObject, error)
-	GetPeerAuthentication(namespace string, name string) (IstioObject, error)
-	GetPeerAuthentications(namespace string) ([]IstioObject, error)
-	GetWorkloadEntry(namespace string, name string) (IstioObject, error)
-	GetWorkloadEntries(namespace string) ([]IstioObject, error)
-	GetRequestAuthentication(namespace string, name string) (IstioObject, error)
-	GetRequestAuthentications(namespace string) ([]IstioObject, error)
-	GetEnvoyFilter(namespace string, name string) (IstioObject, error)
-	GetEnvoyFilters(namespace string) ([]IstioObject, error)
-	GetAttributeManifest(namespace string, name string) (IstioObject, error)
-	GetAttributeManifests(namespace string) ([]IstioObject, error)
-	GetHttpApiSpecBinding(namespace string, name string) (IstioObject, error)
-	GetHttpApiSpecBindings(namespace string) ([]IstioObject, error)
-	GetHttpApiSpec(namespace string, name string) (IstioObject, error)
-	GetHttpApiSpecs(namespace string) ([]IstioObject, error)
+}
+
+type OSClientInterface interface {
+	GetProject(project string) (*osproject_v1.Project, error)
+	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
+	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
+}
+
+// ClientInterface for mocks (only mocked function are necessary here)
+type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
-	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
-	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	GetIstioConfigMap() (*IstioMeshConfig, error)
 	IsMaistraApi() bool
 	IsOpenShift() bool
 	IsMixerDisabled() bool
-	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	K8SClientInterface
+	IstioClientInterface
 	Iter8ClientInterface
+	OSClientInterface
 }
 
-// IstioClient is the client struct for Kubernetes and Istio APIs
+// K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
-type IstioClient struct {
-	IstioClientInterface
+type K8SClient struct {
+	ClientInterface
 	token                    string
 	k8s                      *kube.Clientset
 	istioConfigApi           *rest.RESTClient
@@ -185,32 +153,32 @@ type IstioClient struct {
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
-func (client *IstioClient) GetK8sApi() *kube.Clientset {
+func (client *K8SClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
 }
 
 // GetIstioConfigApi returns the istio config rest client
-func (client *IstioClient) GetIstioConfigApi() *rest.RESTClient {
+func (client *K8SClient) GetIstioConfigApi() *rest.RESTClient {
 	return client.istioConfigApi
 }
 
 // GetIstioNetworkingApi returns the istio config rest client
-func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
+func (client *K8SClient) GetIstioNetworkingApi() *rest.RESTClient {
 	return client.istioNetworkingApi
 }
 
 // GetIstioRbacApi returns the istio rbac rest client
-func (client *IstioClient) GetIstioRbacApi() *rest.RESTClient {
+func (client *K8SClient) GetIstioRbacApi() *rest.RESTClient {
 	return client.istioRbacApi
 }
 
 // GetIstioSecurityApi returns the istio security rest client
-func (client *IstioClient) GetIstioSecurityApi() *rest.RESTClient {
+func (client *K8SClient) GetIstioSecurityApi() *rest.RESTClient {
 	return client.istioSecurityApi
 }
 
 // GetToken returns the BearerToken used from the config
-func (client *IstioClient) GetToken() string {
+func (client *K8SClient) GetToken() string {
 	return client.token
 }
 
@@ -245,8 +213,8 @@ func ConfigClient() (*rest.Config, error) {
 // It hides the access to Kubernetes/Openshift credentials.
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
-func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
-	client := IstioClient{
+func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
+	client := K8SClient{
 		token: config.BearerToken,
 	}
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)

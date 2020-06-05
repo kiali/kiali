@@ -15,7 +15,7 @@ import (
 )
 
 type OpenshiftOAuthService struct {
-	k8s kubernetes.IstioClientInterface
+	k8s kubernetes.ClientInterface
 }
 
 type OAuthMetadata struct {

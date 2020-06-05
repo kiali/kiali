@@ -21,7 +21,7 @@ import (
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type SvcService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
@@ -245,13 +245,13 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var vsCreate, vsUpdate, vsDelete bool
 	go func() {
 		defer wg.Done()
-		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, VirtualServices, "")
+		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, kubernetes.VirtualServices)
 	}()
 
 	var drCreate, drUpdate, drDelete bool
 	go func() {
 		defer wg.Done()
-		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, DestinationRules, "")
+		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, kubernetes.DestinationRules)
 	}()
 
 	wg.Wait()

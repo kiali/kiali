@@ -19,6 +19,8 @@ type IstioConfigList struct {
 	Rules                  IstioRules             `json:"rules"`
 	Adapters               IstioAdapters          `json:"adapters"`
 	Templates              IstioTemplates         `json:"templates"`
+	Handlers               IstioHandlers          `json:"handlers"`
+	Instances              IstioInstances         `json:"instances"`
 	QuotaSpecs             QuotaSpecs             `json:"quotaSpecs"`
 	QuotaSpecBindings      QuotaSpecBindings      `json:"quotaSpecBindings"`
 	AttributeManifests     AttributeManifests     `json:"attributeManifests"`
@@ -51,6 +53,8 @@ type IstioConfigDetails struct {
 	Rule                  *IstioRule             `json:"rule"`
 	Adapter               *IstioAdapter          `json:"adapter"`
 	Template              *IstioTemplate         `json:"template"`
+	Handler               *IstioHandler          `json:"handler"`
+	Instance              *IstioInstance         `json:"instance"`
 	QuotaSpec             *QuotaSpec             `json:"quotaSpec"`
 	QuotaSpecBinding      *QuotaSpecBinding      `json:"quotaSpecBinding"`
 	AttributeManifest     *AttributeManifest     `json:"attributeManifest"`

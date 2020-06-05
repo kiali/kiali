@@ -21,7 +21,7 @@ type Layer struct {
 	App            AppService
 	Namespace      NamespaceService
 	Jaeger         JaegerService
-	k8s            kubernetes.IstioClientInterface
+	k8s            kubernetes.ClientInterface
 	OpenshiftOAuth OpenshiftOAuthService
 	TLS            TLSService
 	ThreeScale     ThreeScaleService
@@ -100,7 +100,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients
-func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
+func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}

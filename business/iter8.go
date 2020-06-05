@@ -15,7 +15,7 @@ import (
 )
 
 type Iter8Service struct {
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
@@ -65,7 +65,7 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		canCreate, canUpdate, canDelete = getPermissions(in.k8s, namespace, Experiments, "")
+		canCreate, canUpdate, canDelete = getPermissions(in.k8s, namespace, kubernetes.Iter8Experiments)
 	}(errChan)
 
 	wg.Wait()

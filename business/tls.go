@@ -10,7 +10,7 @@ import (
 )
 
 type TLSService struct {
-	k8s             kubernetes.IstioClientInterface
+	k8s             kubernetes.ClientInterface
 	businessLayer   *Layer
 	enabledAutoMtls *bool
 }
@@ -56,7 +56,7 @@ func (in *TLSService) hasMeshPeerAuthnEnabled() (bool, error) {
 	var mps []kubernetes.IstioObject
 	var err error
 	if !in.k8s.IsMaistraApi() {
-		if mps, err = in.k8s.GetPeerAuthentications(config.Get().IstioNamespace); err != nil {
+		if mps, err = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); err != nil {
 			return false, nil
 		}
 	} else {
@@ -67,7 +67,7 @@ func (in *TLSService) hasMeshPeerAuthnEnabled() (bool, error) {
 		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
 		// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
 		controlPlaneNs := config.Get().IstioNamespace
-		if mps, err = in.k8s.GetServiceMeshPolicies(controlPlaneNs); err != nil {
+		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.ServiceMeshPolicies, ""); err != nil {
 			// This query can return false if user can't access to controlPlaneNs
 			// On this case we log internally the error but we return a false with nil
 			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, err)
@@ -170,7 +170,7 @@ func (in TLSService) hasPeerAuthnNamespacemTLSDefinition(namespace string) (stri
 		return "", nil
 	}
 
-	ps, err := in.k8s.GetPeerAuthentications(namespace)
+	ps, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 	if err != nil {
 		return "", err
 	}

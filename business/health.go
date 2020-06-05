@@ -19,7 +19,7 @@ import (
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 

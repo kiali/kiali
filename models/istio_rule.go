@@ -52,9 +52,6 @@ type IstioAdapter struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     interface{}        `json:"spec"`
-	Adapter  string             `json:"adapter"`
-	// We need to bring the plural to use it from the UI to build the API
-	Adapters string `json:"adapters"`
 }
 
 // IstioTemplates istioTemplates
@@ -62,7 +59,7 @@ type IstioAdapter struct {
 // This type type is used for returning an array of IstioTemplates
 //
 // swagger:model istioTemplates
-// An array of istioTemplates
+// An array of istioTemplate
 // swagger:allOf
 type IstioTemplates []IstioTemplate
 
@@ -75,9 +72,46 @@ type IstioTemplate struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     interface{}        `json:"spec"`
-	Template string             `json:"template"`
-	// We need to bring the plural to use it from the UI to build the API
-	Templates string `json:"templates"`
+}
+
+// IstioHandlers istioHandlers
+//
+// This type type is used for returning an array of IstioHandlers
+//
+// swagger:model istioHandlers
+// An array of istioHandler
+// swagger:allOf
+type IstioHandlers []IstioHandler
+
+// IstioHandler istioHandler
+//
+// This type type is used for returning a IstioHandler
+//
+// swagger:model istioHandler
+type IstioHandler struct {
+	meta_v1.TypeMeta
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     interface{}        `json:"spec"`
+}
+
+// IstioInstances istioInstances
+//
+// This type type is used for returning an array of IstioInstances
+//
+// swagger:model istioInstances
+// An array of istioIstance
+// swagger:allOf
+type IstioInstances []IstioInstance
+
+// IstioInstance istioInstance
+//
+// This type type is used for returning a IstioInstance
+//
+// swagger:model istioInstance
+type IstioInstance struct {
+	meta_v1.TypeMeta
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     interface{}        `json:"spec"`
 }
 
 func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
@@ -110,8 +144,6 @@ func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
 	istioAdapter.TypeMeta = adapter.GetTypeMeta()
 	istioAdapter.Metadata = adapter.GetObjectMeta()
 	istioAdapter.Spec = adapter.GetSpec()
-	istioAdapter.Adapter = adapter.GetObjectMeta().Labels["adapter"]
-	istioAdapter.Adapters = adapter.GetObjectMeta().Labels["adapters"]
 	return istioAdapter
 }
 
@@ -128,7 +160,37 @@ func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
 	istioTemplate.TypeMeta = template.GetTypeMeta()
 	istioTemplate.Metadata = template.GetObjectMeta()
 	istioTemplate.Spec = template.GetSpec()
-	istioTemplate.Template = template.GetObjectMeta().Labels["template"]
-	istioTemplate.Templates = template.GetObjectMeta().Labels["templates"]
 	return istioTemplate
+}
+
+func CastIstioHandlersCollection(handlers []kubernetes.IstioObject) IstioHandlers {
+	istioHandlers := make([]IstioHandler, len(handlers))
+	for i, handler := range handlers {
+		istioHandlers[i] = CastIstioHandler(handler)
+	}
+	return istioHandlers
+}
+
+func CastIstioHandler(handler kubernetes.IstioObject) IstioHandler {
+	istioHandler := IstioHandler{}
+	istioHandler.TypeMeta = handler.GetTypeMeta()
+	istioHandler.Metadata = handler.GetObjectMeta()
+	istioHandler.Spec = handler.GetSpec()
+	return istioHandler
+}
+
+func CastIstioInstancesCollection(instances []kubernetes.IstioObject) IstioInstances {
+	istioInstances := make([]IstioInstance, len(instances))
+	for i, instance := range instances {
+		istioInstances[i] = CastIstioInstance(instance)
+	}
+	return istioInstances
+}
+
+func CastIstioInstance(instance kubernetes.IstioObject) IstioInstance {
+	istioInstance := IstioInstance{}
+	istioInstance.TypeMeta = instance.GetTypeMeta()
+	istioInstance.Metadata = instance.GetObjectMeta()
+	istioInstance.Spec = instance.GetSpec()
+	return istioInstance
 }

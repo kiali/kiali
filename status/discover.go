@@ -12,7 +12,7 @@ import (
 
 var clientFactory kubernetes.ClientFactory
 
-func getClient() (kubernetes.IstioClientInterface, error) {
+func getClient() (kubernetes.ClientInterface, error) {
 	saToken, err := kubernetes.GetKialiToken()
 	if err != nil {
 		return nil, err

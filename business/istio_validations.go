@@ -17,7 +17,7 @@ import (
 )
 
 type IstioValidationsService struct {
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
@@ -158,72 +158,74 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails}
 
 	switch objectType {
-	case Gateways:
+	case kubernetes.Gateways:
 		objectCheckers = []ObjectChecker{
 			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
 		}
-	case VirtualServices:
+	case kubernetes.VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
-	case DestinationRules:
+	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
-	case ServiceMeshPolicies:
+	case kubernetes.ServiceMeshPolicies:
 		smPoliciesChecker := checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{smPoliciesChecker}
-	case ServiceEntries:
+	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
-	case Rules:
+	case kubernetes.Rules:
 		// Validations on Istio Rules are not yet in place
-	case Templates:
+	case kubernetes.Templates:
 		// Validations on Templates are not yet in place
-		// TODO Support subtypes
-	case Adapters:
+	case kubernetes.Adapters:
 		// Validations on Adapters are not yet in place
-		// TODO Support subtypes
-	case Policies:
+	case kubernetes.Handlers:
+		// Validations on Templates are not yet in place
+	case kubernetes.Instances:
+		// Validations on Adapters are not yet in place
+	case kubernetes.Policies:
 		// Still supporting Policy Objects
-	case MeshPolicies:
+	case kubernetes.MeshPolicies:
 		// Still supporting MeshPolicies
-	case QuotaSpecs:
+	case kubernetes.QuotaSpecs:
 		// Validations on QuotaSpecs are not yet in place
-	case QuotaSpecBindings:
+	case kubernetes.QuotaSpecBindings:
 		// Validations on QuotaSpecBindings are not yet in place
-	case ClusterRbacConfigs:
+	case kubernetes.ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
-	case ServiceMeshRbacConfigs:
+	case kubernetes.ServiceMeshRbacConfigs:
 		// Validations on ServiceMeshRbacConfigs are not yet in place
-	case RbacConfigs:
+	case kubernetes.RbacConfigs:
 		// Validations on RbacConfigs are not yet in place
-	case Sidecars:
+	case kubernetes.Sidecars:
 		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces,
 			WorkloadList: workloads, Services: services, ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{sidecarsChecker}
-	case AuthorizationPolicies:
+	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
-	case ServiceRoles:
+	case kubernetes.ServiceRoles:
 		objectCheckers = []ObjectChecker{noServiceChecker}
-	case ServiceRoleBindings:
+	case kubernetes.ServiceRoleBindings:
 		roleBindChecker := checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails}
 		objectCheckers = []ObjectChecker{roleBindChecker}
-	case PeerAuthentications:
+	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads}
 		objectCheckers = []ObjectChecker{peerAuthnChecker}
-	case WorkloadEntries:
+	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
-	case RequestAuthentications:
+	case kubernetes.RequestAuthentications:
 		// Validation on RequestAuthentications are not yet in place
-	case EnvoyFilters:
+	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
-	case AttributeManifests:
+	case kubernetes.AttributeManifests:
 		// Validation on AttributeManifests are not yet in place
-	case HttpApiSpecBindings:
+	case kubernetes.HttpApiSpecBindings:
 		// Validation on HttpApiSpecBindings are not yet in place
-	case HttpApiSpecs:
+	case kubernetes.HttpApiSpecs:
 		// Validation on HttpApiSpecs are not yet in place
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
@@ -275,7 +277,9 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 					return kialiCache.GetIstioResources("Gateway", namespace)
 				}
 			} else {
-				getCacheGateways = in.k8s.GetGateways
+				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
+					return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+				}
 			}
 			go fetchNoEntry(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
 		}
@@ -440,23 +444,32 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			wg2.Add(1)
 			go fetch(&istioDetails.DestinationRules, namespace, "", in.k8s.GetDestinationRules, &wg2, errChan2)
 		}
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceentryType) {
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceEntryType) {
 			istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
 		} else {
 			wg2.Add(1)
-			go fetchNoEntry(&istioDetails.ServiceEntries, namespace, in.k8s.GetServiceEntries, &wg2, errChan2)
+			getServiceEntries := func(namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
+			}
+			go fetchNoEntry(&istioDetails.ServiceEntries, namespace, getServiceEntries, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.GatewayType) {
 			istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
 		} else {
 			wg2.Add(1)
-			go fetchNoEntry(&istioDetails.Gateways, namespace, in.k8s.GetGateways, &wg2, errChan2)
+			getGateways := func(namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+			}
+			go fetchNoEntry(&istioDetails.Gateways, namespace, getGateways, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.SidecarType) {
 			istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
 		} else {
 			wg2.Add(1)
-			go fetchNoEntry(&istioDetails.Sidecars, namespace, in.k8s.GetSidecars, &wg2, errChan2)
+			getSidecars := func(namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+			}
+			go fetchNoEntry(&istioDetails.Sidecars, namespace, getSidecars, &wg2, errChan2)
 		}
 		wg2.Wait()
 
@@ -489,7 +502,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 
 		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
 		if !in.k8s.IsMaistraApi() {
-			if meshpeerAuthns, iErr := in.k8s.GetPeerAuthentications(config.Get().IstioNamespace); iErr == nil {
+			if meshpeerAuthns, iErr := in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
 				details.MeshPeerAuthentications = meshpeerAuthns
 			} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
 				errChan <- iErr
@@ -502,7 +515,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
 			// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
 			controlPlaneNs := config.Get().IstioNamespace
-			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(controlPlaneNs); iErr == nil {
+			if serviceMeshPolicies, iErr := in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.ServiceMeshPolicies, ""); iErr == nil {
 				details.ServiceMeshPolicies = serviceMeshPolicies
 			} else if !checkForbidden("GetServiceMeshPolicies", iErr, fmt.Sprintf("probably user can't access to %s namespace", controlPlaneNs)) {
 				errChan <- iErr
@@ -513,7 +526,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		peerAuthns, err := in.k8s.GetPeerAuthentications(namespace)
+		peerAuthns, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 		if err != nil {
 			errChan <- err
 		} else {

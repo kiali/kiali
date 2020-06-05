@@ -10,7 +10,7 @@ import (
 )
 
 var iter8typeMeta = meta_v1.TypeMeta{
-	Kind:       PluralType[iter8experiments],
+	Kind:       PluralType[Iter8Experiments],
 	APIVersion: ApiIter8Version,
 }
 
@@ -285,7 +285,7 @@ type Iter8ClientInterface interface {
 	Iter8ConfigMap() ([]string, error)
 }
 
-func (in *IstioClient) IsIter8Api() bool {
+func (in *K8SClient) IsIter8Api() bool {
 	if in.isIter8Api == nil {
 		isIter8Api := false
 		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/iter8.tools").Do().Raw()
@@ -298,11 +298,11 @@ func (in *IstioClient) IsIter8Api() bool {
 	return *in.isIter8Api
 }
 
-func (in *IstioClient) Iter8ConfigMap() ([]string, error) {
+func (in *K8SClient) Iter8ConfigMap() ([]string, error) {
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
 	err := in.k8s.CoreV1().RESTClient().Get().Namespace("iter8").Resource("configmaps").
-		Name(iter8configMap).Do().Into(result)
+		Name(Iter8ConfigMap).Do().Into(result)
 	if err == nil {
 		metrics := []Iter8AnalyticMetric{}
 		err = yaml.Unmarshal([]byte(result.Data["metrics"]), &metrics)
@@ -316,11 +316,11 @@ func (in *IstioClient) Iter8ConfigMap() ([]string, error) {
 	return mnames, err
 }
 
-func (in *IstioClient) CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error) {
+func (in *K8SClient) CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error) {
 	var result runtime.Object
 	var err error
 	byteJson := []byte(json)
-	result, err = in.iter8Api.Post().Namespace(namespace).Resource(iter8experiments).Body(byteJson).Do().Get()
+	result, err = in.iter8Api.Post().Namespace(namespace).Resource(Iter8Experiments).Body(byteJson).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -333,8 +333,8 @@ func (in *IstioClient) CreateIter8Experiment(namespace string, json string) (Ite
 	return i8, nil
 }
 
-func (in *IstioClient) GetIter8Experiment(namespace string, name string) (Iter8Experiment, error) {
-	result, err := in.iter8Api.Get().Namespace(namespace).Resource(iter8experiments).SubResource(name).Do().Get()
+func (in *K8SClient) GetIter8Experiment(namespace string, name string) (Iter8Experiment, error) {
+	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -347,8 +347,8 @@ func (in *IstioClient) GetIter8Experiment(namespace string, name string) (Iter8E
 	return i8, nil
 }
 
-func (in *IstioClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, error) {
-	result, err := in.iter8Api.Get().Namespace(namespace).Resource(iter8experiments).Do().Get()
+func (in *K8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, error) {
+	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -365,8 +365,8 @@ func (in *IstioClient) GetIter8Experiments(namespace string) ([]Iter8Experiment,
 	return iter8Experiments, nil
 }
 
-func (in *IstioClient) DeleteIter8Experiment(namespace string, name string) error {
+func (in *K8SClient) DeleteIter8Experiment(namespace string, name string) error {
 	var err error
-	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(iter8experiments).Name(name).Do().Get()
+	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(Iter8Experiments).Name(name).Do().Get()
 	return err
 }
