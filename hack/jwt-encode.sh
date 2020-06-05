@@ -159,6 +159,6 @@ if [ ! -z "${url}" ]; then
   echo "=================FULL JWT JSON:"
   echo -n ${jwt_token} | ./jwt-decode.sh -k "${secret}"
   echo "=================RESULTS:"
-  if [ ! -z "${nonce}" ]; then nonce_cookie_arg="${ncookie}=${nonce}"; fi
-  curl -v -k --cookie "${cookie}=${jwt_token}" ${nonce_cookie_arg:-} ${url}
+  if [ ! -z "${nonce}" ]; then nonce_cookie_arg="; ${ncookie}=${nonce}"; fi
+  curl -v -k --cookie "${cookie}=${jwt_token}${nonce_cookie_arg:-}" ${url}
 fi
