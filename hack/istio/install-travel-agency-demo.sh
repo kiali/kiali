@@ -7,12 +7,17 @@
 : ${NAMESPACE_PORTAL:=travel-portal}
 : ${ENABLE_OPERATION_METRICS:=false}
 : ${INSTALL_VERSION:=v1}
+: ${DELETE_DEMO:=false}
 
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
     -c|--client)
       CLIENT_EXE="$2"
+      shift;shift
+      ;;
+    -d|--delete)
+      DELETE_DEMO="$2"
       shift;shift
       ;;
     -eo|--enable-operation-metrics)
@@ -35,6 +40,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
+  -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.6 installed in istio-system.
   -na|--namespace-agency: where to install the travel agency demo resources
   -np|--namespace-portal: where to install the travel portal demo resources
@@ -59,6 +65,23 @@ echo INSTALL_VERSION=${INSTALL_VERSION}
 if [ "${INSTALL_VERSION}" != "v1" -a "${INSTALL_VERSION}" != "v2" ]; then
   echo "Version must be one of 'v1' or 'v2'. Aborting."
   exit 1
+fi
+
+# If we are to delete, remove everything and exit immediately after
+if [ "${DELETE_DEMO}" == "true" ]; then
+  echo "Deleting Travel Agency Demo (the envoy filters, if previously created, will remain)"
+  if [ "${CLIENT_EXE}" == "oc" ]; then
+    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
+    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
+    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
+
+    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
+    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
+    ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
+  fi
+  ${CLIENT_EXE} delete namespace ${NAMESPACE_AGENCY}
+  ${CLIENT_EXE} delete namespace ${NAMESPACE_PORTAL}
+  exit 0
 fi
 
 # Create and prepare the demo namespaces
