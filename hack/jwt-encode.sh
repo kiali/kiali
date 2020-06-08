@@ -2,6 +2,22 @@
 
 set -u
 
+# Prints the decoded signing key from the default secret in the default Istio control plane namespace
+echo_kiali_signing_key() {
+  local client_exe=""
+  if which kubectl > /dev/null 2>&1; then
+    client_exe="kubectl";
+  else
+    if which oc > /dev/null 2>&1; then
+      client_exe="oc";
+    else
+      echo "You need either 'kubectl' or 'oc' in your PATH, or define the secret key via --key option."
+      exit 1
+    fi
+  fi
+  $client_exe get secret kiali-signing-key -n istio-system -o jsonpath='{.data.key}' | base64 -d
+}
+
 #
 # JWT Encoder Bash Script
 #
@@ -9,7 +25,7 @@ set -u
 # mechanisms within Kiali that do not allow for Kiali to accept hacked JWT tokens.
 #
 
-secret="${KEY:-kiali}"
+secret="${KEY:-$(echo_kiali_signing_key)}"
 cookie="${COOKIE:-kiali-token}"
 ncookie="${NCOOKIE:-kiali-token-openid-nonce}"
 
@@ -157,7 +173,7 @@ if [ ! -z "${url}" ]; then
   echo "NONCE:   ${nonce}"
   echo "SID:     ${sid}"
   echo "=================FULL JWT JSON:"
-  echo -n ${jwt_token} | ./jwt-decode.sh -k "${secret}"
+  echo -n ${jwt_token} | $(cd "$(dirname "$0")" ; pwd -P)/jwt-decode.sh -k "${secret}"
   echo "=================RESULTS:"
   if [ ! -z "${nonce}" ]; then nonce_cookie_arg="; ${ncookie}=${nonce}"; fi
   curl -v -k --cookie "${cookie}=${jwt_token}${nonce_cookie_arg:-}" ${url}
