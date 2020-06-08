@@ -8,15 +8,6 @@ import (
 
 var ruleRegex = regexp.MustCompile(`^(<|>|<=|>=|==|!=)?([0-9]+)$`)
 
-// Check if variable
-var checkX = regexp.MustCompile(`x|X`)
-
-/*
- Regex forresponse_code
-*/
-
-var responseCodeRegex = regexp.MustCompile(`^(x|X|[0-9]+)(<|>|<=|>=|==|!=)(x|X|[0-9]+)(<|>|<=|>=|==|!=)?(x|X|[0-9]+)?$`)
-
 /*
 	Check the Rule expression
 	Return
@@ -56,22 +47,8 @@ func GetRegex(expr string) *regexp.Regexp {
 */
 func CheckExpr(expr string, regex regexp.Regexp) (error, []string) {
 	steps := delete_empty(regex.FindStringSubmatch(expr))
-	// The Expression match the regex and there is only a X|x
 	if regex.MatchString(expr) {
 		return nil, steps
 	}
 	return fmt.Errorf("Error %s not match %s", expr, regex.String()), []string{}
-}
-
-/*
-	Check If a expression have a variable x|X for response_code case
-		expr: string with expression
-		n: number of times that the expression should be in the string (1)
-
-*/
-func CheckVariable(expr string, n int) bool {
-	if checkX.MatchString(expr) && len(checkX.FindAllStringIndex(expr, -1)) == n {
-		return true
-	}
-	return false
 }

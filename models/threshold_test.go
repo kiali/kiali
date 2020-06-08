@@ -17,7 +17,7 @@ var thresholdConfResponseCode = []config.ThresholdCheck{
 		Kind:        "service",
 		RequestType: "inbound",
 		Label:       "response_code",
-		Expression:  "x>=200",
+		Expression:  "400",
 		Alert:       "warning",
 	},
 }
