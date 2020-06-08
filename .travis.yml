@@ -4,6 +4,16 @@ arch:
   - amd64
   - arm64
 
+jobs:
+  # Sometimes it takes a very long time to spin up an ARM machine on travis.
+  # Because of this, we will not require arm64 builds in order for a PR to go green.
+  fast_finish: true
+  allow_failures:
+    - arch: arm64
+  include:
+    - arch: amd64
+    - arch: arm64
+
 go:
 - 1.14.2
 
