@@ -288,18 +288,19 @@ type ThresholdHealth struct {
 }
 
 type ThresholdCheck struct {
-	Rule       string          `yaml:"rule"`
-	Kind       string          `yaml:"kind"`
-	Label      string          `yaml:"label"`
-	Filter     ThresholdFilter `yaml:"filter,omitempty"`
-	Expression string          `yaml:"exp"`
-	Alert      string          `yaml:"alert"`
+	Rule        string          `yaml:"rule"`
+	Kind        string          `yaml:"kind"`
+	RequestType string          `yaml:"request_type"`
+	Label       string          `yaml:"label"`
+	Filter      ThresholdFilter `yaml:"filter,omitempty"`
+	Expression  string          `yaml:"expression"`
+	Alert       string          `yaml:"alert"`
 }
 
 type ThresholdFilter struct {
 	Regex       string                `yaml:"regex,omitempty"`
 	LabelFilter *ThresholdLabelFilter `yaml:"label_filter,omitempty"`
-	OptProm     *ThresholdLabelFilter `yaml:"prom_filter,omitempty"`
+	OptProm     *ThresholdLabelFilter `yaml:"opt_prom,omitempty"`
 }
 
 type ThresholdLabelFilter struct {

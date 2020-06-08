@@ -3745,6 +3745,13 @@
         "requests": {
           "$ref": "#/definitions/RequestHealth"
         },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Thresholds"
+        },
         "workloadStatuses": {
           "type": "array",
           "items": {
@@ -6717,6 +6724,13 @@
       "properties": {
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Threshold"
+          },
+          "x-go-name": "Thresholds"
         },
         "workloadStatus": {
           "$ref": "#/definitions/WorkloadStatus"

@@ -19,12 +19,28 @@ type Threshold struct {
 	Alert   string `json:"alert"`
 }
 
-func (in *Thresholds) Parse(ths []config.ThresholdCheck, sample *model.Vector, kind string) {
+func addParse(th config.ThresholdCheck, sample *model.Vector) (Threshold, error) {
+	newTh := Threshold{}
+	error := newTh.Parse(th, sample)
+	if error == nil {
+		return newTh, nil
+	}
+	return Threshold{}, error
+}
+
+func (in *Thresholds) Parse(ths []config.ThresholdCheck, inbound *model.Vector, outbound *model.Vector) {
 	for _, th := range ths {
-		newTh := Threshold{}
-		error := newTh.Parse(th, sample)
-		if error == nil {
-			*in = append(*in, newTh)
+		if th.RequestType == "both" || th.RequestType == "inbound" {
+			thParsed, err := addParse(th, inbound)
+			if err == nil {
+				*in = append(*in, thParsed)
+			}
+		}
+		if th.RequestType == "both" || th.RequestType == "outbound" {
+			thParsed, err := addParse(th, outbound)
+			if err == nil {
+				*in = append(*in, thParsed)
+			}
 		}
 	}
 }
@@ -43,7 +59,7 @@ func (in *Threshold) Parse(th config.ThresholdCheck, sample *model.Vector) error
 	if threshold.Compare(calculation, op, percent) {
 		in.Alert = th.Alert
 		in.Percent = count * 100 / total
-		in.Rule = fmt.Sprintf("[%s] Alert requests where %s are %d%% , rule defined %s", th.Alert, th.Expression, calculation, th.Rule)
+		in.Rule = fmt.Sprintf("[%s][%s] Alert requests where %s are %d%% , rule defined %s", th.Alert, th.RequestType, th.Expression, calculation, th.Rule)
 		return nil
 	}
 

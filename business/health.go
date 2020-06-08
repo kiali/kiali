@@ -296,7 +296,7 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
-	return rqHealth, generateThreshold(inbound, namespace, service, "service", srv.Service.Labels), err
+	return rqHealth, generateThreshold(inbound, model.Vector{}, namespace, service, "service", srv.Service.Labels), err
 }
 
 func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) (models.RequestHealth, []models.Threshold, error) {
@@ -309,7 +309,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth, generateThreshold(inbound, namespace, app, "app", getLabelsApp(appInfo[app].Workloads, appInfo[app].Services)), err
+	return rqHealth, generateThreshold(inbound, outbound, namespace, app, "app", getLabelsApp(appInfo[app].Workloads, appInfo[app].Services)), err
 }
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, []models.Threshold, error) {
@@ -322,7 +322,7 @@ func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInte
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth, generateThreshold(inbound, namespace, workload, "workload", wInfo.Labels), err
+	return rqHealth, generateThreshold(inbound, outbound, namespace, workload, "workload", wInfo.Labels), err
 }
 
 func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
@@ -339,9 +339,9 @@ func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
 	return statuses
 }
 
-func generateThreshold(requests model.Vector, ns string, srv string, kind string, labels map[string]string) models.Thresholds {
+func generateThreshold(inbound model.Vector, outbound model.Vector, ns string, srv string, kind string, labels map[string]string) models.Thresholds {
 	thAlerts := threshold.FilterBy(config.Get().ThresholdsHealth, ns, srv, kind, labels)
 	thresholds := models.Thresholds{}
-	thresholds.Parse(thAlerts, &requests, "service")
+	thresholds.Parse(thAlerts, &inbound, &outbound)
 	return thresholds
 }
