@@ -553,11 +553,6 @@ type RBACDetails struct {
 	AuthorizationPolicies  []IstioObject `json:"authorizationpolicies"`
 }
 
-type istioResponse struct {
-	results []IstioObject
-	err     error
-}
-
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
 type GenericIstioObject struct {
 	meta_v1.TypeMeta   `json:",inline" yaml:",inline"`
