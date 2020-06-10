@@ -43,6 +43,15 @@ def get_pod_id(kiali_client, namespace, pod_name):
 
     return pod_id
 
+def get_object_name(kiali_client, namespace):
+    try:
+        response = evaluate_response(kiali_client, method_name='istioConfigList', path={'namespace': namespace})
+        object_name = response.json().get('rules')[0].get('metadata').get('name')
+    except AssertionError:
+        pytest.fail(response.content)
+   
+    return object_name 
+
 def get_kiali_version(kiali_client):
     try:
         response = evaluate_response(kiali_client, method_name='getStatus', path={})
@@ -141,7 +150,10 @@ def test_istio_config_list(kiali_client):
 
 
 def test_istio_config_details(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': 'threescale'})
+    object_name = get_object_name(kiali_client, namespace=control_plane_namespace)
+    if object_name == None:
+        pytest.skip() 
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': object_name})
 
 def __test_istio_config_details_subtype(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': control_plane_namespace, 'object_type': 'destinationrules', 'object_subtype': 'istio-policy', 'object': 'istio-policy'} )
