@@ -50,7 +50,7 @@ def get_object_name(kiali_client, namespace):
     except AssertionError:
         pytest.fail(response.content)
    
-    return object_name.strip() 
+    return object_name 
 
 def get_kiali_version(kiali_client):
     try:
@@ -151,7 +151,7 @@ def test_istio_config_list(kiali_client):
 
 def test_istio_config_details(kiali_client):
     object_name = get_object_name(kiali_client, namespace=control_plane_namespace)
-    if(not(object_name)):
+    if object_name == None:
         pytest.skip() 
     evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': object_name})
 
