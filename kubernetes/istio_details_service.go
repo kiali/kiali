@@ -352,7 +352,6 @@ func (in *K8SClient) getAuthenticationResources() map[string]bool {
 	return *in.authenticationResources
 }
 
-
 // GetAuthorizationDetails returns ServiceRoles, ServiceRoleBindings and ClusterRbacDetails
 func (in *K8SClient) GetAuthorizationDetails(namespace string) (*RBACDetails, error) {
 	rb := &RBACDetails{}
@@ -463,73 +462,6 @@ func (in *K8SClient) IsMixerDisabled() bool {
 	//   * https://github.com/istio/istio/issues/15935
 	in.isMixerDisabled = &meshConfig.DisableMixerHttpReports
 	return *in.isMixerDisabled
-}
-
-func FilterByHost(host, serviceName, namespace string) bool {
-	// Check single name
-	if host == serviceName {
-		return true
-	}
-	// Check service.namespace
-	if host == fmt.Sprintf("%s.%s", serviceName, namespace) {
-		return true
-	}
-	// Check the FQDN. <service>.<namespace>.svc
-	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, "svc") {
-		return true
-	}
-
-	// Check the FQDN. <service>.<namespace>.svc.<zone>
-	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
-		return true
-	}
-
-	// Note, FQDN names are defined from Kubernetes registry specification [1]
-	// [1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
-
-	return false
-}
-
-func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string, serviceEntries map[string]struct{}) bool {
-	if len(protocols) == 0 {
-		return false
-	}
-	for _, protocol := range protocols {
-		if prot, ok := spec[protocol]; ok {
-			if aHttp, ok := prot.([]interface{}); ok {
-				for _, httpRoute := range aHttp {
-					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
-						if route, ok := mHttpRoute["route"]; ok {
-							if aRouteDestination, ok := route.([]interface{}); ok {
-								for _, destination := range aRouteDestination {
-									if mDestination, ok := destination.(map[string]interface{}); ok {
-										if destinationW, ok := mDestination["destination"]; ok {
-											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
-												if host, ok := mDestinationW["host"]; ok {
-													if sHost, ok := host.(string); ok {
-														if FilterByHost(sHost, service, namespace) {
-															return true
-														}
-														if serviceEntries != nil {
-															// We have ServiceEntry to check
-															if _, found := serviceEntries[strings.ToLower(protocol)+sHost]; found {
-																return true
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
 }
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname

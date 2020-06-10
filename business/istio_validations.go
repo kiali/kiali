@@ -421,7 +421,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
 		} else {
 			wg2.Add(1)
-			getVirtualServices := func (namespace string) ([]kubernetes.IstioObject, error) {
+			getVirtualServices := func(namespace string) ([]kubernetes.IstioObject, error) {
 				return in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			}
 			go fetchIstioObjects(&istioDetails.VirtualServices, namespace, getVirtualServices, &wg2, errChan2)
@@ -430,7 +430,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
 		} else {
 			wg2.Add(1)
-			getDestinationRules := func (namespace string) ([]kubernetes.IstioObject, error) {
+			getDestinationRules := func(namespace string) ([]kubernetes.IstioObject, error) {
 				return in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			}
 			go fetchIstioObjects(&istioDetails.DestinationRules, namespace, getDestinationRules, &wg2, errChan2)
