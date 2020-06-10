@@ -116,7 +116,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(ns) {
 				drs, err = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, ns)
 			} else {
-				drs, err = in.k8s.GetDestinationRules(ns, "")
+				drs, err = in.k8s.GetIstioObjects(ns, kubernetes.DestinationRules, "")
 			}
 			if err != nil {
 				errChan <- err

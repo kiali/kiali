@@ -144,7 +144,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(criteria.Namespace) {
 				vs, vsErr = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, criteria.Namespace)
 			} else {
-				vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, "")
+				vs, vsErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.VirtualServices, "")
 			}
 			if vsErr == nil {
 				(&istioConfigList.VirtualServices).Parse(vs)
@@ -163,7 +163,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(criteria.Namespace) {
 				dr, drErr = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, criteria.Namespace)
 			} else {
-				dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, "")
+				dr, drErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.DestinationRules, "")
 			}
 			if drErr == nil {
 				(&istioConfigList.DestinationRules).Parse(dr)
@@ -285,7 +285,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
 		if criteria.IncludeMeshPolicies && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
-			if mp, mpErr := in.k8s.GetMeshPolicies(); mpErr == nil {
+			if mp, mpErr := in.k8s.GetIstioObjects("", kubernetes.MeshPolicies, ""); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
 			} else {
 				// This query can return false if user doesn't have cluster permissions
@@ -300,7 +300,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		// ClusterRbacConfigs are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
 		if criteria.IncludeClusterRbacConfigs && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
-			if crc, crcErr := in.k8s.GetClusterRbacConfigs(); crcErr == nil {
+			if crc, crcErr := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, ""); crcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
 			} else {
 				// This query can return false if user doesn't have cluster permissions
@@ -608,7 +608,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
 		if config.IsIstioNamespace(namespace) {
-			if mp, iErr := in.k8s.GetMeshPolicy(object); iErr == nil {
+			if mp, iErr := in.k8s.GetIstioObject("", kubernetes.MeshPolicies, object); iErr == nil {
 				istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 				istioConfigDetail.MeshPolicy.Parse(mp)
 			} else {
@@ -626,7 +626,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		// ClusterRbacConfigs are not namespaced. They will be only listed for an istio namespace.
 		// Only listed in non Maistra environments.
 		if config.IsIstioNamespace(namespace) {
-			if crc, iErr := in.k8s.GetClusterRbacConfig(object); iErr == nil {
+			if crc, iErr := in.k8s.GetIstioObject("", kubernetes.ClusterRbacConfigs, object); iErr == nil {
 				istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 				istioConfigDetail.ClusterRbacConfig.Parse(crc)
 			} else {

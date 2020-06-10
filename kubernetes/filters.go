@@ -3,6 +3,7 @@ package kubernetes
 import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // FilterPodsForService returns a subpart of pod list filtered according service selector
@@ -68,3 +69,47 @@ func FilterServicesForSelector(selector labels.Selector, allServices []core_v1.S
 	}
 	return services
 }
+
+func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[VirtualServices],
+		APIVersion: ApiNetworkingVersion,
+	}
+	virtualServices := make([]IstioObject, 0)
+	for _, virtualService := range allVs {
+		appendVirtualService := serviceName == ""
+		routeProtocols := []string{"http", "tcp"}
+		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
+			appendVirtualService = true
+		}
+		if appendVirtualService {
+			vs := virtualService.DeepCopyIstioObject()
+			vs.SetTypeMeta(typeMeta)
+			virtualServices = append(virtualServices, vs)
+		}
+	}
+	return virtualServices
+}
+
+func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[DestinationRules],
+		APIVersion: ApiNetworkingVersion,
+	}
+	destinationRules := make([]IstioObject, 0)
+	for _, destinationRule := range allDr {
+		appendDestinationRule := serviceName == ""
+		if host, ok := destinationRule.GetSpec()["host"]; ok {
+			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
+				appendDestinationRule = true
+			}
+		}
+		if appendDestinationRule {
+			dr := destinationRule.DeepCopyIstioObject()
+			dr.SetTypeMeta(typeMeta)
+			destinationRules = append(destinationRules, dr)
+		}
+	}
+	return destinationRules
+}
+

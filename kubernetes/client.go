@@ -38,14 +38,8 @@ type IstioClientInterface interface {
 	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
 	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
-	GetClusterRbacConfig(name string) (IstioObject, error)
-	GetClusterRbacConfigs() ([]IstioObject, error)
-	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
-	GetMeshPolicy(policyName string) (IstioObject, error)
-	GetMeshPolicies() ([]IstioObject, error)
 	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
 	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
-	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 }
 

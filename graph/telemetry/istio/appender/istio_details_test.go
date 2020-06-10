@@ -59,12 +59,12 @@ func TestCBAll(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
@@ -121,12 +121,12 @@ func TestCBSubset(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
@@ -190,10 +190,10 @@ func TestVS(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
 		vService.DeepCopyIstioObject(),
 	}, nil)
 

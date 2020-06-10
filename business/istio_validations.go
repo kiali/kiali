@@ -281,7 +281,7 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 					return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
 				}
 			}
-			go fetchNoEntry(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
+			go fetchIstioObjects(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
 		}
 	} else {
 		select {
@@ -291,22 +291,7 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 	}
 }
 
-func fetch(rValue *[]kubernetes.IstioObject, namespace, service string, fetcher func(string, string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
-	defer wg.Done()
-	if len(errChan) == 0 {
-		fetched, err := fetcher(namespace, service)
-		if err != nil {
-			select {
-			case errChan <- err:
-			default:
-			}
-		} else {
-			*rValue = append(*rValue, fetched...)
-		}
-	}
-}
-
-func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+func fetchIstioObjects(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		fetched, err := fetcher(namespace)
@@ -436,13 +421,19 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
 		} else {
 			wg2.Add(1)
-			go fetch(&istioDetails.VirtualServices, namespace, "", in.k8s.GetVirtualServices, &wg2, errChan2)
+			getVirtualServices := func (namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+			}
+			go fetchIstioObjects(&istioDetails.VirtualServices, namespace, getVirtualServices, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) {
 			istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
 		} else {
 			wg2.Add(1)
-			go fetch(&istioDetails.DestinationRules, namespace, "", in.k8s.GetDestinationRules, &wg2, errChan2)
+			getDestinationRules := func (namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+			}
+			go fetchIstioObjects(&istioDetails.DestinationRules, namespace, getDestinationRules, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceEntryType) {
 			istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
@@ -451,7 +442,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			getServiceEntries := func(namespace string) ([]kubernetes.IstioObject, error) {
 				return in.k8s.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
 			}
-			go fetchNoEntry(&istioDetails.ServiceEntries, namespace, getServiceEntries, &wg2, errChan2)
+			go fetchIstioObjects(&istioDetails.ServiceEntries, namespace, getServiceEntries, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.GatewayType) {
 			istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
@@ -460,7 +451,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			getGateways := func(namespace string) ([]kubernetes.IstioObject, error) {
 				return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
 			}
-			go fetchNoEntry(&istioDetails.Gateways, namespace, getGateways, &wg2, errChan2)
+			go fetchIstioObjects(&istioDetails.Gateways, namespace, getGateways, &wg2, errChan2)
 		}
 		if nsCached && kialiCache.CheckIstioResource(kubernetes.SidecarType) {
 			istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
@@ -469,7 +460,7 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			getSidecars := func(namespace string) ([]kubernetes.IstioObject, error) {
 				return in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 			}
-			go fetchNoEntry(&istioDetails.Sidecars, namespace, getSidecars, &wg2, errChan2)
+			go fetchIstioObjects(&istioDetails.Sidecars, namespace, getSidecars, &wg2, errChan2)
 		}
 		wg2.Wait()
 

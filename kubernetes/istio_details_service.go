@@ -167,7 +167,13 @@ func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector stri
 		return []IstioObject{}, nil
 	}
 
-	result, err := apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
+	var result runtime.Object
+	var err error
+	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
+		result, err = apiClient.Get().Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
+	} else {
+		result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +203,14 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 	} else {
 		return nil, fmt.Errorf("%s not found in ResourcesTypeToAPI", resourceType)
 	}
-	result, err := apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do().Get()
+
+	var result runtime.Object
+	var err error
+	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
+		result, err = apiClient.Get().Resource(resourceType).SubResource(name).Do().Get()
+	} else {
+		result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do().Get()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -339,192 +352,6 @@ func (in *K8SClient) getAuthenticationResources() map[string]bool {
 	return *in.authenticationResources
 }
 
-// GetVirtualServices return all VirtualServices for a given namespace.
-// If serviceName param is provided it will filter all VirtualServices having a host defined on a particular service.
-// It returns an error on any problem.
-func (in *K8SClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
-	// In case VirtualServices aren't present on Istio, return empty array.
-	// I know this is unlikely but just to apply these check in all list get methods
-	if !in.hasNetworkingResource(VirtualServices) {
-		return []IstioObject{}, nil
-	}
-
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(VirtualServices).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	virtualServiceList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
-	}
-	return FilterVirtualServices(virtualServiceList.GetItems(), namespace, serviceName), nil
-}
-
-func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[VirtualServices],
-		APIVersion: ApiNetworkingVersion,
-	}
-	virtualServices := make([]IstioObject, 0)
-	for _, virtualService := range allVs {
-		appendVirtualService := serviceName == ""
-		routeProtocols := []string{"http", "tcp"}
-		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
-			appendVirtualService = true
-		}
-		if appendVirtualService {
-			vs := virtualService.DeepCopyIstioObject()
-			vs.SetTypeMeta(typeMeta)
-			virtualServices = append(virtualServices, vs)
-		}
-	}
-	return virtualServices
-}
-
-// GetDestinationRules returns all DestinationRules for a given namespace.
-// If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
-// It returns an error on any problem.
-func (in *K8SClient) GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
-	// In case DestinationRules aren't present on Istio, return empty array.
-	if !in.hasNetworkingResource(DestinationRules) {
-		return []IstioObject{}, nil
-	}
-
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(DestinationRules).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	destinationRuleList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule list", namespace, serviceName)
-	}
-	return FilterDestinationRules(destinationRuleList.GetItems(), namespace, serviceName), nil
-}
-
-func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[DestinationRules],
-		APIVersion: ApiNetworkingVersion,
-	}
-	destinationRules := make([]IstioObject, 0)
-	for _, destinationRule := range allDr {
-		appendDestinationRule := serviceName == ""
-		if host, ok := destinationRule.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
-				appendDestinationRule = true
-			}
-		}
-		if appendDestinationRule {
-			dr := destinationRule.DeepCopyIstioObject()
-			dr.SetTypeMeta(typeMeta)
-			destinationRules = append(destinationRules, dr)
-		}
-	}
-	return destinationRules
-}
-
-func (in *K8SClient) GetMeshPolicies() ([]IstioObject, error) {
-	// In case MeshPeerAuthentications aren't present on Istio, return empty array.
-	if !in.hasAuthenticationResource(MeshPolicies) {
-		return []IstioObject{}, nil
-	}
-
-	// MeshPeerAuthentications are not namespaced. However, API returns all the instances even asking for one specific namespace.
-	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	result, err := in.istioAuthenticationApi.Get().Resource(MeshPolicies).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[MeshPolicies],
-		APIVersion: ApiAuthenticationVersion,
-	}
-	policyList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("it doesn't return a MeshPolicyList list")
-	}
-
-	policies := make([]IstioObject, 0)
-	for _, ps := range policyList.GetItems() {
-		p := ps.DeepCopyIstioObject()
-		p.SetTypeMeta(typeMeta)
-		policies = append(policies, p)
-	}
-
-	return policies, nil
-}
-
-func (in *K8SClient) GetMeshPolicy(policyName string) (IstioObject, error) {
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	result, err := in.istioAuthenticationApi.Get().Resource(MeshPolicies).SubResource(policyName).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[MeshPolicies],
-		APIVersion: ApiAuthenticationVersion,
-	}
-	mp, ok := result.(*GenericIstioObject)
-	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a MeshPolicy object", policyName)
-	}
-	p := mp.DeepCopyIstioObject()
-	p.SetTypeMeta(typeMeta)
-	return p, nil
-}
-
-func (in *K8SClient) GetClusterRbacConfigs() ([]IstioObject, error) {
-	// In case ClusterRbacConfigs aren't present on Istio, return empty array.
-	if !in.hasRbacResource(ClusterRbacConfigs) {
-		return []IstioObject{}, nil
-	}
-
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	result, err := in.istioRbacApi.Get().Resource(ClusterRbacConfigs).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[ClusterRbacConfigs],
-		APIVersion: ApiRbacVersion,
-	}
-	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("it doesn't return a ClusterRbacConfigList list")
-	}
-
-	clusterRbacConfigs := make([]IstioObject, 0)
-	for _, crc := range clusterRbacConfigList.GetItems() {
-		c := crc.DeepCopyIstioObject()
-		c.SetTypeMeta(typeMeta)
-		clusterRbacConfigs = append(clusterRbacConfigs, c)
-	}
-	return clusterRbacConfigs, nil
-}
-
-func (in *K8SClient) GetClusterRbacConfig(name string) (IstioObject, error) {
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	result, err := in.istioRbacApi.Get().Resource(ClusterRbacConfigs).SubResource(name).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[ClusterRbacConfigs],
-		APIVersion: ApiRbacVersion,
-	}
-	clusterRbacConfig, ok := result.(*GenericIstioObject)
-	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", name)
-	}
-	c := clusterRbacConfig.DeepCopyIstioObject()
-	c.SetTypeMeta(typeMeta)
-	return c, nil
-}
 
 // GetAuthorizationDetails returns ServiceRoles, ServiceRoleBindings and ClusterRbacDetails
 func (in *K8SClient) GetAuthorizationDetails(namespace string) (*RBACDetails, error) {
@@ -565,7 +392,7 @@ func (in *K8SClient) GetAuthorizationDetails(namespace string) (*RBACDetails, er
 		defer wg.Done()
 		// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
 		if !in.IsMaistraApi() {
-			if crc, err := in.GetClusterRbacConfigs(); err == nil {
+			if crc, err := in.GetIstioObjects("", ClusterRbacConfigs, ""); err == nil {
 				rb.ClusterRbacConfigs = crc
 			} else {
 				errChan <- err
