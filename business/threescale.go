@@ -93,7 +93,7 @@ func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeS
 	}()
 
 	// Create handler on main goroutine
-	_, errHandler = in.k8s.CreateIstioObject(kubernetes.ResourceTypesToAPI[kubernetes.Adapters], conf.IstioNamespace, kubernetes.Handlers, jsonHandler)
+	_, errHandler = in.k8s.CreateIstioObject(kubernetes.ResourceTypesToAPI[kubernetes.Handlers], conf.IstioNamespace, kubernetes.Handlers, jsonHandler)
 
 	wg.Wait()
 
@@ -111,7 +111,7 @@ func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeS
 func (in *ThreeScaleService) getThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
 	conf := config.Get()
 	// Istio config generated from Kiali will be labeled as kiali_wizard
-	tsh, err2 := in.k8s.GetIstioObjects(conf.IstioNamespace, kubernetes.Adapters, "kiali_wizard")
+	tsh, err2 := in.k8s.GetIstioObjects(conf.IstioNamespace, kubernetes.Handlers, "kiali_wizard")
 	if err2 != nil {
 		return models.ThreeScaleHandlers{}, err2
 	}
