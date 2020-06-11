@@ -10,6 +10,8 @@ import {
   HTTPAPISpec,
   HTTPAPISpecBinding,
   IstioAdapter,
+  IstioHandler,
+  IstioInstance,
   IstioRule,
   IstioTemplate,
   ObjectValidation,
@@ -42,6 +44,8 @@ export interface IstioConfigItem {
   rule?: IstioRule;
   adapter?: IstioAdapter;
   template?: IstioTemplate;
+  handler?: IstioHandler;
+  instance?: IstioInstance;
   quotaSpec?: QuotaSpec;
   quotaSpecBinding?: QuotaSpecBinding;
   policy?: Policy;
@@ -75,6 +79,8 @@ export interface IstioConfigList {
   rules: IstioRule[];
   adapters: IstioAdapter[];
   templates: IstioTemplate[];
+  instances: IstioInstance[];
+  handlers: IstioHandler[];
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
   attributeManifests: AttributeManifest[];
@@ -105,6 +111,8 @@ export const dicIstioType = {
   Rule: 'rules',
   Adapter: 'adapters',
   Template: 'templates',
+  Handler: 'handlers',
+  Instance: 'instances',
   QuotaSpec: 'quotaspecs',
   QuotaSpecBinding: 'quotaspecbindings',
   Policy: 'policies',
@@ -132,8 +140,8 @@ export const dicIstioType = {
   templates: 'Template',
   quotaspecs: 'QuotaSpec',
   quotaspecbindings: 'QuotaSpecBinding',
-  instance: 'Instance',
-  handler: 'Handler',
+  instances: 'Instance',
+  handlers: 'Handler',
   policies: 'Policy',
   meshpolicies: 'MeshPolicy',
   clusterrbacconfigs: 'ClusterRbacConfig',
@@ -181,6 +189,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     rules: unfiltered.rules.filter(r => includeName(r.metadata.name, names)),
     adapters: unfiltered.adapters.filter(r => includeName(r.metadata.name, names)),
     templates: unfiltered.templates.filter(r => includeName(r.metadata.name, names)),
+    handlers: unfiltered.handlers.filter(r => includeName(r.metadata.name, names)),
+    instances: unfiltered.instances.filter(r => includeName(r.metadata.name, names)),
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.metadata.name, names)),
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
     policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),

@@ -118,9 +118,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean) => {
-    return props.objectSubtype
-      ? API.getIstioConfigDetailSubtype(props.namespace, props.objectType, props.objectSubtype, props.object)
-      : API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate);
+    return API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate);
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
@@ -268,19 +266,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   onDelete = () => {
-    const deletePromise = this.props.match.params.objectSubtype
-      ? API.deleteIstioConfigDetailSubtype(
-          this.props.match.params.namespace,
-          this.props.match.params.objectType,
-          this.props.match.params.objectSubtype,
-          this.props.match.params.object
-        )
-      : API.deleteIstioConfigDetail(
-          this.props.match.params.namespace,
-          this.props.match.params.objectType,
-          this.props.match.params.object
-        );
-    deletePromise
+    API.deleteIstioConfigDetail(
+      this.props.match.params.namespace,
+      this.props.match.params.objectType,
+      this.props.match.params.object
+    )
       .then(() => this.backToList())
       .catch(error => {
         AlertUtils.addError('Could not delete IstioConfig details.', error);
@@ -290,21 +280,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   onUpdate = () => {
     jsYaml.safeLoadAll(this.state.yamlModified, (objectModified: object) => {
       const jsonPatch = JSON.stringify(mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails)));
-      const updatePromise = this.props.match.params.objectSubtype
-        ? API.updateIstioConfigDetailSubtype(
-            this.props.match.params.namespace,
-            this.props.match.params.objectType,
-            this.props.match.params.objectSubtype,
-            this.props.match.params.object,
-            jsonPatch
-          )
-        : API.updateIstioConfigDetail(
-            this.props.match.params.namespace,
-            this.props.match.params.objectType,
-            this.props.match.params.object,
-            jsonPatch
-          );
-      updatePromise
+      API.updateIstioConfigDetail(
+        this.props.match.params.namespace,
+        this.props.match.params.objectType,
+        this.props.match.params.object,
+        jsonPatch
+      )
         .then(() => {
           const targetMessage =
             this.props.match.params.namespace +

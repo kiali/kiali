@@ -151,36 +151,8 @@ export const getIstioConfigDetail = (namespace: string, objectType: string, obje
   );
 };
 
-export const getIstioConfigDetailSubtype = (
-  namespace: string,
-  objectType: string,
-  objectSubtype: string,
-  object: string
-) => {
-  return newRequest<IstioConfigDetails>(
-    HTTP_VERBS.GET,
-    urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
-    {},
-    {}
-  );
-};
-
 export const deleteIstioConfigDetail = (namespace: string, objectType: string, object: string) => {
   return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {});
-};
-
-export const deleteIstioConfigDetailSubtype = (
-  namespace: string,
-  objectType: string,
-  objectSubtype: string,
-  object: string
-) => {
-  return newRequest<string>(
-    HTTP_VERBS.DELETE,
-    urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
-    {},
-    {}
-  );
 };
 
 export const updateIstioConfigDetail = (
@@ -192,36 +164,12 @@ export const updateIstioConfigDetail = (
   return newRequest(HTTP_VERBS.PATCH, urls.istioConfigDetail(namespace, objectType, object), {}, jsonPatch);
 };
 
-export const updateIstioConfigDetailSubtype = (
-  namespace: string,
-  objectType: string,
-  objectSubtype: string,
-  object: string,
-  jsonPatch: string
-): Promise<Response<string>> => {
-  return newRequest(
-    HTTP_VERBS.PATCH,
-    urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
-    {},
-    jsonPatch
-  );
-};
-
 export const createIstioConfigDetail = (
   namespace: string,
   objectType: string,
   json: string
 ): Promise<Response<string>> => {
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json);
-};
-
-export const createIstioConfigDetailSubtype = (
-  namespace: string,
-  objectType: string,
-  objectSubtype: string,
-  json: string
-): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreateSubtype(namespace, objectType, objectSubtype), {}, json);
 };
 
 export const getServices = (namespace: string) => {

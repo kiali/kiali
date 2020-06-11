@@ -172,6 +172,8 @@ export const IstioTypes = {
   rule: { name: 'Rule', url: 'rules', icon: 'R' },
   adapter: { name: 'Adapter', url: 'adapters', icon: 'A' },
   template: { name: 'Template', url: 'templates', icon: 'T' },
+  instance: { name: 'Instance', url: 'instances', icon: 'I' },
+  handler: { name: 'Handler', url: 'handlers', icon: 'H' },
   quotaspec: { name: 'QuotaSpec', url: 'quotaspecs', icon: 'QS' },
   quotaspecbinding: { name: 'QuotaSpecBinding', url: 'quotaspecbindings', icon: 'QSB' },
   policy: { name: 'Policy', url: 'policies', icon: 'P' },

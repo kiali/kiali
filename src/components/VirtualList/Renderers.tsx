@@ -35,14 +35,8 @@ const getLink = (item: TResource, config: Resource, query?: string) => {
 
 const getIstioLink = (item: TResource) => {
   const type = item['type'];
-  let subType;
 
-  // Adapters and Templates need to pass subtype
-  if (type === 'adapter' || type === 'template') {
-    subType = type === 'adapter' ? item['adapter']!.adapters : item['template']!.templates;
-  }
-
-  return GetIstioObjectUrl(item.name, item.namespace, type, subType);
+  return GetIstioObjectUrl(item.name, item.namespace, type);
 };
 
 // Cells
@@ -312,7 +306,7 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
       key={'VirtuaItem_IstioType_' + item.namespace + '_' + item.name}
       style={{ verticalAlign: 'middle' }}
     >
-      {type === 'adapter' || type === 'template' ? `${object.name}: ${item[type]![type]}` : object.name}
+      {object.name}
     </td>
   );
 };

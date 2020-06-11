@@ -40,6 +40,10 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.adapter;
     } else if (istioObjectDetails.template) {
       istioObject = istioObjectDetails.template;
+    } else if (istioObjectDetails.handler) {
+      istioObject = istioObjectDetails.handler;
+    } else if (istioObjectDetails.instance) {
+      istioObject = istioObjectDetails.instance;
     } else if (istioObjectDetails.quotaSpec) {
       istioObject = istioObjectDetails.quotaSpec;
     } else if (istioObjectDetails.quotaSpecBinding) {

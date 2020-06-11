@@ -27,7 +27,9 @@ import {
   EnvoyFilter,
   AttributeManifest,
   HTTPAPISpec,
-  HTTPAPISpecBinding
+  HTTPAPISpecBinding,
+  IstioHandler,
+  IstioInstance
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -49,6 +51,8 @@ export interface IstioConfigDetails {
   rule: IstioRule;
   adapter: IstioAdapter;
   template: IstioTemplate;
+  handler: IstioHandler;
+  instance: IstioInstance;
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
   attributeManifest: AttributeManifest;

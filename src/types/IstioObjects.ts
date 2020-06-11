@@ -615,14 +615,18 @@ export interface IstioRuleActionItem {
 
 export interface IstioAdapter extends IstioObject {
   spec: any;
-  adapter: string;
-  adapters: string;
 }
 
 export interface IstioTemplate extends IstioObject {
   spec: any;
-  template: string;
-  templates: string;
+}
+
+export interface IstioHandler extends IstioObject {
+  spec: any;
+}
+
+export interface IstioInstance extends IstioObject {
+  spec: any;
 }
 
 export interface QuotaSpecSpec {

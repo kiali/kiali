@@ -105,12 +105,8 @@ const conf = {
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
-      istioConfigCreateSubtype: (namespace: string, objectType: string, objectSubtype: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}`,
       istioConfigDetail: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
-      istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
       iter8: `api/iter8`,
       iter8Metrics: 'api/iter8/metrics',
       iter8Experiments: `api/iter8/experiments`,
