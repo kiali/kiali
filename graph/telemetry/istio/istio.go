@@ -92,7 +92,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
 	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
 	//    defined, on the other cluster.
-	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,request_operation,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
@@ -174,7 +174,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
 		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
 		lProtocol, protocolOk := m["request_protocol"]
-		lOperation, operationOk := m["request_operation"]
 		lCode, codeOk := m["response_code"]
 		lGrpc, grpcOk := m["grpc_response_status"]
 		lFlags, flagsOk := m["response_flags"]
@@ -194,10 +193,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		protocol := string(lProtocol)
-		operation := ""
-		if operationOk {
-			operation = string(lOperation)
-		}
 		code := string(lCode)
 		flags := string(lFlags)
 
@@ -227,15 +222,15 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		if inject {
-			addTraffic(trafficMap, val, protocol, operation, code, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-			addTraffic(trafficMap, val, protocol, operation, code, flags, host, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+			addTraffic(trafficMap, val, protocol, code, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTraffic(trafficMap, val, protocol, code, flags, host, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
-			addTraffic(trafficMap, val, protocol, operation, code, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+			addTraffic(trafficMap, val, protocol, code, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, operation, code, flags, host, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
+func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 
@@ -264,10 +259,6 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, operation, c
 	}
 
 	graph.AddToMetadata(protocol, val, code, flags, host, source.Metadata, dest.Metadata, edge.Metadata)
-
-	if dest.NodeType == NodeTypeService && operation != "" {
-		addToOperationMetadata(val)
-	}
 
 	return source, dest
 }
