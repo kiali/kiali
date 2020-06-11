@@ -454,7 +454,7 @@ func (in *K8SClient) IsMixerDisabled() bool {
 		return true
 	}
 
-	log.Infof("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
+	log.Debugf("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
 
 	// References:
 	//   * https://github.com/istio/api/pull/1112
