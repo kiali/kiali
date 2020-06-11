@@ -87,7 +87,7 @@ envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
 kiali-delete: .ensure-oc-exists secret-delete
 	@echo Remove Kiali
-	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}"
+	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" ; true
 
 ## kiali-purge: Purges all Kiali resources directly without going through the operator or ansible.
 kiali-purge: .ensure-oc-exists
