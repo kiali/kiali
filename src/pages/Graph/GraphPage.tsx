@@ -13,6 +13,7 @@ import {
   CytoscapeClickEvent,
   DecoratedGraphElements,
   EdgeLabelMode,
+  GraphDefinition,
   GraphType,
   Layout,
   NodeParamsType,
@@ -84,6 +85,7 @@ type ReduxProps = {
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespace: Namespace[]) => void;
+  setGraphDefinition: (graphDefinition: GraphDefinition) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
   showLegend: boolean;
@@ -453,6 +455,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         timestamp: graphTimestamp * 1000
       }
     });
+    this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 
   private handleGraphDataSourceError = (errorMessage: string | null, fetchParams: FetchParams) => {
@@ -569,6 +572,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
+  setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),

@@ -8,6 +8,7 @@ import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
+  graphDefinition: null,
   layout: DagreGraph.getLayout(),
   node: undefined,
   summaryData: null,
@@ -38,6 +39,8 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         summaryData: INITIAL_GRAPH_STATE.summaryData
       });
+    case getType(GraphActions.setGraphDefinition):
+      return updateState(state, { graphDefinition: action.payload });
     case getType(GraphActions.setLayout):
       return updateState(state, { layout: action.payload });
     case getType(GraphActions.setNode):

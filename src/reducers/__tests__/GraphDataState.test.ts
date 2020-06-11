@@ -7,6 +7,7 @@ import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
+      graphDefinition: null,
       layout: DagreGraph.getLayout(),
       node: undefined,
       summaryData: null,

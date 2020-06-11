@@ -8,7 +8,7 @@ import {
   TimeInMilliseconds,
   UserName
 } from '../types/Common';
-import { EdgeLabelMode, GraphType, Layout, NodeParamsType, SummaryData } from '../types/Graph';
+import { EdgeLabelMode, GraphDefinition, GraphType, Layout, NodeParamsType, SummaryData } from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
@@ -62,6 +62,7 @@ export interface MessageCenterState {
 }
 
 export interface GraphState {
+  graphDefinition: GraphDefinition | null; // Not for consumption. Only for "Debug" dialog.
   layout: Layout;
   node?: NodeParamsType;
   summaryData: SummaryData | null;
