@@ -46,7 +46,7 @@ operator-create: .ensure-operator-repo-exists .prepare-cluster operator-delete .
     --namespace                  "${NAMESPACE}"
 
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
-operator-delete: .ensure-oc-exists kiali-purge
+operator-delete: .ensure-oc-exists kiali-delete kiali-purge
 	@echo Remove Operator
 	${OC} delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
