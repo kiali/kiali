@@ -1525,251 +1525,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/istio/{object_type}/{object_subtype}": {
-      "post": {
-        "description": "Endpoint to create an Istio object by using an Istio Config item",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "istioConfigCreateSubtype",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "201": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}": {
-      "get": {
-        "description": "Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "istioConfigDetailsSubtype",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Endpoint to delete the Istio Config of an Istio object used for templates and adapters",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "istioConfigDeleteSubtype",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      },
-      "patch": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "summary": "Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy.",
-        "operationId": "istioConfigUpdateSubtype",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/istio/{object_type}/{object}": {
       "get": {
         "description": "Endpoint to get the Istio Config of an Istio object",
@@ -4238,11 +3993,17 @@
         "gateway": {
           "$ref": "#/definitions/Gateway"
         },
+        "handler": {
+          "$ref": "#/definitions/istioHandler"
+        },
         "httpApiSpec": {
           "$ref": "#/definitions/httpApiSpec"
         },
         "httpApiSpecBinding": {
           "$ref": "#/definitions/httpApiSpecBinding"
+        },
+        "instance": {
+          "$ref": "#/definitions/istioInstance"
         },
         "meshPolicy": {
           "$ref": "#/definitions/MeshPolicy"
@@ -4340,11 +4101,17 @@
         "gateways": {
           "$ref": "#/definitions/Gateways"
         },
+        "handlers": {
+          "$ref": "#/definitions/istioHandlers"
+        },
         "httpApiSpecBindings": {
           "$ref": "#/definitions/httpApiSpecBindings"
         },
         "httpApiSpecs": {
           "$ref": "#/definitions/httpApiSpecs"
+        },
+        "instances": {
+          "$ref": "#/definitions/istioInstances"
         },
         "meshPolicies": {
           "$ref": "#/definitions/MeshPolicies"
@@ -7190,15 +6957,6 @@
       "type": "object",
       "title": "IstioAdapter istioAdapter",
       "properties": {
-        "adapter": {
-          "type": "string",
-          "x-go-name": "Adapter"
-        },
-        "adapters": {
-          "description": "We need to bring the plural to use it from the UI to build the API",
-          "type": "string",
-          "x-go-name": "Adapters"
-        },
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
           "type": "string",
@@ -7228,6 +6986,78 @@
         "$ref": "#/definitions/istioAdapter"
       },
       "x-go-name": "IstioAdapters",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioHandler": {
+      "description": "This type type is used for returning a IstioHandler",
+      "type": "object",
+      "title": "IstioHandler istioHandler",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "IstioHandler",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioHandlers": {
+      "description": "This type type is used for returning an array of IstioHandlers",
+      "type": "array",
+      "title": "IstioHandlers istioHandlers",
+      "items": {
+        "$ref": "#/definitions/istioHandler"
+      },
+      "x-go-name": "IstioHandlers",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioInstance": {
+      "description": "This type type is used for returning a IstioInstance",
+      "type": "object",
+      "title": "IstioInstance istioInstance",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "IstioInstance",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioInstances": {
+      "description": "This type type is used for returning an array of IstioInstances",
+      "type": "array",
+      "title": "IstioInstances istioInstances",
+      "items": {
+        "$ref": "#/definitions/istioInstance"
+      },
+      "x-go-name": "IstioInstances",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "istioRule": {
@@ -7297,15 +7127,6 @@
         "spec": {
           "type": "object",
           "x-go-name": "Spec"
-        },
-        "template": {
-          "type": "string",
-          "x-go-name": "Template"
-        },
-        "templates": {
-          "description": "We need to bring the plural to use it from the UI to build the API",
-          "type": "string",
-          "x-go-name": "Templates"
         }
       },
       "x-go-name": "IstioTemplate",

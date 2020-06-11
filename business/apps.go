@@ -20,7 +20,7 @@ import (
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
 type AppService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 

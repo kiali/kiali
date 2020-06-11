@@ -39,8 +39,8 @@ const (
 	SidecarType     = "Sidecar"
 	SidecarTypeList = "SidecarList"
 
-	Serviceentries       = "serviceentries"
-	ServiceentryType     = "ServiceEntry"
+	ServiceEntries       = "serviceentries"
+	ServiceEntryType     = "ServiceEntry"
 	ServiceentryTypeList = "ServiceEntryList"
 
 	VirtualServices        = "virtualservices"
@@ -53,52 +53,52 @@ const (
 
 	// Quotas
 
-	quotaspecs        = "quotaspecs"
-	quotaspecType     = "QuotaSpec"
-	quotaspecTypeList = "QuotaSpecList"
+	QuotaSpecs        = "quotaspecs"
+	QuotaSpecType     = "QuotaSpec"
+	QuotaSpecTypeList = "QuotaSpecList"
 
-	quotaspecbindings        = "quotaspecbindings"
-	quotaspecbindingType     = "QuotaSpecBinding"
-	quotaspecbindingTypeList = "QuotaSpecBindingList"
+	QuotaSpecBindings        = "quotaspecbindings"
+	QuotaSpecBindingType     = "QuotaSpecBinding"
+	QuotaSpecBindingTypeList = "QuotaSpecBindingList"
 
 	// PeerAuthentications
 
-	policies       = "policies"
-	policyType     = "Policy"
-	policyTypeList = "PolicyList"
+	Policies       = "policies"
+	PolicyType     = "Policy"
+	PolicyTypeList = "PolicyList"
 
 	//MeshPeerAuthentications
 
-	meshPolicies       = "meshpolicies"
-	meshPolicyType     = "MeshPolicy"
-	meshPolicyTypeList = "MeshPolicyList"
+	MeshPolicies       = "meshpolicies"
+	MeshPolicyType     = "MeshPolicy"
+	MeshPolicyTypeList = "MeshPolicyList"
 
 	// ServiceMeshPolicies
 
-	serviceMeshPolicies       = "servicemeshpolicies"
-	serviceMeshPolicyType     = "ServiceMeshPolicy"
-	serviceMeshPolicyTypeList = "ServiceMeshPolicyList"
+	ServiceMeshPolicies       = "servicemeshpolicies"
+	ServiceMeshPolicyType     = "ServiceMeshPolicy"
+	ServiceMeshPolicyTypeList = "ServiceMeshPolicyList"
 
 	// Rbac
-	clusterrbacconfigs        = "clusterrbacconfigs"
-	clusterrbacconfigType     = "ClusterRbacConfig"
-	clusterrbacconfigTypeList = "ClusterRbacConfigList"
+	ClusterRbacConfigs        = "clusterrbacconfigs"
+	ClusterRbacConfigType     = "ClusterRbacConfig"
+	ClusterRbacConfigTypeList = "ClusterRbacConfigList"
 
-	rbacconfigs        = "rbacconfigs"
-	rbacconfigType     = "RbacConfig"
-	rbacconfigTypeList = "RbacConfigList"
+	RbacConfigs        = "rbacconfigs"
+	RbacConfigType     = "RbacConfig"
+	RbacConfigTypeList = "RbacConfigList"
 
-	serviceroles        = "serviceroles"
-	serviceroleType     = "ServiceRole"
-	serviceroleTypeList = "ServiceRoleList"
+	ServiceRoles        = "serviceroles"
+	ServiceRoleType     = "ServiceRole"
+	ServiceRoleTypeList = "ServiceRoleList"
 
-	servicerolebindings        = "servicerolebindings"
-	servicerolebindingType     = "ServiceRoleBinding"
-	servicerolebindingTypeList = "ServiceRoleBindingList"
+	ServiceRoleBindings        = "servicerolebindings"
+	ServiceRoleBindingType     = "ServiceRoleBinding"
+	ServiceRoleBindingTypeList = "ServiceRoleBindingList"
 
-	serviceMeshRbacConfigs        = "servicemeshrbacconfigs"
-	serviceMeshRbacConfigType     = "ServiceMeshRbacConfig"
-	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
+	ServiceMeshRbacConfigs        = "servicemeshrbacconfigs"
+	ServiceMeshRbacConfigType     = "ServiceMeshRbacConfig"
+	ServiceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
@@ -132,36 +132,36 @@ const (
 
 	// Config - Rules
 
-	rules        = "rules"
-	ruleType     = "rule"
-	ruleTypeList = "ruleList"
+	Rules        = "rules"
+	RuleType     = "rule"
+	RuleTypeList = "ruleList"
 
 	// Config - Adapters
 
-	adapters        = "adapters"
-	adapterType     = "adapter"
-	adapterTypeList = "adapterList"
+	Adapters        = "adapters"
+	AdapterType     = "adapter"
+	AdapterTypeList = "adapterList"
 
-	handlers        = "handlers"
-	handlerType     = "handler"
-	handlerTypeList = "handlerList"
+	Handlers        = "handlers"
+	HandlerType     = "handler"
+	HandlerTypeList = "handlerList"
 
 	// Config - Templates
 
-	instances        = "instances"
-	instanceType     = "instance"
-	instanceTypeList = "instanceList"
+	Instances        = "instances"
+	InstanceType     = "instance"
+	InstanceTypeList = "instanceList"
 
-	templates        = "templates"
-	templateType     = "template"
-	templateTypeList = "templateList"
+	Templates        = "templates"
+	TemplateType     = "template"
+	TemplateTypeList = "templateList"
 
 	// Iter8 types
 
-	iter8experiments        = "experiments"
-	iter8experimentType     = "Experiment"
-	iter8experimentTypeList = "ExperimentList"
-	iter8configMap          = "iter8config-metrics"
+	Iter8Experiments        = "experiments"
+	Iter8ExperimentType     = "Experiment"
+	Iter8ExperimentTypeList = "ExperimentList"
+	Iter8ConfigMap          = "iter8config-metrics"
 )
 
 var (
@@ -231,7 +231,7 @@ var (
 			collectionKind: DestinationRuleTypeList,
 		},
 		{
-			objectKind:     ServiceentryType,
+			objectKind:     ServiceEntryType,
 			collectionKind: ServiceentryTypeList,
 		},
 		{
@@ -253,17 +253,17 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     ruleType,
-			collectionKind: ruleTypeList,
+			objectKind:     RuleType,
+			collectionKind: RuleTypeList,
 		},
 		// Quota specs depends on Quota template but are not a "template" object itselft
 		{
-			objectKind:     quotaspecType,
-			collectionKind: quotaspecTypeList,
+			objectKind:     QuotaSpecType,
+			collectionKind: QuotaSpecTypeList,
 		},
 		{
-			objectKind:     quotaspecbindingType,
-			collectionKind: quotaspecbindingTypeList,
+			objectKind:     QuotaSpecBindingType,
+			collectionKind: QuotaSpecBindingTypeList,
 		},
 		{
 			objectKind:     AttributeManifestType,
@@ -284,12 +284,12 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     policyType,
-			collectionKind: policyTypeList,
+			objectKind:     PolicyType,
+			collectionKind: PolicyTypeList,
 		},
 		{
-			objectKind:     meshPolicyType,
-			collectionKind: meshPolicyTypeList,
+			objectKind:     MeshPolicyType,
+			collectionKind: MeshPolicyTypeList,
 		},
 	}
 
@@ -298,8 +298,8 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     serviceMeshPolicyType,
-			collectionKind: serviceMeshPolicyTypeList,
+			objectKind:     ServiceMeshPolicyType,
+			collectionKind: ServiceMeshPolicyTypeList,
 		},
 	}
 
@@ -328,12 +328,12 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     adapterType,
-			collectionKind: adapterTypeList,
+			objectKind:     AdapterType,
+			collectionKind: AdapterTypeList,
 		},
 		{
-			objectKind:     handlerType,
-			collectionKind: handlerTypeList,
+			objectKind:     HandlerType,
+			collectionKind: HandlerTypeList,
 		},
 	}
 
@@ -342,12 +342,12 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     instanceType,
-			collectionKind: instanceTypeList,
+			objectKind:     InstanceType,
+			collectionKind: InstanceTypeList,
 		},
 		{
-			objectKind:     templateType,
-			collectionKind: templateTypeList,
+			objectKind:     TemplateType,
+			collectionKind: TemplateTypeList,
 		},
 	}
 
@@ -356,20 +356,20 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     clusterrbacconfigType,
-			collectionKind: clusterrbacconfigTypeList,
+			objectKind:     ClusterRbacConfigType,
+			collectionKind: ClusterRbacConfigTypeList,
 		},
 		{
-			objectKind:     rbacconfigType,
-			collectionKind: rbacconfigTypeList,
+			objectKind:     RbacConfigType,
+			collectionKind: RbacConfigTypeList,
 		},
 		{
-			objectKind:     serviceroleType,
-			collectionKind: serviceroleTypeList,
+			objectKind:     ServiceRoleType,
+			collectionKind: ServiceRoleTypeList,
 		},
 		{
-			objectKind:     servicerolebindingType,
-			collectionKind: servicerolebindingTypeList,
+			objectKind:     ServiceRoleBindingType,
+			collectionKind: ServiceRoleBindingTypeList,
 		},
 	}
 
@@ -378,8 +378,8 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     serviceMeshRbacConfigType,
-			collectionKind: serviceMeshRbacConfigTypeList,
+			objectKind:     ServiceMeshRbacConfigType,
+			collectionKind: ServiceMeshRbacConfigTypeList,
 		},
 	}
 
@@ -388,61 +388,45 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     iter8experimentType,
-			collectionKind: iter8experimentTypeList,
+			objectKind:     Iter8ExperimentType,
+			collectionKind: Iter8ExperimentTypeList,
 		},
 	}
 
 	// A map to get the plural for a Istio type using the singlar type
-	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
-	// It should be one entry per adapter/template
-	adapterPlurals = map[string]string{
-		adapterType: adapters,
-		handlerType: handlers,
-	}
-
-	templatePlurals = map[string]string{
-		instanceType: instances,
-		templateType: templates,
-	}
-
 	PluralType = map[string]string{
 		// Networking
 		Gateways:         GatewayType,
 		VirtualServices:  VirtualServiceType,
 		DestinationRules: DestinationRuleType,
-		Serviceentries:   ServiceentryType,
+		ServiceEntries:   ServiceEntryType,
 		Sidecars:         SidecarType,
 		WorkloadEntries:  WorkloadEntryType,
 		EnvoyFilters:     EnvoyFilterType,
 
 		// Main Config files
-		rules:               ruleType,
-		quotaspecs:          quotaspecType,
-		quotaspecbindings:   quotaspecbindingType,
+		Rules:               RuleType,
+		QuotaSpecs:          QuotaSpecType,
+		QuotaSpecBindings:   QuotaSpecBindingType,
 		AttributeManifests:  AttributeManifestType,
 		HttpApiSpecBindings: HttpApiSpecBindingType,
 		HttpApiSpecs:        HttpApiSpecType,
-
-		// Adapters
-		adapters: adapterType,
-		handlers: handlerType,
-
-		// Templates
-		instances: instanceType,
-		templates: templateType,
+		Adapters:            AdapterType,
+		Handlers:            HandlerType,
+		Instances:           InstanceType,
+		Templates:           TemplateType,
 
 		// PeerAuthentications
-		policies:            policyType,
-		meshPolicies:        meshPolicyType,
-		serviceMeshPolicies: serviceMeshPolicyType,
+		Policies:            PolicyType,
+		MeshPolicies:        MeshPolicyType,
+		ServiceMeshPolicies: ServiceMeshPolicyType,
 
 		// Rbac
-		clusterrbacconfigs:     clusterrbacconfigType,
-		rbacconfigs:            rbacconfigType,
-		serviceroles:           serviceroleType,
-		servicerolebindings:    servicerolebindingType,
-		serviceMeshRbacConfigs: serviceMeshRbacConfigType,
+		ClusterRbacConfigs:     ClusterRbacConfigType,
+		RbacConfigs:            RbacConfigType,
+		ServiceRoles:           ServiceRoleType,
+		ServiceRoleBindings:    ServiceRoleBindingType,
+		ServiceMeshRbacConfigs: ServiceMeshRbacConfigType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -450,7 +434,50 @@ var (
 		RequestAuthentications: RequestAuthenticationsType,
 
 		// Iter8
-		iter8experiments: iter8experimentType,
+		Iter8Experiments: Iter8ExperimentType,
+	}
+
+	ResourceTypesToAPI = map[string]string{
+		DestinationRules:       NetworkingGroupVersion.Group,
+		VirtualServices:        NetworkingGroupVersion.Group,
+		ServiceEntries:         NetworkingGroupVersion.Group,
+		Gateways:               NetworkingGroupVersion.Group,
+		Sidecars:               NetworkingGroupVersion.Group,
+		WorkloadEntries:        NetworkingGroupVersion.Group,
+		EnvoyFilters:           NetworkingGroupVersion.Group,
+		Adapters:               ConfigGroupVersion.Group,
+		Templates:              ConfigGroupVersion.Group,
+		Rules:                  ConfigGroupVersion.Group,
+		Handlers:               ConfigGroupVersion.Group,
+		Instances:              ConfigGroupVersion.Group,
+		QuotaSpecs:             ConfigGroupVersion.Group,
+		QuotaSpecBindings:      ConfigGroupVersion.Group,
+		AttributeManifests:     ConfigGroupVersion.Group,
+		HttpApiSpecBindings:    ConfigGroupVersion.Group,
+		HttpApiSpecs:           ConfigGroupVersion.Group,
+		Policies:               AuthenticationGroupVersion.Group,
+		MeshPolicies:           AuthenticationGroupVersion.Group,
+		ClusterRbacConfigs:     RbacGroupVersion.Group,
+		RbacConfigs:            RbacGroupVersion.Group,
+		ServiceRoles:           RbacGroupVersion.Group,
+		ServiceRoleBindings:    RbacGroupVersion.Group,
+		ServiceMeshPolicies:    MaistraAuthenticationGroupVersion.Group,
+		ServiceMeshRbacConfigs: MaistraRbacGroupVersion.Group,
+		AuthorizationPolicies:  SecurityGroupVersion.Group,
+		PeerAuthentications:    SecurityGroupVersion.Group,
+		RequestAuthentications: SecurityGroupVersion.Group,
+		// Extensions
+		Iter8Experiments: Iter8GroupVersion.Group,
+	}
+
+	ApiToVersion = map[string]string{
+		NetworkingGroupVersion.Group:            ApiNetworkingVersion,
+		ConfigGroupVersion.Group:                ApiConfigVersion,
+		AuthenticationGroupVersion.Group:        ApiAuthenticationVersion,
+		RbacGroupVersion.Group:                  ApiRbacVersion,
+		MaistraAuthenticationGroupVersion.Group: ApiMaistraAuthenticationVersion,
+		MaistraRbacGroupVersion.Group:           ApiMaistraRbacVersion,
+		SecurityGroupVersion.Group:              ApiSecurityVersion,
 	}
 )
 
@@ -524,11 +551,6 @@ type RBACDetails struct {
 	ServiceRoles           []IstioObject `json:"serviceroles"`
 	ServiceRoleBindings    []IstioObject `json:"servicerolebindings"`
 	AuthorizationPolicies  []IstioObject `json:"authorizationpolicies"`
-}
-
-type istioResponse struct {
-	results []IstioObject
-	err     error
 }
 
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.

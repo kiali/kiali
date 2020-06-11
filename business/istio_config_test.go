@@ -16,6 +16,165 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
+func TestParseListParams(t *testing.T) {
+	namespace := "bookinfo"
+	objects := ""
+	criteria := ParseIstioConfigCriteria(namespace, objects)
+
+	assert.Equal(t, "bookinfo", criteria.Namespace)
+	assert.True(t, criteria.IncludeVirtualServices)
+	assert.True(t, criteria.IncludeDestinationRules)
+	assert.True(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.IncludeRules)
+	assert.True(t, criteria.IncludeQuotaSpecs)
+	assert.True(t, criteria.IncludeQuotaSpecBindings)
+	assert.True(t, criteria.IncludeMeshPolicies)
+
+	objects = "gateways"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.True(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "virtualservices"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.True(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "destinationrules"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.True(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "serviceentries"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.True(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "rules"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "quotaspecs"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.True(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "quotaspecbindings"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.True(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "virtualservices,rules"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.True(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "destinationrules,virtualservices"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.True(t, criteria.IncludeVirtualServices)
+	assert.True(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "meshpolicies"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.True(t, criteria.IncludeMeshPolicies)
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+
+	objects = "notsupported"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+
+	objects = "notsupported,rules"
+	criteria = ParseIstioConfigCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.IncludeRules)
+	assert.False(t, criteria.IncludeQuotaSpecs)
+	assert.False(t, criteria.IncludeQuotaSpecBindings)
+	assert.False(t, criteria.IncludeMeshPolicies)
+}
+
 func TestGetIstioConfigList(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -217,37 +376,37 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	configService := mockGetIstioConfigDetails()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Metadata.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "", "reviews")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "", "reviews-dr")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "", "checkfromcustomer")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "checkfromcustomer")
 	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "adapters", "listcheckers", "preferencewhitelist")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "adapters", "preferencewhitelist")
 	assert.Equal("preferencewhitelist", istioConfigDetails.Adapter.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "templates", "listentries", "preferencesource")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "templates", "preferencesource")
 	assert.Equal("preferencesource", istioConfigDetails.Template.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "", "googleapis")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Metadata.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "", "stdio")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "stdio")
 	assert.Error(err)
 }
 
@@ -255,16 +414,16 @@ func mockGetIstioConfigList() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetGateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
-	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetVirtualServices(), nil)
-	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationRules(), nil)
-	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return(fakeGetServiceEntries(), nil)
-	k8s.On("GetIstioRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetIstioRules(), nil)
-	k8s.On("GetAdapters", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetAdapters(), nil)
-	k8s.On("GetTemplates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetTemplates(), nil)
-	k8s.On("GetQuotaSpecs", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecs(), nil)
-	k8s.On("GetQuotaSpecBindings", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecBindings(), nil)
-	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakeGetPolicies(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "gateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return(fakeGetVirtualServices(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return(fakeGetDestinationRules(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(fakeGetServiceEntries(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "rules", "").Return(fakeGetIstioRules(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "adapters", "").Return(fakeGetAdapters(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "templates", "").Return(fakeGetTemplates(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecs", "").Return(fakeGetQuotaSpecs(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecbindings", "").Return(fakeGetQuotaSpecBindings(), nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "policies", "").Return(fakeGetPolicies(), nil)
 
 	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
 }
@@ -575,15 +734,15 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetGateway", "test", "gw-1").Return(fakeGetGateways()[0], nil)
-	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)
-	k8s.On("GetDestinationRule", "test", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
-	k8s.On("GetServiceEntry", "test", "googleapis").Return(fakeGetServiceEntries()[0], nil)
-	k8s.On("GetIstioRule", "test", "checkfromcustomer").Return(fakeCheckFromCustomerRule(), nil)
-	k8s.On("GetAdapter", "test", "listcheckers", "preferencewhitelist").Return(fakeGetAdapters()[0], nil)
-	k8s.On("GetTemplate", "test", "listentries", "preferencesource").Return(fakeGetTemplates()[0], nil)
-	k8s.On("GetQuotaSpec", "test", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
-	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
+	k8s.On("GetIstioObject", "test", "gateways", "gw-1").Return(fakeGetGateways()[0], nil)
+	k8s.On("GetIstioObject", "test", "virtualservices", "reviews").Return(fakeGetVirtualServices()[0], nil)
+	k8s.On("GetIstioObject", "test", "destinationrules", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
+	k8s.On("GetIstioObject", "test", "serviceentries", "googleapis").Return(fakeGetServiceEntries()[0], nil)
+	k8s.On("GetIstioObject", "test", "rules", "checkfromcustomer").Return(fakeCheckFromCustomerRule(), nil)
+	k8s.On("GetIstioObject", "test", "adapters", "preferencewhitelist").Return(fakeGetAdapters()[0], nil)
+	k8s.On("GetIstioObject", "test", "templates", "preferencesource").Return(fakeGetTemplates()[0], nil)
+	k8s.On("GetIstioObject", "test", "quotaspecs", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
+	k8s.On("GetIstioObject", "test", "quotaspecbindings", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
 	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
@@ -724,17 +883,17 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	configService := mockDeleteIstioConfigDetails()
 
-	err := configService.DeleteIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "reviews-to-delete")
+	err := configService.DeleteIstioConfigDetail("networking.istio.io", "test", "virtualservices", "reviews-to-delete")
 	assert.Nil(err)
 
-	err = configService.DeleteIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "listchecker-to-delete")
+	err = configService.DeleteIstioConfigDetail("config.istio.io", "test", "templates", "listchecker-to-delete")
 	assert.Nil(err)
 }
 
 func mockDeleteIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("DeleteIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-delete").Return(nil)
-	k8s.On("DeleteIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-delete").Return(nil)
+	k8s.On("DeleteIstioObject", "config.istio.io", "test", "templates", "listchecker-to-delete").Return(nil)
 	return IstioConfigService{k8s: k8s}
 }
 
@@ -742,13 +901,13 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	configService := mockUpdateIstioConfigDetails()
 
-	updatedVirtualService, err := configService.UpdateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "reviews-to-update", "{}")
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "reviews-to-update", "{}")
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
-	updatedTemplate, err := configService.UpdateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "listchecker-to-update", "{}")
+	updatedTemplate, err := configService.UpdateIstioConfigDetail("config.istio.io", "test", "templates", "listchecker-to-update", "{}")
 	assert.Equal("test", updatedTemplate.Namespace.Name)
 	assert.Equal("templates", updatedTemplate.ObjectType)
 	assert.Equal("listchecker-to-update", updatedTemplate.Template.Metadata.Name)
@@ -772,7 +931,7 @@ func mockUpdateIstioConfigDetails() IstioConfigService {
 		},
 	}
 	k8s.On("UpdateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(updatedVirtualService, nil)
-	k8s.On("UpdateIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
+	k8s.On("UpdateIstioObject", "config.istio.io", "test", "templates", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
 	return IstioConfigService{k8s: k8s}
 }
 
@@ -794,7 +953,7 @@ func mockCreateIstioConfigDetails() IstioConfigService {
 		},
 	}
 	k8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
-	k8s.On("CreateIstioObject", "config.istio.io", "test", "listcheckers", mock.AnythingOfType("string")).Return(createdTemplate, nil)
+	k8s.On("CreateIstioObject", "config.istio.io", "test", "templates", mock.AnythingOfType("string")).Return(createdTemplate, nil)
 	return IstioConfigService{k8s: k8s}
 }
 
@@ -802,13 +961,13 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	configService := mockCreateIstioConfigDetails()
 
-	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", []byte("{}"))
+	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", createVirtualService.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
-	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", []byte("{}"))
+	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", []byte("{}"))
 	assert.Equal("test", createTemplate.Namespace.Name)
 	assert.Equal("templates", createTemplate.ObjectType)
 	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)

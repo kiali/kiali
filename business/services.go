@@ -21,7 +21,7 @@ import (
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type SvcService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
@@ -214,15 +214,14 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(namespace) {
-			if vs, err2 = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, namespace); err2 == nil {
-				// Cache offers a generic method to bring all resources but it needs filter on VS case
-				vs = kubernetes.FilterVirtualServices(vs, namespace, service)
-			}
+			vs, err2 = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, namespace)
 		} else {
-			vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+			vs, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 		}
 		if err2 != nil {
 			errChan <- err2
+		} else {
+			vs = kubernetes.FilterVirtualServices(vs, namespace, service)
 		}
 	}()
 
@@ -231,27 +230,26 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		var err2 error
 		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(namespace) {
 			dr, err2 = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, namespace)
-			if err2 == nil {
-				dr = kubernetes.FilterDestinationRules(dr, namespace, service)
-			}
 		} else {
-			dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+			dr, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		}
 		if err2 != nil {
 			errChan <- err2
+		} else {
+			dr = kubernetes.FilterDestinationRules(dr, namespace, service)
 		}
 	}()
 
 	var vsCreate, vsUpdate, vsDelete bool
 	go func() {
 		defer wg.Done()
-		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, VirtualServices, "")
+		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, kubernetes.VirtualServices)
 	}()
 
 	var drCreate, drUpdate, drDelete bool
 	go func() {
 		defer wg.Done()
-		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, DestinationRules, "")
+		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, kubernetes.DestinationRules)
 	}()
 
 	wg.Wait()

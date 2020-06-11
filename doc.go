@@ -82,15 +82,6 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
-// swagger:parameters istioConfigDetailsSubtype istioConfigDeleteSubtype istioConfigUpdateSubtype istioConfigCreateSubtype
-type ObjectSubtypeParam struct {
-	// The Istio object subtype.
-	//
-	// in: path
-	// required: true
-	Name string `json:"object_subtype"`
-}
-
 // swagger:parameters podDetails podLogs
 type PodParam struct {
 	// The pod name.

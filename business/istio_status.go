@@ -10,7 +10,7 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	k8s kubernetes.IstioClientInterface
+	k8s kubernetes.ClientInterface
 }
 
 type ComponentStatus struct {

@@ -19,7 +19,7 @@ const expirationTime = time.Minute * 15
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
-	GetClient(token string) (IstioClientInterface, error)
+	GetClient(token string) (ClientInterface, error)
 }
 
 // clientFactory used to generate per users clients
@@ -31,7 +31,7 @@ type clientFactory struct {
 
 // clientEntry stored the client and its created timestamp
 type clientEntry struct {
-	client  IstioClientInterface
+	client  ClientInterface
 	created time.Time
 }
 
@@ -76,8 +76,8 @@ func getClientFactory(istioConfig *rest.Config, expiry time.Duration) (*clientFa
 	return factory, nil
 }
 
-// NewClient creates a new IstioClientInterface based on a users k8s token
-func (cf *clientFactory) newClient(token string) (IstioClientInterface, error) {
+// NewClient creates a new ClientInterface based on a users k8s token
+func (cf *clientFactory) newClient(token string) (ClientInterface, error) {
 	config := cf.baseIstioConfig
 
 	config.BearerToken = token
@@ -86,7 +86,7 @@ func (cf *clientFactory) newClient(token string) (IstioClientInterface, error) {
 }
 
 // GetClient returns a client for the specified token. Creating one if necessary.
-func (cf *clientFactory) GetClient(token string) (IstioClientInterface, error) {
+func (cf *clientFactory) GetClient(token string) (ClientInterface, error) {
 	clientEntry, err := cf.getClientEntry(token)
 	if err != nil {
 		return nil, err

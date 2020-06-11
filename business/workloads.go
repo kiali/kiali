@@ -25,7 +25,7 @@ import (
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.IstioClientInterface
+	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
