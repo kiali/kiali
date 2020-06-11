@@ -1698,7 +1698,7 @@ func TestServiceNodeGraph(t *testing.T) {
 
 // TestComplexGraph aims to provide test coverage for a more robust graph and specific corner cases. Listed below are coverage cases
 // - multi-namespace graph
-// - istio component namespaces
+// - istio namespace
 // - a "shared" node (internal in ns-1, outsider in ns-2)
 // - request.host
 // - bad dest telemetry filtering
@@ -1874,14 +1874,20 @@ func TestComplexGraph(t *testing.T) {
 	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v12 := model.Vector{}
 
-	q13 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!~"istio-system|istio-telemetry",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
+	q13 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="istio-system",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v13 := model.Vector{}
 
 	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
 	v14 := model.Vector{}
 
-	q15 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system",destination_service_namespace=~"istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
+	q15 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v15 := model.Vector{}
+
+	q16 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="istio-system",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
+	v16 := model.Vector{}
+
+	q17 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
+	v17 := model.Vector{}
 
 	client, api, _, err := setupMockedWithIstioComponentNamespaces()
 	if err != nil {
@@ -1904,6 +1910,8 @@ func TestComplexGraph(t *testing.T) {
 	mockQuery(api, q13, &v13)
 	mockQuery(api, q14, &v14)
 	mockQuery(api, q15, &v15)
+	mockQuery(api, q16, &v16)
+	mockQuery(api, q17, &v17)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
