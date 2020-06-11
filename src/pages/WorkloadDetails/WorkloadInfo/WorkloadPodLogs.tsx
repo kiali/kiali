@@ -42,30 +42,28 @@ type LogLines = string[];
 interface WorkloadPodLogsState {
   containerInfo?: ContainerInfo;
   duration: DurationInSeconds;
+  filteredAppLogs?: LogLines;
+  filteredProxyLogs?: LogLines;
+  hideLogValue: string;
+  isLogWindowSelectExpanded: boolean;
   loadingAppLogs: boolean;
-  loadingProxyLogs: boolean;
   loadingAppLogsError?: string;
+  loadingProxyLogs: boolean;
   loadingProxyLogsError?: string;
+  logWindowSelections: any[];
   podValue?: number;
   rawAppLogs?: LogLines;
   rawProxyLogs?: LogLines;
-  filteredAppLogs?: LogLines;
-  filteredProxyLogs?: LogLines;
-  tailLines: number;
-  isLogWindowSelectExpanded: boolean;
-  logWindowSelections: any[];
-  sideBySideOrientation: boolean;
-  hideLogValue: string;
-  showLogValue: string;
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
-  splitPercent: string;
+  showLogValue: string;
+  sideBySideOrientation: boolean;
+  tailLines: number;
 }
 
 const RETURN_KEY_CODE = 13;
-const NoAppLogsFoundMessage = 'No logs found for the time period.';
-const NoProxyLogsFoundMessage =
-  'Failed to fetch container logs: container istio-proxy is not valid for pod two-containers';
+const NoAppLogsFoundMessage = 'No application container logs found for the time period.';
+const NoProxyLogsFoundMessage = 'No istio-proxy for the pod, or proxy logs for the time period.';
 
 const TailLinesDefault = 500;
 const TailLinesOptions = {
@@ -79,20 +77,17 @@ const TailLinesOptions = {
   '5000': 'Last 5000 lines'
 };
 
-const appLogsDivVertical = style({
-  height: 'calc(100% + 30px)'
-});
 const appLogsDivHorizontal = style({
   height: '100%',
   marginRight: '5px'
 });
 
-const proxyLogsDiv = style({
-  height: '100%'
+const appLogsDivVertical = style({
+  height: 'calc(100% + 30px)'
 });
 
-const logsTitle = style({
-  margin: '15px 0 0 10px'
+const displayFlex = style({
+  display: 'flex'
 });
 
 const infoIcons = style({
@@ -100,12 +95,36 @@ const infoIcons = style({
   width: '24px'
 });
 
+const logsTitle = style({
+  margin: '5px 0 0 10px'
+});
+
+const proxyLogsDiv = style({
+  height: '100%'
+});
+
+const splitter = style({
+  height: 'calc(100% - 80px)' // 80px compensates for toolbar height
+});
+
+const toolbar = style({
+  margin: '0 10px 10px 10px'
+});
+
+const toolbarRight = style({
+  marginLeft: 'auto'
+});
+
+const toolbarTail = style({
+  marginTop: '2px'
+});
+
 const logTextAreaBackground = (enabled = true) => ({ backgroundColor: enabled ? '#003145' : 'gray' });
 
-const logsTextarea = (enabled = true) =>
+const logsTextarea = (enabled = true, hasSplitter = false, hasTitle = false) =>
   style(logTextAreaBackground(enabled), {
     width: 'calc(100% - 15px)',
-    height: 'calc(100% - 85px)',
+    height: `calc(100% - ${hasSplitter ? '40px' : '0px'} - ${hasTitle ? '30px' : '0px'})`,
     overflow: 'auto',
     resize: 'none',
     color: '#fff',
@@ -115,23 +134,6 @@ const logsTextarea = (enabled = true) =>
     whiteSpace: 'pre',
     margin: '0 10px 0 10px'
   });
-
-const toolbarRight = style({
-  right: '50px',
-  position: 'absolute'
-});
-
-const displayFlex = style({
-  display: 'flex'
-});
-
-const toolbarMargin = style({
-  margin: '10px'
-});
-
-const tailToolbarMargin = style({
-  marginTop: '2px'
-});
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private loadProxyLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
@@ -148,19 +150,18 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     if (this.props.pods.length < 1) {
       this.state = {
         duration: retrieveDuration() || 600,
-        loadingAppLogs: false,
-        loadingProxyLogs: false,
-        loadingAppLogsError: 'There are no logs to display because no pods are available.',
-        loadingProxyLogsError: 'There are no logs to display because no container logs are available.',
-        tailLines: TailLinesDefault,
+        hideLogValue: '',
         isLogWindowSelectExpanded: false,
+        loadingAppLogs: false,
+        loadingAppLogsError: 'There are no logs to display because no pods are available.',
+        loadingProxyLogs: false,
+        loadingProxyLogsError: 'There are no logs to display because no container logs are available.',
         logWindowSelections: [],
         sideBySideOrientation: false,
-        hideLogValue: '',
-        showLogValue: '',
         showClearHideLogButton: false,
         showClearShowLogButton: false,
-        splitPercent: '50%'
+        showLogValue: '',
+        tailLines: TailLinesDefault
       };
       return;
     }
@@ -178,18 +179,17 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     this.state = {
       containerInfo: containerInfo,
       duration: retrieveDuration() || 600,
+      hideLogValue: '',
+      isLogWindowSelectExpanded: false,
       loadingAppLogs: false,
       loadingProxyLogs: false,
-      podValue: podValue,
-      tailLines: TailLinesDefault,
-      isLogWindowSelectExpanded: false,
       logWindowSelections: [],
-      sideBySideOrientation: false,
-      hideLogValue: '',
-      showLogValue: '',
+      podValue: podValue,
       showClearHideLogButton: false,
       showClearShowLogButton: false,
-      splitPercent: '50%'
+      showLogValue: '',
+      sideBySideOrientation: false,
+      tailLines: TailLinesDefault
     };
   }
 
@@ -226,19 +226,14 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   render() {
-    const { sideBySideOrientation } = this.state;
-    const appLogsEnabled = !!this.state.filteredAppLogs;
-    const proxyLogsEnabled = !!this.state.filteredProxyLogs;
-    const appLogs = appLogsEnabled ? this.linesToString(this.state.filteredAppLogs) : NoAppLogsFoundMessage;
-    const proxyLogs = proxyLogsEnabled ? this.linesToString(this.state.filteredProxyLogs) : NoProxyLogsFoundMessage;
     return (
-      <RenderComponentScroll>
+      <RenderComponentScroll key={this.state.sideBySideOrientation ? 'vertical' : 'horizontal'}>
         {this.state.containerInfo && (
-          <Grid style={{ padding: '10px', height: '100%' }}>
+          <Grid style={{ padding: '10px 10px 0 10px', height: '100%' }}>
             <GridItem span={12}>
               <Card style={{ height: '100%' }}>
                 <CardBody>
-                  <Toolbar className={toolbarMargin}>
+                  <Toolbar className={toolbar}>
                     <ToolbarGroup>
                       <ToolbarItem className={displayFlex}>
                         <ToolbarDropdown
@@ -263,7 +258,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                         />
                       </ToolbarItem>
                     </ToolbarGroup>
-
                     <ToolbarGroup className={toolbarRight}>
                       <ToolbarItem className={displayFlex}>
                         <ToolbarDropdown
@@ -273,7 +267,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           label={TailLinesOptions[this.state.tailLines]}
                           options={TailLinesOptions}
                           tooltip={'Show up to last N log lines'}
-                          classNameSelect={tailToolbarMargin}
+                          classNameSelect={toolbarTail}
                         />
                       </ToolbarItem>
                       <ToolbarItem>
@@ -293,13 +287,13 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                       </ToolbarItem>
                     </ToolbarGroup>
                   </Toolbar>
-                  <Toolbar className={toolbarMargin}>
+                  <Toolbar className={toolbar}>
                     <ToolbarGroup>
                       <ToolbarItem>
                         <Switch
                           id="orientation-switch"
                           label="Side by Side"
-                          isChecked={sideBySideOrientation}
+                          isChecked={this.state.sideBySideOrientation}
                           onChange={this.handleOrientationChange}
                         />
                       </ToolbarItem>
@@ -328,7 +322,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           </Tooltip>
                         )}
                       </ToolbarItem>
-
                       <ToolbarItem>
                         <TextInput
                           id="log_hide"
@@ -353,42 +346,17 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                         )}
                       </ToolbarItem>
                       <ToolbarItem>
-                        <Tooltip key="show_hide_log_help" position="top" content="Show/Hide Help...">
+                        <Tooltip
+                          key="show_hide_log_help"
+                          position="top"
+                          content="Show only lines containing a substring. Hide all lines containing a substring. Case sensitive."
+                        >
                           <KialiIcon.Info className={infoIcons} />
                         </Tooltip>
                       </ToolbarItem>
                     </ToolbarGroup>
                   </Toolbar>
-                  <Splitter
-                    position={!sideBySideOrientation ? 'horizontal' : 'vertical'}
-                    primaryPaneMaxHeight="100%"
-                    primaryPaneMinHeight={30}
-                    primaryPaneHeight={this.state.splitPercent}
-                    dispatchResize={true}
-                    postPoned={true}
-                  >
-                    <div className={sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
-                      <textarea
-                        className={logsTextarea(appLogsEnabled)}
-                        ref={this.appLogsRef}
-                        readOnly={true}
-                        value={appLogs}
-                        aria-label="Pod logs text"
-                      />
-                    </div>
-                    <div className={proxyLogsDiv}>
-                      <Title size="sm" headingLevel="h5" className={logsTitle}>
-                        Istio proxy (sidecar)
-                      </Title>
-                      <textarea
-                        className={logsTextarea(proxyLogsEnabled)}
-                        ref={this.proxyLogsRef}
-                        readOnly={true}
-                        aria-label="Proxy logs text"
-                        value={proxyLogs}
-                      />
-                    </div>
-                  </Splitter>
+                  <div className={splitter}>{this.getSplitter()}</div>
                 </CardBody>
               </Card>
             </GridItem>
@@ -398,6 +366,72 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       </RenderComponentScroll>
     );
   }
+
+  private getSplitter = () => {
+    return this.state.sideBySideOrientation ? (
+      <Splitter
+        position="vertical"
+        primaryPaneMaxWidth="80%"
+        primaryPaneMinWidth="15%"
+        primaryPaneWidth="50%"
+        dispatchResize={true}
+        postPoned={true}
+      >
+        {this.getAppDiv()}
+        {this.getProxyDiv()}
+      </Splitter>
+    ) : (
+      <Splitter
+        position="horizontal"
+        primaryPaneMaxHeight="80%"
+        primaryPaneMinHeight="15%"
+        primaryPaneHeight="50%"
+        dispatchResize={true}
+        postPoned={true}
+      >
+        {this.getAppDiv()}
+        {this.getProxyDiv()}
+      </Splitter>
+    );
+  };
+
+  private getAppDiv = () => {
+    const appLogsEnabled = !!this.state.filteredAppLogs;
+    const appLogs = appLogsEnabled ? this.linesToString(this.state.filteredAppLogs) : NoAppLogsFoundMessage;
+    return (
+      <div className={this.state.sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
+        {this.state.sideBySideOrientation && (
+          <Title size="sm" headingLevel="h5" className={logsTitle}>
+            {this.state.containerInfo!.containerOptions[this.state.containerInfo!.container]}
+          </Title>
+        )}
+        <textarea
+          className={logsTextarea(appLogsEnabled, !this.state.sideBySideOrientation, this.state.sideBySideOrientation)}
+          ref={this.appLogsRef}
+          readOnly={true}
+          value={appLogs}
+        />
+      </div>
+    );
+  };
+
+  private getProxyDiv = () => {
+    const proxyLogsEnabled = !!this.state.filteredProxyLogs;
+    const proxyLogs = proxyLogsEnabled ? this.linesToString(this.state.filteredProxyLogs) : NoProxyLogsFoundMessage;
+    return (
+      <div className={proxyLogsDiv}>
+        <Title size="sm" headingLevel="h5" className={logsTitle}>
+          Istio proxy (sidecar)
+        </Title>
+        <textarea
+          className={logsTextarea(proxyLogsEnabled, false, true)}
+          ref={this.proxyLogsRef}
+          readOnly={true}
+          value={proxyLogs}
+        />
+      </div>
+    );
+  };
 
   private setPod = (podValue: string) => {
     const pod = this.props.pods[Number(podValue)];
@@ -420,7 +454,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   private handleOrientationChange = (isChecked: boolean) => {
-    this.setState({ sideBySideOrientation: isChecked, splitPercent: '50%' });
+    this.setState({ sideBySideOrientation: isChecked });
   };
 
   private handleRefresh = () => {
