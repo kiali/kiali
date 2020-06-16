@@ -8,12 +8,13 @@ import (
 )
 
 const (
+	AggregateTypeOp       string = "aggregateOp" // request peration aggregate
 	GraphTypeApp          string = "app"
 	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
 	GraphTypeVersionedApp string = "versionedApp"
 	GraphTypeWorkload     string = "workload"
+	NodeTypeAggregate     string = "aggregate" // The special "aggregate" traffic node
 	NodeTypeApp           string = "app"
-	NodeTypeOperation     string = "operation" // The special request_operation aggregate node
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
@@ -70,6 +71,7 @@ func (s *ServiceName) Key() string {
 // namespace.
 type TrafficMap map[string]*Node
 
+// NewNode constructor
 func NewNode(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
 	id, nodeType := Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
 	namespace := workloadNamespace
@@ -80,6 +82,7 @@ func NewNode(serviceNamespace, service, workloadNamespace, workload, app, versio
 	return NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType)
 }
 
+// NewNodeExplicit constructor assigns the specified ID
 func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType string) Node {
 	metadata := make(Metadata)
 
@@ -127,12 +130,14 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 	}
 }
 
+// AddEdge adds an edge to the specified dest node
 func (s *Node) AddEdge(dest *Node) *Edge {
 	e := NewEdge(s, dest)
 	s.Edges = append(s.Edges, &e)
 	return &e
 }
 
+// NewEdge constructor
 func NewEdge(source, dest *Node) Edge {
 	return Edge{
 		Source:   source,
@@ -141,10 +146,12 @@ func NewEdge(source, dest *Node) Edge {
 	}
 }
 
+// NewTrafficMap constructor
 func NewTrafficMap() TrafficMap {
 	return make(map[string]*Node)
 }
 
+// Id returns the unique node ID
 func Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string) {
 	// prefer the workload namespace
 	namespace := workloadNamespace
@@ -212,4 +219,35 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 
 	// fall back to service as a last resort in the app graph
 	return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+}
+
+// NewAggregateNode constructor
+func NewAggregateNode(namespace, aggregateType, aggregate string) Node {
+	id := AggregateID(namespace, aggregateType, aggregate)
+
+	return NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate)
+}
+
+// NewAggregateNodeExplicit constructor assigns the specified ID
+func NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate string) Node {
+	metadata := make(Metadata)
+	metadata["aggregateType"] = aggregateType
+	metadata["agregate"] = aggregate
+
+	return Node{
+		ID:        id,
+		NodeType:  NodeTypeAggregate,
+		Namespace: namespace,
+		Workload:  "",
+		App:       "",
+		Version:   "",
+		Service:   "",
+		Edges:     []*Edge{},
+		Metadata:  metadata,
+	}
+}
+
+// AggregateID returns the unique node ID
+func AggregateID(namespace, aggregateType, aggregate string) (id string) {
+	return fmt.Sprintf("agg_%s_%s_%s", namespace, aggregateType, aggregate)
 }
