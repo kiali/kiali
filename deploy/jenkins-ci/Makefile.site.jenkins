@@ -37,7 +37,7 @@ all:
 	$(error You must explicitly specify a target)
 
 website-build-archive:
-ifneq ($(PUSH_CHANGES),y)
+ifeq ($(PUSH_CHANGES),y)
 	@echo "Will build version: $(SITE_VERSION)"
 	sed -i -r 's/^VERSION \?= v.*/VERSION \?= v$(SITE_BUMPED_VERSION)/' Makefile
 	./scripts/build-archive.sh v$(SITE_VERSION)
