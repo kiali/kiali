@@ -7,6 +7,12 @@ func (o *K8SClientMock) CreateIter8Experiment(namespace string, json string) (ku
 	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
 }
 
+func (o *K8SClientMock) UpdateIter8Experiment(namespace string, name string, json string) (kubernetes.Iter8Experiment, error) {
+	args := o.Called(namespace, name, json)
+	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
+}
+
+
 func (o *K8SClientMock) GetIter8Experiment(namespace string, name string) (kubernetes.Iter8Experiment, error) {
 	args := o.Called(namespace, name)
 	return args.Get(0).(kubernetes.Iter8Experiment), args.Error(1)
