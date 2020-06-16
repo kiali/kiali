@@ -13,12 +13,12 @@ SITE_PULL_URI ?= https://api.github.com/repos/kiali/kiali.io/pulls
 SITE_RELEASE_URI = $(subst pulls,releases,$(SITE_PULL_URI))
 SITE_MAIN_BRANCH ?= master
 
-ifeq ($(RELEASE_SITE),auto)
+ifeq ($(SHOULD_RELEASE_SITE),auto)
 ifeq ($(RELEASE_TYPE),minor)
 	PUSH_CHANGES = y
 endif
 else
-ifeq ($(RELEASE_SITE),y)
+ifeq ($(SHOULD_RELEASE_SITE),y)
 	PUSH_CHANGES = y
 else
 	PUSH_CHANGES = n

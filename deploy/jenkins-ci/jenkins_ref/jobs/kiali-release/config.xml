@@ -138,7 +138,7 @@ operator (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>RELEASE_SITE</name>
+          <name>SHOULD_RELEASE_SITE</name>
           <description>Set to &apos;y&apos; to force release of the website</description>
           <defaultValue>auto</defaultValue>
           <trim>true</trim>
