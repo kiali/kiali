@@ -30,7 +30,6 @@ const orLabelOperation = (labels: { [key: string]: string }, filters: string[]):
           .trim()
           .split(',')
           .some(labelValue => labelValue.trim().startsWith(v.trim()));
-        console.log();
       }
       return undefined;
     });
@@ -69,8 +68,6 @@ const andLabelOperation = (labels: { [key: string]: string }, filters: string[])
         value.split(',').map(val => {
           // Split label values for serviceList Case where we can have multiple values for a label
           if (!labels[key].split(',').some(labelVal => labelVal.trim().startsWith(val.trim()))) {
-            console.log(labels[key].split(','));
-            console.log(val);
             filterOkForLabel = false;
           }
           return undefined;

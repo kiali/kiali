@@ -24,15 +24,18 @@ describe('List page', () => {
     expect(filters).toEqual({
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         }
       ],
@@ -45,15 +48,18 @@ describe('List page', () => {
     const cleanFilters = FilterHelper.setFiltersToURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         }
       ],
@@ -68,15 +74,18 @@ describe('List page', () => {
     const cleanFilters = FilterHelper.setFiltersToURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         }
       ],
@@ -93,15 +102,18 @@ describe('List page', () => {
     const match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         }
       ],
@@ -116,15 +128,18 @@ describe('List page', () => {
     let match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '5'
         }
       ],
@@ -136,11 +151,13 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         }
       ],
@@ -152,19 +169,23 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '5'
         }
       ],
@@ -176,7 +197,8 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         }
       ],
@@ -188,19 +210,23 @@ describe('List page', () => {
     match = FilterHelper.filtersMatchURL(managedFilterTypes, {
       filters: [
         {
-          category: 'A',
+          id: 'a',
+          title: 'A',
           value: '1'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '3'
         },
         {
-          category: 'C',
+          id: 'c',
+          title: 'C',
           value: '4'
         },
         {
-          category: 'D',
+          id: 'd',
+          title: 'D',
           value: '5'
         }
       ],

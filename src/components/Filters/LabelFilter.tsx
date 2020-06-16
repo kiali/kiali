@@ -6,7 +6,7 @@ interface LabelFiltersProps {
   onChange: (value: any) => void;
   value: string;
   filterAdd: (value: string) => void;
-  duplicatesFilter: (value: string) => boolean;
+  isActive: (value: string) => boolean;
 }
 
 export class LabelFilters extends React.Component<LabelFiltersProps, { sortOperation: string }> {
@@ -18,7 +18,7 @@ export class LabelFilters extends React.Component<LabelFiltersProps, { sortOpera
   onkeyPress = (e: any) => {
     if (e.key === 'Enter') {
       if (this.props.value && this.props.value.length > 0) {
-        this.props.value.split(' ').map(val => !this.props.duplicatesFilter(val) && this.props.filterAdd(val));
+        this.props.value.split(' ').map(val => !this.props.isActive(val) && this.props.filterAdd(val));
       }
     }
   };

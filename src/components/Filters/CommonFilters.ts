@@ -55,15 +55,24 @@ export const healthFilter: FilterType = {
   ]
 };
 
+export const labelFilter: FilterType = {
+  id: 'label',
+  title: 'Label',
+  placeholder: 'Filter by Label',
+  filterType: FilterTypes.label,
+  action: FILTER_ACTION_APPEND,
+  filterValues: []
+};
+
 export const getFilterSelectedValues = (filter: FilterType, activeFilters: ActiveFiltersInfo): string[] => {
   const selected: string[] = activeFilters.filters
-    .filter(activeFilter => activeFilter.category === filter.title)
+    .filter(activeFilter => activeFilter.id === filter.id)
     .map(activeFilter => activeFilter.value);
   return removeDuplicatesArray(selected);
 };
 
 export const getPresenceFilterValue = (filter: FilterType, activeFilters: ActiveFiltersInfo): boolean | undefined => {
-  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.category === filter.title);
+  const presenceFilters = activeFilters.filters.filter(activeFilter => activeFilter.id === filter.id);
 
   if (presenceFilters.length > 0) {
     return presenceFilters[0].value === 'Present';

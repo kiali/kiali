@@ -84,7 +84,8 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     // When updateTypeFilter is called, selected filters are already updated with namespace. Just push additional type obj
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     activeFilters.filters.push({
-      category: 'Istio Type',
+      id: 'Istio Type',
+      title: 'Istio Type',
       value: dicIstioType[this.state.istioType || '']
     });
     FilterSelected.setSelected(activeFilters);

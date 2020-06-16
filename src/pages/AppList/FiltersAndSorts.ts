@@ -1,4 +1,4 @@
-import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType, LabelFilter } from '../../types/Filters';
+import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WithAppHealth, hasHealth } from '../../types/Health';
@@ -7,7 +7,8 @@ import {
   healthFilter,
   getPresenceFilterValue,
   getFilterSelectedValues,
-  filterByHealth
+  filterByHealth,
+  labelFilter
 } from '../../components/Filters/CommonFilters';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
@@ -84,7 +85,7 @@ const appNameFilter: FilterType = {
   filterValues: []
 };
 
-export const availableFilters: FilterType[] = [appNameFilter, istioSidecarFilter, healthFilter, LabelFilter];
+export const availableFilters: FilterType[] = [appNameFilter, istioSidecarFilter, healthFilter, labelFilter];
 
 /** Filter Method */
 
@@ -123,7 +124,7 @@ export const filterBy = (
     ret = filterByName(ret, appNamesSelected);
   }
 
-  const appLabelsSelected = getFilterSelectedValues(LabelFilter, filters);
+  const appLabelsSelected = getFilterSelectedValues(labelFilter, filters);
   if (appLabelsSelected.length > 0) {
     ret = filterByLabel(ret, appLabelsSelected, filters.op) as AppListItem[];
   }
