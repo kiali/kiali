@@ -58,8 +58,8 @@ func TestSecurityPolicy(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	ingress, ok := trafficMap[ingressId]
+	ingressID, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
@@ -81,7 +81,7 @@ func TestSecurityPolicy(t *testing.T) {
 
 	appender.appendGraph(trafficMap, "bookinfo", client)
 
-	ingress, ok = trafficMap[ingressId]
+	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
