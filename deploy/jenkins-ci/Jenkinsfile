@@ -156,8 +156,6 @@ node('kiali-build') {
 
           sh "cd ${siteDir}; git config user.email 'kiali-dev@googlegroups.com'"
           sh "cd ${siteDir}; git config user.name 'kiali-bot'"
-          sh "ls src"
-          sh "ls src/github.com"
           sh "cp ${backendDir}/deploy/jenkins-ci/${siteMakefile} ${siteDir}"
       }
     }
