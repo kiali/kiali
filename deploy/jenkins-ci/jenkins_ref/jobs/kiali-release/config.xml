@@ -126,12 +126,6 @@ operator (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>SKIP_SITE_RELEASE</name>
-          <description>Set to &apos;y&apos; if you don&apos;t want to release the UI</description>
-          <defaultValue>n</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
           <name>SKIP_BACKEND_RELEASE</name>
           <description>Set to &apos;y&apos; if you don&apos;t want to release the backend</description>
           <defaultValue>n</defaultValue>
@@ -141,6 +135,12 @@ operator (changes to prepare for next version)</description>
           <name>SKIP_OPERATOR_RELEASE</name>
           <description>Set to &apos;y&apos; if you don&apos;t want to release the operator</description>
           <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>RELEASE_SITE</name>
+          <description>Set to &apos;y&apos; to force release of the website</description>
+          <defaultValue>auto</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>

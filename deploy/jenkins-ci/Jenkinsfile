@@ -61,9 +61,9 @@
  *   - SKIP_OPERATOR_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the operator
- *   - SKIP_SITE_RELEASE
- *      defaultValue: n
- *      description: Set to 'y' if you don't want to release the website
+ *   - RELEASE_SITE
+ *      defaultValue: auto
+ *      description: Set to 'y' to force release of the website even for patch versions
  *   - UI_VERSION
  *       defaultValue: ''
  *       description: If you are skipping UI release. Specify the UI version to package, or leave
@@ -81,7 +81,7 @@ node('kiali-build') {
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
-  def buildSite = params.SKIP_SITE_RELEASE != "y"
+  def buildSite = (params.RELEASE_SITE == "auto" && params.RELEASE_TYPE == "minor") || params.RELEASE_SITE != "y"
   def quayTag = ""
 
   try {

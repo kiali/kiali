@@ -13,16 +13,22 @@ SITE_PULL_URI ?= https://api.github.com/repos/kiali/kiali.io/pulls
 SITE_RELEASE_URI = $(subst pulls,releases,$(SITE_PULL_URI))
 SITE_MAIN_BRANCH ?= master
 
+ifeq ($(RELEASE_SITE),auto)
 ifeq ($(RELEASE_TYPE),minor)
-  PUSH_CHANGES = y
-
-  # NOTE: The value fo SITE_BUMPED_VERSION and SITE_VERSION_BRANCH will only be valid
-  # after the main Makefile has been modified with the version being released.
-  SITE_BUMPED_VERSION ?= $(shell semver bump minor $(SITE_VERSION))
-  SITE_VERSION_BRANCH ?= $(shell semver bump release $(SITE_VERSION) | sed 's/\.[[:digit:]]\+$$//')
-else
-  PUSH_CHANGES = n
+	PUSH_CHANGES = y
 endif
+else
+ifeq ($(RELEASE_SITE),y)
+	PUSH_CHANGES = y
+else
+	PUSH_CHANGES = n
+endif
+endif
+
+# NOTE: The value fo SITE_BUMPED_VERSION and SITE_VERSION_BRANCH will only be valid
+# after the main Makefile has been modified with the version being released.
+SITE_BUMPED_VERSION ?= $(shell semver bump minor $(SITE_VERSION))
+SITE_VERSION_BRANCH ?= $(shell semver bump release $(SITE_VERSION) | sed 's/\.[[:digit:]]\+$$//')
 
 .PHONY: website-build-archive website-push-version-tag
 .PHONY: all release
@@ -40,19 +46,12 @@ ifneq ($(PUSH_CHANGES),y)
 	git commit -m "Release v$(SITE_VERSION)"
 	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):$(SITE_MAIN_BRANCH)
 else
-  @echo "Skipped website release on patch or snapshot releases"
+	@echo "Skipped website release on patch or snapshot releases"
 endif
 
 website-push-version-tag:
 ifeq ($(PUSH_CHANGES),y)
 	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(SITE_VERSION)
-ifdef GH_TOKEN
-	@echo "Creating GitHub release..."
-	@curl -H "Authorization: token $(GH_TOKEN)" \
-	  -H "Content-Type: application/json" \
-	  -d '{"name": "Kiali.io $(SITE_VERSION)", "tag_name": "$(VERSION_TAG)"}' \
-	  -X POST $(SITE_RELEASE_URI)
-endif
 else
 	@echo "Skipped push version tag"
 endif
