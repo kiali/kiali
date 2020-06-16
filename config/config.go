@@ -277,27 +277,22 @@ type DeploymentConfig struct {
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 }
 
-// IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
-// defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
-type IstioComponentNamespaces map[string]string
-
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
-	API                      ApiConfig                `yaml:"api,omitempty"`
-	Auth                     AuthConfig               `yaml:"auth,omitempty"`
-	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
-	Extensions               Extensions               `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
-	Identity                 security.Identity        `yaml:",omitempty"`
-	InCluster                bool                     `yaml:"in_cluster,omitempty"`
-	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
-	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
-	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
-	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
-	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
-	Server                   Server                   `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem `yaml:"additional_display_details,omitempty"`
+	API                      ApiConfig               `yaml:"api,omitempty"`
+	Auth                     AuthConfig              `yaml:"auth,omitempty"`
+	Deployment               DeploymentConfig        `yaml:"deployment,omitempty"`
+	Extensions               Extensions              `yaml:"extensions,omitempty"`
+	ExternalServices         ExternalServices        `yaml:"external_services,omitempty"`
+	Identity                 security.Identity       `yaml:",omitempty"`
+	InCluster                bool                    `yaml:"in_cluster,omitempty"`
+	InstallationTag          string                  `yaml:"installation_tag,omitempty"`
+	IstioLabels              IstioLabels             `yaml:"istio_labels,omitempty"`
+	IstioNamespace           string                  `yaml:"istio_namespace,omitempty"`
+	KubernetesConfig         KubernetesConfig        `yaml:"kubernetes_config,omitempty"`
+	LoginToken               LoginToken              `yaml:"login_token,omitempty"`
+	Server                   Server                  `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -547,24 +542,6 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	log.Debugf("Writing YAML config to [%s]", filename)
 	err = ioutil.WriteFile(filename, []byte(fileContent), 0640)
 	return
-}
-
-// GetIstioNamespaces returns all Istio namespaces, less the exclusions
-func GetIstioNamespaces(exclude []string) []string {
-	excludeMap := map[string]bool{}
-	for _, e := range exclude {
-		excludeMap[e] = true
-	}
-	result := []string{}
-	if _, found := excludeMap[configuration.IstioNamespace]; !found {
-		result = append(result, configuration.IstioNamespace)
-	}
-	for _, ns := range configuration.IstioComponentNamespaces {
-		if _, found := excludeMap[ns]; !found {
-			result = append(result, ns)
-		}
-	}
-	return result
 }
 
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace

@@ -13,6 +13,7 @@ const (
 	GraphTypeVersionedApp string = "versionedApp"
 	GraphTypeWorkload     string = "workload"
 	NodeTypeApp           string = "app"
+	NodeTypeOperation     string = "operation" // The special request_operation aggregate node
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
@@ -51,17 +52,6 @@ type NamespaceInfoMap map[string]NamespaceInfo
 
 func NewNamespaceInfoMap() NamespaceInfoMap {
 	return make(map[string]NamespaceInfo)
-}
-
-// GetIstioNamespaces returns all Istio namespaces found in the NamespaceInfo value set
-func (in NamespaceInfoMap) GetIstioNamespaces() []string {
-	result := []string{}
-	for _, info := range in {
-		if info.IsIstio {
-			result = append(result, info.Name)
-		}
-	}
-	return result
 }
 
 type ServiceName struct {

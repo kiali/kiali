@@ -16,13 +16,11 @@ package istio
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -456,30 +454,19 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	// query prometheus for request traffic in two queries:
 	// 1) query for incoming traffic
 	var query string
-	// For an Istio node limit incoming traffic to only the requested Istio namespaces.
-	var sourceWorkloadQuery = ""
-	if o.Namespaces[namespace].IsIstio {
-		excludedIstioNamespaces := config.GetIstioNamespaces(o.Namespaces.GetIstioNamespaces())
-		if len(excludedIstioNamespaces) > 0 {
-			excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
-			sourceWorkloadQuery = fmt.Sprintf(`,source_workload_namespace!~"%s"`, excludedIstioRegex)
-		}
-	}
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
-		query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
 			httpMetric,
-			sourceWorkloadQuery,
 			namespace,
 			n.Workload,
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 	case graph.NodeTypeApp:
 		if graph.IsOK(n.Version) {
-			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",%sdestination_service_namespace="%s",destination_%s="%s",destination_%s="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",destination_%s="%s",destination_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
-				sourceWorkloadQuery,
 				namespace,
 				appLabel,
 				n.App,
@@ -488,9 +475,8 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
 		} else {
-			query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_%s="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",destination_%s="%s"} [%vs])) by (%s)`,
 				httpMetric,
-				sourceWorkloadQuery,
 				namespace,
 				appLabel,
 				n.App,
