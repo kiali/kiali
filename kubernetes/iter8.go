@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,14 +52,12 @@ type Iter8ExperimentSpec struct {
 			MinMax     string `json:"min_max,omitempty"`
 		} `json:"reward,omitempty"`
 	} `json:"analysis,omitempty"`
-	Assessment       string `json:"assessment,omitempty"`
-	Cleanup          string `json:"cleanup,omitempty"`
-	RoutingReference *struct {
-		ApiVersion string `json:"apiVersion,omitempty"`
-		Kind       string `json:"kind,omitempty"`
-		Name       string `json:"name,omitempty"`
-	} `json:"routingReference,omitempty"`
+	Assessment       string                   `json:"assessment,omitempty"`
+	Cleanup          string                   `json:"cleanup,omitempty"`
+	RoutingReference *core_v1.ObjectReference `json:"routingReference,omitempty"`
 }
+
+type Iter8ExperimentAction string
 
 type Iter8ExperimentStatus struct {
 	Conditions []struct {
@@ -136,6 +135,7 @@ type Iter8ExperimentObject struct {
 	Spec               Iter8ExperimentSpec    `json:"spec"`
 	Status             Iter8ExperimentStatus  `json:"status"`
 	Metrics            Iter8ExperimentMetrics `json:"metrics"`
+	Action             Iter8ExperimentAction  `json:"action,omitempty"`
 }
 
 type Iter8ExperimentObjectList struct {
@@ -278,6 +278,7 @@ type Iter8AnalyticMetric struct {
 
 type Iter8ClientInterface interface {
 	CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error)
+	UpdateIter8Experiment(namespace string, name string, json string) (Iter8Experiment, error)
 	DeleteIter8Experiment(namespace string, name string) error
 	GetIter8Experiment(namespace string, name string) (Iter8Experiment, error)
 	GetIter8Experiments(namespace string) ([]Iter8Experiment, error)
@@ -321,6 +322,23 @@ func (in *K8SClient) CreateIter8Experiment(namespace string, json string) (Iter8
 	var err error
 	byteJson := []byte(json)
 	result, err = in.iter8Api.Post().Namespace(namespace).Resource(Iter8Experiments).Body(byteJson).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	iter8ExperimentObject, ok := result.(*Iter8ExperimentObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a Iter8 Experiment object", namespace)
+	}
+	i8 := iter8ExperimentObject.DeepCopyIter8Object()
+	i8.SetTypeMeta(iter8typeMeta)
+	return i8, nil
+}
+
+func (in *K8SClient) UpdateIter8Experiment(namespace string, name string, json string) (Iter8Experiment, error) {
+	var result runtime.Object
+	var err error
+	byteJson := []byte(json)
+	result, err = in.iter8Api.Patch(types.MergePatchType).Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Body(byteJson).Do().Get()
 	if err != nil {
 		return nil, err
 	}

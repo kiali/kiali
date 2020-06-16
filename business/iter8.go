@@ -2,10 +2,14 @@ package business
 
 import (
 	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v2"
+
+	"sort"
 	"strconv"
 	"sync"
 
+	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -130,13 +134,17 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
-
-	json, err := in.ParseJsonForCreate(body)
+	// get RoutingReference
+	newExperimentSpec := models.Iter8ExperimentSpec{}
+	err = json.Unmarshal(body, &newExperimentSpec)
 	if err != nil {
 		return iter8ExperimentDetail, err
 	}
+	rr, _ := in.GetIter8RoutingReferences(namespace, newExperimentSpec.Service)
 
-	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, json)
+	jsonByte, err := in.ParseJsonForCreate(body, rr)
+
+	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, jsonByte)
 	if err != nil {
 		return iter8ExperimentDetail, err
 	}
@@ -145,7 +153,41 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 	return iter8ExperimentDetail, nil
 }
 
-func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
+func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, body []byte) (models.Iter8ExperimentDetail, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+
+	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
+	action := models.ExperimentAction{}
+	err = json.Unmarshal(body, &action)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+	experiment, err := in.GetIter8Experiment(namespace, name)
+	newExperimentSpec := models.Iter8ExperimentSpec{}
+	newExperimentSpec.Parse(experiment)
+	newExperimentSpec.Action = action.Action
+	// get RoutingReference
+	rr, _ := in.GetIter8RoutingReferences(newExperimentSpec.Namespace, newExperimentSpec.Service)
+
+	var newObject []byte
+	newObject, err = json.Marshal(newExperimentSpec)
+	jsonByte, err := in.ParseJsonForCreate(newObject, rr)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+
+	iter8ExperimentObject, err := in.k8s.UpdateIter8Experiment(namespace, name, jsonByte)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
+
+	iter8ExperimentDetail.Parse(iter8ExperimentObject)
+	return iter8ExperimentDetail, nil
+}
+
+func (in *Iter8Service) ParseJsonForCreate(body []byte, rr core_v1.ObjectReference) (string, error) {
 
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	err := json.Unmarshal(body, &newExperimentSpec)
@@ -172,7 +214,12 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
+	object.Spec.TrafficControl.Interval = newExperimentSpec.TrafficControl.Interval
 	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
+	if rr.Name != "" {
+		object.Spec.RoutingReference = &rr
+	}
+
 	for _, criteria := range newExperimentSpec.Criterias {
 		min_max := struct {
 			Min float64 `json:"min,omitempty"`
@@ -200,6 +247,9 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 				StopOnFailure: criteria.StopOnFailure,
 				MinMax:        min_max,
 			})
+	}
+	if newExperimentSpec.Action != "" {
+		object.Action = kubernetes.Iter8ExperimentAction(newExperimentSpec.Action)
 	}
 
 	b, err2 := json.Marshal(object)
@@ -240,4 +290,85 @@ func (in *Iter8Service) GetAnalyticPort() int {
 		return 80
 	}
 	return analyticConfig.Port
+}
+
+func (in *Iter8Service) GetIter8RoutingReferences(namespace string, servicename string) (routingReference core_v1.ObjectReference, err error) {
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
+	defer promtimer.ObserveNow(&err)
+	istioCfg, err := in.businessLayer.IstioConfig.GetIstioConfigList(IstioConfigCriteria{
+		IncludeGateways:        true,
+		IncludeVirtualServices: true,
+		Namespace:              namespace,
+	})
+	rf := core_v1.ObjectReference{}
+	if err != nil {
+		return rf, err
+	}
+	gwNames := make([]string, 0)
+
+	for _, gw := range istioCfg.Gateways {
+		gwNames = append(gwNames, gw.Metadata.Name)
+	}
+
+	for _, item := range istioCfg.VirtualServices.Items {
+		if item.IsValidHost(namespace, servicename) {
+			gws := item.Spec.Gateways
+			if gateways, ok := gws.([]interface{}); ok {
+				for _, g := range gateways {
+					if gate, ok := g.(string); ok {
+						if contains(gwNames, gate) {
+
+							rf.APIVersion = item.APIVersion
+							rf.Name = item.Metadata.Name
+							rf.Kind = item.Kind
+
+						}
+					}
+				}
+			}
+			if rf.Name != "" {
+				proto := item.Spec.Http
+				if aHttp, ok := proto.([]interface{}); ok {
+					for _, httpRoute := range aHttp {
+						if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
+							if route, ok := mHttpRoute["route"]; ok {
+								if aDestinationWeight, ok := route.([]interface{}); ok {
+									for _, destination := range aDestinationWeight {
+										host := parseHost(destination)
+										if host == "" {
+											continue
+										} else if host == servicename {
+											return rf, nil
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return rf, fmt.Errorf("unable to locate routing references")
+}
+
+func contains(s []string, searchterm string) bool {
+	i := sort.SearchStrings(s, searchterm)
+	return i < len(s) && s[i] == searchterm
+}
+
+func parseHost(destination interface{}) string {
+	if mDestination, ok := destination.(map[string]interface{}); ok {
+		if destinationW, ok := mDestination["destination"]; ok {
+			if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
+				if host, ok := mDestinationW["host"]; ok {
+					if sHost, ok := host.(string); ok {
+						return sHost
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
