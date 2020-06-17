@@ -13,7 +13,6 @@ const (
 	GraphTypeVersionedApp string = "versionedApp"
 	GraphTypeWorkload     string = "workload"
 	NodeTypeApp           string = "app"
-	NodeTypeOperation     string = "operation" // The special request_operation aggregate node
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
