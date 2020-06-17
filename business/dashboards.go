@@ -111,11 +111,29 @@ func getIstioCharts(durationMillis bool) []istioChart {
 		},
 		{
 			Chart: kmodel.Chart{
+				Name:  "Request throughput",
+				Unit:  "bitrate",
+				Spans: 6,
+			},
+			refName: "request_throughput",
+			scale:   8, // Bps to bps
+		},
+		{
+			Chart: kmodel.Chart{
 				Name:  "Request size",
 				Unit:  "bytes",
 				Spans: 6,
 			},
 			refName: "request_size",
+		},
+		{
+			Chart: kmodel.Chart{
+				Name:  "Response throughput",
+				Unit:  "bitrate",
+				Spans: 6,
+			},
+			refName: "response_throughput",
+			scale:   8, // Bps to bps
 		},
 		{
 			Chart: kmodel.Chart{

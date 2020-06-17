@@ -30,6 +30,16 @@ var istioMetrics = []istioMetric{
 		isHisto:   true,
 	},
 	{
+		kialiName: "request_throughput",
+		istioName: "istio_request_bytes_sum",
+		isHisto:   false,
+	},
+	{
+		kialiName: "response_throughput",
+		istioName: "istio_response_bytes_sum",
+		isHisto:   false,
+	},
+	{
 		kialiName: "request_size",
 		istioName: "istio_request_bytes",
 		isHisto:   true,
