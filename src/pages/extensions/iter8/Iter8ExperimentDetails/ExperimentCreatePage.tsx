@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Iter8Info } from '../../../../types/Iter8';
 import { style } from 'typestyle';
 import * as API from '../../../../services/Api';
+import { serverConfig } from '../../../../config/ServerConfig';
 import * as AlertUtils from '../../../../utils/AlertUtils';
 import {
   ActionGroup,
@@ -24,6 +25,7 @@ import { PromisesRegistry } from '../../../../utils/CancelablePromises';
 import { KialiAppState } from '../../../../store/Store';
 import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
+import { PfColors } from '../../../../components/Pf/PfColors';
 
 interface Props {
   activeNamespaces: Namespace[];
@@ -42,6 +44,7 @@ interface State {
   showAdvanced: boolean;
   showTrafficStep: boolean;
   reloadService: boolean;
+  totalDuration: string;
 }
 
 interface ExperimentSpec {
@@ -59,6 +62,7 @@ interface ExperimentSpec {
 interface TrafficControl {
   algorithm: string;
   interval: string;
+  intervalInSecond: number;
   maxIterations: number;
   maxTrafficPercentage: number;
   trafficStepSize: number;
@@ -75,7 +79,11 @@ export interface Criteria {
 // Style constants
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
 const regex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
-
+const noCriteriaStyle = style({
+  marginTop: 15,
+  marginBottom: 15,
+  color: PfColors.Blue400
+});
 const algorithms = [
   'check_and_increment',
   'epsilon_greedy',
@@ -104,6 +112,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         trafficControl: {
           algorithm: 'check_and_increment',
           interval: '30s',
+          intervalInSecond: 30,
           maxIterations: 100,
           maxTrafficPercentage: 50,
           trafficStepSize: 2
@@ -114,9 +123,10 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       services: [],
       workloads: [],
       metricNames: [],
-      showAdvanced: false,
+      showAdvanced: true,
       showTrafficStep: true,
-      reloadService: false
+      reloadService: false,
+      totalDuration: '50 minutes'
     };
   }
 
@@ -199,10 +209,6 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                     prevState.experiment.service = services[0];
                     if (workloads.length > 0) {
                       prevState.experiment.baseline = workloads[0];
-                      prevState.experiment.candidate = workloads[0];
-                    } else {
-                      prevState.experiment.baseline = '';
-                      prevState.experiment.candidate = '';
                     }
                     return {
                       services: services,
@@ -242,10 +248,6 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         this.setState(prevState => {
           if (workloads.length > 0) {
             prevState.experiment.baseline = workloads[0];
-            prevState.experiment.candidate = workloads[0];
-          } else {
-            prevState.experiment.baseline = '';
-            prevState.experiment.candidate = '';
           }
           return {
             workloads: workloads,
@@ -373,9 +375,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           case 'toleranceType':
             newExperiment.criterias[0].toleranceType = value.trim();
             break;
-          case 'interval':
-            newExperiment.trafficControl.interval = value.trim();
-            break;
+
           default:
         }
         return {
@@ -409,10 +409,18 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           case 'tolerance':
             newExperiment.criterias[0].tolerance = value;
             break;
+          case 'interval':
+            newExperiment.trafficControl.intervalInSecond = value;
+            newExperiment.trafficControl.interval = newExperiment.trafficControl.intervalInSecond + 's';
+            break;
           default:
         }
+        const totalSecond = newExperiment.trafficControl.maxIterations * newExperiment.trafficControl.intervalInSecond;
+        const hours = Math.floor(totalSecond / 60 / 60);
+        const minutes = Math.floor(totalSecond / 60) - hours * 60;
         return {
-          experiment: newExperiment
+          experiment: newExperiment,
+          totalDuration: hours + ' hours ' + minutes + ' minutes ' + (totalSecond % 60) + ' seconds'
         };
       },
       () => {
@@ -546,22 +554,31 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                 <GridItem span={6}>
                   <FormGroup
                     fieldId="candidate"
-                    label="Candidate"
+                    label="Select Candidate"
                     isRequired={true}
                     isValid={this.state.experiment.candidate !== ''}
                     helperText="The candidate deployment of the target service (i.e. reviews-v2)"
                     helperTextInvalid="Candidate deployment cannot be empty"
                   >
-                    <FormSelect
+                    <TextInput
                       id="candidate"
                       value={this.state.experiment.candidate}
-                      placeholder="Candidate Deployment"
+                      placeholder="Select from list or enter a new one"
                       onChange={value => this.changeExperiment('candidate', value)}
-                    >
-                      {this.state.workloads.map((wk, index) => (
-                        <FormSelectOption label={wk} key={'workloadCandidate' + index} value={wk} />
-                      ))}
-                    </FormSelect>
+                      list={'candidateName'}
+                      autoComplete={'off'}
+                    />
+                    <datalist id="candidateName">
+                      {this.state.workloads.map((wk, index) =>
+                        wk !== this.state.experiment.baseline ? (
+                          <option label={wk} key={'workloadCandidate' + index} value={wk}>
+                            {wk}
+                          </option>
+                        ) : (
+                          ''
+                        )
+                      )}
+                    </datalist>
                   </FormGroup>
                 </GridItem>
               </Grid>
@@ -572,6 +589,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                 metricNames={this.state.metricNames}
                 onAdd={newCriteria => {
                   this.setState(prevState => {
+                    newCriteria.tolerance = newCriteria.tolerance * (serverConfig.istioTelemetryV2 ? 1000 : 1);
                     prevState.experiment.criterias.push(newCriteria);
                     return {
                       iter8Info: prevState.iter8Info,
@@ -617,21 +635,23 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                   });
                 }}
               >
-                <h1 className="pf-c-title pf-m-xl">Traffic Control</h1>
+                <h1 className="pf-c-title pf-m-xl">Traffic Control </h1>
+                <div className={noCriteriaStyle}>Total Experiment Duration: {this.state.totalDuration}</div>
+
                 <Grid gutter="md">
                   <GridItem span={6}>
                     <FormGroup
                       fieldId="interval"
-                      label="Interval"
+                      label="Interval (seconds)"
                       isValid={this.state.experiment.trafficControl.interval !== ''}
                       helperText="Frequency with which the controller calls the analytics service"
                       helperTextInvalid="Interval cannot be empty"
                     >
                       <TextInput
                         id="interval"
-                        value={this.state.experiment.trafficControl.interval}
+                        value={this.state.experiment.trafficControl.intervalInSecond}
                         placeholder="Time interval i.e. 30s"
-                        onChange={value => this.changeExperiment('interval', value)}
+                        onChange={value => this.changeExperimentNumber('interval', Number(value))}
                       />
                     </FormGroup>
                   </GridItem>

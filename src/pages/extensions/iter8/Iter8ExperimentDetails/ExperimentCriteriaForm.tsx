@@ -1,9 +1,10 @@
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { Criteria, NameValuePair } from '../../../../types/Iter8';
 import * as React from 'react';
-import { Button, FormSelect, FormGroup, FormSelectOption, TextInput, Checkbox } from '@patternfly/react-core';
+import { Button, Checkbox, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { PfColors } from '../../../../components/Pf/PfColors';
+import { serverConfig } from '../../../../config/ServerConfig';
 
 const headerCells: ICell[] = [
   {
@@ -12,7 +13,7 @@ const headerCells: ICell[] = [
     props: {}
   },
   {
-    title: 'Threshold',
+    title: 'Threshold (unit: second)',
     transforms: [cellWidth(10) as any],
     props: {}
   },
@@ -164,7 +165,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         key: 'criteria' + i,
         cells: [
           <>{gw.metric}</>,
-          <>{gw.tolerance}</>,
+          <>{serverConfig.istioTelemetryV2 ? gw.tolerance / 1000 : gw.tolerance}</>,
           <>{gw.toleranceType === 'threshold' ? 'abosulte' : 'delta'}</>,
           <>{gw.stopOnFailure ? 'true' : 'false'}</>
         ]

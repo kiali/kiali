@@ -18,8 +18,7 @@ import {
 import { style } from 'typestyle';
 import * as API from '../../../../services/Api';
 import * as AlertUtils from '../../../../utils/AlertUtils';
-import { Iter8ExpDetailsInfo } from '../../../../types/Iter8';
-import RefreshButtonContainer from '../../../../components/Refresh/RefreshButton';
+import { ExperimentAction, Iter8ExpDetailsInfo } from '../../../../types/Iter8';
 import Iter8Dropdown from './Iter8Dropdown';
 import history from '../../../../app/History';
 import * as FilterHelper from '../../../../components/FilterList/FilterHelper';
@@ -30,10 +29,16 @@ import CriteriaInfoDescription from './CriteriaInfoDescription';
 import { KialiAppState } from '../../../../store/Store';
 import { durationSelector } from '../../../../store/Selectors';
 import { PfColors } from '../../../../components/Pf/PfColors';
+import { DurationInSeconds } from '../../../../types/Common';
+import RefreshContainer from '../../../../components/Refresh/Refresh';
 
-interface Props {
+interface ExpeerimentId {
   namespace: string;
   name: string;
+}
+
+interface Props extends RouteComponentProps<ExpeerimentId> {
+  duration: DurationInSeconds;
 }
 
 interface State {
@@ -43,6 +48,8 @@ interface State {
   target: string;
   baseline: string;
   candidate: string;
+  actionTaken: string;
+  resetActionFlag: boolean;
 }
 
 const tabName = 'tab';
@@ -60,8 +67,8 @@ const breadcrumbPadding = style({
   padding: '22px 0 5px 0'
 });
 
-class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, State> {
-  constructor(props: RouteComponentProps<Props>) {
+class ExperimentDetailsPage extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
 
     const urlParams = new URLSearchParams(history.location.search);
@@ -71,7 +78,9 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
       currentTab: activeTab(tabName, defaultTab),
       target: urlParams.get('target') || '',
       baseline: urlParams.get('baseline') || '',
-      candidate: urlParams.get('candidate') || ''
+      candidate: urlParams.get('candidate') || '',
+      actionTaken: '',
+      resetActionFlag: false
     };
   }
 
@@ -84,10 +93,20 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
         if (iter8Info.enabled) {
           API.getExperiment(namespace, name)
             .then(result => {
-              this.setState({
-                experiment: result.data,
-                canDelete: result.data.permissions.delete
-              });
+              if (this.state.resetActionFlag) {
+                this.setState({
+                  actionTaken: '',
+                  experiment: result.data,
+                  canDelete: result.data.permissions.delete,
+                  resetActionFlag: false
+                });
+              } else {
+                this.setState({
+                  experiment: result.data,
+                  canDelete: result.data.permissions.delete,
+                  resetActionFlag: true
+                });
+              }
             })
             .catch(error => {
               AlertUtils.addError('Could not fetch Iter8 Experiment', error);
@@ -259,14 +278,51 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
       });
   };
 
+  doIter8Action = (requestAction: string): void => {
+    let errMsg = 'Could not' + requestAction + ' Iter8 Experiment';
+    const action: ExperimentAction = {
+      action: requestAction
+    };
+    this.setState({ actionTaken: requestAction });
+    API.updateExperiment(this.props.match.params.namespace, this.props.match.params.name, JSON.stringify(action))
+      .then(() => this.doRefresh())
+      .catch(error => {
+        this.setState({ actionTaken: '' });
+        AlertUtils.addError(errMsg, error);
+      });
+  };
+
+  canAction = (action: string): boolean => {
+    switch (action) {
+      case 'Completed':
+        return (
+          this.state.experiment !== undefined &&
+          this.state.experiment.experimentItem.startedAt !== 0 &&
+          this.state.experiment.experimentItem.endedAt === 0
+        );
+    }
+    return (
+      this.state.experiment !== undefined &&
+      this.state.experiment.experimentItem.startedAt !== 0 &&
+      this.state.experiment.experimentItem.phase === action
+    );
+  };
+
   renderRightToolbar = () => {
     return (
       <span style={{ position: 'absolute', right: '20px', zIndex: 1 }}>
-        <RefreshButtonContainer handleRefresh={this.doRefresh} />
+        <RefreshContainer id="time_range_refresh" hideLabel={true} handleRefresh={this.doRefresh} manageURL={true} />
         <Iter8Dropdown
           experimentName={this.props.match.params.name}
           canDelete={this.state.canDelete}
+          startedAt={this.state.experiment ? this.state.experiment.experimentItem.startedAt : 0}
+          endedAt={this.state.experiment ? this.state.experiment.experimentItem.endedAt : 0}
+          phase={this.state.experiment ? this.state.experiment.experimentItem.phase : ' '}
           onDelete={this.doDelete}
+          onResume={() => this.doIter8Action('resume')}
+          onPause={() => this.doIter8Action('pause')}
+          onSuccess={() => this.doIter8Action('override_success')}
+          onFailure={() => this.doIter8Action('override_failure')}
         />
       </span>
     );
@@ -283,6 +339,7 @@ class ExperimentDetailsPage extends React.Component<RouteComponentProps<Props>, 
           duration={FilterHelper.currentDuration()}
           baseline={this.state.baseline}
           candidate={this.state.candidate}
+          actionTaken={this.state.actionTaken}
         />
       </Tab>
     );

@@ -31,6 +31,7 @@ interface ExperimentInfoDescriptionProps {
   duration: number;
   baseline: string;
   candidate: string;
+  actionTaken: string;
 }
 
 class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps> {
@@ -110,6 +111,10 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     let targetService = this.props.experimentDetails
       ? this.props.experimentDetails.experimentItem.targetService
       : this.props.target;
+    let statusString = this.props.experimentDetails ? this.props.experimentDetails.experimentItem.status : '';
+    if (this.props.actionTaken !== '') {
+      statusString = 'Waiting for result of action "' + this.props.actionTaken + '" ';
+    }
     return (
       <RenderComponentScroll>
         <Grid gutter="md" style={{ margin: '10px' }}>
@@ -170,7 +175,7 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                 <Stack gutter="md" style={{ marginTop: '10px' }}>
                   <StackItem id={'Status'}>
                     <Text component={TextVariants.h3}> Status: </Text>
-                    {this.props.experimentDetails ? this.props.experimentDetails.experimentItem.status : ''}
+                    {statusString}
                   </StackItem>
                   <StackItem id={'Status'}>
                     <Text component={TextVariants.h3}> Phase: </Text>

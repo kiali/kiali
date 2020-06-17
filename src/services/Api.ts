@@ -516,5 +516,5 @@ export const createExperiment = (namespace: string, specBody: string) => {
 };
 
 export const updateExperiment = (namespace: string, name: string, specBody: string) => {
-  return newRequest<Iter8Experiment>(HTTP_VERBS.POST, urls.iter8Experiment(namespace, name), {}, specBody);
+  return newRequest<Iter8Experiment>(HTTP_VERBS.PATCH, urls.iter8Experiment(namespace, name), {}, specBody);
 };
