@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Text, TextVariants } from '@patternfly/react-core';
 
-import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
+import { DEGRADED, FAILURE, HEALTHY, IDLE } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
@@ -21,7 +21,11 @@ class OverviewCardContentCompact extends React.Component<Props> {
     const name = this.props.name;
     const status = this.props.status;
     const nbItems =
-      status.inError.length + status.inWarning.length + status.inSuccess.length + status.notAvailable.length;
+      status.inError.length +
+      status.inWarning.length +
+      status.inSuccess.length +
+      status.notAvailable.length +
+      status.inIdle.length;
     let text: string;
     if (nbItems === 1) {
       text = switchType(this.props.type, '1 Application', '1 Service', '1 Workload');
@@ -32,6 +36,15 @@ class OverviewCardContentCompact extends React.Component<Props> {
       <>
         <Link to={`/${targetPage}?namespaces=${name}`}>{text}</Link>
         <Text component={TextVariants.h3} style={{ marginTop: 5 }}>
+          {status.inIdle.length > 0 && (
+            <OverviewStatus
+              id={name + '-iddle'}
+              namespace={name}
+              status={IDLE}
+              items={status.inIdle}
+              targetPage={targetPage}
+            />
+          )}
           {status.inError.length > 0 && (
             <OverviewStatus
               id={name + '-failure'}
