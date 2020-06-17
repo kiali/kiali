@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -49,6 +50,20 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 		handleErrorResponse(w, err)
 		return
 	}
+	workloadList, err := business.Workload.GetWorkloadList(namespace)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	workloads := workloadList.Workloads
+	for _, w := range workloads {
+		conf := config.Get()
+		if w.Name == experiment.ExperimentItem.Baseline {
+			experiment.ExperimentItem.BaselineVersion = w.Labels[conf.IstioLabels.VersionLabelName]
+		} else if w.Name == experiment.ExperimentItem.Candidate {
+			experiment.ExperimentItem.CandidateVersion = w.Labels[conf.IstioLabels.VersionLabelName]
+		}
+	}
 	RespondWithJSON(w, http.StatusOK, experiment)
 }
 
@@ -76,14 +91,19 @@ func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
 func Iter8ExperimentUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	business, err := getBusiness(r)
-	namespace := params["namespace"]
-	name := params["name"]
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	// TODO This is not yet implemented
-	experiment, err := business.Iter8.GetIter8Experiment(namespace, name)
+	namespace := params["namespace"]
+	name := params["name"]
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	experiment, err := business.Iter8.UpdateIter8Experiment(namespace, name, body)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

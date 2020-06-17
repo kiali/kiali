@@ -8,6 +8,10 @@ type Iter8Info struct {
 	Enabled bool `json:"enabled"`
 }
 
+type ExperimentAction struct {
+	Action string `json:"action"`
+}
+
 type Iter8ExperimentItem struct {
 	Name                   string   `json:"name"`
 	Phase                  string   `json:"phase"`
@@ -15,8 +19,10 @@ type Iter8ExperimentItem struct {
 	Status                 string   `json:"status"`
 	Baseline               string   `json:"baseline"`
 	BaselinePercentage     int      `json:"baselinePercentage"`
+	BaselineVersion        string   `json:"baselineVersion"`
 	Candidate              string   `json:"candidate"`
 	CandidatePercentage    int      `json:"candidatePercentage"`
+	CandidateVersion       string   `json:"candidateVersion"`
 	Namespace              string   `json:"namespace"`
 	StartedAt              int64    `json:"startedAt"`
 	EndedAt                int64    `json:"endedAt"`
@@ -30,6 +36,7 @@ type Iter8ExperimentDetail struct {
 	CriteriaDetails []Iter8CriteriaDetail `json:"criterias"`
 	TrafficControl  Iter8TrafficControl   `json:"trafficControl"`
 	Permissions     ResourcePermissions   `json:"permissions"`
+	Action          string                `json:"action"`
 }
 
 type Iter8CriteriaDetail struct {
@@ -61,6 +68,7 @@ type Iter8ExperimentSpec struct {
 	Candidate      string              `json:"candidate"`
 	TrafficControl Iter8TrafficControl `json:"trafficControl"`
 	Criterias      []Iter8Criteria     `json:"criterias"`
+	Action         string              `json:"action"`
 }
 
 type Iter8TrafficControl struct {
@@ -92,6 +100,19 @@ type Iter8AnalyticsConfig struct {
 		} `yaml:"auth"`
 		URL string `yaml:"url"`
 	} `yaml:"prometheus"`
+}
+
+func (i *Iter8ExperimentSpec) Parse(iter8Object Iter8ExperimentDetail) {
+	i.Name = iter8Object.ExperimentItem.Name
+	i.Namespace = iter8Object.ExperimentItem.Namespace
+	i.Service = iter8Object.ExperimentItem.TargetService
+	i.Candidate = iter8Object.ExperimentItem.Candidate
+	i.Baseline = iter8Object.ExperimentItem.Baseline
+	i.TrafficControl = iter8Object.TrafficControl
+	i.Criterias = make([]Iter8Criteria, len(iter8Object.CriteriaDetails))
+	for k, c := range iter8Object.CriteriaDetails {
+		i.Criterias[k] = c.Criteria
+	}
 }
 
 func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
