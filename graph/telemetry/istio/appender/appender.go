@@ -41,6 +41,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[ServiceEntryAppenderName] = true
 			case IstioAppenderName:
 				requestedAppenders[IstioAppenderName] = true
+			case OperationNodeAppenderName:
+				requestedAppenders[OperationNodeAppenderName] = true
 			case ResponseTimeAppenderName:
 				requestedAppenders[ResponseTimeAppenderName] = true
 			case SecurityPolicyAppenderName:
@@ -74,6 +76,14 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
 		a := DeadNodeAppender{}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[OperationNodeAppenderName]; ok || o.Appenders.All {
+		a := OperationNodeAppender{
+			GraphType:  o.GraphType,
+			Namespaces: o.Namespaces,
+			QueryTime:  o.QueryTime,
+		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {

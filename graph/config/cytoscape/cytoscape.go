@@ -74,6 +74,7 @@ type NodeData struct {
 	IsGroup         string              `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
 	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
+	IsOperation     string              `json:"isOperation,omitempty"`     // set to the operation for NodeTypeAggregate and AggregateTypeOp
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
 	IsServiceEntry  string              `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
@@ -252,6 +253,16 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may be a service entry
 		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			nd.IsServiceEntry = val.(string)
+		}
+
+		// node may be an aggregate
+		if n.NodeType == graph.NodeTypeAggregate {
+			switch n.Metadata[graph.AggregateType] {
+			case graph.AggregateTypeOp:
+				nd.IsOperation = n.Metadata[graph.Aggregate].(string)
+			default:
+				// must be one of the above
+			}
 		}
 
 		nw := NodeWrapper{

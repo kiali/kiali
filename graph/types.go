@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	AggregateTypeOp       string = "aggregateOp" // request peration aggregate
+	AggregateTypeOp       string = "aggregateOp" // request classification operation aggregate
 	GraphTypeApp          string = "app"
 	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
 	GraphTypeVersionedApp string = "versionedApp"
@@ -231,8 +231,8 @@ func NewAggregateNode(namespace, aggregateType, aggregate string) Node {
 // NewAggregateNodeExplicit constructor assigns the specified ID
 func NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate string) Node {
 	metadata := make(Metadata)
-	metadata["aggregateType"] = aggregateType
-	metadata["agregate"] = aggregate
+	metadata[AggregateType] = aggregateType
+	metadata[Aggregate] = aggregate
 
 	return Node{
 		ID:        id,
