@@ -11,6 +11,11 @@ exports[`Overview page renders initial layout 1`] = `
       onRefresh={[Function]}
       setDisplayMode={[Function]}
       sort={[Function]}
+      statefulFilterRef={
+        Object {
+          "current": null,
+        }
+      }
     />
   </div>
   <div

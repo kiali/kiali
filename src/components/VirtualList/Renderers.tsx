@@ -26,6 +26,7 @@ import OverviewCardLinks from '../../pages/Overview/OverviewCardLinks';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
+import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 
 // Links
 
@@ -101,7 +102,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   let status: any = <small style={{ fontSize: '65%', marginLeft: '5px' }}>N/A</small>;
   if (ns.validations) {
     status = (
-      <td role="gridcell" key={'VirtuaItem_Links_' + ns.name} style={{ verticalAlign: 'middle' }}>
+      <td role="gridcell" key={'VirtuaItem_IstioConfig_' + ns.name} style={{ verticalAlign: 'middle' }}>
         <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>
           <ValidationSummary
             id={'ns-val-' + ns.name}
@@ -137,7 +138,7 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       </td>
     );
   }
-  return <td role="gridcell" key={'VirtuaItem_Name_' + ns.name} />;
+  return <td role="gridcell" key={'VirtuaItem_Status_' + ns.name} />;
 };
 
 export const links: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
@@ -150,7 +151,7 @@ export const links: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Resource, icon: string) => {
   return (
-    <td role="gridcell" key={'VirtuaItem_Name_' + ns.name} style={{ verticalAlign: 'middle' }}>
+    <td role="gridcell" key={'VirtuaItem_NamespaceItem_' + ns.name} style={{ verticalAlign: 'middle' }}>
       <Badge className={'virtualitem_badge_definition'}>{icon}</Badge>
       {ns.name}
     </td>
@@ -164,7 +165,7 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, ico
     itemName = IstioTypes[item['type']].name;
   }
   return (
-    <td role="gridcell" key={'VirtuaItem_Name_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
+    <td role="gridcell" key={'VirtuaItem_Item_' + item.namespace + '_' + item.name} style={{ verticalAlign: 'middle' }}>
       <Tooltip position={TooltipPosition.top} content={<>{itemName}</>}>
         <Badge className={'virtualitem_badge_definition'}>{icon}</Badge>
       </Tooltip>
@@ -190,9 +191,9 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
   );
 };
 
-const labelActivate = (filters: ActiveFilter[], key: string, value: string) => {
+const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string) => {
   return filters.some(filter => {
-    if (filter.id === labelFilter.id) {
+    if (filter.id === id) {
       if (filter.value.includes(':')) {
         const [k, v] = filter.value.split(':');
         if (k === key) {
@@ -217,7 +218,10 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   ___?: Health,
   statefulFilter?: React.RefObject<StatefulFilters>
 ) => {
-  const filters = FilterHelper.getFiltersFromURL([labelFilter, appLabelFilter, versionLabelFilter]);
+  let path = window.location.pathname;
+  path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
+  const labelFilt = path === 'overview' ? NsLabelFilter : labelFilter;
+  const filters = FilterHelper.getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
   return (
     <td
       role="gridcell"
@@ -227,8 +231,8 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
       {item.labels &&
         Object.entries(item.labels).map(([key, value]) => {
           const label = `${key}:${value}`;
-          const labelAct = labelActivate(filters.filters, key, value);
-          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilter]).filters.some(f =>
+          const labelAct = labelActivate(filters.filters, key, value, labelFilt.id);
+          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
             f.value.includes(label)
           );
           const badgeComponent = (
@@ -242,8 +246,8 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               onClick={() =>
                 statefulFilter
                   ? labelAct
-                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilter.id, label)
-                    : statefulFilter.current!.filterAdded(labelFilter, label)
+                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.title, label)
+                    : statefulFilter.current!.filterAdded(labelFilt, label)
                   : {}
               }
             >

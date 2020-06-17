@@ -21,6 +21,7 @@ type VirtualListProps<R> = {
   children?: React.ReactNode;
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
+  statefulProps?: React.RefObject<StatefulFilters>;
 };
 
 type VirtualListState = {
@@ -127,7 +128,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
                     item={r}
                     index={i}
                     config={conf}
-                    statefulFilter={this.statefulFilters}
+                    statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
                   />
                 );
               })

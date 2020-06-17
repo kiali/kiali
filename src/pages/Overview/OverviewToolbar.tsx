@@ -32,6 +32,7 @@ type Props = ReduxProps & {
   sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   displayMode: OverviewDisplayMode;
   setDisplayMode: (mode: OverviewDisplayMode) => void;
+  statefulFilterRef: React.RefObject<StatefulFilters>;
 };
 
 export enum OverviewDisplayMode {
@@ -141,6 +142,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
             handleRefresh={this.props.onRefresh}
           />
         ]}
+        ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (
           <>

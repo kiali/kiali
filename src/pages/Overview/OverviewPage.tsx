@@ -52,6 +52,7 @@ import { Link } from 'react-router-dom';
 import { Paths } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
+import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -108,6 +109,7 @@ type ReduxProps = {
 type OverviewProps = ReduxProps & {};
 
 export class OverviewPage extends React.Component<OverviewProps, State> {
+  private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
   private promises = new PromisesRegistry();
   private displayModeSet = false;
 
@@ -398,6 +400,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             sort={this.sort}
             displayMode={this.state.displayMode}
             setDisplayMode={this.setDisplayMode}
+            statefulFilterRef={this.sFOverviewToolbar}
           />
         </div>
         {filteredNamespaces.length > 0 ? (
@@ -405,7 +408,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
-              <VirtualList rows={filteredNamespaces} sort={this.sort} />
+              <VirtualList rows={filteredNamespaces} sort={this.sort} statefulProps={this.sFOverviewToolbar} />
             ) : (
               <Grid>
                 {filteredNamespaces.map(ns => (

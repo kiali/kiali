@@ -10,7 +10,7 @@ type VirtualItemProps = {
   className?: string;
   index: number;
   config: Resource;
-  statefulFilter?: React.RefObject<StatefulFilters>;
+  statefulFilterProps?: React.RefObject<StatefulFilters>;
 };
 
 type VirtualItemState = {
@@ -58,7 +58,7 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   renderDetails = (item: RenderResource, health?: Health) => {
     const icon = this.getIcon();
     return this.props.config.columns.map(object =>
-      object.renderer(item, this.props.config, icon, health, this.props.statefulFilter)
+      object.renderer(item, this.props.config, icon, health, this.props.statefulFilterProps)
     );
   };
 
@@ -77,7 +77,7 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
         style={style}
         className={className}
         role="row"
-        key={'VirtualItem_' + ('namespace' in item ? item.namespace : item.name) + '_' + item.name}
+        key={'VirtualItem_' + ('namespace' in item ? 'Ns' + item.namespace : item.name) + '_' + item.name}
       >
         {this.renderDetails(item, this.state.health)}
       </tr>
