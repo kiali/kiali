@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -36,12 +35,4 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, a graph.Appen
 	}
 
 	return nil
-}
-
-// getIstioNamespaces returns all Istio namespaces, less the exclusions
-func getIstioNamespaces(excludeMap graph.NamespaceInfoMap) []string {
-	if excludeMap != nil {
-		return config.GetIstioNamespaces(excludeMap.GetIstioNamespaces())
-	}
-	return config.GetIstioNamespaces(nil)
 }

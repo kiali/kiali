@@ -2,7 +2,6 @@ package appender
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -54,9 +53,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
-	// 1) query for requests originating from a workload outside the namespace. This may include unnecessary istio
-	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
-	//    traffic will be ignored because it won't map to the trafficMap.
+	// 1) query for requests originating from a workload outside the namespace.
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,connection_security_policy", appLabel, verLabel, appLabel, verLabel)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
@@ -73,24 +70,15 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
-	// 2) query for requests originating from a workload inside of the namespace, exclude traffic to non-requested
-	//    istio namespaces. (note, do we need to ease this restriction to ensure we don't miss egressgateway traffic?)
-	destinationWorkloadNamespaceQuery := ""
-	excludedIstioNamespaces := getIstioNamespaces(a.Namespaces)
-	if len(excludedIstioNamespaces) > 0 {
-		excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
-		destinationWorkloadNamespaceQuery = fmt.Sprintf(`,destination_service_namespace!~"%s"`, excludedIstioRegex)
-	}
-	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
+	// 2) query for requests originating from a workload inside of the namespace
+	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
-		destinationWorkloadNamespaceQuery,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
+	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
-		destinationWorkloadNamespaceQuery,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
