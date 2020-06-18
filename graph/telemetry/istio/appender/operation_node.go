@@ -51,7 +51,7 @@ func (a OperationNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 
 	// query prometheus for request_operation info in two queries (only dest telemetry reports op info):
 	// 1) query for requests originating from a workload outside the namespace.
-	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,request_operation", appLabel, verLabel, appLabel, verLabel)
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,request_operation", appLabel, verLabel, appLabel, verLabel)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v",request_operation!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
