@@ -80,9 +80,10 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[OperationNodeAppenderName]; ok || o.Appenders.All {
 		a := OperationNodeAppender{
-			GraphType:  o.GraphType,
-			Namespaces: o.Namespaces,
-			QueryTime:  o.QueryTime,
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
 		}
 		appenders = append(appenders, a)
 	}

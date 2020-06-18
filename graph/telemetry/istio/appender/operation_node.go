@@ -20,9 +20,10 @@ const (
 // visibility into operation aggregates.
 // Name: operation
 type OperationNodeAppender struct {
-	GraphType  string
-	Namespaces map[string]graph.NamespaceInfo
-	QueryTime  int64 // unix time in seconds
+	GraphType          string
+	InjectServiceNodes bool
+	Namespaces         map[string]graph.NamespaceInfo
+	QueryTime          int64 // unix time in seconds
 }
 
 // Name implements Appender
@@ -151,14 +152,43 @@ func (a OperationNodeAppender) injectOperations(trafficMap graph.TrafficMap, vec
 
 		// inject operation node between source and destination
 		sourceID, _ := graph.Id(sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-		destID, _ := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 		sourceNode, sourceFound := trafficMap[sourceID]
-		destNode, destFound := trafficMap[destID]
-		if !sourceFound || !destFound {
-			log.Warningf("Expected source [%s] or dest [%s] node nod found in traffic map. Skipping op injection [%s]", sourceID, destID, operation)
+		if !sourceFound {
+			log.Warningf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, operation)
 			continue
 		}
-		opNode, _ := addNode(trafficMap, destWlNs, operation)
+
+		// if service nodes are injected show the service-related aggregation:
+		//   - use the service node as the dest
+		//   - replace the non-classified edge (fromsource to service) with the classified edges
+		//     - note that if not every request has a classification match the traffic may be lower than actual, I
+		//     - this this OK, and if the user cares they should define a "catch-all" classification match
+		// else show the independent aggregation by using the workload/app node as the dest
+		destID := ""
+		var opNode *graph.Node
+		if a.InjectServiceNodes {
+			destID, _ = graph.Id(destSvcNs, destSvcName, "", "", "", "", a.GraphType) // service
+			opNode, _ = addNode(trafficMap, destSvcNs, operation, destSvcName)
+		} else {
+			destID, _ = graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType) // wl/app
+			opNode, _ = addNode(trafficMap, destWlNs, operation, "")
+		}
+		destNode, destFound := trafficMap[destID]
+		if !destFound {
+			log.Warningf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, operation)
+			continue
+		}
+
+		if a.InjectServiceNodes {
+			safeEdges := []*graph.Edge{}
+			for _, e := range sourceNode.Edges {
+				if e.Dest.ID != destID {
+					safeEdges = append(safeEdges, e)
+				}
+			}
+			sourceNode.Edges = safeEdges
+		}
+
 		addTraffic(val, protocol, code, flags, host, sourceNode, opNode)
 		addTraffic(val, protocol, code, flags, host, opNode, destNode)
 	}
@@ -180,8 +210,8 @@ func addTraffic(val float64, protocol, code, flags, host string, source, dest *g
 	graph.AddToMetadata(protocol, val, code, flags, host, source.Metadata, dest.Metadata, edge.Metadata)
 }
 
-func addNode(trafficMap graph.TrafficMap, namespace, op string) (*graph.Node, bool) {
-	id := graph.AggregateID(namespace, graph.AggregateTypeOp, op)
+func addNode(trafficMap graph.TrafficMap, namespace, op, svcName string) (*graph.Node, bool) {
+	id := graph.AggregateID(namespace, graph.AggregateTypeOp, op, svcName)
 	node, found := trafficMap[id]
 	if !found {
 		newNode := graph.NewAggregateNodeExplicit(id, namespace, graph.AggregateTypeOp, op)
