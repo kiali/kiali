@@ -197,8 +197,12 @@ spec:
                       "output_attribute": "istio_operationId",
                       "match": [
                         {
-                          "value": "LocalRentals",
-                          "condition": "request.url_path.matches('^/hotels/[[:alnum:]]*$') && request.method == 'GET'"
+                          "value": "ParisRental",
+                          "condition": "request.url_path.matches('^/hotels/paris.*$') && request.method == 'GET'"
+                        },
+                        {
+                          "value": "OtherHotel",
+                          "condition": "request.url_path.matches('^/hotels/.*$')"
                         }
                       ]
                     }
@@ -245,8 +249,12 @@ spec:
                       "output_attribute": "istio_operationId",
                       "match": [
                         {
-                          "value": "LocalRentals",
-                          "condition": "request.url_path.matches('^/cars/[[:alnum:]]*$') && request.method == 'GET'"
+                          "value": "ParisRental",
+                          "condition": "request.url_path.matches('^/cars/paris.*$') && request.method == 'GET'"
+                        },
+                        {
+                          "value": "OtherCar",
+                          "condition": "request.url_path.matches('^/cars/.*$')"
                         }
                       ]
                     }
@@ -293,8 +301,12 @@ spec:
                       "output_attribute": "istio_operationId",
                       "match": [
                         {
-                          "value": "LongDistanceTransportation",
-                          "condition": "request.url_path.matches('^/flights/[[:alnum:]]*$') && request.method == 'GET'"
+                          "value": "ParisFlight",
+                          "condition": "request.url_path.matches('^/flights/paris.*$') && request.method == 'GET'"
+                        },
+                        {
+                          "value": "OtherFlight",
+                          "condition": "request.url_path.matches('^/flights/.*$')"
                         }
                       ]
                     }
