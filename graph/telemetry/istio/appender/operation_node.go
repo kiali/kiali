@@ -169,6 +169,7 @@ func (a OperationNodeAppender) injectOperations(trafficMap graph.TrafficMap, vec
 		if a.InjectServiceNodes {
 			destID, _ = graph.Id(destSvcNs, destSvcName, "", "", "", "", a.GraphType) // service
 			opNode, _ = addNode(trafficMap, destSvcNs, operation, destSvcName)
+			opNode.App = destApp
 		} else {
 			destID, _ = graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType) // wl/app
 			opNode, _ = addNode(trafficMap, destWlNs, operation, "")
