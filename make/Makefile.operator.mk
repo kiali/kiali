@@ -82,17 +82,17 @@ ROUTER_HOSTNAME="$(shell ${OC} get $(shell (${OC} get routes -n ${NAMESPACE} -o 
 SERVICE_TYPE="${SERVICE_TYPE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 KIALI_CR_SPEC_VERSION="${KIALI_CR_SPEC_VERSION}" \
-envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
+envsubst | ${OC} apply -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
 kiali-delete: .ensure-oc-exists secret-delete
 	@echo Remove Kiali
-	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" ; true
+	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" ; true
 
 ## kiali-purge: Purges all Kiali resources directly without going through the operator or ansible.
 kiali-purge: .ensure-oc-exists
 	@echo Purge Kiali resources
-	${OC} patch kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
+	${OC} patch kiali kiali -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
 	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
 ifeq ($(CLUSTER_TYPE),openshift)
 	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io,consolelinks.console.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
