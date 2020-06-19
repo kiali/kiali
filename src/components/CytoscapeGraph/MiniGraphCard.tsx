@@ -13,8 +13,8 @@ import {
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
-import { EdgeLabelMode, GraphType, NodeType, DecoratedGraphElements } from '../../types/Graph';
-import CytoscapeGraph from './CytoscapeGraph';
+import { DecoratedGraphElements, EdgeLabelMode, GraphType, NodeType } from '../../types/Graph';
+import CytoscapeGraph, { GraphNodeDoubleTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { DagreGraph } from './graphs/DagreGraph';
 
@@ -92,6 +92,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               isMTLSEnabled={false}
               isMiniGraph={true}
               layout={DagreGraph.getLayout()}
+              onNodeTap={this.handleNodeTap}
               refreshInterval={0}
               showCircuitBreakers={false}
               showMissingSidecars={true}
@@ -107,6 +108,30 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
       </Card>
     );
   }
+
+  private handleNodeTap = (e: GraphNodeDoubleTapEvent) => {
+    // Do nothing on inaccessible nodes or service entry nodes
+    if (e.isInaccessible || e.isServiceEntry) {
+      return;
+    }
+
+    // If we are already on the details page of the double-tapped node, do nothing.
+    const displayedNode = this.props.dataSource.fetchParameters.node;
+    const isSameResource =
+      displayedNode?.namespace.name === e.namespace &&
+      displayedNode.nodeType === e.nodeType &&
+      displayedNode[displayedNode.nodeType] === e[e.nodeType];
+
+    if (isSameResource) {
+      return;
+    }
+
+    // Redirect to the details page of the double-tapped node.
+    let resource = e[e.nodeType];
+    let resourceType: string = e.nodeType === NodeType.APP ? 'application' : e.nodeType;
+
+    history.push(`/namespaces/${e.namespace}/${resourceType}s/${resource}`);
+  };
 
   private onGraphActionsToggle = (isOpen: boolean) => {
     this.setState({

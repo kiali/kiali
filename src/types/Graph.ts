@@ -63,7 +63,7 @@ export interface NodeParamsType {
   namespace: Namespace;
   nodeType: NodeType;
   service: string;
-  version: string;
+  version?: string;
   workload: string;
 }
 

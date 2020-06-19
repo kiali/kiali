@@ -6,8 +6,10 @@ import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
+import history from '../../app/History';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import { MessageType } from '../../types/MessageCenter';
 import Namespace from '../../types/Namespace';
 import {
   CytoscapeClickEvent,
@@ -23,9 +25,10 @@ import {
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
-import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
+import CytoscapeGraph, { GraphNodeDoubleTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
+import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
 import GraphToolbarContainer from './GraphToolbar/GraphToolbar';
 import GraphLegend from './GraphLegend';
 import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
@@ -400,14 +403,15 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 <TourStopContainer info={GraphTourStops.Graph}>
                   <TourStopContainer info={GraphTourStops.ContextualMenu}>
                     <CytoscapeGraph
-                      onEmptyGraphAction={this.handleEmptyGraphAction}
                       containerClassName={cytoscapeGraphContainerStyle}
-                      ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                      isMTLSEnabled={this.props.mtlsEnabled}
-                      focusSelector={this.focusSelector}
-                      contextMenuNodeComponent={NodeContextMenuContainer}
                       contextMenuGroupComponent={NodeContextMenuContainer}
+                      contextMenuNodeComponent={NodeContextMenuContainer}
+                      focusSelector={this.focusSelector}
                       graphData={this.state.graphData}
+                      isMTLSEnabled={this.props.mtlsEnabled}
+                      onEmptyGraphAction={this.handleEmptyGraphAction}
+                      onNodeDoubleTap={this.handleDoubleTap}
+                      ref={refInstance => this.setCytoscapeGraph(refInstance)}
                       {...this.props}
                     />
                   </TourStopContainer>
@@ -491,6 +495,107 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.graphData.timestamp
       }
     });
+  };
+
+  private handleDoubleTap = (event: GraphNodeDoubleTapEvent) => {
+    if (event.isInaccessible || event.isServiceEntry) {
+      return;
+    }
+
+    if (event.hasMissingSC) {
+      AlertUtils.add(
+        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
+        undefined,
+        MessageType.WARNING
+      );
+      return;
+    }
+    if (event.isUnused) {
+      AlertUtils.add(
+        `An unused node has no node-specific traffic and can not provide a node detail graph.`,
+        undefined,
+        MessageType.WARNING
+      );
+      return;
+    }
+    if (event.isOutside && this.props.setActiveNamespaces) {
+      this.props.setActiveNamespaces([{ name: event.namespace }]);
+      return;
+    }
+
+    // If graph is in the drilled-down view, there is the chance that the user
+    // double clicked the same node as in the full graph. Determine if this is
+    // the case.
+    let sameNode = false;
+    const node = this.state.graphData.fetchParams.node;
+    if (node) {
+      sameNode = node && node.nodeType === event.nodeType;
+      switch (event.nodeType) {
+        case NodeType.APP:
+          sameNode = sameNode && node.app === event.app;
+          sameNode = sameNode && node.version === event.version;
+          break;
+        case NodeType.SERVICE:
+          sameNode = sameNode && node.service === event.service;
+          break;
+        case NodeType.WORKLOAD:
+          sameNode = sameNode && node.workload === event.workload;
+          break;
+        default:
+          sameNode = true; // don't navigate to unsupported node type
+      }
+    }
+
+    const targetNode = { ...event, namespace: { name: event.namespace } };
+
+    // If, while in the drilled-down graph, the user double clicked the same
+    // node as in the main graph, it doesn't make sense to re-load the same view.
+    // Instead, assume that the user wants more details for the node and do a
+    // redirect to the details page.
+    if (sameNode) {
+      this.handleDoubleTapSameNode(targetNode);
+      return;
+    }
+
+    // In case user didn't dounble-tapped the same node, or if graph is in
+    // full graph mode, redirect to the drilled-down graph of the chosen node.
+    const urlParams: GraphUrlParams = {
+      activeNamespaces: this.state.graphData.fetchParams.namespaces,
+      duration: this.state.graphData.fetchParams.duration,
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.layout,
+      graphType: this.state.graphData.fetchParams.graphType,
+      node: targetNode,
+      refreshInterval: this.props.refreshInterval,
+      showServiceNodes: this.props.showServiceNodes,
+      showUnusedNodes: this.props.showUnusedNodes
+    };
+
+    // To ensure updated components get the updated URL, update the URL first and then the state
+    history.push(makeNodeGraphUrlFromParams(urlParams));
+    if (this.props.setNode) {
+      this.props.setNode(targetNode);
+    }
+  };
+
+  // This allows us to navigate to the service details page when zoomed in on nodes
+  private handleDoubleTapSameNode = (targetNode: NodeParamsType) => {
+    const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
+      return `/namespaces/${namespace}/${nodeType}/${name}`;
+    };
+    const nodeType = targetNode.nodeType;
+    let urlNodeType = targetNode.nodeType + 's';
+    let name = targetNode.app;
+    if (nodeType === 'service') {
+      name = targetNode.service;
+    } else if (nodeType === 'workload') {
+      name = targetNode.workload;
+    } else {
+      urlNodeType = 'applications';
+    }
+    const detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+    history.push(detailsPageUrl);
+    return;
   };
 
   private toggleHelp = () => {
