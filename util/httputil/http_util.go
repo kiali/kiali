@@ -121,19 +121,27 @@ func GuessKialiURL(r *http.Request) string {
 		}
 	}
 
+	var isDefaultPort = false
 	// Guess the port. In this case, the port in configuration doesn't take
 	// priority, because this is the port where the pod is listening, which may
 	// be mapped to another public port via the Service/Ingress. So, HTTP headers
 	// take priority.
 	if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
 		port = fwdPort[0]
-	} else if len(r.URL.Port()) != 0 {
-		port = r.URL.Port()
+	} else if len(r.URL.Host) != 0 {
+		if len(r.URL.Port()) != 0 {
+			port = r.URL.Port()
+		} else {
+			isDefaultPort = true
+		}
 	}
 
 	// If using standard ports, don't specify the port component part on the URL
 	var guessedKialiURL string
 	if (schema == "http" && port == "80") || (schema == "https" && port == "443") {
+		isDefaultPort = true
+	}
+	if isDefaultPort {
 		guessedKialiURL = fmt.Sprintf("%s://%s%s", schema, host, cfg.Server.WebRoot)
 	} else {
 		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)

@@ -71,6 +71,15 @@ func TestGuessKialiURLReadsHostPortFromHostAttr(t *testing.T) {
 	assert.Equal(t, "https://example.com:901/custom/kiali", guessedUrl)
 }
 
+func TestGuessKialiURLReadsHostPortFromHostAttrDefault(t *testing.T) {
+	request := setupAndCreateRequest()
+	request.URL.Host = "example.com"
+	request.Host = "example.com"
+	guessedUrl := GuessKialiURL(request)
+
+	assert.Equal(t, "https://example.com/custom/kiali", guessedUrl)
+}
+
 func TestGuessKialiURLOmitsStandardPlainHttpPort(t *testing.T) {
 	// See reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/x-forwarded-headers.html#x-forwarded-port
 
