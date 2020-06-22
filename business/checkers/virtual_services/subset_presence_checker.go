@@ -3,7 +3,6 @@ package virtual_services
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,6 +10,7 @@ import (
 
 type SubsetPresenceChecker struct {
 	Namespace        string
+	Namespaces       []string
 	DestinationRules []kubernetes.IstioObject
 	VirtualService   kubernetes.IstioObject
 }
@@ -98,15 +98,11 @@ func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost strin
 			continue
 		}
 
-		domainParts := strings.Split(sHost, ".")
-		serviceName := domainParts[0]
-		namespace := checker.Namespace
-		if len(domainParts) > 1 {
-			namespace = domainParts[1]
-		}
+		drHost := kubernetes.GetHost(sHost, destinationRule.GetObjectMeta().Namespace, destinationRule.GetObjectMeta().ClusterName, checker.Namespaces)
+		vsHost := kubernetes.GetHost(virtualServiceHost, checker.Namespace, checker.VirtualService.GetObjectMeta().ClusterName, checker.Namespaces)
 
 		// TODO Host could be in another namespace (FQDN)
-		if kubernetes.FilterByHost(virtualServiceHost, serviceName, namespace) {
+		if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) {
 			return destinationRule, true
 		}
 	}
