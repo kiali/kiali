@@ -10,7 +10,8 @@ package istio
 //
 //   Second Pass: Apply any requested appenders to alter or append to the graph.
 //
-// Supports one vendor-specific query parameter:
+// Supports two vendor-specific query parameters:
+//   aggregate: Must be a valid metric attribute (default: request_operation)
 //   responseTimeQuantile: Must be a valid quantile (default: 0.95)
 //
 import (

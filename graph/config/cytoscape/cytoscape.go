@@ -65,6 +65,7 @@ type NodeData struct {
 	App             string              `json:"app,omitempty"`
 	Version         string              `json:"version,omitempty"`
 	Service         string              `json:"service,omitempty"`         // requested service for NodeTypeService
+	Aggregate       string              `json:"aggregate,omitempty"`       // set like "<aggregate>=<aggregateVal>"
 	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
 	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
 	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
@@ -74,7 +75,6 @@ type NodeData struct {
 	IsGroup         string              `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
 	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
-	IsOperation     string              `json:"isOperation,omitempty"`     // set to the operation for NodeTypeAggregate and AggregateTypeOp
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
 	IsServiceEntry  string              `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
@@ -257,12 +257,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node may be an aggregate
 		if n.NodeType == graph.NodeTypeAggregate {
-			switch n.Metadata[graph.AggregateType] {
-			case graph.AggregateTypeOp:
-				nd.IsOperation = n.Metadata[graph.Aggregate].(string)
-			default:
-				// must be one of the above
-			}
+			nd.Aggregate = fmt.Sprintf("%s=%s", n.Metadata[graph.Aggregate].(string), n.Metadata[graph.AggregateVal].(string))
 		}
 
 		nw := NodeWrapper{

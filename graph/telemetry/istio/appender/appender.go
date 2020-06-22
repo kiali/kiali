@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	defaultQuantile = 0.95
+	defaultAggregate = "request_operation"
+	defaultQuantile  = 0.95
 )
 
 // version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
@@ -35,18 +36,18 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
 			switch appenderName {
+			case AggregateNodeAppenderName:
+				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
-			case ServiceEntryAppenderName:
-				requestedAppenders[ServiceEntryAppenderName] = true
 			case IstioAppenderName:
 				requestedAppenders[IstioAppenderName] = true
-			case OperationNodeAppenderName:
-				requestedAppenders[OperationNodeAppenderName] = true
 			case ResponseTimeAppenderName:
 				requestedAppenders[ResponseTimeAppenderName] = true
 			case SecurityPolicyAppenderName:
 				requestedAppenders[SecurityPolicyAppenderName] = true
+			case ServiceEntryAppenderName:
+				requestedAppenders[ServiceEntryAppenderName] = true
 			case SidecarsCheckAppenderName:
 				requestedAppenders[SidecarsCheckAppenderName] = true
 			case UnusedNodeAppenderName:
@@ -78,8 +79,13 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		a := DeadNodeAppender{}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[OperationNodeAppenderName]; ok || o.Appenders.All {
-		a := OperationNodeAppender{
+	if _, ok := requestedAppenders[AggregateNodeAppenderName]; ok || o.Appenders.All {
+		aggregate := o.Params.Get("responseTimeQuantile")
+		if aggregate == "" {
+			aggregate = defaultAggregate
+		}
+		a := AggregateNodeAppender{
+			Aggregate:          aggregate,
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,

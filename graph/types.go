@@ -222,17 +222,17 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 }
 
 // NewAggregateNode constructor
-func NewAggregateNode(namespace, aggregateType, aggregate, svcName string) Node {
-	id := AggregateID(namespace, aggregateType, aggregate, svcName)
+func NewAggregateNode(namespace, aggregate, aggregateVal, svcName string) Node {
+	id := AggregateID(namespace, aggregate, aggregateVal, svcName)
 
-	return NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate)
+	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal)
 }
 
 // NewAggregateNodeExplicit constructor assigns the specified ID
-func NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate string) Node {
+func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal string) Node {
 	metadata := make(Metadata)
-	metadata[AggregateType] = aggregateType
 	metadata[Aggregate] = aggregate
+	metadata[AggregateVal] = aggregateVal
 
 	return Node{
 		ID:        id,
@@ -248,9 +248,9 @@ func NewAggregateNodeExplicit(id, namespace, aggregateType, aggregate string) No
 }
 
 // AggregateID returns the unique node ID
-func AggregateID(namespace, aggregateType, aggregate, svcName string) (id string) {
+func AggregateID(namespace, aggregate, aggregateVal, svcName string) (id string) {
 	if svcName == "" {
-		return fmt.Sprintf("agg_%s_%s_%s", namespace, aggregateType, aggregate)
+		return fmt.Sprintf("agg_%s_%s_%s", namespace, aggregate, aggregateVal)
 	}
-	return fmt.Sprintf("agg_%s_%s_%s_%s", namespace, aggregateType, aggregate, svcName)
+	return fmt.Sprintf("agg_%s_%s_%s_%s", namespace, aggregate, aggregateVal, svcName)
 }
