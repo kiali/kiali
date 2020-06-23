@@ -68,7 +68,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
-	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	a.injectAggregates(trafficMap, &vector)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
@@ -84,12 +85,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
-	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
-
-	// create map to quickly look up securityPolicy
-	// securityPolicyMap := make(map[string]PolicyRates)
-	a.injectAggregates(trafficMap, &outVector)
-	a.injectAggregates(trafficMap, &inVector)
+	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	a.injectAggregates(trafficMap, &vector)
 }
 
 func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vector *model.Vector) {
@@ -164,9 +161,9 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 
 		// if service nodes are injected show the service-related aggregation:
 		//   - use the service node as the dest
-		//   - replace the non-classified edge (fromsource to service) with the classified edges
+		//   - replace the non-classified edge (from source to service) with the classified edges
 		//     - note that if not every request has a classification match the traffic may be lower than actual, I
-		//     - this this OK, and if the user cares they should define a "catch-all" classification match
+		//       think this this OK, and if the user cares they should define a "catch-all" classification match
 		// else show the independent aggregation by using the workload/app node as the dest
 		destID := ""
 		var aggrNode *graph.Node
@@ -212,7 +209,16 @@ func addTraffic(val float64, protocol, code, flags, host string, source, dest *g
 		edge.Metadata[graph.ProtocolKey] = protocol
 	}
 
-	graph.AddToMetadata(protocol, val, code, flags, host, source.Metadata, dest.Metadata, edge.Metadata)
+	// Only update traffic on the aggregate node and associated edges.  Remember that this is an appender and the
+	// in/out traffic is already set for the non-aggregate nodes.
+	var sourceMetadata graph.Metadata
+	var destMetadata graph.Metadata
+	if source.NodeType == graph.NodeTypeAggregate {
+		sourceMetadata = source.Metadata
+	} else {
+		destMetadata = dest.Metadata
+	}
+	graph.AddToMetadata(protocol, val, code, flags, host, sourceMetadata, destMetadata, edge.Metadata)
 }
 
 func addNode(trafficMap graph.TrafficMap, namespace, aggregate, aggregateVal, svcName string) (*graph.Node, bool) {
