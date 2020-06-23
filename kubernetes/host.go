@@ -89,11 +89,17 @@ func includes(nss []string, namespace string) bool {
 
 // String outputs a full FQDN version of the Host
 func (h Host) String() string {
+	var hostname string
 	if h.CompleteInput {
-		return fmt.Sprintf("%s.%s.%s", h.Service, h.Namespace, h.Cluster)
+		if h.Cluster != "" {
+			hostname = fmt.Sprintf("%s.%s.%s", h.Service, h.Namespace, h.Cluster)
+		} else {
+			hostname = fmt.Sprintf("%s.%s", h.Service, h.Namespace)
+		}
 	} else {
-		return h.Service
+		hostname = h.Service
 	}
+	return hostname
 }
 
 func ParseTwoPartHost(host Host) (string, string) {

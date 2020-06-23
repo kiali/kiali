@@ -77,7 +77,7 @@ func testWithDisabledNsValidations(scenario string, t *testing.T) {
 	vals, valid := disabledNamespacetestPrep(scenario, t)
 
 	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
-	tb.AssertValidationsPresent(1)
+	tb.AssertValidationsPresent(1, false)
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disabledestinationrulemissing")
 }
 
