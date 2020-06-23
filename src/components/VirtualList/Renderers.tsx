@@ -22,7 +22,6 @@ import { Paths } from '../../config';
 import ValidationSummary from '../Validations/ValidationSummary';
 import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardContentExpanded';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
-import OverviewCardLinks from '../../pages/Overview/OverviewCardLinks';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
@@ -42,6 +41,15 @@ const getIstioLink = (item: TResource) => {
 };
 
 // Cells
+
+export const actionRenderer = (key: string, action: JSX.Element) => {
+  return (
+    <td role="gridcell" key={'VirtuaItem_Action_' + key} style={{ verticalAlign: 'middle' }}>
+      {action}
+    </td>
+  );
+};
+
 export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem> = (
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
@@ -139,14 +147,6 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
     );
   }
   return <td role="gridcell" key={'VirtuaItem_Status_' + ns.name} />;
-};
-
-export const links: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  return (
-    <td role="gridcell" key={'VirtuaItem_Links_' + ns.name} style={{ verticalAlign: 'middle' }}>
-      <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
-    </td>
-  );
 };
 
 export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Resource, icon: string) => {

@@ -22,6 +22,7 @@ type VirtualListProps<R> = {
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: React.RefObject<StatefulFilters>;
+  actions?: JSX.Element[];
 };
 
 type VirtualListState = {
@@ -58,6 +59,11 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
             return config;
           })
         : [];
+    if (this.props.actions) {
+      columns.push({
+        title: ''
+      });
+    }
     let index = -1;
     const sortParam = HistoryManager.getParam(URLParam.SORT);
     if (sortParam) {
@@ -109,6 +115,19 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
       return child;
     });
 
+    const rowItems: any[] = rows.map((r, i) => {
+      return (
+        <VirtualItem
+          key={'vItem' + i}
+          item={r}
+          index={i}
+          config={conf}
+          statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
+          action={this.props.actions && this.props.actions[i] ? this.props.actions[i] : undefined}
+        />
+      );
+    });
+
     return (
       <div
         style={{
@@ -121,17 +140,7 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
           <TableHeader />
           <tbody>
             {this.props.rows.length > 0 ? (
-              rows.map((r, i) => {
-                return (
-                  <VirtualItem
-                    key={'vItem' + i}
-                    item={r}
-                    index={i}
-                    config={conf}
-                    statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
-                  />
-                );
-              })
+              rowItems
             ) : (
               <tr>
                 <td colSpan={tableProps.cells.length}>

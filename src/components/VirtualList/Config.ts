@@ -67,14 +67,6 @@ const status: ResourceType<NamespaceInfo> = {
   renderer: Renderers.status
 };
 
-const links: ResourceType<NamespaceInfo> = {
-  name: 'Links',
-  param: 'links',
-  column: 'Links',
-  transforms: [cellWidth(15)],
-  renderer: Renderers.links
-};
-
 const nsItem: ResourceType<NamespaceInfo> = {
   name: 'Namespace',
   param: 'ns',
@@ -204,7 +196,7 @@ export type Resource = {
 
 const namespaces: Resource = {
   name: 'namespaces',
-  columns: [tlsStatus, nsItem, istioConfiguration, labels, status, links],
+  columns: [tlsStatus, nsItem, istioConfiguration, labels, status],
   icon: 'NS'
 };
 

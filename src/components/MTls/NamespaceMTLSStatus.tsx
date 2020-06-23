@@ -30,17 +30,17 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
   [MTLSStatuses.NOT_ENABLED, emptyDescriptor]
 ]);
 
-class NamespaceMTLSStatus extends React.Component<Props> {
-  iconStyle() {
-    return style({
-      marginTop: -2,
-      marginRight: 6,
-      width: 10
-    });
-  }
+// Magic style to align Istio Config icons on top of status overview
+const iconStyle = style({
+  marginTop: -3,
+  marginRight: 18,
+  marginLeft: 2,
+  width: 10
+});
 
+class NamespaceMTLSStatus extends React.Component<Props> {
   render() {
-    return <MTLSStatus status={this.props.status} className={this.iconStyle()} statusDescriptors={statusDescriptors} />;
+    return <MTLSStatus status={this.props.status} className={iconStyle} statusDescriptors={statusDescriptors} />;
   }
 }
 

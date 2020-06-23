@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
 import { Text, TextVariants } from '@patternfly/react-core';
 
 import { DEGRADED, FAILURE, HEALTHY, IDLE } from '../../types/Health';
@@ -34,46 +33,56 @@ class OverviewCardContentCompact extends React.Component<Props> {
     }
     return (
       <>
-        <Link to={`/${targetPage}?namespaces=${name}`}>{text}</Link>
-        <Text component={TextVariants.h3} style={{ marginTop: 5 }}>
-          {status.inIdle.length > 0 && (
-            <OverviewStatus
-              id={name + '-iddle'}
-              namespace={name}
-              status={IDLE}
-              items={status.inIdle}
-              targetPage={targetPage}
-            />
-          )}
-          {status.inError.length > 0 && (
-            <OverviewStatus
-              id={name + '-failure'}
-              namespace={name}
-              status={FAILURE}
-              items={status.inError}
-              targetPage={targetPage}
-            />
-          )}
-          {status.inWarning.length > 0 && (
-            <OverviewStatus
-              id={name + '-degraded'}
-              namespace={name}
-              status={DEGRADED}
-              items={status.inWarning}
-              targetPage={targetPage}
-            />
-          )}
-          {status.inSuccess.length > 0 && (
-            <OverviewStatus
-              id={name + '-healthy'}
-              namespace={name}
-              status={HEALTHY}
-              items={status.inSuccess}
-              targetPage={targetPage}
-            />
-          )}
-          {nbItems === status.notAvailable.length && 'N/A'}
-        </Text>
+        <div style={{ textAlign: 'left' }}>
+          <span>
+            <div style={{ display: 'inline-block', width: '125px' }}>{text}</div>
+            <div style={{ display: 'inline-block' }}>
+              <Text component={TextVariants.h3}>
+                {status.inIdle.length > 0 && (
+                  <OverviewStatus
+                    id={name + '-iddle'}
+                    namespace={name}
+                    status={IDLE}
+                    items={status.inIdle}
+                    targetPage={targetPage}
+                  />
+                )}
+                {status.inError.length > 0 && (
+                  <OverviewStatus
+                    id={name + '-failure'}
+                    namespace={name}
+                    status={FAILURE}
+                    items={status.inError}
+                    targetPage={targetPage}
+                  />
+                )}
+                {status.inWarning.length > 0 && (
+                  <OverviewStatus
+                    id={name + '-degraded'}
+                    namespace={name}
+                    status={DEGRADED}
+                    items={status.inWarning}
+                    targetPage={targetPage}
+                  />
+                )}
+                {status.inSuccess.length > 0 && (
+                  <OverviewStatus
+                    id={name + '-healthy'}
+                    namespace={name}
+                    status={HEALTHY}
+                    items={status.inSuccess}
+                    targetPage={targetPage}
+                  />
+                )}
+                {nbItems === status.notAvailable.length && (
+                  <div style={{ display: 'inline-block', marginLeft: '5px' }}>
+                    <Text>N/A</Text>
+                  </div>
+                )}
+              </Text>
+            </div>
+          </span>
+        </div>
       </>
     );
   }

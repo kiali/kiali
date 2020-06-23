@@ -49,12 +49,12 @@ class OverviewStatus extends React.Component<Props, {}> {
     );
     return (
       <Tooltip aria-label={'Overview status'} position={TooltipPosition.top} content={tooltipContent}>
-        <>
+        <div style={{ display: 'inline-block', marginRight: '5px' }}>
           <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.setFilters()}>
             {createIcon(this.props.status)}
             {' ' + length}
           </Link>{' '}
-        </>
+        </div>
       </Tooltip>
     );
   }

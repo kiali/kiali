@@ -35,7 +35,7 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
         </>
       );
     }
-    return <div style={{ marginTop: '40px' }}>No traffic</div>;
+    return <div style={{ paddingTop: '40px' }}>No traffic</div>;
   }
 }
 
