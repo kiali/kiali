@@ -2,11 +2,19 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem, Grid, GridItem, Card, CardBody } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink, Overlay } from '@kiali/k-charted-pf4';
+import {
+  Dashboard,
+  DashboardModel,
+  DashboardQuery,
+  Aggregator,
+  ExternalLink,
+  Overlay,
+  VCDataPoint
+} from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
-import history from '../../app/History';
+import history, { URLParam } from '../../app/History';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
@@ -61,7 +69,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(props.namespace, props.app, changed => this.setState({ spanOverlay: changed }));
   }
 
   initOptions(settings: MetricsSettings): DashboardQuery {
@@ -85,7 +93,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.props.namespace, this.props.app, this.state.timeRange);
+      this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
@@ -117,7 +125,6 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
   onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
-      this.spanOverlay.resetLastFetchTime();
       this.refresh();
     });
   };
@@ -125,6 +132,17 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   onRawAggregationChanged = (aggregator: Aggregator) => {
     this.options.rawDataAggregator = aggregator;
     this.fetchMetrics();
+  };
+
+  onClickDataPoint = (_, datum: VCDataPoint) => {
+    if ('start' in datum && 'end' in datum) {
+      // Zoom-in bucket
+      this.onDomainChange([datum.start, datum.end]);
+    } else if ('traceId' in datum) {
+      history.push(
+        `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${datum.traceId}`
+      );
+    }
   };
 
   private onDomainChange(dates: [Date, Date]) {
@@ -165,6 +183,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
                       labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
                       expandedChart={expandedChart}
                       expandHandler={this.expandHandler}
+                      onClick={this.onClickDataPoint}
                       overlay={this.state.spanOverlay}
                       timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
                       brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}

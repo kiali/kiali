@@ -68,7 +68,9 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(props.namespace, props.object, changed =>
+      this.setState({ spanOverlay: changed })
+    );
   }
 
   initOptions(settings: MetricsSettings): IstioMetricsOptions {
@@ -88,7 +90,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.props.namespace, this.props.object, this.state.timeRange);
+      this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
@@ -160,7 +162,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
-      this.spanOverlay.resetLastFetchTime();
       this.refresh();
     });
   };
@@ -171,7 +172,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   };
 
   onClickDataPoint = (_, datum: VCDataPoint) => {
-    if ('traceId' in datum) {
+    if ('start' in datum && 'end' in datum) {
+      // Zoom-in bucket
+      this.onDomainChange([datum.start, datum.end]);
+    } else if ('traceId' in datum) {
       history.push(
         `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${datum.traceId}`
       );

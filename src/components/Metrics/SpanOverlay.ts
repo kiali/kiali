@@ -8,40 +8,30 @@ import { Span, TracingQuery } from 'types/Tracing';
 
 export class SpanOverlay {
   private spans: Span[] = [];
-  private lastFetchMicros: number | undefined;
   private lastFetchError = false;
 
-  constructor(public onChange: (overlay?: Overlay) => void) {}
+  constructor(private namespace: string, private service: string, public onChange: (overlay?: Overlay) => void) {}
 
-  fetch(namespace: string, service: string, range: TimeRange) {
+  fetch(range: TimeRange) {
     const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
-    // Convert start time to microseconds with 1min margin
-    const frameStart = (boundsMillis.from - 60000) * 1000;
-    const frameEnd = boundsMillis.to ? boundsMillis.to * 1000 : undefined;
-    if (frameEnd) {
-      // Closed time frame (looking in past)
-      // Turning off incremental refresh as it doesn't make sense with bounded end time
-      this.lastFetchMicros = undefined;
-    }
     const opts: TracingQuery = {
-      startMicros: this.lastFetchMicros || frameStart,
-      endMicros: frameEnd
+      startMicros: boundsMillis.from * 1000,
+      endMicros: boundsMillis.to ? boundsMillis.to * 1000 : undefined
     };
-    API.getServiceSpans(namespace, service, opts)
+    // Remove any out-of-bound spans
+    this.spans = this.spans.filter(
+      s => s.startTime >= opts.startMicros && (opts.endMicros === undefined || s.startTime <= opts.endMicros)
+    );
+    // Start fetching from last fetched data when available
+    if (this.spans.length > 0) {
+      opts.startMicros = 1 + Math.max(...this.spans.map(s => s.startTime));
+    }
+    API.getServiceSpans(this.namespace, this.service, opts)
       .then(res => {
         this.lastFetchError = false;
-        if (this.lastFetchMicros) {
-          // Incremental refresh
-          this.spans = this.spans.filter(s => s.startTime >= frameStart).concat(res.data);
-        } else {
-          this.spans = res.data;
-        }
+        // Incremental refresh: we keep existing spans
+        this.spans = this.spans.concat(res.data);
         this.onChange(this.buildOverlay());
-        // Update last fetch time only if we had some results
-        // So that if Jaeger DB hadn't time to ingest data, it's still going to be fetched next time
-        if (this.spans.length > 0) {
-          this.lastFetchMicros = Math.max(...this.spans.map(s => s.startTime));
-        }
       })
       .catch(err => {
         if (!this.lastFetchError) {
@@ -49,10 +39,6 @@ export class SpanOverlay {
           this.lastFetchError = true;
         }
       });
-  }
-
-  resetLastFetchTime() {
-    this.lastFetchMicros = undefined;
   }
 
   private buildOverlay(): Overlay | undefined {
@@ -63,7 +49,8 @@ export class SpanOverlay {
         dataStyle: { fill: ({ datum }) => (datum.error ? PFAlertColor.Danger : PfColors.Cyan300), fillOpacity: 0.6 },
         color: PfColors.Cyan300,
         symbol: 'circle',
-        size: 10
+        size: 10,
+        buckets: this.spans.length > 1000 ? 15 : 0
       };
       const dps = this.spans.map(span => {
         const hasError = span.tags.some(tag => tag.key === 'error' && tag.value);
