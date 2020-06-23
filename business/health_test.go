@@ -17,6 +17,8 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
+var emptyResult = map[string]map[string]float64{}
+
 func TestGetServiceHealth(t *testing.T) {
 	assert := assert.New(t)
 
@@ -36,9 +38,18 @@ func TestGetServiceHealth(t *testing.T) {
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
-	assert.InDelta(float64((1.4+1.4)/(1.4+1.4+14+14)), health.Requests.ErrorRatio, 0.01)
-	assert.Equal(float64((1.4+1.4)/(1.4+1.4+14+14)), health.Requests.InboundErrorRatio)
-	assert.Equal(float64(-1), health.Requests.OutboundErrorRatio)
+	var result = map[string]map[string]float64{
+		"http": {
+			"200": 14,
+			"404": 1.4,
+		},
+		"grpc": {
+			"0": 14,
+			"7": 1.4,
+		},
+	}
+	assert.Equal(result, health.Requests.Inbound)
+	assert.Equal(emptyResult, health.Requests.Outbound)
 }
 
 func TestGetAppHealth(t *testing.T) {
@@ -64,9 +75,23 @@ func TestGetAppHealth(t *testing.T) {
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
-	assert.InDelta(float64((1.6+3.5+3.5)/(1.6+5+5+3.5+3.5)), health.Requests.ErrorRatio, 0.0001)
-	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
-	assert.Equal(float64((3.5+3.5)/(5+5+3.5+3.5)), health.Requests.OutboundErrorRatio)
+	var result = map[string]map[string]float64{
+		"http": {
+			"500": 1.6,
+		},
+	}
+	assert.Equal(result, health.Requests.Inbound)
+	result = map[string]map[string]float64{
+		"http": {
+			"200": 5,
+			"400": 3.5,
+		},
+		"grpc": {
+			"0": 5,
+			"7": 3.5,
+		},
+	}
+	assert.Equal(result, health.Requests.Outbound)
 }
 
 func TestGetWorkloadHealth(t *testing.T) {
@@ -93,9 +118,23 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
-	assert.InDelta(float64((1.6+3.5+3.5)/(1.6+5+5+3.5+3.5)), health.Requests.ErrorRatio, 0.0001)
-	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
-	assert.Equal(float64((3.5+3.5)/(5+5+3.5+3.5)), health.Requests.OutboundErrorRatio)
+	var result = map[string]map[string]float64{
+		"http": {
+			"500": 1.6,
+		},
+	}
+	assert.Equal(result, health.Requests.Inbound)
+	result = map[string]map[string]float64{
+		"http": {
+			"200": 5,
+			"400": 3.5,
+		},
+		"grpc": {
+			"0": 5,
+			"7": 3.5,
+		},
+	}
+	assert.Equal(result, health.Requests.Outbound)
 }
 
 func TestGetAppHealthWithoutIstio(t *testing.T) {
@@ -121,7 +160,8 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
-	assert.Equal(float64(-1), health.Requests.ErrorRatio)
+	assert.Equal(emptyResult, health.Requests.Inbound)
+	assert.Equal(emptyResult, health.Requests.Outbound)
 }
 
 func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
@@ -147,7 +187,8 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
-	assert.Equal(float64(-1), health.Requests.ErrorRatio)
+	assert.Equal(emptyResult, health.Requests.Inbound)
+	assert.Equal(emptyResult, health.Requests.Outbound)
 }
 
 func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
@@ -193,8 +234,20 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	assert.Nil(err)
 	// Make sure we get services with N/A health
 	assert.Len(health, 2)
-	assert.Equal(float64(-1), health["reviews"].Requests.ErrorRatio)
-	assert.InDelta(float64(0.09), health["httpbin"].Requests.ErrorRatio, 0.01)
+	assert.Equal(emptyResult, health["reviews"].Requests.Inbound)
+	assert.Equal(emptyResult, health["reviews"].Requests.Outbound)
+	var result = map[string]map[string]float64{
+		"http": {
+			"200": 14,
+			"404": 1.4,
+		},
+		"grpc": {
+			"0": 14,
+			"7": 1.4,
+		},
+	}
+	assert.Equal(result, health["httpbin"].Requests.Inbound)
+	assert.Equal(emptyResult, health["httpbin"].Requests.Outbound)
 }
 
 var (
@@ -202,6 +255,7 @@ var (
 		Metric: model.Metric{
 			"source_service":      "reviews.tutorial.svc.cluster.local",
 			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":    "http",
 			"response_code":       "200",
 		},
 		Value:     model.SampleValue(5),
@@ -211,6 +265,7 @@ var (
 		Metric: model.Metric{
 			"source_service":      "reviews.tutorial.svc.cluster.local",
 			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"request_protocol":    "http",
 			"response_code":       "400",
 		},
 		Value:     model.SampleValue(3.5),
@@ -240,6 +295,7 @@ var (
 		Metric: model.Metric{
 			"destination_service":      "httpbin.tutorial.svc.cluster.local",
 			"destination_service_name": "httpbin",
+			"request_protocol":         "http",
 			"source_service":           "unknown",
 			"response_code":            "200",
 		},
@@ -250,6 +306,7 @@ var (
 		Metric: model.Metric{
 			"destination_service":      "httpbin.tutorial.svc.cluster.local",
 			"destination_service_name": "httpbin",
+			"request_protocol":         "http",
 			"source_service":           "unknown",
 			"response_code":            "404",
 		},
@@ -282,6 +339,7 @@ var (
 		Metric: model.Metric{
 			"destination_service":      "reviews.tutorial.svc.cluster.local",
 			"destination_service_name": "reviews",
+			"request_protocol":         "http",
 			"source_service":           "unknown",
 			"response_code":            "500",
 		},

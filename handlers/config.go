@@ -48,6 +48,7 @@ type PrometheusConfig struct {
 // help them interact with the system.
 type PublicConfig struct {
 	Extensions               Extensions                      `json:"extensions,omitempty"`
+	HealthConfig             config.HealthConfig             `json:"healthConfig,omitempty"`
 	InstallationTag          string                          `json:"installationTag,omitempty"`
 	IstioAnnotations         IstioAnnotations                `json:"istioAnnotations,omitempty"`
 	IstioStatusEnabled       bool                            `json:"istioStatusEnabled,omitempty"`
@@ -86,6 +87,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		IstioAnnotations: IstioAnnotations{
 			IstioInjectionAnnotation: config.ExternalServices.Istio.IstioInjectionAnnotation,
 		},
+		HealthConfig:             config.HealthConfig,
 		IstioStatusEnabled:       config.ExternalServices.Istio.ComponentStatuses.Enabled,
 		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,

@@ -289,6 +289,28 @@ type KialiFeatureFlags struct {
 	IstioInjectionAction bool `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
 }
 
+// ToleranceConfig
+type Tolerance struct {
+	Code      string  `yaml:"code,omitempty" json:"code"`
+	Degraded  float32 `yaml:"degraded,omitempty" json:"degraded"`
+	Failure   float32 `yaml:"failure,omitempty" json:"failure"`
+	Protocol  string  `yaml:"protocol,omitempty" json:"protocol"`
+	Direction string  `yaml:"direction,omitempty" json:"direction"`
+}
+
+// RateConfig
+type Rate struct {
+	Namespace string      `yaml:"namespace,omitempty" json:"namespace"`
+	Kind      string      `yaml:"kind,omitempty" json:"kind"`
+	Name      string      `yaml:"name,omitempty" json:"name"`
+	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
+}
+
+// HealthConfig
+type HealthConfig struct {
+	Rate []Rate `yaml:"rate,omitempty" json:"rate"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
@@ -297,6 +319,7 @@ type Config struct {
 	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
 	Extensions               Extensions               `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
+	HealthConfig             HealthConfig             `yaml:"health_config,omitempty" json:"healthConfig"`
 	Identity                 security.Identity        `yaml:",omitempty"`
 	InCluster                bool                     `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
@@ -416,6 +439,31 @@ func NewConfig() (c *Config) {
 				InClusterURL:         "http://tracing.istio-system/jaeger",
 				URL:                  "",
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
+			},
+		},
+		HealthConfig: HealthConfig{
+			Rate: []Rate{
+				{
+					Namespace: ".*",
+					Kind:      ".*",
+					Name:      ".*",
+					Tolerance: []Tolerance{
+						{
+							Code:      "^[4-5]\\d\\d$",
+							Protocol:  "http",
+							Direction: ".*",
+							Degraded:  0.1,
+							Failure:   20,
+						},
+						{
+							Code:      "^[1-9]$|^1[0-6]$",
+							Protocol:  "grpc",
+							Direction: ".*",
+							Degraded:  0.1,
+							Failure:   20,
+						},
+					},
+				},
 			},
 		},
 		IstioLabels: IstioLabels{

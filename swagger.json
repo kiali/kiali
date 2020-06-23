@@ -5543,23 +5543,30 @@
       "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "RequestHealth": {
-      "description": "RequestHealth holds several stats about recent request errors",
+      "description": "RequestHealth holds several stats about recent request errors\nInbound//Outbound are the rates of requests by protocol and status_code.\nExample:   Inbound: { \"http\": {\"200\": 1.5, \"400\": 2.3}, \"grpc\": {\"1\": 1.2} }",
       "type": "object",
       "properties": {
-        "errorRatio": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ErrorRatio"
+        "inbound": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "x-go-name": "Inbound"
         },
-        "inboundErrorRatio": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "InboundErrorRatio"
-        },
-        "outboundErrorRatio": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "OutboundErrorRatio"
+        "outbound": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "x-go-name": "Outbound"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"

@@ -228,7 +228,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
-		allHealth[w.Name] = &models.WorkloadHealth{}
+		allHealth[w.Name] = models.EmptyWorkloadHealth()
 		allHealth[w.Name].WorkloadStatus = models.WorkloadStatus{
 			Name:              w.Name,
 			DesiredReplicas:   w.DesiredReplicas,

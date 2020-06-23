@@ -1,8 +1,6 @@
 package models
 
 import (
-	"regexp"
-
 	"github.com/prometheus/common/model"
 )
 
@@ -26,13 +24,8 @@ type AppHealth struct {
 	Requests         RequestHealth    `json:"requests"`
 }
 
-var (
-	grpcErrorRegexp, _ = regexp.Compile(`^[1-9]$|^1[0-6]$`) // 1..16
-	httpErrorRegexp, _ = regexp.Compile(`^[4-5]\d\d$`)      // 4xx, 5xx
-)
-
 func NewEmptyRequestHealth() RequestHealth {
-	return RequestHealth{ErrorRatio: -1, InboundErrorRatio: -1, OutboundErrorRatio: -1}
+	return RequestHealth{Inbound: make(map[string]map[string]float64), Outbound: make(map[string]map[string]float64)}
 }
 
 // EmptyAppHealth create an empty AppHealth
@@ -46,6 +39,13 @@ func EmptyAppHealth() AppHealth {
 // EmptyServiceHealth create an empty ServiceHealth
 func EmptyServiceHealth() ServiceHealth {
 	return ServiceHealth{
+		Requests: NewEmptyRequestHealth(),
+	}
+}
+
+// EmptyWorkloadHealth create an empty WorkloadHealth
+func EmptyWorkloadHealth() *WorkloadHealth {
+	return &WorkloadHealth{
 		Requests: NewEmptyRequestHealth(),
 	}
 }
@@ -73,54 +73,36 @@ type WorkloadStatus struct {
 }
 
 // RequestHealth holds several stats about recent request errors
+// - Inbound//Outbound are the rates of requests by protocol and status_code.
+//   Example:   Inbound: { "http": {"200": 1.5, "400": 2.3}, "grpc": {"1": 1.2} }
 type RequestHealth struct {
-	inboundErrorRate    float64
-	outboundErrorRate   float64
-	inboundRequestRate  float64
-	outboundRequestRate float64
-
-	ErrorRatio         float64 `json:"errorRatio"`
-	InboundErrorRatio  float64 `json:"inboundErrorRatio"`
-	OutboundErrorRatio float64 `json:"outboundErrorRatio"`
+	Inbound  map[string]map[string]float64 `json:"inbound"`
+	Outbound map[string]map[string]float64 `json:"outbound"`
 }
 
 // AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios
 func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
-	aggregate(sample, &in.inboundRequestRate, &in.inboundErrorRate, &in.InboundErrorRatio)
-	in.updateGlobalErrorRatio()
+	aggregate(sample, in.Inbound)
 }
 
 // AggregateOutbound adds the provided metric sample to internal outbound counters and updates error ratios
 func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
-	aggregate(sample, &in.outboundRequestRate, &in.outboundErrorRate, &in.OutboundErrorRatio)
-	in.updateGlobalErrorRatio()
+	aggregate(sample, in.Outbound)
 }
 
-func (in *RequestHealth) updateGlobalErrorRatio() {
-	globalRequestRate := in.inboundRequestRate + in.outboundRequestRate
-	globalErrorRate := in.inboundErrorRate + in.outboundErrorRate
-
-	if globalRequestRate == 0 {
-		in.ErrorRatio = -1
-	} else {
-		in.ErrorRatio = globalErrorRate / globalRequestRate
-	}
-}
-
-func aggregate(sample *model.Sample, requestRate, errorRate, errorRatio *float64) {
-	*requestRate += float64(sample.Value)
+func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 	responseCode := sample.Metric["response_code"]
-	regexp := httpErrorRegexp
-	if string(sample.Metric["request_protocol"]) == "grpc" {
+	protocol := string(sample.Metric["request_protocol"])
+	if protocol == "grpc" {
 		responseCode = sample.Metric["grpc_response_status"]
-		regexp = grpcErrorRegexp
 	}
-	if regexp.MatchString(string(responseCode)) {
-		*errorRate += float64(sample.Value)
+	code := string(responseCode)
+	if _, ok := requests[protocol]; !ok {
+		requests[protocol] = make(map[string]float64)
 	}
-	if *requestRate == 0 {
-		*errorRatio = -1
+	if _, ok := requests[protocol][code]; ok {
+		requests[protocol][code] += float64(sample.Value)
 	} else {
-		*errorRatio = *errorRate / *requestRate
+		requests[protocol][code] = float64(sample.Value)
 	}
 }
