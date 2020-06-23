@@ -578,6 +578,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceMetrics,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics aggregates aggregateMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single aggregate
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"AggregateMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics",
+			handlers.AggregateMetrics,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/metrics apps appMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single app

@@ -50,6 +50,9 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 	if q.RequestProtocol != "" {
 		labels = append(labels, fmt.Sprintf(`request_protocol="%s"`, q.RequestProtocol))
 	}
+	if q.Aggregate != "" {
+		labels = append(labels, fmt.Sprintf(`%s="%s"`, q.Aggregate, q.AggregateValue))
+	}
 
 	full := "{" + strings.Join(labels, ",") + "}"
 

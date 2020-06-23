@@ -8,11 +8,41 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
+
+// AggregateMetrics is the API handler to fetch metrics to be displayed, related to a single aggregate
+func AggregateMetrics(w http.ResponseWriter, r *http.Request) {
+	getAggregateMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getServiceMetrics (mock-friendly version)
+func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	aggregate := vars["aggregate"]
+	aggregateValue := vars["aggregateValue"]
+
+	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
+	if prom == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics := prom.GetMetrics(&params)
+	RespondWithJSON(w, http.StatusOK, metrics)
+}
 
 func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
@@ -20,6 +50,7 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
 		q.Filters = filters
 	}
+
 	dir := queryParams.Get("direction")
 	if dir != "" {
 		if dir != "inbound" && dir != "outbound" {
