@@ -39,6 +39,9 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// Ensure direction=inbound because aggregates always reflect inbound traffic to the target workload.  This ensures
+	// the namespace is tested against the destination.
+	params.Direction = "inbound"
 
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
