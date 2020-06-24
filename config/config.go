@@ -156,6 +156,7 @@ type ThreeScaleConfig struct {
 	AdapterPort    string `yaml:"adapter_port"`
 	AdapterService string `yaml:"adapter_service"`
 	Enabled        bool   `yaml:"enabled"`
+	TemplateName   string `yaml:"template_name"`
 }
 
 type Iter8Config struct {
@@ -338,6 +339,7 @@ func NewConfig() (c *Config) {
 				AdapterPort:    "3333",
 				AdapterService: "threescale-istio-adapter",
 				Enabled:        false,
+				TemplateName:   "threescale-authorization",
 			},
 			Iter8: Iter8Config{
 				Enabled: false,

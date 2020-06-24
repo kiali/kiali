@@ -659,35 +659,6 @@ type TypedIstioValidations map[string]NameIstioValidation
 // swagger:model
 type NameIstioValidation map[string]models.IstioValidation
 
-// Return if ThreeScale adapter is enabled in Istio and if user has permissions to write adapter's configuration
-// swagger:response threeScaleInfoResponse
-type ThreeScaleInfoResponse struct {
-	// in: body
-	Body models.ThreeScaleInfo
-}
-
-// List of ThreeScale handlers created from Kiali to be used in the adapter's configuration
-// swagger:response threeScaleHandlersResponse
-type ThreeScaleGetHandlersResponse struct {
-	// in: body
-	Body models.ThreeScaleHandlers
-}
-
-// swagger:parameters patchThreeScaleHandler deleteThreeScaleHandler
-type ThreScaleHandlerNameParam struct {
-	// The ThreeScaleHandler name.
-	//
-	// in: path
-	// required: true
-	Name string `json:"threescaleHandlerName"`
-}
-
-// Return Threescale rule definition for a given service
-// swagger:response threeScaleRuleResponse
-type ThreeScaleGetRuleResponse struct {
-	// in: body
-	Body models.ThreeScaleServiceRule
-}
 
 // Return caller permissions per namespace and Istio Config type
 // swagger:response istioConfigPermissions

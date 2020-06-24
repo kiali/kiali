@@ -19,7 +19,11 @@ const (
 )
 
 type ThreeScaleConfig struct {
-	Enabled bool `json:"enabled"`
+	AdapterName    string `json:"adapterName"`
+	AdapterPort    string `json:"adapterPort"`
+	AdapterService string `json:"adapterService"`
+	Enabled        bool   `json:"enabled"`
+	TemplateName   string `json:"templateName"`
 }
 type Iter8Config struct {
 	Enabled bool `json:"enabled"`
@@ -61,7 +65,11 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	publicConfig := PublicConfig{
 		Extensions: Extensions{
 			ThreeScale: ThreeScaleConfig{
+				AdapterName: config.Extensions.ThreeScale.AdapterName,
+				AdapterPort: config.Extensions.ThreeScale.AdapterPort,
+				AdapterService: config.Extensions.ThreeScale.AdapterService,
 				Enabled: config.Extensions.ThreeScale.Enabled,
+				TemplateName: config.Extensions.ThreeScale.TemplateName,
 			},
 			Iter8: Iter8Config{
 				Enabled: config.Extensions.Iter8.Enabled,

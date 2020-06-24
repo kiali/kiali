@@ -3356,6 +3356,7 @@
           }
         }
       }
+<<<<<<< HEAD
     },
     "/threescale": {
       "get": {
@@ -3697,6 +3698,8 @@
           }
         }
       }
+=======
+>>>>>>> 036ff7de... WIP: Refactoring several areas. Simplify 3scale extension
     }
   },
   "definitions": {
@@ -6513,68 +6516,6 @@
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
-    "ThreeScaleHandler": {
-      "description": "ThreeScaleHAndler represents the minimal info that a user needs to know from the UI to link a service with 3Scale site",
-      "type": "object",
-      "properties": {
-        "accessToken": {
-          "type": "string",
-          "x-go-name": "AccessToken"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "serviceId": {
-          "type": "string",
-          "x-go-name": "ServiceId"
-        },
-        "systemUrl": {
-          "type": "string",
-          "x-go-name": "SystemUrl"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ThreeScaleHandlers": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ThreeScaleHandler"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ThreeScaleInfo": {
-      "description": "ThreeScaleInfo shows if 3scale adapter is enabled in cluster and if user has permissions on adapter's configuration",
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "x-go-name": "Enabled"
-        },
-        "permissions": {
-          "$ref": "#/definitions/ResourcePermissions"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ThreeScaleServiceRule": {
-      "type": "object",
-      "properties": {
-        "serviceName": {
-          "type": "string",
-          "x-go-name": "ServiceName"
-        },
-        "serviceNamespace": {
-          "type": "string",
-          "x-go-name": "ServiceNamespace"
-        },
-        "threeScaleHandlerName": {
-          "type": "string",
-          "x-go-name": "ThreeScaleHandlerName"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "Time": {
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
       "type": "object",
@@ -8023,24 +7964,6 @@
       "description": "HTTP status code 200 and statusInfo model in data",
       "schema": {
         "$ref": "#/definitions/StatusInfo"
-      }
-    },
-    "threeScaleHandlersResponse": {
-      "description": "List of ThreeScale handlers created from Kiali to be used in the adapter's configuration",
-      "schema": {
-        "$ref": "#/definitions/ThreeScaleHandlers"
-      }
-    },
-    "threeScaleInfoResponse": {
-      "description": "Return if ThreeScale adapter is enabled in Istio and if user has permissions to write adapter's configuration",
-      "schema": {
-        "$ref": "#/definitions/ThreeScaleInfo"
-      }
-    },
-    "threeScaleRuleResponse": {
-      "description": "Return Threescale rule definition for a given service",
-      "schema": {
-        "$ref": "#/definitions/ThreeScaleServiceRule"
       }
     },
     "tokenResponse": {

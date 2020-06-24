@@ -19,7 +19,8 @@ import (
 func TestParseListParams(t *testing.T) {
 	namespace := "bookinfo"
 	objects := ""
-	criteria := ParseIstioConfigCriteria(namespace, objects)
+	labelSelector := ""
+	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.Equal(t, "bookinfo", criteria.Namespace)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -31,7 +32,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeMeshPolicies)
 
 	objects = "gateways"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -43,7 +44,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -55,7 +56,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -67,7 +68,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "serviceentries"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -79,7 +80,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -91,7 +92,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "quotaspecs"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -103,7 +104,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "quotaspecbindings"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -115,7 +116,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "virtualservices,rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -127,7 +128,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules,virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -139,7 +140,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "meshpolicies"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.True(t, criteria.IncludeMeshPolicies)
 	assert.False(t, criteria.IncludeGateways)
@@ -151,7 +152,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeQuotaSpecBindings)
 
 	objects = "notsupported"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -163,7 +164,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "notsupported,rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
