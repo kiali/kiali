@@ -31,6 +31,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 
 	// Group Validations
 	validations.MergeValidations(authorization.MtlsEnabledChecker{
+		Namespace:             a.Namespace,
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		MtlsDetails:           a.MtlsDetails,
 	}.Check())

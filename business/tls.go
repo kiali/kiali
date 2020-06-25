@@ -1,6 +1,7 @@
 package business
 
 import (
+	"github.com/kiali/kiali/util/mtls"
 	"sync"
 
 	"github.com/kiali/kiali/config"
@@ -23,41 +24,35 @@ const (
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
-	var drp = true
-	var paErr, drErr error
-
-	pap, paErr := in.hasMeshPeerAuthnEnabled()
-	if paErr != nil {
-		return models.MTLSStatus{}, paErr
+	pas, error := in.getMeshPeerAuthentications()
+	if error != nil {
+		return models.MTLSStatus{}, error
 	}
 
-	if !in.hasAutoMTLSEnabled() {
-		drp, drErr = in.hasDestinationRuleEnabled(namespaces)
-		if drErr != nil {
-			return models.MTLSStatus{}, drErr
-		}
+	drs, error := in.getAllDestinationRules(namespaces)
+	if error != nil {
+		return models.MTLSStatus{}, error
 	}
 
-	finalStatus := MTLSNotEnabled
-	if drp && pap {
-		finalStatus = MTLSEnabled
-	} else if drp || pap {
-		if !in.hasAutoMTLSEnabled() {
-			finalStatus = MTLSPartiallyEnabled
-		}
+	mtlsStatus := mtls.MtlsStatus{
+		PeerAuthentications: pas,
+		DestinationRules:    drs,
+		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(),
 	}
 
 	return models.MTLSStatus{
-		Status: finalStatus,
+		Status: mtlsStatus.MeshMtlsStatus(),
 	}, nil
 }
 
-func (in *TLSService) hasMeshPeerAuthnEnabled() (bool, error) {
+func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, error) {
 	var mps []kubernetes.IstioObject
 	var err error
+
+	controlPlaneNs := config.Get().IstioNamespace
 	if !in.k8s.IsMaistraApi() {
-		if mps, err = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); err != nil {
-			return false, nil
+		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, ""); err != nil {
+			return mps, nil
 		}
 	} else {
 		// ServiceMeshPolicies are namespace scoped.
@@ -66,37 +61,15 @@ func (in *TLSService) hasMeshPeerAuthnEnabled() (bool, error) {
 		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
 		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
 		// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
-		controlPlaneNs := config.Get().IstioNamespace
 		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.ServiceMeshPolicies, ""); err != nil {
 			// This query can return false if user can't access to controlPlaneNs
 			// On this case we log internally the error but we return a false with nil
 			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, err)
-			return false, nil
+			return mps, err
 		}
 	}
 
-	for _, mp := range mps {
-		if strictMode := kubernetes.PeerAuthnHasStrictMTLS(mp); strictMode {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (in *TLSService) hasDestinationRuleEnabled(namespaces []string) (bool, error) {
-	drs, err := in.getAllDestinationRules(namespaces)
-	if err != nil {
-		return false, err
-	}
-
-	for _, dr := range drs {
-		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return mps, nil
 }
 
 func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
@@ -146,48 +119,37 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 }
 
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	var plMode, drMode string
-	var pErr, dErr error
-
-	plMode, pErr = in.hasPeerAuthnNamespacemTLSDefinition(namespace)
-	if pErr != nil {
-		return models.MTLSStatus{}, pErr
+	pas, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	if err != nil {
+		return models.MTLSStatus{}, nil
 	}
 
-	drMode, dErr = in.hasDesinationRuleEnablingNamespacemTLS(namespace)
-	if dErr != nil {
-		return models.MTLSStatus{}, dErr
+	nss, err := in.getNamespaces()
+	if err != nil {
+		return models.MTLSStatus{}, nil
+	}
+
+	drs, err := in.getAllDestinationRules(nss)
+	if err != nil {
+		return models.MTLSStatus{}, nil
+	}
+
+	mtlsStatus := mtls.MtlsStatus{
+		Namespace:           namespace,
+		PeerAuthentications: pas,
+		DestinationRules:    drs,
+		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(),
 	}
 
 	return models.MTLSStatus{
-		Status: in.finalStatus(drMode, plMode),
+		Status: mtlsStatus.NamespaceMtlsStatus(),
 	}, nil
 }
 
-func (in TLSService) hasPeerAuthnNamespacemTLSDefinition(namespace string) (string, error) {
-	// PeerAuthn at istio control plane level, are considered mesh-wide objects
-	if namespace == config.Get().IstioNamespace {
-		return "", nil
-	}
-
-	ps, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-	if err != nil {
-		return "", err
-	}
-
-	for _, p := range ps {
-		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(p); mode != "" {
-			return mode, nil
-		}
-	}
-
-	return "", nil
-}
-
-func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (string, error) {
+func (in TLSService) getNamespaces() ([]string, error) {
 	nss, nssErr := in.businessLayer.Namespace.GetNamespaces()
 	if nssErr != nil {
-		return "", nssErr
+		return nil, nssErr
 	}
 
 	nsNames := make([]string, 0)
@@ -195,36 +157,7 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (s
 		nsNames = append(nsNames, ns.Name)
 	}
 
-	drs, nssErr := in.getAllDestinationRules(nsNames)
-	if nssErr != nil {
-		return "", nssErr
-	}
-
-	for _, dr := range drs {
-		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr); mode != "" {
-			return mode, nil
-		}
-	}
-
-	return "", nil
-}
-
-func (in TLSService) finalStatus(drStatus string, paStatus string) string {
-	finalStatus := MTLSPartiallyEnabled
-	autoMtls := in.hasAutoMTLSEnabled()
-
-	mtlsEnabled := drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" || (drStatus == "" && autoMtls)
-	mtlsDisabled := drStatus == "DISABLE" || (drStatus == "" && autoMtls)
-
-	if paStatus == "STRICT" && mtlsEnabled {
-		finalStatus = MTLSEnabled
-	} else if paStatus == "DISABLE" && mtlsDisabled {
-		finalStatus = MTLSDisabled
-	} else if paStatus == "" && drStatus == "" {
-		finalStatus = MTLSNotEnabled
-	}
-
-	return finalStatus
+	return nsNames, nil
 }
 
 func (in TLSService) hasAutoMTLSEnabled() bool {
