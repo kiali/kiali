@@ -26,10 +26,10 @@ func (tb ValidationTestAsserter) AssertNoValidations() {
 	assert.True(tb.Valid)
 }
 
-func (tb ValidationTestAsserter) AssertValidationsPresent(count int) {
+func (tb ValidationTestAsserter) AssertValidationsPresent(count int, valid bool) {
 	assert := assert.New(tb.T)
 
-	assert.False(tb.Valid)
+	assert.Equal(tb.Valid, valid)
 	assert.NotEmpty(tb.Validations)
 	assert.Len(tb.Validations, count)
 }

@@ -58,6 +58,6 @@ func testNoDisabledMeshValidations(scenario string, t *testing.T) {
 func testWithDisabledMeshValidations(scenario string, t *testing.T) {
 	vals, valid := disabledMeshTestPrep(scenario, t)
 	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
-	tb.AssertValidationsPresent(1)
+	tb.AssertValidationsPresent(1, false)
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disablemeshdestinationrulemissing")
 }
