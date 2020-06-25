@@ -101,7 +101,8 @@ class OAuthLogin implements LoginStrategy<unknown> {
       return AuthResult.FAILURE;
     }
 
-    if (window.location.hash.startsWith('#access_token')) {
+    const pattern = /[#&](access_token|id_token)=/;
+    if (pattern.test(window.location.hash)) {
       return AuthResult.CONTINUE;
     } else {
       return AuthResult.HOLD;
