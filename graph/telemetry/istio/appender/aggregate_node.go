@@ -51,6 +51,10 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in two queries (assume aggregation is typically request classification, so use dest telemetry):
+	//   note1: we want to only match the aggregate when it is set and not "unknown".  But in Prometheus a negative test on an unset label
+	//      matches everything, so using %s!=unknown mneans we still have to filter out unset time-series below...
+	//   note2: for now we will filter out aggregates with no traffic on the assumption that users probably don't want to
+	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
 	// 1) query for requests originating from a workload outside the namespace.
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,%s", appLabel, verLabel, appLabel, verLabel, a.Aggregate)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
@@ -107,9 +111,13 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		lGrpc, grpcOk := m["grpc_response_status"] // will be missing for non-GRPC
 		lFlags, flagsOk := m["response_flags"]
 		lProtocol, protocolOk := m["request_protocol"]
-		lAggregate, aggregateOk := m[model.LabelName(a.Aggregate)]
+		lAggregate, aggregateOk := m[model.LabelName(a.Aggregate)] // may be unset, see note above
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk || !aggregateOk {
+		if !aggregateOk {
+			continue
+		}
+
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}

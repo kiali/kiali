@@ -142,7 +142,9 @@ ${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.6 -o yaml > stats-f
 cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.6.yaml
 --- stats-filter-1.6.yaml	2020-06-02 11:10:29.476537126 -0400
 +++ stats-filter-1.6.yaml.new	2020-06-02 09:59:26.434300000 -0400
-@@ -95,7 +95,14 @@
+@@ -72,11 +72,24 @@ spec:
+           value:
+             config:
                configuration: |
                  {
                    "debug": "false",
@@ -154,13 +156,74 @@ cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-fi
 +                     "dimensions": {
 +                       "request_operation": "istio_operationId"
 +                     }
++                   },
++                   {
++                     "name": "request_duration_milliseconds",
++                     "dimensions": {
++                       "request_operation": "istio_operationId"
++                     }
 +                   }]
                  }
                root_id: stats_inbound
                vm_config:
+                 code:
+                   local:
 EOF
 
 cat <<EOF | ${CLIENT_EXE} -n istio-system apply -f -
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: attribgen-travelagency
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.http_connection_manager
+            subFilter:
+              name: istio.stats
+      proxy:
+        proxyVersion: 1\.6.*
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: istio.attributegen
+        typed_config:
+          '@type': type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+          value:
+            config:
+              configuration: |
+                {
+                  "attributes": [
+                    {
+                      "output_attribute": "istio_operationId",
+                      "match": [
+                        {
+                          "value": "TravelQuote",
+                          "condition": "request.url_path.matches('^/travels/[:alpha:]+.*$') && request.method == 'GET'"
+                        },
+                        {
+                          "value": "ListCities",
+                          "condition": "request.url_path.matches('^/travels.*$') && request.method == 'GET'"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              vm_config:
+                code:
+                  local:
+                    inline_string: envoy.wasm.attributegen
+                runtime: envoy.wasm.runtime.null
+  workloadSelector:
+    labels:
+      app: travels
+---
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -197,116 +260,12 @@ spec:
                       "output_attribute": "istio_operationId",
                       "match": [
                         {
-                          "value": "ParisRental",
+                          "value": "ParisHotel",
                           "condition": "request.url_path.matches('^/hotels/paris.*$') && request.method == 'GET'"
                         },
                         {
                           "value": "OtherHotel",
                           "condition": "request.url_path.matches('^/hotels/.*$')"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              vm_config:
-                runtime: envoy.wasm.runtime.null
-                code:
-                  local: { inline_string: "envoy.wasm.attributegen" }
----
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: attribgen-travelagency-cars
-spec:
-  workloadSelector:
-    labels:
-      app: cars
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      proxy:
-        proxyVersion: '1\.6.*'
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.http_connection_manager"
-            subFilter:
-              name: "istio.stats"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: istio.attributegen
-        typed_config:
-          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              configuration: |
-                {
-                  "attributes": [
-                    {
-                      "output_attribute": "istio_operationId",
-                      "match": [
-                        {
-                          "value": "ParisRental",
-                          "condition": "request.url_path.matches('^/cars/paris.*$') && request.method == 'GET'"
-                        },
-                        {
-                          "value": "OtherCar",
-                          "condition": "request.url_path.matches('^/cars/.*$')"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              vm_config:
-                runtime: envoy.wasm.runtime.null
-                code:
-                  local: { inline_string: "envoy.wasm.attributegen" }
----
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: attribgen-travelagency-flights
-spec:
-  workloadSelector:
-    labels:
-      app: flights
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-      proxy:
-        proxyVersion: '1\.6.*'
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.http_connection_manager"
-            subFilter:
-              name: "istio.stats"
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: istio.attributegen
-        typed_config:
-          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
-          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
-          value:
-            config:
-              configuration: |
-                {
-                  "attributes": [
-                    {
-                      "output_attribute": "istio_operationId",
-                      "match": [
-                        {
-                          "value": "ParisFlight",
-                          "condition": "request.url_path.matches('^/flights/paris.*$') && request.method == 'GET'"
-                        },
-                        {
-                          "value": "OtherFlight",
-                          "condition": "request.url_path.matches('^/flights/.*$')"
                         }
                       ]
                     }

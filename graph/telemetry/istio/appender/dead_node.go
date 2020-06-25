@@ -57,6 +57,9 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 		}
 
 		switch n.NodeType {
+		case graph.NodeTypeAggregate:
+			// am aggregate node is never dead
+			continue
 		case graph.NodeTypeService:
 			// a service node with outgoing edges is never considered dead (or egress)
 			if len(n.Edges) > 0 {
