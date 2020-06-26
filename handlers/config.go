@@ -65,11 +65,11 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	publicConfig := PublicConfig{
 		Extensions: Extensions{
 			ThreeScale: ThreeScaleConfig{
-				AdapterName: config.Extensions.ThreeScale.AdapterName,
-				AdapterPort: config.Extensions.ThreeScale.AdapterPort,
+				AdapterName:    config.Extensions.ThreeScale.AdapterName,
+				AdapterPort:    config.Extensions.ThreeScale.AdapterPort,
 				AdapterService: config.Extensions.ThreeScale.AdapterService,
-				Enabled: config.Extensions.ThreeScale.Enabled,
-				TemplateName: config.Extensions.ThreeScale.TemplateName,
+				Enabled:        config.Extensions.ThreeScale.Enabled,
+				TemplateName:   config.Extensions.ThreeScale.TemplateName,
 			},
 			Iter8: Iter8Config{
 				Enabled: config.Extensions.Iter8.Enabled,

@@ -52,7 +52,7 @@ type IstioConfigCriteria struct {
 	IncludeAttributeManifests     bool
 	IncludeHttpApiSpecBindings    bool
 	IncludeHttpApiSpecs           bool
-	LabelSelector				  string
+	LabelSelector                 string
 }
 
 // IstioConfig types used in the IstioConfig New Page Form

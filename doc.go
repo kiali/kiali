@@ -659,7 +659,6 @@ type TypedIstioValidations map[string]NameIstioValidation
 // swagger:model
 type NameIstioValidation map[string]models.IstioValidation
 
-
 // Return caller permissions per namespace and Istio Config type
 // swagger:response istioConfigPermissions
 type swaggIstioConfigPermissions struct {

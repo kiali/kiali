@@ -185,7 +185,7 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 	return false
 }
 
-func FilterIstioObjectsForSelector(selector labels.Selector, allObjects []IstioObject) []IstioObject{
+func FilterIstioObjectsForSelector(selector labels.Selector, allObjects []IstioObject) []IstioObject {
 	var istioObjects []IstioObject
 	for _, object := range allObjects {
 		if selector.Matches(labels.Set(object.GetObjectMeta().Labels)) {
