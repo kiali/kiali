@@ -2,12 +2,12 @@ package authorization
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/tests/data"
 	"testing"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/data/validations"
 )
 
@@ -118,24 +118,40 @@ func TestNeedsIdentities(t *testing.T) {
 	var tests = []struct {
 		name   string
 		result bool
+		paths  []string
 	}{
-		{"policy-0", true},
-		{"policy-1", true},
-		{"policy-2", false},
-		{"policy-3", true},
-		{"policy-4", true},
-		{"policy-5", true},
-		{"policy-6", false},
-		{"policy-7", false},
-		{"policy-8", true},
-		{"policy-9", true},
-		{"policy-10", false},
+		{"policy-0", true, []string{"spec/rules[0]/from[0]/source/principals"}},
+		{"policy-1", true, []string{"spec/rules[0]/from[0]/source/notPrincipals"}},
+		{"policy-2", false, []string{""}},
+		{"policy-3", true, []string{"spec/rules[0]/when[0]"}},
+		{"policy-4", true, []string{"spec/rules[0]/when[0]"}},
+		{"policy-5", true, []string{"spec/rules[0]/when[0]"}},
+		{"policy-6", false, []string{""}},
+		{"policy-7", false, []string{""}},
+		{"policy-8", true, []string{"spec/rules[0]/from[o]/source/namespaces"}},
+		{"policy-9", true, []string{"spec/rules[0]/from[o]/source/notNamespaces"}},
+		{"policy-10", false, []string{""}},
 	}
 
 	for _, test := range tests {
 		ap := loader.GetResource("AuthorizationPolicy", test.name, "bookinfo")
-		if needsIdentities(ap) != test.result {
-			t.Errorf("%s needs identities: %t. Expected to be %t", test.name, needsIdentities(ap), test.result)
+		needs, paths := needsMtls(ap)
+		if needs != test.result {
+			t.Errorf("%s needs identities: %t. Expected to be %t", test.name, needs, test.result)
+
+			for _, tp := range test.paths {
+				contains := false
+				for _, rp := range paths {
+					contains = contains || tp != rp
+				}
+				if !contains {
+					t.Errorf("%s doesn't include PATH: %s", test.name, tp)
+				}
+			}
+
+			if len(test.paths) != len(paths) {
+				t.Errorf("%s doesn't contain all the PATH", test.name)
+			}
 		}
 	}
 }
@@ -179,7 +195,7 @@ func testMtlsCheckerPresent(scenario string, t *testing.T) {
 		ObjectType: "authorizationpolicy",
 		Name:       "policy",
 		Namespace:  "bookinfo",
-	}, models.ErrorSeverity, "metadata/name", "authorizationpolicy.mtls.needstobeenabled")
+	}, models.ErrorSeverity, "spec/rules[0]/source/principals", "authorizationpolicy.mtls.needstobeenabled")
 }
 
 func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {

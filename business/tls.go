@@ -1,13 +1,13 @@
 package business
 
 import (
-	"github.com/kiali/kiali/util/mtls"
 	"sync"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/mtls"
 )
 
 type TLSService struct {

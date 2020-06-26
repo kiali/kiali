@@ -1,6 +1,7 @@
 package authorization
 
 import (
+	"fmt"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/mtls"
@@ -20,14 +21,20 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 
 	if mode := c.hasMtlsEnabledForNamespace(); mode != mtls.MTLSEnabled {
 		for _, ap := range c.AuthorizationPolicies {
-			if needsIdentities(ap) {
+			if need, paths := needsMtls(ap); need {
+				checks := make([]*models.IstioCheck, 0)
 				key := models.BuildKey(objectType, ap.GetObjectMeta().Name, ap.GetObjectMeta().Namespace)
-				checks := models.Build("authorizationpolicy.mtls.needstobeenabled", "metadata/name")
+
+				for _, path := range paths {
+					check := models.Build("authorizationpolicy.mtls.needstobeenabled", path)
+					checks = append(checks, &check)
+				}
+
 				validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
 					Name:       ap.GetObjectMeta().Namespace,
 					ObjectType: objectType,
 					Valid:      false,
-					Checks:     []*models.IstioCheck{&checks},
+					Checks:     checks,
 				}})
 			}
 		}
@@ -36,18 +43,19 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func needsIdentities(ap kubernetes.IstioObject) bool {
+func needsMtls(ap kubernetes.IstioObject) (bool, []string) {
+	paths := make([]string, 0)
 	rules, found := ap.GetSpec()["rules"]
 	if !found {
-		return false
+		return false, nil
 	}
 
 	cRules, ok := rules.([]interface{})
 	if !ok {
-		return false
+		return false, nil
 	}
 
-	for _, rule := range cRules {
+	for i, rule := range cRules {
 		cRule, ok := rule.(map[string]interface{})
 		if !ok {
 			continue
@@ -55,25 +63,27 @@ func needsIdentities(ap kubernetes.IstioObject) bool {
 
 		if froms, found := cRule["from"]; found {
 			if fs, ok := froms.([]interface{}); ok {
-				if fromNeedsIdentities(fs) {
-					return true
+				if needs, fPaths := fromNeedsMtls(fs, i); needs {
+					paths = append(paths, fPaths...)
 				}
 			}
 		}
 
 		if conditions, found := cRule["when"]; found {
 			if cs, ok := conditions.([]interface{}); ok {
-				if conditionNeedsIdentities(cs) {
-					return true
+				if needs, cPaths := conditionNeedsMtls(cs, i); needs {
+					paths = append(paths, cPaths...)
 				}
 			}
 		}
 	}
 
-	return false
+	return len(paths) > 0, paths
 }
 
-func fromNeedsIdentities(froms []interface{}) bool {
+func fromNeedsMtls(froms []interface{}, ruleNum int) (bool, []string) {
+	paths := make([]string, 0)
+
 	for _, from := range froms {
 		cFrom, ok := from.(map[string]interface{})
 		if !ok {
@@ -90,19 +100,20 @@ func fromNeedsIdentities(froms []interface{}) bool {
 			continue
 		}
 
-		//namespaces, principals
-		if hasValues(cSource, "principals") || hasValues(cSource, "notPrincipals") ||
-			hasValues(cSource, "namespaces") || hasValues(cSource, "notNamespaces") {
-			return true
+		for _, field := range []string{"principals", "notPrincipals", "namespaces", "notNamespaces"} {
+			if hasValues(cSource, field) {
+				paths = append(paths, fmt.Sprintf("spec/rules[%d]/source/%s", ruleNum, field))
+			}
 		}
 	}
-	return false
+	return len(paths) > 0, paths
 }
 
-func conditionNeedsIdentities(conditions []interface{}) bool {
+func conditionNeedsMtls(conditions []interface{}, ruleNum int) (bool, []string) {
 	var keysWithMtls = [3]string{"source.namespace", "source.principal", "connection.sni"}
+	paths := make([]string, 0)
 
-	for _, c := range conditions {
+	for i, c := range conditions {
 		condition, ok := c.(map[string]interface{})
 		if !ok {
 			continue
@@ -110,11 +121,11 @@ func conditionNeedsIdentities(conditions []interface{}) bool {
 
 		for _, key := range keysWithMtls {
 			if v, found := condition["key"]; found && v == key {
-				return true
+				paths = append(paths, fmt.Sprintf("spec/rules[%d]/when[%d]", ruleNum, i))
 			}
 		}
 	}
-	return false
+	return len(paths) > 0, paths
 }
 
 func hasValues(definition map[string]interface{}, key string) bool {
