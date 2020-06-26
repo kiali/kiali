@@ -142,7 +142,7 @@ ${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.6 -o yaml > stats-f
 cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.6.yaml
 --- stats-filter-1.6.yaml	2020-06-02 11:10:29.476537126 -0400
 +++ stats-filter-1.6.yaml.new	2020-06-02 09:59:26.434300000 -0400
-@@ -72,11 +72,24 @@ spec:
+@@ -72,11 +72,24 @@
            value:
              config:
                configuration: |
