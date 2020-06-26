@@ -169,9 +169,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 
 		// if service nodes are injected show the service-related aggregation:
 		//   - use the service node as the dest
-		//   - replace the non-classified edge (from source to service) with the classified edges
-		//     - note that if not every request has a classification match the traffic may be lower than actual, I
-		//       think this this OK, and if the user cares they should define a "catch-all" classification match
+		//   - associate aggregate node with the destApp (if set)
 		// else show the independent aggregation by using the workload/app node as the dest
 		destID := ""
 		var aggrNode *graph.Node
@@ -189,15 +187,16 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 			continue
 		}
 
-		if a.InjectServiceNodes {
-			safeEdges := []*graph.Edge{}
-			for _, e := range sourceNode.Edges {
-				if e.Dest.ID != destID {
-					safeEdges = append(safeEdges, e)
-				}
+		// replace the non-classified edge (from source to dest) with the classified edges
+		// - note that if not every request has a classification match the traffic may be lower than actual, I
+		//   think this this OK, and if the user cares they should define a "catch-all" classification match
+		safeEdges := []*graph.Edge{}
+		for _, e := range sourceNode.Edges {
+			if e.Dest.ID != destID {
+				safeEdges = append(safeEdges, e)
 			}
-			sourceNode.Edges = safeEdges
 		}
+		sourceNode.Edges = safeEdges
 
 		addTraffic(val, protocol, code, flags, host, sourceNode, aggrNode)
 		addTraffic(val, protocol, code, flags, host, aggrNode, destNode)
