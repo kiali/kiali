@@ -9,7 +9,7 @@ import {
   Aggregator,
   ExternalLink,
   Overlay,
-  VCDataPoint
+  RawOrBucket
 } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
@@ -27,7 +27,7 @@ import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdo
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { SpanOverlay } from './SpanOverlay';
+import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
 import { statLabel } from '@kiali/k-charted-pf4/dist/common/types/Labels';
@@ -37,7 +37,7 @@ type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
-  spanOverlay?: Overlay;
+  spanOverlay?: Overlay<JaegerLineInfo>;
   timeRange: TimeRange;
 };
 
@@ -134,13 +134,14 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.fetchMetrics();
   };
 
-  onClickDataPoint = (_, datum: VCDataPoint) => {
+  onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
     if ('start' in datum && 'end' in datum) {
       // Zoom-in bucket
-      this.onDomainChange([datum.start, datum.end]);
+      this.onDomainChange([datum.start as Date, datum.end as Date]);
     } else if ('traceId' in datum) {
+      const traceId = datum.traceId;
       history.push(
-        `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${datum.traceId}`
+        `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
       );
     }
   };
@@ -181,7 +182,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
                     <Dashboard
                       dashboard={this.state.dashboard}
                       labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                      expandedChart={expandedChart}
+                      maximizedChart={expandedChart}
                       expandHandler={this.expandHandler}
                       onClick={this.onClickDataPoint}
                       overlay={this.state.spanOverlay}
