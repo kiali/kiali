@@ -7,21 +7,14 @@ spec:
   selector:
     matchLabels:
       app: productpage
-  rules:
-    - from:
-        - source:
-            principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
-      to:
-        - operation:
-            methods: ["GET"]
 ---
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
   name: "enable-mtls"
-  namespace: bookinfo
+  namespace: istio-system
 spec:
-  host: "*.bookinfo.svc.cluster.local"
+  host: "*.local"
   trafficPolicy:
     tls:
-      mode: ISTIO_MUTUAL
+      mode: DISABLE

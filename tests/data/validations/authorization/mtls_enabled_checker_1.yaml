@@ -7,3 +7,10 @@ spec:
   selector:
     matchLabels:
       app: productpage
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+      to:
+        - operation:
+            methods: ["GET"]

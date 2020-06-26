@@ -1,0 +1,194 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-0
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-1
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            notPrincipals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-2 # Doesn't need mtls (identities)
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+      when:
+        - key: destination.port
+          values: ["80", "443"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-3
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+      when:
+        - key: source.principal
+          values: ["cluster.local/ns/default/sa/productpage"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-4
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+      when:
+        - key: source.namespace
+          values: ["front-ns"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-5
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+      when:
+        - key: connection.sni
+          values: ["www.example.com"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-6 # Doesn't need mtls (identities)
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-7 # Doesn't need mtls (identities)
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-8
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            namespaces: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-9
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            notNamespaces: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policy-10 # Doesn't need mtls (identities)
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["bookinfo"]
+      to:
+        - operation:
+            methods: ["GET"]
+      when:
+        - key: source.ip
+          values: ["10.1.2.3"]

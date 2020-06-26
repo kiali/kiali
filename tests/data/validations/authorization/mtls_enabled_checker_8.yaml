@@ -7,6 +7,13 @@ spec:
   selector:
     matchLabels:
       app: productpage
+  rules:
+  - from:
+      - source:
+          principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+    to:
+      - operation:
+          methods: ["GET"]
 ---
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"

@@ -97,10 +97,24 @@ func (l YamlFixtureLoader) GetResourcesMatching(kind string, match func(resource
 	return resources
 }
 
-func (l YamlFixtureLoader) GetResource(kind string) kubernetes.IstioObject {
+func (l YamlFixtureLoader) GetFirstResource(kind string) kubernetes.IstioObject {
 	if len(l.GetResources(kind)) > 0 {
 		return l.GetResources(kind)[0]
 	}
+	return nil
+}
+
+func (l YamlFixtureLoader) GetResource(kind, name, namespace string) kubernetes.IstioObject {
+	if len(l.GetResources(kind)) == 0 {
+		return nil
+	}
+
+	for _, rsrc := range l.GetResources(kind) {
+		if rsrc.GetObjectMeta().Name == name && rsrc.GetObjectMeta().Namespace == namespace {
+			return rsrc
+		}
+	}
+
 	return nil
 }
 

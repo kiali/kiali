@@ -53,6 +53,8 @@ func TestPeerAuthnNotFoundDestRuleIstioMutual(t *testing.T) {
 // It returns a validation
 func TestAutoAuthzPeerAuthnDisable(t *testing.T) {
 	testMtlsCheckerPresent("mtls_enabled_checker_7.yaml", t)
+	// If the AP doesn't have principals
+	testNoMtlsChecker("mtls_enabled_checker_71.yaml", t)
 }
 
 // Context: AutoMtls enabled/disabled
@@ -77,6 +79,8 @@ func TestAutoAuthzMeshPeerAuthnDisable(t *testing.T) {
 // It returns a validation
 func TestAutoAuthzMeshDestRuleDisable(t *testing.T) {
 	testMtlsCheckerPresent("mtls_enabled_checker_10.yaml", t)
+	// If the AP doesn't have principals
+	testNoMtlsChecker("mtls_enabled_checker_101.yaml", t)
 }
 
 // Context: AutoMtls enabled
@@ -102,6 +106,38 @@ func TestAutoAuthzMeshDestRuleEnabled(t *testing.T) {
 // It doesn't return any validation
 func TestAutoAuthzMeshMTLSEnabled(t *testing.T) {
 	testNoMtlsChecker("mtls_enabled_checker_13.yaml", t)
+}
+
+func TestNeedsIdentities(t *testing.T) {
+	loader := yamlFixtureLoaderFor("mtls_enabled_checker_14.yaml")
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	var tests = []struct {
+		name   string
+		result bool
+	}{
+		{"policy-0", true},
+		{"policy-1", true},
+		{"policy-2", false},
+		{"policy-3", true},
+		{"policy-4", true},
+		{"policy-5", true},
+		{"policy-6", false},
+		{"policy-7", false},
+		{"policy-8", true},
+		{"policy-9", true},
+		{"policy-10", false},
+	}
+
+	for _, test := range tests {
+		ap := loader.GetResource("AuthorizationPolicy", test.name, "bookinfo")
+		if needsIdentities(ap) != test.result {
+			t.Errorf("%s needs identities: %t. Expected to be %t", test.name, needsIdentities(ap), test.result)
+		}
+	}
 }
 
 func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.IstioValidations {

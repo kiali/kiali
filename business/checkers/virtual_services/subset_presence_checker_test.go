@@ -71,7 +71,7 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 		Namespace:        "bookinfo",
 		Namespaces:       namespaceNames(loader.GetResources("Namespace")),
 		DestinationRules: loader.GetResources("DestinationRule"),
-		VirtualService:   loader.GetResource("VirtualService"),
+		VirtualService:   loader.GetFirstResource("VirtualService"),
 	}.Check()
 
 	if err != nil {

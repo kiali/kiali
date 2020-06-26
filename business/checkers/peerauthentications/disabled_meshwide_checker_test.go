@@ -42,7 +42,7 @@ func disabledMeshTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, 
 	}
 
 	validations, valid := DisabledMeshWideChecker{
-		PeerAuthn:        loader.GetResource("PeerAuthentication"),
+		PeerAuthn:        loader.GetFirstResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
