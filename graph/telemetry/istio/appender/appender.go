@@ -64,6 +64,7 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	// To pre-process service nodes run service_entry appender first
 	// To reduce processing, filter dead nodes next
 	// To reduce processing, next run appenders that don't apply to unused services
+	// - lazily inject aggregate nodes so other decorations can influence the new nodes/edges, if necessary
 	// Add orphan (unused) services
 	// Run remaining appenders
 	var appenders []graph.Appender
@@ -77,20 +78,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
 		a := DeadNodeAppender{}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[AggregateNodeAppenderName]; ok || o.Appenders.All {
-		aggregate := o.Params.Get("responseTimeQuantile")
-		if aggregate == "" {
-			aggregate = defaultAggregate
-		}
-		a := AggregateNodeAppender{
-			Aggregate:          aggregate,
-			GraphType:          o.GraphType,
-			InjectServiceNodes: o.InjectServiceNodes,
-			Namespaces:         o.Namespaces,
-			QueryTime:          o.QueryTime,
-		}
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {
@@ -113,6 +100,20 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[SecurityPolicyAppenderName]; ok || o.Appenders.All {
 		a := SecurityPolicyAppender{
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
+		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[AggregateNodeAppenderName]; ok || o.Appenders.All {
+		aggregate := o.Params.Get("responseTimeQuantile")
+		if aggregate == "" {
+			aggregate = defaultAggregate
+		}
+		a := AggregateNodeAppender{
+			Aggregate:          aggregate,
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
