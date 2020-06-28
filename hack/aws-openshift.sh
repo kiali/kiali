@@ -351,6 +351,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="kubeadmin-pw"
       shift
       ;;
+    api-host)
+      _CMD="api-host"
+      shift
+      ;;
 
     # OPTIONS CONFIGURING THE HACK SCRIPT ITSELF AND THE CLUSTER
 
@@ -480,6 +484,7 @@ The command must be one of:
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
   * oc-env: Used to configure a shell for 'oc'.
   * kubeadmin-pw: Prints the kubeadmin password.
+  * api-host: Prints the expected hostname for the cluster API endpoint. This is used by the 'oc login' command.
 
 HELPMSG
       exit 1
@@ -825,6 +830,10 @@ elif [ "$_CMD" = "kubeadmin-pw" ]; then
   if ! cat ${AWS_KUBEADMIN_PASSWORD_FILE}; then
     echo "You must install an AWS cluster in order to have a kubeadmin password."
   fi
+
+elif [ "$_CMD" = "api-host" ]; then
+
+  echo "api.${AWS_CLUSTER_NAME}.${AWS_BASE_DOMAIN}:6443"
 
 else
   infomsg "ERROR: Missing command. See --help for usage."
