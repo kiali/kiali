@@ -27,6 +27,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_SRC_HOME="$2"
       shift;shift
       ;;
+    -mp|--minikube-profile)
+      MINIKUBE_PROFILE="$2"
+      shift;shift
+      ;;
     -nd|--never-destroy)
       MOLECULE_DESTROY_NEVER="$2"
       shift;shift
@@ -56,6 +60,7 @@ $0 [option...] command
 -ct|--cluster-type     The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug             True if you want the molecule tests to output large amounts of debug messages. (default: true)
 -ksh|--kiali_src-home  Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-mp|--minikube-profile If cluster type is 'minikube' you can specify the profile that is in use via this option.
 -nd|--never-destroy    Do not have the molecule framework destroy the test scaffolding. Setting this to true
                        will help test failures by allowing you to examine the operator logs after a test finished.
                        Default is 'false' - the operator resources will be deleted after a test completes, no matter
@@ -125,6 +130,7 @@ echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
+echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo "=============================="
 
 # Make sure the cluster is accessible
@@ -170,6 +176,14 @@ prepare_test() {
         ${TEST_CLIENT_EXE:-oc} policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
+
+    # if running the non-OpenShift openid-test, create a rolebinding so the test can log in
+    openid-test)
+      if [ "${CLUSTER_TYPE}" == "minikube" ]; then
+        ${TEST_CLIENT_EXE:-kubectl} create rolebinding openid-rolebinding-istio-system --clusterrole=kiali --user=admin@example.com --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+      fi
+      ;;
+
     # nothing to do for any other test
     *) ;;
   esac
@@ -183,6 +197,14 @@ unprepare_test() {
         ${TEST_CLIENT_EXE:-oc} policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
+
+    # remove the rolebinding that was created
+    openid-test)
+      if [ "${CLUSTER_TYPE}" == "minikube" ]; then
+        ${TEST_CLIENT_EXE:-kubectl} delete rolebinding openid-rolebinding-istio-system --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+      fi
+      ;;
+
     # nothing to do for any other test
     *) ;;
   esac
@@ -204,6 +226,9 @@ if ! which docker > /dev/null 2>&1; then
     exit 1
   fi
 fi
+
+# the user may have specified a specific minikube profile to use - export this so make knows about it
+export MINIKUBE_PROFILE
 
 # Run the tests
 echo

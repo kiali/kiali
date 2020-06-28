@@ -24,5 +24,4 @@ if ! ${minikube_sh} status; then
   ${minikube_sh} istio
 fi
 
-${hack_dir}/run-molecule-tests.sh --cluster-type minikube -at openid-test #MAZZ remove -at
-
+${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile}
