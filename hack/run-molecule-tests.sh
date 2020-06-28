@@ -60,7 +60,7 @@ $0 [option...] command
 -udi|--use-dev-images  If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                        images, you must have already pushed locally built dev images into your cluster.
                        If false, the cluster will put the latest images found on quay.io.
-                       Default: true
+                       Default: false
 HELPMSG
       exit 1
       ;;
@@ -95,7 +95,7 @@ fi
 
 # If you want to test the latest release from quay, set this to "false".
 # If this is set to true, the current dev images that have been pushed to the cluster will be tested.
-export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-true}"
+export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-false}"
 
 # Set this to true if you want molecule to output more noisy logs from Ansible.
 export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
