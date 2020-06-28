@@ -809,6 +809,9 @@ elif [ "$_CMD" = "destroy" ]; then
 elif [ "$_CMD" = "status" ]; then
 
   get_status
+  if [ "${_IS_RUNNING}" != "true" ]; then
+    exit 1
+  fi
 
 elif [ "$_CMD" = "routes" ]; then
 
