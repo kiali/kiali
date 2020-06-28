@@ -43,17 +43,17 @@ done
 INSTALL_SERVICE_MESH="${INSTALL_SERVICE_MESH:-false}"
 INSTALL_UPSTREAM_ISTIO="${INSTALL_UPSTREAM_ISTIO:-false}"
 
-if [ "${INSTALL_SERVICE_MESH}" == "false" -a "${INSTALL_UPSTREAM_ISTIO}" == "false" ]; then
-  echo "Molecule tests require either Service Mesh or upstream Istio to be installed."
-  exit 1
-fi
-
 # Where this script is - all our hack files are assumed to be in here
 script_root="$( cd "$(dirname "$0")" ; pwd -P )"
 hack_dir="$script_root"
 
 if ! oc whoami > /dev/null 2>&1; then
   if ! ${hack_dir}/aws-openshift.sh status; then
+    if [ "${INSTALL_SERVICE_MESH}" == "false" -a "${INSTALL_UPSTREAM_ISTIO}" == "false" ]; then
+      echo "Molecule tests require either Service Mesh or upstream Istio to be installed."
+      exit 1
+    fi
+
     ${hack_dir}/aws-openshift-istio.sh \
       --install-service-mesh "${INSTALL_SERVICE_MESH}" \
       --install-upstream-istio "${INSTALL_UPSTREAM_ISTIO}" \
