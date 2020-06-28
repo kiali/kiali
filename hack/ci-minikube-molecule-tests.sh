@@ -11,13 +11,17 @@
 script_root="$( cd "$(dirname "$0")" ; pwd -P )"
 hack_dir="$script_root"
 
-if ! ${hack_dir}/k8s-minikube status; then
-  ${hack_dir}/k8s-minikube.sh --dex-enabled true start
-  if ! ${hack_dir}/k8s-minikube status; then
+# the minikube hack script command
+minikube_profile="ci"
+minikube_sh="${hack_dir}/k8s-minikube.sh --minikube-profile ${minikube_profile}"
+
+if ! ${minikube_sh} status; then
+  ${minikube_sh} start --dex-enabled true -kv 1.18.0
+  if ! ${minikube_sh} status; then
     echo "Failed to install the minikube cluster."
     exit 1
   fi
-  ${hack_dir}/k8s-minikube.sh istio
+  ${minikube_sh} istio
 fi
 
 ${hack_dir}/run-molecule-tests.sh --cluster-type minikube -at openid-test #MAZZ remove -at
