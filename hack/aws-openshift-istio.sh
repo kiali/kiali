@@ -27,11 +27,14 @@ while [[ $# -gt 0 ]]; do
 
 $0 [option...] command
 
--d|--datadir:                  default "${HOME}/openshift"
--ib|--install-bookinfo:        default "false"
--ism|--install-service-mesh:   default "false"
--iui|--install-upstream-istio  default "false"
--uip|--upstream-istio-profile: default "default"
+-d|--datadir:                  Where installation files are placed.
+                               You must put your OpenShift pull secret in here
+                               under the name "pull-secret.txt".
+                               default "${HOME}/openshift"
+-ib|--install-bookinfo:        If true, the Bookinfo demo will be installed. default "false"
+-ism|--install-service-mesh:   If true, Service Mesh will be installed. default "false"
+-iui|--install-upstream-istio  If true, upstream Istio will be installed. default "false"
+-uip|--upstream-istio-profile: If upstream Istio will be installed, this is the profile used. default "default"
 HELPMSG
       exit 1
       ;;
