@@ -55,7 +55,7 @@ $0 [option...] command
                        will help test failures by allowing you to examine the operator logs after a test finished.
                        Default is 'false' - the operator resources will be deleted after a test completes, no matter
                        if the test succeeded or failed.
--st|--skip-tests       Space-separated list of all the molecule tests to be skipped. (default: openid-test)
+-st|--skip-tests       Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
 -tld|--test-logs-dir   Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
 -udi|--use-dev-images  If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                        images, you must have already pushed locally built dev images into your cluster.
@@ -78,19 +78,20 @@ if [ ! -d "${KIALI_SRC_HOME}" ]; then echo "Kiali source home directory is inval
 if [ ! -d "${KIALI_SRC_HOME}/operator/molecule" ]; then echo "Kiali source home directory is missing the operator molecule tests: ${KIALI_SRC_HOME}"; exit 1; fi
 KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}"; pwd -P)"
 
+# Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
+export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
+if [ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
+
 # A list of all the tests.
 # This list, minus the tests to be skipped (see SKIP_TESTS), are the tests that this script will run.
 ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule"; ls -d *-test)}
 
 # Put the names of any tests in here if you do not want to run them (space separated).
-# Note that as of June 27, 2020:
-#   openid-test is only valid when testing with CLUSTER_TYPE=minikube.
-#   os-console-links-test is only valid when testing with CLUSTER_TYPE=openshift
-SKIP_TESTS="${SKIP_TESTS:-openid-test}"
-
-# Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
-export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
-if [ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
+if [ "${CLUSTER_TYPE}" == "openshift" ]; then
+  SKIP_TESTS="${SKIP_TESTS:-openid-test}"
+elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
+  SKIP_TESTS="${SKIP_TESTS:-os-console-links-test}"
+fi
 
 # If you want to test the latest release from quay, set this to "false".
 # If this is set to true, the current dev images that have been pushed to the cluster will be tested.
