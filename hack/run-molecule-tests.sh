@@ -11,6 +11,10 @@ while [[ $# -gt 0 ]]; do
       COLOR="$2"
       shift;shift
       ;;
+    -ce|--client-exe)
+      TEST_CLIENT_EXE="$2"
+      shift;shift
+      ;;
     -ct|--cluster-type)
       CLUSTER_TYPE="$2"
       shift;shift
@@ -48,6 +52,7 @@ $0 [option...] command
                        tests that are actually run - see --skip-tests.
                        The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
 -c|--color             True if you want color in the output. (default: true)
+-ce|--client-exe       Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
 -ct|--cluster-type     The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug             True if you want the molecule tests to output large amounts of debug messages. (default: true)
 -ksh|--kiali_src-home  Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
@@ -118,17 +123,18 @@ echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
+echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
 echo "=============================="
 
 # Make sure the cluster is accessible
 if [ "${CLUSTER_TYPE}" == "openshift" ]; then
-  if ! oc whoami > /dev/null; then
+  if ! ${TEST_CLIENT_EXE:-oc} whoami > /dev/null; then
     echo "You either did not 'oc login' or the OpenShift cluster is not accessible. Aborting."
     exit 1
   fi
 else
-  if ! kubectl get ns > /dev/null; then
+  if ! ${TEST_CLIENT_EXE:-kubectl} get ns > /dev/null; then
     echo "The minikube cluster is not accessible. Aborting."
     exit 1
   fi
@@ -161,7 +167,7 @@ prepare_test() {
     # if using dev images on openshift, we have to grant an additional priviledge for this test
     default-namespace-test)
       if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
-        oc policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+        ${TEST_CLIENT_EXE:-oc} policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
     # nothing to do for any other test
@@ -174,7 +180,7 @@ unprepare_test() {
     # remove that additional priviledge that was granted
     default-namespace-test)
       if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
-        oc policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+        ${TEST_CLIENT_EXE:-oc} policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
     # nothing to do for any other test
@@ -182,6 +188,22 @@ unprepare_test() {
   esac
 }
 
+# Prepare some environment variables needed by the makefile
+
+# tell make what client to use if we were explicitly given one
+if [ ! -z "${TEST_CLIENT_EXE}" ]; then
+  export OC="${TEST_CLIENT_EXE}"
+fi
+
+# if we need to use podman, we have to explicitly tell the makefile
+if ! which docker > /dev/null 2>&1; then
+  if which podman > /dev/null 2>&1; then
+    export DORP="podman"
+  else
+    echo "You do not have 'docker' or 'podman' in PATH - aborting."
+    exit 1
+  fi
+fi
 
 # Run the tests
 echo
