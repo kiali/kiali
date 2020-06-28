@@ -347,6 +347,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="oc-env"
       shift
       ;;
+    kubeadmin-pw)
+      _CMD="kubeadmin-pw"
+      shift
+      ;;
 
     # OPTIONS CONFIGURING THE HACK SCRIPT ITSELF AND THE CLUSTER
 
@@ -475,6 +479,7 @@ The command must be one of:
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
   * oc-env: Used to configure a shell for 'oc'.
+  * kubeadmin-pw: Prints the kubeadmin password.
 
 HELPMSG
       exit 1
@@ -814,6 +819,12 @@ elif [ "$_CMD" = "oc-env" ]; then
   echo "export PATH=\"${OPENSHIFT_DOWNLOAD_PATH}:\$PATH\""
   echo "# Run this command to configure your shell:"
   echo "# eval \$($0 oc-env)"
+
+elif [ "$_CMD" = "kubeadmin-pw" ]; then
+
+  if ! cat ${AWS_KUBEADMIN_PASSWORD_FILE}; then
+    echo "You must install an AWS cluster in order to have a kubeadmin password."
+  fi
 
 else
   infomsg "ERROR: Missing command. See --help for usage."
