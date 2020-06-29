@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	AggregateTypeOp       string = "aggregateOp" // request classification operation aggregate
 	GraphTypeApp          string = "app"
 	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
 	GraphTypeVersionedApp string = "versionedApp"
