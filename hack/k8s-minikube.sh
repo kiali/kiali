@@ -96,8 +96,9 @@ check_insecure_registry() {
 install_dex() {
   echo 'Installing Dex for OpenID Connect support...'
 
-  # Download dex, if needed
+  # Download dex - prepare a clean copy
   DEX_VERSION_PATH="${OUTPUT_PATH}/dex/${DEX_VERSION}"
+  rm -rf ${DEX_VERSION_PATH}
   if [ ! -d "${DEX_VERSION_PATH}" ]; then
     echo "Will download Dex version [${DEX_VERSION}] to [${DEX_VERSION_PATH}]"
     mkdir -p ${DEX_VERSION_PATH}

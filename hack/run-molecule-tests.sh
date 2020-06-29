@@ -11,6 +11,10 @@ while [[ $# -gt 0 ]]; do
       COLOR="$2"
       shift;shift
       ;;
+    -ce|--client-exe)
+      TEST_CLIENT_EXE="$2"
+      shift;shift
+      ;;
     -ct|--cluster-type)
       CLUSTER_TYPE="$2"
       shift;shift
@@ -21,6 +25,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ksh|--kiali-src-home)
       KIALI_SRC_HOME="$2"
+      shift;shift
+      ;;
+    -mp|--minikube-profile)
+      MINIKUBE_PROFILE="$2"
       shift;shift
       ;;
     -nd|--never-destroy)
@@ -48,19 +56,21 @@ $0 [option...] command
                        tests that are actually run - see --skip-tests.
                        The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
 -c|--color             True if you want color in the output. (default: true)
+-ce|--client-exe       Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
 -ct|--cluster-type     The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug             True if you want the molecule tests to output large amounts of debug messages. (default: true)
 -ksh|--kiali_src-home  Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-mp|--minikube-profile If cluster type is 'minikube' you can specify the profile that is in use via this option.
 -nd|--never-destroy    Do not have the molecule framework destroy the test scaffolding. Setting this to true
                        will help test failures by allowing you to examine the operator logs after a test finished.
                        Default is 'false' - the operator resources will be deleted after a test completes, no matter
                        if the test succeeded or failed.
--st|--skip-tests       Space-separated list of all the molecule tests to be skipped. (default: openid-test)
+-st|--skip-tests       Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
 -tld|--test-logs-dir   Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
 -udi|--use-dev-images  If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                        images, you must have already pushed locally built dev images into your cluster.
                        If false, the cluster will put the latest images found on quay.io.
-                       Default: true
+                       Default: false
 HELPMSG
       exit 1
       ;;
@@ -78,23 +88,24 @@ if [ ! -d "${KIALI_SRC_HOME}" ]; then echo "Kiali source home directory is inval
 if [ ! -d "${KIALI_SRC_HOME}/operator/molecule" ]; then echo "Kiali source home directory is missing the operator molecule tests: ${KIALI_SRC_HOME}"; exit 1; fi
 KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}"; pwd -P)"
 
+# Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
+export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
+if [ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
+
 # A list of all the tests.
 # This list, minus the tests to be skipped (see SKIP_TESTS), are the tests that this script will run.
 ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule"; ls -d *-test)}
 
 # Put the names of any tests in here if you do not want to run them (space separated).
-# Note that as of June 27, 2020:
-#   openid-test is only valid when testing with CLUSTER_TYPE=minikube.
-#   os-console-links-test is only valid when testing with CLUSTER_TYPE=openshift
-SKIP_TESTS="${SKIP_TESTS:-openid-test}"
-
-# Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
-export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
-if [ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
+if [ "${CLUSTER_TYPE}" == "openshift" ]; then
+  SKIP_TESTS="${SKIP_TESTS:-openid-test}"
+elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
+  SKIP_TESTS="${SKIP_TESTS:-os-console-links-test}"
+fi
 
 # If you want to test the latest release from quay, set this to "false".
 # If this is set to true, the current dev images that have been pushed to the cluster will be tested.
-export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-true}"
+export MOLECULE_USE_DEV_IMAGES="${MOLECULE_USE_DEV_IMAGES:-false}"
 
 # Set this to true if you want molecule to output more noisy logs from Ansible.
 export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
@@ -117,17 +128,19 @@ echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
+echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
+echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo "=============================="
 
 # Make sure the cluster is accessible
 if [ "${CLUSTER_TYPE}" == "openshift" ]; then
-  if ! oc whoami > /dev/null; then
+  if ! ${TEST_CLIENT_EXE:-oc} whoami > /dev/null; then
     echo "You either did not 'oc login' or the OpenShift cluster is not accessible. Aborting."
     exit 1
   fi
 else
-  if ! kubectl get ns > /dev/null; then
+  if ! ${TEST_CLIENT_EXE:-kubectl} get ns > /dev/null; then
     echo "The minikube cluster is not accessible. Aborting."
     exit 1
   fi
@@ -160,9 +173,17 @@ prepare_test() {
     # if using dev images on openshift, we have to grant an additional priviledge for this test
     default-namespace-test)
       if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
-        oc policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+        ${TEST_CLIENT_EXE:-oc} policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
+
+    # if running the non-OpenShift openid-test, create a rolebinding so the test can log in
+    openid-test)
+      if [ "${CLUSTER_TYPE}" == "minikube" ]; then
+        ${TEST_CLIENT_EXE:-kubectl} create rolebinding openid-rolebinding-istio-system --clusterrole=kiali --user=admin@example.com --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+      fi
+      ;;
+
     # nothing to do for any other test
     *) ;;
   esac
@@ -173,14 +194,41 @@ unprepare_test() {
     # remove that additional priviledge that was granted
     default-namespace-test)
       if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
-        oc policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+        ${TEST_CLIENT_EXE:-oc} policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
+
+    # remove the rolebinding that was created
+    openid-test)
+      if [ "${CLUSTER_TYPE}" == "minikube" ]; then
+        ${TEST_CLIENT_EXE:-kubectl} delete rolebinding openid-rolebinding-istio-system --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
+      fi
+      ;;
+
     # nothing to do for any other test
     *) ;;
   esac
 }
 
+# Prepare some environment variables needed by the makefile
+
+# tell make what client to use if we were explicitly given one
+if [ ! -z "${TEST_CLIENT_EXE}" ]; then
+  export OC="${TEST_CLIENT_EXE}"
+fi
+
+# if we need to use podman, we have to explicitly tell the makefile
+if ! which docker > /dev/null 2>&1; then
+  if which podman > /dev/null 2>&1; then
+    export DORP="podman"
+  else
+    echo "You do not have 'docker' or 'podman' in PATH - aborting."
+    exit 1
+  fi
+fi
+
+# the user may have specified a specific minikube profile to use - export this so make knows about it
+export MINIKUBE_PROFILE
 
 # Run the tests
 echo
