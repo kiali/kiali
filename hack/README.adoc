@@ -3,11 +3,7 @@
 :toc: macro
 :toc-title:
 
-== Table of contents
-
-toc::[]
-
-=== Description
+== Description
 
 The following are brief summaries for each hack script. Most of these hack scripts accept a `--help` option to provide information on the different options available.
 
@@ -55,7 +51,7 @@ Runs the suite of molecule tests on a running OpenShift or minikube cluster.
 
 Runs a local Prometheus in docker and scrapes the Kiali server and operator that is running in an OpenShift cluster.
 
-=== Running Molecule Tests Periodically
+== Running Molecule Tests Periodically
 
 If you have a cluster running (in this example, one that was installed locally via link:https://github.com/kxr/ocp4_setup_upi_kvm[ocp4_setup_upi_kvm]), you can use a script like this for a cron job in order to periodically run the Molecule tests:
 
