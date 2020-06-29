@@ -57,7 +57,7 @@ Runs a local Prometheus in docker and scrapes the Kiali server and operator that
 
 === Running Molecule Tests Periodically
 
-If you have a cluster running, you can use a script like this for a cron job in order to periodically run the Molecule tests:
+If you have a cluster running (in this example, one that was installed locally via link:https://github.com/kxr/ocp4_setup_upi_kvm[ocp4_setup_upi_kvm]), you can use a script like this for a cron job in order to periodically run the Molecule tests:
 
 ```
 #!/bin/bash
