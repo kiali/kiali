@@ -28,9 +28,8 @@ endif
 # NOTE: The value fo SITE_BUMPED_VERSION and SITE_VERSION_BRANCH will only be valid
 # after the main Makefile has been modified with the version being released.
 SITE_BUMPED_VERSION ?= $(shell semver bump minor $(SITE_VERSION))
-SITE_VERSION_BRANCH ?= $(shell semver bump release $(SITE_VERSION) | sed 's/\.[[:digit:]]\+$$//')
 
-.PHONY: website-build-archive website-push-version-tag
+.PHONY: website-build-archive
 .PHONY: all release
 
 all:
@@ -45,15 +44,9 @@ ifeq ($(PUSH_CHANGES),y)
 	git add content/documentation/v*
 	git commit -m "Release v$(SITE_VERSION)"
 	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):$(SITE_MAIN_BRANCH)
+	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(SITE_VERSION)
 else
 	@echo "Skipped website release on patch or snapshot releases"
 endif
 
-website-push-version-tag:
-ifeq ($(PUSH_CHANGES),y)
-	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(SITE_VERSION)
-else
-	@echo "Skipped push version tag"
-endif
-
-release: website-build-archive website-push-version-tag
+release: website-build-archive

@@ -269,7 +269,7 @@ node('kiali-build') {
         if ( buildSite ) {
           withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
             sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${siteMakefile} -C ${siteDir} website-build-archive website-push-version-tag"
+              sh "make -f ${siteMakefile} -C ${siteDir} website-build-archive"
             }
           }
         }
