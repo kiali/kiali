@@ -38,10 +38,11 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
 		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(),
+		AllowPermissive:     false,
 	}
 
 	return models.MTLSStatus{
-		Status: mtlsStatus.MeshMtlsStatus(),
+		Status: mtlsStatus.MeshMtlsStatus().OverallStatus,
 	}, nil
 }
 
@@ -139,10 +140,11 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
 		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(),
+		AllowPermissive:     false,
 	}
 
 	return models.MTLSStatus{
-		Status: mtlsStatus.NamespaceMtlsStatus(),
+		Status: mtlsStatus.NamespaceMtlsStatus().OverallStatus,
 	}, nil
 }
 

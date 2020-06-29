@@ -16,6 +16,13 @@ type MtlsStatus struct {
 	PeerAuthentications []kubernetes.IstioObject
 	DestinationRules    []kubernetes.IstioObject
 	AutoMtlsEnabled     bool
+	AllowPermissive     bool
+}
+
+type TlsStatus struct {
+	DestinationRuleStatus    string
+	PeerAuthenticationStatus string
+	OverallStatus            string
 }
 
 func (m MtlsStatus) hasPeerAuthnNamespacemTLSDefinition() string {
@@ -38,36 +45,34 @@ func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS() string {
 	return ""
 }
 
-func (m MtlsStatus) NamespaceMtlsStatus() string {
+func (m MtlsStatus) NamespaceMtlsStatus() TlsStatus {
 	drStatus := m.hasDesinationRuleEnablingNamespacemTLS()
 	paStatus := m.hasPeerAuthnNamespacemTLSDefinition()
 	return m.finalStatus(drStatus, paStatus)
 }
 
-func (m MtlsStatus) finalStatus(drStatus, paStatus string) string {
+func (m MtlsStatus) finalStatus(drStatus, paStatus string) TlsStatus {
 	finalStatus := MTLSPartiallyEnabled
 
 	mtlsEnabled := drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" || (drStatus == "" && m.AutoMtlsEnabled)
 	mtlsDisabled := drStatus == "DISABLE" || (drStatus == "" && m.AutoMtlsEnabled)
 
-	if paStatus == "STRICT" && mtlsEnabled {
+	if (paStatus == "STRICT" || (paStatus == "PERMISSIVE" && m.AllowPermissive)) && mtlsEnabled {
 		finalStatus = MTLSEnabled
 	} else if paStatus == "DISABLE" && mtlsDisabled {
 		finalStatus = MTLSDisabled
-	} else if paStatus == "" {
-		if drStatus == "DISABLE" {
-			finalStatus = MTLSDisabled
-		} else if m.AutoMtlsEnabled && drStatus == "ISTIO_MUTUAL" || drStatus == "MUTUAL" {
-			finalStatus = MTLSEnabled
-		} else if drStatus == "" {
-			finalStatus = MTLSNotEnabled
-		}
+	} else if paStatus == "" && drStatus == "" {
+		finalStatus = MTLSNotEnabled
 	}
 
-	return finalStatus
+	return TlsStatus{
+		DestinationRuleStatus:    drStatus,
+		PeerAuthenticationStatus: paStatus,
+		OverallStatus:            finalStatus,
+	}
 }
 
-func (m MtlsStatus) MeshMtlsStatus() string {
+func (m MtlsStatus) MeshMtlsStatus() TlsStatus {
 	drStatus := m.hasDestinationRuleMeshTLSDefinition()
 	paStatus := m.hasPeerAuthnMeshTLSDefinition()
 	return m.finalStatus(drStatus, paStatus)
@@ -91,16 +96,44 @@ func (m MtlsStatus) hasDestinationRuleMeshTLSDefinition() string {
 	return ""
 }
 
-func OverallMtlsStatus(nsStatus, meshStatus string, autoMtlsEnabled bool) string {
+func (m MtlsStatus) OverallMtlsStatus(nsStatus, meshStatus TlsStatus) string {
 	var status string
-	if nsStatus == MTLSEnabled || nsStatus == MTLSDisabled {
-		status = nsStatus
-	} else if meshStatus == MTLSEnabled || meshStatus == MTLSDisabled {
-		status = meshStatus
-	} else if autoMtlsEnabled {
+	if nsStatus.hasDefiniteTls() {
+		status = nsStatus.OverallStatus
+	} else if nsStatus.hasPartialTlsConfig() {
+		status = m.inheritedOverallStatus(nsStatus, meshStatus)
+	} else if meshStatus.hasDefiniteTls() {
+		status = meshStatus.OverallStatus
+	} else if m.AutoMtlsEnabled {
 		status = MTLSEnabled
+		if meshStatus.PeerAuthenticationStatus == "DISABLE" || meshStatus.DestinationRuleStatus == "DISABLE" {
+			status = MTLSDisabled
+		}
 	} else {
 		status = MTLSNotEnabled
 	}
 	return status
+}
+
+func (m MtlsStatus) inheritedOverallStatus(nsStatus, meshStatus TlsStatus) string {
+	var partialDRStatus, partialPAStatus = nsStatus.DestinationRuleStatus, nsStatus.PeerAuthenticationStatus
+	if nsStatus.DestinationRuleStatus == "" {
+		partialDRStatus = meshStatus.DestinationRuleStatus
+	}
+
+	if nsStatus.PeerAuthenticationStatus == "" {
+		partialPAStatus = meshStatus.PeerAuthenticationStatus
+	}
+
+	return m.OverallMtlsStatus(TlsStatus{},
+		m.finalStatus(partialDRStatus, partialPAStatus),
+	)
+}
+
+func (t TlsStatus) hasDefiniteTls() bool {
+	return t.OverallStatus == MTLSEnabled || t.OverallStatus == MTLSDisabled
+}
+
+func (t TlsStatus) hasPartialTlsConfig() bool {
+	return t.OverallStatus == MTLSPartiallyEnabled
 }

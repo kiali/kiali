@@ -143,26 +143,30 @@ func hasValues(definition map[string]interface{}, key string) bool {
 }
 
 func (c MtlsEnabledChecker) hasMtlsEnabledForNamespace() string {
-	return mtls.OverallMtlsStatus(c.namespaceMtlsStatus(), c.meshWideMtlsStatus(), c.MtlsDetails.EnabledAutoMtls)
+	return mtls.MtlsStatus{
+		AutoMtlsEnabled: c.MtlsDetails.EnabledAutoMtls,
+	}.OverallMtlsStatus(c.namespaceMtlsStatus(), c.meshWideMtlsStatus())
 }
 
-func (c MtlsEnabledChecker) meshWideMtlsStatus() string {
+func (c MtlsEnabledChecker) meshWideMtlsStatus() mtls.TlsStatus {
 	mtlsStatus := mtls.MtlsStatus{
 		Namespace:           c.Namespace,
 		PeerAuthentications: c.MtlsDetails.MeshPeerAuthentications,
 		DestinationRules:    c.MtlsDetails.DestinationRules,
 		AutoMtlsEnabled:     c.MtlsDetails.EnabledAutoMtls,
+		AllowPermissive:     true,
 	}
 
 	return mtlsStatus.MeshMtlsStatus()
 }
 
-func (c MtlsEnabledChecker) namespaceMtlsStatus() string {
+func (c MtlsEnabledChecker) namespaceMtlsStatus() mtls.TlsStatus {
 	mtlsStatus := mtls.MtlsStatus{
 		Namespace:           c.Namespace,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
 		DestinationRules:    c.MtlsDetails.DestinationRules,
 		AutoMtlsEnabled:     c.MtlsDetails.EnabledAutoMtls,
+		AllowPermissive:     true,
 	}
 
 	return mtlsStatus.NamespaceMtlsStatus()

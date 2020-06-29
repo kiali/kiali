@@ -106,10 +106,22 @@ func TestAutoAuthzMeshDestRuleEnabled(t *testing.T) {
 // It doesn't return any validation
 func TestAutoAuthzMeshMTLSEnabled(t *testing.T) {
 	testNoMtlsChecker("mtls_enabled_checker_13.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_14.yaml", t)
+}
+
+// Context: AutoMtls enabled
+// Context: Authorization Policy found
+// Context: Mesh-wide mTLS enabled
+// Context: Namespace-wide mTLS disabled
+// It doesn't return any validation
+func TestAuthozDisabled(t *testing.T) {
+	testMtlsCheckerPresent("mtls_enabled_checker_15.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_16.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_17.yaml", t)
 }
 
 func TestNeedsIdentities(t *testing.T) {
-	loader := yamlFixtureLoaderFor("mtls_enabled_checker_14.yaml")
+	loader := yamlFixtureLoaderFor("authz_policy_requires_mtls.yaml")
 	err := loader.Load()
 	if err != nil {
 		t.Error("Error loading test data.")

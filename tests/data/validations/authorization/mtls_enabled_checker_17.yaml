@@ -15,22 +15,13 @@ spec:
         - operation:
             methods: ["GET"]
 ---
-apiVersion: "security.istio.io/v1beta1"
-kind: "PeerAuthentication"
-metadata:
-  name: "default"
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
----
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
-  name: "enable-mtls"
-  namespace: istio-system
+  name: "disable-mtls"
+  namespace: "bookinfo"
 spec:
-  host: "*.local"
+  host: "*.bookinfo.svc.cluster.local"
   trafficPolicy:
     tls:
-      mode: ISTIO_MUTUAL
+      mode: DISABLE
