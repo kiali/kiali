@@ -1,0 +1,39 @@
+= Hack Scripts
+
+:toc: macro
+:toc-title:
+
+== Table of contents
+
+toc::[]
+
+=== Description
+
+The following are brief summaries for each hack script. Most of these hack scripts accept a `--help` option to provide information on the different options available.
+
+* `aws-openshift-istio.sh`
+
+* `aws-openshift.sh`
+
+* `check_go_version.sh`
+
+* `ci-minikube-molecule-tests.sh`
+
+* `ci-openshift-molecule-tests.sh`
+
+* `cluster-openshift.sh`
+
+* `crc-openshift.sh`
+
+* `jwt-decode.sh`
+
+* `jwt-encode.sh`
+
+* `k8s-minikube.sh`
+
+* `os-minishift.sh`
+
+* `run-molecule-tests.sh`
+
+* `run-prometheus.sh`
+
