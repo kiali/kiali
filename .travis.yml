@@ -17,7 +17,11 @@ jobs:
 go:
 - 1.14.2
 
-# The channel name "chat.freenode.net#kiali" is encrypted to prevent IRC spam from forks
+cache:
+  directories:
+  - $HOME/gopath/pkg/mod
+
+  # The channel name "chat.freenode.net#kiali" is encrypted to prevent IRC spam from forks
 notifications:
   irc:
     channels:
