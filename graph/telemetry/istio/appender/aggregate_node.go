@@ -20,6 +20,7 @@ const (
 // visibility into traffic aggregations for a user-specfied metric attribute.
 type AggregateNodeAppender struct {
 	Aggregate          string
+	AggregateValue     string
 	GraphType          string
 	InjectServiceNodes bool
 	Namespaces         map[string]graph.NamespaceInfo
@@ -43,11 +44,15 @@ func (a AggregateNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	if a.AggregateValue == "" {
+		a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	} else {
+		a.appendNodeGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	}
 }
 
 func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
-	log.Tracef("Resolving request aggregates for namespace = %v", namespace)
+	log.Tracef("Resolving request aggregates for namespace=[%s], aggregate=[%s]", namespace, a.Aggregate)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for aggregate info in two queries (assume aggregation is typically request classification, so use dest telemetry):
@@ -57,14 +62,14 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
 	// 1) query for requests originating from a workload outside the namespace.
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,%s", appLabel, verLabel, appLabel, verLabel, a.Aggregate)
-	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		namespace,
 		a.Aggregate,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
 		namespace,
@@ -76,13 +81,13 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	a.injectAggregates(trafficMap, &vector)
 
 	// 2) query for requests originating from a workload inside of the namespace
-	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
+	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		a.Aggregate,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
+	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
 		a.Aggregate,
@@ -90,6 +95,33 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		groupBy)
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	a.injectAggregates(trafficMap, &vector)
+}
+
+func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+	log.Tracef("Resolving node request aggregates for namespace=[%s], aggregate=[%s=%s]", namespace, a.Aggregate, a.AggregateValue)
+	duration := a.Namespaces[namespace].Duration
+
+	// query prometheus for aggregate info in a single query (assume aggregation is typically request classification, so use dest telemetry):
+	//   note1: for now we will filter out aggregates with no traffic on the assumption that users probably don't want to
+	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,%s", appLabel, verLabel, appLabel, verLabel, a.Aggregate)
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+		"istio_requests_total",
+		namespace,
+		a.Aggregate,
+		a.AggregateValue,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		a.Aggregate,
+		a.AggregateValue,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 }
 

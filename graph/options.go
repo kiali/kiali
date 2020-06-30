@@ -44,11 +44,13 @@ const (
 
 // NodeOptions are those that apply only to node-detail graphs
 type NodeOptions struct {
-	App       string
-	Namespace string
-	Service   string
-	Version   string
-	Workload  string
+	Aggregate      string
+	AggregateValue string
+	App            string
+	Namespace      string
+	Service        string
+	Version        string
+	Workload       string
 }
 
 // CommonOptions are those supplied to Telemetry and Config Vendors
@@ -91,6 +93,8 @@ type Options struct {
 func NewOptions(r *net_http.Request) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
+	aggregate := vars["aggregate"]
+	aggregateValue := vars["aggregateValue"]
 	app := vars["app"]
 	namespace := vars["namespace"]
 	service := vars["service"]
@@ -242,11 +246,13 @@ func NewOptions(r *net_http.Request) Options {
 				QueryTime: queryTime,
 			},
 			NodeOptions: NodeOptions{
-				App:       app,
-				Namespace: namespace,
-				Service:   service,
-				Version:   version,
-				Workload:  workload,
+				Aggregate:      aggregate,
+				AggregateValue: aggregateValue,
+				App:            app,
+				Namespace:      namespace,
+				Service:        service,
+				Version:        version,
+				Workload:       workload,
 			},
 		},
 	}

@@ -412,6 +412,10 @@ func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, worklo
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+	if o.NodeOptions.Aggregate != "" {
+		return handleAggregateNodeTrafficMap(o, client, globalInfo)
+	}
+
 	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
 
 	log.Tracef("Build graph for node [%+v]", n)
@@ -629,7 +633,67 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	}
 	tcpOutVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 	populateTrafficMapTCP(trafficMap, &tcpOutVector, o)
-	// }
+
+	return trafficMap
+}
+
+func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+	n := graph.NewAggregateNode(o.NodeOptions.Namespace, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, "")
+
+	log.Tracef("Build graph for aggregate node [%+v]", n)
+
+	setLabels()
+	if !o.Appenders.All {
+		o.Appenders.AppenderNames = append(o.Appenders.AppenderNames, appender.AggregateNodeAppenderName)
+	}
+	appenders := appender.ParseAppenders(o)
+	trafficMap := buildAggregateNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
+
+	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
+
+	for _, a := range appenders {
+		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
+		a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+		appenderTimer.ObserveDuration()
+	}
+
+	// The appenders can add/remove/alter nodes. After the manipulations are complete
+	// we can make some final adjustments:
+	// - mark the outsiders (i.e. nodes not in the requested namespaces)
+	// - mark the traffic generators
+	telemetry.MarkOutsideOrInaccessible(trafficMap, o)
+	telemetry.MarkTrafficGenerators(trafficMap)
+
+	return trafficMap
+}
+
+// buildAggregateNodeTrafficMap returns a map of all incoming and outgoing traffic from the perspective of the aggregate. Aggregates
+// are always generated for complete requests and therefore via destination telemetry.
+func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
+	interval := o.Namespaces[namespace].Duration
+
+	// create map to aggregate traffic by response code
+	trafficMap := graph.NewTrafficMap()
+
+	// It takes only one prometheus query to get everything involving the target operation
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+		"istio_requests_total",
+		namespace,
+		n.Metadata[graph.Aggregate],
+		n.Metadata[graph.AggregateValue],
+		int(interval.Seconds()), // range duration for the query
+		groupBy)
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		n.Metadata[graph.Aggregate],
+		n.Metadata[graph.AggregateValue],
+		int(interval.Seconds()), // range duration for the query
+		groupBy)
+	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+	populateTrafficMap(trafficMap, &vector, o)
 
 	return trafficMap
 }

@@ -221,17 +221,17 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 }
 
 // NewAggregateNode constructor
-func NewAggregateNode(namespace, aggregate, aggregateVal, svcName string) Node {
-	id := AggregateID(namespace, aggregate, aggregateVal, svcName)
+func NewAggregateNode(namespace, aggregate, aggregateValue, svcName string) Node {
+	id := AggregateID(namespace, aggregate, aggregateValue, svcName)
 
-	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal)
+	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue)
 }
 
 // NewAggregateNodeExplicit constructor assigns the specified ID
-func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal string) Node {
+func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue string) Node {
 	metadata := make(Metadata)
 	metadata[Aggregate] = aggregate
-	metadata[AggregateVal] = aggregateVal
+	metadata[AggregateValue] = aggregateValue
 
 	return Node{
 		ID:        id,

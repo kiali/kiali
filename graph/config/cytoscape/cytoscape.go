@@ -257,7 +257,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node may be an aggregate
 		if n.NodeType == graph.NodeTypeAggregate {
-			nd.Aggregate = fmt.Sprintf("%s=%s", n.Metadata[graph.Aggregate].(string), n.Metadata[graph.AggregateVal].(string))
+			nd.Aggregate = fmt.Sprintf("%s=%s", n.Metadata[graph.Aggregate].(string), n.Metadata[graph.AggregateValue].(string))
 		}
 
 		nw := NodeWrapper{

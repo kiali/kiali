@@ -935,6 +935,28 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNamespaces,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph graphs graphAggregate
+		// ---
+		// The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      500: internalError
+		//      200: graphResponse
+		//
+		{
+
+			"GraphAggregate",
+			"GET",
+			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph",
+			handlers.GraphNode,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
 		// ---
 		// The backing JSON for a versioned app node detail graph. (supported graphTypes: app | versionedApp)
