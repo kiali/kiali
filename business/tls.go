@@ -120,7 +120,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 }
 
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	pas, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	pas, err := in.getPeerAuthentications(namespace)
 	if err != nil {
 		return models.MTLSStatus{}, nil
 	}
@@ -146,6 +146,14 @@ func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatu
 	return models.MTLSStatus{
 		Status: mtlsStatus.NamespaceMtlsStatus().OverallStatus,
 	}, nil
+}
+
+func (in TLSService) getPeerAuthentications(namespace string) ([]kubernetes.IstioObject, error) {
+	if namespace == config.Get().IstioNamespace {
+		return []kubernetes.IstioObject{}, nil
+	}
+
+	return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 }
 
 func (in TLSService) getNamespaces() ([]string, error) {
