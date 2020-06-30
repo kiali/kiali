@@ -162,7 +162,7 @@ func (in TLSService) getNamespaces() ([]string, error) {
 	return nsNames, nil
 }
 
-func (in TLSService) hasAutoMTLSEnabled() bool {
+func (in *TLSService) hasAutoMTLSEnabled() bool {
 	if in.enabledAutoMtls != nil {
 		return *in.enabledAutoMtls
 	}
@@ -171,6 +171,7 @@ func (in TLSService) hasAutoMTLSEnabled() bool {
 	if err != nil {
 		return true
 	}
-
-	return mc.GetEnableAutoMtls()
+	autoMtls := mc.GetEnableAutoMtls()
+	in.enabledAutoMtls = &autoMtls
+	return autoMtls
 }
