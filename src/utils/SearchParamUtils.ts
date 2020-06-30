@@ -12,3 +12,15 @@ export const getFocusSelector = () => {
 export const unsetFocusSelector = () => {
   HistoryManager.deleteParam(URLParam.FOCUS_SELECTOR, true);
 };
+
+export const getExperimentalFlags = (): string[] => {
+  const flags = HistoryManager.getParam(URLParam.EXPERIMENTAL_FLAGS);
+  if (!flags) {
+    return [];
+  }
+  return flags.split(',');
+};
+
+export const hasExperimentalFlag = (flag: string): boolean => {
+  return getExperimentalFlags().includes(flag);
+};
