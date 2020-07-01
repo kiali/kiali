@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, ExternalLink, Overlay, VCDataPoint } from '@kiali/k-charted-pf4';
+import { Dashboard, DashboardModel, ExternalLink, RawOrBucket, Overlay } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
@@ -22,7 +22,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
 import { GrafanaLinks } from './GrafanaLinks';
-import { SpanOverlay } from './SpanOverlay';
+import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
@@ -31,7 +31,7 @@ type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
-  spanOverlay?: Overlay;
+  spanOverlay?: Overlay<JaegerLineInfo>;
   timeRange: TimeRange;
 };
 
@@ -68,7 +68,9 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(props.namespace, props.object, changed =>
+      this.setState({ spanOverlay: changed })
+    );
   }
 
   initOptions(settings: MetricsSettings): IstioMetricsOptions {
@@ -88,7 +90,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.props.namespace, this.props.object, this.state.timeRange);
+      this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
@@ -160,7 +162,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
-      this.spanOverlay.resetLastFetchTime();
       this.refresh();
     });
   };
@@ -170,10 +171,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.fetchMetrics();
   };
 
-  onClickDataPoint = (_, datum: VCDataPoint) => {
-    if ('traceId' in datum) {
+  onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
+    if ('start' in datum && 'end' in datum) {
+      // Zoom-in bucket
+      this.onDomainChange([datum.start as Date, datum.end as Date]);
+    } else if ('traceId' in datum) {
+      const traceId = datum.traceId;
       history.push(
-        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${datum.traceId}`
+        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
       );
     }
   };
@@ -214,7 +219,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                     <Dashboard
                       dashboard={this.state.dashboard}
                       labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                      expandedChart={expandedChart}
+                      maximizedChart={expandedChart}
                       expandHandler={this.expandHandler}
                       onClick={this.onClickDataPoint}
                       labelPrettifier={MetricsHelper.prettyLabelValues}

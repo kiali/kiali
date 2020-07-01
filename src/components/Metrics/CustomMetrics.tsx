@@ -2,11 +2,19 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem, Grid, GridItem, Card, CardBody } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink, Overlay } from '@kiali/k-charted-pf4';
+import {
+  Dashboard,
+  DashboardModel,
+  DashboardQuery,
+  Aggregator,
+  ExternalLink,
+  Overlay,
+  RawOrBucket
+} from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
-import history from '../../app/History';
+import history, { URLParam } from '../../app/History';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
@@ -19,7 +27,7 @@ import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdo
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { SpanOverlay } from './SpanOverlay';
+import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
 import { statLabel } from '@kiali/k-charted-pf4/dist/common/types/Labels';
@@ -29,7 +37,7 @@ type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
-  spanOverlay?: Overlay;
+  spanOverlay?: Overlay<JaegerLineInfo>;
   timeRange: TimeRange;
 };
 
@@ -61,7 +69,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(props.namespace, props.app, changed => this.setState({ spanOverlay: changed }));
   }
 
   initOptions(settings: MetricsSettings): DashboardQuery {
@@ -85,7 +93,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.props.namespace, this.props.app, this.state.timeRange);
+      this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
@@ -117,7 +125,6 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
   onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
-      this.spanOverlay.resetLastFetchTime();
       this.refresh();
     });
   };
@@ -125,6 +132,18 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   onRawAggregationChanged = (aggregator: Aggregator) => {
     this.options.rawDataAggregator = aggregator;
     this.fetchMetrics();
+  };
+
+  onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
+    if ('start' in datum && 'end' in datum) {
+      // Zoom-in bucket
+      this.onDomainChange([datum.start as Date, datum.end as Date]);
+    } else if ('traceId' in datum) {
+      const traceId = datum.traceId;
+      history.push(
+        `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+      );
+    }
   };
 
   private onDomainChange(dates: [Date, Date]) {
@@ -163,8 +182,9 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
                     <Dashboard
                       dashboard={this.state.dashboard}
                       labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                      expandedChart={expandedChart}
+                      maximizedChart={expandedChart}
                       expandHandler={this.expandHandler}
+                      onClick={this.onClickDataPoint}
                       overlay={this.state.spanOverlay}
                       timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
                       brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}

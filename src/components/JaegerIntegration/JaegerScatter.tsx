@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChartWithLegend, makeLegend, VCDataPoint } from '@kiali/k-charted-pf4';
+import { ChartWithLegend, makeLegend, LineInfo, VCDataPoint } from '@kiali/k-charted-pf4';
 import { ChartScatter } from '@patternfly/react-charts';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { isErrorTag } from './RouteHelper';
@@ -23,6 +23,9 @@ const ONE_MILLISECOND = 1000000;
 
 const MINIMAL_SIZE = 2;
 
+type JaegerLineInfo = LineInfo & { id: string };
+type Datapoint = VCDataPoint & JaegerLineInfo;
+
 export class JaegerScatter extends React.Component<JaegerScatterProps> {
   renderFetchEmtpy = (title, msg) => {
     return (
@@ -36,12 +39,12 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
     );
   };
   render() {
-    let tracesRaw: VCDataPoint[] = [];
-    let tracesError: VCDataPoint[] = [];
+    const tracesRaw: Datapoint[] = [];
+    const tracesError: Datapoint[] = [];
 
     this.props.traces.forEach(trace => {
-      let traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
-      let traceItem = {
+      const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
+      const traceItem = {
         x: new Date(trace.startTime / 1000),
         y: Number(trace.duration / ONE_MILLISECOND),
         name: `${trace.traceName !== '' ? trace.traceName : '<trace-without-root-span>'} (${trace.traceID.slice(
@@ -75,7 +78,7 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmtpy('Error fetching Traces in Tracing tool', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
-      <ChartWithLegend
+      <ChartWithLegend<Datapoint, JaegerLineInfo>
         data={[traces, errorTraces]}
         fill={true}
         unit="seconds"

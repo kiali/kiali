@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
-import { SparklineChart, VCLines, VCLine, VCDataPoint } from '@kiali/k-charted-pf4';
+import { SparklineChart, VCLines, VCLine, VCDataPoint, RichDataPoint } from '@kiali/k-charted-pf4';
 
 import { PfColors, PFAlertColor } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
@@ -45,11 +45,11 @@ const renderNoTrafficLegend = () => {
   );
 };
 
-const thereIsTrafficData = (seriesData: VCLine) => {
+const thereIsTrafficData = (seriesData: VCLine<RichDataPoint>) => {
   return seriesData.datapoints.reduce((accum, val) => accum + val.y, 0) > 0;
 };
 
-const renderSparklines = (series: VCLines, yTickFormat?: (val: number) => string) => {
+const renderSparklines = (series: VCLines<RichDataPoint>, yTickFormat?: (val: number) => string) => {
   const yFormat = yTickFormat ? yTickFormat : y => y;
   return (
     <SparklineChart

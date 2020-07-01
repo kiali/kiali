@@ -30,7 +30,8 @@ const createMetricChart = (name: string): ChartModel => {
           [2222, 10]
         ]
       }
-    ]
+    ],
+    startCollapsed: false
   };
 };
 
@@ -68,7 +69,8 @@ const createHistogramChart = (name: string): ChartModel => {
           [2222, 41]
         ]
       }
-    ]
+    ],
+    startCollapsed: false
   };
 };
 

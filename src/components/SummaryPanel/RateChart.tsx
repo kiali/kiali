@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { VCLines, addLegendEvent, VCEvent } from '@kiali/k-charted-pf4';
+import { VCLines, addLegendEvent, VCEvent, RichDataPoint } from '@kiali/k-charted-pf4';
 import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { VictoryLegend } from 'victory';
 
@@ -11,7 +11,7 @@ export const legendTopMargin = 20;
 
 type Props = {
   baseName: string;
-  series: VCLines;
+  series: VCLines<RichDataPoint>;
   height: number;
   xLabelsWidth: number;
 };
@@ -129,7 +129,7 @@ export class RateChart extends React.Component<Props, State> {
 
 export const renderRateChartHttp = (percent2xx: number, percent3xx: number, percent4xx: number, percent5xx: number) => {
   const colorVals = getPFAlertColorVals();
-  const vcLines: VCLines = [
+  const vcLines: VCLines<RichDataPoint> = [
     { name: 'OK', x: 'rate', y: percent2xx, color: colorVals.Success },
     { name: '3xx', x: 'rate', y: percent3xx, color: colorVals.Info },
     { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.ChartWarning }, // 4xx is also an error use close but distinct color
@@ -149,7 +149,7 @@ export const renderRateChartHttp = (percent2xx: number, percent3xx: number, perc
 
 export const renderRateChartGrpc = (percentOK: number, percentErr: number) => {
   const colorVals = getPFAlertColorVals();
-  const vcLines: VCLines = [
+  const vcLines: VCLines<RichDataPoint> = [
     { name: 'OK', x: 'rate', y: percentOK, color: colorVals.Success },
     { name: 'Err', x: 'rate', y: percentErr, color: colorVals.Danger }
   ].map(dp => {
@@ -176,7 +176,7 @@ export const renderInOutRateChartHttp = (
   percent5xxOut: number
 ) => {
   const colorVals = getPFAlertColorVals();
-  const vcLines: VCLines = [
+  const vcLines: VCLines<RichDataPoint> = [
     {
       name: 'OK',
       dp: [
@@ -233,7 +233,7 @@ export const renderInOutRateChartGrpc = (
   percentErrOut: number
 ) => {
   const colorVals = getPFAlertColorVals();
-  const vcLines: VCLines = [
+  const vcLines: VCLines<RichDataPoint> = [
     {
       name: 'OK',
       dp: [
