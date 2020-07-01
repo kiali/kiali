@@ -260,12 +260,64 @@ spec:
                       "output_attribute": "istio_operationId",
                       "match": [
                         {
-                          "value": "ParisHotel",
-                          "condition": "request.url_path.matches('^/hotels/paris.*$') && request.method == 'GET'"
+                          "value": "VIP",
+                          "condition": "request.headers['user'] == 'vip'"
                         },
                         {
-                          "value": "OtherHotel",
-                          "condition": "request.url_path.matches('^/hotels/.*$')"
+                          "value": "Standard",
+                          "condition": "request.headers['user'] != 'vip'"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              vm_config:
+                runtime: envoy.wasm.runtime.null
+                code:
+                  local: { inline_string: "envoy.wasm.attributegen" }
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: attribgen-travelagency-cars
+spec:
+  workloadSelector:
+    labels:
+      app: cars
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      proxy:
+        proxyVersion: '1\.6.*'
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.http_connection_manager"
+            subFilter:
+              name: "istio.stats"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: istio.attributegen
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+          value:
+            config:
+              configuration: |
+                {
+                  "attributes": [
+                    {
+                      "output_attribute": "istio_operationId",
+                      "match": [
+                        {
+                          "value": "VIP",
+                          "condition": "request.headers['user'] == 'vip'"
+                        },
+                        {
+                          "value": "Standard",
+                          "condition": "request.headers['user'] != 'vip'"
                         }
                       ]
                     }
