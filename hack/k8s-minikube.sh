@@ -56,7 +56,7 @@ get_gateway_url() {
     INGRESS_PORT="<port>"
   else
     jsonpath="{.spec.ports[?(@.name==\"$1\")].nodePort}"
-    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=${jsonpath})
+    INGRESS_PORT=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath=${jsonpath})
   fi
 
   INGRESS_HOST=$(${MINIKUBE_EXEC_WITH_PROFILE} ip)
@@ -65,7 +65,7 @@ get_gateway_url() {
 
 print_all_gateway_urls() {
   echo "Gateway URLs for all known ports are:"
-  allnames=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath={.spec.ports['*'].name})
+  allnames=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath={.spec.ports['*'].name})
   for n in ${allnames}
   do
     get_gateway_url ${n}
@@ -275,9 +275,11 @@ while [[ $# -gt 0 ]]; do
     bookinfo) _CMD="bookinfo"; shift ;;
     gwurl)
       _CMD="gwurl"
-      if [ "$2" != "" ]; then
+      if [ "${2:-}" != "" ]; then
         _CMD_OPT="$2"
         shift
+      else
+        _CMD_OPT="all"
       fi
       shift
       ;;
@@ -484,7 +486,7 @@ elif [ "$_CMD" = "port-forward" ]; then
   ensure_minikube_is_running
   echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
   echo 'To access Kiali, point your browser to https://localhost:20001/kiali/console'
-  kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward $(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then
   ensure_minikube_is_running
@@ -508,7 +510,7 @@ elif [ "$_CMD" = "bookinfo" ]; then
 
 elif [ "$_CMD" = "gwurl" ]; then
   ensure_minikube_is_running
-  if [ "$_CMD_OPT" == "all" ]; then
+  if [ "${_CMD_OPT}" == "all" ]; then
     print_all_gateway_urls
   else
     get_gateway_url $_CMD_OPT
