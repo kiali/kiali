@@ -18,6 +18,24 @@ import (
 // - keep this alphabetized
 /////////////////////
 
+// swagger:parameters aggregateMetrics graphAggregate
+type AggregateParam struct {
+	// The aggregate name (label).
+	//
+	// in: path
+	// required: true
+	Name string `json:"aggregate"`
+}
+
+// swagger:parameters aggregateMetrics graphAggregate
+type AggregateValueParam struct {
+	// The aggregate value (label value).
+	//
+	// in: path
+	// required: true
+	Name string `json:"aggregateValue"`
+}
+
 // swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard
 type AppParam struct {
 	// The app name (label value).
@@ -45,7 +63,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
