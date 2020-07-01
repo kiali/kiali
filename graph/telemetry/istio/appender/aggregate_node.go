@@ -139,7 +139,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
 		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
-		lCode, _ := m["response_code"]             // will be missing for TCP
+		lCode := m["response_code"]                // will be missing for TCP
 		lGrpc, grpcOk := m["grpc_response_status"] // will be missing for non-GRPC
 		lFlags, flagsOk := m["response_flags"]
 		lProtocol, protocolOk := m["request_protocol"]
