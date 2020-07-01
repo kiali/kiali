@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"bytes"
-
+	"fmt"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -15,6 +15,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -355,4 +356,33 @@ func (in *K8SClient) GetSelfSubjectAccessReview(namespace, api, resourceType str
 		}
 	}
 	return result, err
+}
+
+func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error {
+	bytePatch := []byte(jsonPatch)
+	var err error
+	switch workloadType {
+	case DeploymentType:
+		_, err = in.k8s.AppsV1().Deployments(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case ReplicaSetType:
+		_, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case ReplicationControllerType:
+		_, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case DeploymentConfigType:
+		if in.IsOpenShift() {
+			result := &osapps_v1.DeploymentConfigList{}
+			err = in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do().Into(result)
+		}
+	case StatefulSetType:
+		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case JobType:
+		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case CronJobType:
+		_, err = in.k8s.BatchV1beta1().CronJobs(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	case PodType:
+		_, err = in.k8s.CoreV1().Pods(namespace).Patch(workloadName, types.MergePatchType, bytePatch)
+	default:
+		err = fmt.Errorf("Workload type %s not found", workloadType)
+	}
+	return err
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
+	"io/ioutil"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -56,6 +57,35 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	RespondWithJSON(w, http.StatusOK, workloadDetails)
+}
+
+// WorkloadUpdate is the API to perform a patch on a Workload configuration
+func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
+		return
+	}
+
+	namespace := params["namespace"]
+	workload := params["workload"]
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+	}
+	jsonPatch := string(body)
+	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, true, jsonPatch)
+
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	audit(r, "UPDATE on Namespace: "+namespace+" Workload name: "+workload+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, workloadDetails)
 }
 

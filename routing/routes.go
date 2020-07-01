@@ -496,6 +496,31 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDetails,
 			true,
 		},
+		// swagger:route PATCH /namespaces/{namespace}/workloads/{workload} workloads workloadUpdate
+		// ---
+		// Endpoint to update the Workload configuration using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: workloadDetails
+		//
+		{
+			"WorkloadUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}/workloads/{workload}",
+			handlers.WorkloadUpdate,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/apps apps appList
 		// ---
 		// Endpoint to get the list of apps for a namespace

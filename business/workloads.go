@@ -112,6 +112,21 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	return workload, nil
 }
 
+func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string, includeServices bool, jsonPatch string) (*models.Workload, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
+	defer promtimer.ObserveNow(&err)
+
+	// Identify controller and apply patch to workload
+	err = updateWorkload(in.businessLayer, namespace, workloadName, jsonPatch)
+	if err != nil {
+		return nil, err
+	}
+
+	// After the update we fetch the whole workload
+	return in.GetWorkload(namespace, workloadName, includeServices)
+}
+
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPods")
@@ -1060,6 +1075,53 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		}
 	}
 	return wl, kubernetes.NewNotFound(workloadName, "Kiali", "Workload")
+}
+
+func updateWorkload(layer *Layer, namespace string, workloadName string, jsonPatch string) error {
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+		return err
+	}
+
+	workloadTypes := []string{
+		kubernetes.DeploymentType,
+		kubernetes.ReplicaSetType,
+		kubernetes.ReplicationControllerType,
+		kubernetes.DeploymentConfigType,
+		kubernetes.StatefulSetType,
+		kubernetes.JobType,
+		kubernetes.CronJobType,
+		kubernetes.PodType,
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(workloadTypes))
+	errChan := make(chan error, len(workloadTypes))
+
+	for _, workloadType := range workloadTypes {
+		go func(wkType string) {
+			defer wg.Done()
+			var err error
+			if isWorkloadIncluded(wkType) {
+				err = layer.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
+			}
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkType, namespace, workloadName, err)
+					errChan <- err
+				}
+			}
+		}(workloadType)
+	}
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err := <-errChan
+		return err
+	}
+
+	return nil
 }
 
 // KIALI-1730
