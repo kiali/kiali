@@ -143,9 +143,18 @@ func hasValues(definition map[string]interface{}, key string) bool {
 }
 
 func (c MtlsEnabledChecker) hasMtlsEnabledForNamespace() string {
-	return mtls.MtlsStatus{
+	mtlsStatus := mtls.MtlsStatus{
 		AutoMtlsEnabled: c.MtlsDetails.EnabledAutoMtls,
 	}.OverallMtlsStatus(c.namespaceMtlsStatus(), c.meshWideMtlsStatus())
+
+	// If there isn't any PeerAuthn or DestinationRule and AutoMtls is enabled,
+	// then we can consider that the rule will be using mtls
+	// Masthead icon won't be present in this case.
+	if mtlsStatus == mtls.MTLSNotEnabled && c.MtlsDetails.EnabledAutoMtls {
+		mtlsStatus = mtls.MTLSEnabled
+	}
+
+	return mtlsStatus
 }
 
 func (c MtlsEnabledChecker) meshWideMtlsStatus() mtls.TlsStatus {

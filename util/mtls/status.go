@@ -75,7 +75,11 @@ func (m MtlsStatus) finalStatus(drStatus, paStatus string) TlsStatus {
 func (m MtlsStatus) MeshMtlsStatus() TlsStatus {
 	drStatus := m.hasDestinationRuleMeshTLSDefinition()
 	paStatus := m.hasPeerAuthnMeshTLSDefinition()
-	return m.finalStatus(drStatus, paStatus)
+	return TlsStatus{
+		DestinationRuleStatus:    drStatus,
+		PeerAuthenticationStatus: paStatus,
+		OverallStatus:            m.OverallMtlsStatus(TlsStatus{}, m.finalStatus(drStatus, paStatus)),
+	}
 }
 
 func (m MtlsStatus) hasPeerAuthnMeshTLSDefinition() string {
@@ -97,20 +101,21 @@ func (m MtlsStatus) hasDestinationRuleMeshTLSDefinition() string {
 }
 
 func (m MtlsStatus) OverallMtlsStatus(nsStatus, meshStatus TlsStatus) string {
-	var status string
-	if nsStatus.hasDefiniteTls() {
+	var status = MTLSPartiallyEnabled
+	if nsStatus.hasDefinedTls() {
 		status = nsStatus.OverallStatus
 	} else if nsStatus.hasPartialTlsConfig() {
 		status = m.inheritedOverallStatus(nsStatus, meshStatus)
-	} else if meshStatus.hasDefiniteTls() {
+	} else if meshStatus.hasDefinedTls() {
 		status = meshStatus.OverallStatus
-	} else if m.AutoMtlsEnabled {
-		status = MTLSEnabled
-		if meshStatus.PeerAuthenticationStatus == "DISABLE" || meshStatus.DestinationRuleStatus == "DISABLE" {
-			status = MTLSDisabled
-		}
-	} else {
+	} else if meshStatus.hasNoConfig() {
 		status = MTLSNotEnabled
+	} else if meshStatus.hasPartialDisabledConfig() {
+		status = MTLSDisabled
+	} else if meshStatus.hasHalfTlsConfigDefined(m.AutoMtlsEnabled, m.AllowPermissive) {
+		status = MTLSEnabled
+	} else if !m.AutoMtlsEnabled && meshStatus.hasPartialTlsConfig() {
+		status = MTLSPartiallyEnabled
 	}
 	return status
 }
@@ -130,10 +135,33 @@ func (m MtlsStatus) inheritedOverallStatus(nsStatus, meshStatus TlsStatus) strin
 	)
 }
 
-func (t TlsStatus) hasDefiniteTls() bool {
+func (t TlsStatus) hasDefinedTls() bool {
 	return t.OverallStatus == MTLSEnabled || t.OverallStatus == MTLSDisabled
 }
 
 func (t TlsStatus) hasPartialTlsConfig() bool {
 	return t.OverallStatus == MTLSPartiallyEnabled
+}
+
+func (t TlsStatus) hasHalfTlsConfigDefined(autoMtls, allowPermissive bool) bool {
+	defined := false
+	if autoMtls {
+		defined = t.PeerAuthenticationStatus == "STRICT" && t.DestinationRuleStatus == "" ||
+			(t.DestinationRuleStatus == "ISTIO_MUTUAL" || t.DestinationRuleStatus == "MUTUAL") && t.PeerAuthenticationStatus == ""
+
+		if !defined && allowPermissive {
+			defined = t.PeerAuthenticationStatus == "PERMISSIVE" && t.DestinationRuleStatus == ""
+		}
+	}
+
+	return defined
+}
+
+func (t TlsStatus) hasNoConfig() bool {
+	return t.PeerAuthenticationStatus == "" && t.DestinationRuleStatus == ""
+}
+
+func (t TlsStatus) hasPartialDisabledConfig() bool {
+	return t.PeerAuthenticationStatus == "DISABLE" && t.DestinationRuleStatus == "" ||
+		t.DestinationRuleStatus == "DISABLE" && t.PeerAuthenticationStatus == ""
 }
