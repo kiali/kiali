@@ -195,7 +195,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		sourceID, _ := graph.Id(sourceWlNs, "", sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 		sourceNode, sourceFound := trafficMap[sourceID]
 		if !sourceFound {
-			log.Warningf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
+			log.Debugf("Expected source [%s] node not found in traffic map. Skipping aggregate injection [%s]", sourceID, aggregate)
 			continue
 		}
 
@@ -204,19 +204,23 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		//   - associate aggregate node with the destApp (if set)
 		// else show the independent aggregation by using the workload/app node as the dest
 		destID := ""
-		var aggrNode *graph.Node
 		if a.InjectServiceNodes {
 			destID, _ = graph.Id(destSvcNs, destSvcName, "", "", "", "", a.GraphType) // service
-			aggrNode, _ = addNode(trafficMap, destSvcNs, a.Aggregate, aggregate, destSvcName)
-			aggrNode.App = destApp
 		} else {
 			destID, _ = graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType) // wl/app
-			aggrNode, _ = addNode(trafficMap, destWlNs, a.Aggregate, aggregate, "")
 		}
 		destNode, destFound := trafficMap[destID]
 		if !destFound {
-			log.Warningf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
+			log.Debugf("Expected dest [%s] node not found in traffic map. Skipping aggregate injection [%s]", destID, aggregate)
 			continue
+		}
+
+		var aggrNode *graph.Node
+		if a.InjectServiceNodes {
+			aggrNode, _ = addNode(trafficMap, destSvcNs, a.Aggregate, aggregate, destSvcName)
+			aggrNode.App = destApp
+		} else {
+			aggrNode, _ = addNode(trafficMap, destWlNs, a.Aggregate, aggregate, "")
 		}
 
 		// replace the non-classified edge (from source to dest) with the classified edges
