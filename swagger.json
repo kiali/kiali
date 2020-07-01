@@ -575,7 +575,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
             "in": "query"
           },
@@ -641,6 +641,60 @@
         }
       }
     },
+    "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
+      "get": {
+        "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "graphs"
+        ],
+        "operationId": "graphAggregate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/graphResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single aggregate",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "aggregates"
+        ],
+        "operationId": "aggregateMetrics",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
         "description": "The backing JSON for an app node detail graph. (supported graphTypes: app | versionedApp)",
@@ -676,7 +730,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
             "in": "query"
           },
@@ -777,7 +831,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
             "in": "query"
           },
@@ -2122,7 +2176,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
             "in": "query"
           },
@@ -2791,7 +2845,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
             "in": "query"
           },
@@ -4840,6 +4894,10 @@
     "NodeData": {
       "type": "object",
       "properties": {
+        "aggregate": {
+          "type": "string",
+          "x-go-name": "Aggregate"
+        },
         "app": {
           "type": "string",
           "x-go-name": "App"
