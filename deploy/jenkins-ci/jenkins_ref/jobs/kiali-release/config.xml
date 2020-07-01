@@ -38,6 +38,12 @@ specified, the type of the release will be determined based on the current date.
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>SITE_RELEASING_BRANCH</name>
+          <description>Branch of the website to release</description>
+          <defaultValue>refs/heads/master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>OPERATOR_RELEASING_BRANCH</name>
           <description>Branch of the operator to release</description>
           <defaultValue>refs/heads/master</defaultValue>
@@ -53,6 +59,12 @@ specified, the type of the release will be determined based on the current date.
           <name>UI_GITHUB_URI</name>
           <description>SSH Url of the kiali-ui GitHub repository</description>
           <defaultValue>git@github.com:kiali/kiali-ui.git</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SITE_GITHUB_URI</name>
+          <description>SSH Url of the kiali.io GitHub repository</description>
+          <defaultValue>git@github.com:kiali/kiali.io.git</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
@@ -88,6 +100,13 @@ UI (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>SITE_PULL_URI</name>
+          <description>The URL of the GitHub API to use to create pull requests for the
+UI (changes to prepare for next version)</description>
+          <defaultValue>https://api.github.com/repos/kiali/kiali.io/pulls</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>OPERATOR_PULL_URI</name>
           <description>The URL of the GitHub API to use to create pull requests for the
 operator (changes to prepare for next version)</description>
@@ -97,7 +116,7 @@ operator (changes to prepare for next version)</description>
         <hudson.model.StringParameterDefinition>
           <name>NPM_DRY_RUN</name>
           <description>Set to &quot;y&quot; if you want to make a &quot;dry run&quot; of the front-end release process</description>
-          <defaultValue>n</defaultValue>
+          <defaultValue>y</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
@@ -119,8 +138,14 @@ operator (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>SHOULD_RELEASE_SITE</name>
+          <description>Set to &apos;y&apos; to force release of the website</description>
+          <defaultValue>auto</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>UI_VERSION</name>
-          <description>If you are skipping UI release. Specify the UI version to package, or leave 
+          <description>If you are skipping UI release. Specify the UI version to package, or leave
 unset to use the version present in the main Makefile (e.g. leave unset for patch releases)</description>
           <defaultValue/>
           <trim>true</trim>
