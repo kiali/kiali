@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
@@ -31,6 +31,7 @@ const (
 	IstioVersionSupported   = ">= 1.0"
 	MaistraVersionSupported = ">= 0.7.0"
 	OSSMVersionSupported    = ">= 1.0"
+	Iter8VersionSupported   = ">= 0.2"
 )
 
 // The valid auth strategies and values for cookie handling

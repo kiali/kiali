@@ -4335,6 +4335,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Iter8ExperimentDetail": {
+      "description": "For Displaying Iter8 Experiment Tabs",
       "type": "object",
       "properties": {
         "action": {
@@ -4351,6 +4352,13 @@
         "experimentItem": {
           "$ref": "#/definitions/Iter8ExperimentItem"
         },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Iter8Host"
+          },
+          "x-go-name": "Hosts"
+        },
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
@@ -4361,6 +4369,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Iter8ExperimentItem": {
+      "description": "For Displaying Iter8 Experiment Details",
       "type": "object",
       "properties": {
         "assessmentConclusion": {
@@ -4406,6 +4415,10 @@
           "format": "int64",
           "x-go-name": "EndedAt"
         },
+        "kind": {
+          "type": "string",
+          "x-go-name": "Kind"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -4438,12 +4451,38 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Iter8Host": {
+      "type": "object",
+      "properties": {
+        "gateway": {
+          "type": "string",
+          "x-go-name": "Gateway"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Iter8Info": {
       "type": "object",
       "properties": {
+        "analyticsImgVersion": {
+          "type": "string",
+          "x-go-name": "AnalyticsImageVersion"
+        },
+        "controllerImgVersion": {
+          "type": "string",
+          "x-go-name": "ControllerImageVersion"
+        },
         "enabled": {
           "type": "boolean",
           "x-go-name": "Enabled"
+        },
+        "supportedVersion": {
+          "type": "boolean",
+          "x-go-name": "SupportedVersion"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
