@@ -732,6 +732,112 @@
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "source",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {

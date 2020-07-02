@@ -43,6 +43,10 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		RespondWithError(w, http.StatusBadRequest, "AggregateMetrics 'direction' must be 'inbound' as the metrics are associated with inbound traffic to the destination workload.")
 		return
 	}
+	if params.Reporter != "destination" {
+		RespondWithError(w, http.StatusBadRequest, "AggregateMetrics 'reporter' must be 'destination' as the metrics are associated with inbound traffic to the destination workload.")
+		return
+	}
 
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
