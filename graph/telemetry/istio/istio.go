@@ -684,6 +684,8 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 		n.Metadata[graph.AggregateValue],
 		int(interval.Seconds()), // range duration for the query
 		groupBy)
+	/* It's not clear that request classification makes sense for TCP metrics. Because it costs us queries I'm
+	   removing the support for now, we can add it back if someone presents a valid use case.
 	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
@@ -692,6 +694,8 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 		int(interval.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	*/
+	query := httpQuery
 	vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 	populateTrafficMap(trafficMap, &vector, o)
 

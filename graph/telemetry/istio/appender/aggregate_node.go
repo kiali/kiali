@@ -69,6 +69,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		a.Aggregate,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	/* It's not clear that request classification makes sense for TCP metrics. Because it costs us queries I'm
+	   removing the support for now, we can add it back if someone presents a valid use case.
 	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
@@ -77,6 +79,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	*/
+	query := httpQuery
 	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 
@@ -87,6 +91,7 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		a.Aggregate,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	/* See comment above...
 	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
@@ -94,6 +99,8 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	*/
+	query = httpQuery
 	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 }
@@ -113,6 +120,7 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 		a.AggregateValue,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	/* See comment above...
 	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
@@ -121,6 +129,8 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
+	*/
+	query := httpQuery
 	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 }
@@ -176,7 +186,10 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 			// set response code in a backward compatible way
 			code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
 		} else {
-			protocol = "tcp"
+			// because we are not currently supporting TCP requests, the protocol should be set
+			log.Warningf("Skipping %v, missing expected protocol label", m.String())
+			continue
+			// protocol = "tcp"
 		}
 
 		// handle multicluster requests
