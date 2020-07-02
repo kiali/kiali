@@ -3446,7 +3446,7 @@
           "x-go-name": "Label"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "App": {
       "type": "object",
@@ -3565,7 +3565,7 @@
     "CauseType": {
       "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Chart": {
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
@@ -3605,12 +3605,16 @@
           "format": "int64",
           "x-go-name": "Spans"
         },
+        "startCollapsed": {
+          "type": "boolean",
+          "x-go-name": "StartCollapsed"
+        },
         "unit": {
           "type": "string",
           "x-go-name": "Unit"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "ClusterRbacConfig": {
       "type": "object",
@@ -3739,7 +3743,7 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "EdgeData": {
       "type": "object",
@@ -3835,7 +3839,7 @@
           "$ref": "#/definitions/MonitoringDashboardExternalLinkVariables"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "Fields": {
       "description": "To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff",
@@ -3850,7 +3854,7 @@
           }
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Gateway": {
       "type": "object",
@@ -3916,7 +3920,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Initializers": {
       "type": "object",
@@ -3934,7 +3938,7 @@
           "$ref": "#/definitions/Status"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "IstioCheck": {
       "type": "object",
@@ -4561,7 +4565,7 @@
           "x-go-name": "Value"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "Log": {
       "description": "Log is a log emitted in a span",
@@ -4580,7 +4584,7 @@
           "x-go-name": "Timestamp"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "MTLSStatus": {
       "description": "MTLSStatus describes the current mTLS status of a mesh entity",
@@ -4622,12 +4626,12 @@
           "$ref": "#/definitions/Time"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "ManagedFieldsOperationType": {
       "type": "string",
       "title": "ManagedFieldsOperationType is the type of operation which lead to a ManagedFieldsEntry being created.",
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Matrix": {
       "type": "array",
@@ -4635,7 +4639,7 @@
       "items": {
         "$ref": "#/definitions/SampleStream"
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+      "x-go-package": "github.com/prometheus/common/model"
     },
     "MeshPolicies": {
       "type": "array",
@@ -4760,7 +4764,7 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
@@ -4786,7 +4790,7 @@
           "x-go-name": "Workload"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/kubernetes/v1alpha1"
+      "x-go-package": "github.com/kiali/k-charted/kubernetes/v1alpha1"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
@@ -5002,7 +5006,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "OwnerReference": {
       "description": "OwnerReference contains enough information to let you identify an owning\nobject. An owning object must be in the same namespace as the dependent, or\nbe cluster-scoped, so there is no namespace field.",
@@ -5037,7 +5041,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Pod": {
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
@@ -5214,12 +5218,12 @@
           "x-go-name": "Tags"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "ProcessID": {
       "type": "string",
       "title": "ProcessID is a hashed value of the Process struct that is unique within the trace.",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "ProtocolTraffic": {
       "description": "ProtocolTraffic supplies all of the traffic information for a single protocol",
@@ -5376,12 +5380,12 @@
           "$ref": "#/definitions/TraceID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "ReferenceType": {
       "description": "ReferenceType is the reference type of one span to another",
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors",
@@ -5487,7 +5491,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "SamplePair": {
       "type": "object",
@@ -5501,7 +5505,7 @@
           "format": "double"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "SampleStream": {
       "type": "object",
@@ -5521,7 +5525,7 @@
           "x-go-name": "Values"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/k-charted/model"
     },
     "Service": {
       "type": "object",
@@ -6038,7 +6042,7 @@
     "SpanID": {
       "description": "SpanID is the id of a span",
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "Status": {
       "type": "object",
@@ -6092,7 +6096,7 @@
           "x-go-name": "Status"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "StatusCause": {
       "description": "StatusCause provides more information about an api.Status failure, including\ncases when multiple errors are encountered.",
@@ -6112,7 +6116,7 @@
           "$ref": "#/definitions/CauseType"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "StatusDetails": {
       "description": "StatusDetails is a set of additional properties that MAY be set by the\nserver to provide additional information about a response. The Reason\nfield of a Status object defines what attributes will be set. Clients\nmust ignore fields that do not match the defined type of each attribute,\nand should assume that any attribute may be empty, invalid, or under\ndefined.",
@@ -6151,7 +6155,7 @@
           "$ref": "#/definitions/UID"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "StatusInfo": {
       "description": "This is used for returning a response of Kiali Status",
@@ -6193,7 +6197,7 @@
     "StatusReason": {
       "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "ThreeScaleHandler": {
       "description": "ThreeScaleHAndler represents the minimal info that a user needs to know from the UI to link a service with 3Scale site",
@@ -6261,7 +6265,7 @@
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
       "type": "object",
       "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "TokenResponse": {
       "description": "This is used for returning the token",
@@ -6323,22 +6327,22 @@
           "x-go-name": "Warnings"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "TraceID": {
       "type": "string",
       "title": "TraceID is the shared trace ID of all spans in the trace.",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/types"
+      "x-go-package": "k8s.io/apimachinery/pkg/types"
     },
     "ValueType": {
       "type": "string",
       "title": "ValueType is the type of a value stored in KeyValue struct.",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/jaegertracing/jaeger/model/json"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "Workload": {
       "description": "Workload has the details of a workload",

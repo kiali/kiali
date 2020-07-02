@@ -88,24 +88,6 @@ git clone git@github.com:kiali/kiali-operator kiali/operator
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
-* Install Glide - the Go dependency management tool that Kiali uses to build itself
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make dep-install
-----
-
-* Tell the dependency manager tool to update the Kiali dependencies
-[NOTE]
-You should only run this command if you add, remove, or modify a dependency. If you are simply git cloning and building from source, you should skip this step.
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make dep-update
-----
-
 * Build Kiali
 
 [source,shell]
@@ -355,30 +337,6 @@ apidocs:
     api_spec_annotation_name: "my-annotation-for-api-spec"
     api_type_annotation_name: "my-annotation-for-api-type"
 ...
-----
-
-=== LDAP Configuration
-
-The `auth.ldap` section is used to configure Kiali when the authentication strategy is LDAP. The following configuration is an example. Kiali will not start without the required LDAP settings of `ldap_host`, `ldap_port`, `ldap_base` and `ldap_bind_dn`.
-
-[source,yaml]
-----
-auth:
-  strategy: "ldap"
-  ldap:
-    ldap_base: "DC=example,DC=com"
-    ldap_bind_dn: "CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com"
-    ldap_group_filter: "(cn=%s)"
-    ldap_host: "example.com"
-    ldap_insecure_skip_verify: true
-    ldap_mail_id_key: "mail"
-    ldap_member_of_key: "memberOf"
-    ldap_port: 123
-    ldap_role_filter: ".*xyz.*"
-    ldap_search_filter: "(&(name={USERID}))"
-    ldap_use_ssl: false
-    ldap_user_filter: "(cn=%s)"
-    ldap_user_id_key: "cn"
 ----
 
 == Additional Notes

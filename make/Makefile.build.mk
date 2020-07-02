@@ -80,23 +80,6 @@ run:
 	@${GOPATH}/bin/kiali -v 4 -config config.yaml
 
 #
-# Dependency management targets
-#
-
-## dep-install: Install Glide.
-dep-install:
-	@echo Installing Glide itself
-	@mkdir -p ${GOPATH}/bin
-	# We want to pin on a specific version
-	# @curl https://glide.sh/get | sh
-	@curl https://glide.sh/get | awk '{gsub("get TAG https://glide.sh/version", "TAG=v0.13.1", $$0); print}' | sh
-
-## dep-update: Updating dependencies and storing in vendor directory. Runs `glide update` internally
-dep-update:
-	@echo Updating dependencies and storing in vendor directory
-	@glide update --strip-vendor
-
-#
 # Swagger Documentation
 #
 
