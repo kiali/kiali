@@ -43,6 +43,8 @@ export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter
   filterTypes.forEach(type => {
     urlParams.delete(type.id);
   });
+  // Remove manually the special Filter opLabel
+  urlParams.delete('opLabel');
   const cleanFilters: ActiveFilter[] = [];
 
   filters.filters.forEach(activeFilter => {
