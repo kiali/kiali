@@ -42,6 +42,12 @@ MOLECULE_ADD_HOST_ARGS =
 endif
 endif
 
+# Only allocate a pseudo-TTY if there is a terminal attached - this enables more readable colored text in ansible output.
+# But do not set this option if there is not TERM (i.e. when run within a cron job) to avoid a runtime failure.
+ifdef TERM
+MOLECULE_DOCKER_TERM_ARGS=-t
+endif
+
 ## molecule-build: Builds an image to run Molecule without requiring the host to have python/pip installed
 molecule-build: .ensure-operator-repo-exists
 ifeq ($(DORP),docker)
@@ -63,15 +69,15 @@ endif
 ## molecule-test: Runs Molecule tests using the Molecule docker image
 molecule-test: .ensure-operator-repo-exists .prepare-add-host-args
 ifeq ($(DORP),docker)
-	for msn in ${MOLECULE_SCENARIO}; do docker run --rm -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
+	for msn in ${MOLECULE_SCENARIO}; do docker run --rm ${MOLECULE_DOCKER_TERM_ARGS} -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 else
-	for msn in ${MOLECULE_SCENARIO}; do podman run --rm -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
+	for msn in ${MOLECULE_SCENARIO}; do podman run --rm ${MOLECULE_DOCKER_TERM_ARGS} -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 endif
 
 ## molecule-test-all: Runs all Molecule tests using the Molecule docker image
 molecule-test-all: .ensure-operator-repo-exists .prepare-add-host-args
 ifeq ($(DORP),docker)
-	docker run --rm -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --all
+	docker run --rm ${MOLECULE_DOCKER_TERM_ARGS} -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --all
 else
-	podman run --rm -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --all
+	podman run --rm ${MOLECULE_DOCKER_TERM_ARGS} -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --all
 endif
