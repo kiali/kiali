@@ -123,6 +123,11 @@ func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string,
 		return nil, err
 	}
 
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh
+	if kialiCache != nil && err == nil {
+		kialiCache.RefreshNamespace(namespace)
+	}
+
 	// After the update we fetch the whole workload
 	return in.GetWorkload(namespace, workloadName, includeServices)
 }
