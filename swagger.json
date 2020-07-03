@@ -2911,6 +2911,24 @@
         ],
         "summary": "Endpoint to update the Workload configuration using Json Merge Patch strategy.",
         "operationId": "workloadUpdate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The workload name.",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/workloadDetails"

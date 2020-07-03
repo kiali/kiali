@@ -145,7 +145,7 @@ type DashboardParam struct {
 	Name string `json:"dashboard"`
 }
 
-// swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload workloadDashboard
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
