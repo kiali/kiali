@@ -2894,6 +2894,37 @@
             "$ref": "#/responses/internalError"
           }
         }
+      },
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "workloads"
+        ],
+        "summary": "Endpoint to update the Workload configuration using Json Merge Patch strategy.",
+        "operationId": "workloadUpdate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/workloadDetails"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
       }
     },
     "/namespaces/{namespace}/workloads/{workload}/dashboard": {
