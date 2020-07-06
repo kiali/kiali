@@ -31,7 +31,7 @@ const flexBoxColumnStyle = style({
   flexDirection: 'column'
 });
 
-class Navigation extends React.Component<PropsType, NavigationState> {
+export class Navigation extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
     router: () => null
   };
@@ -96,6 +96,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
         showNavToggle={true}
         onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
         isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
+        role={'kiali_header'}
       />
     );
 
