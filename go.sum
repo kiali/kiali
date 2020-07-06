@@ -71,6 +71,8 @@ github.com/jtblin/go-ldap-client v0.0.0-20161205001958-ad9f2ea47a83/go.mod h1:+0
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/kiali/k-charted v0.6.0-rc5 h1:6iqV0X2m3jcSPifpYg8p+ImKDkVnfJAOwdFkIOitnp4=
 github.com/kiali/k-charted v0.6.0-rc5/go.mod h1:EHpndpTT3uB6Q8lbyDf+Yiv/L7nIiV5XIVsirImH9Eo=
+github.com/kiali/k-charted v0.6.0 h1:0q3Cwkw40LN0N/3vvX1HQMVWvLTIcH+0QxogTipZVxs=
+github.com/kiali/k-charted v0.6.0/go.mod h1:EHpndpTT3uB6Q8lbyDf+Yiv/L7nIiV5XIVsirImH9Eo=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
