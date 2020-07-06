@@ -643,7 +643,7 @@
     },
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
       "get": {
-        "description": "The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)",
+        "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
         "produces": [
           "application/json"
         ],
@@ -866,7 +866,7 @@
         "tags": [
           "graphs"
         ],
-        "operationId": "graphAggregate",
+        "operationId": "graphAggregateByService",
         "parameters": [
           {
             "type": "string",
@@ -889,6 +889,14 @@
             "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
             "in": "path",
             "required": true
           }

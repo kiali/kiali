@@ -957,7 +957,7 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNode,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph graphs graphAggregate
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph graphs graphAggregateByService
 		// ---
 		// The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)
 		//
