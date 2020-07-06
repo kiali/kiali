@@ -638,7 +638,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 }
 
 func handleAggregateNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
-	n := graph.NewAggregateNode(o.NodeOptions.Namespace, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, "")
+	n := graph.NewAggregateNode(o.NodeOptions.Namespace, o.NodeOptions.Aggregate, o.NodeOptions.AggregateValue, o.NodeOptions.Service, o.NodeOptions.App)
 
 	log.Tracef("Build graph for aggregate node [%+v]", n)
 
@@ -676,12 +676,17 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 	trafficMap := graph.NewTrafficMap()
 
 	// It takes only one prometheus query to get everything involving the target operation
+	serviceFragment := ""
+	if n.Service != "" {
+		serviceFragment = fmt.Sprintf(`,destination_service_name="%s"`, n.Service)
+	}
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags", appLabel, verLabel, appLabel, verLabel)
-	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		n.Metadata[graph.Aggregate],
 		n.Metadata[graph.AggregateValue],
+		serviceFragment,
 		int(interval.Seconds()), // range duration for the query
 		groupBy)
 	/* It's not clear that request classification makes sense for TCP metrics. Because it costs us queries I'm

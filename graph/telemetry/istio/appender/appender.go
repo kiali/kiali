@@ -109,7 +109,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[AggregateNodeAppenderName]; ok || o.Appenders.All {
 		aggregate := o.NodeOptions.Aggregate
-		aggregateValue := o.NodeOptions.AggregateValue
 		if aggregate == "" {
 			if aggregate = o.Params.Get("aggregate"); aggregate == "" {
 				aggregate = defaultAggregate
@@ -117,11 +116,12 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		}
 		a := AggregateNodeAppender{
 			Aggregate:          aggregate,
-			AggregateValue:     aggregateValue,
+			AggregateValue:     o.NodeOptions.AggregateValue,
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
+			Service:            o.NodeOptions.Service,
 		}
 		appenders = append(appenders, a)
 	}

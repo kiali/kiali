@@ -25,6 +25,7 @@ type AggregateNodeAppender struct {
 	InjectServiceNodes bool
 	Namespaces         map[string]graph.NamespaceInfo
 	QueryTime          int64 // unix time in seconds
+	Service            string
 }
 
 // Name implements Appender
@@ -112,20 +113,26 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 	// query prometheus for aggregate info in a single query (assume aggregation is typically request classification, so use dest telemetry):
 	//   note1: for now we will filter out aggregates with no traffic on the assumption that users probably don't want to
 	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
+	serviceFragment := ""
+	if a.Service != "" {
+		serviceFragment = fmt.Sprintf(`,destination_service_name="%s"`, a.Service)
+	}
 	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,request_protocol,response_code,grpc_response_status,response_flags,%s", appLabel, verLabel, appLabel, verLabel, a.Aggregate)
-	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		a.Aggregate,
 		a.AggregateValue,
+		serviceFragment,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	/* See comment above...
-	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"}[%vs])) by (%s) > 0`,
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		"istio_tcp_sent_bytes_total",
 		namespace,
 		a.Aggregate,
 		a.AggregateValue,
+		serviceFragment,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
@@ -214,7 +221,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 
 		// if service nodes are injected show the service-related aggregation:
 		//   - use the service node as the dest
-		//   - associate aggregate node with the destApp (if set)
+		//   - associate aggregate node with the destSvcName and, if set, destApp
 		// else show the independent aggregation by using the workload/app node as the dest
 		destID := ""
 		if a.InjectServiceNodes {
@@ -230,10 +237,9 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 
 		var aggrNode *graph.Node
 		if a.InjectServiceNodes {
-			aggrNode, _ = addNode(trafficMap, destSvcNs, a.Aggregate, aggregate, destSvcName)
-			aggrNode.App = destApp
+			aggrNode, _ = addNode(trafficMap, destSvcNs, a.Aggregate, aggregate, destSvcName, destApp)
 		} else {
-			aggrNode, _ = addNode(trafficMap, destWlNs, a.Aggregate, aggregate, "")
+			aggrNode, _ = addNode(trafficMap, destWlNs, a.Aggregate, aggregate, "", "")
 		}
 
 		// replace the non-classified edge (from source to dest) with the classified edges
@@ -277,11 +283,11 @@ func addTraffic(val float64, protocol, code, flags, host string, source, dest *g
 	graph.AddToMetadata(protocol, val, code, flags, host, sourceMetadata, destMetadata, edge.Metadata)
 }
 
-func addNode(trafficMap graph.TrafficMap, namespace, aggregate, aggregateVal, svcName string) (*graph.Node, bool) {
+func addNode(trafficMap graph.TrafficMap, namespace, aggregate, aggregateVal, svcName, app string) (*graph.Node, bool) {
 	id := graph.AggregateID(namespace, aggregate, aggregateVal, svcName)
 	node, found := trafficMap[id]
 	if !found {
-		newNode := graph.NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal)
+		newNode := graph.NewAggregateNodeExplicit(id, namespace, aggregate, aggregateVal, svcName, app)
 		node = &newNode
 		trafficMap[id] = node
 	}

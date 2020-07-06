@@ -220,15 +220,16 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 	return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
 }
 
-// NewAggregateNode constructor
-func NewAggregateNode(namespace, aggregate, aggregateValue, svcName string) Node {
+// NewAggregateNode constructor, set svcName and app to "" when not service-specific aggregate
+func NewAggregateNode(namespace, aggregate, aggregateValue, svcName, app string) Node {
 	id := AggregateID(namespace, aggregate, aggregateValue, svcName)
 
-	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue)
+	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName, app)
 }
 
-// NewAggregateNodeExplicit constructor assigns the specified ID
-func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue string) Node {
+// NewAggregateNodeExplicit constructor assigns the specified ID, , set svcName and app to ""
+// when not service-specific aggregate
+func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName, app string) Node {
 	metadata := make(Metadata)
 	metadata[Aggregate] = aggregate
 	metadata[AggregateValue] = aggregateValue
@@ -238,9 +239,9 @@ func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue string) N
 		NodeType:  NodeTypeAggregate,
 		Namespace: namespace,
 		Workload:  "",
-		App:       "",
+		App:       app,
 		Version:   "",
-		Service:   "",
+		Service:   svcName,
 		Edges:     []*Edge{},
 		Metadata:  metadata,
 	}

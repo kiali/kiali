@@ -643,7 +643,7 @@
     },
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
       "get": {
-        "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
+        "description": "The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)",
         "produces": [
           "application/json"
         ],
@@ -849,6 +849,59 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph": {
+      "get": {
+        "description": "The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "graphs"
+        ],
+        "operationId": "graphAggregate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The aggregate name (label).",
+            "name": "aggregate",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The aggregate value (label value).",
+            "name": "aggregateValue",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/graphResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }

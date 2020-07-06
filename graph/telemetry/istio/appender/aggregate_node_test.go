@@ -101,6 +101,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal("request_operation", topReviews.Metadata[graph.Aggregate])
 	assert.Equal("Top", topReviews.Metadata[graph.AggregateValue])
 	assert.Equal("reviews", topReviews.App)
+	assert.Equal("reviews", topReviews.Service)
 	assert.Equal(1, len(topReviews.Edges))
 	assert.Equal(graph.NodeTypeService, topReviews.Edges[0].Dest.NodeType)
 
@@ -111,6 +112,7 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert.Equal("request_operation", allReviews.Metadata[graph.Aggregate])
 	assert.Equal("All", allReviews.Metadata[graph.AggregateValue])
 	assert.Equal("reviews", allReviews.App)
+	assert.Equal("reviews", allReviews.Service)
 	assert.Equal(1, len(allReviews.Edges))
 	assert.Equal(graph.NodeTypeService, allReviews.Edges[0].Dest.NodeType)
 
@@ -241,7 +243,7 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 func TestNodeGraphWithServiceInjection(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top",destination_service_name="reviews"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -290,6 +292,7 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 			},
 		},
 		QueryTime: time.Now().Unix(),
+		Service:   "reviews",
 	}
 
 	appender.appendNodeGraph(trafficMap, "bookinfo", client)
