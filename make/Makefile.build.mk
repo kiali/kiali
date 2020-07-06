@@ -31,12 +31,13 @@ install:
 	${GO_BUILD_ENVVARS} ${GO} install \
 		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
-## format: Format all the files excluding vendor. Runs `gofmt` internally
+## format: Format all the files excluding vendor. Runs `gofmt` and `goimports` internally
 format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
 			${GOFMT} -w $$gofile; \
-	done
+	done; \
+	$(shell ./hack/fix_imports.sh)
 
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test:
