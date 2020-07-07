@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ThunkDispatch } from 'redux-thunk';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
 import {
@@ -21,6 +22,8 @@ import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { hasExperimentalFlag } from 'utils/SearchParamUtils';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 
 type SummaryPanelNodeState = {
   healthLoading: boolean;
@@ -35,6 +38,7 @@ const defaultState: SummaryPanelNodeState = {
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
+  setTraceId: (traceId?: string) => void;
 };
 
 type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
@@ -147,6 +151,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
               service={nodeData.service!}
               jaegerInfo={this.props.jaegerInfo}
               queryTime={this.props.queryTime}
+              setTraceId={this.props.setTraceId}
             />
           </Tab>
         </SimpleTabs>
@@ -211,8 +216,12 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState.info
 });
 
-const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId))
+});
+
+const SummaryPanelNodeContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNode);
 export default SummaryPanelNodeContainer;

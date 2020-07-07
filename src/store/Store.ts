@@ -12,8 +12,8 @@ import { EdgeLabelMode, GraphDefinition, GraphType, Layout, NodeParamsType, Summ
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
-import { JaegerInfo } from 'types/JaegerInfo';
 import { ComponentStatus } from '../types/IstioStatus';
+import { JaegerState } from 'reducers/JaegerState';
 
 // Store is the Redux Data store
 
@@ -124,6 +124,6 @@ export interface KialiAppState {
   /** User Settings */
   userSettings: UserSettings;
   /** Jaeger Settings */
-  jaegerState: JaegerInfo | null;
+  jaegerState: JaegerState;
   tourState: TourState;
 }

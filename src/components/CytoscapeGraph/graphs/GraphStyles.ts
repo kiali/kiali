@@ -277,6 +277,9 @@ export class GraphStyles {
     };
 
     const getEdgeColor = (ele: Cy.EdgeSingular): string => {
+      if (ele.data('spans')) {
+        return PfColors.Blue700;
+      }
       let rate = 0;
       let pErr = 0;
       const edgeData = decoratedEdgeData(ele);
@@ -434,6 +437,9 @@ export class GraphStyles {
     };
 
     const getNodeBorderColor = (ele: Cy.NodeSingular): string => {
+      if (ele.data('spans')) {
+        return PfColors.Blue700;
+      }
       if (ele.hasClass(DEGRADED.name)) {
         return NodeColorBorderDegraded;
       }

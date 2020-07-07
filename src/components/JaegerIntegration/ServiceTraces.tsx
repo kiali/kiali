@@ -30,7 +30,7 @@ import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import RefreshContainer from 'components/Refresh/Refresh';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
-import { getTimeRangeMicros, buildTags } from './RouteHelper';
+import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 
 interface ServiceTracesProps {
   namespace: string;
@@ -368,8 +368,8 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    urlJaeger: state.jaegerState ? state.jaegerState.url : '',
-    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
+    urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
+    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true
   };
 };
 

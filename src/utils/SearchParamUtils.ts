@@ -24,3 +24,11 @@ export const getExperimentalFlags = (): string[] => {
 export const hasExperimentalFlag = (flag: string): boolean => {
   return getExperimentalFlags().includes(flag);
 };
+
+export const getTraceId = () => {
+  return new URLSearchParams(window.location.search).get(URLParam.JAEGER_TRACE_ID) || undefined;
+};
+
+export const setTraceId = (traceId: string) => {
+  HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
+};

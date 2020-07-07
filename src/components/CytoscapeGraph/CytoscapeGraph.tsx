@@ -32,6 +32,8 @@ import { NodeSingular } from 'cytoscape';
 import { EdgeSingular } from 'cytoscape';
 import { Core } from 'cytoscape';
 import { GraphData } from 'pages/Graph/GraphPage';
+import { JaegerTrace } from 'types/JaegerInfo';
+import { showTrace, hideTrace } from './CytoscapeTrace';
 
 type CytoscapeGraphProps = {
   compressOnHide: boolean;
@@ -63,6 +65,7 @@ type CytoscapeGraphProps = {
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
+  trace?: JaegerTrace;
   updateSummary?: (event: CytoscapeClickEvent) => void;
 };
 
@@ -133,7 +136,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   componentDidMount() {
-    this.cyInitialization(this.getCy());
+    const cy = this.getCy();
+    this.cyInitialization(cy);
+    if (this.props.trace) {
+      showTrace(cy, this.props.trace);
+    }
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps) {
@@ -153,7 +160,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
-      this.props.showVirtualServices !== nextProps.showVirtualServices;
+      this.props.showVirtualServices !== nextProps.showVirtualServices ||
+      this.props.trace !== nextProps.trace;
 
     return result;
   }
@@ -208,6 +216,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     }
     if (this.props.graphData.elements !== prevProps.graphData.elements) {
       this.updateHealth(cy);
+    }
+    if (this.props.trace) {
+      showTrace(cy, this.props.trace);
+    } else if (!this.props.trace && prevProps.trace) {
+      hideTrace(cy);
     }
   }
 

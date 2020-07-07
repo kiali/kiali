@@ -18,6 +18,7 @@ type Props = {
   namespace: string;
   service: string;
   queryTime: TimeInSeconds;
+  setTraceId: (traceId?: string) => void;
 };
 
 type State = {
@@ -86,7 +87,9 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
       });
   }
 
-  private onSelect() {}
+  private onClickTrace(trace: JaegerTrace) {
+    this.props.setTraceId(trace.traceID);
+  }
 
   render() {
     if (this.state.traces.length === 0) {
@@ -105,10 +108,10 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
             onChange={checked => this.setState({ keepList: checked })}
           />
         </Tooltip>
-        <SimpleList style={{ marginBottom: 8 }} onSelect={this.onSelect} aria-label="Traces list">
+        <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
           {this.state.traces.map((trace, idx) => {
             return (
-              <SimpleListItem key={'trace_' + idx}>
+              <SimpleListItem key={'trace_' + idx} onClick={() => this.onClickTrace(trace)}>
                 <TraceListItem trace={trace} />
               </SimpleListItem>
             );

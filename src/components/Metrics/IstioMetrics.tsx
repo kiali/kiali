@@ -279,7 +279,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState ? state.jaegerState.integration : false
+    jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false
   };
 };
 

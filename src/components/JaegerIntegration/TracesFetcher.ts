@@ -4,7 +4,7 @@ import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
 import { transformTraceData } from './JaegerResults';
 import { traceDurationUnits } from './ServiceTraces';
 import { TracingQuery } from 'types/Tracing';
-import { getTimeRangeMicros } from './RouteHelper';
+import { getTimeRangeMicros } from './JaegerHelper';
 
 type FetchOptions = {
   namespace: string;

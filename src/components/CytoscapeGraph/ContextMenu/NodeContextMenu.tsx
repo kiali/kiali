@@ -174,7 +174,7 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState.info
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);

@@ -10,7 +10,7 @@ import history from '../../../app/History';
 import { Link } from 'react-router-dom';
 import { serverConfig } from '../../../config';
 import { SpanTabsTags } from './SpanTabsTags';
-import { isErrorTag } from '../RouteHelper';
+import { getWorkloadFromSpan, isErrorTag } from '../JaegerHelper';
 import { css } from '@patternfly/react-styles';
 import styles from '@patternfly/react-styles/css/components/Table/table';
 import { PfColors } from '../../Pf/PfColors';
@@ -50,7 +50,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     }
   }
 
-  goService = (service: string = this.props.spans[0].process.serviceName, extra: string = '') => {
+  private goService = (service: string = this.props.spans[0].process.serviceName, extra: string = '') => {
     if (service) {
       const ns = service.split('.')[1] || serverConfig.istioNamespace;
       const srv = service.split('.')[0];
@@ -60,51 +60,35 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     }
   };
 
-  goLogsWorkloads = (workload: string, srv: string) => {
-    const ns = srv.split('.')[1] || serverConfig.istioNamespace;
-    return '/namespaces/' + ns + '/workloads/' + workload + '?tab=logs';
+  private goLogsWorkloads = (workload: string, namespace: string) => {
+    return '/namespaces/' + namespace + '/workloads/' + workload + '?tab=logs';
   };
 
-  getNodeLog = (sp: Span) => {
-    let node = '';
-    const filterNode = sp.tags.filter(tag => tag.key === 'node_id');
-    if (filterNode.length > 0) {
-      node = sp.tags.filter(tag => tag.key === 'node_id')[0].value;
-    }
+  private getNodeLog = (sp: Span) => {
     const srv = sp.process.serviceName.split('.')[0];
-    const regex = new RegExp(`([a-z0-9-\\.]+)-[a-z0-9]+-[a-z0-9]+\\.[a-z0-9-]+`);
-    const result = node !== '' ? regex.exec(node.split('~')[2]) : null;
-    const workload = result ? result[1] : undefined;
-    if (workload) {
+    let workloadNs = getWorkloadFromSpan(sp);
+    if (!workloadNs && this.props.jaegerInfo && this.props.jaegerInfo.whiteListIstioSystem.includes(srv)) {
+      // Special case (why?)
+      workloadNs = {
+        workload: srv === 'jaeger-query' ? 'jaeger' : srv,
+        namespace: serverConfig.istioNamespace
+      };
+    }
+    if (workloadNs) {
+      const path = this.goLogsWorkloads(workloadNs.workload, workloadNs.namespace);
       return (
-        <Tooltip content={<>View logs of workload {workload}</>}>
-          <Link
-            to={this.goLogsWorkloads(workload, sp.operationName)}
-            onClick={() => history.push(this.goLogsWorkloads(workload, sp.operationName))}
-          >
+        <Tooltip content={<>View logs of workload {workloadNs.workload}</>}>
+          <Link to={path} onClick={() => history.push(path)}>
             View logs
           </Link>
         </Tooltip>
       );
-    } else {
-      if (this.props.jaegerInfo && this.props.jaegerInfo.whiteListIstioSystem.includes(srv)) {
-        return (
-          <Tooltip content={<>View logs of workload {srv}</>}>
-            <Link
-              to={this.goLogsWorkloads(srv === 'jaeger-query' ? 'jaeger' : srv, '')}
-              onClick={() => history.push(this.goLogsWorkloads(srv === 'jaeger-query' ? 'jaeger' : srv, ''))}
-            >
-              View logs
-            </Link>
-          </Tooltip>
-        );
-      } else {
-        return <> We can't find logs</>;
-      }
     }
+
+    return <>Logs not found</>;
   };
 
-  getRows = () => {
+  private getRows = () => {
     let rows: (IRow | string)[] = [];
     this.props.spans.map(span => {
       const service = span.process.serviceName === 'jaeger-query' ? span.process.serviceName : span.operationName;
@@ -171,7 +155,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     return rows;
   };
 
-  customRowWrapper = ({ trRef, className, rowProps, row: { isExpanded, isHeightAuto }, ...props }) => {
+  private customRowWrapper = ({ trRef, className, rowProps, row: { isExpanded, isHeightAuto }, ...props }) => {
     const dangerErrorStyle = {
       borderLeft: '3px solid var(--pf-global--danger-color--100)'
     };
@@ -195,7 +179,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     );
   };
 
-  onCollapse = (_, rowKey, isOpen) => {
+  private onCollapse = (_, rowKey, isOpen) => {
     const { rows } = this.state;
     /**
      * Please do not use rowKey as row index for more complex tables.
@@ -235,7 +219,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerInfo: state.jaegerState || undefined
+    jaegerInfo: state.jaegerState.info
   };
 };
 

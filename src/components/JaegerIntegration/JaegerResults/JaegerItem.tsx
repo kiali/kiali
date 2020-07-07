@@ -7,7 +7,7 @@ import { JaegerTraceTitle } from './JaegerTraceTitle';
 import { SpanDetail } from './SpanDetail';
 import { style } from 'typestyle';
 import { cleanServiceSelector } from './transform';
-import { isErrorTag } from '../RouteHelper';
+import { isErrorTag } from '../JaegerHelper';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { PfColors } from '../../Pf/PfColors';
@@ -111,7 +111,7 @@ class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
+    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true
   };
 };
 
