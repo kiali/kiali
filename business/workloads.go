@@ -11,6 +11,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -19,7 +20,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model

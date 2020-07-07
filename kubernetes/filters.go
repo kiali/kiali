@@ -2,11 +2,13 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
+	"strings"
+
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"strings"
+
+	"github.com/kiali/kiali/config"
 )
 
 // FilterPodsForService returns a subpart of pod list filtered according service selector

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCorrectMeshPeerAuthn(t *testing.T) {

@@ -2,12 +2,12 @@ package kubernetes
 
 import (
 	"fmt"
+
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var iter8typeMeta = meta_v1.TypeMeta{

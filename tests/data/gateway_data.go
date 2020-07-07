@@ -1,9 +1,10 @@
 package data
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func CreateEmptyGateway(name, namespace string, selector map[string]string) kubernetes.IstioObject {

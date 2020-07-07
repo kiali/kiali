@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
+
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 )
 
 // package-private util functions (used by multiple files)

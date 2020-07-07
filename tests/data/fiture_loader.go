@@ -3,8 +3,9 @@ package data
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"

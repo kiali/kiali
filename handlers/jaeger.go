@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )

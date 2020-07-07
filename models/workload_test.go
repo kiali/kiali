@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/config"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
 )
 
 func TestParseDeploymentToWorkload(t *testing.T) {

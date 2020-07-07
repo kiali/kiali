@@ -1,10 +1,12 @@
 package httputil
 
 import (
-	"github.com/kiali/kiali/config"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/config"
 )
 
 func setupAndCreateRequest() *http.Request {

@@ -1,8 +1,9 @@
 package data
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func CreateEmptyServiceRole(name, namespace string) kubernetes.IstioObject {

@@ -2,8 +2,9 @@ package ldap
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
 	"time"
+
+	"github.com/kiali/kiali/config"
 )
 
 // UserInfo holds authenticatoin information

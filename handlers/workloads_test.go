@@ -12,11 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/prometheustest"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -26,6 +21,12 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {

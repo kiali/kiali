@@ -3,8 +3,9 @@ package validations
 import (
 	"testing"
 
-	"github.com/kiali/kiali/models"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/models"
 )
 
 type TestAsserter interface {

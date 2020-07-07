@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
-	"strings"
 )
 
 // Helper method to adjust error code in the handler's response

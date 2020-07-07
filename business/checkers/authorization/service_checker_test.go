@@ -3,13 +3,13 @@ package authorization
 import (
 	"testing"
 
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
-
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestMatching(t *testing.T) {
