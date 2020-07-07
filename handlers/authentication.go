@@ -213,7 +213,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Check if the nonce cookie is present
 	nonceCookie, err := r.Cookie(openIdNonceCookieName)
 	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "No nonce code present. Login window timed out.")
+		RespondWithError(w, http.StatusBadRequest, "No nonce code present. Login window timed out.")
 		return false
 	}
 
@@ -235,20 +235,40 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	err = r.ParseForm()
 
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
+		RespondWithJSONIndent(w, http.StatusBadRequest, fmt.Errorf("error parsing form info: %+v", err))
 		return false
 	}
 
 	token := r.Form.Get("id_token")
+	state := r.Form.Get("state")
 	expiresIn := r.Form.Get("expires_in")
 	if token == "" || expiresIn == "" {
-		RespondWithError(w, http.StatusInternalServerError, "Token is empty or invalid.")
+		RespondWithError(w, http.StatusBadRequest, "Token is empty or invalid.")
+		return false
+	}
+	if state == "" {
+		RespondWithError(w, http.StatusBadRequest, "State parameter is empty or invalid.")
 		return false
 	}
 
 	expiresInNumber, err := strconv.Atoi(expiresIn)
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Token is empty or invalid.", err.Error())
+		RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is invalid.", err.Error())
+		return false
+	}
+
+	// CSRF mitigation
+	separator := strings.LastIndexByte(state, '-')
+	if separator != -1 {
+		csrfToken, timestamp := state[:separator], state[separator+1:]
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCookie.Value, timestamp, config.GetSigningKey())))
+
+		if fmt.Sprintf("%x", csrfHash) != csrfToken {
+			RespondWithError(w, http.StatusForbidden, "Request rejected because of CSRF mitigation.")
+			return false
+		}
+	} else {
+		RespondWithError(w, http.StatusBadRequest, "State parameter is invalid.")
 		return false
 	}
 
@@ -813,8 +833,10 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	nowTime := util.Clock.Now()
+	expirationTime := nowTime.Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
 	nonceCookie := http.Cookie{
-		Expires:  util.Clock.Now().Add(time.Duration(conf.Auth.OpenId.AuthenticationTimeout) * time.Second),
+		Expires:  expirationTime,
 		HttpOnly: true,
 		Name:     openIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
@@ -828,13 +850,28 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	// needs to craft the cookie (which is hopefully very, very hard to do).
 	nonceHash := sha256.Sum224([]byte(nonceCode))
 
+	// OpenID spec recommends the use of "state" parameter. Although it's just a recommendation,
+	// some identity providers have chosen to require the "state" parameter, effectively blocking
+	// authentication with Kiali.
+	// The state parameter is to mitigate CSRF attacks. Mitigation is usually done with
+	// a token and it's implementation *could* be similar to the nonce code, but this would
+	// require a second cookie.
+	// To reduce the usage of cookies, let's use the already generated nonce as a session_id,
+	// and the "nowTime" to generate a hash and use it as CSRF token. The Kiali's signing key is also used to
+	// add a component that is not traveling over the network.
+	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
+	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
+	// the Kiali's signing key).
+	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), config.GetSigningKey())))
+
 	// Send redirection to browser
-	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s",
+	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
 		url.QueryEscape(httputil.GuessKialiURL(r)),
 		url.QueryEscape(scopes),
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
+		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
 	)
 	http.Redirect(w, r, redirectUri, http.StatusFound)
 }
