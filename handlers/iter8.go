@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/kiali/kiali/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/mux"
+
+	"github.com/kiali/kiali/config"
 )
 
 func Iter8Status(w http.ResponseWriter, r *http.Request) {

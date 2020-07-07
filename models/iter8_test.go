@@ -1,9 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"testing"
 
-	"encoding/json"
 	"github.com/stretchr/testify/assert"
 )
 

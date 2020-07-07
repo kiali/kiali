@@ -1,12 +1,12 @@
 package appender
 
 import (
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/prometheus/common/model"
-
-	"github.com/stretchr/testify/mock"
 )
 
 // package-private test util functions (used by multiple test files)

@@ -11,8 +11,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/kiali/kiali/graph"
-
 	"github.com/gorilla/mux"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
@@ -23,6 +21,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"

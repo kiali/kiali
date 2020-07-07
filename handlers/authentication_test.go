@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util"
-	"github.com/stretchr/testify/assert"
 )
 
 type dummyHandler struct {

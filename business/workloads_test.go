@@ -13,12 +13,12 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {

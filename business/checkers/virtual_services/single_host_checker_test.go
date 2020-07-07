@@ -3,10 +3,11 @@ package virtual_services
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOneVirtualServicePerHost(t *testing.T) {

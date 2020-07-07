@@ -1,12 +1,13 @@
 package kubetest
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func (o *K8SClientMock) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {

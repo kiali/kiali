@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/kiali/kiali/prometheus"
 	"github.com/prometheus/client_golang/api"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/kiali/kiali/prometheus"
 )
 
 // PromAPIMock for mocking Prometheus API

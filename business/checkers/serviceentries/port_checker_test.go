@@ -3,10 +3,11 @@ package serviceentries
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestValidPortDefinition(t *testing.T) {

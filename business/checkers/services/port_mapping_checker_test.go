@@ -3,12 +3,11 @@ package services
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"

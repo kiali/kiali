@@ -2,9 +2,11 @@ package common
 
 import (
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 type GenericMultiMatchChecker struct {
