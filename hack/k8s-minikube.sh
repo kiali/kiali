@@ -533,7 +533,7 @@ elif [ "$_CMD" = "podman" ]; then
 elif [ "$_CMD" = "resetclock" ]; then
   ensure_minikube_is_running
   echo "Resetting the clock in the minikube VM"
-  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- docker run -i --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i date -u $(date -u +%m%d%H%M%Y)
+  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo date -u $(date -u +%m%d%H%M%Y.%S)
 
 else
   echo "ERROR: Missing required command"
