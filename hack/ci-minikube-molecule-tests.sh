@@ -31,6 +31,8 @@ if ! ${minikube_sh} status; then
     exit 1
   fi
   ${minikube_sh} istio
+else
+  ${minikube_sh} resetclock
 fi
 
 ${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false
