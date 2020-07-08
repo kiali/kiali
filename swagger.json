@@ -2427,7 +2427,7 @@
     },
     "/namespaces/{namespace}/services/{service}/traces": {
       "get": {
-        "description": "Endpoint to get a specific trace of a given service",
+        "description": "Endpoint to get the traces of a given service",
         "produces": [
           "application/json"
         ],
@@ -2438,7 +2438,7 @@
         "tags": [
           "traces"
         ],
-        "operationId": "tracesDetail",
+        "operationId": "tracesList",
         "parameters": [
           {
             "type": "string",
@@ -2459,7 +2459,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/tracesDetailResponse"
+            "$ref": "#/responses/traceDetailsResponse"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -3378,6 +3378,43 @@
         "responses": {
           "200": {
             "$ref": "#/responses/threeScaleRuleResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/traces/{traceID}": {
+      "get": {
+        "description": "Endpoint to get a specific trace from ID",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "traceDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The trace ID.",
+            "name": "traceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/traceDetailsResponse"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -7735,7 +7772,7 @@
         "$ref": "#/definitions/TokenResponse"
       }
     },
-    "tracesDetailResponse": {
+    "traceDetailsResponse": {
       "description": "Listing all the information related to a Trace",
       "schema": {
         "type": "array",

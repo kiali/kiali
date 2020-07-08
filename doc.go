@@ -45,7 +45,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces tracesDetail workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -91,7 +91,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList errorTraces tracesDetail serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
 type ServiceParam struct {
 	// The service name.
 	//
@@ -107,6 +107,15 @@ type SinceTimeParam struct {
 	// in: query
 	// required: false
 	Name string `json:"sinceTime"`
+}
+
+// swagger:parameters traceDetails
+type TraceIDParam struct {
+	// The trace ID.
+	//
+	// in: path
+	// required: true
+	Name string `json:"traceID"`
 }
 
 // swagger:parameters customDashboard
@@ -516,8 +525,8 @@ type ServiceDetailsResponse struct {
 }
 
 // Listing all the information related to a Trace
-// swagger:response tracesDetailResponse
-type TracesDetailResponse struct {
+// swagger:response traceDetailsResponse
+type TraceDetailsResponse struct {
 	// in:body
 	Body []jaegerModels.Trace
 }
