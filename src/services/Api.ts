@@ -319,8 +319,8 @@ export const getJaegerErrorTraces = (namespace: string, service: string, duratio
   return newRequest<number>(HTTP_VERBS.GET, urls.jaegerErrorTraces(namespace, service), { duration: duration }, {});
 };
 
-export const getJaegerTrace = (namespace: string, service: string, idTrace: string) => {
-  return newRequest<JaegerSingleResponse>(HTTP_VERBS.GET, urls.jaegerTrace(namespace, service, idTrace), {}, {});
+export const getJaegerTrace = (idTrace: string) => {
+  return newRequest<JaegerSingleResponse>(HTTP_VERBS.GET, urls.jaegerTrace(idTrace), {}, {});
 };
 
 export const getGraphElements = (params: any) => {

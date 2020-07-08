@@ -116,7 +116,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
   };
 
   private fetchSingle = (traceId: string) => {
-    return API.getJaegerTrace(this.props.namespace, this.props.service, traceId)
+    return API.getJaegerTrace(traceId)
       .then(response => {
         if (response.data.data) {
           const trace = transformTraceData(response.data.data);
