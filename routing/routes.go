@@ -404,7 +404,7 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      404: notFoundError
 		//      500: internalError
-		//      200: tracesDetailResponse
+		//      200: traceDetailsResponse
 		//
 		{
 			"TracesList",
@@ -434,9 +434,9 @@ func NewRoutes() (r *Routes) {
 			handlers.ErrorTraces,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesDetail
+		// swagger:route GET /traces/{traceID} traces traceDetails
 		// ---
-		// Endpoint to get a specific trace of a given service
+		// Endpoint to get a specific trace from ID
 		//
 		//     Produces:
 		//     - application/json
@@ -446,12 +446,12 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      404: notFoundError
 		//      500: internalError
-		//      200: tracesDetailResponse
+		//      200: traceDetailsResponse
 		//
 		{
 			"TracesDetails",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/traces/{traceID}",
+			"/api/traces/{traceID}",
 			handlers.TraceDetails,
 			true,
 		},
