@@ -119,10 +119,7 @@ const conf = {
       jaegerTraces: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/traces`,
       jaegerErrorTraces: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/errortraces`,
-      jaegerTrace: (namespace: string, service: string, idTrace: string) =>
-        `api/namespaces/${namespace}/services/${service}/traces/${idTrace}`,
-      jaegerTraceDetail: (namespace: string, service: string, traceID: string) =>
-        `api/namespaces/${namespace}/services/${service}/traces/${traceID}`,
+      jaegerTrace: (idTrace: string) => `api/traces/${idTrace}`,
       logout: 'api/logout',
       namespaces: 'api/namespaces',
       namespacesGraphElements: `api/namespaces/graph`,
