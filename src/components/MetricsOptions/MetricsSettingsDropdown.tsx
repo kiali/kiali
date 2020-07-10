@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Dropdown, DropdownToggle } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import isEqual from 'lodash/fp/isEqual';
+import isEqual from 'lodash/isEqual';
 import { PromLabel } from '@kiali/k-charted-pf4';
 
 import history, { URLParam } from '../../app/History';
