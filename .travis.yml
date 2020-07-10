@@ -3,6 +3,7 @@ language: go
 arch:
   - amd64
   - arm64
+  - ppc64le
 
 jobs:
   # Sometimes it takes a very long time to spin up an ARM machine on travis.
@@ -10,9 +11,11 @@ jobs:
   fast_finish: true
   allow_failures:
     - arch: arm64
+    - arch: ppc64le
   include:
     - arch: amd64
     - arch: arm64
+    - arch: ppc64le
 
 go:
 - 1.14.2
