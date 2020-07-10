@@ -140,6 +140,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
             "graphType": "versionedApp",
             "injectServiceNodes": true,
             "namespaces": Array [],
+            "showOperationNodes": false,
             "showSecurity": false,
             "showUnusedNodes": false,
           },

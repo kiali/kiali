@@ -59,6 +59,7 @@ export interface FetchParams {
   namespaces: Namespace[];
   node?: NodeParamsType;
   queryTime?: TimeInMilliseconds;
+  showOperationNodes: boolean;
   showSecurity: boolean;
   showUnusedNodes: boolean;
 }
@@ -112,6 +113,7 @@ export default class GraphDataSource {
       graphType: GraphType.VERSIONED_APP,
       injectServiceNodes: true,
       namespaces: [],
+      showOperationNodes: false,
       showSecurity: false,
       showUnusedNodes: false
     };
@@ -150,6 +152,10 @@ export default class GraphDataSource {
     // Some appenders are expensive so only specify an appender if needed.
     let appenders: AppenderString = 'deadNode,sidecarsCheck,serviceEntry,istio';
 
+    if (fetchParams.showOperationNodes) {
+      appenders += ',aggregateNode';
+    }
+
     if (!fetchParams.node && fetchParams.showUnusedNodes) {
       // note we only use the unusedNode appender if this is NOT a drilled-in node graph and
       // the user specifically requests to see unused nodes.
@@ -181,7 +187,9 @@ export default class GraphDataSource {
         this.fetchParameters.namespaces.map(ns => ns.name).join() ||
       previousFetchParams.node !== this.fetchParameters.node ||
       previousFetchParams.graphType !== this.fetchParameters.graphType ||
-      previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes;
+      previousFetchParams.injectServiceNodes !== this.fetchParameters.injectServiceNodes ||
+      previousFetchParams.showOperationNodes !== this.fetchParameters.showOperationNodes ||
+      previousFetchParams.showUnusedNodes !== this.fetchParameters.showUnusedNodes;
 
     if (isPreviousDataInvalid) {
       // Reset the graph data
@@ -241,6 +249,7 @@ export default class GraphDataSource {
       graphType: GraphType.WORKLOAD,
       injectServiceNodes: true,
       edgeLabelMode: EdgeLabelMode.NONE,
+      showOperationNodes: false,
       showSecurity: false,
       showUnusedNodes: false,
       node: {

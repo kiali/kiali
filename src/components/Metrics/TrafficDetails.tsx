@@ -137,12 +137,13 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
 
   private buildTrafficNode = (prefix: 'in' | 'out', node: GraphNodeData): TrafficNode => {
     switch (node.nodeType) {
-      case NodeType.WORKLOAD:
+      case NodeType.AGGREGATE:
         return {
           id: `${prefix}-${node.id}`,
           type: node.nodeType,
           namespace: node.namespace,
-          name: node.workload || 'unknown',
+          name: node.aggregateValue || 'unknown',
+          version: node.version || '',
           isInaccessible: node.isInaccessible || false
         };
       case NodeType.APP:
@@ -163,6 +164,14 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
           destServices: node.destServices
+        };
+      case NodeType.WORKLOAD:
+        return {
+          id: `${prefix}-${node.id}`,
+          type: node.nodeType,
+          namespace: node.namespace,
+          name: node.workload || 'unknown',
+          isInaccessible: node.isInaccessible || false
         };
       default:
         return {

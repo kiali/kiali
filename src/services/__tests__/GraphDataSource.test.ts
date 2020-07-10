@@ -20,6 +20,7 @@ const FETCH_PARAMS = {
   injectServiceNodes: false,
   namespaces: [{ name: 'foo' }],
   queryTime: 0,
+  showOperationNodes: false,
   showSecurity: false,
   showUnusedNodes: false
 };

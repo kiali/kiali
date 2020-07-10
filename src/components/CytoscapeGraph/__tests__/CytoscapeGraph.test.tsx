@@ -37,6 +37,7 @@ describe('CytoscapeGraph component test', () => {
       duration: 60,
       edgeLabelMode: myEdgeLabelMode,
       queryTime: 0,
+      showOperationNodes: false,
       showSecurity: true,
       showUnusedNodes: false
     });
@@ -56,6 +57,7 @@ describe('CytoscapeGraph component test', () => {
               duration: 60,
               edgeLabelMode: myEdgeLabelMode,
               queryTime: 0,
+              showOperationNodes: false,
               showSecurity: true,
               showUnusedNodes: false
             },
@@ -72,6 +74,7 @@ describe('CytoscapeGraph component test', () => {
           showCircuitBreakers={false}
           showMissingSidecars={true}
           showNodeLabels={true}
+          showOperationNodes={false}
           showSecurity={true}
           showServiceNodes={true}
           showTrafficAnimation={false}

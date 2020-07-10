@@ -257,9 +257,12 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderGrpcRates = group => {
-    const nonServiceChildren = group.children('node[nodeType != "' + NodeType.SERVICE + '"]');
-    const incoming = getAccumulatedTrafficRateGrpc(nonServiceChildren.incomers('edge'));
-    const outgoing = getAccumulatedTrafficRateGrpc(nonServiceChildren.edgesTo('*'));
+    // only consider the physical children to avoid inflated rates
+    const validChildren = group.children(
+      `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
+    );
+    const incoming = getAccumulatedTrafficRateGrpc(validChildren.incomers('edge'));
+    const outgoing = getAccumulatedTrafficRateGrpc(validChildren.edgesTo('*'));
 
     return (
       <>
@@ -275,9 +278,12 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderHttpRates = group => {
-    const nonServiceChildren = group.children(`node[nodeType != "${NodeType.SERVICE}"]`);
-    const incoming = getAccumulatedTrafficRateHttp(nonServiceChildren.incomers('edge'));
-    const outgoing = getAccumulatedTrafficRateHttp(nonServiceChildren.edgesTo('*'));
+    // only consider the physical children to avoid inflated rates
+    const validChildren = group.children(
+      `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
+    );
+    const incoming = getAccumulatedTrafficRateHttp(validChildren.incomers('edge'));
+    const outgoing = getAccumulatedTrafficRateHttp(validChildren.edgesTo('*'));
 
     return (
       <>
@@ -359,9 +365,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     // likely 0 or 1 but support N in case of unanticipated labeling
     const serviceList: any[] = [];
 
-    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(node => {
-      const nodeData = decoratedNodeData(node);
-      serviceList.push(renderBadgedLink(nodeData, NodeType.SERVICE));
+    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(serviceNode => {
+      const serviceNodeData = decoratedNodeData(serviceNode);
+      serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
+      console.log(`service=[${serviceNodeData.service}]`);
+      const aggregates = group.children(
+        `node[nodeType = "${NodeType.AGGREGATE}"][service = "${serviceNodeData.service}"]`
+      );
+      if (!!aggregates && aggregates.length > 0) {
+        const aggregateList: any[] = [];
+        aggregates.forEach(aggregateNode => {
+          const aggregateNodeData = decoratedNodeData(aggregateNode);
+          aggregateList.push(renderBadgedLink(aggregateNodeData, NodeType.AGGREGATE));
+        });
+        serviceList.push(<div>{aggregateList}</div>);
+      }
     });
 
     return serviceList;

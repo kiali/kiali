@@ -24,6 +24,7 @@ export enum URLParam {
   JAEGER_TRACE_INTERVAL_SELECTED = 'intSelectedTrace',
   JAEGER_STATUS_CODE = 'statusCode',
   NAMESPACES = 'namespaces',
+  OPERATION_NODES = 'operationNodes',
   OVERVIEW_TYPE = 'otype',
   QUANTILES = 'quantiles',
   REFRESH_INTERVAL = 'refresh',

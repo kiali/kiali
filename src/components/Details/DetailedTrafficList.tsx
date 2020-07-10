@@ -24,6 +24,15 @@ type DetailedTrafficProps = {
   traffic: TrafficItem[];
 };
 
+export interface AggregateNode {
+  id: string;
+  type: NodeType.AGGREGATE;
+  namespace: string;
+  name: string;
+  version: string;
+  isInaccessible: boolean;
+}
+
 export interface AppNode {
   id: string;
   type: NodeType.APP;
@@ -58,7 +67,7 @@ export interface UnknownNode {
   name: 'unknown';
 }
 
-export type TrafficNode = WorkloadNode | ServiceNode | UnknownNode | AppNode;
+export type TrafficNode = AggregateNode | AppNode | ServiceNode | UnknownNode | WorkloadNode;
 
 export interface TrafficItem {
   node: TrafficNode;

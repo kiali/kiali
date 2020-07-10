@@ -47,6 +47,9 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     let name: string | undefined = '';
     let type = '';
     switch (node.nodeType) {
+      case 'aggregate':
+        name = node.aggregateValue!;
+        break;
       case 'app':
         // Prefer workload type for nodes backed by a workload
         if (node.workload && node.parent) {
@@ -87,8 +90,8 @@ export class NodeContextMenu extends React.PureComponent<Props> {
   }
 
   render() {
-    // Disable context menu if we are dealing with a unknown or an inaccessible node
-    if (this.props.nodeType === NodeType.UNKNOWN || this.props.isInaccessible) {
+    // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
+    if (this.props.nodeType === NodeType.AGGREGATE || this.props.isInaccessible) {
       this.props.contextMenu.disable();
       return null;
     }

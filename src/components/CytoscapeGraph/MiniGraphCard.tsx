@@ -97,6 +97,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               showCircuitBreakers={false}
               showMissingSidecars={true}
               showNodeLabels={true}
+              showOperationNodes={false}
               showSecurity={false}
               showServiceNodes={true}
               showTrafficAnimation={false}
@@ -145,21 +146,27 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     let graphType: GraphType = GraphType.APP;
 
     switch (this.props.dataSource.fetchParameters.node!.nodeType) {
-      case NodeType.WORKLOAD:
-        graphType = GraphType.WORKLOAD;
-        cytoscapeGraph = cytoscapeGraph.workload(this.props.dataSource.fetchParameters.node!.workload);
+      case NodeType.AGGREGATE:
+        cytoscapeGraph = cytoscapeGraph
+          .aggregate(
+            this.props.dataSource.fetchParameters.node!.aggregate!,
+            this.props.dataSource.fetchParameters.node!.aggregateValue!
+          )
+          .nodeType(NodeType.AGGREGATE);
         break;
-
       case NodeType.APP:
         cytoscapeGraph = cytoscapeGraph
           .app(this.props.dataSource.fetchParameters.node!.app)
           .nodeType(NodeType.APP)
           .isGroup(null);
         break;
-
       case NodeType.SERVICE:
         graphType = GraphType.SERVICE;
         cytoscapeGraph = cytoscapeGraph.service(this.props.dataSource.fetchParameters.node!.service);
+        break;
+      case NodeType.WORKLOAD:
+        graphType = GraphType.WORKLOAD;
+        cytoscapeGraph = cytoscapeGraph.workload(this.props.dataSource.fetchParameters.node!.workload);
         break;
     }
 

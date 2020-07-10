@@ -2,7 +2,7 @@
 import workloadImage from '../../assets/img/legend/node.svg';
 import appImage from '../../assets/img/legend/app.svg';
 import serviceImage from '../../assets/img/legend/service.svg';
-import unknownSourceImage from '../../assets/img/legend/unknown.svg';
+import aggregateImage from '../../assets/img/legend/aggregate.svg';
 import serviceEntryImage from '../../assets/img/legend/service-entry.svg';
 // Node Colors
 import nodeColorNormalImage from '../../assets/img/legend/node-color-normal.svg';
@@ -44,7 +44,7 @@ const legendData: GraphLegendItem[] = [
     data: [
       { label: 'Workload', icon: workloadImage },
       { label: 'App', icon: appImage },
-      { label: 'Unknown Source', icon: unknownSourceImage },
+      { label: 'Operation', icon: aggregateImage },
       { label: 'Service', icon: serviceImage },
       { label: 'Service Entry', icon: serviceEntryImage }
     ]

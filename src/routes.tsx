@@ -80,6 +80,10 @@ const pathRoutes: Path[] = [
     component: OverviewPageContainer
   },
   {
+    path: '/graph/node/namespaces/:namespace/' + Paths.AGGREGATES + '/:aggregate/:aggregateValue',
+    component: GraphPageContainer
+  },
+  {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
     component: GraphPageContainer
   },

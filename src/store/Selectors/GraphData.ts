@@ -38,6 +38,8 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       tcp: NaN
     },
     nodes: {
+      aggregate: undefined,
+      aggregateValue: undefined,
       app: undefined,
       destServices: undefined,
       grpcIn: NaN,
@@ -115,6 +117,12 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           traffic.forEach(protocol => {
             decoratedNode.data = { ...propertiesToNumber(protocol.rates), ...decoratedNode.data };
           });
+        }
+        // node.aggregate is set like aggregate=aggregateValue, split into distinct fields for the ui to use
+        if (!!decoratedNode.data.aggregate) {
+          const aggr = decoratedNode.data.aggregate.split('=');
+          decoratedNode.data.aggregate = aggr[0];
+          decoratedNode.data.aggregateValue = aggr[1];
         }
         const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;
         // prettier-ignore

@@ -50,6 +50,7 @@ export enum GroupByType {
 }
 
 export enum NodeType {
+  AGGREGATE = 'aggregate',
   APP = 'app',
   SERVICE = 'service',
   UNKNOWN = 'unknown',
@@ -59,6 +60,8 @@ export enum NodeType {
 export const UNKNOWN = 'unknown';
 
 export interface NodeParamsType {
+  aggregate?: string;
+  aggregateValue?: string;
   app: string;
   namespace: Namespace;
   nodeType: NodeType;
@@ -163,6 +166,8 @@ export interface GraphNodeData {
   app?: string;
   version?: string;
   service?: string;
+  aggregate?: string;
+  aggregateValue?: string;
   destServices?: any;
   traffic?: ProtocolTraffic[];
   hasCB?: boolean;

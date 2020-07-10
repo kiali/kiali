@@ -386,6 +386,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             "graphType": "versionedApp",
             "injectServiceNodes": true,
             "namespaces": Array [],
+            "showOperationNodes": false,
             "showSecurity": false,
             "showUnusedNodes": false,
           },

@@ -109,18 +109,18 @@ exports[`GraphLegend test should render correctly 1`] = `
           </div>
           <div
             className="f1n8a700"
-            key="unknown.svg"
+            key="aggregate.svg"
           >
             <span>
               <img
-                alt="Unknown Source"
-                src="unknown.svg"
+                alt="Operation"
+                src="aggregate.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Unknown Source
+              Operation
             </span>
           </div>
           <div

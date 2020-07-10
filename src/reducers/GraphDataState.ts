@@ -23,6 +23,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showLegend: false,
     showMissingSidecars: true,
     showNodeLabels: true,
+    showOperationNodes: false,
     showSecurity: false,
     showServiceNodes: true,
     showTrafficAnimation: false,
@@ -75,9 +76,14 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         })
       });
     case getType(GraphToolbarActions.setGraphType):
+      const isServiceGraph = action.payload === GraphType.SERVICE;
+      const showOperationNodes = isServiceGraph ? false : state.toolbarState.showOperationNodes;
+      const showServiceNodes = isServiceGraph ? false : state.toolbarState.showServiceNodes;
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          graphType: action.payload
+          graphType: action.payload,
+          showOperationNodes: showOperationNodes,
+          showServiceNodes: showServiceNodes
         }),
         // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
         summaryData: INITIAL_GRAPH_STATE.summaryData
@@ -141,6 +147,14 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
         toolbarState: updateState(state.toolbarState, {
           showLegend: !state.toolbarState.showLegend
         })
+      });
+    case getType(GraphToolbarActions.toggleOperationNodes):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showOperationNodes: !state.toolbarState.showOperationNodes
+        }),
+        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
+        summaryData: INITIAL_GRAPH_STATE.summaryData
       });
     case getType(GraphToolbarActions.toggleServiceNodes):
       return updateState(state, {

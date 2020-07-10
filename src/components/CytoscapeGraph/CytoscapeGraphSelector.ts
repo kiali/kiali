@@ -3,6 +3,8 @@ import { NodeType } from '../../types/Graph';
 export type CytoscapeGraphSelector = string;
 
 interface CytoscapeElementData {
+  aggregate?: string;
+  aggregateValue?: string;
   app?: string;
   id?: string;
   isGroup?: string | null;
@@ -15,6 +17,12 @@ interface CytoscapeElementData {
 
 export class CytoscapeGraphSelectorBuilder {
   private data: CytoscapeElementData = {};
+
+  aggregate(aggregate: string, aggregateValue: string) {
+    this.data.aggregate = aggregate;
+    this.data.aggregateValue = aggregateValue;
+    return this;
+  }
 
   app(app: string) {
     this.data.app = app;

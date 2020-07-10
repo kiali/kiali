@@ -3,6 +3,7 @@
  */
 
 export enum Paths {
+  AGGREGATES = 'aggregates',
   APPLICATIONS = 'applications',
   ISTIO = 'istio',
   JAEGER = 'jaeger',

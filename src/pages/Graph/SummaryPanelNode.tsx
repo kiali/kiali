@@ -67,13 +67,15 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
   render() {
     const node = this.props.data.summaryTarget;
     const nodeData = decoratedNodeData(node);
-    const { nodeType, workload, isServiceEntry } = nodeData;
+    const { nodeType, app, service, workload, isServiceEntry } = nodeData;
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(node);
     const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(nodeData);
 
     const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
-    const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && nodeType !== NodeType.UNKNOWN && workload;
+    const shouldRenderService = service && ![NodeType.SERVICE, NodeType.UNKNOWN].includes(nodeType);
+    const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType);
+    const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderTraces =
       nodeType === NodeType.SERVICE &&
       !nodeData.isInaccessible &&
@@ -95,7 +97,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         <div className="panel-heading" style={summaryHeader}>
           <div>
             {renderBadgedLink(nodeData)}
-            {!nodeData.isInaccessible && (
+            {!(nodeData.isInaccessible || nodeType === NodeType.AGGREGATE) && (
               <Dropdown
                 id="summary-node-actions"
                 style={{ float: 'right' }}
@@ -112,6 +114,8 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div>{servicesList}</div>}
+            {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
+            {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
             {shouldRenderWorkload && <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>}
           </div>
         </div>

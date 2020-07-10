@@ -40,9 +40,15 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('namespace = foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
+    expect(instance.parseValue('app = foo')).toEqual('node[app = "foo"]');
+    // @ts-ignore
     expect(instance.parseValue('ns = foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
     expect(instance.parseValue('node = app')).toEqual('node[nodeType = "app"]');
+    // @ts-ignore
+    expect(instance.parseValue('node = operation')).toEqual('node[nodeType = "aggregate"]');
+    // @ts-ignore
+    expect(instance.parseValue('node = op')).toEqual('node[nodeType = "aggregate"]');
     // @ts-ignore
     expect(instance.parseValue('node = service')).toEqual('node[nodeType = "service"]');
     // @ts-ignore
@@ -53,6 +59,10 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('node = workload')).toEqual('node[nodeType = "workload"]');
     // @ts-ignore
     expect(instance.parseValue('node = wl')).toEqual('node[nodeType = "workload"]');
+    // @ts-ignore
+    expect(instance.parseValue('operation = foo')).toEqual('node[aggregateValue = "foo"]');
+    // @ts-ignore
+    expect(instance.parseValue('op = foo')).toEqual('node[aggregateValue = "foo"]');
     // @ts-ignore
     expect(instance.parseValue('service = foo')).toEqual('node[service = "foo"]');
     // @ts-ignore
@@ -206,9 +216,13 @@ describe('Parse find value test', () => {
 
     // check find by name
     // @ts-ignore
-    expect(instance.parseValue('name = foo')).toEqual('node[workload = "foo"],[app = "foo"],[service = "foo"]');
+    expect(instance.parseValue('name = foo')).toEqual(
+      'node[aggregateValue = "foo"],[app = "foo"],[service = "foo"],[workload = "foo"]'
+    );
     // @ts-ignore
-    expect(instance.parseValue('name != foo')).toEqual('node[workload != "foo"][app != "foo"][service != "foo"]');
+    expect(instance.parseValue('name != foo')).toEqual(
+      'node[aggregateValue != "foo"][app != "foo"][service != "foo"][workload != "foo"]'
+    );
 
     // check violations
     // @ts-ignore

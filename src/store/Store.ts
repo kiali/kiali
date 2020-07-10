@@ -46,6 +46,7 @@ export interface GraphToolbarState {
   showLegend: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
+  showOperationNodes: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;

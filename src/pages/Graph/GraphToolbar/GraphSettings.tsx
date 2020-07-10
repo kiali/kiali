@@ -1,4 +1,4 @@
-import { Radio, Dropdown, DropdownToggle, Checkbox } from '@patternfly/react-core';
+import { Radio, Dropdown, DropdownToggle, Checkbox, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -16,8 +16,9 @@ import {
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { style } from 'typestyle';
 import { PfColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
 
-type ReduxProps = Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
+type ReduxProps = {
   setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
   toggleCompressOnHide(): void;
   toggleGraphCircuitBreakers(): void;
@@ -25,12 +26,14 @@ type ReduxProps = Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegen
   toggleGraphNodeLabels(): void;
   toggleGraphSecurity(): void;
   toggleGraphVirtualServices(): void;
+  toggleOperationNodes(): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
   toggleUnusedNodes(): void;
 };
 
-type GraphSettingsProps = ReduxProps;
+type GraphSettingsProps = ReduxProps &
+  Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'>;
 
 type GraphSettingsState = { isOpen: boolean };
 
@@ -40,6 +43,7 @@ interface DisplayOptionType {
   labelText: string;
   isChecked: boolean;
   onChange?: () => void;
+  tooltip?: React.ReactNode;
 }
 
 const marginBottom = 20;
@@ -61,11 +65,16 @@ const titleStyle = style({
 });
 
 // this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
-const itemStyle = style({
-  alignItems: 'center',
-  whiteSpace: 'nowrap',
-  margin: 0,
-  padding: '6px 16px'
+const itemStyle = (hasInfo: boolean) =>
+  style({
+    alignItems: 'center',
+    whiteSpace: 'nowrap',
+    margin: 0,
+    padding: hasInfo ? '6px 0px 6px 16px' : '6px 16px'
+  });
+
+const infoStyle = style({
+  margin: '0px 16px 2px 4px'
 });
 
 class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
@@ -76,6 +85,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
     };
 
     // Let URL override current redux state at construction time. Update URL with unset params.
+    const urlShowOperationNodes = HistoryManager.getBooleanParam(URLParam.OPERATION_NODES);
+    if (urlShowOperationNodes !== undefined) {
+      if (urlShowOperationNodes !== props.showOperationNodes) {
+        props.toggleOperationNodes();
+      }
+    } else {
+      HistoryManager.setParam(URLParam.OPERATION_NODES, String(this.props.showOperationNodes));
+    }
     const urlInjectServiceNodes = HistoryManager.getBooleanParam(URLParam.GRAPH_SERVICE_NODES);
     if (urlInjectServiceNodes !== undefined) {
       if (urlInjectServiceNodes !== props.showServiceNodes) {
@@ -94,6 +111,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
   componentDidUpdate(_prevProps: GraphSettingsProps) {
     // ensure redux state and URL are aligned
+    HistoryManager.setParam(URLParam.OPERATION_NODES, String(this.props.showOperationNodes));
     HistoryManager.setParam(URLParam.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
   }
 
@@ -121,6 +139,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       showCircuitBreakers,
       showMissingSidecars,
       showNodeLabels,
+      showOperationNodes,
       showSecurity,
       showServiceNodes,
       showTrafficAnimation,
@@ -136,6 +155,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       toggleGraphNodeLabels,
       toggleGraphSecurity,
       toggleGraphVirtualServices,
+      toggleOperationNodes,
       toggleServiceNodes,
       toggleTrafficAnimation,
       toggleUnusedNodes
@@ -160,7 +180,18 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       {
         id: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
         labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE),
-        isChecked: edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE
+        isChecked: edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>Displays the 95th Percentile.</div>
+            <div>
+              To see other response time percentiles select the desired edge and see the side panel. The following edges
+              do not offer a response time label but the information is availabe in the side panel:
+            </div>
+            <div>- edges into service nodes</div>
+            <div>- edges into or out of operation nodes.</div>
+          </div>
+        )
       }
     ];
 
@@ -169,13 +200,41 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         id: 'filterHide',
         labelText: 'Compress Hidden',
         isChecked: compressOnHide,
-        onChange: toggleCompressOnHide
+        onChange: toggleCompressOnHide,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            When enabled the graph is compressed after graph-hide removes matching elements. Otherwise the graph
+            maintains the space consumed by the hidden elements.
+          </div>
+        )
       },
       {
         id: 'filterNodes',
         labelText: 'Node Names',
         isChecked: showNodeLabels,
         onChange: toggleGraphNodeLabels
+      },
+      {
+        id: 'filterOperationNodes',
+        disabled: this.props.graphType === GraphType.SERVICE,
+        labelText: 'Operation Nodes',
+        isChecked: showOperationNodes,
+        onChange: toggleOperationNodes,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>
+              When both operation and service nodes are enabled then the operation is displayed specific to each service
+              to which it applies, and therefore may be duplicated for different services. When enabled independently
+              each operation will have a single node representing the total traffic for that operation.
+            </div>
+            <div>- Operations with no traffic are ignored.</div>
+            <div>- This is not applicable to Service graphs.</div>
+            <div>
+              - Operation nodes require additional "Request Classification" Istio configuration for workloads in the
+              selected namespaces.
+            </div>
+          </div>
+        )
       },
       {
         id: 'filterServiceNodes',
@@ -233,28 +292,55 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         <div id="graph-display-menu" className={menuStyle}>
           <div className={titleStyle}>Show Edge Labels</div>
           {edgeLabelOptions.map((item: DisplayOptionType) => (
-            <label key={item.id} className={itemStyle}>
-              <Radio
-                id={item.id}
-                name="edgeLabels"
-                isChecked={item.isChecked}
-                label={item.labelText}
-                onChange={this.setEdgeLabelMode}
-                value={item.id}
-              />
-            </label>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+              <label key={item.id} className={itemStyle(!!item.tooltip)}>
+                <Radio
+                  id={item.id}
+                  name="edgeLabels"
+                  isChecked={item.isChecked}
+                  label={item.labelText}
+                  onChange={this.setEdgeLabelMode}
+                  value={item.id}
+                />
+              </label>
+              {!!item.tooltip && (
+                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+                  <KialiIcon.Info className={infoStyle} />
+                </Tooltip>
+              )}
+            </div>
           ))}
           <div className={titleStyle}>Show</div>
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <label key={item.id} className={itemStyle}>
-              <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
-            </label>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+              <label key={item.id} className={itemStyle(!!item.tooltip)}>
+                <Checkbox
+                  id={item.id}
+                  isChecked={item.isChecked}
+                  label={item.labelText}
+                  onChange={item.onChange}
+                  isDisabled={item.disabled}
+                />
+              </label>
+              {!!item.tooltip && (
+                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+                  <KialiIcon.Info className={infoStyle} />
+                </Tooltip>
+              )}
+            </div>
           ))}
           <div className={titleStyle}>Show Badges</div>
           {badgeOptions.map((item: DisplayOptionType) => (
-            <label key={item.id} className={itemStyle}>
-              <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
-            </label>
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+              <label key={item.id} className={itemStyle(!!item.tooltip)}>
+                <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
+              </label>
+              {!!item.tooltip && (
+                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+                  <KialiIcon.Info className={infoStyle} />
+                </Tooltip>
+              )}
+            </div>
           ))}
         </div>
       </BoundingClientAwareComponent>
@@ -276,6 +362,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
   showNodeLabels: state.graph.toolbarState.showNodeLabels,
+  showOperationNodes: state.graph.toolbarState.showOperationNodes,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
@@ -293,6 +380,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     toggleGraphNodeLabels: bindActionCreators(GraphToolbarActions.toggleGraphNodeLabel, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleGraphVirtualServices: bindActionCreators(GraphToolbarActions.toggleGraphVirtualServices, dispatch),
+    toggleOperationNodes: bindActionCreators(GraphToolbarActions.toggleOperationNodes, dispatch),
     toggleServiceNodes: bindActionCreators(GraphToolbarActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphToolbarActions.toggleTrafficAnimation, dispatch),
     toggleUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)

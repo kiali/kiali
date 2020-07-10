@@ -211,23 +211,38 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   }
 
   private getByLabels = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
-    let sourceLabel: string;
+    let label: string;
     switch (sourceMetricType) {
+      case NodeMetricType.AGGREGATE:
+        switch (destMetricType) {
+          case NodeMetricType.APP:
+            label = 'destination_app';
+            break;
+          case NodeMetricType.SERVICE:
+            label = 'destination_service_name';
+            break;
+          case NodeMetricType.WORKLOAD:
+          // fall through, workload is default
+          default:
+            label = 'destination_workload';
+            break;
+        }
+        break;
       case NodeMetricType.APP:
-        sourceLabel = 'source_app';
+        label = 'source_app';
         break;
       case NodeMetricType.SERVICE:
-        sourceLabel = 'destination_service_name';
+        label = 'destination_service_name';
         break;
       case NodeMetricType.WORKLOAD:
       // fall through, workload is default
       default:
-        sourceLabel = 'source_workload';
+        label = 'source_workload';
         break;
     }
     // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
     // comparator in getNodeDatapoints).
-    return this.isSpecialServiceDest(destMetricType) ? [sourceLabel, 'destination_workload'] : [sourceLabel];
+    return this.isSpecialServiceDest(destMetricType) ? [label, 'destination_workload'] : [label];
   };
 
   private getNodeDataPoints = (
@@ -243,26 +258,44 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         return data.destServices && data.destServices.some(svc => svc.name === metric['destination_service_name']);
       });
     }
-    let sourceLabel: string;
-    let sourceValue: string | undefined;
+    let label: string;
+    let value: string | undefined;
     switch (sourceMetricType) {
+      case NodeMetricType.AGGREGATE:
+        switch (destMetricType) {
+          case NodeMetricType.APP:
+            label = 'destination_app';
+            value = data.app;
+            break;
+          case NodeMetricType.SERVICE:
+            label = 'destination_service_name';
+            value = data.service;
+            break;
+          case NodeMetricType.WORKLOAD:
+          // fall through, workload is default
+          default:
+            label = 'destination_workload';
+            value = data.workload;
+            break;
+        }
+        break;
       case NodeMetricType.APP:
-        sourceLabel = 'source_app';
-        sourceValue = data.app;
+        label = 'source_app';
+        value = data.app;
         break;
       case NodeMetricType.SERVICE:
-        sourceLabel = 'destination_service_name';
-        sourceValue = data.service;
+        label = 'destination_service_name';
+        value = data.service;
         break;
       case NodeMetricType.WORKLOAD:
       // fall through, use workload as the default
       default:
-        sourceLabel = 'source_workload';
-        sourceValue = data.workload;
+        label = 'source_workload';
+        value = data.workload;
     }
     const comparator = this.isSpecialServiceDest(destMetricType)
-      ? (metric: Metric) => metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN
-      : (metric: Metric) => metric[sourceLabel] === sourceValue;
+      ? (metric: Metric) => metric[label] === value && metric.destination_workload === UNKNOWN
+      : (metric: Metric) => metric[label] === value;
     return getDatapoints(m, comparator);
   };
 
@@ -297,28 +330,25 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       return;
     }
 
+    // use dest node metrics unless dest is a serviceEntry or source is an aggregate
+    const isSourceAggregate = sourceData.nodeType === NodeType.AGGREGATE;
+    const isDestServiceEntry = !!destData.isServiceEntry;
+    const useDestMetrics = isDestServiceEntry || isSourceAggregate ? false : true;
+    const metricsNode = useDestMetrics ? edge.target() : edge.source();
+    const metricsNodeData = useDestMetrics ? destData : sourceData;
+    const direction: Direction = useDestMetrics || isSourceAggregate ? 'inbound' : 'outbound';
+    const metricType = useDestMetrics ? destMetricType : sourceMetricType;
+    const byLabels = isDestServiceEntry
+      ? ['destination_service_name']
+      : this.getByLabels(sourceMetricType, destMetricType);
+    const otherEndData = useDestMetrics ? sourceData : destData;
     const quantiles = ['0.5', '0.95', '0.99'];
-    let byLabels = this.getByLabels(sourceMetricType, destMetricType);
-    let node = edge.target();
-    let direction: Direction = 'inbound';
-    let metricType = destMetricType;
-    let isServiceEntry = false;
-    let otherEndData = sourceData;
-    if (decoratedNodeData(node).isServiceEntry) {
-      // Switch to source to get edge to service entry
-      node = edge.source();
-      direction = 'outbound';
-      metricType = sourceMetricType;
-      byLabels = ['destination_service_name'];
-      isServiceEntry = true;
-      otherEndData = destData;
-    }
 
     let promiseRps, promiseTcp;
     if (isGrpc || isHttp) {
       const reporterRps =
-        sourceData.nodeType === NodeType.UNKNOWN ||
-        sourceData.nodeType === NodeType.SERVICE ||
+        [NodeType.SERVICE, NodeType.UNKNOWN].includes(sourceData.nodeType) ||
+        NodeType.AGGREGATE === metricsNodeData.nodeType ||
         edge.source().isIstio ||
         edge.target().isIstio
           ? 'destination'
@@ -327,7 +357,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       const filtersRps = ['request_count', 'request_duration', 'request_duration_millis', 'request_error_count'];
       promiseRps = getNodeMetrics(
         metricType,
-        node,
+        metricsNode,
         props,
         filtersRps,
         direction,
@@ -338,11 +368,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     } else {
       // TCP uses slightly different reporting
-      const reporterTCP = sourceData.nodeType === NodeType.UNKNOWN || sourceData.isIstio ? 'destination' : 'source';
+      const reporterTCP =
+        [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
+          ? 'destination'
+          : 'source';
       const filtersTCP = ['tcp_sent', 'tcp_received'];
       promiseTcp = getNodeMetrics(
         metricType,
-        node,
+        metricsNode,
         props,
         filtersTCP,
         direction,
@@ -364,29 +397,53 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             sourceMetricType,
             destMetricType,
             otherEndData,
-            isServiceEntry
+            isDestServiceEntry
           );
           errRates = this.getNodeDataPoints(
             metrics.request_error_count,
             sourceMetricType,
             destMetricType,
             otherEndData,
-            isServiceEntry
+            isDestServiceEntry
           );
           // We query for both 'request_duration' and 'request_duration_millis' because the former is used
           // with Istio mixer telemetry and the latter with Istio mixer-less (introduced as an experimental
           // option in istion 1.3.0).  Until we can safely rely on the newer metric we must support both. So,
           // prefer the newer but if it holds no valid data, revert to the older.
           let histo = histograms.request_duration_millis;
-          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isServiceEntry);
+          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isDestServiceEntry);
           if (this.isEmpty(rtAvg)) {
             histo = histograms.request_duration;
             unit = 's';
-            rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isServiceEntry);
+            rtAvg = this.getNodeDataPoints(
+              histo.avg,
+              sourceMetricType,
+              destMetricType,
+              otherEndData,
+              isDestServiceEntry
+            );
           }
-          rtMed = this.getNodeDataPoints(histo['0.5'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
-          rt95 = this.getNodeDataPoints(histo['0.95'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
-          rt99 = this.getNodeDataPoints(histo['0.99'], sourceMetricType, destMetricType, otherEndData, isServiceEntry);
+          rtMed = this.getNodeDataPoints(
+            histo['0.5'],
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isDestServiceEntry
+          );
+          rt95 = this.getNodeDataPoints(
+            histo['0.95'],
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isDestServiceEntry
+          );
+          rt99 = this.getNodeDataPoints(
+            histo['0.99'],
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isDestServiceEntry
+          );
         } else {
           // TCP
           tcpSent = this.getNodeDataPoints(
@@ -394,14 +451,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             sourceMetricType,
             destMetricType,
             otherEndData,
-            isServiceEntry
+            isDestServiceEntry
           );
           tcpReceived = this.getNodeDataPoints(
             metrics.tcp_received,
             sourceMetricType,
             destMetricType,
             otherEndData,
-            isServiceEntry
+            isDestServiceEntry
           );
         }
 

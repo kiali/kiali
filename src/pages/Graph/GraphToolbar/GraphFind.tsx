@@ -524,14 +524,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         } else if (conjunctive) {
           return this.setErrorMsg(`Can not use 'AND' with 'name' operand`);
         }
-        const wl = `[${CyNode.workload} ${op} "${val}"]`;
+        const agg = `[${CyNode.aggregateValue} ${op} "${val}"]`;
         const app = `[${CyNode.app} ${op} "${val}"]`;
         const svc = `[${CyNode.service} ${op} "${val}"]`;
-        return { target: 'node', selector: isNegation ? `${wl}${app}${svc}` : `${wl},${app},${svc}` };
+        const wl = `[${CyNode.workload} ${op} "${val}"]`;
+        return { target: 'node', selector: isNegation ? `${agg}${app}${svc}${wl}` : `${agg},${app},${svc},${wl}` };
       }
       case 'node':
         let nodeType = val.toLowerCase();
         switch (nodeType) {
+          case 'op':
+          case 'operation':
+            nodeType = NodeType.AGGREGATE;
+            break;
           case 'svc':
             nodeType = NodeType.SERVICE;
             break;
@@ -542,18 +547,24 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
             break; // no-op
         }
         switch (nodeType) {
+          case NodeType.AGGREGATE:
           case NodeType.APP:
           case NodeType.SERVICE:
           case NodeType.WORKLOAD:
           case NodeType.UNKNOWN:
             return { target: 'node', selector: `[${CyNode.nodeType} ${op} "${nodeType}"]` };
           default:
-            this.setErrorMsg(`Invalid node type [${nodeType}]. Expected app | service | unknown | workload`);
+            this.setErrorMsg(
+              `Invalid node type [${nodeType}]. Expected app | operation | service | unknown | workload`
+            );
         }
         return undefined;
       case 'ns':
       case 'namespace':
         return { target: 'node', selector: `[${CyNode.namespace} ${op} "${val}"]` };
+      case 'op':
+      case 'operation':
+        return { target: 'node', selector: `[${CyNode.aggregateValue} ${op} "${val}"]` };
       case 'svc':
       case 'service':
         return { target: 'node', selector: `[${CyNode.service} ${op} "${val}"]` };
