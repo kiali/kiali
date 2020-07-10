@@ -31,7 +31,8 @@ export enum URLParam {
   SHOW_AVERAGE = 'avg',
   SORT = 'sort',
   TO = 'to',
-  UNUSED_NODES = 'unusedNodes'
+  UNUSED_NODES = 'unusedNodes',
+  EXPERIMENTAL_FLAGS = 'xflags'
 }
 
 export interface URLParamValue {

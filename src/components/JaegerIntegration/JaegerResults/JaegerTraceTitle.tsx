@@ -1,24 +1,22 @@
 import * as React from 'react';
 import { CardHeader, Text, TextVariants, Tooltip } from '@patternfly/react-core';
-import { JaegerTrace } from '../../../types/JaegerInfo';
 import { PfColors } from '../../Pf/PfColors';
-import { formatDuration } from './transform';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { FormattedTraceInfo } from './FormattedTraceInfo';
 
-interface JaegerScatterProps {
-  trace: JaegerTrace;
-  duration?: number;
+interface Props {
+  traceID: string;
+  formattedTrace: FormattedTraceInfo;
   onClickLink: string;
 }
 
-export class JaegerTraceTitle extends React.Component<JaegerScatterProps> {
+export class JaegerTraceTitle extends React.Component<Props> {
   render() {
-    const { trace, duration } = this.props;
-    const { traceID, traceName } = trace;
+    const { traceID, formattedTrace } = this.props;
     return (
       <CardHeader style={{ backgroundColor: PfColors.Black200, height: '50px' }}>
         <Text component={TextVariants.h3} style={{ margin: 0, position: 'relative' }}>
-          {traceName === '' ? '<trace-without-root-span>' : traceName}
+          {formattedTrace.name}
           <Tooltip content={<>{traceID}</>}>
             <span style={{ color: PfColors.Black600, paddingLeft: '10px', fontSize: '14px' }}>
               {traceID.slice(0, 7)}
@@ -36,7 +34,9 @@ export class JaegerTraceTitle extends React.Component<JaegerScatterProps> {
               </a>
             </Tooltip>
           )}
-          {duration != null && <span style={{ float: 'right', position: 'relative' }}>{formatDuration(duration)}</span>}
+          {formattedTrace.duration && (
+            <span style={{ float: 'right', position: 'relative' }}>{formattedTrace.duration}</span>
+          )}
         </Text>
       </CardHeader>
     );
