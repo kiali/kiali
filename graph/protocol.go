@@ -299,7 +299,7 @@ func AggregateEdgeTraffic(edge, aggregateEdge *Edge) {
 }
 
 func addToMetadataValue(md Metadata, k MetadataKey, v float64) {
-	if v <= 0 {
+	if v <= 0 || md == nil {
 		return
 	}
 	if curr, ok := md[k]; ok {

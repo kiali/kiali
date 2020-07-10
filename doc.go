@@ -18,6 +18,24 @@ import (
 // - keep this alphabetized
 /////////////////////
 
+// swagger:parameters aggregateMetrics graphAggregate graphAggregateByService
+type AggregateParam struct {
+	// The aggregate name (label).
+	//
+	// in: path
+	// required: true
+	Name string `json:"aggregate"`
+}
+
+// swagger:parameters aggregateMetrics graphAggregate graphAggregateByService
+type AggregateValueParam struct {
+	// The aggregate value (label value).
+	//
+	// in: path
+	// required: true
+	Name string `json:"aggregateValue"`
+}
+
 // swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard
 type AppParam struct {
 	// The app name (label value).
@@ -45,7 +63,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -91,7 +109,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService graphAggregateByService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
 type ServiceParam struct {
 	// The service name.
 	//
@@ -143,7 +161,7 @@ type WorkloadParam struct {
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type AppendersParam struct {
-	// Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].
+	// Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].
 	//
 	// in: query
 	// required: false
@@ -224,7 +242,7 @@ type AdditionalLabelsParam struct {
 	Name string `json:"additionalLabels"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type AvgParam struct {
 	// Flag for fetching histogram average. Default is true.
 	//
@@ -234,7 +252,7 @@ type AvgParam struct {
 	Name bool `json:"avg"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type ByLabelsParam struct {
 	// List of labels to use for grouping metrics (via Prometheus 'by' clause).
 	//
@@ -244,7 +262,7 @@ type ByLabelsParam struct {
 	Name []string `json:"byLabels[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type DirectionParam struct {
 	// Traffic direction: 'inbound' or 'outbound'.
 	//
@@ -254,7 +272,7 @@ type DirectionParam struct {
 	Name string `json:"direction"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type DurationParam struct {
 	// Duration of the query period, in seconds.
 	//
@@ -264,7 +282,7 @@ type DurationParam struct {
 	Name int `json:"duration"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics
 type FiltersParam struct {
 	// List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.
 	//
@@ -284,7 +302,7 @@ type LabelsFiltersParam struct {
 	Name string `json:"labelsFilters"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type QuantilesParam struct {
 	// List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].
 	//
@@ -294,7 +312,7 @@ type QuantilesParam struct {
 	Name []string `json:"quantiles[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type RateFuncParam struct {
 	// Prometheus function used to calculate rate: 'rate' or 'irate'.
 	//
@@ -304,7 +322,7 @@ type RateFuncParam struct {
 	Name string `json:"rateFunc"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type RateIntervalParam struct {
 	// Interval used for rate and histogram calculation.
 	//
@@ -314,7 +332,7 @@ type RateIntervalParam struct {
 	Name string `json:"rateInterval"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type RequestProtocolParam struct {
 	// Desired request protocol for the telemetry: For example, 'http' or 'grpc'.
 	//
@@ -324,7 +342,7 @@ type RequestProtocolParam struct {
 	Name string `json:"requestProtocol"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type ReporterParam struct {
 	// Istio telemetry reporter: 'source' or 'destination'.
 	//
@@ -334,7 +352,7 @@ type ReporterParam struct {
 	Name string `json:"reporter"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type StepParam struct {
 	// Step between [graph] datapoints, in seconds.
 	//
@@ -344,7 +362,7 @@ type StepParam struct {
 	Name int `json:"step"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics
 type VersionParam struct {
 	// Filters metrics by the specified version.
 	//

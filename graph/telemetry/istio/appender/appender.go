@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	defaultQuantile = 0.95
+	defaultAggregate = "request_operation"
+	defaultQuantile  = 0.95
 )
 
 // version-specific telemetry field names.  Because the istio version can change outside of the kiali pod,
@@ -35,16 +36,18 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
 			switch appenderName {
+			case AggregateNodeAppenderName:
+				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
-			case ServiceEntryAppenderName:
-				requestedAppenders[ServiceEntryAppenderName] = true
 			case IstioAppenderName:
 				requestedAppenders[IstioAppenderName] = true
 			case ResponseTimeAppenderName:
 				requestedAppenders[ResponseTimeAppenderName] = true
 			case SecurityPolicyAppenderName:
 				requestedAppenders[SecurityPolicyAppenderName] = true
+			case ServiceEntryAppenderName:
+				requestedAppenders[ServiceEntryAppenderName] = true
 			case SidecarsCheckAppenderName:
 				requestedAppenders[SidecarsCheckAppenderName] = true
 			case UnusedNodeAppenderName:
@@ -61,6 +64,7 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	// To pre-process service nodes run service_entry appender first
 	// To reduce processing, filter dead nodes next
 	// To reduce processing, next run appenders that don't apply to unused services
+	// - lazily inject aggregate nodes so other decorations can influence the new nodes/edges, if necessary
 	// Add orphan (unused) services
 	// Run remaining appenders
 	var appenders []graph.Appender
@@ -100,6 +104,24 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
+		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[AggregateNodeAppenderName]; ok || o.Appenders.All {
+		aggregate := o.NodeOptions.Aggregate
+		if aggregate == "" {
+			if aggregate = o.Params.Get("aggregate"); aggregate == "" {
+				aggregate = defaultAggregate
+			}
+		}
+		a := AggregateNodeAppender{
+			Aggregate:          aggregate,
+			AggregateValue:     o.NodeOptions.AggregateValue,
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
+			Service:            o.NodeOptions.Service,
 		}
 		appenders = append(appenders, a)
 	}

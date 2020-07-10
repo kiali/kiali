@@ -65,6 +65,7 @@ type NodeData struct {
 	App             string              `json:"app,omitempty"`
 	Version         string              `json:"version,omitempty"`
 	Service         string              `json:"service,omitempty"`         // requested service for NodeTypeService
+	Aggregate       string              `json:"aggregate,omitempty"`       // set like "<aggregate>=<aggregateVal>"
 	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
 	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
 	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
@@ -252,6 +253,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may be a service entry
 		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			nd.IsServiceEntry = val.(string)
+		}
+
+		// node may be an aggregate
+		if n.NodeType == graph.NodeTypeAggregate {
+			nd.Aggregate = fmt.Sprintf("%s=%s", n.Metadata[graph.Aggregate].(string), n.Metadata[graph.AggregateValue].(string))
 		}
 
 		nw := NodeWrapper{

@@ -13,6 +13,8 @@ func NewMetadata() Metadata {
 
 // Metadata keys to be used instead of literal strings
 const (
+	Aggregate       MetadataKey = "aggregate" // the prom attribute used for aggregation
+	AggregateValue  MetadataKey = "aggregateValue"
 	DestServices    MetadataKey = "destServices"
 	HasCB           MetadataKey = "hasCB"
 	HasMissingSC    MetadataKey = "hasMissingSC"

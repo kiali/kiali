@@ -578,6 +578,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceMetrics,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics aggregates aggregateMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single aggregate
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"AggregateMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics",
+			handlers.AggregateMetrics,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/metrics apps appMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single app
@@ -912,6 +933,50 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/graph",
 			handlers.GraphNamespaces,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph graphs graphAggregate
+		// ---
+		// The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      500: internalError
+		//      200: graphResponse
+		//
+		{
+
+			"GraphAggregate",
+			"GET",
+			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph",
+			handlers.GraphNode,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph graphs graphAggregateByService
+		// ---
+		// The backing JSON for an aggregate node detail graph, specific to a service. (supported graphTypes: app | versionedApp | workload)
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      500: internalError
+		//      200: graphResponse
+		//
+		{
+
+			"GraphAggregateByService",
+			"GET",
+			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph",
+			handlers.GraphNode,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
