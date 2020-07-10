@@ -74,7 +74,7 @@ Currently, Kiali releases are built using Go 1.14. Although Kiali may build corr
 
 To build Kiali:
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/kiali/kiali" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH. Also set the swagger version to be used by setting the variable SWAGGER_VERSION.
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/kiali/kiali" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
 
 [source,shell]
 ----
@@ -86,7 +86,6 @@ cd src/github.com/kiali
 git clone git@github.com:kiali/kiali
 git clone git@github.com:kiali/kiali-operator kiali/operator
 export PATH=${PATH}:${GOPATH}/bin
-export SWAGGER_VERSION=0.22.0
 ----
 
 * Build Kiali
