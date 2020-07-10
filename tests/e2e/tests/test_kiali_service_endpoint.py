@@ -255,7 +255,7 @@ def test_service_traces_detail(kiali_client):
 
     for service in services:
         name = service.get('name')
-        tracesDetailsList = kiali_client.request(method_name='tracesDetail', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        tracesDetailsList = kiali_client.request(method_name='tracesList', path={'namespace': bookinfo_namespace, 'service': name}).json()
         assert tracesDetailsList != None
 
         for tracesDetail in tracesDetailsList.get('data'):
