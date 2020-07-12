@@ -25,6 +25,7 @@ import (
 const (
 	missingSecretStatusCode = 520
 	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
+	defaultSessionDuration  = 86400
 )
 
 type AuthenticationHandler struct {
@@ -242,8 +243,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	token := r.Form.Get("id_token")
 	state := r.Form.Get("state")
-	expiresIn := r.Form.Get("expires_in")
-	if token == "" || expiresIn == "" {
+	if token == "" {
 		RespondWithError(w, http.StatusBadRequest, "Token is empty or invalid.")
 		return false
 	}
@@ -252,10 +252,17 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	expiresInNumber, err := strconv.Atoi(expiresIn)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is invalid.", err.Error())
-		return false
+	expiresIn := r.Form.Get("expires_in")
+	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
+
+	if expiresIn != "" {
+		expiresInNumber, err := strconv.Atoi(expiresIn)
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is invalid.", err.Error())
+			return false
+		}
+
+		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
 	}
 
 	// CSRF mitigation
@@ -286,8 +293,6 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Create business layer using the received id_token
-	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
-
 	business, err := business.Get(token)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
