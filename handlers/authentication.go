@@ -25,7 +25,7 @@ import (
 const (
 	missingSecretStatusCode = 520
 	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
-	defaultSessionDuration  = 86400
+	defaultSessionDuration  = 3600
 )
 
 type AuthenticationHandler struct {
@@ -252,19 +252,6 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	expiresIn := r.Form.Get("expires_in")
-	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
-
-	if expiresIn != "" {
-		expiresInNumber, err := strconv.Atoi(expiresIn)
-		if err != nil {
-			RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is invalid.", err.Error())
-			return false
-		}
-
-		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
-	}
-
 	// CSRF mitigation
 	separator := strings.LastIndexByte(state, '-')
 	if separator != -1 {
@@ -290,6 +277,36 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || fmt.Sprintf("%x", nonceHash) != nonceClaim.(string) {
 		RespondWithError(w, http.StatusUnauthorized, "Received token from the OpenID provider is invalid (nonce code mismatch)")
 		return false
+	}
+
+	// Set a default value for expiration date
+	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
+
+	// We check for the expiration date from the claim
+	if expClaim := idTokenClaims["exp"].(string); expClaim != "" {
+		expiresInNumber, err := strconv.Atoi(expClaim)
+
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusBadRequest, "Token exp claim is present, but invalid.", err.Error())
+			return false
+		}
+
+		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
+	}
+
+	// Then we check the expiration date for the access on the access token
+	// We give priority to it because it is what we use to access the cluster,
+	// so if it is valid we are ok.
+	expiresIn := r.Form.Get("expires_in")
+	if expiresIn != "" {
+		expiresInNumber, err := strconv.Atoi(expiresIn)
+
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is present, but invalid.", err.Error())
+			return false
+		}
+
+		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
 	}
 
 	// Create business layer using the received id_token
