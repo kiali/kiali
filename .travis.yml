@@ -16,9 +16,21 @@ jobs:
     - arch: amd64
     - arch: arm64
     - arch: ppc64le
+    - name: Snyk
+      if: branch == master AND fork == false
+      node_js:
+        - 12
+      env:
+        - NODE_OPTIONS=--max-old-space-size=8192
+        - secure: fA6zOOsbgJXlHe9nkuW4XOAtfQ9QTxorDJGLA97ic1+tCWpJzJlcTJ+cW1vMQXvpmoyLzZWl8PhS9PLeHY5wgwPc+EtTAc1l9JhNPr72V0yPCuZdIwc9HHG6gDFaoy28Ms4NFwIWFST11ZaZ0BLoi11uIDScngtcvbW94/HUw9giSpAbPGAjCa1+uLw4Oci678W072b0gtaTs8HujpePB1aofBhx1p6ZVMCY/O7VjJ6UdOcyBtNL8/DfupKHAQIpbNFvqO+GpscVNY7ZNyubj7K3Fw2CGSrvZ3V0iBcliA3jhQ8+bTTE0IvuXPcy79Cid5YQgxCcmAPlwkZeo8dLMspdTFiGkFINfAZkrfODWO1wgQ9tpJtCCr/PnycBYliT1XW1lCr2Uw2K5u0cn0JHeJLUwZPBKG9vTzq8zjIQBae7ZCb7x1PcuznbQpvo0zIkDOyNTJI5w5waroZ8VBJ8VkYNe0sNw0GgeM2doHVKPkayx/I1LgqBYv2oktLf25uhIvzKR3jByCsVOiWdw9/lvluQ77F4qzyDa58M9KM3FMsP84izxEQXjrgLUwIsgqvW9B9EROW9Thllllvc1/3gVKADYbiSD03RML7W1T+q8tX7KUiru1kGGSGjX7VDy46YooiUAA/Ou8aw9mP4jjN6eTEL2moZMN1frOgI9EJ49aY=
+      install:
+        - npm install -g snyk
+      script:
+        - if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then snyk monitor --org=kiali --prune-repeated-subdependencies; fi
+        - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then snyk test --org=kiali --prune-repeated-subdependencies; fi
 
 go:
-- 1.14.2
+- 1.14.5
 
 cache:
   directories:
