@@ -350,6 +350,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       this.errorBoundaryRef.current.cleanError();
     }
 
+    if (prev.summaryData !== this.props.summaryData) {
+      this.props.setTraceId(undefined);
+    }
+
     if (curr.showLegend && this.props.activeTour) {
       this.props.endTour();
     }
