@@ -95,7 +95,8 @@ kiali-purge: .ensure-oc-exists
 	${OC} patch kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
 	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
 ifeq ($(CLUSTER_TYPE),openshift)
-	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io,consolelinks.console.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
+	${OC} delete --ignore-not-found=true consolelinks.console.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
+	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" ; true
 endif
 
 ## kiali-reload-image: Refreshing the Kiali pod by deleting it which forces a redeployment
