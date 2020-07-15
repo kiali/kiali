@@ -249,20 +249,22 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           }
           <div style={{ paddingBottom: 14 }} />
         </RenderHeader>
-        <ParameterizedTabs
-          id="basic-tabs"
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-          }}
-          tabMap={paramToTab}
-          tabName={tabName}
-          defaultTab={defaultTab}
-          activeTab={this.state.currentTab}
-          mountOnEnter={true}
-          unmountOnExit={true}
-        >
-          {this.renderTabs()}
-        </ParameterizedTabs>
+        {this.state.workload && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+        )}
       </>
     );
   }
