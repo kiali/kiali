@@ -13,12 +13,17 @@ MOLECULE_SCENARIO ?= default
 # This is useful if you want to test a specific released version or images found in a different repo.
 # If the x_IMAGE_NAME env vars are set to 'dev' then the molecule tests will use the internal OpenShift registry location.
 ifeq ($(MOLECULE_USE_DEV_IMAGES),true)
-MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS ?= --env MOLECULE_KIALI_OPERATOR_IMAGE_PULL_POLICY=IfNotPresent --env MOLECULE_KIALI_IMAGE_PULL_POLICY=IfNotPresent
 ifeq ($(CLUSTER_TYPE),openshift)
 MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=dev --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=dev --env MOLECULE_KIALI_IMAGE_NAME=dev --env MOLECULE_KIALI_IMAGE_VERSION=dev
 else ifeq ($(CLUSTER_TYPE),minikube)
 MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=localhost:5000/kiali/kiali-operator --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=dev --env MOLECULE_KIALI_IMAGE_NAME=localhost:5000/kiali/kiali --env MOLECULE_KIALI_IMAGE_VERSION=dev
 endif
+endif
+
+# The Molecule tests by default will have the Kiali and Kiali Operator images pulled "Always".
+# MOLECULE_IMAGE_PULL_POLICY changes that default behavior - other options are the k8s values "Never" and "IfNotPresent".
+ifdef MOLECULE_IMAGE_PULL_POLICY
+MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS ?= --env MOLECULE_KIALI_OPERATOR_IMAGE_PULL_POLICY=${MOLECULE_IMAGE_PULL_POLICY} --env MOLECULE_KIALI_IMAGE_PULL_POLICY=${MOLECULE_IMAGE_PULL_POLICY}
 endif
 
 ifeq ($(MOLECULE_DEBUG),true)
