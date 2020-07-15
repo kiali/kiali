@@ -282,31 +282,16 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Set a default value for expiration date
 	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
 
-	// We check for the expiration date from the claim
+	// If the expiration date is present on the claim, we use that
 	if expClaim := idTokenClaims["exp"].(string); expClaim != "" {
-		expiresInNumber, err := strconv.Atoi(expClaim)
+		expiresInNumber, err := strconv.ParseInt(expClaim, 10, 64)
 
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusBadRequest, "Token exp claim is present, but invalid.", err.Error())
 			return false
 		}
 
-		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
-	}
-
-	// Then we check the expiration date for the access on the access token
-	// We give priority to it because it is what we use to access the cluster,
-	// so if it is valid we are ok.
-	expiresIn := r.Form.Get("expires_in")
-	if expiresIn != "" {
-		expiresInNumber, err := strconv.Atoi(expiresIn)
-
-		if err != nil {
-			RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is present, but invalid.", err.Error())
-			return false
-		}
-
-		expiresOn = time.Now().Add(time.Second * time.Duration(expiresInNumber))
+		expiresOn = time.Unix(expiresInNumber, 0)
 	}
 
 	// Create business layer using the received id_token
