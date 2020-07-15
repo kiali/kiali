@@ -448,7 +448,7 @@ export class GraphStyles {
       const nodeType = nodeData.nodeType;
       switch (nodeType) {
         case NodeType.AGGREGATE:
-          return 'star';
+          return 'round-pentagon';
         case NodeType.APP:
           return 'round-rectangle';
         case NodeType.SERVICE:
