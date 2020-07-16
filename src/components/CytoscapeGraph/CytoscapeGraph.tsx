@@ -136,8 +136,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   componentDidMount() {
-    const cy = this.getCy();
-    this.cyInitialization(cy);
+    this.cyInitialization(this.getCy());
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps) {
