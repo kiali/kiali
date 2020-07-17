@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -243,6 +244,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	token := r.Form.Get("id_token")
 	state := r.Form.Get("state")
+
 	if token == "" {
 		RespondWithError(w, http.StatusBadRequest, "Token is empty or invalid.")
 		return false
@@ -283,14 +285,26 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
 
 	// If the expiration date is present on the claim, we use that
-	if expClaim := idTokenClaims["exp"].(string); expClaim != "" {
-		expiresInNumber, err := strconv.ParseInt(expClaim, 10, 64)
+	expiresInNumber := int64(0)
+
+	// As it turns out, the response from the exp claim can be either a f64 and
+	// a json.Number. With this, we take care of it, converting to the int64
+	// that we need to use timestamps in go.
+	switch exp := idTokenClaims["exp"].(type) {
+	case float64:
+		// This can not fail
+		expiresInNumber = int64(exp)
+	case json.Number:
+		// This can fail, so we short-circuit if we get an invalid value.
+		expiresInNumber, err = exp.Int64()
 
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusBadRequest, "Token exp claim is present, but invalid.", err.Error())
 			return false
 		}
+	}
 
+	if expiresInNumber != 0 {
 		expiresOn = time.Unix(expiresInNumber, 0)
 	}
 
