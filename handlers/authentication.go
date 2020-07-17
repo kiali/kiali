@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 const (
 	missingSecretStatusCode = 520
 	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
+	defaultSessionDuration  = 3600
 )
 
 type AuthenticationHandler struct {
@@ -242,19 +244,13 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	token := r.Form.Get("id_token")
 	state := r.Form.Get("state")
-	expiresIn := r.Form.Get("expires_in")
-	if token == "" || expiresIn == "" {
+
+	if token == "" {
 		RespondWithError(w, http.StatusBadRequest, "Token is empty or invalid.")
 		return false
 	}
 	if state == "" {
 		RespondWithError(w, http.StatusBadRequest, "State parameter is empty or invalid.")
-		return false
-	}
-
-	expiresInNumber, err := strconv.Atoi(expiresIn)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusBadRequest, "Token expiration is invalid.", err.Error())
 		return false
 	}
 
@@ -285,9 +281,34 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	// Create business layer using the received id_token
-	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
+	// Set a default value for expiration date
+	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
 
+	// If the expiration date is present on the claim, we use that
+	expiresInNumber := int64(0)
+
+	// As it turns out, the response from the exp claim can be either a f64 and
+	// a json.Number. With this, we take care of it, converting to the int64
+	// that we need to use timestamps in go.
+	switch exp := idTokenClaims["exp"].(type) {
+	case float64:
+		// This can not fail
+		expiresInNumber = int64(exp)
+	case json.Number:
+		// This can fail, so we short-circuit if we get an invalid value.
+		expiresInNumber, err = exp.Int64()
+
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusBadRequest, "Token exp claim is present, but invalid.", err.Error())
+			return false
+		}
+	}
+
+	if expiresInNumber != 0 {
+		expiresOn = time.Unix(expiresInNumber, 0)
+	}
+
+	// Create business layer using the received id_token
 	business, err := business.Get(token)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
