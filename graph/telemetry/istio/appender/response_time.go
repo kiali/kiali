@@ -170,13 +170,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		sourceWl := string(lSourceWl)
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
-		destSvcNs := string(lDestSvcNs)
 		destSvc := string(lDestSvc)
-		destSvcName := string(lDestSvcName)
-		destWlNs := string(lDestWlNs)
-		destWl := string(lDestWl)
-		destApp := string(lDestApp)
-		destVer := string(lDestVer)
 		responseCode := string(lResponseCode)
 
 		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
@@ -196,7 +190,9 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		}
 
 		val := float64(s.Value)
-		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
+
+		// handle unusual destinations
+		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
 		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue

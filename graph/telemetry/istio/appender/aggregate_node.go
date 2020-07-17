@@ -175,11 +175,7 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 		sourceWl := string(lSourceWl)
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
-		destWlNs := string(lDestWlNs)
 		destSvc := string(lDestSvc)
-		destWl := string(lDestWl)
-		destApp := string(lDestApp)
-		destVer := string(lDestVer)
 		code := string(lCode)
 		protocol := string(lProtocol)
 		flags := string(lFlags)
@@ -199,8 +195,8 @@ func (a AggregateNodeAppender) injectAggregates(trafficMap graph.TrafficMap, vec
 			// protocol = "tcp"
 		}
 
-		// handle multicluster requests
-		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
+		// handle unusual destinations
+		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
 		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue
