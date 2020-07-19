@@ -40,8 +40,7 @@ ifeq ($(PUSH_CHANGES),y)
 	@echo "Will build version: $(SITE_VERSION)"
 	sed -i -r 's/^VERSION \?= v.*/VERSION \?= v$(SITE_BUMPED_VERSION)/' Makefile
 	./scripts/build-archive.sh v$(SITE_VERSION)
-	git add Makefile
-	git add content/documentation/v*
+	git add -A
 	git commit -m "Release v$(SITE_VERSION)"
 	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):$(SITE_MAIN_BRANCH)
 	git push $(SITE_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(SITE_VERSION)
