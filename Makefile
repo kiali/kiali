@@ -91,10 +91,15 @@ MINIKUBE_PROFILE ?= minikube
 # Details about the Kiali operator image used when deploying to remote cluster
 OPERATOR_IMAGE_PULL_POLICY ?= Always
 OPERATOR_NAMESPACE ?= kiali-operator
-OPERATOR_WATCH_NAMESPACE ?= kiali-operator
+OPERATOR_WATCH_NAMESPACE ?= \"\"
 
-# When deploying the Kiali operator via make, this indicates if it should install Kiali also.
+# When deploying the Kiali operator via make, this indicates if it should install Kiali also and where to put the CR
 OPERATOR_INSTALL_KIALI ?= false
+ifeq ($(OPERATOR_WATCH_NAMESPACE),\"\")
+OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_NAMESPACE}
+else
+OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_WATCH_NAMESPACE}
+endif
 
 # When installing Kiali to a remote cluster via make, here are some configuration settings for it.
 ACCESSIBLE_NAMESPACES ?= **
