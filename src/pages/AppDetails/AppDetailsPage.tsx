@@ -153,20 +153,22 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           }
           <div style={{ paddingBottom: 14 }} />
         </RenderHeader>
-        <ParameterizedTabs
-          id="basic-tabs"
-          onSelect={tabValue => {
-            this.setState({ currentTab: tabValue });
-          }}
-          tabMap={paramToTab}
-          tabName={tabName}
-          defaultTab={defaultTab}
-          activeTab={this.state.currentTab}
-          mountOnEnter={true}
-          unmountOnExit={true}
-        >
-          {this.renderTabs()}
-        </ParameterizedTabs>
+        {this.state.app && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+        )}
       </>
     );
   }
