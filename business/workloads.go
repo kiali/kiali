@@ -66,12 +66,12 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
-func (in *WorkloadService) GetWorkload(namespace string, workloadName string, includeServices bool) (*models.Workload, error) {
+func (in *WorkloadService) GetWorkload(namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkload")
 	defer promtimer.ObserveNow(&err)
 
-	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName)
+	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName, workloadType)
 	if err != nil {
 		return nil, err
 	}
@@ -112,13 +112,13 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	return workload, nil
 }
 
-func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string, includeServices bool, jsonPatch string) (*models.Workload, error) {
+func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string) (*models.Workload, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
 	defer promtimer.ObserveNow(&err)
 
 	// Identify controller and apply patch to workload
-	err = updateWorkload(in.businessLayer, namespace, workloadName, jsonPatch)
+	err = updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string,
 	}
 
 	// After the update we fetch the whole workload
-	return in.GetWorkload(namespace, workloadName, includeServices)
+	return in.GetWorkload(namespace, workloadName, workloadType, includeServices)
 }
 
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
@@ -655,7 +655,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	return ws, nil
 }
 
-func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models.Workload, error) {
+func fetchWorkload(layer *Layer, namespace string, workloadName string, workloadType string) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -680,6 +680,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	wg.Add(8)
 	errChan := make(chan error, 8)
 
+	// Pods are always fetched for all workload types
 	go func() {
 		defer wg.Done()
 		var err error
@@ -699,6 +700,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.DeploymentType {
+			return
+		}
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
@@ -718,6 +723,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.ReplicaSetType {
+			return
+		}
 		var err error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
@@ -734,6 +743,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.ReplicationControllerType {
+			return
+		}
 		var err error
 		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			repcon, err = layer.k8s.GetReplicationControllers(namespace)
@@ -746,6 +759,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.DeploymentConfigType {
+			return
+		}
 		var err error
 		if layer.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			depcon, err = layer.k8s.GetDeploymentConfig(namespace, workloadName)
@@ -757,6 +774,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.StatefulSetType {
+			return
+		}
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
 			fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
@@ -768,6 +789,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.CronJobType {
+			return
+		}
 		var err error
 		if isWorkloadIncluded(kubernetes.CronJobType) {
 			conjbs, err = layer.k8s.GetCronJobs(namespace)
@@ -780,6 +805,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 
 	go func() {
 		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.JobType {
+			return
+		}
 		var err error
 		if isWorkloadIncluded(kubernetes.JobType) {
 			jbs, err = layer.k8s.GetJobs(namespace)
@@ -1082,7 +1111,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	return wl, kubernetes.NewNotFound(workloadName, "Kiali", "Workload")
 }
 
-func updateWorkload(layer *Layer, namespace string, workloadName string, jsonPatch string) error {
+func updateWorkload(layer *Layer, namespace string, workloadName string, workloadType string, jsonPatch string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
@@ -1098,6 +1127,21 @@ func updateWorkload(layer *Layer, namespace string, workloadName string, jsonPat
 		kubernetes.JobType,
 		kubernetes.CronJobType,
 		kubernetes.PodType,
+	}
+
+	// workloadType is an optional parameter used to optimize the workload type fetch
+	// By default workloads use only the "name" but not the pair "name,type".
+	if workloadType != "" {
+		found := false
+		for _, wt := range workloadTypes {
+			if workloadType == wt {
+				found = true
+				break
+			}
+		}
+		if found {
+			workloadTypes = []string{workloadType}
+		}
 	}
 
 	wg := sync.WaitGroup{}

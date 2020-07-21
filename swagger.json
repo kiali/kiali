@@ -3216,6 +3216,12 @@
             "name": "workload",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "WorkloadType",
+            "name": "type",
+            "in": "query"
           }
         ],
         "responses": {

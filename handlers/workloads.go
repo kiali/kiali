@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
-	"io/ioutil"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -40,6 +40,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 // WorkloadDetails is the API handler to fetch all details to be displayed, related to a single workload
 func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+	query := r.URL.Query()
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -49,9 +50,10 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	}
 	namespace := params["namespace"]
 	workload := params["workload"]
+	workloadType := query.Get("type")
 
 	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, true)
+	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, workloadType, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
@@ -63,6 +65,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 // WorkloadUpdate is the API to perform a patch on a Workload configuration
 func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
+	query := r.URL.Query()
 
 	// Get business layer
 	business, err := getBusiness(r)
@@ -73,19 +76,20 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 
 	namespace := params["namespace"]
 	workload := params["workload"]
+	workloadType := query.Get("type")
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, true, jsonPatch)
+	workloadDetails, err := business.Workload.UpdateWorkload(namespace, workload, workloadType,true, jsonPatch)
 
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
-	audit(r, "UPDATE on Namespace: "+namespace+" Workload name: "+workload+" Patch: "+jsonPatch)
+	audit(r, "UPDATE on Namespace: "+namespace+" Workload name: "+workload+" Type: "+workloadType+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, workloadDetails)
 }
 
