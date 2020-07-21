@@ -224,8 +224,8 @@ type workloadHealthParams struct {
 	// The target workload
 	//
 	// in: path
-	Workload 		 string `json:"workload"`
-	WorkloadType 	 string `json:"type"`
+	Workload     string `json:"workload"`
+	WorkloadType string `json:"type"`
 }
 
 func (p *workloadHealthParams) extract(r *http.Request) {
