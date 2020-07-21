@@ -261,13 +261,13 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   };
 
   private renderNamespacesSummary = () => {
-    return <>{this.props.namespaces.map(namespace => this.renderNamespace(namespace.name))}</>;
+    return this.props.namespaces.map(namespace => this.renderNamespace(namespace.name));
   };
 
   private renderNamespace = (ns: string) => {
     const validation = this.state.validationsMap[ns];
     return (
-      <>
+      <React.Fragment key={ns}>
         <span>
           <Tooltip position={TooltipPosition.auto} content={<>Namespace</>}>
             <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
@@ -286,7 +286,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           )}
         </span>
         <br />
-      </>
+      </React.Fragment>
     );
   };
 

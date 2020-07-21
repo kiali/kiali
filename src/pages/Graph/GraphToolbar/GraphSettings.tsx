@@ -292,7 +292,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         <div id="graph-display-menu" className={menuStyle}>
           <div className={titleStyle}>Show Edge Labels</div>
           {edgeLabelOptions.map((item: DisplayOptionType) => (
-            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
               <label key={item.id} className={itemStyle(!!item.tooltip)}>
                 <Radio
                   id={item.id}
@@ -312,7 +312,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
           ))}
           <div className={titleStyle}>Show</div>
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
               <label key={item.id} className={itemStyle(!!item.tooltip)}>
                 <Checkbox
                   id={item.id}
@@ -331,7 +331,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
           ))}
           <div className={titleStyle}>Show Badges</div>
           {badgeOptions.map((item: DisplayOptionType) => (
-            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
               <label key={item.id} className={itemStyle(!!item.tooltip)}>
                 <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
               </label>
