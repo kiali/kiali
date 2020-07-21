@@ -43,7 +43,7 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
       return true;
     }
     // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
-    return !(!nextIsEmpty && this.props.namespaces === nextProps.namespaces);
+    return !(!nextIsEmpty && _.isEqual(this.props.namespaces, nextProps.namespaces));
   }
 
   namespacesText() {

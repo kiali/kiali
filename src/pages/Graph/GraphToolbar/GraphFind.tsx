@@ -62,7 +62,7 @@ const thinGroupStyle = style({
   paddingRight: '10px'
 });
 
-export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindState> {
+export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: () => null
   };
