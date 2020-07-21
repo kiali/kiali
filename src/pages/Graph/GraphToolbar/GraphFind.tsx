@@ -85,14 +85,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   // We only update on a change to the find/hide/compress values, or a graph change.  Although we use other props
   // in processing (compressOnHide, layout, etc), a change to those settings will generate a graph change, so we
   // wait for the graph change to do the update.
-  shouldComponentUpdate(nextProps: GraphFindProps) {
+  shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState) {
     const cyChanged = this.props.cy !== nextProps.cy;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
     const graphChanged = this.props.updateTime !== nextProps.updateTime;
     const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
+    const errorChanged = this.state.errorMessage !== nextState.errorMessage;
 
-    return cyChanged || findChanged || hideChanged || graphChanged || showFindHelpChanged;
+    return cyChanged || findChanged || hideChanged || graphChanged || showFindHelpChanged || errorChanged;
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
@@ -186,11 +187,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 </Button>
               </Tooltip>
             )}
-            {this.state.errorMessage && (
-              <div>
-                <span style={{ color: 'red' }}>{this.state.errorMessage}</span>
-              </div>
-            )}
+            {this.state.errorMessage && <div style={{ color: 'red' }}>{this.state.errorMessage}</div>}
           </span>
         </Form>
       </TourStopContainer>
