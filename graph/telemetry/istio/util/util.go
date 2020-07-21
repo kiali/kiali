@@ -31,7 +31,7 @@ func HandleDestination(sourceWlNs, sourceWl, destSvcNs, destSvc, destSvcName, de
 		return istioNs, "istio-egressgateway", istioNs, "istio-egressgateway", "istio-egressgateway", "latest", true
 	}
 
-	return destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, true
+	return destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, false
 }
 
 // handleMultiClusterRequest ensures the proper destination service namespace and name
