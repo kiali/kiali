@@ -54,7 +54,7 @@ func TestCorrectServiceEntry(t *testing.T) {
 func TestInvalidServiceEntry(t *testing.T) {
 	vals, valid := subsetPresenceCheckerPrep("subset-presence-service-entry-invalid.yaml", t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertValidationsPresent(2, true)
 	tb.AssertValidationAt(0, models.WarningSeverity, "spec/http[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/tls[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
@@ -71,7 +71,7 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 		Namespace:        "bookinfo",
 		Namespaces:       namespaceNames(loader.GetResources("Namespace")),
 		DestinationRules: loader.GetResources("DestinationRule"),
-		VirtualService:   loader.GetResource("VirtualService"),
+		VirtualService:   loader.GetFirstResource("VirtualService"),
 	}.Check()
 
 	if err != nil {
@@ -96,14 +96,14 @@ func yamlFixtureLoaderFor(file string) *data.YamlFixtureLoader {
 
 func testNoSubsetPresenceValidationsFound(scenario string, t *testing.T) {
 	vals, valid := subsetPresenceCheckerPrep(scenario, t)
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertNoValidations()
 }
 
 func testSubsetPresenceValidationsFound(scenario string, t *testing.T) {
 	vals, valid := subsetPresenceCheckerPrep(scenario, t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertValidationsPresent(2, true)
 	tb.AssertValidationAt(0, models.WarningSeverity, "spec/http[0]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/http[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")

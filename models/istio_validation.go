@@ -119,6 +119,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0104 This host has no matching entry in the service registry",
 		Severity: ErrorSeverity,
 	},
+	"authorizationpolicy.mtls.needstobeenabled": {
+		Message:  "KIA0105 This field requires mTLS to be enabled",
+		Severity: ErrorSeverity,
+	},
 	"destinationrules.multimatch": {
 		Message:  "KIA0201 More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,

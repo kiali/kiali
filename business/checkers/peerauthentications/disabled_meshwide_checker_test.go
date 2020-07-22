@@ -42,7 +42,7 @@ func disabledMeshTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, 
 	}
 
 	validations, valid := DisabledMeshWideChecker{
-		PeerAuthn:        loader.GetResource("PeerAuthentication"),
+		PeerAuthn:        loader.GetFirstResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
@@ -51,13 +51,13 @@ func disabledMeshTestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, 
 
 func testNoDisabledMeshValidations(scenario string, t *testing.T) {
 	vals, valid := disabledMeshTestPrep(scenario, t)
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertNoValidations()
 }
 
 func testWithDisabledMeshValidations(scenario string, t *testing.T) {
 	vals, valid := disabledMeshTestPrep(scenario, t)
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertValidationsPresent(1, false)
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disablemeshdestinationrulemissing")
 }

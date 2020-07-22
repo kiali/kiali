@@ -55,7 +55,7 @@ func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	err := loader.Load()
 
 	validations, valid := DisabledNamespaceWideChecker{
-		PeerAuthn:        loader.GetResource("PeerAuthentication"),
+		PeerAuthn:        loader.GetFirstResource("PeerAuthentication"),
 		DestinationRules: loader.GetResources("DestinationRule"),
 	}.Check()
 
@@ -69,14 +69,14 @@ func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCh
 func testNoDisabledNsValidations(scenario string, t *testing.T) {
 	vals, valid := disabledNamespacetestPrep(scenario, t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertNoValidations()
 }
 
 func testWithDisabledNsValidations(scenario string, t *testing.T) {
 	vals, valid := disabledNamespacetestPrep(scenario, t)
 
-	tb := validations.ValidationTestAsserter{T: t, Validations: vals, Valid: valid}
+	tb := validations.IstioCheckTestAsserter{T: t, Validations: vals, Valid: valid}
 	tb.AssertValidationsPresent(1, false)
 	tb.AssertValidationAt(0, models.ErrorSeverity, "spec/mtls", "peerauthentications.mtls.disabledestinationrulemissing")
 }
