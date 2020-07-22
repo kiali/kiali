@@ -18,7 +18,7 @@
 * It is expected that the following have already been deployed in Openshift
     * `Istio-system (Istio, Grafana, Prometheus, etc.)`
     * `Kiali (Deployed into Istio-system namespace)`
-    * `Bookinfo`
+    * `Bookinfo (with traffic generated to Bookinfo)`
 
 ```sh
 # Clone this repository
@@ -35,13 +35,16 @@ $ source .kiali-e2e/bin/activate
 $ pip install -U pip
 $ pip install -r requirements.txt
 
-# Update config/env.yaml with kiali hostname and credentials
+# Update config/env.yaml with kiali hostname and openshift-user-token
 
 # Login to Openshift Cluster 
-$ oc login https://<openshift>:8443 --username=<username> --password=<password> --insecure-skip-tls-verify=true
+$ oc login https://<openshift>:<port> --username=<username> --password=<password> --insecure-skip-tls-verify=true
 
 # run API tests - this test class is run by the Jenkins-CI kiali-core-pr job
 $ pytest tests/test_api_methods.py
+
+# To save test output to JUnit XML file
+$ pytest tests/test_api_methods.py --junitxml=<filename>
 
 # run all tests
 $ pytest -s tests/
