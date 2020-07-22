@@ -67,7 +67,6 @@ export const initPeerAuthentication = (): PeerAuthenticationState => ({
 export const isPeerAuthenticationStateValid = (pa: PeerAuthenticationState): boolean => {
   const workloadSelectorRule = pa.addWorkloadSelector ? pa.workloadSelectorValid : true;
   const validPortsMtlsRule = pa.addPortMtls ? pa.workloadSelectorValid && pa.portLevelMtls.length > 0 : true;
-  console.log('TODELETE workloadSelectorRule ' + workloadSelectorRule + ' validPortsMtlsRule ' + validPortsMtlsRule);
   return workloadSelectorRule && validPortsMtlsRule;
 };
 

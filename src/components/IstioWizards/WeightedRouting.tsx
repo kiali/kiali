@@ -6,7 +6,7 @@ import { style } from 'typestyle';
 import { PfColors } from '../Pf/PfColors';
 import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
-import { getDefaultWeights } from './IstioWizardActions';
+import { getDefaultWeights } from './WizardActions';
 
 type Props = {
   serviceName: string;

@@ -9,6 +9,7 @@ const titles = [
   'services',
   'istio',
   'istio/new',
+  'extensions/threescale/new',
   'extensions/iter8',
   'extensions/iter8/new'
 ];
@@ -22,6 +23,8 @@ export default class DefaultSecondaryMasthead extends React.Component {
         title = 'Create New Istio Config';
       } else if (path === 'istio') {
         title = 'Istio Config';
+      } else if (path === 'extensions/threescale/new') {
+        title = 'Create New 3scale Config';
       } else if (path === 'extensions/iter8') {
         title = 'Iter8 Experiments';
       } else if (path === 'extensions/iter8/new') {

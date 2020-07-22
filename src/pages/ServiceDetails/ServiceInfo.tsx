@@ -10,20 +10,17 @@ import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { ObjectValidation, Validations, ValidationTypes } from '../../types/IstioObjects';
-import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import Validation from '../../components/Validations/Validation';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import Namespace from 'types/Namespace';
-import { MessageType } from 'types/MessageCenter';
-import { serverConfig } from 'config';
 import DestinationRuleValidator from './ServiceInfo/types/DestinationRuleValidator';
 import { DurationInSeconds } from 'types/Common';
 import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from 'components/Refresh/RefreshButton';
-import IstioWizardDropdown from 'components/IstioWizards/IstioWizardDropdown';
+import ServiceWizardDropdown from 'components/IstioWizards/ServiceWizardDropdown';
 import GraphDataSource from 'services/GraphDataSource';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 
@@ -35,8 +32,6 @@ type ServiceInfoState = {
   serviceDetails?: ServiceDetailsInfo;
   gateways: string[];
   validations: Validations;
-  threeScaleInfo: ThreeScaleInfo;
-  threeScaleServiceRule?: ThreeScaleServiceRule;
   currentTab: string;
 };
 
@@ -57,11 +52,6 @@ const paramToTab: { [key: string]: number } = {
   destinationrules: 2
 };
 
-const emptyThreeScale: ThreeScaleInfo = {
-  enabled: false,
-  permissions: { create: false, update: false, delete: false }
-};
-
 class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   private promises = new PromisesRegistry();
   private graphDataSource = new GraphDataSource();
@@ -71,7 +61,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     this.state = {
       gateways: [],
       validations: {},
-      threeScaleInfo: emptyThreeScale,
       currentTab: activeTab(tabName, defaultTab)
     };
   }
@@ -99,7 +88,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         this.promises
           .registerAll(
             'gateways',
-            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false))
+            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false, ''))
           )
           .then(responses => {
             let gatewayList: string[] = [];
@@ -131,40 +120,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       });
 
     this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service);
-
-    if (serverConfig.extensions?.threescale?.enabled) {
-      API.getThreeScaleInfo()
-        .then(results => {
-          this.setState({
-            threeScaleInfo: results.data
-          });
-          if (results.data.enabled) {
-            API.getThreeScaleServiceRule(this.props.namespace, this.props.service)
-              .then(result => {
-                this.setState({
-                  threeScaleServiceRule: result.data
-                });
-              })
-              .catch(error => {
-                this.setState({
-                  threeScaleServiceRule: undefined
-                });
-                // Only log 500 errors. 404 response is a valid response on this composition case
-                if (error.response && error.response.status >= 500) {
-                  AlertUtils.addError('Could not fetch ThreeScaleServiceRule.', error);
-                }
-              });
-          }
-        })
-        .catch(error => {
-          AlertUtils.addError(
-            'Could not fetch 3scale info. Turning off 3scale integration.',
-            error,
-            'default',
-            MessageType.INFO
-          );
-        });
-    }
   };
 
   static addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
@@ -295,7 +250,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
                 endpoints={this.state.serviceDetails?.endpoints}
                 health={this.state.serviceDetails?.health}
                 externalName={this.state.serviceDetails?.service.externalName}
-                threeScaleServiceRule={this.state.threeScaleServiceRule}
                 validations={this.getServiceValidation()}
                 miniGraphDatasource={this.graphDataSource}
               />
@@ -355,7 +309,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         <DurationDropdownContainer id="service-info-duration-dropdown" prefix="Last" />
         <RefreshButtonContainer handleRefresh={this.fetchBackend} />
         {details && (
-          <IstioWizardDropdown
+          <ServiceWizardDropdown
             namespace={this.props.namespace}
             serviceName={details.service.name}
             show={false}
@@ -365,8 +319,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             gateways={this.state.gateways}
             tlsStatus={details.namespaceMTLS}
             onChange={this.fetchBackend}
-            threeScaleInfo={this.state.threeScaleInfo}
-            threeScaleServiceRule={this.state.threeScaleServiceRule}
           />
         )}
       </RightActionBar>

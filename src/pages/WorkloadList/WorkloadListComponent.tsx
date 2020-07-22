@@ -118,6 +118,7 @@ class WorkloadListComponent extends FilterComponent.Component<
         healthPromise: API.getWorkloadHealth(
           data.namespace.name,
           deployment.name,
+          deployment.type,
           this.props.duration,
           deployment.istioSidecar
         ),

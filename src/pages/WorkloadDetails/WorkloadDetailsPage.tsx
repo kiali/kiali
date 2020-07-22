@@ -5,14 +5,13 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patt
 
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
-import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import WorkloadInfo from './WorkloadInfo';
 import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
-import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
 import { DurationInSeconds } from '../../types/Common';
@@ -22,7 +21,6 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 
 type WorkloadDetailsState = {
   workload?: Workload;
-  validations?: Validations;
   currentTab: string;
 };
 
@@ -68,74 +66,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload)
       .then(details =>
         this.setState({
-          workload: details.data,
-          validations: this.workloadValidations(details.data)
+          workload: details.data
         })
       )
       .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
   };
-
-  // All information for validations is fetched in the workload, no need to add another call
-  private workloadValidations(workload: Workload): Validations {
-    const noIstiosidecar: ObjectCheck = {
-      message: 'Pod has no Istio sidecar',
-      severity: ValidationTypes.Warning,
-      path: ''
-    };
-    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
-    const noVersionLabel: ObjectCheck = {
-      message: 'Pod has no version label',
-      severity: ValidationTypes.Warning,
-      path: ''
-    };
-    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
-    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
-    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
-
-    const validations: Validations = {};
-    if (workload.pods.length > 0) {
-      validations.pod = {};
-      workload.pods.forEach(pod => {
-        validations.pod[pod.name] = {
-          name: pod.name,
-          objectType: 'pod',
-          valid: true,
-          checks: []
-        };
-        if (!isIstioNamespace(this.props.match.params.namespace)) {
-          if (!pod.istioContainers || pod.istioContainers.length === 0) {
-            validations.pod[pod.name].checks.push(noIstiosidecar);
-          }
-          if (!pod.labels) {
-            validations.pod[pod.name].checks.push(noAppLabel);
-            validations.pod[pod.name].checks.push(noVersionLabel);
-          } else {
-            if (!pod.appLabel) {
-              validations.pod[pod.name].checks.push(noAppLabel);
-            }
-            if (!pod.versionLabel) {
-              validations.pod[pod.name].checks.push(noVersionLabel);
-            }
-          }
-        }
-        switch (pod.status) {
-          case 'Pending':
-            validations.pod[pod.name].checks.push(pendingPod);
-            break;
-          case 'Unknown':
-            validations.pod[pod.name].checks.push(unknownPod);
-            break;
-          case 'Failed':
-            validations.pod[pod.name].checks.push(failedPod);
-            break;
-          default:
-          // Pod healthy
-        }
-        validations.pod[pod.name].valid = validations.pod[pod.name].checks.length === 0;
-      });
-    }
-    return validations;
-  }
 
   private staticTabs() {
     const hasPods = this.state.workload?.pods.length;
@@ -143,10 +78,9 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <WorkloadInfo
-          workload={this.state.workload}
+          workloadName={this.props.match.params.workload}
           namespace={this.props.match.params.namespace}
           duration={this.props.duration}
-          onRefresh={this.fetchWorkload}
         />
       </Tab>
     );

@@ -11,7 +11,6 @@ import { ObjectCheck, ObjectValidation } from '../../../types/IstioObjects';
 import { ValidationObjectSummary } from '../../../components/Validations/ValidationObjectSummary';
 import ValidationList from '../../../components/Validations/ValidationList';
 import Labels from '../../../components/Label/Labels';
-import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
 import { AdditionalItem } from 'types/Workload';
 import { TextOrLink } from 'components/TextOrLink';
 import { renderAPILogo } from 'components/Logo/Logos';
@@ -34,7 +33,6 @@ interface ServiceInfoDescriptionProps {
   ports?: ServicePort[];
   endpoints?: Endpoints[];
   health?: ServiceHealth;
-  threeScaleServiceRule?: ThreeScaleServiceRule;
   validations?: ObjectValidation;
   miniGraphDatasource: GraphDataSource;
 }
@@ -152,15 +150,6 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                         </StackItem>
                       );
                     })}
-                    {this.props.threeScaleServiceRule && this.props.threeScaleServiceRule.threeScaleHandlerName !== '' && (
-                      <StackItem id={'threescale_link'}>
-                        <Title headingLevel="h6" size="md">
-                          {' '}
-                          3scale API handler
-                        </Title>
-                        <TextOrLink text={this.props.threeScaleServiceRule.threeScaleHandlerName} />
-                      </StackItem>
-                    )}
                   </Stack>
                 </Tab>
                 <Tab eventKey={1} title={'Network'}>

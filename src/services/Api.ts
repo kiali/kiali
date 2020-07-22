@@ -29,7 +29,6 @@ import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
 import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
-import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
 import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info } from '../types/Iter8';
@@ -134,10 +133,13 @@ export const getNamespaceValidations = (namespace: string) => {
   return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {});
 };
 
-export const getIstioConfig = (namespace: string, objects: string[], validate: boolean) => {
+export const getIstioConfig = (namespace: string, objects: string[], validate: boolean, labelSelector: string) => {
   const params: any = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
   if (validate) {
     params.validate = validate;
+  }
+  if (labelSelector) {
+    params.labelSelector = labelSelector;
   }
   return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
 };
@@ -248,10 +250,12 @@ export const getAppHealth = (
 export const getWorkloadHealth = (
   namespace: string,
   workload: string,
+  workloadType: string,
   durationSec: number,
   hasSidecar: boolean
 ): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
+  params['type'] = workloadType;
   return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}).then(response =>
     WorkloadHealth.fromJson(response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
   );
@@ -422,6 +426,15 @@ export const getWorkload = (namespace: string, name: string) => {
   return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {});
 };
 
+export const updateWorkload = (
+  namespace: string,
+  name: string,
+  type: string,
+  jsonPatch: string
+): Promise<Response<string>> => {
+  return newRequest(HTTP_VERBS.PATCH, urls.workload(namespace, name), { type: type }, jsonPatch);
+};
+
 export const getPod = (namespace: string, name: string) => {
   return newRequest<Pod>(HTTP_VERBS.GET, urls.pod(namespace, name), {}, {});
 };
@@ -469,42 +482,6 @@ export const getErrorDetail = (error: AxiosError): string => {
     }
   }
   return '';
-};
-
-export const getThreeScaleInfo = () => {
-  return newRequest<ThreeScaleInfo>(HTTP_VERBS.GET, urls.threeScale, {}, {});
-};
-
-export const getThreeScaleHandlers = () => {
-  return newRequest<ThreeScaleHandler[]>(HTTP_VERBS.GET, urls.threeScaleHandlers, {}, {});
-};
-
-export const createThreeScaleHandler = (json: string) => {
-  return newRequest<ThreeScaleHandler[]>(HTTP_VERBS.POST, urls.threeScaleHandlers, {}, json);
-};
-
-export const updateThreeScaleHandler = (handlerName: string, json: string) => {
-  return newRequest<ThreeScaleHandler[]>(HTTP_VERBS.PATCH, urls.threeScaleHandler(handlerName), {}, json);
-};
-
-export const deleteThreeScaleHandler = (handlerName: string) => {
-  return newRequest<ThreeScaleHandler[]>(HTTP_VERBS.DELETE, urls.threeScaleHandler(handlerName), {}, {});
-};
-
-export const getThreeScaleServiceRule = (namespace: string, service: string) => {
-  return newRequest<ThreeScaleServiceRule>(HTTP_VERBS.GET, urls.threeScaleServiceRule(namespace, service), {}, {});
-};
-
-export const createThreeScaleServiceRule = (namespace: string, json: string) => {
-  return newRequest<string>(HTTP_VERBS.POST, urls.threeScaleServiceRules(namespace), {}, json);
-};
-
-export const updateThreeScaleServiceRule = (namespace: string, service: string, json: string) => {
-  return newRequest<string>(HTTP_VERBS.PATCH, urls.threeScaleServiceRule(namespace, service), {}, json);
-};
-
-export const deleteThreeScaleServiceRule = (namespace: string, service: string) => {
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.threeScaleServiceRule(namespace, service), {}, {});
 };
 
 export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {

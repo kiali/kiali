@@ -17,9 +17,11 @@ const Label = (props: Props) => {
         <PfLabel className="label-key" isCompact={true}>
           {name}
         </PfLabel>
-        <PfLabel className="label-value" isCompact={true}>
-          {value || ''}
-        </PfLabel>
+        {value && value.length > 0 && (
+          <PfLabel className="label-value" isCompact={true}>
+            {value || ''}
+          </PfLabel>
+        )}
       </span>
     );
   } else {

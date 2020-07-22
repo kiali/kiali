@@ -12,11 +12,10 @@ import { Paths } from './config';
 import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
-import ThreeScaleHandlerListPage from './pages/extensions/threescale/ThreeScaleHandlerList/ThreeScaleHandlerListPage';
-import ThreeScaleHandlerDetailsPage from './pages/extensions/threescale/ThreeScaleHandlerDetails/ThreeScaleHandlerDetailsPage';
 import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/ExperimentListPage';
 import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
 import ExperimentDetailsPage from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentDetailsPage';
+import ThreeScaleNewPageContainer from './pages/extensions/threescale/ThreeScaleNew/ThreeScaleNewPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -51,7 +50,11 @@ const navItems: MenuItem[] = [
   {
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
-    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new')]
+    pathsActive: [
+      new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'),
+      new RegExp('/' + Paths.ISTIO + '/new'),
+      new RegExp('/extensions/threescale/new')
+    ]
   },
   {
     title: 'Distributed Tracing',
@@ -60,11 +63,6 @@ const navItems: MenuItem[] = [
 ];
 
 const extensionsItems: MenuItem[] = [
-  {
-    title: '3scale Config',
-    to: '/extensions/threescale',
-    pathsActive: [/^\/extensions\/threescale/]
-  },
   {
     title: 'Iter8 Experiments',
     to: '/extensions/iter8',
@@ -172,6 +170,10 @@ const secondaryMastheadRoutes: Path[] = [
     component: DefaultSecondaryMasthead
   },
   {
+    path: '/extensions/threescale/new',
+    component: DefaultSecondaryMasthead
+  },
+  {
     path: '/extensions/iter8',
     component: DefaultSecondaryMasthead
   }
@@ -181,15 +183,7 @@ const extensionsRoutes: Path[] = [
   // Keep routes ordered with the more specific URLs first
   {
     path: '/extensions/threescale/new',
-    component: ThreeScaleHandlerDetailsPage
-  },
-  {
-    path: '/extensions/threescale/:handlerName',
-    component: ThreeScaleHandlerDetailsPage
-  },
-  {
-    path: '/extensions/threescale',
-    component: ThreeScaleHandlerListPage
+    component: ThreeScaleNewPageContainer
   },
   // Extension will follow /extensions/<extension>/namespaces/:namespace/experiments/:name pattern
   // To make RenderPage.tsx routes easy to filter without regex

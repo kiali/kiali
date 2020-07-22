@@ -2,7 +2,7 @@ import * as React from 'react';
 import { style } from 'typestyle';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { Validations, ValidationTypes } from '../../types/IstioObjects';
+import { IstioRule, ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
@@ -19,13 +19,14 @@ import { DurationInSeconds } from 'types/Common';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from 'components/Refresh/RefreshButton';
+import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
+import { serverConfig } from '../../config';
+import { isIstioNamespace } from '../../config/ServerConfig';
 
 type WorkloadInfoProps = {
-  workload?: Workload;
-  validations?: Validations;
   namespace: string;
+  workloadName: string;
   duration: DurationInSeconds;
-  onRefresh: () => void;
 };
 
 interface ValidationChecks {
@@ -33,8 +34,11 @@ interface ValidationChecks {
 }
 
 type WorkloadInfoState = {
+  workload?: Workload;
+  validations?: Validations;
   currentTab: string;
   health?: WorkloadHealth;
+  threescaleRules: IstioRule[];
 };
 
 const tabIconStyle = style({
@@ -54,7 +58,8 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   constructor(props: WorkloadInfoProps) {
     super(props);
     this.state = {
-      currentTab: activeTab(tabName, defaultTab)
+      currentTab: activeTab(tabName, defaultTab),
+      threescaleRules: []
     };
   }
 
@@ -70,38 +75,119 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         currentTab: aTab
       });
     }
-    if (prev.duration !== this.props.duration || prev.workload !== this.props.workload) {
+
+    if (prev.duration !== this.props.duration) {
       this.fetchBackend();
     }
   }
 
   private fetchBackend = () => {
-    if (!this.props.workload) {
-      return;
-    }
-    this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
+    this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workloadName);
+    API.getWorkload(this.props.namespace, this.props.workloadName)
+      .then(details =>
+        this.setState({
+          workload: details.data,
+          validations: this.workloadValidations(details.data)
+        })
+      )
+      .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
     API.getWorkloadHealth(
       this.props.namespace,
-      this.props.workload.name,
+      this.props.workloadName,
+      this.state.workload ? this.state.workload.type : '',
       this.props.duration,
-      this.props.workload.istioSidecar
+      this.state.workload ? this.state.workload.istioSidecar : false
     )
       .then(health => this.setState({ health: health }))
       .catch(error => AlertUtils.addError('Could not fetch Health.', error));
+    if (serverConfig.extensions?.threescale.enabled) {
+      // 3scale info should be placed under control plane namespace
+      API.getIstioConfig(serverConfig.istioNamespace, ['rules'], false, 'kiali_wizard=threescale')
+        .then(response => {
+          this.setState({
+            threescaleRules: response.data.rules
+          });
+        })
+        .catch(error => {
+          AlertUtils.addError('Could not fetch 3scale Rules.', error);
+        });
+    }
   };
+
+  // All information for validations is fetched in the workload, no need to add another call
+  private workloadValidations(workload: Workload): Validations {
+    const noIstiosidecar: ObjectCheck = {
+      message: 'Pod has no Istio sidecar',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
+    const noVersionLabel: ObjectCheck = {
+      message: 'Pod has no version label',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
+    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
+    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
+
+    const validations: Validations = {};
+    if (workload.pods.length > 0) {
+      validations.pod = {};
+      workload.pods.forEach(pod => {
+        validations.pod[pod.name] = {
+          name: pod.name,
+          objectType: 'pod',
+          valid: true,
+          checks: []
+        };
+        if (!isIstioNamespace(this.props.namespace)) {
+          if (!pod.istioContainers || pod.istioContainers.length === 0) {
+            validations.pod[pod.name].checks.push(noIstiosidecar);
+          }
+          if (!pod.labels) {
+            validations.pod[pod.name].checks.push(noAppLabel);
+            validations.pod[pod.name].checks.push(noVersionLabel);
+          } else {
+            if (!pod.appLabel) {
+              validations.pod[pod.name].checks.push(noAppLabel);
+            }
+            if (!pod.versionLabel) {
+              validations.pod[pod.name].checks.push(noVersionLabel);
+            }
+          }
+        }
+        switch (pod.status) {
+          case 'Pending':
+            validations.pod[pod.name].checks.push(pendingPod);
+            break;
+          case 'Unknown':
+            validations.pod[pod.name].checks.push(unknownPod);
+            break;
+          case 'Failed':
+            validations.pod[pod.name].checks.push(failedPod);
+            break;
+          default:
+          // Pod healthy
+        }
+        validations.pod[pod.name].valid = validations.pod[pod.name].checks.length === 0;
+      });
+    }
+    return validations;
+  }
 
   private validationChecks(): ValidationChecks {
     const validationChecks = {
       hasPodsChecks: false
     };
 
-    const pods = this.props.workload?.pods || [];
+    const pods = this.state.workload?.pods || [];
 
     validationChecks.hasPodsChecks = pods.some(
       pod =>
-        this.props.validations?.pod &&
-        this.props.validations.pod[pod.name] &&
-        this.props.validations.pod[pod.name].checks.length > 0
+        this.state.validations?.pod &&
+        this.state.validations.pod[pod.name] &&
+        this.state.validations.pod[pod.name].checks.length > 0
     );
 
     return validationChecks;
@@ -112,7 +198,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   }
 
   render() {
-    const workload = this.props.workload;
+    const workload = this.state.workload;
     const pods = workload?.pods || [];
     const services = workload?.services || [];
     const validationChecks = this.validationChecks();
@@ -127,7 +213,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = ValidationTypes.Warning;
       keys.forEach(key => {
-        const validations = this.props.validations![type][key];
+        const validations = this.state.validations![type][key];
         if (validationToSeverity(validations) === ValidationTypes.Error) {
           severity = ValidationTypes.Error;
         }
@@ -152,6 +238,14 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         <RightActionBar>
           <DurationDropdownContainer id="workload-info-duration-dropdown" prefix="Last" />
           <RefreshButtonContainer handleRefresh={this.fetchBackend} />
+          {workload && (
+            <WorkloadWizardDropdown
+              namespace={this.props.namespace}
+              workload={workload}
+              rules={this.state.threescaleRules}
+              onChange={this.fetchBackend}
+            />
+          )}
         </RightActionBar>
         <RenderComponentScroll>
           <Grid style={{ margin: '10px' }} gutter={'md'}>
@@ -178,9 +272,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Pods')}>
                     <WorkloadPods
                       namespace={this.props.namespace}
-                      workload={this.props.workload?.name || ''}
+                      workload={this.state.workload?.name || ''}
                       pods={pods}
-                      validations={this.props.validations?.pod || {}}
+                      validations={this.state.validations?.pod || {}}
                     />
                   </ErrorBoundaryWithMessage>
                 </Tab>
@@ -188,7 +282,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Services')}>
                     <WorkloadServices
                       services={services}
-                      workload={this.props.workload?.name || ''}
+                      workload={this.state.workload?.name || ''}
                       namespace={this.props.namespace}
                     />
                   </ErrorBoundaryWithMessage>
