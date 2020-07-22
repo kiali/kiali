@@ -89,7 +89,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
+	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
@@ -144,7 +144,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
-	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
+	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
 	assert.Equal(float64(-1), health.Requests.ErrorRatio)

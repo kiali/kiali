@@ -65,6 +65,7 @@ type K8SClientInterface interface {
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
 }
 
 type OSClientInterface interface {

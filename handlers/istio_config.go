@@ -32,7 +32,12 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		includeValidations = true
 	}
 
-	criteria := business.ParseIstioConfigCriteria(namespace, objects)
+	labelSelector := ""
+	if _, found := query["labelSelector"]; found {
+		labelSelector = query.Get("labelSelector")
+	}
+
+	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector)
 
 	// Get business layer
 	business, err := getBusiness(r)

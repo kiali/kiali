@@ -98,7 +98,7 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	p.RateInterval = rateInterval
 
-	health, err := business.Health.GetWorkloadHealth(p.Namespace, p.Workload, rateInterval, p.QueryTime)
+	health, err := business.Health.GetWorkloadHealth(p.Namespace, p.Workload, p.WorkloadType, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -224,13 +224,16 @@ type workloadHealthParams struct {
 	// The target workload
 	//
 	// in: path
-	Workload string `json:"workload"`
+	Workload     string `json:"workload"`
+	WorkloadType string `json:"type"`
 }
 
 func (p *workloadHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
+	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Workload = vars["workload"]
+	p.WorkloadType = query.Get("type")
 }
 
 func adjustRateInterval(business *business.Layer, namespace, rateInterval string, queryTime time.Time) (string, error) {

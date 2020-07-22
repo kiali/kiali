@@ -213,8 +213,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
-		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(namespace) {
-			vs, err2 = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, namespace)
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServices) && kialiCache.CheckNamespace(namespace) {
+			vs, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 		} else {
 			vs, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 		}
@@ -228,8 +228,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(namespace) {
-			dr, err2 = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, namespace)
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRules) && kialiCache.CheckNamespace(namespace) {
+			dr, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		} else {
 			dr, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		}

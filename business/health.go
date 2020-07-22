@@ -81,12 +81,12 @@ func (in *HealthService) getAppHealth(namespace, app, rateInterval string, query
 }
 
 // GetWorkloadHealth returns a workload health from just Namespace and workload (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.WorkloadHealth, error) {
+func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, rateInterval string, queryTime time.Time) (models.WorkloadHealth, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetWorkloadHealth")
 	defer promtimer.ObserveNow(&err)
 
-	w, err := fetchWorkload(in.businessLayer, namespace, workload)
+	w, err := fetchWorkload(in.businessLayer, namespace, workload, workloadType)
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}

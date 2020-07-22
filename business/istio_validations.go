@@ -273,9 +273,9 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 		for i, ns := range nss {
 			var getCacheGateways func(string) ([]kubernetes.IstioObject, error)
 			// businessLayer.Namespace.GetNamespaces() is invoked before, so, namespace used are under the user's view
-			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.GatewayType) && kialiCache.CheckNamespace(ns.Name) {
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.Gateways) && kialiCache.CheckNamespace(ns.Name) {
 				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
-					return kialiCache.GetIstioResources("Gateway", namespace)
+					return kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
 				}
 			} else {
 				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
@@ -418,8 +418,8 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		nsCached := kialiCache != nil && kialiCache.CheckNamespace(namespace)
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) {
-			istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.VirtualServices) {
+			istioDetails.VirtualServices, err = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 		} else {
 			wg2.Add(1)
 			getVirtualServices := func(namespace string) ([]kubernetes.IstioObject, error) {
@@ -427,8 +427,8 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			go fetchIstioObjects(&istioDetails.VirtualServices, namespace, getVirtualServices, &wg2, errChan2)
 		}
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) {
-			istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.DestinationRules) {
+			istioDetails.DestinationRules, err = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		} else {
 			wg2.Add(1)
 			getDestinationRules := func(namespace string) ([]kubernetes.IstioObject, error) {
@@ -436,8 +436,8 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			go fetchIstioObjects(&istioDetails.DestinationRules, namespace, getDestinationRules, &wg2, errChan2)
 		}
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceEntryType) {
-			istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.ServiceEntries) {
+			istioDetails.ServiceEntries, err = kialiCache.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
 		} else {
 			wg2.Add(1)
 			getServiceEntries := func(namespace string) ([]kubernetes.IstioObject, error) {
@@ -445,8 +445,8 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			go fetchIstioObjects(&istioDetails.ServiceEntries, namespace, getServiceEntries, &wg2, errChan2)
 		}
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.GatewayType) {
-			istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.Gateways) {
+			istioDetails.Gateways, err = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
 		} else {
 			wg2.Add(1)
 			getGateways := func(namespace string) ([]kubernetes.IstioObject, error) {
@@ -454,8 +454,8 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 			}
 			go fetchIstioObjects(&istioDetails.Gateways, namespace, getGateways, &wg2, errChan2)
 		}
-		if nsCached && kialiCache.CheckIstioResource(kubernetes.SidecarType) {
-			istioDetails.Sidecars, err = kialiCache.GetIstioResources("Sidecar", namespace)
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.Sidecars) {
+			istioDetails.Sidecars, err = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 		} else {
 			wg2.Add(1)
 			getSidecars := func(namespace string) ([]kubernetes.IstioObject, error) {

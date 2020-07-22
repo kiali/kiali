@@ -63,7 +63,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -109,7 +109,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService graphAggregateByService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService graphAggregateByService serviceDashboard
 type ServiceParam struct {
 	// The service name.
 	//
@@ -145,7 +145,7 @@ type DashboardParam struct {
 	Name string `json:"dashboard"`
 }
 
-// swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload workloadDashboard
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
@@ -658,36 +658,6 @@ type TypedIstioValidations map[string]NameIstioValidation
 // List of validations grouped by object name
 // swagger:model
 type NameIstioValidation map[string]models.IstioValidation
-
-// Return if ThreeScale adapter is enabled in Istio and if user has permissions to write adapter's configuration
-// swagger:response threeScaleInfoResponse
-type ThreeScaleInfoResponse struct {
-	// in: body
-	Body models.ThreeScaleInfo
-}
-
-// List of ThreeScale handlers created from Kiali to be used in the adapter's configuration
-// swagger:response threeScaleHandlersResponse
-type ThreeScaleGetHandlersResponse struct {
-	// in: body
-	Body models.ThreeScaleHandlers
-}
-
-// swagger:parameters patchThreeScaleHandler deleteThreeScaleHandler
-type ThreScaleHandlerNameParam struct {
-	// The ThreeScaleHandler name.
-	//
-	// in: path
-	// required: true
-	Name string `json:"threescaleHandlerName"`
-}
-
-// Return Threescale rule definition for a given service
-// swagger:response threeScaleRuleResponse
-type ThreeScaleGetRuleResponse struct {
-	// in: body
-	Body models.ThreeScaleServiceRule
-}
 
 // Return caller permissions per namespace and Istio Config type
 // swagger:response istioConfigPermissions

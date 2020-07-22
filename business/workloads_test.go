@@ -353,7 +353,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workload, _ := svc.GetWorkload("Namespace", "details-v1", false)
+	workload, _ := svc.GetWorkload("Namespace", "details-v1", "", false)
 
 	assert.Equal("details-v1", workload.Name)
 	assert.Equal("Deployment", workload.Type)
@@ -385,7 +385,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	svc := setupWorkloadService(k8s)
 
-	workload, _ := svc.GetWorkload("Namespace", "daemon-controller", false)
+	workload, _ := svc.GetWorkload("Namespace", "daemon-controller", "", false)
 
 	assert.Equal("daemon-controller", workload.Name)
 	assert.Equal("DaemonSet", workload.Type)
@@ -475,7 +475,7 @@ func TestDuplicatedControllers(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
-	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", false)
+	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", "", false)
 
 	assert.Equal(workloads[0].Type, workload.Type)
 }
