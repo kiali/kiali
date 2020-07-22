@@ -19,36 +19,42 @@
 	done ; \
 	exit 0
 
+.ensure-operator-helm-chart-exists:
+	@if [ ! -f "${ROOTDIR}/operator/_output/charts/kiali-operator/Chart.yaml" ]; then $(MAKE) -C operator build-helm-chart ; fi
+
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
 # You can tell it to also install Kiali by setting OPERATOR_INSTALL_KIALI=true.
 # The Kiali operator does not create secrets, but this calls the install script
 # which can create a Kiali secret for you as a convienence so you don't have
 # to remember to do it yourself. It will only do this if it was told to install Kiali.
-operator-create: .ensure-operator-repo-exists .prepare-cluster operator-delete .ensure-operator-ns-does-not-exist
+operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists operator-delete .ensure-operator-ns-does-not-exist .prepare-cluster
 	@echo Deploy Operator
 	${ROOTDIR}/operator/deploy/deploy-kiali-operator.sh \
-    --version                    "${KIALI_CR_SPEC_VERSION}" \
-    --operator-image-name        "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
-    --operator-image-pull-policy "${OPERATOR_IMAGE_PULL_POLICY}" \
-    --operator-image-version     "${OPERATOR_CONTAINER_VERSION}" \
-    --operator-namespace         "${OPERATOR_NAMESPACE}" \
-    --operator-watch-namespace   "${OPERATOR_WATCH_NAMESPACE}" \
-    --operator-install-kiali     "${OPERATOR_INSTALL_KIALI}" \
-    --accessible-namespaces      "${ACCESSIBLE_NAMESPACES}" \
-    --auth-strategy              "${AUTH_STRATEGY}" \
-    --credentials-username       "${CREDENTIALS_USERNAME}" \
-    --credentials-passphrase     "${CREDENTIALS_PASSPHRASE}" \
-    --kiali-image-name           "${CLUSTER_KIALI_INTERNAL_NAME}" \
-    --kiali-image-pull-policy    "${KIALI_IMAGE_PULL_POLICY}" \
-    --kiali-image-version        "${CONTAINER_VERSION}" \
-    --istio-namespace            "${ISTIO_NAMESPACE}" \
-    --namespace                  "${NAMESPACE}"
+    --helm-chart                    "source" \
+    --operator-cluster-role-creator "true" \
+    --operator-image-name           "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
+    --operator-image-pull-policy    "${OPERATOR_IMAGE_PULL_POLICY}" \
+    --operator-image-version        "${OPERATOR_CONTAINER_VERSION}" \
+    --operator-install-kiali        "${OPERATOR_INSTALL_KIALI}" \
+    --operator-namespace            "${OPERATOR_NAMESPACE}" \
+    --operator-watch-namespace      "${OPERATOR_WATCH_NAMESPACE}" \
+    --accessible-namespaces         "${ACCESSIBLE_NAMESPACES}" \
+    --auth-strategy                 "${AUTH_STRATEGY}" \
+    --kiali-image-name              "${CLUSTER_KIALI_INTERNAL_NAME}" \
+    --kiali-image-pull-policy       "${KIALI_IMAGE_PULL_POLICY}" \
+    --kiali-image-version           "${CONTAINER_VERSION}" \
+    --istio-namespace               "${ISTIO_NAMESPACE}" \
+    --namespace                     "${NAMESPACE}" \
+    --version                       "${KIALI_CR_SPEC_VERSION}"
 
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: .ensure-oc-exists kiali-delete kiali-purge
 	@echo Remove Operator
-	${OC} delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,sa,deployments --selector="app.kubernetes.io/name=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app.kubernetes.io/name=kiali-operator"
+	${OC} delete --ignore-not-found=true customresourcedefinitions kialis.kiali.io
+	${OC} delete --ignore-not-found=true customresourcedefinitions monitoringdashboards.monitoring.kiali.io
 	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
 
 ## secret-create: Create a Kiali secret using CREDENTIALS_USERNAME and CREDENTIALS_PASSPHRASE.
@@ -93,10 +99,11 @@ kiali-delete: .ensure-oc-exists secret-delete
 kiali-purge: .ensure-oc-exists
 	@echo Purge Kiali resources
 	${OC} patch kiali kiali -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
-	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses --selector="app=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app=kiali"
 ifeq ($(CLUSTER_TYPE),openshift)
-	${OC} delete --ignore-not-found=true consolelinks.console.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
-	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" ; true
+	${OC} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}" ; true
+	${OC} delete --ignore-not-found=true consolelinks.console.openshift.io,oauthclients.oauth.openshift.io --selector="app=kiali" ; true
 endif
 
 ## kiali-reload-image: Refreshing the Kiali pod by deleting it which forces a redeployment
@@ -105,10 +112,10 @@ kiali-reload-image: .ensure-oc-exists
 	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
 
 ## run-operator-playbook: Run the operator dev playbook to run the operator ansible script locally.
-run-operator-playbook: .ensure-operator-repo-exists
+run-operator-playbook: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
 	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
 
 ## run-operator-playbook-tag: Run a tagged set of tasks via operator dev playbook to run parts of the operator ansible script locally.
 # To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
-run-operator-playbook-tag: .ensure-operator-repo-exists
+run-operator-playbook-tag: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
 	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml --tags test

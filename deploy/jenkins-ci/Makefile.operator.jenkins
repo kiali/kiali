@@ -92,7 +92,7 @@ operator-build-release:
 	  $(MAKE) clean build
 ifneq ($(IS_SNAPSHOT),y)
 	OPERATOR_IMAGE_VERSION="$(OPERATOR_VERSION_TO_RELEASE)" \
-	  $(MAKE) generate-all-in-one
+	  $(MAKE) generate-all-in-one update-helm-repo
 	cp _output/kiali-operator-all-in-one.yaml deploy/
 endif
 
@@ -120,6 +120,7 @@ operator-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
 	git add Makefile
 	git add deploy/kiali-operator-all-in-one.yaml
+	git add docs/charts
 	git commit -m "Release $(OPERATOR_VERSION)"
 	git push $(OPERATOR_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
 ifdef GH_TOKEN
