@@ -20,6 +20,7 @@ require (
 	github.com/prometheus/common v0.4.1
 	github.com/prometheus/procfs v0.0.10 // indirect
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ldap.v2 v2.5.1-0.20190417171812-9f0d712775a0
