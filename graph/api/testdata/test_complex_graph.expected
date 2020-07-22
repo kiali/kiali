@@ -52,6 +52,24 @@
       },
       {
         "data": {
+          "id": "332209947916c37701f39500789b6792",
+          "nodeType": "app",
+          "namespace": "istio-system",
+          "workload": "istio-egressgateway",
+          "app": "istio-egressgateway",
+          "version": "unknown",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "400.00"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
           "id": "d75c918a12f72a1ea1797911cb9770f7",
           "nodeType": "app",
           "namespace": "tutorial",
@@ -74,7 +92,29 @@
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "350.00"
+                "httpOut": "750.00"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "id": "c4d8519b61e39974286357006b354f99",
+          "nodeType": "service",
+          "namespace": "unknown",
+          "service": "app.example-2.com",
+          "destServices": [
+            {
+              "namespace": "unknown",
+              "name": "app.example-2.com"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "400.00"
               }
             }
           ]
@@ -108,6 +148,30 @@
       }
     ],
     "edges": [
+      {
+        "data": {
+          "id": "b8652735083f361a13ab190a26f37e89",
+          "source": "332209947916c37701f39500789b6792",
+          "target": "c4d8519b61e39974286357006b354f99",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "400.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "app.example-2.com": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
       {
         "data": {
           "id": "e0040271cbc5fd1bcf9e605d7a2c367d",
@@ -158,6 +222,30 @@
       },
       {
         "data": {
+          "id": "864c8eae6f988891d9df2d9f378eece5",
+          "source": "d75c918a12f72a1ea1797911cb9770f7",
+          "target": "332209947916c37701f39500789b6792",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "400.00",
+              "httpPercentReq": "53.3"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "istio-egressgateway.istio-system.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "62adcb3e419f4bcee6f1528dd9d2eb56",
           "source": "d75c918a12f72a1ea1797911cb9770f7",
           "target": "7fb749d8703ff9fde566213cb1c98b41",
@@ -165,7 +253,7 @@
             "protocol": "http",
             "rates": {
               "http": "300.00",
-              "httpPercentReq": "85.7"
+              "httpPercentReq": "40.0"
             },
             "responses": {
               "200": {
@@ -189,7 +277,7 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "14.3"
+              "httpPercentReq": "6.7"
             },
             "responses": {
               "200": {
