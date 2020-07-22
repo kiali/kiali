@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -10,8 +11,30 @@ import (
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
 var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
+var egressHost string
 
-// HandleMultiClusterRequest ensures the proper destination service workload and name
+// HandleDestination modifies the destination information, when necessary, for various corner
+// cases.  It should be called after source validation and before destination processing.
+// Returns destSvcNs, destSvcName, destWlNs, destWl, destApp, destVersion, isupdated
+func HandleDestination(sourceWlNs, sourceWl, destSvcNs, destSvc, destSvcName, destWlNs, destWl, destApp, destVer string) (string, string, string, string, string, string, bool) {
+	if destSvcNs, destSvcName, isUpdated := handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName); isUpdated {
+		return destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, true
+	}
+
+	// Handle egressgateway (kiali#2999)
+	if egressHost == "" {
+		egressHost = fmt.Sprintf("istio-egressgateway.%s.svc.cluster.local", config.Get().IstioNamespace)
+	}
+
+	if destSvc == egressHost && destSvc == destSvcName {
+		istioNs := config.Get().IstioNamespace
+		return istioNs, "istio-egressgateway", istioNs, "istio-egressgateway", "istio-egressgateway", "latest", true
+	}
+
+	return destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, false
+}
+
+// handleMultiClusterRequest ensures the proper destination service namespace and name
 // for requests forwarded from another cluster (via a ServiceEntry).
 //
 // Given a request from clusterA to clusterB, clusterA will generate source telemetry
@@ -37,16 +60,18 @@ var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
 // the MC format. When the source workload IS known the traffic it should be representing
 // the clusterA traffic to the ServiceEntry and being routed out of the cluster. That use
 // case is handled in the service_entry.go file.
-func HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName string) (string, string) {
+//
+// Returns destSvcNs, destSvcName, isUpdated
+func handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName string) (string, string, bool) {
 	if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown {
 		destSvcNameEntries := strings.Split(destSvcName, ".")
 
 		if len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
-			return destSvcNameEntries[1], destSvcNameEntries[0]
+			return destSvcNameEntries[1], destSvcNameEntries[0], true
 		}
 	}
 
-	return destSvcNs, destSvcName
+	return destSvcNs, destSvcName, false
 }
 
 // HandleResponseCode returns either the HTTP response code or the GRPC response status.  GRPC response

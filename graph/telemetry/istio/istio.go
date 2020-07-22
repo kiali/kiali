@@ -189,10 +189,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
-		destWlNs := string(lDestWlNs)
-		destWl := string(lDestWl)
-		destApp := string(lDestApp)
-		destVer := string(lDestVer)
 		protocol := string(lProtocol)
 		code := string(lCode)
 		flags := string(lFlags)
@@ -204,8 +200,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		// set response code in a backward compatible way
 		code = util.HandleResponseCode(protocol, code, grpcOk, string(lGrpc))
 
-		// handle multicluster requests
-		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
+		// handle unusual destinations
+		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
 		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue
@@ -290,18 +286,14 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
-		destWlNs := string(lDestWlNs)
-		destWl := string(lDestWl)
-		destApp := string(lDestApp)
-		destVer := string(lDestVer)
 		flags := string(lFlags)
 
 		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
 			continue
 		}
 
-		// handle multicluster requests
-		destSvcNs, destSvcName := util.HandleMultiClusterRequest(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvcName))
+		// handle unusual destinations
+		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
 		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
 			continue

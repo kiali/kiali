@@ -1702,6 +1702,7 @@ func TestServiceNodeGraph(t *testing.T) {
 // - request.host
 // - bad dest telemetry filtering
 // - bad source telemetry filtering
+// - workload -> egress -> service-entry traffic
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
@@ -1847,6 +1848,21 @@ func TestComplexGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
+	q8m4 := model.Metric{ // good telem (service entry via egressgateway, see the second hop below)
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "unknown",
+		"destination_service":            "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_service_name":       "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
 	v8 := model.Vector{
 		&model.Sample{
 			Metric: q8m0,
@@ -1859,7 +1875,10 @@ func TestComplexGraph(t *testing.T) {
 			Value:  200},
 		&model.Sample{
 			Metric: q8m3,
-			Value:  300}}
+			Value:  300},
+		&model.Sample{
+			Metric: q8m4,
+			Value:  400}}
 
 	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v9 := model.Vector{}
@@ -1877,7 +1896,27 @@ func TestComplexGraph(t *testing.T) {
 	v13 := model.Vector{}
 
 	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
-	v14 := model.Vector{}
+	q14m0 := model.Metric{ // good telem (service entry via egressgateway, see the second hop below)
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "istio-egressgateway",
+		"source_app":                     "istio-egressgateway",
+		"source_version":                 "unknown",
+		"source_canonical_revision":      "latest",
+		"source_canonical_service":       "istio-egressgateway",
+		"destination_service_namespace":  "unknown",
+		"destination_service":            "app.example-2.com",
+		"destination_service_name":       "app.example-2.com",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
+	v14 := model.Vector{
+		&model.Sample{
+			Metric: q14m0,
+			Value:  400}}
 
 	q15 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v15 := model.Vector{}
