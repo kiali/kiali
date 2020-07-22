@@ -1,11 +1,16 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { SimpleList, SimpleListItem, Button, Checkbox, Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
+import { KialiAppState } from 'store/Store';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import history from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { JaegerInfo, JaegerTrace } from 'types/JaegerInfo';
+import { JaegerTrace } from 'types/JaegerInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
@@ -14,11 +19,11 @@ import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 
 type Props = {
-  jaegerInfo?: JaegerInfo;
   namespace: string;
   service: string;
   queryTime: TimeInSeconds;
   setTraceId: (traceId?: string) => void;
+  selectedTrace?: JaegerTrace;
 };
 
 type State = {
@@ -38,8 +43,19 @@ const checkboxStyle = style({
   }
 });
 
-export class SummaryPanelNodeTraces extends React.Component<Props, State> {
+class SummaryPanelNodeTraces extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
+
+  static getDerivedStateFromProps(props: Props, state: State) {
+    // Update the selected trace within list because it may have more up-to-date data after being selected hence fetched again
+    if (props.selectedTrace) {
+      const index = state.traces.findIndex(t => t.traceID === props.selectedTrace!.traceID);
+      if (index >= 0) {
+        state.traces[index] = props.selectedTrace;
+      }
+    }
+    return state;
+  }
 
   constructor(props: Props) {
     super(props);
@@ -80,6 +96,10 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
               .map(trace => transformTraceData(trace))
               .filter(trace => trace !== null) as JaegerTrace[])
           : [];
+        if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
+          // Put selected trace back in list
+          traces.push(this.props.selectedTrace);
+        }
         this.setState({ traces: traces });
       })
       .catch(error => {
@@ -88,7 +108,12 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
   }
 
   private onClickTrace(trace: JaegerTrace) {
-    this.props.setTraceId(trace.traceID);
+    if (this.props.selectedTrace?.traceID === trace.traceID) {
+      // Deselect
+      this.props.setTraceId(undefined);
+    } else {
+      this.props.setTraceId(trace.traceID);
+    }
   }
 
   render() {
@@ -96,6 +121,7 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
       return null;
     }
     const tracesDetailsURL = `/namespaces/${this.props.namespace}/services/${this.props.service}?tab=traces`;
+    const currentID = this.props.selectedTrace?.traceID;
 
     return (
       <div style={{ marginBottom: 8 }}>
@@ -109,9 +135,13 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
           />
         </Tooltip>
         <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
-          {this.state.traces.map((trace, idx) => {
+          {this.state.traces.map(trace => {
             return (
-              <SimpleListItem key={'trace_' + idx} onClick={() => this.onClickTrace(trace)}>
+              <SimpleListItem
+                key={'trace_' + trace.traceID}
+                onClick={() => this.onClickTrace(trace)}
+                isCurrent={trace.traceID === currentID}
+              >
                 <TraceListItem trace={trace} />
               </SimpleListItem>
             );
@@ -124,3 +154,14 @@ export class SummaryPanelNodeTraces extends React.Component<Props, State> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  selectedTrace: state.jaegerState.selectedTrace
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId))
+});
+
+const SummaryPanelNodeTracesContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTraces);
+export default SummaryPanelNodeTracesContainer;

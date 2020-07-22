@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ThunkDispatch } from 'redux-thunk';
+import { connect } from 'react-redux';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
 import {
@@ -16,14 +16,11 @@ import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { Dropdown, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
-import { connect } from 'react-redux';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
-import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
+import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { hasExperimentalFlag } from 'utils/SearchParamUtils';
-import { KialiAppAction } from 'actions/KialiAppAction';
-import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 
 type SummaryPanelNodeState = {
   healthLoading: boolean;
@@ -38,7 +35,6 @@ const defaultState: SummaryPanelNodeState = {
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
-  setTraceId: (traceId?: string) => void;
 };
 
 type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
@@ -149,9 +145,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             <SummaryPanelNodeTraces
               namespace={nodeData.namespace}
               service={nodeData.service!}
-              jaegerInfo={this.props.jaegerInfo}
               queryTime={this.props.queryTime}
-              setTraceId={this.props.setTraceId}
             />
           </Tab>
         </SimpleTabs>
@@ -219,9 +213,5 @@ const mapStateToProps = (state: KialiAppState) => ({
   jaegerInfo: state.jaegerState.info
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId))
-});
-
-const SummaryPanelNodeContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNode);
+const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);
 export default SummaryPanelNodeContainer;
