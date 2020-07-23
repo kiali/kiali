@@ -369,6 +369,11 @@ func TestParseStats(t *testing.T) {
 			invalid: true,
 		},
 		{
+			name:    "qm bad",
+			s:       "qm 1 2 3 4 5 6 7 8 9 10",
+			invalid: true,
+		},
+		{
 			name: "qm OK",
 			s:    "qm 1 2 3 4 5 6 7 8",
 			stats: &xfs.Stats{
@@ -381,6 +386,23 @@ func TestParseStats(t *testing.T) {
 					Wants:         6,
 					ShakeReclaims: 7,
 					InactReclaims: 8,
+				},
+			},
+		},
+		{
+			name: "qm OK",
+			s:    "qm 1 2 3 4 5 6 7 8 9",
+			stats: &xfs.Stats{
+				QuotaManager: xfs.QuotaManagerStats{
+					Reclaims:      1,
+					ReclaimMisses: 2,
+					DquoteDups:    3,
+					CacheMisses:   4,
+					CacheHits:     5,
+					Wants:         6,
+					ShakeReclaims: 7,
+					InactReclaims: 8,
+					Unused:        9,
 				},
 			},
 		},

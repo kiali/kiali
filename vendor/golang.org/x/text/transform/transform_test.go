@@ -1315,3 +1315,26 @@ var (
 	aaa = strings.Repeat("a", 4096)
 	AAA = strings.Repeat("A", 4096)
 )
+
+type badTransformer struct{}
+
+func (bt badTransformer) Transform(dst, src []byte, atEOF bool) (nDst, nSrc int, err error) {
+	return 0, 0, ErrShortSrc
+}
+
+func (bt badTransformer) Reset() {}
+
+func TestBadTransformer(t *testing.T) {
+	bt := badTransformer{}
+	if _, _, err := String(bt, "aaa"); err != ErrShortSrc {
+		t.Errorf("String expected ErrShortSrc, got nil")
+	}
+	if _, _, err := Bytes(bt, []byte("aaa")); err != ErrShortSrc {
+		t.Errorf("Bytes expected ErrShortSrc, got nil")
+	}
+	r := NewReader(bytes.NewReader([]byte("aaa")), bt)
+	var bytes []byte
+	if _, err := r.Read(bytes); err != ErrShortSrc {
+		t.Errorf("NewReader Read expected ErrShortSrc, got nil")
+	}
+}

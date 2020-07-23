@@ -114,12 +114,39 @@ func TestUTF16(t *testing.T) {
 		err:     ErrMissingBOM,
 		t:       utf16BEEB.NewDecoder(),
 	}, {
+		desc:    "utf-16 dec: Fail on single byte missing BOM when required",
+		src:     "\x00",
+		sizeDst: 4,
+		t:       utf16BEEB.NewDecoder(),
+		err:     ErrMissingBOM,
+	}, {
+		desc:    "utf-16 dec: Fail on short src missing BOM when required",
+		src:     "\x00",
+		notEOF:  true,
+		sizeDst: 4,
+		t:       utf16BEEB.NewDecoder(),
+		err:     transform.ErrShortSrc,
+	}, {
 		desc:    "utf-16 dec: SHOULD interpret text as big-endian when BOM not present (RFC 2781:4.3)",
 		src:     "\xD8\x08\xDF\x45\x00\x3D\x00\x52\x00\x61",
 		sizeDst: 100,
 		want:    "\U00012345=Ra",
 		nSrc:    10,
 		t:       utf16BEUB.NewDecoder(),
+	}, {
+		desc:    "utf-16 dec: incorrect UTF-16: odd bytes",
+		src:     "\x00",
+		sizeDst: 100,
+		want:    "\uFFFD",
+		nSrc:    1,
+		t:       utf16BEUB.NewDecoder(),
+	}, {
+		desc:    "utf-16 dec: Fail on incorrect UTF-16: short source odd bytes",
+		src:     "\x00",
+		notEOF:  true,
+		sizeDst: 100,
+		t:       utf16BEUB.NewDecoder(),
+		err:     transform.ErrShortSrc,
 	}, {
 		// This is an error according to RFC 2781. But errors in RFC 2781 are
 		// open to interpretations, so I guess this is fine.
@@ -273,16 +300,23 @@ func TestUTF16(t *testing.T) {
 		t:       utf16LEUB.NewDecoder(),
 	}}
 	for i, tc := range testCases {
-		b := make([]byte, tc.sizeDst)
-		nDst, nSrc, err := tc.t.Transform(b, []byte(tc.src), !tc.notEOF)
-		if err != tc.err {
-			t.Errorf("%d:%s: error was %v; want %v", i, tc.desc, err, tc.err)
-		}
-		if got := string(b[:nDst]); got != tc.want {
-			t.Errorf("%d:%s: result was %q: want %q", i, tc.desc, got, tc.want)
-		}
-		if nSrc != tc.nSrc {
-			t.Errorf("%d:%s: nSrc was %d; want %d", i, tc.desc, nSrc, tc.nSrc)
+		for j := 0; j < 2; j++ {
+			b := make([]byte, tc.sizeDst)
+			nDst, nSrc, err := tc.t.Transform(b, []byte(tc.src), !tc.notEOF)
+			if err != tc.err {
+				t.Errorf("%d:%s: error was %v; want %v", i, tc.desc, err, tc.err)
+			}
+			if got := string(b[:nDst]); got != tc.want {
+				t.Errorf("%d:%s: result was %q: want %q", i, tc.desc, got, tc.want)
+			}
+			if nSrc != tc.nSrc {
+				t.Errorf("%d:%s: nSrc was %d; want %d", i, tc.desc, nSrc, tc.nSrc)
+			}
+			// Since Transform is stateful, run failures again
+			// to ensure that the same error occurs a second time.
+			if err == nil {
+				break
+			}
 		}
 	}
 }
@@ -450,6 +484,212 @@ func TestUTF8Decoder(t *testing.T) {
 		}
 		if nSrc != tc.nSrc {
 			t.Errorf("%d:%s: nSrc was %d; want %d", i, tc.desc, nSrc, tc.nSrc)
+		}
+	}
+}
+
+func TestUTF8BOMDecoder(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		src     string
+		notEOF  bool // the inverse of atEOF
+		sizeDst int
+		want    string
+		nSrc    int
+		err     error
+		wantAll string
+	}{{
+		desc: "empty string, empty dest buffer",
+	}, {
+		desc:    "empty string",
+		sizeDst: 8,
+	}, {
+		desc:    "empty string, streaming",
+		notEOF:  true,
+		sizeDst: 8,
+	}, {
+		desc:    "ascii",
+		src:     "abcde",
+		sizeDst: 8,
+		want:    "abcde",
+		nSrc:    5,
+		wantAll: "abcde",
+	}, {
+		desc:    "ascii with bom",
+		src:     utf8BOM + "abcde",
+		sizeDst: 11,
+		want:    "abcde",
+		nSrc:    8,
+		wantAll: "abcde",
+	}, {
+		desc:    "error with bom",
+		src:     utf8BOM + "ab\x80de",
+		sizeDst: 11,
+		want:    "ab\ufffdde",
+		nSrc:    8,
+		wantAll: "ab\ufffdde",
+	}, {
+		desc:    "short bom",
+		src:     utf8BOM[:2],
+		notEOF:  true,
+		sizeDst: 7,
+		want:    "",
+		nSrc:    0,
+		wantAll: "\ufffd", // needs to be 1 replacement
+		err:     transform.ErrShortSrc,
+	}, {
+		desc:    "short bom at end",
+		src:     utf8BOM[:2],
+		sizeDst: 7,
+		want:    "\ufffd", // needs to be 1 replacement
+		nSrc:    2,
+		wantAll: "\ufffd", // needs to be 1 replacement
+		err:     nil,
+	}, {
+		desc:    "short source buffer",
+		src:     "abc\xf0\x90",
+		notEOF:  true,
+		sizeDst: 10,
+		want:    "abc",
+		nSrc:    3,
+		wantAll: "abc\ufffd",
+		err:     transform.ErrShortSrc,
+	}, {
+		desc:    "short source buffer with bom",
+		src:     utf8BOM + "abc\xf0\x90",
+		notEOF:  true,
+		sizeDst: 15,
+		want:    "abc",
+		nSrc:    6,
+		wantAll: "abc\ufffd",
+		err:     transform.ErrShortSrc,
+	}, {
+		desc:    "short dst for error",
+		src:     utf8BOM + "abc\x80",
+		notEOF:  true,
+		sizeDst: 5,
+		want:    "abc",
+		nSrc:    6,
+		wantAll: "abc\ufffd",
+		err:     transform.ErrShortDst,
+	}}
+	tr := UTF8BOM.NewDecoder()
+	for i, tc := range testCases {
+		tr.Reset()
+		b := make([]byte, tc.sizeDst)
+		nDst, nSrc, err := tr.Transform(b, []byte(tc.src), !tc.notEOF)
+		if err != tc.err {
+			t.Errorf("%d:%s: error was %v; want %v", i, tc.desc, err, tc.err)
+		}
+		if got := string(b[:nDst]); got != tc.want {
+			t.Errorf("%d:%s: result was %q: want %q", i, tc.desc, got, tc.want)
+		}
+		if nSrc != tc.nSrc {
+			t.Errorf("%d:%s: nSrc was %d; want %d", i, tc.desc, nSrc, tc.nSrc)
+		}
+		if got, _ := tr.String(tc.src); got != tc.wantAll {
+			t.Errorf("%d:%s: String was %s; want %s", i, tc.desc, got, tc.wantAll)
+		}
+	}
+}
+
+func TestUTF8SigEncoder(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		src     string
+		notEOF  bool // the inverse of atEOF
+		sizeDst int
+		want    string
+		wantAll string // converting all bytes
+		nSrc    int
+		err     error
+	}{{
+		desc:    "empty string, empty dest buffer",
+		err:     transform.ErrShortDst,
+		wantAll: utf8BOM,
+	}, {
+		desc:    "empty string",
+		sizeDst: 8,
+		want:    utf8BOM,
+		wantAll: utf8BOM,
+	}, {
+		desc:    "empty string, streaming",
+		notEOF:  true,
+		sizeDst: 8,
+		want:    utf8BOM,
+		wantAll: utf8BOM,
+	}, {
+		desc:    "ascii",
+		src:     "abcde",
+		sizeDst: 8,
+		want:    utf8BOM + "abcde",
+		nSrc:    5,
+		wantAll: utf8BOM + "abcde",
+	}, {
+		desc:    "short bom at end",
+		src:     utf8BOM[:2],
+		sizeDst: 11,
+		want:    utf8BOM + "\ufffd",
+		nSrc:    2,
+		wantAll: utf8BOM + "\ufffd",
+	}, {
+		desc:    "short bom",
+		src:     utf8BOM[:2],
+		notEOF:  true,
+		sizeDst: 7,
+		want:    utf8BOM,
+		nSrc:    0,
+		err:     transform.ErrShortSrc,
+		wantAll: utf8BOM + "\ufffd",
+	}, {
+		desc:    "short bom at end",
+		src:     utf8BOM[:2],
+		sizeDst: 7,
+		want:    utf8BOM + "\ufffd", // needs to be 1 replacement
+		nSrc:    2,
+		err:     nil,
+		wantAll: utf8BOM + "\ufffd",
+	}, {
+		desc:    "short dst buffer 2",
+		src:     "ab",
+		sizeDst: 2,
+		want:    "",
+		nSrc:    0,
+		err:     transform.ErrShortDst,
+		wantAll: utf8BOM + "ab",
+	}, {
+		desc:    "short dst buffer 3",
+		src:     "ab",
+		sizeDst: 3,
+		want:    utf8BOM,
+		nSrc:    0,
+		err:     transform.ErrShortDst,
+		wantAll: utf8BOM + "ab",
+	}, {
+		desc:    "short dst buffer 4",
+		src:     "ab",
+		sizeDst: 4,
+		want:    utf8BOM + "a",
+		nSrc:    1,
+		err:     transform.ErrShortDst,
+		wantAll: utf8BOM + "ab",
+	}}
+	tr := UTF8BOM.NewEncoder()
+	for i, tc := range testCases {
+		tr.Reset()
+		b := make([]byte, tc.sizeDst)
+		nDst, nSrc, err := tr.Transform(b, []byte(tc.src), !tc.notEOF)
+		if err != tc.err {
+			t.Errorf("%d:%s: error was %v; want %v", i, tc.desc, err, tc.err)
+		}
+		if got := string(b[:nDst]); got != tc.want {
+			t.Errorf("%d:%s: result was %q: want %q", i, tc.desc, got, tc.want)
+		}
+		if nSrc != tc.nSrc {
+			t.Errorf("%d:%s: nSrc was %d; want %d", i, tc.desc, nSrc, tc.nSrc)
+		}
+		if got, _ := tr.String(tc.src); got != tc.wantAll {
+			t.Errorf("%d:%s: String was %s; want %s", i, tc.desc, got, tc.wantAll)
 		}
 	}
 }

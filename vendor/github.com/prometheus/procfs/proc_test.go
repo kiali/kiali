@@ -72,6 +72,28 @@ func TestCmdLine(t *testing.T) {
 	}
 }
 
+func TestWchan(t *testing.T) {
+	for _, tt := range []struct {
+		process int
+		want    string
+	}{
+		{process: 26231, want: "poll_schedule_timeout"},
+		{process: 26232, want: ""},
+	} {
+		p1, err := getProcFixtures(t).Proc(tt.process)
+		if err != nil {
+			t.Fatal(err)
+		}
+		c1, err := p1.Wchan()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(tt.want, c1) {
+			t.Errorf("want wchan %v, have %v", tt.want, c1)
+		}
+	}
+}
+
 func TestComm(t *testing.T) {
 	for _, tt := range []struct {
 		process int

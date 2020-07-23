@@ -9,7 +9,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -119,7 +124,7 @@ var decomposeSegmentTests = []PositionTest{
 	{grave(31), 60, grave(30) + cgj},
 	{"a" + grave(31), 61, "a" + grave(30) + cgj},
 
-	// Stability tests: see http://www.unicode.org/review/pr-29.html.
+	// Stability tests: see https://www.unicode.org/review/pr-29.html.
 	// U+0300 COMBINING GRAVE ACCENT;Mn;230;NSM;;;;;N;NON-SPACING GRAVE;;;;
 	// U+0B47 ORIYA VOWEL SIGN E;Mc;0;L;;;;;N;;;;;
 	// U+0B3E ORIYA VOWEL SIGN AA;Mc;0;L;;;;;N;;;;;
@@ -437,7 +442,7 @@ var quickSpanNFCTests = []spanTest{
 	{"abc\u00C0", true, 5, nil},
 	// correctly ordered combining characters
 	// TODO: b may combine with modifiers, which is why this fails. We could
-	// make a more precise test that that actually checks whether last
+	// make a more precise test that actually checks whether last
 	// characters combines. Probably not worth it.
 	{"ab\u0300", true, 1, transform.ErrEndOfSpan},
 	{"ab\u0300cd", true, 1, transform.ErrEndOfSpan},
@@ -674,7 +679,7 @@ var appendTestsNFC = []AppendTest{
 		"\u1161\u11a8",
 	},
 
-	// Stability tests: see http://www.unicode.org/review/pr-29.html.
+	// Stability tests: see https://www.unicode.org/review/pr-29.html.
 	{"", "\u0b47\u0300\u0b3e", "\u0b47\u0300\u0b3e"},
 	{"", "\u1100\u0300\u1161", "\u1100\u0300\u1161"},
 	{"", "\u0b47\u0b3e", "\u0b4b"},
@@ -720,7 +725,7 @@ var appendTestsNFC = []AppendTest{
 }
 
 var appendTestsNFD = []AppendTest{
-// TODO: Move some of the tests here.
+	// TODO: Move some of the tests here.
 }
 
 var appendTestsNFKC = []AppendTest{
@@ -920,6 +925,31 @@ func TestString(t *testing.T) {
 	})
 }
 
+func runNM(code string) (string, error) {
+	// Write the file.
+	tmpdir, err := ioutil.TempDir(os.TempDir(), "normalize_test")
+	if err != nil {
+		return "", fmt.Errorf("failed to create tmpdir: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+	goTool := filepath.Join(runtime.GOROOT(), "bin", "go")
+	filename := filepath.Join(tmpdir, "main.go")
+	if err := ioutil.WriteFile(filename, []byte(code), 0644); err != nil {
+		return "", fmt.Errorf("failed to write main.go: %v", err)
+	}
+	outputFile := filepath.Join(tmpdir, "main")
+
+	// Build the binary.
+	out, err := exec.Command(goTool, "build", "-o", outputFile, filename).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to execute command: %v", err)
+	}
+
+	// Get the symbols.
+	out, err = exec.Command(goTool, "tool", "nm", outputFile).CombinedOutput()
+	return string(out), err
+}
+
 func TestLinking(t *testing.T) {
 	const prog = `
 	package main
@@ -927,15 +957,21 @@ func TestLinking(t *testing.T) {
 	import "golang.org/x/text/unicode/norm"
 	func main() { fmt.Println(norm.%s) }
 	`
-	baseline, errB := testtext.CodeSize(fmt.Sprintf(prog, "MaxSegmentSize"))
-	withTables, errT := testtext.CodeSize(fmt.Sprintf(prog, `NFC.String("")`))
+
+	baseline, errB := runNM(fmt.Sprintf(prog, "MaxSegmentSize"))
+	withTables, errT := runNM(fmt.Sprintf(prog, `NFC.String("")`))
 	if errB != nil || errT != nil {
-		t.Skipf("code size failed: %v and %v", errB, errT)
+		t.Skipf("TestLinking failed: %v and %v", errB, errT)
 	}
-	// Tables are at least 50K
-	if d := withTables - baseline; d < 50*1024 {
-		t.Errorf("tables appear not to be dropped: %d - %d = %d",
-			withTables, baseline, d)
+
+	symbols := []string{"norm.formTable", "norm.nfkcValues", "norm.decomps"}
+	for _, symbol := range symbols {
+		if strings.Contains(baseline, symbol) {
+			t.Errorf("found: %q unexpectedly", symbol)
+		}
+		if !strings.Contains(withTables, symbol) {
+			t.Errorf("didn't find: %q unexpectedly", symbol)
+		}
 	}
 }
 
@@ -1182,7 +1218,7 @@ func BenchmarkOverflow(b *testing.B) {
 var overflow = string(bytes.Repeat([]byte("\u035D"), 4096)) + "\u035B"
 
 // Tests sampled from the Canonical ordering tests (Part 2) of
-// http://unicode.org/Public/UNIDATA/NormalizationTest.txt
+// https://unicode.org/Public/UNIDATA/NormalizationTest.txt
 const txt_canon = `\u0061\u0315\u0300\u05AE\u0300\u0062 \u0061\u0300\u0315\u0300\u05AE\u0062
 \u0061\u0302\u0315\u0300\u05AE\u0062 \u0061\u0307\u0315\u0300\u05AE\u0062
 \u0061\u0315\u0300\u05AE\u030A\u0062 \u0061\u059A\u0316\u302A\u031C\u0062

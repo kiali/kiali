@@ -49,7 +49,7 @@ func TestClassThermalZoneStats(t *testing.T) {
 			Name:    "1",
 			Type:    "acpitz",
 			Policy:  "step_wise",
-			Temp:    44000,
+			Temp:    -44000,
 			Mode:    enabled,
 			Passive: &passive,
 		},
