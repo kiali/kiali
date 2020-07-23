@@ -59,29 +59,37 @@ func TestInfiniBandClass(t *testing.T) {
 	}
 
 	var (
-		port1LinkDowned               uint64
-		port1LinkErrorRecovery        uint64
-		port1PortRcvConstraintErrors  uint64
-		port1PortRcvData              uint64 = 8884894436
-		port1PortRcvErrors            uint64
-		port1PortRcvPackets           uint64 = 87169372
-		port1PortXmitConstraintErrors uint64
-		port1PortXmitData             uint64 = 106036453180
-		port1PortXmitDiscards         uint64
-		port1PortXmitPackets          uint64 = 85734114
-		port1PortXmitWait             uint64 = 3599
+		port1LinkDowned                  uint64
+		port1LinkErrorRecovery           uint64
+		port1PortRcvConstraintErrors     uint64
+		port1PortRcvData                 uint64 = 8884894436
+		port1PortRcvErrors               uint64
+		port1PortRcvPackets              uint64 = 87169372
+		port1PortRcvRemotePhysicalErrors uint64
+		port1PortRcvSwitchRelayErrors    uint64
+		port1PortXmitConstraintErrors    uint64
+		port1PortXmitData                uint64 = 106036453180
+		port1PortXmitDiscards            uint64
+		port1PortXmitPackets             uint64 = 85734114
+		port1PortXmitWait                uint64 = 3599
+		port1SymbolError                 uint64
+		port1VL15Dropped                 uint64
 
-		port2LinkDowned               uint64
-		port2LinkErrorRecovery        uint64
-		port2PortRcvConstraintErrors  uint64
-		port2PortRcvData              uint64 = 9841747136
-		port2PortRcvErrors            uint64
-		port2PortRcvPackets           uint64 = 89332064
-		port2PortXmitConstraintErrors uint64
-		port2PortXmitData             uint64 = 106161427560
-		port2PortXmitDiscards         uint64
-		port2PortXmitPackets          uint64 = 88622850
-		port2PortXmitWait             uint64 = 3846
+		port2LinkDowned                  uint64
+		port2LinkErrorRecovery           uint64
+		port2PortRcvConstraintErrors     uint64
+		port2PortRcvData                 uint64 = 9841747136
+		port2PortRcvErrors               uint64
+		port2PortRcvPackets              uint64 = 89332064
+		port2PortRcvRemotePhysicalErrors uint64
+		port2PortRcvSwitchRelayErrors    uint64
+		port2PortXmitConstraintErrors    uint64
+		port2PortXmitData                uint64 = 106161427560
+		port2PortXmitDiscards            uint64
+		port2PortXmitPackets             uint64 = 88622850
+		port2PortXmitWait                uint64 = 3846
+		port2SymbolError                 uint64
+		port2VL15Dropped                 uint64
 	)
 
 	want := InfiniBandClass{
@@ -100,17 +108,21 @@ func TestInfiniBandClass(t *testing.T) {
 					PhysStateID: 5,
 					Rate:        5000000000,
 					Counters: InfiniBandCounters{
-						LinkDowned:               &port1LinkDowned,
-						LinkErrorRecovery:        &port1LinkErrorRecovery,
-						PortRcvConstraintErrors:  &port1PortRcvConstraintErrors,
-						PortRcvData:              &port1PortRcvData,
-						PortRcvErrors:            &port1PortRcvErrors,
-						PortRcvPackets:           &port1PortRcvPackets,
-						PortXmitConstraintErrors: &port1PortXmitConstraintErrors,
-						PortXmitData:             &port1PortXmitData,
-						PortXmitDiscards:         &port1PortXmitDiscards,
-						PortXmitPackets:          &port1PortXmitPackets,
-						PortXmitWait:             &port1PortXmitWait,
+						LinkDowned:                  &port1LinkDowned,
+						LinkErrorRecovery:           &port1LinkErrorRecovery,
+						PortRcvConstraintErrors:     &port1PortRcvConstraintErrors,
+						PortRcvData:                 &port1PortRcvData,
+						PortRcvErrors:               &port1PortRcvErrors,
+						PortRcvPackets:              &port1PortRcvPackets,
+						PortRcvRemotePhysicalErrors: &port1PortRcvRemotePhysicalErrors,
+						PortRcvSwitchRelayErrors:    &port1PortRcvSwitchRelayErrors,
+						PortXmitConstraintErrors:    &port1PortXmitConstraintErrors,
+						PortXmitData:                &port1PortXmitData,
+						PortXmitDiscards:            &port1PortXmitDiscards,
+						PortXmitPackets:             &port1PortXmitPackets,
+						PortXmitWait:                &port1PortXmitWait,
+						SymbolError:                 &port1SymbolError,
+						VL15Dropped:                 &port1VL15Dropped,
 					},
 				},
 				2: {
@@ -122,17 +134,21 @@ func TestInfiniBandClass(t *testing.T) {
 					PhysStateID: 5,
 					Rate:        5000000000,
 					Counters: InfiniBandCounters{
-						LinkDowned:               &port2LinkDowned,
-						LinkErrorRecovery:        &port2LinkErrorRecovery,
-						PortRcvConstraintErrors:  &port2PortRcvConstraintErrors,
-						PortRcvData:              &port2PortRcvData,
-						PortRcvErrors:            &port2PortRcvErrors,
-						PortRcvPackets:           &port2PortRcvPackets,
-						PortXmitConstraintErrors: &port2PortXmitConstraintErrors,
-						PortXmitData:             &port2PortXmitData,
-						PortXmitDiscards:         &port2PortXmitDiscards,
-						PortXmitPackets:          &port2PortXmitPackets,
-						PortXmitWait:             &port2PortXmitWait,
+						LinkDowned:                  &port2LinkDowned,
+						LinkErrorRecovery:           &port2LinkErrorRecovery,
+						PortRcvConstraintErrors:     &port2PortRcvConstraintErrors,
+						PortRcvData:                 &port2PortRcvData,
+						PortRcvErrors:               &port2PortRcvErrors,
+						PortRcvPackets:              &port2PortRcvPackets,
+						PortRcvRemotePhysicalErrors: &port2PortRcvRemotePhysicalErrors,
+						PortRcvSwitchRelayErrors:    &port2PortRcvSwitchRelayErrors,
+						PortXmitConstraintErrors:    &port2PortXmitConstraintErrors,
+						PortXmitData:                &port2PortXmitData,
+						PortXmitDiscards:            &port2PortXmitDiscards,
+						PortXmitPackets:             &port2PortXmitPackets,
+						PortXmitWait:                &port2PortXmitWait,
+						SymbolError:                 &port2SymbolError,
+						VL15Dropped:                 &port2VL15Dropped,
 					},
 				},
 			},

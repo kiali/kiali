@@ -14,6 +14,7 @@
 package blockdevice
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestDiskstats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedNumOfDevices := 49
+	expectedNumOfDevices := 52
 	if len(diskstats) != expectedNumOfDevices {
 		t.Errorf(failMsgFormat, "Incorrect number of devices", expectedNumOfDevices, len(diskstats))
 	}
@@ -50,6 +51,15 @@ func TestDiskstats(t *testing.T) {
 	}
 	if diskstats[48].IoStatsCount != 18 {
 		t.Errorf(failMsgFormat, "Incorrect number of stats read", 18, diskstats[48].IoStatsCount)
+	}
+	if diskstats[49].IoStatsCount != 20 {
+		t.Errorf(failMsgFormat, "Incorrect number of stats read", 20, diskstats[50].IoStatsCount)
+	}
+	if diskstats[49].FlushRequestsCompleted != 127 {
+		t.Errorf(failMsgFormat, "Incorrect number of flash requests completed", 127, diskstats[50].FlushRequestsCompleted)
+	}
+	if diskstats[49].TimeSpentFlushing != 182 {
+		t.Errorf(failMsgFormat, "Incorrect time spend flushing", 182, diskstats[50].TimeSpentFlushing)
 	}
 }
 
@@ -94,5 +104,51 @@ func TestBlockDevice(t *testing.T) {
 	}
 	if device1stats.DiscardTicks != 12 {
 		t.Errorf(failMsgFormat, "Incorrect discard ticks", 12, device1stats.DiscardTicks)
+	}
+	blockQueueStatExpected := BlockQueueStats{
+		AddRandom:            1,
+		DAX:                  0,
+		DiscardGranularity:   0,
+		DiscardMaxHWBytes:    0,
+		DiscardMaxBytes:      0,
+		HWSectorSize:         512,
+		IOPoll:               0,
+		IOPollDelay:          -1,
+		IOTimeout:            30000,
+		IOStats:              1,
+		LogicalBlockSize:     512,
+		MaxHWSectorsKB:       32767,
+		MaxIntegritySegments: 0,
+		MaxSectorsKB:         1280,
+		MaxSegments:          168,
+		MaxSegmentSize:       65536,
+		MinimumIOSize:        512,
+		NoMerges:             0,
+		NRRequests:           64,
+		OptimalIOSize:        0,
+		PhysicalBlockSize:    512,
+		ReadAHeadKB:          128,
+		Rotational:           1,
+		RQAffinity:           1,
+		SchedulerList:        []string{"mq-deadline", "kyber", "bfq", "none"},
+		SchedulerCurrent:     "bfq",
+		WriteCache:           "write back",
+		WriteSameMaxBytes:    0,
+		WBTLatUSec:           75000,
+		ThrottleSampleTime:   nil,
+		Zoned:                "none",
+		NRZones:              0,
+		ChunkSectors:         0,
+		FUA:                  0,
+		MaxDiscardSegments:   1,
+		WriteZeroesMaxBytes:  0,
+	}
+
+	blockQueueStat, err := blockdevice.SysBlockDeviceQueueStats(devices[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(blockQueueStat, blockQueueStatExpected) {
+		t.Errorf("Incorrect BlockQueueStat, expected: \n%+v, got: \n%+v", blockQueueStatExpected, blockQueueStat)
 	}
 }

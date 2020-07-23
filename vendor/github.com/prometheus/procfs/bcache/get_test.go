@@ -158,3 +158,61 @@ func TestPriorityStats(t *testing.T) {
 		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.UnusedPercent, got.UnusedPercent)
 	}
 }
+
+func TestWritebackRateDebug(t *testing.T) {
+	var want = WritebackRateDebugStats{
+		Rate:         1765376,
+		Dirty:        21789409280,
+		Target:       21894266880,
+		Proportional: -1124,
+		Integral:     -257624,
+		Change:       2648,
+		NextIO:       -150773,
+	}
+	var (
+		in     string
+		gotErr error
+		got    WritebackRateDebugStats
+	)
+	in = "rate:           1.7M/sec"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Rate != want.Rate {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Rate, got.Rate)
+	}
+
+	in = "dirty:           20.3G"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Dirty != want.Dirty {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Dirty, got.Dirty)
+	}
+
+	in = "target:           20.4G"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Target != want.Target {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Target, got.Target)
+	}
+
+	in = "proportional:           -1.1k"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Proportional != want.Proportional {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Proportional, got.Proportional)
+	}
+
+	in = "integral:           -251.6k"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Integral != want.Integral {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Integral, got.Integral)
+	}
+
+	in = "change:           2.6k/sec"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.Change != want.Change {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.Change, got.Change)
+	}
+
+	in = "next io:           -150773ms"
+	gotErr = parseWritebackRateDebug(in, &got)
+	if gotErr != nil || got.NextIO != want.NextIO {
+		t.Errorf("parsePriorityStats: '%s', want %d, got %d", in, want.NextIO, got.NextIO)
+	}
+}

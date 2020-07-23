@@ -62,6 +62,11 @@ func (e *Common) Default() string {
 	return ""
 }
 
+// Element returns the XML element name.
+func (e *Common) Element() string {
+	return e.name
+}
+
 // GetCommon returns e. It is provided such that Common implements Elem.
 func (e *Common) GetCommon() *Common {
 	return e
@@ -93,7 +98,7 @@ var charRe = regexp.MustCompile(`&#x[0-9a-fA-F]*;|\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-
 func replaceUnicode(s string) string {
 	if s[1] == '#' {
 		r, _ := strconv.ParseInt(s[3:len(s)-1], 16, 32)
-		return string(r)
+		return string(rune(r))
 	}
 	r, _, _, _ := strconv.UnquoteChar(s, 0)
 	return string(r)

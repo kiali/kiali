@@ -160,45 +160,45 @@ func TestGetStats(t *testing.T) {
 				t.Errorf("unexpected iSCSI iops data :\nwant:\n%v\nhave:\n%v", readTests[i].iops, iops)
 			}
 			if stat.Tpgt[0].Luns[0].Backstore == "rd_mcp" {
-				have_rdmcp, err := sysconfigfs.GetRDMCPPath("119", "ramdisk_lio_1G")
+				haveRdmcp, err := sysconfigfs.GetRDMCPPath("119", "ramdisk_lio_1G")
 				if err != nil {
 					t.Errorf("fail rdmcp error %v", err)
 				}
 				// Name ObjectName
-				want_rdmcp := &iscsi.RDMCP{"rd_mcp_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].ObjectName}
+				wantRdmcp := &iscsi.RDMCP{"rd_mcp_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].ObjectName}
 
-				if !reflect.DeepEqual(want_rdmcp, have_rdmcp) {
-					t.Errorf("unexpected rdmcp data :\nwant:\n%v\nhave:\n%v", want_rdmcp, have_rdmcp)
+				if !reflect.DeepEqual(wantRdmcp, haveRdmcp) {
+					t.Errorf("unexpected rdmcp data :\nwant:\n%v\nhave:\n%v", wantRdmcp, haveRdmcp)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "iblock" {
-				have_iblock, err := sysconfigfs.GetIblockUdev("0", "block_lio_rbd1")
+				haveIblock, err := sysconfigfs.GetIblockUdev("0", "block_lio_rbd1")
 				if err != nil {
 					t.Errorf("fail iblock error %v", err)
 				}
 				// Name Bnumber ObjectName Iblock
-				want_iblock := &iscsi.IBLOCK{"iblock_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].ObjectName, "/dev/rbd1"}
-				if !reflect.DeepEqual(want_iblock, have_iblock) {
-					t.Errorf("unexpected iblock data :\nwant:\n%v\nhave:\n%v", want_iblock, have_iblock)
+				wantIblock := &iscsi.IBLOCK{"iblock_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].ObjectName, "/dev/rbd1"}
+				if !reflect.DeepEqual(wantIblock, haveIblock) {
+					t.Errorf("unexpected iblock data :\nwant:\n%v\nhave:\n%v", wantIblock, haveIblock)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "fileio" {
-				have_fileio, err := sysconfigfs.GetFileioUdev("1", "file_lio_1G")
+				haveFileIO, err := sysconfigfs.GetFileioUdev("1", "file_lio_1G")
 				if err != nil {
 					t.Errorf("fail fileio error %v", err)
 				}
 				// Name, Fnumber, ObjectName, Filename
-				want_fileio := &iscsi.FILEIO{"fileio_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, "file_lio_1G", "/home/iscsi/file_back_1G"}
-				if !reflect.DeepEqual(want_fileio, have_fileio) {
-					t.Errorf("unexpected fileio data :\nwant:\n%v\nhave:\n%v", want_fileio, have_fileio)
+				wantFileIO := &iscsi.FILEIO{"fileio_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, "file_lio_1G", "/home/iscsi/file_back_1G"}
+				if !reflect.DeepEqual(wantFileIO, haveFileIO) {
+					t.Errorf("unexpected fileio data :\nwant:\n%v\nhave:\n%v", wantFileIO, haveFileIO)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "rbd" {
-				have_rbd, err := sysconfigfs.GetRBDMatch("0", "iscsi-images-demo")
+				haveRBD, err := sysconfigfs.GetRBDMatch("0", "iscsi-images-demo")
 				if err != nil {
 					t.Errorf("fail rbd error %v", err)
 				}
 				// Name, Rnumber, Pool, Image
-				want_rbd := &iscsi.RBD{"rbd_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, "iscsi-images", "demo"}
-				if !reflect.DeepEqual(want_rbd, have_rbd) {
-					t.Errorf("unexpected fileio data :\nwant:\n%v\nhave:\n%v", want_rbd, have_rbd)
+				wantRBD := &iscsi.RBD{"rbd_" + stat.Tpgt[0].Luns[0].TypeNumber, stat.Tpgt[0].Luns[0].TypeNumber, "iscsi-images", "demo"}
+				if !reflect.DeepEqual(wantRBD, haveRBD) {
+					t.Errorf("unexpected fileio data :\nwant:\n%v\nhave:\n%v", wantRBD, haveRBD)
 				}
 			}
 		}

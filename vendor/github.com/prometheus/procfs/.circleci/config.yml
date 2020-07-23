@@ -34,7 +34,7 @@ jobs:
     steps:
     - checkout
     - run: sudo pip install codespell
-    - run: codespell --skip=".git,./vendor,ttar,go.mod,go.sum" -L uint,packages\'
+    - run: codespell --skip=".git,./vendor,ttar,fixtures.ttar,./fixtures,go.mod,go.sum" -L uint,packages\',ded,alo,als,te,sie
 
 workflows:
   version: 2
@@ -42,22 +42,22 @@ workflows:
     jobs:
     - test:
         command: default
-        name: linux-1-11
+        name: linux-1-13
         os: linux
-        go_version: "1.11"
+        go_version: "1.13"
     - test:
         command: default
-        name: linux-1-12
+        name: linux-1-14
         os: linux
-        go_version: "1.12"
+        go_version: "1.14"
     - test:
         command: no-test
-        name: windows-1-11
+        name: windows-1-13
         os: windows
-        go_version: "1.11"
+        go_version: "1.13"
     - test:
         command: no-test
-        name: windows-1-12
+        name: windows-1-14
         os: windows
-        go_version: "1.12"
+        go_version: "1.14"
     - codespell

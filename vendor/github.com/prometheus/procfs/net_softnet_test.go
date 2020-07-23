@@ -29,7 +29,11 @@ func TestNetSoftnet(t *testing.T) {
 		Processed:    0x00015c73,
 		Dropped:      0x00020e76,
 		TimeSqueezed: 0xf0000769,
-	}}
+	},
+		{
+			Processed:    0x01663fb2,
+			TimeSqueezed: 0x0109a4,
+		}}
 
 	got, err := fs.NetSoftnetStat()
 	if err != nil {
@@ -38,5 +42,18 @@ func TestNetSoftnet(t *testing.T) {
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("unexpected softnet stats(-want +got):\n%s", diff)
+	}
+}
+
+func TestBadSoftnet(t *testing.T) {
+	softNetProcFile = "net/softnet_stat.broken"
+	fs, err := NewFS(procTestFixtures)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = fs.NetSoftnetStat()
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }

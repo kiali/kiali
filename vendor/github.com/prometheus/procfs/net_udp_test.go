@@ -1,4 +1,4 @@
-// Copyright 2019 The Prometheus Authors
+// Copyright 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,6 +14,7 @@
 package procfs
 
 import (
+	"net"
 	"reflect"
 	"testing"
 )
@@ -30,9 +31,9 @@ func Test_parseNetUDPLine(t *testing.T) {
 			fields: []string{"11:", "00000000:0000", "00000000:0000", "0A", "00000017:0000002A", "0:0", "0", "1000"},
 			want: &netUDPLine{
 				Sl:        11,
-				LocalAddr: 0,
+				LocalAddr: net.IP{0, 0, 0, 0},
 				LocalPort: 0,
-				RemAddr:   0,
+				RemAddr:   net.IP{0, 0, 0, 0},
 				RemPort:   0,
 				St:        10,
 				TxQueue:   23,
@@ -99,19 +100,8 @@ func Test_parseNetUDPLine(t *testing.T) {
 			if tt.want == nil && got != nil {
 				t.Errorf("parseNetUDPLine() = %v, want %v", got, tt.want)
 			}
-			if got != nil {
-				if (got.Sl != tt.want.Sl) ||
-					(got.LocalAddr != tt.want.LocalAddr) ||
-					(got.LocalPort != tt.want.LocalPort) ||
-					(got.RemAddr != tt.want.RemAddr) ||
-					(got.RemPort != tt.want.RemPort) ||
-					(got.St != tt.want.St) ||
-					(got.TxQueue != tt.want.TxQueue) ||
-					(got.RxQueue != tt.want.RxQueue) ||
-					(got.UID != tt.want.UID) {
-
-					t.Errorf("parseNetUDPLine() = %#v, want %#v", got, tt.want)
-				}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseNetUDPLine() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
@@ -129,13 +119,37 @@ func Test_newNetUDP(t *testing.T) {
 			file: "fixtures/proc/net/udp",
 			want: []*netUDPLine{
 				&netUDPLine{
-					Sl: 0, LocalAddr: 0, LocalPort: 22, RemAddr: 0, RemPort: 0, St: 10, TxQueue: 0, RxQueue: 1, UID: 0,
+					Sl:        0,
+					LocalAddr: net.IP{10, 0, 0, 5},
+					LocalPort: 22,
+					RemAddr:   net.IP{0, 0, 0, 0},
+					RemPort:   0,
+					St:        10,
+					TxQueue:   0,
+					RxQueue:   1,
+					UID:       0,
 				},
 				&netUDPLine{
-					Sl: 1, LocalAddr: 0, LocalPort: 22, RemAddr: 0, RemPort: 0, St: 10, TxQueue: 1, RxQueue: 0, UID: 0,
+					Sl:        1,
+					LocalAddr: net.IP{0, 0, 0, 0},
+					LocalPort: 22,
+					RemAddr:   net.IP{0, 0, 0, 0},
+					RemPort:   0,
+					St:        10,
+					TxQueue:   1,
+					RxQueue:   0,
+					UID:       0,
 				},
 				&netUDPLine{
-					Sl: 2, LocalAddr: 0, LocalPort: 22, RemAddr: 0, RemPort: 0, St: 10, TxQueue: 1, RxQueue: 1, UID: 0,
+					Sl:        2,
+					LocalAddr: net.IP{0, 0, 0, 0},
+					LocalPort: 22,
+					RemAddr:   net.IP{0, 0, 0, 0},
+					RemPort:   0,
+					St:        10,
+					TxQueue:   1,
+					RxQueue:   1,
+					UID:       0,
 				},
 			},
 			wantErr: false,
@@ -145,10 +159,26 @@ func Test_newNetUDP(t *testing.T) {
 			file: "fixtures/proc/net/udp6",
 			want: []*netUDPLine{
 				&netUDPLine{
-					Sl: 1315, LocalAddr: 0, LocalPort: 5355, RemAddr: 0, RemPort: 0, St: 7, TxQueue: 0, RxQueue: 0, UID: 981,
+					Sl:        1315,
+					LocalAddr: net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					LocalPort: 5355,
+					RemAddr:   net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					RemPort:   0,
+					St:        7,
+					TxQueue:   0,
+					RxQueue:   0,
+					UID:       981,
 				},
 				&netUDPLine{
-					Sl: 6073, LocalAddr: 0, LocalPort: 51073, RemAddr: 0, RemPort: 0, St: 7, TxQueue: 0, RxQueue: 0, UID: 1000,
+					Sl:        6073,
+					LocalAddr: net.IP{0, 0, 128, 254, 0, 0, 0, 0, 255, 173, 225, 86, 9, 102, 124, 254},
+					LocalPort: 51073,
+					RemAddr:   net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					RemPort:   0,
+					St:        7,
+					TxQueue:   0,
+					RxQueue:   0,
+					UID:       1000,
 				},
 			},
 			wantErr: false,
