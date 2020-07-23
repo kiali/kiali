@@ -5,13 +5,17 @@ import (
 )
 
 type Iter8Info struct {
-	Enabled bool `json:"enabled"`
+	Enabled                bool   `json:"enabled"`
+	SupportedVersion       bool   `json:"supportedVersion"`
+	ControllerImageVersion string `json:"controllerImgVersion"`
+	AnalyticsImageVersion  string `json:"analyticsImgVersion"`
 }
 
 type ExperimentAction struct {
 	Action string `json:"action"`
 }
 
+// For Displaying Iter8 Experiment Details
 type Iter8ExperimentItem struct {
 	Name                   string   `json:"name"`
 	Phase                  string   `json:"phase"`
@@ -29,11 +33,14 @@ type Iter8ExperimentItem struct {
 	TargetService          string   `json:"targetService"`
 	TargetServiceNamespace string   `json:"targetServiceNamespace"`
 	AssessmentConclusion   []string `json:"assessmentConclusion"`
+	Kind                   string   `json:"kind"`
 }
 
+// For Displaying Iter8 Experiment Tabs
 type Iter8ExperimentDetail struct {
 	ExperimentItem  Iter8ExperimentItem   `json:"experimentItem"`
 	CriteriaDetails []Iter8CriteriaDetail `json:"criterias"`
+	Hosts           []Iter8Host           `json:"hosts"`
 	TrafficControl  Iter8TrafficControl   `json:"trafficControl"`
 	Permissions     ResourcePermissions   `json:"permissions"`
 	Action          string                `json:"action"`
@@ -59,6 +66,7 @@ type Iter8SuccessCrideriaStatus struct {
 	AbortExperiment     bool     `json:"abort_experiment"`
 }
 
+// Spec for Creating Experiment
 type Iter8ExperimentSpec struct {
 	Name           string              `json:"name"`
 	Namespace      string              `json:"namespace"`
@@ -68,7 +76,14 @@ type Iter8ExperimentSpec struct {
 	Candidate      string              `json:"candidate"`
 	TrafficControl Iter8TrafficControl `json:"trafficControl"`
 	Criterias      []Iter8Criteria     `json:"criterias"`
+	Hosts          []Iter8Host         `json:"hosts"`
 	Action         string              `json:"action"`
+	ExperimentKind string              `json:"experimentKind"`
+}
+
+type Iter8Host struct {
+	Name    string `json:"name"`
+	Gateway string `json:"gateway"`
 }
 
 type Iter8TrafficControl struct {
@@ -108,6 +123,7 @@ func (i *Iter8ExperimentSpec) Parse(iter8Object Iter8ExperimentDetail) {
 	i.Service = iter8Object.ExperimentItem.TargetService
 	i.Candidate = iter8Object.ExperimentItem.Candidate
 	i.Baseline = iter8Object.ExperimentItem.Baseline
+	i.ExperimentKind = iter8Object.ExperimentItem.Kind
 	i.TrafficControl = iter8Object.TrafficControl
 	i.Criterias = make([]Iter8Criteria, len(iter8Object.CriteriaDetails))
 	for k, c := range iter8Object.CriteriaDetails {
@@ -154,6 +170,13 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		criterias[i] = criteriaDetail
 	}
 
+	hosts := make([]Iter8Host, len(spec.TargetService.Hosts))
+	for i, h := range spec.TargetService.Hosts {
+		host := Iter8Host{}
+		host.Name = h.Name
+		host.Gateway = h.Gateway
+		hosts[i] = host
+	}
 	trafficControl := Iter8TrafficControl{
 		Algorithm:            spec.TrafficControl.Strategy,
 		Interval:             spec.TrafficControl.Interval,
@@ -181,9 +204,11 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		TargetService:          spec.TargetService.Name,
 		TargetServiceNamespace: targetServiceNamespace,
 		AssessmentConclusion:   status.Assestment.Conclusions,
+		Kind:                   spec.TargetService.Kind,
 	}
 	i.CriteriaDetails = criterias
 	i.TrafficControl = trafficControl
+	i.Hosts = hosts
 }
 
 func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
@@ -205,4 +230,6 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 	i.CandidatePercentage = status.TrafficSplitPercentage.Candidate
 	i.TargetService = spec.TargetService.Name
 	i.TargetServiceNamespace = spec.TargetService.Namespace
+
+	i.Kind = spec.TargetService.Kind
 }

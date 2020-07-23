@@ -31,6 +31,7 @@ const (
 	IstioVersionSupported   = ">= 1.0"
 	MaistraVersionSupported = ">= 0.7.0"
 	OSSMVersionSupported    = ">= 1.0"
+	Iter8VersionSupported   = ">= 0.2"
 )
 
 // The valid auth strategies and values for cookie handling
