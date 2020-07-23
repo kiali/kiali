@@ -20,13 +20,26 @@ describe('JaegerHelper', () => {
     expect(wkdNs!.namespace).toEqual('default');
     expect(wkdNs!.workload).toEqual('ai-locals');
 
-    const span2 = { tags: [{ key: 'node_id', value: 'not going to work' }] } as Span;
-    const wkdNs2 = getWorkloadFromSpan(span2);
-    expect(wkdNs2).toBeUndefined();
-
-    const span3 = { tags: [{ key: '-', value: 'not going to work' }] } as Span;
+    const span3 = { tags: [{ key: 'node_id', value: 'not going to work' }] } as Span;
     const wkdNs3 = getWorkloadFromSpan(span3);
     expect(wkdNs3).toBeUndefined();
+
+    const span4 = { tags: [{ key: '-', value: 'not going to work' }] } as Span;
+    const wkdNs4 = getWorkloadFromSpan(span4);
+    expect(wkdNs4).toBeUndefined();
+  });
+
+  it('tests more regex', () => {
+    const test = (podName: string, expectedWkd: string, expectedNs: string) => {
+      const span = { tags: [{ key: 'node_id', value: `any~any~${podName}~any` }] } as Span;
+      const wkdNs = getWorkloadFromSpan(span);
+      expect(wkdNs).toBeDefined();
+      expect(wkdNs!.namespace).toEqual(expectedNs);
+      expect(wkdNs!.workload).toEqual(expectedWkd);
+    };
+    test('simple-1234xy-5678z.namespace', 'simple', 'namespace');
+    test('abc.def-1234xy-5678z.ns', 'abc.def', 'ns');
+    test('ab-1.2-ef-1234xy-5678z.n-s-3', 'ab-1.2-ef', 'n-s-3');
   });
 
   it('should find parent workload', () => {

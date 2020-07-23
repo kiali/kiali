@@ -41,7 +41,7 @@ export const getTimeRangeMicros = () => {
   };
 };
 
-const workloadFromNodeRegex = /([a-z0-9-\.]+)-[a-z0-9]+-[a-z0-9]+\.([a-z0-9-]+)/;
+const workloadFromNodeRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+.([a-z0-9-]+)/;
 type WorkloadAndNamespace = { workload: string; namespace: string };
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
