@@ -177,7 +177,6 @@ export class GraphStyles {
       const isGroupMember = data.parent;
       const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
       const isOutside = data.isOutside;
-      const isServiceEntry = data.isServiceEntry !== undefined;
       const namespace = data.namespace;
       const nodeType = data.nodeType;
       const service = data.service || '';
@@ -219,7 +218,7 @@ export class GraphStyles {
         }
       } else {
         const contentArray: string[] = [];
-        if ((isMultiNamespace || isOutside) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
+        if ((isMultiNamespace || isOutside) && nodeType !== NodeType.UNKNOWN) {
           contentArray.push('(' + namespace + ')');
         }
         switch (nodeType) {
