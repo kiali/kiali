@@ -26,7 +26,6 @@ import (
 const (
 	missingSecretStatusCode = 520
 	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
-	defaultSessionDuration  = 3600
 )
 
 type AuthenticationHandler struct {
@@ -282,7 +281,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Set a default value for expiration date
-	expiresOn := time.Now().Add(time.Second * time.Duration(defaultSessionDuration))
+	expiresOn := time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
 
 	// If the expiration date is present on the claim, we use that
 	expiresInNumber := int64(0)
