@@ -158,6 +158,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			version:    "some-unknown-version-string",
 			supported:  false,
 		},
+		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/1.7.0-alpha.1-cd46a166947eac363380c3aa3523b26a8c391f98-dirty-Modified",
+			name:       "Istio RC",
+			version:    "1.7.0 (alpha.1)",
+			supported:  true,
+		},
 	}
 
 	for _, versionToTest := range versionsToTest {
