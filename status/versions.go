@@ -32,6 +32,8 @@ var (
 	//   OSSM_1.1.0-291c5419cf19d2b015e7e5dee970c458fb8f1982-Clean
 	// Example Istio snapshot version is:
 	//   root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-cbe9c05c470ec1924f7bcf02334b183e7e6175cb-Clean
+	// Example Istio alpha RC version is:
+	//   1.7.0-alpha.1-cd46a166947eac363380c3aa3523b26a8c391f98-dirty-Modified
 	// Example Istio dev version is:
 	//   1.5-alpha.dbd2aca8887fb42c2bb358417621a78de372f906-dbd2aca8887fb42c2bb358417621a78de372f906-Clean
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
@@ -190,23 +192,6 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		}
 	}
 
-	// see if it is a dev version of Istio
-	istioVersionStringArr = istioDevVersionExpr.FindStringSubmatch(rawVersion)
-	if istioVersionStringArr != nil {
-		log.Debugf("Detected Istio dev version [%v]", rawVersion)
-		if len(istioVersionStringArr) > 2 {
-			product.Name = "Istio Dev"
-			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#" version numbers
-			buildHash := istioVersionStringArr[2]  // regex group #2 is the build hash
-			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
-			if !validateVersion(config.IstioVersionSupported, majorMinor) {
-				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
-			}
-			// we know this is Istio upstream - either a supported or unsupported version - return now
-			return &product, nil
-		}
-	}
-
 	// see if it is an RC version of Istio
 	istioVersionStringArr = istioRCVersionExpr.FindStringSubmatch(rawVersion)
 	if istioVersionStringArr != nil {
@@ -218,6 +203,23 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 			product.Version = fmt.Sprintf("%s (%s)", majorMinor, rc)
 			if !validateVersion(config.IstioVersionSupported, majorMinor) {
 				info.WarningMessages = append(info.WarningMessages, "Istio release candidate version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	// see if it is a dev version of Istio
+	istioVersionStringArr = istioDevVersionExpr.FindStringSubmatch(rawVersion)
+	if istioVersionStringArr != nil {
+		log.Debugf("Detected Istio dev version [%v]", rawVersion)
+		if len(istioVersionStringArr) > 2 {
+			product.Name = "Istio Dev"
+			majorMinor := istioVersionStringArr[1] // regex group #1 is the "#.#" version numbers
+			buildHash := istioVersionStringArr[2]  // regex group #2 is the build hash
+			product.Version = fmt.Sprintf("%s (dev %s)", majorMinor, buildHash)
+			if !validateVersion(config.IstioVersionSupported, majorMinor) {
+				info.WarningMessages = append(info.WarningMessages, "Istio dev version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
 			return &product, nil
