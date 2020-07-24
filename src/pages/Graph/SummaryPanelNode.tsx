@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
 import {
@@ -15,10 +16,9 @@ import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { Dropdown, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
-import { connect } from 'react-redux';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
-import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
+import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { hasExperimentalFlag } from 'utils/SearchParamUtils';
 
@@ -145,7 +145,6 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             <SummaryPanelNodeTraces
               namespace={nodeData.namespace}
               service={nodeData.service!}
-              jaegerInfo={this.props.jaegerInfo}
               queryTime={this.props.queryTime}
             />
           </Tab>
@@ -211,7 +210,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState.info
 });
 
 const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);

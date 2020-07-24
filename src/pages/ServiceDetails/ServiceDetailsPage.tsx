@@ -184,7 +184,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  jaegerInfo: state.jaegerState || undefined
+  jaegerInfo: state.jaegerState.info
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

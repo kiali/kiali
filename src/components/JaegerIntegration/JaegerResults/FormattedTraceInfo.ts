@@ -1,7 +1,7 @@
 import { JaegerTrace } from '../../../types/JaegerInfo';
 import moment from 'moment';
 import { formatDuration, formatRelativeDate } from './transform';
-import { isErrorTag } from '../RouteHelper';
+import { isErrorTag } from '../JaegerHelper';
 
 export type FormattedTraceInfo = {
   name: string;

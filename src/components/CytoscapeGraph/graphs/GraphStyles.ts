@@ -621,6 +621,14 @@ export class GraphStyles {
           'overlay-padding': '8px',
           'overlay-opacity': 0.5
         }
+      },
+      {
+        selector: '*.span[^isGroup]',
+        style: {
+          'overlay-color': PfColors.Purple200,
+          'overlay-padding': '8px',
+          'overlay-opacity': 0.5
+        }
       }
     ];
   }

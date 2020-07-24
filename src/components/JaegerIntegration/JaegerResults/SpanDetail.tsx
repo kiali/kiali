@@ -85,7 +85,7 @@ export class SpanDetailC extends React.Component<SpanDetailProps, SpanDetailStat
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    namespaceSelector: state.jaegerState ? state.jaegerState.namespaceSelector : true
+    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true
   };
 };
 

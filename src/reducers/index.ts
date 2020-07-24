@@ -8,11 +8,11 @@ import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
 import namespaceState from './NamespaceState';
 import UserSettingsState from './UserSettingsState';
-import JaegerState from './JaegerState';
 import TourState from './TourState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import MeshTlsState from './MeshTlsState';
 import IstioStatusState from './IstioStatusState';
+import JaegerStateReducer from './JaegerState';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: loginState,
@@ -22,7 +22,7 @@ const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   namespaces: namespaceState,
   statusState: HelpDropdownState,
   userSettings: UserSettingsState,
-  jaegerState: JaegerState,
+  jaegerState: JaegerStateReducer,
   meshTLSStatus: MeshTlsState,
   istioStatus: IstioStatusState,
   tourState: TourState

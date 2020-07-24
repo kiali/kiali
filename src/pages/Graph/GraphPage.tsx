@@ -53,7 +53,7 @@ import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import TourStopContainer, { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
+import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'utils/SearchParamUtils';
 import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
@@ -61,6 +61,8 @@ import { replayBorder } from 'components/Time/Replay';
 import GraphDataSource, { FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import GraphThunkActions from '../../actions/GraphThunkActions';
+import { JaegerTrace } from 'types/JaegerInfo';
+import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -89,6 +91,7 @@ type ReduxProps = {
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespace: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setTraceId: (traceId?: string) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
   showLegend: boolean;
@@ -101,6 +104,7 @@ type ReduxProps = {
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
   summaryData: SummaryData | null;
+  trace?: JaegerTrace;
   updateSummary: (event: CytoscapeClickEvent) => void;
   mtlsEnabled: boolean;
 
@@ -260,6 +264,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     if (GraphPage.isNodeChanged(urlNode, props.node)) {
       props.setNode(urlNode);
     }
+    const urlTrace = getTraceId();
+    if (urlTrace !== props.trace) {
+      props.setTraceId(urlTrace);
+    }
 
     this.graphDataSource = new GraphDataSource();
 
@@ -340,6 +348,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
     if (prev.layout.name !== curr.layout.name || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
+    }
+
+    if (prev.summaryData !== this.props.summaryData) {
+      this.props.setTraceId(undefined);
     }
 
     if (curr.showLegend && this.props.activeTour) {
@@ -678,6 +690,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
+  trace: state.jaegerState?.selectedTrace,
   mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
@@ -689,6 +702,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),

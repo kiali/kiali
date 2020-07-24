@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ChartWithLegend, makeLegend, LineInfo, VCDataPoint } from '@kiali/k-charted-pf4';
 import { ChartScatter } from '@patternfly/react-charts';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
-import { isErrorTag } from './RouteHelper';
+import { isErrorTag } from './JaegerHelper';
 import { PfColors } from '../Pf/PfColors';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 
