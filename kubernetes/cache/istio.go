@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 type (

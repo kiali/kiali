@@ -77,7 +77,7 @@ func TestComponentRunning(t *testing.T) {
 func TestGrafanaDisabled(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
+	conf := confWithIstioComponents()
 	conf.ExternalServices.Grafana.Enabled = false
 	config.Set(conf)
 
@@ -127,8 +127,7 @@ func TestTracingDisabled(t *testing.T) {
 func TestMonolithComp(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
-	config.Set(conf)
+	config.Set(confWithIstioComponents())
 
 	pods := []apps_v1.Deployment{
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
@@ -165,8 +164,7 @@ func TestMonolithComp(t *testing.T) {
 func TestMixerComp(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
-	config.Set(conf)
+	config.Set(confWithIstioComponents())
 
 	pods := []apps_v1.Deployment{
 		fakeDeploymentWithStatus("istio-citadel", map[string]string{"app": "citadel", "istio": "citadel"}, healthyStatus),
@@ -252,4 +250,13 @@ func shutdown() {
 	delete(components["mixer"], TRACING_COMPONENT)
 	delete(components["mixerless"], TRACING_COMPONENT)
 	delete(components["mixerless"], GRAFANA_COMPONENT)
+}
+
+func confWithIstioComponents() *config.Config {
+	conf := config.NewConfig()
+	conf.IstioComponentNamespaces = config.IstioComponentNamespaces{
+		"grafana": "istio-system",
+		"istiod":  "istio-config",
+	}
+	return conf
 }

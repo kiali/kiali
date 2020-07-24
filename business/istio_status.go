@@ -1,6 +1,8 @@
 package business
 
 import (
+	"sync"
+
 	apps_v1 "k8s.io/api/apps/v1"
 
 	"github.com/kiali/kiali/config"
@@ -71,8 +73,8 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 		return IstioComponentStatus{}, nil
 	}
 
-	// Fetching workloads from control plane namespace
-	ds, error := iss.k8s.GetDeployments(config.Get().IstioNamespace)
+	// Fetching workloads from component namespaces
+	ds, error := iss.getComponentNamespacesWorkloads()
 	if error != nil {
 		return IstioComponentStatus{}, error
 	}
@@ -83,6 +85,49 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 	}
 
 	return iss.getStatusOf(arch, ds)
+}
+
+func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Deployment, error) {
+	var wg sync.WaitGroup
+
+	comNs := config.Get().IstioComponentNamespaces
+	nss := map[string]bool{}
+	deps := make([]apps_v1.Deployment, 0)
+
+	depsChan := make(chan []apps_v1.Deployment, len(comNs))
+	errChan := make(chan error, len(comNs))
+
+	for _, n := range comNs {
+		if !nss[n] {
+			go func(n string, depsChan chan []apps_v1.Deployment, errChan chan error) {
+				defer wg.Done()
+				ds, err := iss.k8s.GetDeployments(n)
+				depsChan <- ds
+				errChan <- err
+			}(n, depsChan, errChan)
+
+			wg.Add(1)
+			nss[n] = true
+		}
+	}
+
+	wg.Wait()
+
+	close(depsChan)
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for dep := range depsChan {
+		if dep != nil {
+			deps = append(deps, dep...)
+		}
+	}
+
+	return deps, nil
 }
 
 func addAddOnComponents(arch string) {
