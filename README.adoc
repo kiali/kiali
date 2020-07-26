@@ -409,6 +409,69 @@ In the provided Kubernetes templates, SSL is turned on by default. If you want t
 
 * Optionally you can also remove the volume that is declared and mounted in Kiali Deployment (the name of the volume and mount are both "kiali-cert". If you don't remove these, they will just be ignored.
 
+== Exposing Kiali to External Clients Using Istio Gateway
+
+The operator will create a Route or Ingress by default (see the Kiali CR setting "deployment.ingress_enabled"). If you want to expose Kiali via Istio itself, you can create Gateway, Virtual Service, and Destination Rule resources similiar to below:
+
+[source,yaml]
+----
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: kiali-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http-kiali
+      protocol: HTTP
+    # https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings
+    tls:
+      httpsRedirect: false
+    hosts: [<your-host>]
+  - port:
+      number: 443
+      name: https-kiali
+      protocol: HTTPS
+    tls: {}
+    hosts: [<your-host>]
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: kiali-virtualservice
+  namespace: istio-system
+spec:
+  gateways:
+  - kiali-gateway
+  hosts: [<your-host>]
+  http:
+  - route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001
+      weight: 100
+...
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: kiali-destinationrule
+  namespace: istio-system
+spec:
+  host: kiali
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+...
+----
+
 == Contributing
 
 First, check the link:https://kiali.io/contribute[Contribute section in our web site], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
