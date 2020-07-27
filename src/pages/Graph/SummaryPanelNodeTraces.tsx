@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { SimpleList, SimpleListItem, Button, Checkbox, Tooltip } from '@patternfly/react-core';
+import { SimpleList, SimpleListItem, Button, Checkbox } from '@patternfly/react-core';
+import { SyncAltIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
 import { KialiAppState } from 'store/Store';
@@ -28,19 +29,30 @@ type Props = {
 
 type State = {
   traces: JaegerTrace[];
-  keepList: boolean;
+  useGraphRefresh: boolean;
 };
 
 const tracesLimit = 15;
 
+const refreshSpanStyle = style({
+  display: 'inline-flex',
+  marginLeft: 80
+});
+
 const checkboxStyle = style({
   paddingBottom: 10,
-  float: 'right',
+  // float: 'right',
   $nest: {
     '& > label': {
       fontSize: 'var(--graph-side-panel--font-size)'
     }
   }
+});
+
+const refreshButtonStyle = style({
+  padding: '2px 10px',
+  marginLeft: 5,
+  top: -4
 });
 
 class SummaryPanelNodeTraces extends React.Component<Props, State> {
@@ -59,7 +71,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { traces: [], keepList: false };
+    this.state = { traces: [], useGraphRefresh: true };
   }
 
   componentDidMount() {
@@ -68,7 +80,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     if (
-      !this.state.keepList &&
+      this.state.useGraphRefresh &&
       (prevProps.queryTime !== this.props.queryTime ||
         prevProps.namespace !== this.props.namespace ||
         prevProps.service !== this.props.service)
@@ -125,15 +137,25 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
     return (
       <div style={{ marginBottom: 8 }}>
-        <Tooltip content="When checked, traces won't be reloaded with Graph refresh">
+        <span className={refreshSpanStyle}>
           <Checkbox
-            id="disable-refresh"
-            label="Keep list"
+            id="use-graph-refresh"
+            label="Use graph refresh"
             className={checkboxStyle}
-            isChecked={this.state.keepList}
-            onChange={checked => this.setState({ keepList: checked })}
+            isChecked={this.state.useGraphRefresh}
+            onChange={checked => this.setState({ useGraphRefresh: checked })}
           />
-        </Tooltip>
+          <Button
+            id="manual-refresh"
+            isDisabled={this.state.useGraphRefresh}
+            onClick={() => this.loadTraces()}
+            aria-label="Action"
+            variant="secondary"
+            className={refreshButtonStyle}
+          >
+            <SyncAltIcon />
+          </Button>
+        </span>
         <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
           {this.state.traces.map(trace => {
             return (
