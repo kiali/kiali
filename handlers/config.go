@@ -76,7 +76,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		InstallationTag:          config.InstallationTag,
-		IstioStatusEnabled:       config.ExternalServices.Istio.IstioStatusEnabled,
+		IstioStatusEnabled:       config.ExternalServices.Istio.ComponentStatuses.Enabled,
 		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,
 		IstioComponentNamespaces: config.IstioComponentNamespaces,

@@ -105,18 +105,20 @@ func (a *Auth) Obfuscate() {
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	Auth             Auth   `yaml:"auth,omitempty"`
-	CustomMetricsURL string `yaml:"custom_metrics_url,omitempty"`
-	URL              string `yaml:"url,omitempty"`
+	Auth             Auth            `yaml:"auth,omitempty"`
+	ComponentStatus  ComponentStatus `yaml:"component_status,omitempty"`
+	CustomMetricsURL string          `yaml:"custom_metrics_url,omitempty"`
+	URL              string          `yaml:"url,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth         Auth                     `yaml:"auth"`
-	Dashboards   []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled      bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	InClusterURL string                   `yaml:"in_cluster_url"`
-	URL          string                   `yaml:"url"`
+	Auth            Auth                     `yaml:"auth"`
+	ComponentStatus ComponentStatus          `yaml:"component_status,omitempty"`
+	Dashboards      []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled         bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	InClusterURL    string                   `yaml:"in_cluster_url"`
+	URL             string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -134,20 +136,31 @@ type GrafanaVariablesConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                 Auth     `yaml:"auth"`
-	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
-	InClusterURL         string   `yaml:"in_cluster_url"`
-	NamespaceSelector    bool     `yaml:"namespace_selector"`
-	URL                  string   `yaml:"url"`
-	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
+	Auth                 Auth            `yaml:"auth"`
+	ComponentStatus      ComponentStatus `yaml:"component_status,omitempty"`
+	Enabled              bool            `yaml:"enabled"` // Enable Jaeger in Kiali
+	InClusterURL         string          `yaml:"in_cluster_url"`
+	NamespaceSelector    bool            `yaml:"namespace_selector"`
+	URL                  string          `yaml:"url"`
+	WhiteListIstioSystem []string        `yaml:"whitelist_istio_system"`
 }
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	IstioStatusEnabled     bool   `yaml:"istio_status_enabled,omitempty"`
-	IstioIdentityDomain    string `yaml:"istio_identity_domain,omitempty"`
-	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
-	UrlServiceVersion      string `yaml:"url_service_version"`
+	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
+	IstioSidecarAnnotation string            `yaml:"istio_sidecar_annotation,omitempty"`
+	ComponentStatuses      ComponentStatuses `yaml:"component_status,omitempty"`
+	UrlServiceVersion      string            `yaml:"url_service_version"`
+}
+
+type ComponentStatuses struct {
+	Enabled    bool              `yaml:"enabled,omitempty"`
+	Components []ComponentStatus `yaml:"components,omitempty"`
+}
+
+type ComponentStatus struct {
+	Name   string `yaml:"name,omitempty"`
+	IsCore bool   `yaml:"is_core,omitempty"`
 }
 
 // ThreeScaleConfig describes configuration used for 3Scale adapter
@@ -351,16 +364,40 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				Enabled: true,
+				ComponentStatus: ComponentStatus{
+					Name:   "grafana",
+					IsCore: false,
+				},
 			},
 			Istio: IstioConfig{
-				IstioStatusEnabled:     true,
 				IstioIdentityDomain:    "svc.cluster.local",
 				IstioSidecarAnnotation: "sidecar.istio.io/status",
-				UrlServiceVersion:      "http://istiod:15014/version",
+				ComponentStatuses: ComponentStatuses{
+					Enabled: true,
+					Components: []ComponentStatus{
+						{
+							Name:   "istio-egressgateway",
+							IsCore: false,
+						},
+						{
+							Name:   "istio-ingressgateway",
+							IsCore: true,
+						},
+						{
+							Name:   "istiod",
+							IsCore: true,
+						},
+					},
+				},
+				UrlServiceVersion: "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
+				},
+				ComponentStatus: ComponentStatus{
+					Name:   "prometheus",
+					IsCore: true,
 				},
 				CustomMetricsURL: "http://prometheus.istio-system:9090",
 				URL:              "http://prometheus.istio-system:9090",
@@ -368,6 +405,10 @@ func NewConfig() (c *Config) {
 			Tracing: TracingConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
+				},
+				ComponentStatus: ComponentStatus{
+					Name:   "jaeger",
+					IsCore: false,
 				},
 				Enabled:              true,
 				NamespaceSelector:    true,

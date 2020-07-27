@@ -24,8 +24,6 @@ var unhealthyStatus = apps_v1.DeploymentStatus{
 	UnavailableReplicas: 1,
 }
 
-var isMixerDisabled *bool
-
 func TestComponentNotRunning(t *testing.T) {
 	assert := assert.New(t)
 
@@ -50,9 +48,6 @@ func TestComponentNotRunning(t *testing.T) {
 				ds,
 			)))
 	}
-
-	// Cleaning up environment
-	shutdown()
 }
 
 func TestComponentRunning(t *testing.T) {
@@ -69,9 +64,6 @@ func TestComponentRunning(t *testing.T) {
 	)
 
 	assert.Equal(Healthy, status)
-
-	// Cleaning up environment
-	shutdown()
 }
 
 func TestGrafanaDisabled(t *testing.T) {
@@ -93,10 +85,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
 
 	// Don't return status of mixer deployment
-	assertNotPresent(assert, icsl, GRAFANA_COMPONENT)
-
-	// Cleaning up environment
-	shutdown()
+	assertNotPresent(assert, icsl, "grafana")
 }
 
 func TestTracingDisabled(t *testing.T) {
@@ -118,16 +107,50 @@ func TestTracingDisabled(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
 
 	// Don't return status of mixer deployment
-	assertNotPresent(assert, icsl, TRACING_COMPONENT)
-
-	// Cleaning up environment
-	shutdown()
+	assertNotPresent(assert, icsl, "jaeger")
 }
 
-func TestMonolithComp(t *testing.T) {
+func TestDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	config.Set(confWithIstioComponents())
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+		fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
+		fakeDeploymentWithStatus("jaeger", map[string]string{"app": "jaeger"}, unhealthyStatus),
+	}
+
+	k8s := mockDeploymentCall(pods, true)
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
+	assertComponent(assert, icsl, "grafana", Unhealthy, false)
+	assertComponent(assert, icsl, "jaeger", Unhealthy, false)
+	assertComponent(assert, icsl, "prometheus", NotFound, true)
+
+	// Don't return healthy deployments
+	assertNotPresent(assert, icsl, "istio-egressgateway")
+	assertNotPresent(assert, icsl, "istiod")
+}
+
+func TestNonDefaults(t *testing.T) {
+	assert := assert.New(t)
+
+	c := confWithIstioComponents()
+	c.ExternalServices.Tracing.ComponentStatus = config.ComponentStatus{Name: "istio-tracing", IsCore: true}
+	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+		Enabled: true,
+		Components: []config.ComponentStatus{
+			{Name: "istiod", IsCore: true},
+			{Name: "istio-egressgateway", IsCore: false},
+			{Name: "istio-ingressgateway", IsCore: false},
+		},
+	}
+	config.Set(c)
 
 	pods := []apps_v1.Deployment{
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
@@ -141,63 +164,14 @@ func TestMonolithComp(t *testing.T) {
 
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "grafana", Unhealthy, false)
-	assertComponent(assert, icsl, "istio-tracing", Unhealthy, false)
+	assertComponent(assert, icsl, "istio-tracing", Unhealthy, true)
 	assertComponent(assert, icsl, "prometheus", NotFound, true)
 
 	// Don't return healthy deployments
 	assertNotPresent(assert, icsl, "istio-egressgateway")
 	assertNotPresent(assert, icsl, "istiod")
-
-	// Don't return status of mixer deployment
-	assertNotPresent(assert, icsl, "istio-citadel")
-	assertNotPresent(assert, icsl, "istio-galley")
-	assertNotPresent(assert, icsl, "istio-pilot")
-	assertNotPresent(assert, icsl, "istio-policy")
-	assertNotPresent(assert, icsl, "istio-telemetry")
-
-	// Cleaning up environment
-	shutdown()
-}
-
-func TestMixerComp(t *testing.T) {
-	assert := assert.New(t)
-
-	config.Set(confWithIstioComponents())
-
-	pods := []apps_v1.Deployment{
-		fakeDeploymentWithStatus("istio-citadel", map[string]string{"app": "citadel", "istio": "citadel"}, healthyStatus),
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus), fakeDeploymentWithStatus("istio-pilot", map[string]string{"app": "pilot", "istio": "pilot"}, healthyStatus), fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
-		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
-	}
-
-	k8s := mockDeploymentCall(pods, false)
-	iss := IstioStatusService{k8s: k8s}
-
-	boolVar := true
-	isMixerDisabled = &boolVar
-	icsl, error := iss.GetStatus()
-	assert.NoError(error)
-	assertComponent(assert, icsl, "istio-galley", NotFound, true)
-	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, true)
-	assertComponent(assert, icsl, "istio-policy", NotFound, true)
-	assertComponent(assert, icsl, "istio-sidecar-injector", NotFound, true)
-	assertComponent(assert, icsl, "istio-telemetry", NotFound, true)
-	assertComponent(assert, icsl, "grafana", Unhealthy, false)
-	assertComponent(assert, icsl, "istio-tracing", Unhealthy, false)
-	assertComponent(assert, icsl, "prometheus", NotFound, true)
-
-	// Don't return healthy deployments
-	assertNotPresent(assert, icsl, "istio-citadel")
-	assertNotPresent(assert, icsl, "istio-egressgateway")
-	assertNotPresent(assert, icsl, "istio-pilot")
-
-	// Don't return status of mixer deployment
-	assertNotPresent(assert, icsl, "istiod")
-
-	// Cleaning up environment
-	shutdown()
 }
 
 func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
@@ -243,13 +217,6 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 			Replicas: &status.Replicas,
 			Selector: &meta_v1.LabelSelector{
 				MatchLabels: labels}}}
-}
-
-func shutdown() {
-	delete(components["mixer"], GRAFANA_COMPONENT)
-	delete(components["mixer"], TRACING_COMPONENT)
-	delete(components["mixerless"], TRACING_COMPONENT)
-	delete(components["mixerless"], GRAFANA_COMPONENT)
 }
 
 func confWithIstioComponents() *config.Config {
