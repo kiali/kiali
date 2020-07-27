@@ -34,14 +34,13 @@ type State = {
 
 const tracesLimit = 15;
 
-const refreshSpanStyle = style({
-  display: 'inline-flex',
-  marginLeft: 80
+const refreshDivStyle = style({
+  display: 'inline-flex'
 });
 
 const checkboxStyle = style({
   paddingBottom: 10,
-  // float: 'right',
+  marginRight: 15,
   $nest: {
     '& > label': {
       fontSize: 'var(--graph-side-panel--font-size)'
@@ -137,7 +136,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
     return (
       <div style={{ marginBottom: 8 }}>
-        <span className={refreshSpanStyle}>
+        <div className={refreshDivStyle}>
           <Checkbox
             id="use-graph-refresh"
             label="Use graph refresh"
@@ -155,7 +154,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
           >
             <SyncAltIcon />
           </Button>
-        </span>
+        </div>
         <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
           {this.state.traces.map(trace => {
             return (
@@ -170,7 +169,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
           })}
         </SimpleList>
         <Button style={summaryFont} onClick={() => history.push(tracesDetailsURL)}>
-          Find more traces
+          Go to Tracing
         </Button>
       </div>
     );
