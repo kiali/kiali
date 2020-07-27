@@ -10,6 +10,7 @@ import { Response } from '../../services/Api';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { PfColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { CSSProperties } from 'typestyle/lib/types';
 
 export enum NodeMetricType {
   APP = 1,
@@ -26,14 +27,18 @@ export const summaryHeader: React.CSSProperties = {
   backgroundColor: PfColors.White
 };
 
-export const summaryPanel = style({
+const summaryPanelCommon: CSSProperties = {
   height: '100%',
   margin: 0,
   minWidth: '25em',
   overflowY: 'scroll',
   backgroundColor: PfColors.White,
   width: '25em'
-});
+};
+
+export const summaryPanel = style(summaryPanelCommon);
+export const summaryPanelTopSplit = style({ ...summaryPanelCommon, height: '60%' });
+export const summaryPanelBottomSplit = style({ ...summaryPanelCommon, height: '40%', overflowY: 'initial' });
 
 export const summaryFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'

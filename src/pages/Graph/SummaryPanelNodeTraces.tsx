@@ -181,7 +181,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId))
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
 });
 
 const SummaryPanelNodeTracesContainer = connect(mapStateToProps, mapDispatchToProps)(SummaryPanelNodeTraces);

@@ -29,6 +29,10 @@ export const getTraceId = () => {
   return new URLSearchParams(window.location.search).get(URLParam.JAEGER_TRACE_ID) || undefined;
 };
 
-export const setTraceId = (traceId: string) => {
-  HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
+export const setTraceId = (traceId?: string) => {
+  if (traceId) {
+    HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
+  } else {
+    HistoryManager.deleteParam(URLParam.JAEGER_TRACE_ID);
+  }
 };

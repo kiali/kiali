@@ -6,9 +6,11 @@ import * as API from '../services/Api';
 import { KialiAppAction } from './KialiAppAction';
 import { transformTraceData } from 'components/JaegerIntegration/JaegerResults';
 import { JaegerActions } from './JaegerActions';
+import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 
 export const JaegerThunkActions = {
-  fetchTrace: (traceId?: string) => {
+  setTraceId: (traceId?: string) => {
+    setURLTraceId(traceId);
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
       if (traceId) {
         API.getJaegerTrace(traceId)

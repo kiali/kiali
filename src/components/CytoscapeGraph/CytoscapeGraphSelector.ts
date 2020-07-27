@@ -17,6 +17,7 @@ interface CytoscapeElementData {
 
 export class CytoscapeGraphSelectorBuilder {
   private data: CytoscapeElementData = {};
+  private clazz: string = '';
 
   aggregate(aggregate: string, aggregateValue: string) {
     this.data.aggregate = aggregate;
@@ -26,6 +27,11 @@ export class CytoscapeGraphSelectorBuilder {
 
   app(app: string) {
     this.data.app = app;
+    return this;
+  }
+
+  class(clazz: string) {
+    this.clazz = '.' + clazz;
     return this;
   }
 
@@ -65,7 +71,7 @@ export class CytoscapeGraphSelectorBuilder {
   }
 
   build(): CytoscapeGraphSelector {
-    return 'node' + this.buildDataSelector();
+    return 'node' + this.clazz + this.buildDataSelector();
   }
 
   private buildDataSelector() {

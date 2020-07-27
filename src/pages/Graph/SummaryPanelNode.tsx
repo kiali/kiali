@@ -8,7 +8,9 @@ import {
   summaryHeader,
   summaryPanel,
   summaryBodyTabs,
-  summaryFont
+  summaryFont,
+  summaryPanelTopSplit,
+  summaryPanelBottomSplit
 } from './SummaryPanelCommon';
 import { Health } from '../../types/Health';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -16,11 +18,12 @@ import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { Dropdown, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
-import { JaegerInfo } from 'types/JaegerInfo';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { hasExperimentalFlag } from 'utils/SearchParamUtils';
+import { JaegerState } from 'reducers/JaegerState';
+import SummaryPanelTraceDetails from './SummaryPanelTraceDetails';
 
 type SummaryPanelNodeState = {
   healthLoading: boolean;
@@ -34,7 +37,7 @@ const defaultState: SummaryPanelNodeState = {
 };
 
 type ReduxProps = {
-  jaegerInfo?: JaegerInfo;
+  jaegerState: JaegerState;
 };
 
 type SummaryPanelNodeProps = ReduxProps & SummaryPanelPropType;
@@ -79,12 +82,13 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderTraces =
       nodeType === NodeType.SERVICE &&
       !nodeData.isInaccessible &&
-      this.props.jaegerInfo &&
-      this.props.jaegerInfo.enabled &&
-      this.props.jaegerInfo.integration &&
+      this.props.jaegerState.info &&
+      this.props.jaegerState.info.enabled &&
+      this.props.jaegerState.info.integration &&
       hasExperimentalFlag('igt');
+    const mainStyle = this.props.jaegerState.selectedTrace ? summaryPanelTopSplit : summaryPanel;
 
-    const actions = getOptions(nodeData, this.props.jaegerInfo).map(o => {
+    const actions = getOptions(nodeData, this.props.jaegerState.info).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
           {o.text}
@@ -93,34 +97,43 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     });
 
     return (
-      <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
-        <div className="panel-heading" style={summaryHeader}>
-          <div>
-            {renderBadgedLink(nodeData)}
-            {!(nodeData.isInaccessible || nodeType === NodeType.AGGREGATE) && (
-              <Dropdown
-                id="summary-node-actions"
-                style={{ float: 'right' }}
-                isPlain={true}
-                dropdownItems={actions}
-                isOpen={this.state.isActionOpen}
-                position={DropdownPosition.right}
-                toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
-              />
-            )}
+      <>
+        <div ref={this.mainDivRef} className={`panel panel-default ${mainStyle}`}>
+          <div className="panel-heading" style={summaryHeader}>
+            <div>
+              {renderBadgedLink(nodeData)}
+              {!(nodeData.isInaccessible || nodeType === NodeType.AGGREGATE) && (
+                <Dropdown
+                  id="summary-node-actions"
+                  style={{ float: 'right' }}
+                  isPlain={true}
+                  dropdownItems={actions}
+                  isOpen={this.state.isActionOpen}
+                  position={DropdownPosition.right}
+                  toggle={<KebabToggle id="summary-node-kebab" onToggle={this.onToggleActions} />}
+                />
+              )}
+            </div>
+            <div>{renderHealth(this.state.health)}</div>
+            <div>
+              {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
+              {shouldRenderDestsList && <div>{destsList}</div>}
+              {shouldRenderSvcList && <div>{servicesList}</div>}
+              {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
+              {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
+              {shouldRenderWorkload && <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>}
+            </div>
           </div>
-          <div>{renderHealth(this.state.health)}</div>
-          <div>
-            {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
-            {shouldRenderDestsList && <div>{destsList}</div>}
-            {shouldRenderSvcList && <div>{servicesList}</div>}
-            {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
-            {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
-            {shouldRenderWorkload && <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>}
-          </div>
+          {shouldRenderTraces ? this.renderWithTabs(nodeData) : this.renderTrafficOnly()}
         </div>
-        {shouldRenderTraces ? this.renderWithTabs(nodeData) : this.renderTrafficOnly()}
-      </div>
+        {this.props.jaegerState.selectedTrace && (
+          <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
+            <div className="panel-body">
+              <SummaryPanelTraceDetails trace={this.props.jaegerState.selectedTrace} node={node} />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -210,7 +223,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerInfo: state.jaegerState.info
+  jaegerState: state.jaegerState
 });
 
 const SummaryPanelNodeContainer = connect(mapStateToProps)(SummaryPanelNode);
