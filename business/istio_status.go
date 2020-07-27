@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	apps_v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -104,7 +105,7 @@ func istioCoreComponents() map[string]bool {
 	components := map[string]bool{}
 	cs := config.Get().ExternalServices.Istio.ComponentStatuses
 	for _, c := range cs.Components {
-		components[c.Name] = c.IsCore
+		components[c.AppLabel] = c.IsCore
 	}
 	return components
 }
@@ -112,14 +113,14 @@ func istioCoreComponents() map[string]bool {
 func addAddOnComponents(components map[string]bool) map[string]bool {
 	confExtSvcs := config.Get().ExternalServices
 
-	components[confExtSvcs.Prometheus.ComponentStatus.Name] = confExtSvcs.Prometheus.ComponentStatus.IsCore
+	components[confExtSvcs.Prometheus.ComponentStatus.AppLabel] = confExtSvcs.Prometheus.ComponentStatus.IsCore
 
 	if confExtSvcs.Grafana.Enabled {
-		components[confExtSvcs.Grafana.ComponentStatus.Name] = confExtSvcs.Grafana.ComponentStatus.IsCore
+		components[confExtSvcs.Grafana.ComponentStatus.AppLabel] = confExtSvcs.Grafana.ComponentStatus.IsCore
 	}
 
 	if confExtSvcs.Tracing.Enabled {
-		components[confExtSvcs.Tracing.ComponentStatus.Name] = confExtSvcs.Tracing.ComponentStatus.IsCore
+		components[confExtSvcs.Tracing.ComponentStatus.AppLabel] = confExtSvcs.Tracing.ComponentStatus.IsCore
 	}
 
 	return components
@@ -133,17 +134,18 @@ func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioCompon
 
 	// Map workloads there by app name
 	for _, d := range ds {
-		if d.Name == "" {
+		appLabel := labels.Set(d.Spec.Template.Labels).Get(config.Get().IstioLabels.AppLabelName)
+		if appLabel == "" {
 			continue
 		}
 
-		isCore, found := statusComponents[d.Name]
+		isCore, found := statusComponents[appLabel]
 		if !found {
 			continue
 		}
 
 		// Component found
-		cf[d.Name] = true
+		cf[appLabel] = true
 
 		if status := GetDeploymentStatus(d); status != Healthy {
 			// Check status

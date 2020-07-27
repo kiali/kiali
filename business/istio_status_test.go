@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -141,13 +142,13 @@ func TestNonDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	c := confWithIstioComponents()
-	c.ExternalServices.Tracing.ComponentStatus = config.ComponentStatus{Name: "istio-tracing", IsCore: true}
+	c.ExternalServices.Tracing.ComponentStatus = config.ComponentStatus{AppLabel: "jaeger", IsCore: true}
 	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
 		Components: []config.ComponentStatus{
-			{Name: "istiod", IsCore: true},
-			{Name: "istio-egressgateway", IsCore: false},
-			{Name: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istiod", IsCore: true},
+			{AppLabel: "istio-egressgateway", IsCore: false},
+			{AppLabel: "istio-ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(c)
@@ -156,7 +157,7 @@ func TestNonDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, healthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 		fakeDeploymentWithStatus("grafana", map[string]string{"app": "grafana"}, unhealthyStatus),
-		fakeDeploymentWithStatus("istio-tracing", map[string]string{"app": "jaeger"}, unhealthyStatus),
+		fakeDeploymentWithStatus("jaeger", map[string]string{"app": "jaeger"}, unhealthyStatus),
 	}
 
 	k8s := mockDeploymentCall(pods, true)
@@ -166,7 +167,7 @@ func TestNonDefaults(t *testing.T) {
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "grafana", Unhealthy, false)
-	assertComponent(assert, icsl, "istio-tracing", Unhealthy, true)
+	assertComponent(assert, icsl, "jaeger", Unhealthy, true)
 	assertComponent(assert, icsl, "prometheus", NotFound, true)
 
 	// Don't return healthy deployments
@@ -214,9 +215,14 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 		},
 		Status: status,
 		Spec: apps_v1.DeploymentSpec{
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:   "",
+					Labels: labels,
+				},
+			},
 			Replicas: &status.Replicas,
-			Selector: &meta_v1.LabelSelector{
-				MatchLabels: labels}}}
+		}}
 }
 
 func confWithIstioComponents() *config.Config {

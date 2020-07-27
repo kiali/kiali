@@ -159,8 +159,8 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	Name   string `yaml:"name,omitempty"`
-	IsCore bool   `yaml:"is_core,omitempty"`
+	AppLabel string `yaml:"app_label,omitempty"`
+	IsCore   bool   `yaml:"is_core,omitempty"`
 }
 
 // ThreeScaleConfig describes configuration used for 3Scale adapter
@@ -365,8 +365,8 @@ func NewConfig() (c *Config) {
 				},
 				Enabled: true,
 				ComponentStatus: ComponentStatus{
-					Name:   "grafana",
-					IsCore: false,
+					AppLabel: "grafana",
+					IsCore:   false,
 				},
 			},
 			Istio: IstioConfig{
@@ -376,16 +376,16 @@ func NewConfig() (c *Config) {
 					Enabled: true,
 					Components: []ComponentStatus{
 						{
-							Name:   "istio-egressgateway",
-							IsCore: false,
+							AppLabel: "istio-egressgateway",
+							IsCore:   false,
 						},
 						{
-							Name:   "istio-ingressgateway",
-							IsCore: true,
+							AppLabel: "istio-ingressgateway",
+							IsCore:   true,
 						},
 						{
-							Name:   "istiod",
-							IsCore: true,
+							AppLabel: "istiod",
+							IsCore:   true,
 						},
 					},
 				},
@@ -396,8 +396,8 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				ComponentStatus: ComponentStatus{
-					Name:   "prometheus",
-					IsCore: true,
+					AppLabel: "prometheus",
+					IsCore:   true,
 				},
 				CustomMetricsURL: "http://prometheus.istio-system:9090",
 				URL:              "http://prometheus.istio-system:9090",
@@ -407,8 +407,8 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				ComponentStatus: ComponentStatus{
-					Name:   "jaeger",
-					IsCore: false,
+					AppLabel: "jaeger",
+					IsCore:   false,
 				},
 				Enabled:              true,
 				NamespaceSelector:    true,
