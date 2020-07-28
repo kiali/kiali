@@ -113,14 +113,14 @@ func TestDeadNode(t *testing.T) {
 	trafficMap := testTrafficMap()
 
 	assert.Equal(12, len(trafficMap))
-	unknownId, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
-	unknownNode, found := trafficMap[unknownId]
+	unknownID, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	unknownNode, found := trafficMap[unknownID]
 	assert.Equal(true, found)
 	assert.Equal(graph.Unknown, unknownNode.Workload)
 	assert.Equal(10, len(unknownNode.Edges))
 
-	ingressId, _ := graph.Id(graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	ingressNode, found := trafficMap[ingressId]
+	ingressID, _ := graph.Id(graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingressNode, found := trafficMap[ingressID]
 	assert.Equal(true, found)
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
@@ -134,10 +134,10 @@ func TestDeadNode(t *testing.T) {
 
 	assert.Equal(10, len(trafficMap))
 
-	_, found = trafficMap[unknownId]
+	_, found = trafficMap[unknownID]
 	assert.Equal(false, found)
 
-	ingressNode, found = trafficMap[ingressId]
+	ingressNode, found = trafficMap[ingressID]
 	assert.Equal(true, found)
 	assert.Equal(9, len(ingressNode.Edges))
 
@@ -291,6 +291,61 @@ func testTrafficMapIssue2783() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
 	n0 := graph.NewNode("testNamespace", "a", "testNamespace", "a-v1", "a", "v1", graph.GraphTypeVersionedApp)
+
+	n1 := graph.NewNode("testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+
+	n2 := graph.NewNode("testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+
+	trafficMap[n0.ID] = &n0
+	trafficMap[n1.ID] = &n1
+	trafficMap[n2.ID] = &n2
+
+	n0.AddEdge(&n1)
+	n1.AddEdge(&n2)
+
+	return trafficMap
+}
+
+func TestDeadNodeIssue2982(t *testing.T) {
+	assert := assert.New(t)
+
+	businessLayer := setupWorkloads()
+	trafficMap := testTrafficMapIssue2982()
+
+	assert.Equal(3, len(trafficMap))
+	aID, _ := graph.Id("testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "a", "v1", graph.GraphTypeVersionedApp)
+	aNode, found := trafficMap[aID]
+	assert.Equal(true, found)
+	assert.Equal(1, len(aNode.Edges))
+
+	bSvcID, _ := graph.Id("testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	bSvcNode, found := trafficMap[bSvcID]
+	assert.Equal(true, found)
+	assert.Equal(1, len(bSvcNode.Edges))
+
+	bID, _ := graph.Id("testNamespace", "b", "testNamespace", "b-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	bNode, found := trafficMap[bID]
+	assert.Equal(true, found)
+	assert.Equal(0, len(bNode.Edges))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := DeadNodeAppender{}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(1, len(trafficMap))
+	_, found = trafficMap[aID]
+	assert.Equal(true, found)
+}
+
+// testTrafficMapIssue2783() ensures that zero request traffic does not leave behind an injected service node.
+func testTrafficMapIssue2982() map[string]*graph.Node {
+	trafficMap := make(map[string]*graph.Node)
+
+	n0 := graph.NewNode("testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n0.Metadata["httpIn"] = 0.8
 
 	n1 := graph.NewNode("testNamespace", "b", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
