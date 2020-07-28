@@ -10,7 +10,8 @@ const DeadNodeAppenderName = "deadNode"
 // - nodes for which there is no traffic reported and a backing workload that can't be found
 //   (presumably removed from K8S). (kiali-621)
 //   - this includes "unknown"
-// - service nodes that are not service entries (kiali-1526) and for which there is no incoming
+// - service nodes that are not service entries (kiali-1526), egress handlers and for which there is no
+//   incoming traffic or outgoing edges
 //   error traffic and no outgoing edges (kiali-1326).
 // Name: deadNode
 type DeadNodeAppender struct{}
@@ -32,11 +33,16 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
-	a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
+	// Apply dead node removal iteratively until no dead nodes are found.  Removal of dead nodes may
+	// alter the graph such that new nodes qualify for dead-ness by being orphaned, lack required
+	// outgoing edges, etc.. so we repeat as needed.
+	applyDeadNodes := true
+	for applyDeadNodes {
+		applyDeadNodes = a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo) > 0
+	}
 }
 
-func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	numRemoved := 0
+func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) (numRemoved int) {
 	for id, n := range trafficMap {
 		isDead := true
 
@@ -101,30 +107,17 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 	}
 
 	// If we removed any nodes we need to remove any edges to them as well...
-	if numRemoved == 0 {
-		return
-	}
-
-	for _, n := range trafficMap {
-		goodEdges := []*graph.Edge{}
-		for _, e := range n.Edges {
-			if _, found := trafficMap[e.Dest.ID]; found {
-				goodEdges = append(goodEdges, e)
+	if numRemoved > 0 {
+		for _, n := range trafficMap {
+			goodEdges := []*graph.Edge{}
+			for _, e := range n.Edges {
+				if _, found := trafficMap[e.Dest.ID]; found {
+					goodEdges = append(goodEdges, e)
+				}
 			}
+			n.Edges = goodEdges
 		}
-		n.Edges = goodEdges
 	}
 
-	// now, after removing edges, remove any orphaned nodes (no incoming or outgoing edges)
-	destNodes := graph.NewTrafficMap()
-	for _, n := range trafficMap {
-		for _, e := range n.Edges {
-			destNodes[e.Dest.ID] = e.Dest
-		}
-	}
-	for _, n := range trafficMap {
-		if _, found := destNodes[n.ID]; !found && len(n.Edges) == 0 {
-			delete(trafficMap, n.ID)
-		}
-	}
+	return numRemoved
 }
