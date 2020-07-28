@@ -21,7 +21,6 @@ import { KialiAppState } from 'store/Store';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
 import SimpleTabs from 'components/Tab/SimpleTabs';
-import { hasExperimentalFlag } from 'utils/SearchParamUtils';
 import { JaegerState } from 'reducers/JaegerState';
 import SummaryPanelTraceDetails from './SummaryPanelTraceDetails';
 
@@ -84,8 +83,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       !nodeData.isInaccessible &&
       this.props.jaegerState.info &&
       this.props.jaegerState.info.enabled &&
-      this.props.jaegerState.info.integration &&
-      hasExperimentalFlag('igt');
+      this.props.jaegerState.info.integration;
     const mainStyle = this.props.jaegerState.selectedTrace ? summaryPanelTopSplit : summaryPanel;
 
     const actions = getOptions(nodeData, this.props.jaegerState.info).map(o => {
