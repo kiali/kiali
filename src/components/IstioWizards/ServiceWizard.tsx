@@ -8,9 +8,10 @@ import MatchingRouting from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyContainer, {
   ConsistentHashType,
-  TrafficPolicyState
+  TrafficPolicyState,
+  UNSET
 } from '../../components/IstioWizards/TrafficPolicy';
-import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
+import { ROUND_ROBIN } from './TrafficPolicy';
 import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 import { Rule } from './MatchingRouting/Rules';
 import {
@@ -19,6 +20,7 @@ import {
   getInitGateway,
   getInitHosts,
   getInitLoadBalancer,
+  getInitPeerAuthentication,
   getInitRules,
   getInitSuspendedRoutes,
   getInitTlsMode,
@@ -35,6 +37,7 @@ import {
 import { MessageType } from '../../types/MessageCenter';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
+import { DestinationRule, PeerAuthentication, PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -54,7 +57,7 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
     vsHosts: [fqdnServiceName],
     trafficPolicy: {
       tlsModified: false,
-      mtlsMode: DISABLE,
+      mtlsMode: UNSET,
       clientCertificate: '',
       privateKey: '',
       caCertificates: '',
@@ -63,6 +66,11 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
       consistentHashType: ConsistentHashType.HTTP_HEADER_NAME,
       loadBalancer: {
         simple: ROUND_ROBIN
+      },
+      peerAuthnSelector: {
+        addPeerAuthentication: false,
+        addPeerAuthnModified: false,
+        mode: PeerAuthenticationMutualTLSMode.UNSET
       }
     },
     gateway: undefined
@@ -107,9 +115,14 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           initConsistentHashType = ConsistentHashType.USE_SOURCE_IP;
         }
       }
+
+      const initPeerAuthentication = getInitPeerAuthentication(
+        this.props.destinationRules,
+        this.props.peerAuthentications
+      );
       const trafficPolicy: TrafficPolicyState = {
         tlsModified: initMtlsMode !== '',
-        mtlsMode: initMtlsMode !== '' ? initMtlsMode : DISABLE,
+        mtlsMode: initMtlsMode !== '' ? initMtlsMode : UNSET,
         clientCertificate: initClientCertificate,
         privateKey: initPrivateKey,
         caCertificates: initCaCertificates,
@@ -120,7 +133,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           ? initLoadBalancer
           : {
               simple: ROUND_ROBIN
-            }
+            },
+        peerAuthnSelector: {
+          addPeerAuthentication: initPeerAuthentication !== undefined,
+          addPeerAuthnModified: false,
+          mode: initPeerAuthentication || PeerAuthenticationMutualTLSMode.UNSET
+        }
       };
       const gateway: GatewaySelectorState = {
         addGateway: false,
@@ -182,11 +200,12 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       case WIZARD_WEIGHTED_ROUTING:
       case WIZARD_MATCHING_ROUTING:
       case WIZARD_SUSPEND_TRAFFIC:
-        const [dr, vs, gw] = buildIstioConfig(this.props, this.state);
+        const [dr, vs, gw, pa] = buildIstioConfig(this.props, this.state);
         // Gateway is only created when user has explicit selected this option
         if (gw) {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
         }
+
         if (this.props.update) {
           promises.push(
             API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
@@ -194,10 +213,16 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           promises.push(
             API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
           );
+
+          this.handlePeerAuthnUpdate(pa, dr, promises);
           // Note that Gateways are not updated from the Wizard, only the VS hosts/gateways sections are updated
         } else {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+
+          if (pa) {
+            promises.push(API.createIstioConfigDetail(this.props.namespace, 'peerauthentications', JSON.stringify(pa)));
+          }
         }
         break;
       default:
@@ -228,6 +253,24 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         AlertUtils.addError('Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.', error);
         this.onClose(true);
       });
+  };
+
+  handlePeerAuthnUpdate = (
+    pa: PeerAuthentication | undefined,
+    dr: DestinationRule,
+    promises: Promise<Response<string>>[]
+  ): void => {
+    if (pa) {
+      if (this.state.trafficPolicy.peerAuthnSelector.addPeerAuthnModified) {
+        promises.push(API.createIstioConfigDetail(this.props.namespace, 'peerauthentications', JSON.stringify(pa)));
+      } else {
+        promises.push(
+          API.updateIstioConfigDetail(this.props.namespace, 'peerauthentications', dr.metadata.name, JSON.stringify(pa))
+        );
+      }
+    } else if (this.state.trafficPolicy.peerAuthnSelector.addPeerAuthnModified) {
+      promises.push(API.deleteIstioConfigDetail(this.props.namespace, 'peerauthentications', dr.metadata.name));
+    }
   };
 
   onVsHosts = (valid: boolean, vsHosts: string[]) => {
@@ -370,6 +413,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
               loadBalancer={this.state.trafficPolicy.loadBalancer}
               nsWideStatus={this.props.tlsStatus}
+              hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
+              peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
               onTrafficPolicyChange={this.onTrafficPolicy}
             />
             <br />

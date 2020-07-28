@@ -9,7 +9,7 @@ import { ServiceDetailsInfo, validationToSeverity } from '../../types/ServiceInf
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
-import { ObjectValidation, Validations, ValidationTypes } from '../../types/IstioObjects';
+import { ObjectValidation, PeerAuthentication, Validations, ValidationTypes } from '../../types/IstioObjects';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import Validation from '../../components/Validations/Validation';
@@ -31,6 +31,7 @@ interface Props extends ServiceId {
 type ServiceInfoState = {
   serviceDetails?: ServiceDetailsInfo;
   gateways: string[];
+  peerAuthentications: PeerAuthentication[];
   validations: Validations;
   currentTab: string;
 };
@@ -60,6 +61,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     super(props);
     this.state = {
       gateways: [],
+      peerAuthentications: [],
       validations: {},
       currentTab: activeTab(tabName, defaultTab)
     };
@@ -117,6 +119,16 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch Service Details.', error);
+      });
+
+    API.getIstioConfig(this.props.namespace, ['peerauthentications'], false, '')
+      .then(results => {
+        this.setState({
+          peerAuthentications: results.data.peerAuthentications
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch PeerAuthentications.', error);
       });
 
     this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service);
@@ -317,6 +329,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             virtualServices={details.virtualServices}
             destinationRules={details.destinationRules}
             gateways={this.state.gateways}
+            peerAuthentications={this.state.peerAuthentications}
             tlsStatus={details.namespaceMTLS}
             onChange={this.fetchBackend}
           />

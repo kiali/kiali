@@ -32,7 +32,7 @@ import {
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
-import { ConsistentHashType, MUTUAL, TrafficPolicyState } from './TrafficPolicy';
+import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
@@ -75,6 +75,7 @@ export type ServiceWizardProps = {
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
   gateways: string[];
+  peerAuthentications: PeerAuthentication[];
   onClose: (changed: boolean) => void;
 };
 
@@ -121,6 +122,7 @@ export type WorkloadWizardState = {
 const SERVICE_UNAVAILABLE = 503;
 
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
+export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return serviceName + '.' + namespace + '.' + serverConfig.istioIdentityDomain;
@@ -228,7 +230,7 @@ export const getGatewayName = (namespace: string, serviceName: string, gatewayNa
 export const buildIstioConfig = (
   wProps: ServiceWizardProps,
   wState: ServiceWizardState
-): [DestinationRule, VirtualService, Gateway?] => {
+): [DestinationRule, VirtualService, Gateway?, PeerAuthentication?] => {
   const wkdNameVersion: { [key: string]: string } = {};
 
   // DestinationRule from the labels
@@ -268,6 +270,8 @@ export const buildIstioConfig = (
     },
     spec: {}
   };
+
+  let wizardPA: PeerAuthentication | undefined = undefined;
 
   // Wizard is optional, only when user has explicitly selected "Create a Gateway"
   const fullNewGatewayName = getGatewayName(wProps.namespace, wProps.serviceName, wProps.gateways);
@@ -412,61 +416,98 @@ export const buildIstioConfig = (
       ? wState.vsHosts
       : [wProps.serviceName];
 
-  if (wState.trafficPolicy.tlsModified || wState.trafficPolicy.addLoadBalancer) {
-    wizardDR.spec.trafficPolicy = {
-      tls: null,
-      loadBalancer: null
+  if (wState.trafficPolicy.tlsModified && wState.trafficPolicy.mtlsMode !== UNSET) {
+    wizardDR.spec.trafficPolicy = {};
+    wizardDR.spec.trafficPolicy.tls = {
+      mode: wState.trafficPolicy.mtlsMode,
+      clientCertificate: null,
+      privateKey: null,
+      caCertificates: null
     };
-    if (wState.trafficPolicy.tlsModified) {
-      wizardDR.spec.trafficPolicy.tls = {
-        mode: wState.trafficPolicy.mtlsMode,
-        clientCertificate: null,
-        privateKey: null,
-        caCertificates: null
-      };
-      if (wState.trafficPolicy.mtlsMode === MUTUAL) {
-        wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
-        wizardDR.spec.trafficPolicy.tls.privateKey = wState.trafficPolicy.privateKey;
-        wizardDR.spec.trafficPolicy.tls.caCertificates = wState.trafficPolicy.caCertificates;
-      }
+    if (wState.trafficPolicy.mtlsMode === MUTUAL) {
+      wizardDR.spec.trafficPolicy.tls.clientCertificate = wState.trafficPolicy.clientCertificate;
+      wizardDR.spec.trafficPolicy.tls.privateKey = wState.trafficPolicy.privateKey;
+      wizardDR.spec.trafficPolicy.tls.caCertificates = wState.trafficPolicy.caCertificates;
     }
-    if (wState.trafficPolicy.addLoadBalancer) {
-      if (wState.trafficPolicy.simpleLB) {
-        // Remember to put a null fields that need to be deleted on a JSON merge patch
-        wizardDR.spec.trafficPolicy.loadBalancer = {
-          simple: wState.trafficPolicy.loadBalancer.simple,
-          consistentHash: null
-        };
-      } else {
-        wizardDR.spec.trafficPolicy.loadBalancer = {
-          simple: null,
-          consistentHash: {}
-        };
-        wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
-          httpHeaderName: null,
-          httpCookie: null,
-          useSourceIp: null
-        };
-        if (wState.trafficPolicy.loadBalancer.consistentHash) {
-          const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
-          switch (wState.trafficPolicy.consistentHashType) {
-            case ConsistentHashType.HTTP_HEADER_NAME:
-              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpHeaderName = consistentHash.httpHeaderName;
-              break;
-            case ConsistentHashType.HTTP_COOKIE:
-              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpCookie = consistentHash.httpCookie;
-              break;
-            case ConsistentHashType.USE_SOURCE_IP:
-              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.useSourceIp = true;
-              break;
-            default:
-            /// No default action
-          }
+  }
+
+  if (wState.trafficPolicy.peerAuthnSelector.addPeerAuthentication) {
+    const peerAuthnLabels: { [key: string]: string } = {};
+    peerAuthnLabels[serverConfig.istioLabels.appLabelName] = wProps.workloads[0].labels![
+      serverConfig.istioLabels.appLabelName
+    ];
+
+    wizardPA = {
+      metadata: {
+        namespace: wProps.namespace,
+        name: wProps.serviceName,
+        labels: {
+          [KIALI_WIZARD_LABEL]: wProps.type
+        }
+      },
+      spec: {
+        selector: {
+          matchLabels: peerAuthnLabels
+        },
+        mtls: {
+          mode: wState.trafficPolicy.peerAuthnSelector.mode
+        }
+      }
+    };
+
+    wizardDR.metadata.annotations = {};
+    wizardDR.metadata.annotations[KIALI_RELATED_LABEL] = 'PeerAuthentication/' + wProps.serviceName;
+  }
+
+  if (wState.trafficPolicy.addLoadBalancer) {
+    if (!wizardDR.spec.trafficPolicy) {
+      wizardDR.spec.trafficPolicy = {};
+    }
+
+    if (wState.trafficPolicy.simpleLB) {
+      // Remember to put a null fields that need to be deleted on a JSON merge patch
+      wizardDR.spec.trafficPolicy.loadBalancer = {
+        simple: wState.trafficPolicy.loadBalancer.simple,
+        consistentHash: null
+      };
+    } else {
+      wizardDR.spec.trafficPolicy.loadBalancer = {
+        simple: null,
+        consistentHash: {}
+      };
+      wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
+        httpHeaderName: null,
+        httpCookie: null,
+        useSourceIp: null
+      };
+      if (wState.trafficPolicy.loadBalancer.consistentHash) {
+        const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
+        switch (wState.trafficPolicy.consistentHashType) {
+          case ConsistentHashType.HTTP_HEADER_NAME:
+            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpHeaderName = consistentHash.httpHeaderName;
+            break;
+          case ConsistentHashType.HTTP_COOKIE:
+            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpCookie = consistentHash.httpCookie;
+            break;
+          case ConsistentHashType.USE_SOURCE_IP:
+            wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.useSourceIp = true;
+            break;
+          default:
+          /// No default action
         }
       }
     }
-  } else {
+  }
+
+  // If traffic policy has empty objects, it will be invalidated because galleys expects at least one non-empty field.
+  if (!wizardDR.spec.trafficPolicy) {
     wizardDR.spec.trafficPolicy = null;
+  }
+
+  // If there isn't any PeerAuthn created/updated, remove the DR annotation
+  if (!wizardPA) {
+    // @ts-ignore
+    wizardDR.metadata.annotations = null;
   }
 
   if (wState.gateway && wState.gateway.addGateway) {
@@ -477,7 +518,8 @@ export const buildIstioConfig = (
   } else {
     wizardVS.spec.gateways = null;
   }
-  return [wizardDR, wizardVS, wizardGW];
+
+  return [wizardDR, wizardVS, wizardGW, wizardPA];
 };
 
 const getWorkloadsByVersion = (workloads: WorkloadOverview[]): { [key: string]: string } => {
@@ -628,6 +670,29 @@ export const getInitLoadBalancer = (destinationRules: DestinationRules): LoadBal
     return destinationRules.items[0].spec.trafficPolicy.loadBalancer;
   }
   return undefined;
+};
+
+export const getInitPeerAuthentication = (
+  destinationRules: DestinationRules,
+  peerAuthentications: PeerAuthentication[]
+): PeerAuthenticationMutualTLSMode | undefined => {
+  let paMode: PeerAuthenticationMutualTLSMode | undefined;
+  if (
+    destinationRules.items.length === 1 &&
+    destinationRules.items[0].metadata.annotations &&
+    destinationRules.items[0].metadata.annotations[KIALI_RELATED_LABEL]
+  ) {
+    let related = destinationRules.items[0].metadata.annotations[KIALI_RELATED_LABEL].split('/');
+    if (related.length > 1) {
+      const peerAuthn = peerAuthentications.find(
+        (value: PeerAuthentication): boolean => value.metadata.name === related[1]
+      );
+      if (peerAuthn) {
+        paMode = peerAuthn.spec!.mtls!.mode;
+      }
+    }
+  }
+  return paMode;
 };
 
 export const hasGateway = (virtualServices: VirtualServices): boolean => {

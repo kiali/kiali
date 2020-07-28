@@ -2,22 +2,23 @@ import * as React from 'react';
 import {
   Button,
   Dropdown,
-  DropdownToggle,
   DropdownItem,
   DropdownPosition,
   DropdownSeparator,
+  DropdownToggle,
   Modal,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { CaretDownIcon } from '@patternfly/react-icons';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
+import { DestinationRule, DestinationRules, PeerAuthentication, VirtualServices } from '../../types/IstioObjects';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import { serverConfig } from '../../config/ServerConfig';
 import { TLSStatus } from '../../types/TLSStatus';
 import {
+  KIALI_RELATED_LABEL,
   KIALI_WIZARD_LABEL,
   SERVICE_WIZARD_ACTIONS,
   WIZARD_MATCHING_ROUTING,
@@ -36,6 +37,7 @@ type Props = {
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
   gateways: string[];
+  peerAuthentications: PeerAuthentication[];
   tlsStatus?: TLSStatus;
   onChange: () => void;
 };
@@ -113,10 +115,20 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
               }: '${this.props.virtualServices.items.map(vs => vs.metadata.name)}'`
             : '';
         deleteMessage +=
-          this.props.virtualServices.items.length > 0 && this.props.destinationRules.items.length > 0 ? ' and ' : '';
+          this.props.virtualServices.items.length > 0 && this.props.destinationRules.items.length > 0 ? ', ' : '';
         deleteMessage +=
           this.props.destinationRules.items.length > 0
             ? `DestinationRule${
+                this.props.destinationRules.items.length > 1 ? 's' : ''
+              }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
+            : '';
+        deleteMessage +=
+          this.props.destinationRules.items.length > 0 && !this.hasAnyPeerAuthn(this.props.destinationRules)
+            ? ' and '
+            : '';
+        deleteMessage +=
+          this.props.destinationRules.items.length > 0
+            ? `PeerAuthentication${
                 this.props.destinationRules.items.length > 1 ? 's' : ''
               }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
             : '';
@@ -125,6 +137,21 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     }
     deleteMessage += ' ?  ';
     return deleteMessage;
+  };
+
+  hasAnyPeerAuthn = (drs: DestinationRules): boolean => {
+    return drs.items.filter(dr => !!this.hasPeerAuthentication(dr)).length > 0;
+  };
+
+  hasPeerAuthentication = (dr: DestinationRule): string => {
+    if (!!dr.metadata && !!dr.metadata.annotations && dr.metadata.annotations[KIALI_RELATED_LABEL] !== undefined) {
+      const anno = dr.metadata.annotations[KIALI_RELATED_LABEL];
+      const parts = anno.split('/');
+      if (parts.length > 1) {
+        return parts[1];
+      }
+    }
+    return '';
   };
 
   getValidWorkloads = (): WorkloadOverview[] => {
@@ -194,7 +221,15 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           deletePromises.push(
             API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
           );
+
+          const paName = this.hasPeerAuthentication(dr);
+          if (!!paName) {
+            deletePromises.push(
+              API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'peerauthentications', paName)
+            );
+          }
         });
+
         break;
     }
     // For slow scenarios, dialog is hidden and Delete All action blocked until promises have finished
@@ -328,6 +363,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}
+          peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
         />
