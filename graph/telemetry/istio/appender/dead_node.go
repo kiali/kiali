@@ -2,6 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -36,9 +37,16 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	// Apply dead node removal iteratively until no dead nodes are found.  Removal of dead nodes may
 	// alter the graph such that new nodes qualify for dead-ness by being orphaned, lack required
 	// outgoing edges, etc.. so we repeat as needed.
+	// Should never have to execute more times than the number of nodes in the map, so limit to maxTries
+	// to avoid any sort of infinite loop
+	maxTries := len(trafficMap)
 	applyDeadNodes := true
-	for applyDeadNodes {
+	for applyDeadNodes && maxTries > 0 {
 		applyDeadNodes = a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo) > 0
+		maxTries--
+	}
+	if applyDeadNodes {
+		log.Warningf("DeadNodeAppender infinite loop detection! MaxTries=[%v]", maxTries)
 	}
 }
 
