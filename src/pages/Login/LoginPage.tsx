@@ -10,7 +10,6 @@ import {
   ListItem,
   ListVariant,
   LoginFooterItem,
-  LoginForm,
   LoginPage as LoginNext,
   TextInput
 } from '@patternfly/react-core';
@@ -69,9 +68,11 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     }
   }
 
+  /* FOR FUTURE USE - IN CASE WE NEED A LOGIN FORM THAT ASKS FOR USERNAME
   handleUsernameChange = value => {
     this.setState({ username: value });
   };
+*/
 
   handlePasswordChange = passwordValue => {
     this.setState({ password: passwordValue });
@@ -174,36 +175,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (this.props.postLoginErrorMsg) {
       messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
     }
-    if (authenticationConfig.strategy === AuthStrategy.ldap) {
-      messages.push(
-        this.renderMessage(
-          <>
-            Authentication with LDAP strategy is deprecated and will be removed in a following release. As an
-            alternative, use the "openid" strategy using an OpenId provider with an LDAP connector. See{' '}
-            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
-              release notes for version 1.19.
-            </a>
-          </>,
-          'warning',
-          'deprecatedLdap'
-        )
-      );
-    }
-    if (authenticationConfig.strategy === AuthStrategy.login) {
-      messages.push(
-        this.renderMessage(
-          <>
-            Authentication with "login" strategy is deprecated and will be removed in a following release. As an
-            alternative, use the "token" strategy. See{' '}
-            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
-              release notes for version 1.19.
-            </a>
-          </>,
-          'warning',
-          'deprecatedLogin'
-        )
-      );
-    }
     return messages;
   };
 
@@ -220,6 +191,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     const isLoginButtonDisabled =
       isLoggingIn || (this.props.postLoginErrorMsg !== undefined && this.props.postLoginErrorMsg.length !== 0);
 
+    /* FOR FUTURE USE - IN CASE WE NEED A LOGIN FORM THAT ASKS FOR USERNAME AND PASSWORD
     const loginForm = (
       <LoginForm
         usernameLabel="Username"
@@ -239,6 +211,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
         isLoginButtonDisabled={isLoginButtonDisabled}
       />
     );
+*/
 
     const listItem = (
       <>
@@ -252,9 +225,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     );
 
     let loginPane: React.ReactFragment;
-    if (authenticationConfig.strategy === AuthStrategy.login || authenticationConfig.strategy === AuthStrategy.ldap) {
-      loginPane = loginForm;
-    } else if (authenticationConfig.strategy === AuthStrategy.token) {
+    if (authenticationConfig.strategy === AuthStrategy.token) {
       loginPane = (
         <Form>
           <FormHelperText

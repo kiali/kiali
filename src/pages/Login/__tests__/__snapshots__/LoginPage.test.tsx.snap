@@ -26,56 +26,38 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
   loginTitle="Log in Kiali"
   textContent="Service mesh management for Istio."
 >
-  <LoginForm
-    helperText={
-      <React.Fragment>
-        <span
-          style={
-            Object {
-              "color": "#f0ab00",
-              "fontSize": 16,
-              "fontWeight": "bold",
-            }
+  <Form>
+    <FormHelperText
+      isError={false}
+      isHidden={false}
+    />
+    <FormGroup
+      fieldId="token"
+      isRequired={true}
+      label="Token"
+    >
+      <ForwardRef
+        id="token"
+        isRequired={true}
+        onChange={[Function]}
+        type="password"
+      />
+    </FormGroup>
+    <ActionGroup>
+      <Component
+        isDisabled={false}
+        onClick={[Function]}
+        style={
+          Object {
+            "width": "100%",
           }
-        >
-          <ExclamationTriangleIcon
-            color="currentColor"
-            noVerticalAlign={false}
-            size="sm"
-            title={null}
-          />
-            
-          <React.Fragment>
-            Authentication with "login" strategy is deprecated and will be removed in a following release. As an alternative, use the "token" strategy. See
-             
-            <a
-              href="https://kiali.io/news/release-notes/#_1_19_0"
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              release notes for version 1.19.
-            </a>
-          </React.Fragment>
-        </span>
-      </React.Fragment>
-    }
-    isLoginButtonDisabled={false}
-    isValidPassword={true}
-    isValidUsername={true}
-    onChangePassword={[Function]}
-    onChangeUsername={[Function]}
-    onLoginButtonClick={[Function]}
-    passwordLabel="Password"
-    passwordValue=""
-    rememberMeAriaLabel="Remember me Checkbox"
-    showHelperText={true}
-    style={
-      Object {
-        "marginTop": "10px",
-      }
-    }
-    usernameLabel="Username"
-    usernameValue=""
-  />
+        }
+        type="submit"
+        variant="primary"
+      >
+        Log In
+      </Component>
+    </ActionGroup>
+  </Form>
 </LoginPage>
 `;

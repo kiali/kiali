@@ -23,15 +23,12 @@ describe('#LoginPage render correctly', () => {
 
   it('should have a handles methods defined', () => {
     const instance = wrapper.instance();
-    expect('handleUsernameChange' in instance).toBeTruthy();
     expect('handlePasswordChange' in instance).toBeTruthy();
     expect('handleSubmit' in instance).toBeTruthy();
   });
 
   it('handleChange should change state', () => {
     const instance = wrapper.instance() as LoginPage;
-    instance.handleUsernameChange(username);
-    expect(instance.state.username).toBe(username);
     instance.handlePasswordChange(password);
     expect(instance.state.password).toBe(password);
   });

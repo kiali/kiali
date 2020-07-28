@@ -1,7 +1,7 @@
 import { AuthConfig, AuthStrategy } from '../types/Auth';
 
 const authenticationConfig: AuthConfig = {
-  strategy: AuthStrategy.login,
+  strategy: AuthStrategy.token,
   secretMissing: false
 };
 

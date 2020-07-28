@@ -50,21 +50,6 @@ interface WebLoginData {
   password: string;
 }
 
-class WebLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(_info: AuthConfig) {
-    return AuthResult.CONTINUE;
-  }
-
-  public async perform(request: DispatchRequest<WebLoginData>): Promise<LoginResult> {
-    const session = (await API.login({ token: '', ...request.data })).data;
-
-    return {
-      status: AuthResult.SUCCESS,
-      session: session
-    };
-  }
-}
-
 class TokenLogin implements LoginStrategy<WebLoginData> {
   public async prepare(_info: AuthConfig) {
     return AuthResult.CONTINUE;
@@ -72,21 +57,6 @@ class TokenLogin implements LoginStrategy<WebLoginData> {
 
   public async perform(request: DispatchRequest<WebLoginData>): Promise<LoginResult> {
     const session = (await API.login({ username: '', password: '', token: request.data.password })).data;
-
-    return {
-      status: AuthResult.SUCCESS,
-      session: session
-    };
-  }
-}
-
-class LdapLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(_info: AuthConfig) {
-    return AuthResult.CONTINUE;
-  }
-
-  public async perform(request: DispatchRequest<WebLoginData>): Promise<LoginResult> {
-    const session = (await API.login({ token: '', ...request.data })).data;
 
     return {
       status: AuthResult.SUCCESS,
@@ -132,9 +102,7 @@ export class LoginDispatcher {
     this.strategyMapping = new Map();
 
     this.strategyMapping.set(AuthStrategy.anonymous, new AnonymousLogin());
-    this.strategyMapping.set(AuthStrategy.login, new WebLogin());
     this.strategyMapping.set(AuthStrategy.openshift, new OAuthLogin());
-    this.strategyMapping.set(AuthStrategy.ldap, new LdapLogin());
     this.strategyMapping.set(AuthStrategy.token, new TokenLogin());
     this.strategyMapping.set(AuthStrategy.openid, new OAuthLogin());
   }
