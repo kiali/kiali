@@ -127,7 +127,11 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
         {this.props.jaegerState.selectedTrace && (
           <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
             <div className="panel-body">
-              <SummaryPanelTraceDetails trace={this.props.jaegerState.selectedTrace} node={node} />
+              <SummaryPanelTraceDetails
+                trace={this.props.jaegerState.selectedTrace}
+                node={node}
+                jaegerURL={this.props.jaegerState.info?.url}
+              />
             </div>
           </div>
         )}
@@ -155,7 +159,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           <Tab style={summaryFont} title="Traces" eventKey={1}>
             <SummaryPanelNodeTraces
               namespace={nodeData.namespace}
-              service={nodeData.service!}
+              app={nodeData.app || nodeData.service!}
               queryTime={this.props.queryTime}
             />
           </Tab>

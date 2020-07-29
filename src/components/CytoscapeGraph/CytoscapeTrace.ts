@@ -17,8 +17,8 @@ export const showTrace = (cy: Cy.Core, trace: JaegerTrace) => {
 
   trace.spans.forEach(span => {
     const split = span.process.serviceName.split('.');
-    const service = split[0];
-    let selector = `[${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.service}="${service}"]`;
+    const app = split[0];
+    let selector = `[${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${app}"]`;
     selector = split.length > 1 ? `${selector}[${CyNode.namespace}="${split[1]}"]` : selector;
     const serviceSelection = cy.elements(selector);
     if (!!serviceSelection) {

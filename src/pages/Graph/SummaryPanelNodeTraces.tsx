@@ -21,7 +21,7 @@ import { summaryFont } from './SummaryPanelCommon';
 
 type Props = {
   namespace: string;
-  service: string;
+  app: string;
   queryTime: TimeInSeconds;
   setTraceId: (traceId?: string) => void;
   selectedTrace?: JaegerTrace;
@@ -82,7 +82,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
       this.state.useGraphRefresh &&
       (prevProps.queryTime !== this.props.queryTime ||
         prevProps.namespace !== this.props.namespace ||
-        prevProps.service !== this.props.service)
+        prevProps.app !== this.props.app)
     ) {
       this.loadTraces();
     }
@@ -100,7 +100,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
     };
     this.promises.cancelAll();
     this.promises
-      .register('traces', API.getJaegerTraces(this.props.namespace, this.props.service, params))
+      .register('traces', API.getJaegerTraces(this.props.namespace, this.props.app, params))
       .then(response => {
         const traces = response.data.data
           ? (response.data.data
@@ -128,9 +128,6 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
   }
 
   render() {
-    if (this.state.traces.length === 0) {
-      return null;
-    }
     const tracesDetailsURL = `/namespaces/${this.props.namespace}/applications/${this.props.service}?tab=traces`;
     const currentID = this.props.selectedTrace?.traceID;
 
@@ -155,19 +152,21 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
             <SyncAltIcon />
           </Button>
         </div>
-        <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
-          {this.state.traces.map(trace => {
-            return (
-              <SimpleListItem
-                key={'trace_' + trace.traceID}
-                onClick={() => this.onClickTrace(trace)}
-                isCurrent={trace.traceID === currentID}
-              >
-                <TraceListItem trace={trace} />
-              </SimpleListItem>
-            );
-          })}
-        </SimpleList>
+        {this.state.traces.length > 0 && (
+          <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
+            {this.state.traces.map(trace => {
+              return (
+                <SimpleListItem
+                  key={'trace_' + trace.traceID}
+                  onClick={() => this.onClickTrace(trace)}
+                  isCurrent={trace.traceID === currentID}
+                >
+                  <TraceListItem trace={trace} />
+                </SimpleListItem>
+              );
+            })}
+          </SimpleList>
+        )}
         <Button style={summaryFont} onClick={() => history.push(tracesDetailsURL)}>
           Go to Tracing
         </Button>

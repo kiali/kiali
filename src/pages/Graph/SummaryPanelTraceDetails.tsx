@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { style } from 'typestyle';
 import { Tooltip, Button, ButtonVariant } from '@patternfly/react-core';
-import { CloseIcon, AngleLeftIcon, AngleRightIcon } from '@patternfly/react-icons';
+import { CloseIcon, AngleLeftIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import { URLParam } from '../../app/History';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
@@ -22,6 +22,7 @@ import FocusAnimation from 'components/CytoscapeGraph/FocusAnimation';
 type Props = {
   trace: JaegerTrace;
   node: any;
+  jaegerURL?: string;
   close: () => void;
 };
 
@@ -84,9 +85,11 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 
   render() {
     const node = decoratedNodeData(this.props.node);
-    const tracesDetailsURL = node.service
-      ? `/namespaces/${node.namespace}/services/${node.service}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
+    const tracesDetailsURL = node.app
+      ? `/namespaces/${node.namespace}/services/${node.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
+    const jaegerTraceURL =
+      node.app && this.props.jaegerURL ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}` : undefined;
     const info = getFormattedTraceInfo(this.props.trace);
     const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
     const spans: Span[] | undefined = this.props.node.data('spans');
@@ -97,7 +100,16 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           {tracesDetailsURL && (
             <>
               {' '}
-              (<Link to={tracesDetailsURL}>Details</Link>)
+              (<Link to={tracesDetailsURL}>Details</Link>
+              {jaegerTraceURL && (
+                <>
+                  {' - '}
+                  <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
+                    Jaeger <ExternalLinkAltIcon size="sm" />
+                  </a>
+                </>
+              )}
+              )
             </>
           )}
         </span>
