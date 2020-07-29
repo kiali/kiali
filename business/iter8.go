@@ -2,7 +2,6 @@ package business
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/go-version"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/status"
 )
 
 type Iter8Service struct {
@@ -35,10 +35,10 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 
 	// It will be considered enabled if the extension is present in the Kiali configuration and the CRD is enabled on the cluster
 	if conf.Extensions.Iter8.Enabled && in.k8s.IsIter8Api() {
-		if kialiCache != nil && kialiCache.CheckNamespace("iter8") {
-			ps, err = kialiCache.GetPods("iter8", "")
+		if kialiCache != nil && kialiCache.CheckNamespace(conf.Extensions.Iter8.Namespace) {
+			ps, err = kialiCache.GetPods(conf.Extensions.Iter8.Namespace, "")
 		} else {
-			ps, err = in.k8s.GetPods("iter8", "")
+			ps, err = in.k8s.GetPods(conf.Extensions.Iter8.Namespace, "")
 		}
 		if err == nil {
 			pods := models.Pods{}
@@ -54,15 +54,23 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 					}
 				}
 			}
+		} else {
+			// Configuration error, cannot find iter8 controller and analytics in the namespace specified
+			return models.Iter8Info{
+				Enabled:                false,
+				SupportedVersion:       false,
+				ControllerImageVersion: controllerImgVersion,
+				AnalyticsImageVersion:  analyticsImgVersion,
+			}
 		}
 
 		supportedVersion := true
 		if controllerImgVersion != "" && analyticsImgVersion != "" {
-
-			if !validateVersion(config.Iter8VersionSupported, controllerImgVersion) {
+			if !status.IsIter8Supported(analyticsImgVersion) {
 				supportedVersion = false
 			}
-			if !validateVersion(config.Iter8VersionSupported, analyticsImgVersion) {
+
+			if !status.IsIter8Supported(analyticsImgVersion) {
 				supportedVersion = false
 			}
 		}
@@ -349,7 +357,8 @@ func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
 }
 
 func (in *Iter8Service) GetAnalyticPort() int {
-	configMap, err := in.k8s.GetConfigMap("iter8", "iter8-analytics")
+	conf := config.Get()
+	configMap, err := in.k8s.GetConfigMap(conf.Extensions.Iter8.Namespace, "iter8-analytics")
 	if err != nil {
 		return 80
 	}
@@ -363,26 +372,4 @@ func (in *Iter8Service) GetAnalyticPort() int {
 		return 80
 	}
 	return analyticConfig.Port
-}
-
-func validateVersion(requiredVersion string, installedVersion string) bool {
-	reqWords := strings.Split(requiredVersion, " ")
-	requirementV, errReqV := version.NewVersion(reqWords[1])
-	installedV, errInsV := version.NewVersion(installedVersion)
-	if errReqV != nil || errInsV != nil {
-		return false
-	}
-	switch operator := reqWords[0]; operator {
-	case "==":
-		return installedV.Equal(requirementV)
-	case ">=":
-		return installedV.GreaterThan(requirementV) || installedV.Equal(requirementV)
-	case ">":
-		return installedV.GreaterThan(requirementV)
-	case "<=":
-		return installedV.LessThan(requirementV) || installedV.Equal(requirementV)
-	case "<":
-		return installedV.LessThan(requirementV)
-	}
-	return false
 }

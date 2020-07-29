@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
@@ -162,6 +162,8 @@ type ThreeScaleConfig struct {
 
 type Iter8Config struct {
 	Enabled bool `yaml:"enabled"`
+	// Defein which namespace Iter8 is installed on, default to iter8
+	Namespace string `yaml:"namespace"`
 }
 
 // Extensions struct describes configuration for Kiali add-ons (extensions)
@@ -343,7 +345,8 @@ func NewConfig() (c *Config) {
 				TemplateName:   "threescale-authorization",
 			},
 			Iter8: Iter8Config{
-				Enabled: false,
+				Enabled:   false,
+				Namespace: "iter8",
 			},
 		},
 		ExternalServices: ExternalServices{

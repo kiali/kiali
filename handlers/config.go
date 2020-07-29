@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -26,7 +26,8 @@ type ThreeScaleConfig struct {
 	TemplateName   string `json:"templateName"`
 }
 type Iter8Config struct {
-	Enabled bool `json:"enabled"`
+	Enabled   bool   `json:"enabled"`
+	Namespace string `json:"namespace"`
 }
 type Extensions struct {
 	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
@@ -72,7 +73,8 @@ func Config(w http.ResponseWriter, r *http.Request) {
 				TemplateName:   config.Extensions.ThreeScale.TemplateName,
 			},
 			Iter8: Iter8Config{
-				Enabled: config.Extensions.Iter8.Enabled,
+				Enabled:   config.Extensions.Iter8.Enabled,
+				Namespace: config.Extensions.Iter8.Namespace,
 			},
 		},
 		InstallationTag:          config.InstallationTag,

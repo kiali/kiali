@@ -3,6 +3,8 @@ package kubernetes
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/config"
+
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -311,9 +313,10 @@ func (in *K8SClient) IsIter8Api() bool {
 }
 
 func (in *K8SClient) Iter8ConfigMap() ([]string, error) {
+	conf := config.Get()
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
-	err := in.k8s.CoreV1().RESTClient().Get().Namespace("iter8").Resource("configmaps").
+	err := in.k8s.CoreV1().RESTClient().Get().Namespace(conf.Extensions.Iter8.Namespace).Resource("configmaps").
 		Name(Iter8ConfigMap).Do().Into(result)
 	if err == nil {
 		metrics := []Iter8AnalyticMetric{}
