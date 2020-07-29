@@ -17,6 +17,7 @@ type NoHostChecker struct {
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
 	Services            []core_v1.Service
+	VirtualServices     []kubernetes.IstioObject
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -112,6 +113,11 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 		}
 	}
 
-	// Otherwise Check ServiceEntries
-	return kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries)
+	// Check ServiceEntries
+	if kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries) {
+		return true
+	}
+
+	// Otherwise, check VirtualServices
+	return kubernetes.HasMatchingVirtualServices(host, n.VirtualServices)
 }
