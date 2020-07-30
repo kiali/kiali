@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jaegertracing/jaeger v1.15.1
 	github.com/jtblin/go-ldap-client v0.0.0-20161205001958-ad9f2ea47a83
-	github.com/kiali/k-charted v0.6.1-rc2
+	github.com/kiali/k-charted v0.6.1-rc3
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
 	github.com/prometheus/client_golang v0.9.4
