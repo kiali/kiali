@@ -92,6 +92,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
       node.app && this.props.jaegerURL ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}` : undefined;
     const info = getFormattedTraceInfo(this.props.trace);
     const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
+    const nodeName = node.workload || node.service || node.app;
     const spans: Span[] | undefined = this.props.node.data('spans');
     return (
       <>
@@ -143,7 +144,9 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               >
                 <AngleLeftIcon />
               </Button>
-              <span className={navSpanStyle}>Span {this.state.selectedSpan + 1 + ' / ' + spans.length}</span>
+              <span className={navSpanStyle}>
+                Span on {nodeName} {this.state.selectedSpan + 1 + ' / ' + spans.length}
+              </span>
               <Button
                 variant={ButtonVariant.plain}
                 isDisabled={this.state.selectedSpan >= spans.length - 1}

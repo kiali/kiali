@@ -37,8 +37,8 @@ const summaryPanelCommon: CSSProperties = {
 };
 
 export const summaryPanel = style(summaryPanelCommon);
-export const summaryPanelTopSplit = style({ ...summaryPanelCommon, height: '60%' });
-export const summaryPanelBottomSplit = style({ ...summaryPanelCommon, height: '40%', overflowY: 'initial' });
+export const summaryPanelTopSplit = style({ ...summaryPanelCommon, height: '50%' });
+export const summaryPanelBottomSplit = style({ ...summaryPanelCommon, height: '50%', overflowY: 'initial' });
 
 export const summaryFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'
