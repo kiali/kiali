@@ -242,7 +242,6 @@ else
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
-    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/prometheus
 
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands so sidecar injection works:"
