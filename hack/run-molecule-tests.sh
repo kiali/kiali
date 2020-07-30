@@ -230,6 +230,15 @@ fi
 # the user may have specified a specific minikube profile to use - export this so make knows about it
 export MINIKUBE_PROFILE
 
+# build the latest Helm Chart
+echo
+echo "========================="
+echo "=== BUILD HELM CHARTS ==="
+echo "========================="
+echo
+
+make -C operator build-helm-chart
+
 # Run the tests
 echo
 echo "====================="
