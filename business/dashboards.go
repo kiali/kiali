@@ -237,7 +237,7 @@ func fillHistogram(chart *kmodel.Chart, from prometheus.Histogram, scale float64
 			chart.Error = fmt.Sprintf("error in metric %s/%s: %v", chart.Name, stat, promMetric.Err)
 			return
 		}
-		metric := kmodel.ConvertMatrix(promMetric.Matrix, kmodel.BuildLabelsMap(chart.Name, stat), scale)
+		metric := kmodel.ConvertMatrix(promMetric.Matrix, kmodel.BuildLabelsMap(chart.Name, stat), kmodel.ConversionParams{Scale: scale})
 		chart.Metrics = append(chart.Metrics, metric...)
 	}
 }
@@ -248,7 +248,7 @@ func fillMetric(chart *kmodel.Chart, from *prometheus.Metric, scale float64) {
 		chart.Error = fmt.Sprintf("error in metric %s: %v", chart.Name, from.Err)
 		return
 	}
-	chart.Metrics = kmodel.ConvertMatrix(from.Matrix, kmodel.BuildLabelsMap(chart.Name, ""), scale)
+	chart.Metrics = kmodel.ConvertMatrix(from.Matrix, kmodel.BuildLabelsMap(chart.Name, ""), kmodel.ConversionParams{Scale: scale})
 }
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model

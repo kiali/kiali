@@ -3673,6 +3673,10 @@
         "unit": {
           "type": "string",
           "x-go-name": "Unit"
+        },
+        "xAxis": {
+          "type": "string",
+          "x-go-name": "XAxis"
         }
       },
       "x-go-package": "github.com/kiali/k-charted/model"
