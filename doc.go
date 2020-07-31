@@ -36,7 +36,7 @@ type AggregateValueParam struct {
 	Name string `json:"aggregateValue"`
 }
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard spansList tracesList errorTraces
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -109,7 +109,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails spansList tracesList errorTraces serviceMetrics graphService graphAggregateByService serviceDashboard
+// swagger:parameters serviceDetails serviceMetrics graphService graphAggregateByService serviceDashboard
 type ServiceParam struct {
 	// The service name.
 	//
