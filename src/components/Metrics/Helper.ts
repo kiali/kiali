@@ -107,15 +107,20 @@ export const convertAsPromLabels = (lblSettings: LabelsSettings): AllPromLabelsV
   return promLabels;
 };
 
-export const settingsToOptions = (settings: MetricsSettings, opts: MetricsQuery) => {
+export const settingsToOptions = (settings: MetricsSettings, opts: MetricsQuery, defaultLabels: string[]) => {
   opts.avg = settings.showAverage;
   opts.quantiles = settings.showQuantiles;
-  opts.byLabels = [];
-  settings.labelsSettings.forEach((objLbl, k) => {
-    if (objLbl.checked) {
-      opts.byLabels!.push(k);
-    }
-  });
+  let byLabels = defaultLabels;
+  if (settings.labelsSettings.size > 0) {
+    // Labels have been fetched, so use what comes from labelsSettings
+    byLabels = [];
+    settings.labelsSettings.forEach((objLbl, k) => {
+      if (objLbl.checked) {
+        byLabels.push(k);
+      }
+    });
+  }
+  opts.byLabels = byLabels;
 };
 
 export const timeRangeToOptions = (range: TimeRange, opts: MetricsQuery) => {
@@ -137,7 +142,7 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
   const urlParams = new URLSearchParams(history.location.search);
   const settings: MetricsSettings = {
     showAverage: true,
-    showQuantiles: ['0.5', '0.95', '0.99'],
+    showQuantiles: ['0.5', '0.99'],
     labelsSettings: new Map()
   };
   const avg = urlParams.get(URLParam.SHOW_AVERAGE);

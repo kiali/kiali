@@ -72,7 +72,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.spanOverlay = new SpanOverlay(props.namespace, props.app, changed => this.setState({ spanOverlay: changed }));
   }
 
-  initOptions(settings: MetricsSettings): DashboardQuery {
+  private initOptions(settings: MetricsSettings): DashboardQuery {
     const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
     const options: DashboardQuery = this.props.version
       ? {
@@ -82,7 +82,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
           labelsFilters: filters,
           additionalLabels: 'version:Version'
         };
-    MetricsHelper.settingsToOptions(settings, options);
+    MetricsHelper.settingsToOptions(settings, options, []);
     return options;
   }
 
@@ -90,14 +90,14 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  refresh = () => {
+  private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
-  fetchMetrics = () => {
+  private fetchMetrics = () => {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.state.timeRange, this.options);
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
@@ -114,27 +114,27 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
       });
   };
 
-  onMetricsSettingsChanged = (settings: MetricsSettings) => {
-    MetricsHelper.settingsToOptions(settings, this.options);
+  private onMetricsSettingsChanged = (settings: MetricsSettings) => {
+    MetricsHelper.settingsToOptions(settings, this.options, []);
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
+  private onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  onTimeFrameChanged = (range: TimeRange) => {
+  private onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
       this.refresh();
     });
   };
 
-  onRawAggregationChanged = (aggregator: Aggregator) => {
+  private onRawAggregationChanged = (aggregator: Aggregator) => {
     this.options.rawDataAggregator = aggregator;
     this.fetchMetrics();
   };
 
-  onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
+  private onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
     if ('start' in datum && 'end' in datum) {
       // Zoom-in bucket
       this.onDomainChange([datum.start as Date, datum.end as Date]);
@@ -199,7 +199,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     );
   }
 
-  renderOptionsBar() {
+  private renderOptionsBar() {
     const hasHistograms =
       this.state.dashboard !== undefined &&
       this.state.dashboard.charts.some(chart => {

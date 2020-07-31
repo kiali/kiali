@@ -73,12 +73,15 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     );
   }
 
-  initOptions(settings: MetricsSettings): IstioMetricsOptions {
+  private initOptions(settings: MetricsSettings): IstioMetricsOptions {
     const options: IstioMetricsOptions = {
       reporter: MetricsReporter.initialReporter(this.props.direction),
       direction: this.props.direction
     };
-    MetricsHelper.settingsToOptions(settings, options);
+    const defaultLabels = [
+      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service'
+    ];
+    MetricsHelper.settingsToOptions(settings, options, defaultLabels);
     return options;
   }
 
@@ -87,14 +90,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  refresh = () => {
+  private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
       this.spanOverlay.fetch(this.state.timeRange);
     }
   };
 
-  fetchMetrics = () => {
+  private fetchMetrics = () => {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.state.timeRange, this.options);
     let promise: Promise<API.Response<DashboardModel>>;
@@ -124,7 +127,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       });
   };
 
-  fetchGrafanaInfo() {
+  private fetchGrafanaInfo() {
     if (!IstioMetrics.grafanaInfoPromise) {
       IstioMetrics.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
@@ -151,27 +154,30 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       });
   }
 
-  onMetricsSettingsChanged = (settings: MetricsSettings) => {
-    MetricsHelper.settingsToOptions(settings, this.options);
+  private onMetricsSettingsChanged = (settings: MetricsSettings) => {
+    const defaultLabels = [
+      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service'
+    ];
+    MetricsHelper.settingsToOptions(settings, this.options, defaultLabels);
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
+  private onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  onTimeFrameChanged = (range: TimeRange) => {
+  private onTimeFrameChanged = (range: TimeRange) => {
     this.setState({ timeRange: range }, () => {
       this.refresh();
     });
   };
 
-  onReporterChanged = (reporter: Reporter) => {
+  private onReporterChanged = (reporter: Reporter) => {
     this.options.reporter = reporter;
     this.fetchMetrics();
   };
 
-  onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
+  private onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
     if ('start' in datum && 'end' in datum) {
       // Zoom-in bucket
       this.onDomainChange([datum.start as Date, datum.end as Date]);
@@ -237,7 +243,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     );
   }
 
-  renderOptionsBar() {
+  private renderOptionsBar() {
     return (
       <Toolbar style={{ paddingBottom: 8 }}>
         <ToolbarGroup>
