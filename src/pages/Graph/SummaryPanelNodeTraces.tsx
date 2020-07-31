@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { SimpleList, SimpleListItem, Button, Checkbox } from '@patternfly/react-core';
+import { SimpleList, SimpleListItem, Button, Checkbox, Divider } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
@@ -35,23 +35,28 @@ type State = {
 const tracesLimit = 15;
 
 const refreshDivStyle = style({
-  display: 'inline-flex'
+  display: 'inline-flex',
+  width: '100%'
 });
 
 const checkboxStyle = style({
   paddingBottom: 10,
-  marginRight: 15,
   $nest: {
     '& > label': {
-      fontSize: 'var(--graph-side-panel--font-size)'
+      fontSize: 'var(--graph-side-panel--font-size)',
+      paddingTop: '4px'
     }
   }
 });
 
 const refreshButtonStyle = style({
   padding: '2px 10px',
-  marginLeft: 5,
+  margin: '5px 0 5px auto',
   top: -4
+});
+
+const dividerStyle = style({
+  paddingBottom: '3px'
 });
 
 class SummaryPanelNodeTraces extends React.Component<Props, State> {
@@ -70,7 +75,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { traces: [], useGraphRefresh: true };
+    this.state = { traces: [], useGraphRefresh: false };
   }
 
   componentDidMount() {
@@ -145,13 +150,14 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
             id="manual-refresh"
             isDisabled={this.state.useGraphRefresh}
             onClick={() => this.loadTraces()}
-            aria-label="Action"
+            aria-label="Refresh"
             variant="secondary"
             className={refreshButtonStyle}
           >
             <SyncAltIcon />
           </Button>
         </div>
+        <Divider className={dividerStyle} />
         {this.state.traces.length > 0 && (
           <SimpleList style={{ marginBottom: 8 }} aria-label="Traces list">
             {this.state.traces.map(trace => {
