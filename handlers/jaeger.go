@@ -44,13 +44,13 @@ func TracesList(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	service := params["service"]
+	app := params["app"]
 	q, err := readQuery(r.URL.Query())
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetJaegerTraces(namespace, service, q)
+	traces, err := business.Jaeger.GetJaegerTraces(namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -66,7 +66,7 @@ func ErrorTraces(w http.ResponseWriter, r *http.Request) {
 	}
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	service := params["service"]
+	app := params["app"]
 	queryParams := r.URL.Query()
 	durationInSeconds := queryParams.Get("duration")
 	conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
@@ -74,7 +74,7 @@ func ErrorTraces(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Cannot parse parameter 'duration': "+err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetErrorTraces(namespace, service, time.Second*time.Duration(conv))
+	traces, err := business.Jaeger.GetErrorTraces(namespace, app, time.Second*time.Duration(conv))
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -99,7 +99,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 // ServiceSpans is the API handler to fetch Jaeger spans of a specific service
-func ServiceSpans(w http.ResponseWriter, r *http.Request) {
+func AppSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -108,14 +108,14 @@ func ServiceSpans(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	service := params["service"]
+	app := params["app"]
 	q, err := readQuery(r.URL.Query())
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	spans, err := business.Jaeger.GetJaegerSpans(namespace, service, q)
+	spans, err := business.Jaeger.GetJaegerSpans(namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

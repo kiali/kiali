@@ -373,7 +373,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/spans traces spansList
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces spansList
 		// ---
 		// Endpoint to get Jaeger spans for a given service
 		//
@@ -388,11 +388,11 @@ func NewRoutes() (r *Routes) {
 		{
 			"ServiceSpans",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/spans",
-			handlers.ServiceSpans,
+			"/api/namespaces/{namespace}/apps/{app}/spans",
+			handlers.AppSpans,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces tracesList
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/traces traces tracesList
 		// ---
 		// Endpoint to get the traces of a given service
 		//
@@ -409,11 +409,11 @@ func NewRoutes() (r *Routes) {
 		{
 			"TracesList",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/traces",
+			"/api/namespaces/{namespace}/apps/{app}/traces",
 			handlers.TracesList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/errortraces traces errorTraces
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/errortraces traces errorTraces
 		// ---
 		// Endpoint to get the number of traces in error for a given service
 		//
@@ -430,7 +430,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"ErrorTraces",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/errortraces",
+			"/api/namespaces/{namespace}/apps/{app}/errortraces",
 			handlers.ErrorTraces,
 			true,
 		},

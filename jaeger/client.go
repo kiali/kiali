@@ -14,10 +14,10 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetSpans(ns, srv string, query models.TracingQuery) ([]Span, error)
-	GetTraces(ns, srv string, query models.TracingQuery) (traces *JaegerResponse, err error)
+	GetSpans(ns, app string, query models.TracingQuery) ([]Span, error)
+	GetTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
-	GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error)
+	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
 }
 
 // Client for Jaeger API.
@@ -57,17 +57,17 @@ func NewClient(token string) (*Client, error) {
 	}
 }
 
-// GetSpans fetches Jaeger traces of a service and extract related spans
+// GetSpans fetches Jaeger traces of a app and extract related spans
 // Returns (spans, error)
-func (in *Client) GetSpans(ns, srv string, query models.TracingQuery) ([]Span, error) {
-	return getSpans(in.client, in.endpoint, ns, srv, query)
+func (in *Client) GetSpans(ns, app string, query models.TracingQuery) ([]Span, error) {
+	return getSpans(in.client, in.endpoint, ns, app, query)
 }
 
-// GetTraces Jaeger to fetch traces of a service
+// GetTraces Jaeger to fetch traces of a app
 // requests for traces of a service
 // Returns (traces, code, error)
-func (in *Client) GetTraces(ns, srv string, query models.TracingQuery) (traces *JaegerResponse, err error) {
-	return getTraces(in.client, in.endpoint, ns, srv, query)
+func (in *Client) GetTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error) {
+	return getTraces(in.client, in.endpoint, ns, app, query)
 }
 
 // GetTraceDetail jaeger to fetch a specific trace
@@ -77,9 +77,9 @@ func (in *Client) GetTraceDetail(traceId string) (*JaegerSingleTrace, error) {
 	return getTraceDetail(in.client, in.endpoint, traceId)
 }
 
-// GetErrorTraces jaeger to fetch a traces of a specific service
+// GetErrorTraces jaeger to fetch a traces of a specific app
 // requests for errors traces
 //  Returns (errorTraces, error)
-func (in *Client) GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error) {
-	return getErrorTraces(in.client, in.endpoint, ns, srv, duration)
+func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error) {
+	return getErrorTraces(in.client, in.endpoint, ns, app, duration)
 }
