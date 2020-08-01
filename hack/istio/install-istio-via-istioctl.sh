@@ -239,6 +239,11 @@ else
     exit 1
   fi
 
+  echo Installing Addons except Kiali
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/grafana.yaml
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/jaeger.yaml
+
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
