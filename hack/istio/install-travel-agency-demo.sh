@@ -231,11 +231,11 @@ spec:
                         "match": [
                           {
                             "value": "TravelQuote",
-                            "condition": "request.url_path.matches('^.*/travels/[:alpha:]+.*$') && request.method == 'GET'"
+                            "condition": "request.url_path.matches('^/travels/[[:alpha:]]+$') && request.method == 'GET'"
                           },
                           {
                             "value": "ListCities",
-                            "condition": "request.url_path.matches('^.*/travels$') && request.method == 'GET'"
+                            "condition": "request.url_path.matches('^/travels$') && request.method == 'GET'"
                           }
                         ]
                       }
