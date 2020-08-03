@@ -10,8 +10,7 @@ import {
   Title,
   Tooltip
 } from '@patternfly/react-core';
-import { serverConfig } from '../../../../config/ServerConfig';
-import { SuccessCriteria } from '../../../../types/Iter8';
+import { Iter8Info, SuccessCriteria } from '../../../../types/Iter8';
 import {
   Table,
   TableBody,
@@ -29,6 +28,7 @@ import { RenderComponentScroll } from '../../../../components/Nav/Page';
 import styles from '@patternfly/react-styles/css/components/Table/table';
 
 interface ExperimentInfoDescriptionProps {
+  iter8Info: Iter8Info;
   criterias: SuccessCriteria[];
 }
 
@@ -74,10 +74,7 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
           {
             title: (
               <ul>
-                <li>
-                  Threshold : {criteria.criteria.tolerance}
-                  {serverConfig.istioTelemetryV2 ? ' ms' : ' s'}
-                </li>
+                <li>Threshold : {criteria.criteria.tolerance}</li>
                 <li>Threshold Type: {criteria.criteria.toleranceType}</li>
                 <li>Sample Size: {criteria.criteria.sampleSize}</li>
               </ul>

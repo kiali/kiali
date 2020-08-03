@@ -1,10 +1,18 @@
-import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
-import { Criteria, NameValuePair } from '../../../../types/Iter8';
+import { cellWidth, ICell, Table, TableBody, TableHeader, wrappable } from '@patternfly/react-table';
+import { Criteria, Host, initCriteria, Iter8Info, NameValuePair } from '../../../../types/Iter8';
 import * as React from 'react';
-import { Button, Checkbox, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  Checkbox,
+  Form,
+  FormGroup,
+  FormSelect,
+  FormSelectOption,
+  TextInputBase as TextInput
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { PfColors } from '../../../../components/Pf/PfColors';
-import { serverConfig } from '../../../../config/ServerConfig';
+import history from '../../../../app/History';
 
 const headerCells: ICell[] = [
   {
@@ -13,17 +21,18 @@ const headerCells: ICell[] = [
     props: {}
   },
   {
-    title: 'Threshold (unit: second)',
-    transforms: [cellWidth(10) as any],
+    title: 'Threshold',
+    transforms: [wrappable],
     props: {}
   },
   {
     title: 'Threshold Type',
-    transforms: [cellWidth(15) as any],
+    transforms: [wrappable, cellWidth(20) as any],
     props: {}
   },
   {
     title: 'Stop on Failure',
+    transforms: [wrappable],
     props: {}
   },
   {
@@ -45,18 +54,17 @@ const toleranceType: NameValuePair[] = [
 
 const noCriteriaStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  marginBottom: 15,
+  color: PfColors.Blue400,
+  fontSize: '1.2em'
 });
 
 type Props = {
+  iter8Info: Iter8Info;
   criterias: Criteria[];
   metricNames: string[];
-  onAdd: (server: Criteria) => void;
-  onRemove: (index: number) => void;
-};
-
-export type CriteriaState = {
-  criterias: Criteria[];
+  onAdd: (server: Criteria, host: Host) => void;
+  onRemove: (type: string, index: number) => void;
 };
 
 type State = {
@@ -69,13 +77,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      addCriteria: {
-        metric: '',
-        tolerance: 0.2,
-        toleranceType: 'threshold',
-        stopOnFailure: false,
-        sampleSize: 5
-      },
+      addCriteria: initCriteria(),
       validName: false
     };
   }
@@ -86,7 +88,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
       title: 'Remove Criteria',
       // @ts-ignore
       onClick: (event, rowIndex, rowData, extraData) => {
-        this.props.onRemove(rowIndex);
+        this.props.onRemove('Criteria', rowIndex);
       }
     };
     if (rowIndex < this.props.criterias.length) {
@@ -147,47 +149,124 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
   };
 
   onAddCriteria = () => {
-    this.props.onAdd(this.state.addCriteria);
+    this.props.onAdd(this.state.addCriteria, { name: '', gateway: '' });
     this.setState({
-      addCriteria: {
-        metric: '',
-        tolerance: 0.2,
-        toleranceType: 'threshold',
-        stopOnFailure: false,
-        sampleSize: 5
-      }
+      addCriteria: initCriteria()
     });
   };
 
   rows() {
-    return this.props.criterias
-      .map((gw, i) => ({
+    if (history.location.pathname.endsWith('/new')) {
+      return this.props.criterias
+        .map((gw, i) => ({
+          key: 'criteria' + i,
+          cells: [
+            <>{gw.metric}</>,
+            <>{gw.tolerance}</>,
+            <>{gw.toleranceType === 'threshold' ? 'abosulte' : 'delta'}</>,
+            <>{gw.stopOnFailure ? 'true' : 'false'}</>
+          ]
+        }))
+        .concat([
+          {
+            key: 'gwNew',
+            cells: [
+              <>
+                <FormSelect
+                  value={this.state.addCriteria.metric}
+                  id="addMetricName"
+                  name="addMetricName"
+                  onChange={this.onAddMetricName}
+                >
+                  {this.props.metricNames.map((option, index) => (
+                    <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
+                  ))}
+                </FormSelect>
+              </>,
+
+              <FormGroup fieldId="addTolerancef" isValid={this.state.addCriteria.tolerance > 0}>
+                <TextInput
+                  id="addTolerance"
+                  type="number"
+                  value={this.state.addCriteria.tolerance}
+                  placeholder="Tolerance"
+                  onChange={value => this.onAddTolerance(value, '')}
+                  isValid={!isNaN(Number(this.state.addCriteria.tolerance))}
+                />
+              </FormGroup>,
+
+              <>
+                <FormSelect
+                  value={this.state.addCriteria.toleranceType}
+                  id="addPortProtocol"
+                  name="addPortProtocol"
+                  onChange={this.onAddToleranceType}
+                >
+                  {toleranceType.map((option, index) => (
+                    <FormSelectOption isDisabled={false} key={'p' + index} value={option.name} label={option.value} />
+                  ))}
+                </FormSelect>
+              </>,
+              <>
+                <Checkbox
+                  label="Stop On Failure"
+                  id="stopOnFailure"
+                  name="stopOnFailure"
+                  aria-label="Stop On Failure"
+                  isChecked={this.state.addCriteria.stopOnFailure}
+                  onChange={this.onAddStopOnFailure}
+                />
+              </>,
+              <>
+                <Button
+                  id="addServerBtn"
+                  variant="secondary"
+                  isDisabled={this.state.addCriteria.metric.length === 0}
+                  onClick={this.onAddCriteria}
+                >
+                  Add this Criteria
+                </Button>
+              </>
+            ]
+          }
+        ]);
+    } else {
+      return this.props.criterias.map((gw, i) => ({
         key: 'criteria' + i,
         cells: [
           <>{gw.metric}</>,
-          <>{serverConfig.istioTelemetryV2 ? gw.tolerance / 1000 : gw.tolerance}</>,
+          <>{gw.tolerance}</>,
           <>{gw.toleranceType === 'threshold' ? 'abosulte' : 'delta'}</>,
           <>{gw.stopOnFailure ? 'true' : 'false'}</>
         ]
-      }))
-      .concat([
-        {
-          key: 'gwNew',
-          cells: [
-            <>
+      }));
+    }
+  }
+
+  renderCriteriaForm() {
+    return (
+      <>
+        <div>
+          {this.props.criterias.length === 0 && (
+            <span className={noCriteriaStyle}>(At least one criteria is needed)</span>
+          )}
+          <p>&nbsp;&nbsp;</p>
+          <Form isHorizontal={true}>
+            <FormGroup fieldId="name" label="Metric" isRequired={true}>
               <FormSelect
                 value={this.state.addCriteria.metric}
                 id="addMetricName"
                 name="addMetricName"
                 onChange={this.onAddMetricName}
+                style={{ width: 'auto' }}
               >
                 {this.props.metricNames.map((option, index) => (
                   <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
                 ))}
               </FormSelect>
-            </>,
+            </FormGroup>
 
-            <FormGroup fieldId="addTolerancef" isValid={this.state.addCriteria.tolerance > 0}>
+            <FormGroup label="Tolerance" fieldId="addTolerancef" isValid={this.state.addCriteria.tolerance > 0}>
               <TextInput
                 id="addTolerance"
                 type="number"
@@ -195,22 +274,23 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
                 placeholder="Tolerance"
                 onChange={value => this.onAddTolerance(value, '')}
                 isValid={!isNaN(Number(this.state.addCriteria.tolerance))}
+                style={{ width: 'auto' }}
               />
-            </FormGroup>,
-
-            <>
+            </FormGroup>
+            <FormGroup label="Protocol" fieldId="addPortProtocol" isValid={this.state.addCriteria.tolerance > 0}>
               <FormSelect
                 value={this.state.addCriteria.toleranceType}
                 id="addPortProtocol"
                 name="addPortProtocol"
                 onChange={this.onAddToleranceType}
+                style={{ width: 'auto' }}
               >
                 {toleranceType.map((option, index) => (
                   <FormSelectOption isDisabled={false} key={'p' + index} value={option.name} label={option.value} />
                 ))}
               </FormSelect>
-            </>,
-            <>
+            </FormGroup>
+            <FormGroup label="Protocol" fieldId="addPortProtocol" isValid={this.state.addCriteria.tolerance > 0}>
               <Checkbox
                 label="Stop On Failure"
                 id="stopOnFailure"
@@ -219,21 +299,25 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
                 isChecked={this.state.addCriteria.stopOnFailure}
                 onChange={this.onAddStopOnFailure}
               />
-            </>,
+            </FormGroup>
+
             <>
               <Button
+                style={{ paddingLeft: '6px' }}
                 id="addServerBtn"
-                variant="secondary"
+                variant="primary"
                 isDisabled={this.state.addCriteria.metric.length === 0}
                 onClick={this.onAddCriteria}
               >
                 Add this Criteria
               </Button>
             </>
-          ]
-        }
-      ]);
+          </Form>
+        </div>
+      </>
+    );
   }
+
   render() {
     return (
       <>
@@ -247,9 +331,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
           <TableHeader />
           <TableBody />
         </Table>
-        {this.props.criterias.length === 0 && (
-          <div className={noCriteriaStyle}>Experiment has no Success Criteria Defined</div>
-        )}
+        {history.location.pathname.endsWith('/new') ? '' : this.renderCriteriaForm()}
       </>
     );
   }

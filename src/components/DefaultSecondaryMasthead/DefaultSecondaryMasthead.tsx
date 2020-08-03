@@ -19,6 +19,7 @@ export default class DefaultSecondaryMasthead extends React.Component {
     path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
     if (titles.includes(path)) {
       let title = path.charAt(0).toUpperCase() + path.slice(1);
+      let disabled = false;
       if (path === 'istio/new') {
         title = 'Create New Istio Config';
       } else if (path === 'istio') {
@@ -29,22 +30,26 @@ export default class DefaultSecondaryMasthead extends React.Component {
         title = 'Iter8 Experiments';
       } else if (path === 'extensions/iter8/new') {
         title = 'Create New Iter8 Experiment';
+        disabled = true;
       }
-      return (
-        <Title headingLevel="h1" size="3xl" style={{ margin: '18px 0 18px' }}>
-          {title}
-        </Title>
-      );
+      return {
+        title: (
+          <Title headingLevel="h1" size="3xl" style={{ margin: '18px 0 18px' }}>
+            {title}
+          </Title>
+        ),
+        disabled: disabled
+      };
     }
 
-    return undefined;
+    return { title: undefined, disabled: false };
   }
 
   render() {
-    const title = this.showTitle();
+    const { title, disabled } = this.showTitle();
     return (
       <SecondaryMasthead title={title ? true : false}>
-        <NamespaceDropdownContainer disabled={false} />
+        <NamespaceDropdownContainer disabled={disabled} />
         {title}
       </SecondaryMasthead>
     );

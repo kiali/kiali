@@ -17,19 +17,19 @@ import {
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import {
+  cellWidth,
+  IRow,
+  ISortBy,
   sortable,
+  SortByDirection,
   Table,
   TableBody,
-  TableHeader,
-  ISortBy,
-  IRow,
-  SortByDirection,
-  cellWidth
+  TableHeader
 } from '@patternfly/react-table';
 import * as API from '../../../../services/Api';
 import * as AlertUtils from '../../../../utils/AlertUtils';
 import history from '../../../../app/History';
-import { Iter8Info, Iter8Experiment } from '../../../../types/Iter8';
+import { Iter8Experiment, Iter8Info } from '../../../../types/Iter8';
 import { Link } from 'react-router-dom';
 import * as FilterComponent from '../../../../components/FilterList/FilterComponent';
 
@@ -109,7 +109,10 @@ class ExperimentListPage extends React.Component<Props, State> {
     super(props);
     this.state = {
       iter8Info: {
-        enabled: false
+        enabled: false,
+        supportedVersion: false,
+        controllerImageVersion: '',
+        analyticsImageVersion: ''
       },
       experimentLists: [],
       sortBy: {},
@@ -126,6 +129,11 @@ class ExperimentListPage extends React.Component<Props, State> {
       .then(result => {
         const iter8Info = result.data;
         if (iter8Info.enabled) {
+          if (!iter8Info.supportedVersion) {
+            AlertUtils.addError(
+              'You are running an unsupported Iter8 vresion, please upgrade to supported version  (v0.2+) to take advantage of the full features of Iter8 .'
+            );
+          }
           API.getExperiments(namespaces)
             .then(result => {
               this.setState(prevState => {
@@ -231,13 +239,7 @@ class ExperimentListPage extends React.Component<Props, State> {
     history.push('/extensions/iter8/new');
   };
 
-  serviceLink(namespace: string, workload: string) {
-    let slink = '/namespaces/' + namespace + '/services/' + workload;
-    return <Link to={slink}>{workload}</Link>;
-  }
-
-  // This is a simplified actions toolbar.
-  // It contains a create new handler action.
+  // It contains a create new experiment action.
   actionsToolbar = () => {
     return (
       <Dropdown
@@ -380,8 +382,28 @@ class ExperimentListPage extends React.Component<Props, State> {
     }
   };
 
-  workloadLink(namespace: string, workload: string) {
-    return '/namespaces/' + namespace + '/workloads/' + workload;
+  redirectLink(namespace: string, name: string, kind: string) {
+    if (kind === 'Deployment') {
+      let linkTo = '/namespaces/' + namespace + '/workloads/' + name;
+      return (
+        <>
+          <Badge className={'virtualitem_badge_definition'}>W</Badge>
+          <Link to={linkTo}>{name}</Link>
+        </>
+      );
+    } else {
+      if (name !== '') {
+        let linkTo = '/namespaces/' + namespace + '/services/' + name;
+        return (
+          <>
+            <Badge className={'virtualitem_badge_definition'}>S</Badge>
+            <Link to={linkTo}>{name}</Link>
+          </>
+        );
+      } else {
+        return 'N/A';
+      }
+    }
   }
 
   // Helper used to build the table content.
@@ -415,23 +437,18 @@ class ExperimentListPage extends React.Component<Props, State> {
             {h.namespace}
           </>,
           <>
-            <Tooltip
-              key={'TooltipTargetService_' + h.targetService}
-              position={TooltipPosition.top}
-              content={<>Experiment TargetService</>}
-            >
-              <Badge className={'virtualitem_badge_definition'}>S</Badge>
-            </Tooltip>
-            {h.targetService ? this.serviceLink(h.namespace, h.targetService) : ''}
+            {h.kind === 'Deployment'
+              ? this.redirectLink(h.namespace, h.targetService, 'Service')
+              : this.redirectLink(h.namespace, '', h.kind)}
           </>,
           <>{this.experimentStatusIcon(h.name + '_' + h.namespace, h.phase, h.candidatePercentage, h.status)}</>,
 
           <>
-            <Link to={this.workloadLink(h.namespace, h.baseline)}>{h.baseline}</Link>
+            {this.redirectLink(h.namespace, h.baseline, h.kind)}
             <br /> {h.baselinePercentage}%
           </>,
           <>
-            <Link to={this.workloadLink(h.namespace, h.candidate)}>{h.candidate}</Link>
+            {this.redirectLink(h.namespace, h.candidate, h.kind)}
             <br /> {h.candidatePercentage}%
           </>
         ]

@@ -18,7 +18,7 @@ import {
 import { style } from 'typestyle';
 import * as API from '../../../../services/Api';
 import * as AlertUtils from '../../../../utils/AlertUtils';
-import { ExperimentAction, Iter8ExpDetailsInfo } from '../../../../types/Iter8';
+import { ExperimentAction, Iter8ExpDetailsInfo, Iter8Info } from '../../../../types/Iter8';
 import Iter8Dropdown from './Iter8Dropdown';
 import history from '../../../../app/History';
 import * as FilterHelper from '../../../../components/FilterList/FilterHelper';
@@ -42,6 +42,7 @@ interface Props extends RouteComponentProps<ExpeerimentId> {
 }
 
 interface State {
+  iter8Info: Iter8Info;
   experiment?: Iter8ExpDetailsInfo;
   currentTab: string;
   canDelete: boolean;
@@ -73,6 +74,12 @@ class ExperimentDetailsPage extends React.Component<Props, State> {
 
     const urlParams = new URLSearchParams(history.location.search);
     this.state = {
+      iter8Info: {
+        enabled: false,
+        supportedVersion: false,
+        analyticsImageVersion: '',
+        controllerImageVersion: ''
+      },
       experiment: undefined,
       canDelete: false,
       currentTab: activeTab(tabName, defaultTab),
@@ -95,6 +102,7 @@ class ExperimentDetailsPage extends React.Component<Props, State> {
             .then(result => {
               if (this.state.resetActionFlag) {
                 this.setState({
+                  iter8Info: iter8Info,
                   actionTaken: '',
                   experiment: result.data,
                   canDelete: result.data.permissions.delete,
@@ -134,8 +142,8 @@ class ExperimentDetailsPage extends React.Component<Props, State> {
       );
     }
   }
+
   // Extensions breadcrumb,
-  // It is a simplified view of BreadcrumbView with fixed rendering
   breadcrumb = () => {
     return (
       <div className={extensionHeader}>
@@ -345,7 +353,10 @@ class ExperimentDetailsPage extends React.Component<Props, State> {
     );
     const criteriaTab = (
       <Tab eventKey={1} title="Criteria" key="Criteria">
-        <CriteriaInfoDescription criterias={this.state.experiment ? this.state.experiment.criterias : []} />
+        <CriteriaInfoDescription
+          iter8Info={this.state.iter8Info}
+          criterias={this.state.experiment ? this.state.experiment.criterias : []}
+        />
       </Tab>
     );
     const tabsArray: any[] = [overviewTab, criteriaTab];

@@ -2,6 +2,9 @@ import { ResourcePermissions } from './Permissions';
 
 export interface Iter8Info {
   enabled: boolean;
+  supportedVersion: boolean;
+  controllerImageVersion: string;
+  analyticsImageVersion: string;
 }
 
 export interface Iter8Experiment {
@@ -11,12 +14,15 @@ export interface Iter8Experiment {
   status: string;
   baseline: string;
   baselinePercentage: number;
+  baselineVersion: string;
   candidate: string;
   candidatePercentage: number;
+  candidateVersion: string;
   namespace: string;
   createdAt: number;
   startedAt: number;
   endedAt: number;
+  kind: string;
 }
 
 export interface ExpId {
@@ -36,6 +42,7 @@ export interface Iter8ExpDetailsInfo {
   experimentItem: ExperimentItem;
   criterias: SuccessCriteria[];
   trafficControl: TrafficControl;
+  hosts: Host[];
   permissions: ResourcePermissions;
 }
 
@@ -49,13 +56,16 @@ export interface ExperimentItem {
   endedAt: number;
   baseline: string;
   baselinePercentage: number;
+  baselineVersion: string;
   candidate: string;
   candidatePercentage: number;
+  candidateVersion: string;
   targetService: string;
   targetServiceNamespace: string;
   assessmentConclusion: string[];
   labels?: { [key: string]: string };
   resourceVersion: string;
+  kind: string;
 }
 export interface SuccessCriteria {
   name: string;
@@ -87,6 +97,18 @@ export interface Criteria {
   toleranceType: string;
   sampleSize: number;
   stopOnFailure: boolean;
+}
+export const initCriteria = (): Criteria => ({
+  metric: '',
+  tolerance: 200,
+  toleranceType: 'threshold',
+  stopOnFailure: false,
+  sampleSize: 5
+});
+
+export interface Host {
+  name: string;
+  gateway: string;
 }
 
 export interface ExperimentAction {

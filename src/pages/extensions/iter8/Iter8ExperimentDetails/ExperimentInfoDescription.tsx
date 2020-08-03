@@ -2,26 +2,35 @@ import * as React from 'react';
 import {
   Badge,
   Card,
+  CardActions,
   CardBody,
+  CardHead,
+  CardHeader,
   DataList,
   DataListCell,
   DataListItem,
   DataListItemCells,
   DataListItemRow,
+  Dropdown,
+  DropdownItem,
   Grid,
   GridItem,
+  KebabToggle,
   List,
   ListItem,
   Stack,
   StackItem,
   Text,
-  TextVariants
+  TextVariants,
+  Title
 } from '@patternfly/react-core';
 
 import LocalTime from '../../../../components/Time/LocalTime';
 import { Link } from 'react-router-dom';
 import { Iter8ExpDetailsInfo } from '../../../../types/Iter8';
 import { RenderComponentScroll } from '../../../../components/Nav/Page';
+import { GraphType } from '../../../../types/Graph';
+import history from '../../../../app/History';
 
 interface ExperimentInfoDescriptionProps {
   target: string;
@@ -34,7 +43,16 @@ interface ExperimentInfoDescriptionProps {
   actionTaken: string;
 }
 
-class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps> {
+type MiniGraphCardState = {
+  isKebabOpen: boolean;
+};
+
+class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps, MiniGraphCardState> {
+  constructor(props) {
+    super(props);
+    this.state = { isKebabOpen: false };
+  }
+
   serviceLink(namespace: string, workload: string) {
     return '/namespaces/' + namespace + '/services/' + workload;
   }
@@ -59,24 +77,25 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
       </DataListCell>
     ];
   }
-  workloadLink(namespace: string, workload: string) {
-    return '/namespaces/' + namespace + '/workloads/' + workload;
-  }
 
-  renderDeployments(baseline: string) {
+  renderDeployments(baseline: string, kind: string) {
+    let linkTo = '/namespaces/' + this.props.namespace + '/workloads/' + baseline;
+    if (kind === 'Service') {
+      linkTo = '/namespaces/' + this.props.namespace + '/services/' + baseline;
+    }
     return (
       <ListItem key={`AppService_${baseline}`}>
-        <Link to={this.workloadLink(this.props.namespace, baseline)}>{baseline}</Link>
+        <Link to={linkTo}>{baseline}</Link>
       </ListItem>
     );
   }
 
-  baselineInfo(bname: string, binfo: string) {
-    const workloadList = this.renderDeployments(binfo);
-
+  baselineInfo(bname: string, binfo: string, kind: string) {
+    const workloadList = this.renderDeployments(binfo, kind);
+    let badgeKind = kind === 'Deployment' ? 'W' : 'S';
     return [
       <DataListCell key="workload-icon" isIcon={true}>
-        <Badge>W</Badge>
+        <Badge>{badgeKind}</Badge>
       </DataListCell>,
       <DataListCell key="baseline">
         <Text component={TextVariants.h3}>{bname}</Text>
@@ -94,6 +113,20 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     ];
   }
 
+  gatewayInfo(badgeKind: string, nameString: string, namespace: string, gatewayname: string) {
+    let linkTo = '/namespaces/' + namespace + '/istio/gateways/' + gatewayname;
+    return [
+      <DataListCell key="workload-icon" isIcon={true}>
+        <Badge>{badgeKind}</Badge>
+      </DataListCell>,
+      <DataListCell key="gateway">
+        <Text component={TextVariants.h3}>
+          <Link to={linkTo}>{nameString}</Link>
+        </Text>
+      </DataListCell>
+    ];
+  }
+
   getConclusionList(conclusions: string[]) {
     return (
       <ul>
@@ -104,6 +137,35 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     );
   }
 
+  renderCardHead() {
+    const graphCardActions = [
+      <DropdownItem key="viewGraph" onClick={this.showFullMetric}>
+        Show service inbound metrics
+      </DropdownItem>,
+      <DropdownItem key="viewGraph" onClick={this.showFullGraph}>
+        Show traffic graph
+      </DropdownItem>
+    ];
+    return [
+      <CardHead>
+        <CardActions>
+          <Dropdown
+            toggle={<KebabToggle onToggle={this.onGraphActionsToggle} />}
+            dropdownItems={graphCardActions}
+            isPlain
+            isOpen={this.state.isKebabOpen}
+            position={'right'}
+          />
+        </CardActions>
+        <CardHeader>
+          <Title style={{ float: 'left' }} headingLevel="h3" size="2xl">
+            {this.props.experimentDetails !== undefined ? this.props.experimentDetails.experimentItem.name : 'N/A'}
+          </Title>
+        </CardHeader>
+      </CardHead>
+    ];
+  }
+
   render() {
     let targetNamespace = this.props.experimentDetails
       ? this.props.experimentDetails.experimentItem.targetServiceNamespace
@@ -111,30 +173,43 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     let targetService = this.props.experimentDetails
       ? this.props.experimentDetails.experimentItem.targetService
       : this.props.target;
+
     let statusString = this.props.experimentDetails ? this.props.experimentDetails.experimentItem.status : '';
     if (this.props.actionTaken !== '') {
       statusString = 'Waiting for result of action "' + this.props.actionTaken + '" ';
     }
+
+    let hasHosts = this.props.experimentDetails
+      ? this.props.experimentDetails.hosts.length > 0
+        ? true
+        : false
+      : false;
     return (
       <RenderComponentScroll>
         <Grid gutter="md" style={{ margin: '10px' }}>
           <GridItem span={6}>
             <Card style={{ height: '100%' }}>
+              {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? this.renderCardHead() : ''}
               <CardBody>
                 <DataList aria-label="baseline and candidate">
-                  <DataListItem aria-labelledby="target">
-                    <DataListItemRow>
-                      <DataListItemCells dataListCells={this.serviceInfo()} />
-                      <DataListItemCells dataListCells={this.serviceLinkCell(targetNamespace, targetService)} />
-                    </DataListItemRow>
-                  </DataListItem>
+                  {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? (
+                    <DataListItem aria-labelledby="target">
+                      <DataListItemRow>
+                        <DataListItemCells dataListCells={this.serviceInfo()} />
+                        <DataListItemCells dataListCells={this.serviceLinkCell(targetNamespace, targetService)} />
+                      </DataListItemRow>
+                    </DataListItem>
+                  ) : (
+                    ''
+                  )}
 
                   <DataListItem aria-labelledby="Baseline">
                     <DataListItemRow>
                       <DataListItemCells
                         dataListCells={this.baselineInfo(
                           'Baseline',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline : ''
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline : '',
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
                         )}
                       />
                       <DataListItemCells
@@ -152,7 +227,8 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                       <DataListItemCells
                         dataListCells={this.baselineInfo(
                           'Candidate',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.candidate : ''
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.candidate : '',
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
                         )}
                       />
                       <DataListItemCells
@@ -165,6 +241,22 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                       />
                     </DataListItemRow>
                   </DataListItem>
+                  {hasHosts ? (
+                    <DataListItem aria-labelledby="Gateway">
+                      <DataListItemRow>
+                        <DataListItemCells
+                          dataListCells={this.gatewayInfo(
+                            'G',
+                            this.props.experimentDetails ? this.props.experimentDetails.hosts[0].name : '',
+                            this.props.namespace,
+                            this.props.experimentDetails ? this.props.experimentDetails.hosts[0].gateway : ''
+                          )}
+                        />
+                      </DataListItemRow>
+                    </DataListItem>
+                  ) : (
+                    <></>
+                  )}
                 </DataList>
               </CardBody>
             </Card>
@@ -239,6 +331,29 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
       </RenderComponentScroll>
     );
   }
+
+  private onGraphActionsToggle = (isOpen: boolean) => {
+    this.setState({
+      isKebabOpen: isOpen
+    });
+  };
+
+  private showFullGraph = () => {
+    let graphType: GraphType = GraphType.WORKLOAD;
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${this.props.namespace}&unusedNodes=false&edges=requestsPercentage&`;
+    history.push(graphUrl);
+  };
+
+  private showFullMetric = () => {
+    const graphUrl = `/namespaces/${this.props.namespace}/services/${this.props.target}?tab=metrics&bylbl=destination_version`;
+
+    if (this.props.experimentDetails !== undefined) {
+      const params = `=${this.props.experimentDetails.experimentItem.baselineVersion},${this.props.experimentDetails.experimentItem.candidateVersion}`;
+      history.push(graphUrl + encodeURIComponent(params));
+    } else {
+      history.push(graphUrl);
+    }
+  };
 }
 
 export default ExperimentInfoDescription;
