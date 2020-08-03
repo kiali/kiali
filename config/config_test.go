@@ -3,13 +3,10 @@ package config
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/kiali/kiali/config/security"
 )
 
 func TestEnvVarOverrides(t *testing.T) {
@@ -75,12 +72,6 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	conf.ExternalServices.Tracing.Auth.Token = "my-token"
 	conf.LoginToken.SigningKey = "my-signkey"
 	conf.LoginToken.ExpirationSeconds = 12345
-	conf.Server = Server{
-		Credentials: security.Credentials{
-			Username:   "my-username",
-			Passphrase: "my-password",
-		},
-	}
 
 	printed := fmt.Sprintf("%v", conf)
 
@@ -95,7 +86,6 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
 	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
-	assert.Equal(t, "my-password", conf.Server.Credentials.Passphrase)
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
@@ -220,59 +210,6 @@ func TestError(t *testing.T) {
 	_, err = LoadFromFile("bogus-file-name")
 	if err == nil {
 		t.Errorf("Load should have failed")
-	}
-}
-
-func TestMarshalUnmarshalCredentials(t *testing.T) {
-	testConf := Config{
-		Server: Server{
-			Credentials: security.Credentials{
-				Username:   "foo",
-				Passphrase: "bar",
-			},
-		},
-	}
-
-	yamlString, err := Marshal(&testConf)
-	if err != nil {
-		t.Errorf("Failed to marshal: %v", err)
-	}
-	if !strings.Contains(yamlString, "username: foo\n") {
-		t.Errorf("Failed to marshal credentials - [%v]", yamlString)
-	}
-	conf, err := Unmarshal(yamlString)
-	if err != nil {
-		t.Errorf("Failed to unmarshal: %v", err)
-	}
-	if conf.Server.Credentials.Username != "foo" {
-		t.Errorf("Failed to unmarshal username credentials:\n%v", conf)
-	}
-	if conf.Server.Credentials.Passphrase != "bar" {
-		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
-	}
-
-	testConf = Config{
-		Server: Server{
-			Credentials: security.Credentials{
-				Username:   "",
-				Passphrase: "",
-			},
-		},
-	}
-
-	yamlString, err = Marshal(&testConf)
-	if err != nil {
-		t.Errorf("Failed to marshal: %v", err)
-	}
-	conf, err = Unmarshal(yamlString)
-	if err != nil {
-		t.Errorf("Failed to unmarshal: %v", err)
-	}
-	if conf.Server.Credentials.Username != "" {
-		t.Errorf("Failed to unmarshal empty username credentials:\n%v", conf)
-	}
-	if conf.Server.Credentials.Passphrase != "" {
-		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
 	}
 }
 

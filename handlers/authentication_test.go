@@ -28,10 +28,8 @@ func (t dummyHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
 func TestStrategyLoginAuthentication(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -59,7 +57,6 @@ func TestStrategyLoginAuthentication(t *testing.T) {
 	cookie := response.Cookies()[0]
 	assert.Equal(t, config.TokenCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
-	// assert.Equal(t,, http.SameSiteStrictMode, cookie.SameSite) ** Commented out because unsupported in go < 1.11
 
 	newToken, _ := config.GenerateToken("foo")
 	assert.Equal(t, cookie.Value, newToken.Token)
@@ -72,10 +69,8 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 	// Set some config values to a known state
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	// Mock the clock
@@ -120,7 +115,7 @@ func TestStrategyLoginInvalidSignature(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   "foo", // We use the "foo" user which should be valid
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyLoginIssuer,
+			Issuer:    config.AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -172,10 +167,8 @@ func TestStrategyLoginValidatesExpiration(t *testing.T) {
 	// Set some config values to a known state
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	// Mock the clock
@@ -191,7 +184,7 @@ func TestStrategyLoginValidatesExpiration(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   "foo",
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyLoginIssuer,
+			Issuer:    config.AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -227,10 +220,8 @@ func TestStrategyLoginValidatesUserChange(t *testing.T) {
 	// Set some config values to a known state
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	// Mock the clock
@@ -246,7 +237,7 @@ func TestStrategyLoginValidatesUserChange(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   "dummy", // wrong user
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyLoginIssuer,
+			Issuer:    config.AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -274,74 +265,14 @@ func TestStrategyLoginValidatesUserChange(t *testing.T) {
 	assert.Equal(t, fmt.Sprintln(http.StatusText(http.StatusUnauthorized)), string(body))
 }
 
-// TestStrategyLoginValidatesPasswordChange checks that the Kiali back-end is verifying that
-// session of currently logged in users are terminated if a password change is made
-// to the Kiali configuration
-func TestStrategyLoginValidatesPasswordChange(t *testing.T) {
-	// Set some config values to a known state
-	rand.Seed(time.Now().UnixNano())
-	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
-	config.Set(cfg)
-
-	// Mock the clock
-	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	util.Clock = util.ClockMock{Time: clockTime}
-	jwt.TimeFunc = func() time.Time {
-		return util.Clock.Now()
-	}
-
-	// First go through authentication to get a kiali cookie.
-	authRequest := httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
-	authRequest.SetBasicAuth("foo", "bar")
-
-	authResponseRecorder := httptest.NewRecorder()
-	Authenticate(authResponseRecorder, authRequest)
-	authResponse := authResponseRecorder.Result()
-
-	assert.Equal(t, http.StatusOK, authResponse.StatusCode)
-	assert.Len(t, authResponse.Cookies(), 1)
-
-	// OK, authentication succeeded and we have a token.
-	// Let's change the passphrase for logging into Kiali.
-	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "newValue"
-	config.Set(cfg)
-
-	// Make a request using the Kiali token generated with the old credentials.
-	request := httptest.NewRequest("GET", "http://kiali/api/foo", nil)
-	request.AddCookie(authResponse.Cookies()[0])
-
-	// Setup authentication handler
-	authenticationHandler, _ := NewAuthenticationHandler()
-	handler := authenticationHandler.Handle(new(dummyHandler))
-
-	// Run the request
-	responseRecorder := httptest.NewRecorder()
-	handler.ServeHTTP(responseRecorder, request)
-	response := responseRecorder.Result()
-
-	// Server should return an unauthorized authResponse code.
-	// Body should be the text explanation of the HTTP error
-	body, _ := ioutil.ReadAll(response.Body)
-	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
-	assert.Equal(t, fmt.Sprintln(http.StatusText(http.StatusUnauthorized)), string(body))
-}
-
 // TestStrategyLoginMissingUser checks that the Kiali back-end is ensuring
 // that the username field is populated in the Kiali auth token.
 func TestStrategyLoginMissingUser(t *testing.T) {
 	// Set some config values to a known state
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	// Mock the clock
@@ -357,7 +288,7 @@ func TestStrategyLoginMissingUser(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			// Subject:   "foo",
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyLoginIssuer,
+			Issuer:    config.AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -391,10 +322,8 @@ func TestStrategyLoginMissingExpiration(t *testing.T) {
 	// Set some config values to a known state
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	// Let's create a valid token that does not expire.
@@ -402,7 +331,7 @@ func TestStrategyLoginMissingExpiration(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			Subject: "foo",
 			// ExpiresAt: timeExpire.Unix(),
-			Issuer: config.AuthStrategyLoginIssuer,
+			Issuer: config.AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -434,9 +363,7 @@ func TestStrategyLoginMissingExpiration(t *testing.T) {
 // rejected if user provides wrong credentials
 func TestStrategyLoginFails(t *testing.T) {
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	config.Set(cfg)
 
 	// Check wrong user
@@ -471,10 +398,8 @@ func TestStrategyLoginExtend(t *testing.T) {
 
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -501,7 +426,6 @@ func TestStrategyLoginExtend(t *testing.T) {
 	cookie := response.Cookies()[0]
 	assert.Equal(t, config.TokenCookieName, cookie.Name)
 	assert.True(t, cookie.HttpOnly)
-	// assert.Equal(t,, http.SameSiteStrictMode, cookie.SameSite) ** Commented out because unsupported in go < 1.11
 
 	expectedToken, _ := config.GenerateToken("foo")
 	assert.NotEmpty(t, cookie.Value)
@@ -519,18 +443,20 @@ func TestStrategyLoginRejectStaleExtension(t *testing.T) {
 
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Auth.Strategy = config.AuthStrategyToken
 	cfg.LoginToken.SigningKey = util.RandomString(10)
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
 
-	// If token has an old user, session shouldn't be extended
+	// If signing key has changed, session shouldn't be extended
 	request := httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
-	token, _ := config.GenerateToken("joe")
+	token, _ := config.GenerateToken("foo")
+	cfg.LoginToken.SigningKey = "myNewKey"
+	config.Set(cfg)
+
+	request = httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
 	oldCookie := http.Cookie{
 		Name:  config.TokenCookieName,
 		Value: token.Token,
@@ -540,44 +466,6 @@ func TestStrategyLoginRejectStaleExtension(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 	Authenticate(responseRecorder, request)
 	response := responseRecorder.Result()
-
-	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
-	assert.Len(t, response.Cookies(), 0)
-
-	// If token has an old password, session shouldn't be extended
-	token, _ = config.GenerateToken("foo")
-	cfg.Server.Credentials.Passphrase = "dummy"
-	config.Set(cfg)
-
-	request = httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
-	oldCookie = http.Cookie{
-		Name:  config.TokenCookieName,
-		Value: token.Token,
-	}
-	request.AddCookie(&oldCookie)
-
-	responseRecorder = httptest.NewRecorder()
-	Authenticate(responseRecorder, request)
-	response = responseRecorder.Result()
-
-	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
-	assert.Len(t, response.Cookies(), 0)
-
-	// If signing key has changed, session shouldn't be extended
-	token, _ = config.GenerateToken("foo")
-	cfg.LoginToken.SigningKey = "myNewKey"
-	config.Set(cfg)
-
-	request = httptest.NewRequest("GET", "http://kiali/api/authenticate", nil)
-	oldCookie = http.Cookie{
-		Name:  config.TokenCookieName,
-		Value: token.Token,
-	}
-	request.AddCookie(&oldCookie)
-
-	responseRecorder = httptest.NewRecorder()
-	Authenticate(responseRecorder, request)
-	response = responseRecorder.Result()
 
 	assert.Equal(t, http.StatusUnauthorized, response.StatusCode)
 	assert.Len(t, response.Cookies(), 0)
@@ -622,53 +510,4 @@ func TestLogout(t *testing.T) {
 
 	assert.Equal(t, "", cookie.Value)
 	assert.True(t, cookie.Expires.Before(clockTime))
-}
-
-// TestMissingSecretFlagPresent checks that the AuthenticationInfo handler
-// sets the secretMissing flag if secret is not present when AuthStrategy is "login".
-func TestMissingSecretFlagPresent(t *testing.T) {
-	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = ""
-	cfg.Server.Credentials.Passphrase = ""
-	config.Set(cfg)
-
-	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)
-
-	responseRecorder := httptest.NewRecorder()
-	AuthenticationInfo(responseRecorder, request)
-	response := responseRecorder.Result()
-
-	assert.Equal(t, http.StatusOK, response.StatusCode)
-
-	var reply map[string]interface{}
-	body, _ := ioutil.ReadAll(response.Body)
-	_ = json.Unmarshal(body, &reply)
-
-	assert.Contains(t, reply, "secretMissing")
-	assert.Equal(t, true, reply["secretMissing"])
-}
-
-// TestMissingSecretFlagAbsent checks that the AuthenticationInfo handler
-// won't set the secretMissing flag if secret is present.
-func TestMissingSecretFlagAbsent(t *testing.T) {
-	cfg := config.NewConfig()
-	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
-	config.Set(cfg)
-
-	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)
-
-	responseRecorder := httptest.NewRecorder()
-	AuthenticationInfo(responseRecorder, request)
-	response := responseRecorder.Result()
-
-	assert.Equal(t, http.StatusOK, response.StatusCode)
-
-	var reply map[string]interface{}
-	body, _ := ioutil.ReadAll(response.Body)
-	_ = json.Unmarshal(body, &reply)
-
-	assert.NotContains(t, reply, "secretMissing")
 }

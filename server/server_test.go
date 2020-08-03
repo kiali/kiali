@@ -24,11 +24,6 @@ import (
 )
 
 const (
-	authorizedUsername = "theUser"
-	authorizedPassword = "thePassword"
-)
-
-const (
 	testHostname = "127.0.0.1"
 )
 
@@ -52,8 +47,6 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = "unused"
-	conf.Server.Credentials.Passphrase = "unused"
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -111,8 +104,6 @@ func TestAnonymousMode(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = "unused"
-	conf.Server.Credentials.Passphrase = "unused"
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -195,11 +186,9 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = authorizedUsername
-	conf.Server.Credentials.Passphrase = authorizedPassword
 	conf.Server.MetricsEnabled = true
 	conf.Server.MetricsPort = testMetricsPort
-	conf.Auth.Strategy = "login"
+	conf.Auth.Strategy = "anonymous"
 	util.Clock = util.RealClock{}
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
@@ -232,62 +221,30 @@ func TestSecureComm(t *testing.T) {
 		t.Fatalf("Failed to create http client")
 	}
 
-	// the good basic credentials
-	basicCredentials := &security.Credentials{
-		Username:   authorizedUsername,
-		Passphrase: authorizedPassword,
-	}
-
-	// bad basic credentials
-	badBasicCredentials := &security.Credentials{
-		Username:   "invalid username",
-		Passphrase: "invalid password",
-	}
-
 	// no credentials
 	noCredentials := &security.Credentials{}
 
 	// wait for our test http server to come up
 	checkHTTPReady(httpClient, serverURL+"/status")
 
-	// TEST WITH AN AUTHORIZED USER
+	// TEST WITH NO USER
 
-	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, basicCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth API URL: %v", err)
+	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, noCredentials); err != nil {
+		t.Fatalf("Failed: Basic Auth API URL shouldn't have failed with no credentials: %v", err)
 	}
 
-	if _, err = getRequestResults(t, httpClient, apiURL, basicCredentials); err != nil {
-		t.Fatalf("Failed: Basic API URL: %v", err)
+	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err != nil {
+		t.Fatalf("Failed: Basic API URL shouldn't have failed with no credentials: %v", err)
 	}
 
 	// this makes sure the Prometheus metrics endpoint can start (we made an API call above; there should be metrics)
-	if s, err := getRequestResults(t, httpClient, metricsURL, basicCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth Metrics URL: %v", err)
+	if s, err := getRequestResults(t, httpClient, metricsURL, noCredentials); err != nil {
+		t.Fatalf("Failed: Metrics URL: %v", err)
 	} else {
 		// makes sure we did get the metrics endpoint
 		if !strings.Contains(s, "HELP go_") || !strings.Contains(s, "TYPE go_") {
 			t.Fatalf("Failed: Metrics URL returned bad results - there are no kial metrics:\n%s", s)
 		}
-	}
-
-	// TEST WITH AN INVALID USER
-
-	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, badBasicCredentials); err == nil {
-		t.Fatalf("Failed: Basic Auth API URL should have failed")
-	}
-
-	if _, err = getRequestResults(t, httpClient, apiURL, badBasicCredentials); err != nil {
-		t.Fatalf("Failed: Basic API URL shouldn't have failed: %v", err)
-	}
-
-	// TEST WITH NO USER
-
-	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, noCredentials); err == nil {
-		t.Fatalf("Failed: Basic Auth API URL should have failed with no credentials")
-	}
-
-	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err != nil {
-		t.Fatalf("Failed: Basic API URL shouldn't have failed with no credentials: %v", err)
 	}
 
 	// Make sure the server rejects anything trying to use TLS 1.1 or under
@@ -306,7 +263,7 @@ func TestSecureComm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create http client with TLS 1.1")
 	}
-	if _, err = getRequestResults(t, httpClientTLS11, apiURLWithAuthentication, basicCredentials); err == nil {
+	if _, err = getRequestResults(t, httpClientTLS11, apiURL, noCredentials); err == nil {
 		t.Fatalf("Failed: Should not have been able to use TLS 1.1")
 	}
 

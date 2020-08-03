@@ -43,14 +43,6 @@ func GetSigningKey() string {
 		panic(err)
 	}
 
-	if cfg.Auth.Strategy == AuthStrategyLogin {
-		// If we are using "login" strategy, let's combine the login passphrase
-		// and the token signing key to form a new signing key. This way, if
-		// either the login passphrase or the signing key is changed, active
-		// sessions will be invalidated.
-		signKey = fmt.Sprintf("%s+%s", signKey, cfg.Server.Credentials.Passphrase)
-	}
-
 	return signKey
 }
 
@@ -71,7 +63,7 @@ func GenerateToken(username string) (TokenGenerated, error) {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   username,
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    AuthStrategyLoginIssuer,
+			Issuer:    AuthStrategyTokenIssuer,
 		},
 	}
 
@@ -109,31 +101,22 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		cfg := Get()
 		claims := token.Claims.(*IanaClaims)
 
-		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer && claims.Issuer != AuthStrategyTokenIssuer && claims.Issuer != AuthStrategyOpenIdIssuer {
+		if claims.Issuer != AuthStrategyOpenshiftIssuer && claims.Issuer != AuthStrategyTokenIssuer && claims.Issuer != AuthStrategyOpenIdIssuer {
 			return nil, errors.New("token has invalid issuer (auth strategy)")
 		}
-		if claims.Issuer == AuthStrategyLoginIssuer && cfg.Auth.Strategy != AuthStrategyLogin {
-			return nil, errors.New("token is invalid because of authentication strategy mismatch")
-		}
 		if claims.Issuer == AuthStrategyOpenshiftIssuer && cfg.Auth.Strategy != AuthStrategyOpenshift {
-			return nil, errors.New("token is invalid because of authentication strategy mismatch")
+			return nil, errors.New("token is invalid because of openshift authentication strategy mismatch")
 		}
 		if claims.Issuer == AuthStrategyTokenIssuer && cfg.Auth.Strategy != AuthStrategyToken {
-			return nil, errors.New("token is invalid because of authentication strategy mismatch")
+			return nil, errors.New("token is invalid because of token authentication strategy mismatch")
 		}
 		if claims.Issuer == AuthStrategyOpenIdIssuer && cfg.Auth.Strategy != AuthStrategyOpenId {
-			return nil, errors.New("token is invalid because of authentication strategy mismatch")
+			return nil, errors.New("token is invalid because of openid authentication strategy mismatch")
 		}
 
 		// A token with no expiration claim is invalid for Kiali
 		if claims.ExpiresAt == 0 {
 			return nil, errors.New("token is invalid because expiration claim is missing")
-		}
-
-		// If auth strategy is login and the subject claim does not match the username in the Kiali secret,
-		// the token is invalid.
-		if cfg.Auth.Strategy == AuthStrategyLogin && claims.Subject != cfg.Server.Credentials.Username {
-			return nil, errors.New("username has changed")
 		}
 
 		return token.Claims.(*IanaClaims), nil

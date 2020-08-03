@@ -74,8 +74,6 @@ github.com/json-iterator/go v1.1.6 h1:MrUvLMLTMxbqFJ9kzlvat/rYZqZnW3u4wkLzWTaFwK
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/json-iterator/go v1.1.8 h1:QiWkFLKq0T7mpzwOTu6BzNDbfTE8OLrYhVKYMLF46Ok=
 github.com/json-iterator/go v1.1.8/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
-github.com/jtblin/go-ldap-client v0.0.0-20161205001958-ad9f2ea47a83 h1:gJyptJO7dSNI9Fw/x4438AUhgHnCMqml/aQwqO2xb7M=
-github.com/jtblin/go-ldap-client v0.0.0-20161205001958-ad9f2ea47a83/go.mod h1:+0BcLY5d54TVv6irFzHoiFvwAHR6T0g9B+by/UaS9T0=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
 github.com/kiali/k-charted v0.6.0 h1:0q3Cwkw40LN0N/3vvX1HQMVWvLTIcH+0QxogTipZVxs=
 github.com/kiali/k-charted v0.6.0/go.mod h1:EHpndpTT3uB6Q8lbyDf+Yiv/L7nIiV5XIVsirImH9Eo=
@@ -203,8 +201,6 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
 gopkg.in/inf.v0 v0.9.1 h1:73M5CoZyi3ZLMOyDlQh031Cx6N9NDJ2Vvfl76EDAgDc=
 gopkg.in/inf.v0 v0.9.1/go.mod h1:cWUDdTG/fYaXco+Dcufb5Vnc6Gp2YChqWtbxRZE0mXw=
-gopkg.in/ldap.v2 v2.5.1-0.20190417171812-9f0d712775a0 h1:A8s/Pq/RudzfxfG6nENBh8apvzqvUYBPssQgnh7JyTs=
-gopkg.in/ldap.v2 v2.5.1-0.20190417171812-9f0d712775a0/go.mod h1:oI0cpe/D7HRtBQl8aTg+ZmzFUAvu4lsv3eLXMLGFxWk=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

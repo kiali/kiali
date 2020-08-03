@@ -17,15 +17,13 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/ldap"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
 )
 
 const (
-	missingSecretStatusCode = 520
-	openIdNonceCookieName   = config.TokenCookieName + "-openid-nonce"
+	openIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
 )
 
 type AuthenticationHandler struct {
@@ -72,21 +70,6 @@ type TokenResponse struct {
 	ExpiresOn string `json:"expiresOn"`
 }
 
-func checkKialiCredentials(r *http.Request) string {
-	conf := config.Get()
-
-	if conf.Server.Credentials.Username == "" || conf.Server.Credentials.Passphrase == "" {
-		return ""
-	}
-
-	u, p, ok := r.BasicAuth()
-	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Passphrase == p {
-		return u
-	}
-
-	return ""
-}
-
 func getTokenStringFromRequest(r *http.Request) string {
 	tokenString := "" // Default to no token.
 
@@ -100,53 +83,6 @@ func getTokenStringFromRequest(r *http.Request) string {
 	}
 
 	return tokenString
-}
-
-func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	// Check if user is already logged in
-	oldToken := getTokenStringFromRequest(r)
-	user, err := config.ValidateToken(oldToken)
-	if err != nil {
-		log.Debugf("(Re-)authentication was asked. Validation of old token failed with: %v", err)
-	}
-
-	// If user is already logged in, skip credential
-	// validation and just send a new JWT to extend
-	// the session of the user.
-	if len(user) == 0 {
-		user = checkKialiCredentials(r)
-
-		if len(user) == 0 {
-			conf := config.Get()
-			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
-				RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
-				return false
-			} else {
-				RespondWithCode(w, http.StatusUnauthorized)
-				return false
-			}
-		}
-	}
-
-	token, err := config.GenerateToken(user)
-
-	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
-		return false
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     config.TokenCookieName,
-		Value:    token.Token,
-		Expires:  token.ExpiresOn,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	}
-	http.SetCookie(w, &tokenCookie)
-
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: token.Token, ExpiresOn: token.ExpiresOn.Format(time.RFC1123Z), Username: user})
-	return true
 }
 
 func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool {
@@ -462,81 +398,6 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 	}
 }
 
-// performLDAPAuthentication is to authenticate user using LDAP
-func performLDAPAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	//Handle request correlation ID
-	conf := config.Get()
-	var token ldap.Token
-	var username string
-	var user ldap.User
-	var tknErr error
-	oldToken := getTokenStringFromRequest(r)
-	if len(oldToken) == 0 {
-		var err error
-		user, err = ldap.ValidateUser(r, conf.Auth)
-		if err != nil {
-			RespondWithCode(w, http.StatusUnauthorized)
-			return false
-		}
-		username = user.Username
-	} else {
-		userInfo, err := ldap.ValidateToken(oldToken)
-		if err != nil {
-			log.Warning("Token error: ", err)
-			return false
-		}
-		user = *userInfo.Status.User
-		username = user.Username
-	}
-
-	token, tknErr = ldap.GenerateToken(user, conf.Auth)
-	if tknErr != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, tknErr)
-		return false
-	}
-
-	tokenCookie := http.Cookie{
-		Name:     config.TokenCookieName,
-		Value:    token.JWT,
-		Expires:  token.Expiry,
-		HttpOnly: true,
-	}
-	http.SetCookie(w, &tokenCookie)
-
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: token.JWT, ExpiresOn: token.Expiry.Format(time.RFC1123Z), Username: username})
-	return true
-}
-
-func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
-	if token := getTokenStringFromRequest(r); len(token) > 0 {
-		user, err := config.ValidateToken(token)
-
-		if err != nil {
-			log.Warning("Token error: ", err)
-			return http.StatusUnauthorized
-		}
-
-		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", user)
-	} else {
-		user := checkKialiCredentials(r)
-		if len(user) == 0 {
-			conf := config.Get()
-			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
-				return missingSecretStatusCode // our specific error code that indicates to the client that we are missing the secret
-			} else {
-				return http.StatusUnauthorized
-			}
-		}
-
-		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", user)
-	}
-
-	return http.StatusOK
-}
-
 func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
@@ -608,22 +469,6 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	return http.StatusUnauthorized, ""
 }
 
-// checkLDAPSession is to check validity of the LDAP session
-func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
-	// Validate token
-	if token := getTokenStringFromRequest(r); len(token) > 0 {
-		user, err := ldap.ValidateToken(token)
-		if err != nil {
-			log.Warning("Token error: ", err)
-			return http.StatusUnauthorized, ""
-		}
-		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", user.Status.User.Username)
-		return http.StatusOK, token
-	}
-	return http.StatusUnauthorized, ""
-}
-
 func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
@@ -685,16 +530,10 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			statusCode, token = checkOpenshiftSession(w, r)
 		case config.AuthStrategyOpenId:
 			statusCode, token = checkOpenIdSession(w, r)
-		case config.AuthStrategyLogin:
-			statusCode = checkKialiSession(w, r)
-			token = aHandler.saToken
 		case config.AuthStrategyToken:
 			statusCode, token = checkTokenSession(w, r)
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
-			token = aHandler.saToken
-		case config.AuthStrategyLDAP:
-			statusCode, _ = checkLDAPSession(w, r)
 			token = aHandler.saToken
 		}
 
@@ -703,12 +542,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			context := context.WithValue(r.Context(), "token", token)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
-			if conf.Auth.Strategy == config.AuthStrategyLogin {
-				writeAuthenticateHeader(w, r)
-			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		case missingSecretStatusCode:
-			http.Error(w, "Credentials are missing. Create a secret. Please refer to the documentation for more details", statusCode)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
 			log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
@@ -730,19 +564,10 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		performOpenshiftAuthentication(w, r)
 	case config.AuthStrategyOpenId:
 		performOpenIdAuthentication(w, r)
-	case config.AuthStrategyLogin:
-		if !performKialiAuthentication(w, r) {
-			writeAuthenticateHeader(w, r)
-		}
 	case config.AuthStrategyToken:
 		performTokenAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
-	case config.AuthStrategyLDAP:
-		// Code to do LDAP Authentication
-		if !performLDAPAuthentication(w, r) {
-			writeAuthenticateHeader(w, r)
-		}
 	default:
 		message := fmt.Sprintf("Cannot authenticate users, because strategy <%s> is unknown.", conf.Auth.Strategy)
 		log.Errorf(message)
@@ -778,10 +603,6 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		// Do the redirection through an intermediary own endpoint
 		response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/openid_redirect",
 			httputil.GuessKialiURL(r))
-	case config.AuthStrategyLogin:
-		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-			response.SecretMissing = true
-		}
 	}
 
 	token := getTokenStringFromRequest(r)
