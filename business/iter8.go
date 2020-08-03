@@ -2,9 +2,9 @@ package business
 
 import (
 	"encoding/json"
-	"fmt"
-	"sort"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 
 	"gopkg.in/yaml.v2"
@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/status"
 )
 
 type Iter8Service struct {
@@ -24,6 +25,9 @@ type Iter8Service struct {
 
 func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 	var err error
+	var ps []core_v1.Pod
+	var controllerImgVersion string
+	var analyticsImgVersion string
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Info")
 	defer promtimer.ObserveNow(&err)
 
@@ -31,12 +35,58 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 
 	// It will be considered enabled if the extension is present in the Kiali configuration and the CRD is enabled on the cluster
 	if conf.Extensions.Iter8.Enabled && in.k8s.IsIter8Api() {
+		if kialiCache != nil && kialiCache.CheckNamespace(conf.Extensions.Iter8.Namespace) {
+			ps, err = kialiCache.GetPods(conf.Extensions.Iter8.Namespace, "")
+		} else {
+			ps, err = in.k8s.GetPods(conf.Extensions.Iter8.Namespace, "")
+		}
+		if err == nil {
+			pods := models.Pods{}
+			pods.Parse(ps)
+			reg, _ := regexp.Compile("[a-zA-Z]+")
+			for _, pod := range pods {
+				for _, ct := range pod.Containers {
+					imgInfo := strings.Split(ct.Image, ":")
+					if strings.Contains(imgInfo[0], "iter8-controller") {
+						controllerImgVersion = reg.ReplaceAllString(imgInfo[1], "")
+					} else if strings.Contains(imgInfo[0], "iter8-analytics") {
+						analyticsImgVersion = reg.ReplaceAllString(imgInfo[1], "")
+					}
+				}
+			}
+		} else {
+			// Configuration error, cannot find iter8 controller and analytics in the namespace specified
+			return models.Iter8Info{
+				Enabled:                false,
+				SupportedVersion:       false,
+				ControllerImageVersion: controllerImgVersion,
+				AnalyticsImageVersion:  analyticsImgVersion,
+			}
+		}
+
+		supportedVersion := true
+		if controllerImgVersion != "" && analyticsImgVersion != "" {
+			if !status.IsIter8Supported(analyticsImgVersion) {
+				supportedVersion = false
+			}
+
+			if !status.IsIter8Supported(analyticsImgVersion) {
+				supportedVersion = false
+			}
+		}
+
 		return models.Iter8Info{
-			Enabled: true,
+			Enabled:                true,
+			SupportedVersion:       supportedVersion,
+			ControllerImageVersion: controllerImgVersion,
+			AnalyticsImageVersion:  analyticsImgVersion,
 		}
 	}
 	return models.Iter8Info{
-		Enabled: false,
+		Enabled:                false,
+		SupportedVersion:       false,
+		ControllerImageVersion: controllerImgVersion,
+		AnalyticsImageVersion:  analyticsImgVersion,
 	}
 }
 
@@ -133,15 +183,8 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (mo
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
-	// get RoutingReference
-	newExperimentSpec := models.Iter8ExperimentSpec{}
-	err = json.Unmarshal(body, &newExperimentSpec)
-	if err != nil {
-		return iter8ExperimentDetail, err
-	}
-	rr, _ := in.GetIter8RoutingReferences(namespace, newExperimentSpec.Service)
 
-	jsonByte, err := in.ParseJsonForCreate(body, rr)
+	jsonByte, err := in.ParseJsonForCreate(body)
 
 	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, jsonByte)
 	if err != nil {
@@ -167,12 +210,10 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	newExperimentSpec.Parse(experiment)
 	newExperimentSpec.Action = action.Action
-	// get RoutingReference
-	rr, _ := in.GetIter8RoutingReferences(newExperimentSpec.Namespace, newExperimentSpec.Service)
 
 	var newObject []byte
 	newObject, err = json.Marshal(newExperimentSpec)
-	jsonByte, err := in.ParseJsonForCreate(newObject, rr)
+	jsonByte, err := in.ParseJsonForCreate(newObject)
 	if err != nil {
 		return iter8ExperimentDetail, err
 	}
@@ -186,7 +227,7 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	return iter8ExperimentDetail, nil
 }
 
-func (in *Iter8Service) ParseJsonForCreate(body []byte, rr core_v1.ObjectReference) (string, error) {
+func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	err := json.Unmarshal(body, &newExperimentSpec)
@@ -209,16 +250,29 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte, rr core_v1.ObjectReferen
 	object.Spec.TargetService.Name = newExperimentSpec.Service
 	object.Spec.TargetService.Baseline = newExperimentSpec.Baseline
 	object.Spec.TargetService.Candidate = newExperimentSpec.Candidate
+	if newExperimentSpec.ExperimentKind == "" {
+		object.Spec.TargetService.Kind = "Deployment"
+	} else {
+		object.Spec.TargetService.Kind = newExperimentSpec.ExperimentKind
+	}
+
 	object.Spec.TrafficControl.Strategy = newExperimentSpec.TrafficControl.Algorithm
 	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
 	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
 	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
 	object.Spec.TrafficControl.Interval = newExperimentSpec.TrafficControl.Interval
 	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
-	if rr.Name != "" {
-		object.Spec.RoutingReference = &rr
-	}
 
+	for _, host := range newExperimentSpec.Hosts {
+		object.Spec.TargetService.Hosts = append(object.Spec.TargetService.Hosts,
+			struct {
+				Name    string `json:"name"`
+				Gateway string `json:"gateway"`
+			}{
+				Name:    host.Name,
+				Gateway: host.Gateway,
+			})
+	}
 	for _, criteria := range newExperimentSpec.Criterias {
 		min_max := struct {
 			Min float64 `json:"min,omitempty"`
@@ -244,6 +298,34 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte, rr core_v1.ObjectReferen
 				Tolerance:     criteria.Tolerance,
 				SampleSize:    criteria.SampleSize,
 				StopOnFailure: criteria.StopOnFailure,
+				MinMax:        min_max,
+			})
+	}
+	if len(object.Spec.Analysis.SuccessCriteria) == 0 {
+		min_max := struct {
+			Min float64 `json:"min,omitempty"`
+			Max float64 `json:"max,omitempty"`
+		}{
+			Min: 0.1,
+			Max: 1.0,
+		}
+		object.Spec.Analysis.SuccessCriteria = append(object.Spec.Analysis.SuccessCriteria,
+			struct {
+				MetricName    string  `json:"metricName,omitempty"`
+				ToleranceType string  `json:"toleranceType,omitempty"`
+				Tolerance     float64 `json:"tolerance,omitempty"`
+				SampleSize    int     `json:"sampleSize,omitempty"`
+				MinMax        struct {
+					Min float64 `json:"min,omitempty"`
+					Max float64 `json:"max,omitempty"`
+				} `json:"min_max,omitempty"`
+				StopOnFailure bool `json:"stopOnFailure,omitempty"`
+			}{
+				MetricName:    "iter8_latency",
+				ToleranceType: "threshold",
+				Tolerance:     200,
+				SampleSize:    5,
+				StopOnFailure: false,
 				MinMax:        min_max,
 			})
 	}
@@ -275,7 +357,8 @@ func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
 }
 
 func (in *Iter8Service) GetAnalyticPort() int {
-	configMap, err := in.k8s.GetConfigMap("iter8", "iter8-analytics")
+	conf := config.Get()
+	configMap, err := in.k8s.GetConfigMap(conf.Extensions.Iter8.Namespace, "iter8-analytics")
 	if err != nil {
 		return 80
 	}
@@ -289,85 +372,4 @@ func (in *Iter8Service) GetAnalyticPort() int {
 		return 80
 	}
 	return analyticConfig.Port
-}
-
-func (in *Iter8Service) GetIter8RoutingReferences(namespace string, servicename string) (routingReference core_v1.ObjectReference, err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
-	defer promtimer.ObserveNow(&err)
-	istioCfg, err := in.businessLayer.IstioConfig.GetIstioConfigList(IstioConfigCriteria{
-		IncludeGateways:        true,
-		IncludeVirtualServices: true,
-		Namespace:              namespace,
-	})
-	rf := core_v1.ObjectReference{}
-	if err != nil {
-		return rf, err
-	}
-	gwNames := make([]string, 0)
-
-	for _, gw := range istioCfg.Gateways {
-		gwNames = append(gwNames, gw.Metadata.Name)
-	}
-
-	for _, item := range istioCfg.VirtualServices.Items {
-		if item.IsValidHost(namespace, servicename) {
-			gws := item.Spec.Gateways
-			if gateways, ok := gws.([]interface{}); ok {
-				for _, g := range gateways {
-					if gate, ok := g.(string); ok {
-						if contains(gwNames, gate) {
-
-							rf.APIVersion = item.APIVersion
-							rf.Name = item.Metadata.Name
-							rf.Kind = item.Kind
-
-						}
-					}
-				}
-			}
-			if rf.Name != "" {
-				proto := item.Spec.Http
-				if aHttp, ok := proto.([]interface{}); ok {
-					for _, httpRoute := range aHttp {
-						if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
-							if route, ok := mHttpRoute["route"]; ok {
-								if aDestinationWeight, ok := route.([]interface{}); ok {
-									for _, destination := range aDestinationWeight {
-										host := parseHost(destination)
-										if host == "" {
-											continue
-										} else if host == servicename {
-											return rf, nil
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return rf, fmt.Errorf("unable to locate routing references")
-}
-
-func contains(s []string, searchterm string) bool {
-	i := sort.SearchStrings(s, searchterm)
-	return i < len(s) && s[i] == searchterm
-}
-
-func parseHost(destination interface{}) string {
-	if mDestination, ok := destination.(map[string]interface{}); ok {
-		if destinationW, ok := mDestination["destination"]; ok {
-			if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
-				if host, ok := mDestinationW["host"]; ok {
-					if sHost, ok := host.(string); ok {
-						return sHost
-					}
-				}
-			}
-		}
-	}
-	return ""
 }

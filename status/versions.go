@@ -388,3 +388,8 @@ func AreCanonicalMetricsAvailable() bool { // AreCanonicalMetricsAvailable() boo
 	// AND if mixer is disabled.
 	return *istioSupportsCanonical && IsMixerDisabled()
 }
+
+// Check Iter8 Supported Version
+func IsIter8Supported(analyticsImgVersion string) bool {
+	return validateVersion(config.Iter8VersionSupported, analyticsImgVersion)
+}
