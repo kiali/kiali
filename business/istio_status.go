@@ -1,7 +1,10 @@
 package business
 
 import (
+	"sync"
+
 	apps_v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -41,80 +44,113 @@ const (
 	NotFound  string = "NotFound"
 )
 
-// List of workloads part of a Istio deployment and if whether it is mandatory or not.
-// It follows the default profile
-var components = map[string]map[string]bool{
-	"mixerless": {
-		"istio-egressgateway":  false,
-		"istio-ingressgateway": true,
-		"istiod":               true,
-		"prometheus":           true,
-	},
-	"mixer": {
-		"istio-citadel":          true,
-		"istio-egressgateway":    false,
-		"istio-galley":           true,
-		"istio-ingressgateway":   true,
-		"istio-pilot":            true,
-		"istio-policy":           true,
-		"istio-sidecar-injector": true,
-		"istio-telemetry":        true,
-		"prometheus":             true,
-	},
-}
-
-const GRAFANA_COMPONENT = "grafana"
-const TRACING_COMPONENT = "istio-tracing"
-
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
-	if !config.Get().ExternalServices.Istio.IstioStatusEnabled {
+	if !config.Get().ExternalServices.Istio.ComponentStatuses.Enabled {
 		return IstioComponentStatus{}, nil
 	}
 
-	// Fetching workloads from control plane namespace
-	ds, error := iss.k8s.GetDeployments(config.Get().IstioNamespace)
+	// Fetching workloads from component namespaces
+	ds, error := iss.getComponentNamespacesWorkloads()
 	if error != nil {
 		return IstioComponentStatus{}, error
 	}
 
-	arch := "mixerless"
-	if !iss.k8s.IsMixerDisabled() {
-		arch = "mixer"
-	}
-
-	return iss.getStatusOf(arch, ds)
+	return iss.getStatusOf(ds)
 }
 
-func addAddOnComponents(arch string) {
-	if config.Get().ExternalServices.Grafana.Enabled {
-		components[arch][GRAFANA_COMPONENT] = false
+func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Deployment, error) {
+	var wg sync.WaitGroup
+
+	nss := map[string]bool{}
+	deps := make([]apps_v1.Deployment, 0)
+
+	comNs := config.Get().IstioComponentNamespaces
+	// In case there isn't any namespace set up, check the control plane namespace
+	if comNs == nil || len(comNs) == 0 {
+		comNs = map[string]string{"istiod": config.Get().IstioNamespace}
 	}
 
-	if config.Get().ExternalServices.Tracing.Enabled {
-		components[arch][TRACING_COMPONENT] = false
+	depsChan := make(chan []apps_v1.Deployment, len(comNs))
+	errChan := make(chan error, len(comNs))
+
+	for _, n := range comNs {
+		if !nss[n] {
+			go func(n string, depsChan chan []apps_v1.Deployment, errChan chan error) {
+				defer wg.Done()
+				ds, err := iss.k8s.GetDeployments(n)
+				depsChan <- ds
+				errChan <- err
+			}(n, depsChan, errChan)
+
+			wg.Add(1)
+			nss[n] = true
+		}
 	}
+
+	wg.Wait()
+
+	close(depsChan)
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for dep := range depsChan {
+		if dep != nil {
+			deps = append(deps, dep...)
+		}
+	}
+
+	return deps, nil
 }
 
-func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment) (IstioComponentStatus, error) {
+func istioCoreComponents() map[string]bool {
+	components := map[string]bool{}
+	cs := config.Get().ExternalServices.Istio.ComponentStatuses
+	for _, c := range cs.Components {
+		components[c.AppLabel] = c.IsCore
+	}
+	return components
+}
+
+func addAddOnComponents(components map[string]bool) map[string]bool {
+	confExtSvcs := config.Get().ExternalServices
+
+	components[confExtSvcs.Prometheus.ComponentStatus.AppLabel] = confExtSvcs.Prometheus.ComponentStatus.IsCore
+
+	if confExtSvcs.Grafana.Enabled {
+		components[confExtSvcs.Grafana.ComponentStatus.AppLabel] = confExtSvcs.Grafana.ComponentStatus.IsCore
+	}
+
+	if confExtSvcs.Tracing.Enabled {
+		components[confExtSvcs.Tracing.ComponentStatus.AppLabel] = confExtSvcs.Tracing.ComponentStatus.IsCore
+	}
+
+	return components
+}
+
+func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioComponentStatus, error) {
+	statusComponents := istioCoreComponents()
+	statusComponents = addAddOnComponents(statusComponents)
 	isc := IstioComponentStatus{}
 	cf := map[string]bool{}
 
-	// Append grafana and tracing if they are enabled on kiali
-	addAddOnComponents(arch)
-
 	// Map workloads there by app name
 	for _, d := range ds {
-		if d.Name == "" {
+		appLabel := labels.Set(d.Spec.Template.Labels).Get(config.Get().IstioLabels.AppLabelName)
+		if appLabel == "" {
 			continue
 		}
 
-		isCore, found := components[arch][d.Name]
+		isCore, found := statusComponents[appLabel]
 		if !found {
 			continue
 		}
 
 		// Component found
-		cf[d.Name] = true
+		cf[appLabel] = true
 
 		if status := GetDeploymentStatus(d); status != Healthy {
 			// Check status
@@ -128,7 +164,7 @@ func (iss *IstioStatusService) getStatusOf(arch string, ds []apps_v1.Deployment)
 	}
 
 	// Add missing deployments
-	for comp, isCore := range components[arch] {
+	for comp, isCore := range statusComponents {
 		if _, found := cf[comp]; !found {
 			isc = append(isc, ComponentStatus{
 				Name:   comp,
