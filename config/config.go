@@ -252,9 +252,15 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	LDAP     LDAPConfig   `yaml:"ldap,omitempty"`
-	OpenId   OpenIdConfig `yaml:"openid,omitempty"`
-	Strategy string       `yaml:"strategy,omitempty"`
+	LDAP      LDAPConfig      `yaml:"ldap,omitempty"`
+	OpenId    OpenIdConfig    `yaml:"openid,omitempty"`
+	OpenShift OpenShiftConfig `yaml:"openshift,omitempty"`
+	Strategy  string          `yaml:"strategy,omitempty"`
+}
+
+// OpenShiftConfig contains specific configuration for authentication when on OpenShift
+type OpenShiftConfig struct {
+	ClientIdPrefix string `yaml:"client_id_prefix,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -340,6 +346,9 @@ func NewConfig() (c *Config) {
 				IssuerUri:             "",
 				Scopes:                []string{"openid", "profile", "email"},
 				UsernameClaim:         "sub",
+			},
+			OpenShift: OpenShiftConfig{
+				ClientIdPrefix: "kiali",
 			},
 		},
 		Deployment: DeploymentConfig{
