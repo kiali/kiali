@@ -39,7 +39,7 @@ while [ $# -gt 0 ]; do
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
-  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.6 installed in istio-system.
+  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.7 installed in istio-system.
   -iv|--install-version: either 'v1' or 'v2' (default is v1)
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
 HELPMSG
@@ -165,37 +165,33 @@ if [ "${ENABLE_OPERATION_METRICS}" != "true" ]; then
   exit 0
 fi
 
-# This only works if you have Istio 1.6 installed, and it is in istio-system namespace.
-${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.6 -o yaml > stats-filter-1.6.yaml
-cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.6.yaml
---- stats-filter-1.6.yaml	2020-06-02 11:10:29.476537126 -0400
-+++ stats-filter-1.6.yaml.new	2020-06-02 09:59:26.434300000 -0400
-@@ -72,11 +72,24 @@
-           value:
-             config:
-               configuration: |
-                 {
-                   "debug": "false",
--                  "stat_prefix": "istio"
-+                  "stat_prefix": "istio",
-+                  "metrics": [
-+                   {
-+                     "name": "requests_total",
-+                     "dimensions": {
-+                       "request_operation": "istio_operationId"
-+                     }
-+                   },
-+                   {
-+                     "name": "request_duration_milliseconds",
-+                     "dimensions": {
-+                       "request_operation": "istio_operationId"
-+                     }
-+                   }]
-                 }
+# This only works if you have Istio 1.7 installed, and it is in istio-system namespace.
+${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.7 -o yaml > stats-filter-1.7.yaml
+cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.7.yaml
+--- stats-filter-1.7.yaml	2020-06-02 11:10:29.476537126 -0400
++++ stats-filter-1.7.yaml.new	2020-06-02 09:59:26.434300000 -0400
+@@ -79,7 +79,20 @@ spec:
+                 value: |
+                   {
+                     "debug": "false",
+-                    "stat_prefix": "istio"
++                    "stat_prefix": "istio",
++                    "metrics": [
++                     {
++                       "name": "requests_total",
++                       "dimensions": {
++                         "request_operation": "istio_operationId"
++                       }
++                     },
++                     {
++                       "name": "request_duration_milliseconds",
++                       "dimensions": {
++                         "request_operation": "istio_operationId"
++                       }
++                     }]
+                   }
                root_id: stats_inbound
                vm_config:
-                 code:
-                   local:
 EOF
 
 cat <<EOF | ${CLIENT_EXE} -n istio-system apply -f -
@@ -215,7 +211,7 @@ spec:
             subFilter:
               name: istio.stats
       proxy:
-        proxyVersion: 1\.6.*
+        proxyVersion: 1\.7.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -225,24 +221,26 @@ spec:
           type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
           value:
             config:
-              configuration: |
-                {
-                  "attributes": [
-                    {
-                      "output_attribute": "istio_operationId",
-                      "match": [
-                        {
-                          "value": "TravelQuote",
-                          "condition": "request.url_path.matches('^/travels/[:alpha:]+.*$') && request.method == 'GET'"
-                        },
-                        {
-                          "value": "ListCities",
-                          "condition": "request.url_path.matches('^/travels.*$') && request.method == 'GET'"
-                        }
-                      ]
-                    }
-                  ]
-                }
+              configuration:
+                '@type': type.googleapis.com/google.protobuf.StringValue
+                value: |
+                  {
+                    "attributes": [
+                      {
+                        "output_attribute": "istio_operationId",
+                        "match": [
+                          {
+                            "value": "TravelQuote",
+                            "condition": "request.url_path.matches('^.*/travels/[:alpha:]+.*$') && request.method == 'GET'"
+                          },
+                          {
+                            "value": "ListCities",
+                            "condition": "request.url_path.matches('^.*/travels$') && request.method == 'GET'"
+                          }
+                        ]
+                      }
+                    ]
+                  }
               vm_config:
                 code:
                   local:
@@ -265,7 +263,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.6.*'
+        proxyVersion: '1\.7.*'
       listener:
         filterChain:
           filter:
@@ -281,24 +279,26 @@ spec:
           type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
           value:
             config:
-              configuration: |
-                {
-                  "attributes": [
-                    {
-                      "output_attribute": "istio_operationId",
-                      "match": [
-                        {
-                          "value": "VIP",
-                          "condition": "request.headers['user'] == 'vip'"
-                        },
-                        {
-                          "value": "Standard",
-                          "condition": "request.headers['user'] != 'vip'"
-                        }
-                      ]
-                    }
-                  ]
-                }
+              configuration:
+                '@type': type.googleapis.com/google.protobuf.StringValue
+                value: |
+                  {
+                    "attributes": [
+                      {
+                        "output_attribute": "istio_operationId",
+                        "match": [
+                          {
+                            "value": "New",
+                            "condition": "request.headers['user'] == 'new'"
+                          },
+                          {
+                            "value": "Registered",
+                            "condition": "request.headers['user'] != 'new'"
+                          }
+                        ]
+                      }
+                    ]
+                  }
               vm_config:
                 runtime: envoy.wasm.runtime.null
                 code:
@@ -317,7 +317,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.6.*'
+        proxyVersion: '1\.7.*'
       listener:
         filterChain:
           filter:
@@ -333,24 +333,26 @@ spec:
           type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
           value:
             config:
-              configuration: |
-                {
-                  "attributes": [
-                    {
-                      "output_attribute": "istio_operationId",
-                      "match": [
-                        {
-                          "value": "VIP",
-                          "condition": "request.headers['user'] == 'vip'"
-                        },
-                        {
-                          "value": "Standard",
-                          "condition": "request.headers['user'] != 'vip'"
-                        }
-                      ]
-                    }
-                  ]
-                }
+              configuration:
+                '@type': type.googleapis.com/google.protobuf.StringValue
+                value: |
+                  {
+                    "attributes": [
+                      {
+                        "output_attribute": "istio_operationId",
+                        "match": [
+                          {
+                            "value": "New",
+                            "condition": "request.headers['user'] == 'new'"
+                          },
+                          {
+                            "value": "Registered",
+                            "condition": "request.headers['user'] != 'new'"
+                          }
+                        ]
+                      }
+                    ]
+                  }
               vm_config:
                 runtime: envoy.wasm.runtime.null
                 code:
