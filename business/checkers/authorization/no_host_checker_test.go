@@ -125,6 +125,45 @@ func TestServiceEntryNotPresent(t *testing.T) {
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
 }
 
+func TestVirtualServicePresent(t *testing.T) {
+	assert := assert.New(t)
+
+	virtualService := data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
+	validations, valid := NoHostChecker{
+		AuthorizationPolicy: authPolicyWithHost([]interface{}{"foo-dev.example.com"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
+		ServiceEntries:      map[string][]string{},
+		Services:            []core_v1.Service{},
+		VirtualServices:     []kubernetes.IstioObject{virtualService},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestVirtualServiceNotPresent(t *testing.T) {
+	assert := assert.New(t)
+
+	virtualService := data.CreateEmptyVirtualService("foo-dev", "foo", []string{"foo-dev.example.com"})
+	validations, valid := NoHostChecker{
+		AuthorizationPolicy: authPolicyWithHost([]interface{}{"foo-bogus.example.com"}),
+		Namespace:           "bookinfo",
+		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
+		ServiceEntries:      map[string][]string{},
+		Services:            []core_v1.Service{},
+		VirtualServices:     []kubernetes.IstioObject{virtualService},
+	}.Check()
+
+	// Wrong.org host is not present
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Len(validations, 1)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("authorizationpolicy.nodest.matchingregistry"), validations[0].Message)
+	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", validations[0].Path)
+}
+
 func TestWildcardServiceEntryHost(t *testing.T) {
 	assert := assert.New(t)
 

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
@@ -152,6 +153,73 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 	}
 
 	return false
+}
+
+func HasMatchingVirtualServices(host Host, virtualServices []IstioObject) bool {
+	for _, vs := range virtualServices {
+		rawHosts, found := vs.GetSpec()["hosts"]
+		if !found {
+			continue
+		}
+
+		slice := reflect.ValueOf(rawHosts)
+		if slice.Kind() != reflect.Slice {
+			continue
+		}
+
+		for hostIdx := 0; hostIdx < slice.Len(); hostIdx++ {
+			vHost, ok := slice.Index(hostIdx).Interface().(string)
+			if !ok {
+				continue
+			}
+
+			// vHost is wildcard, then any host fit in
+			if vHost == "*" {
+				return true
+			}
+
+			// vHost is simple name (namespaces should match)
+			if vHost == host.Service && vs.GetObjectMeta().Namespace == host.Namespace {
+				return true
+			}
+
+			// vHost twoparts name
+			if vHost == fmt.Sprintf("%s.%s", host.Service, host.Namespace) {
+				return true
+			}
+
+			// vHost FQDN (no-wildcarded)
+			if vHost == fmt.Sprintf("%s.%s.%s", host.Service, host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+				return true
+			}
+
+			// vHost if wildcard FQDN
+			if vHost == fmt.Sprintf("*.%s.%s", host.Namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+				return true
+			}
+
+			// Non-internal service name
+			hostS := ParseHost(vHost, vs.GetObjectMeta().Namespace, vs.GetObjectMeta().ClusterName)
+			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
+				return true
+			}
+
+			// Non-internal wildcard service name
+			if HostWithinWildcardHost(host.Service, vHost) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
+	if !strings.HasPrefix(wildcardDomain, "*") {
+		return false
+	}
+
+	return len(wildcardDomain) > 2 && strings.HasSuffix(subdomain, wildcardDomain[2:])
 }
 
 func ParseGatewayAsHost(gateway, currentNamespace, currentCluster string) Host {
