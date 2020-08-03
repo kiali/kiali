@@ -21,26 +21,26 @@ interface JaegerScatterProps {
   trace: JaegerTrace;
   namespaceSelector: boolean;
   namespace: string;
-  service: string;
+  app: string;
   jaegerURL: string;
 }
 
 interface JaegerScatterState {
   spansSelected: Span[];
-  serviceSelected: string;
+  appSelected: string;
 }
 class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState> {
   constructor(props: JaegerScatterProps) {
     super(props);
-    this.state = { spansSelected: [], serviceSelected: '' };
+    this.state = { spansSelected: [], appSelected: '' };
   }
 
-  getClassButtonSpan = (service: string) => {
-    if (this.state.serviceSelected === service) {
+  getClassButtonSpan = (app: string) => {
+    if (this.state.appSelected === app) {
       return 'primary';
     } else {
-      const srv = this.props.namespaceSelector ? cleanServiceSelector(service, this.props.namespace) : service;
-      if (this.props.service === srv) {
+      const srv = this.props.namespaceSelector ? cleanServiceSelector(app, this.props.namespace) : app;
+      if (this.props.app === srv) {
         return 'tertiary';
       } else {
         return 'secondary';
@@ -48,10 +48,10 @@ class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState
     }
   };
 
-  onClickService = (service: string) => {
+  onClickApp = (app: string) => {
     this.setState({
-      serviceSelected: service,
-      spansSelected: this.props.trace.spans.filter(span => span.process.serviceName === service)
+      appSelected: app,
+      spansSelected: this.props.trace.spans.filter(span => span.process.serviceName === app)
     });
   };
 
@@ -74,14 +74,14 @@ class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState
               )}
             </GridItem>
             <GridItem span={8}>
-              {sortBy(trace.services, s => s.name).map(service => {
-                const { name, numberOfSpans: count } = service;
+              {sortBy(trace.services, s => s.name).map(app => {
+                const { name, numberOfSpans: count } = app;
                 const spans = trace.spans.filter(span => span.process.serviceName === name);
                 const errorSpans = spans.filter(span => span.tags.some(isErrorTag)).length;
                 return (
                   <Button
                     variant={this.getClassButtonSpan(name)}
-                    onClick={() => this.onClickService(name)}
+                    onClick={() => this.onClickApp(name)}
                     className={labelStyle}
                     key={`span_button_${name}`}
                   >

@@ -32,7 +32,7 @@ export class SpanOverlay {
     if (this.spans.length > 0) {
       opts.startMicros = 1 + Math.max(...this.spans.map(s => s.startTime));
     }
-    API.getServiceSpans(this.namespace, this.service, opts)
+    API.getAppSpans(this.namespace, this.service, opts)
       .then(res => {
         this.lastFetchError = false;
         // Incremental refresh: we keep existing spans

@@ -156,7 +156,7 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
     if (type !== Paths.SERVICES) {
       options.push({ text: 'Show Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
     }
-    if (type === Paths.SERVICES && jaegerInfo && jaegerInfo.enabled) {
+    if (type === Paths.APPLICATIONS && jaegerInfo && jaegerInfo.enabled) {
       if (jaegerInfo.integration) {
         options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` });
       } else if (jaegerInfo.url) {

@@ -32,16 +32,16 @@ import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 
-interface ServiceTracesProps {
+interface AppTracesProps {
   namespace: string;
-  service: string;
+  app: string;
   urlJaeger: string;
   namespaceSelector: boolean;
   showErrors: boolean;
   duration: number;
 }
 
-interface ServiceTracesState {
+interface AppTracesState {
   url: string;
   width: number;
   showErrors: boolean;
@@ -62,10 +62,10 @@ export const traceDurationUnits: { [key: string]: string } = {
   s: 's'
 };
 
-class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesState> {
+class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
   private fetcher: TracesFetcher;
 
-  constructor(props: ServiceTracesProps) {
+  constructor(props: AppTracesProps) {
     super(props);
     const limit =
       HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) ||
@@ -108,7 +108,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
   private refresh = () => {
     this.fetcher.fetch({
       namespace: this.props.namespace,
-      service: this.props.service,
+      app: this.props.app,
       spanLimit: Number(this.state.selectedLimitSpans),
       intervalDuration: this.state.selectedTraceIntervalDuration,
       tags: buildTags(this.state.showErrors, this.state.selectedStatusCode)
@@ -149,13 +149,13 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
   };
 
   private getJaegerUrl = () => {
-    const service =
+    const app =
       this.props.namespaceSelector && serverConfig.istioNamespace !== this.props.namespace
-        ? `${this.props.service}.${this.props.namespace}`
-        : `${this.props.service}`;
+        ? `${this.props.app}.${this.props.namespace}`
+        : `${this.props.app}`;
 
     const range = getTimeRangeMicros();
-    let url = `${this.props.urlJaeger}/search?service=${service}&start=${range.from}&limit=${this.state.selectedLimitSpans}`;
+    let url = `${this.props.urlJaeger}/search?service=${app}&start=${range.from}&limit=${this.state.selectedLimitSpans}`;
     if (range.to) {
       url += `&end=${range.to}`;
     }
@@ -341,7 +341,7 @@ class ServiceTracesC extends React.Component<ServiceTracesProps, ServiceTracesSt
                         <JaegerItem
                           trace={this.state.selectedTrace}
                           namespace={this.props.namespace}
-                          service={this.props.service}
+                          app={this.props.app}
                           jaegerURL={this.props.urlJaeger}
                         />
                       )}
@@ -373,6 +373,6 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-export const ServiceTraces = connect(mapStateToProps)(ServiceTracesC);
+export const AppTraces = connect(mapStateToProps)(AppTracesC);
 
-export default ServiceTraces;
+export default AppTraces;

@@ -141,7 +141,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
       history.push(
-        `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
       );
     }
   };

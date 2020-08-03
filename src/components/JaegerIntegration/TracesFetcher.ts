@@ -2,13 +2,13 @@ import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
 import { transformTraceData } from './JaegerResults';
-import { traceDurationUnits } from './ServiceTraces';
+import { traceDurationUnits } from './AppTraces';
 import { TracingQuery } from 'types/Tracing';
 import { getTimeRangeMicros } from './JaegerHelper';
 
 type FetchOptions = {
   namespace: string;
-  service: string;
+  app: string;
   intervalDuration: string;
   spanLimit: number;
   tags: string;
@@ -34,7 +34,7 @@ export class TracesFetcher {
       tags: opts.tags,
       limit: opts.spanLimit
     };
-    API.getJaegerTraces(opts.namespace, opts.service, q)
+    API.getJaegerTraces(opts.namespace, opts.app, q)
       .then(response => {
         this.lastFetchError = false;
         const traces = response.data.data

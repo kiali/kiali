@@ -2,7 +2,7 @@ import * as React from 'react';
 import { JaegerInfo, Span } from '../../../types/JaegerInfo';
 import { Table, TableHeader, TableBody, IRow, expandable, RowWrapperProps } from '@patternfly/react-table';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
-import { Tooltip } from '@patternfly/react-core';
+import { List, ListItem, Tooltip } from '@patternfly/react-core';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { formatDuration } from './transform';
@@ -35,7 +35,7 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
           title: 'Operation',
           cellFormatters: [expandable]
         },
-        'Service',
+        'App',
         { title: 'Duration' },
         '',
         ''
@@ -50,11 +50,11 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     }
   }
 
-  private goService = (service: string = this.props.spans[0].process.serviceName, extra: string = '') => {
-    if (service) {
-      const ns = service.split('.')[1] || serverConfig.istioNamespace;
-      const srv = service.split('.')[0];
-      return '/namespaces/' + ns + '/services/' + srv + extra;
+  private goApp = (app: string = this.props.spans[0].process.serviceName, extra: string = '') => {
+    if (app) {
+      const ns = app.split('.')[1] || serverConfig.istioNamespace;
+      const appName = app.split('.')[0];
+      return '/namespaces/' + ns + '/applications/' + appName + extra;
     } else {
       return undefined;
     }
@@ -91,10 +91,11 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
   private getRows = () => {
     let rows: (IRow | string)[] = [];
     this.props.spans.map(span => {
-      const service = span.process.serviceName === 'jaeger-query' ? span.process.serviceName : span.operationName;
-      const linkToService = this.goService(service);
-      const linkToMetrics = this.goService(service, '?tab=metrics');
-      const serviceDefinition = (
+      const app = span.process.serviceName === 'jaeger-query' ? span.process.serviceName : span.operationName;
+      const linkToApp = this.goApp(app);
+      const linkToInMetrics = this.goApp(app, '?tab=in_metrics');
+      const linkToOutMetrics = this.goApp(app, '?tab=out_metrics');
+      const appDefinition = (
         <>
           {span.operationName.split('.')[0] +
             (span.operationName.split('.')[1] ? '(' + span.operationName.split('.')[1] + ')' : '')}
@@ -107,14 +108,14 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
         isOpen: false,
         cells: [
           {
-            title: linkToService ? (
-              <Tooltip content={<>Go to Service {span.operationName.split('.')[0]}</>}>
-                <Link to={linkToService} onClick={() => history.push(linkToService)}>
-                  {serviceDefinition}
+            title: linkToApp ? (
+              <Tooltip content={<>Go to App {span.operationName.split('.')[0]}</>}>
+                <Link to={linkToApp} onClick={() => history.push(linkToApp)}>
+                  {appDefinition}
                 </Link>
               </Tooltip>
             ) : (
-              serviceDefinition
+              appDefinition
             )
           },
           {
@@ -132,15 +133,31 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
           },
           { title: <>{formatDuration(span.duration)}</> },
           {
-            title: linkToMetrics ? (
-              <Tooltip content={<>View metrics of {span.operationName.split('.')[0]}</>}>
-                <Link to={linkToMetrics} onClick={() => history.push(linkToMetrics)}>
-                  View metrics
-                </Link>
-              </Tooltip>
-            ) : (
-              <></>
-            )
+            title:
+              linkToInMetrics || linkToOutMetrics ? (
+                <List>
+                  {linkToInMetrics && (
+                    <ListItem>
+                      <Tooltip content={<>View Inbound metrics of {span.operationName.split('.')[0]}</>}>
+                        <Link to={linkToInMetrics} onClick={() => history.push(linkToInMetrics)}>
+                          View Inbound metrics
+                        </Link>
+                      </Tooltip>
+                    </ListItem>
+                  )}
+                  {linkToOutMetrics && (
+                    <ListItem>
+                      <Tooltip content={<>View Outbound metrics of {span.operationName.split('.')[0]}</>}>
+                        <Link to={linkToOutMetrics} onClick={() => history.push(linkToOutMetrics)}>
+                          View Outbound metrics
+                        </Link>
+                      </Tooltip>
+                    </ListItem>
+                  )}
+                </List>
+              ) : (
+                <></>
+              )
           },
           { title: this.getNodeLog(span) }
         ]

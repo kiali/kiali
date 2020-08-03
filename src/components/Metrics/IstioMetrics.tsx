@@ -184,7 +184,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
       history.push(
-        `/namespaces/${this.props.namespace}/services/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
       );
     }
   };

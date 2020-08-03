@@ -324,8 +324,8 @@ export const getJaegerInfo = () => {
   return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {});
 };
 
-export const getJaegerTraces = (namespace: string, service: string, params: TracingQuery) => {
-  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTraces(namespace, service), params, {});
+export const getJaegerTraces = (namespace: string, app: string, params: TracingQuery) => {
+  return newRequest<JaegerResponse>(HTTP_VERBS.GET, urls.jaegerTraces(namespace, app), params, {});
 };
 
 export const getJaegerErrorTraces = (namespace: string, service: string, duration: DurationInSeconds) => {
@@ -484,8 +484,8 @@ export const getErrorDetail = (error: AxiosError): string => {
   return '';
 };
 
-export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {
-  return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), params, {});
+export const getAppSpans = (namespace: string, app: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), params, {});
 };
 
 export const getIstioPermissions = (namespaces: string[]) => {
