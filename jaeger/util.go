@@ -9,16 +9,18 @@ import (
 	"strconv"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
-func prepareQuery(u *url.URL, namespace, service string, query models.TracingQuery) {
-	queryService := service
+func prepareQuery(u *url.URL, namespace, app string, query models.TracingQuery) {
+	queryApp := app
 	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
-		queryService = fmt.Sprintf("%s.%s", service, namespace)
+		queryApp = fmt.Sprintf("%s.%s", app, namespace)
 	}
+	log.Errorf("%+v", queryApp)
 	q := url.Values{}
-	q.Set("service", queryService)
+	q.Set("service", queryApp)
 	q.Set("start", query.StartMicros)
 	if query.EndMicros != "" {
 		q.Set("end", query.EndMicros)
