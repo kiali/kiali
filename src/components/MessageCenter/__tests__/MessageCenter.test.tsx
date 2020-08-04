@@ -32,7 +32,8 @@ describe('MessageCenter', () => {
           count: 0,
           created: new Date(),
           detail: '',
-          showDetail: false
+          showDetail: false,
+          show_notification: true
         }
       ]
     },
@@ -48,7 +49,7 @@ describe('MessageCenter', () => {
           content: 'show me too',
           type: MessageType.SUCCESS,
           count: 0,
-          show_notification: true,
+          show_notification: false,
           created: new Date(),
           detail: '',
           showDetail: false

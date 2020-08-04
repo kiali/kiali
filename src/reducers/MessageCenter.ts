@@ -36,6 +36,7 @@ const createMessage = (
   detail: string,
   type: MessageType,
   count: number,
+  showNotification: boolean,
   created: Date,
   showDetail: boolean,
   firstTriggered?: Date
@@ -46,7 +47,7 @@ const createMessage = (
     detail,
     type,
     count,
-    show_notification: type === MessageType.ERROR || type === MessageType.WARNING || type === MessageType.SUCCESS,
+    show_notification: showNotification,
     seen: false,
     created: created,
     showDetail: showDetail,
@@ -78,7 +79,7 @@ const Messages = (
 ): MessageCenterState => {
   switch (action.type) {
     case getType(MessageCenterActions.addMessage): {
-      const { content, detail, groupId, messageType } = action.payload;
+      const { content, detail, groupId, messageType, showNotification } = action.payload;
 
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
@@ -103,6 +104,7 @@ const Messages = (
               existingMessage.detail,
               messageType,
               existingMessage.count + 1,
+              existingMessage.show_notification,
               new Date(),
               existingMessage.showDetail,
               firstTriggered
@@ -115,7 +117,17 @@ const Messages = (
 
             group = { ...group, messages: filteredArray.concat(newMessage) };
           } else {
-            newMessage = createMessage(state.nextId, content, detail, messageType, 1, new Date(), false, undefined);
+            newMessage = createMessage(
+              state.nextId,
+              content,
+              detail,
+              messageType,
+              1,
+              showNotification,
+              new Date(),
+              false,
+              undefined
+            );
             group = { ...group, messages: group.messages.concat(newMessage) };
           }
 

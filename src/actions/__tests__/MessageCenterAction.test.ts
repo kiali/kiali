@@ -14,7 +14,8 @@ describe('MessageCenterActions', () => {
       content: 'my message',
       detail: 'my detail',
       groupId: 'great-messages',
-      messageType: MessageType.WARNING
+      messageType: MessageType.WARNING,
+      showNotification: true
     };
     const action = MessageCenterActions.addMessage('my message', 'my detail', 'great-messages', MessageType.WARNING);
     expect(action.payload).toEqual(expectedPayload);

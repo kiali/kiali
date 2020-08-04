@@ -16,8 +16,9 @@ export const MessageCenterActions = {
       content: string,
       detail: string,
       groupId: string = DEFAULT_GROUP_ID,
-      messageType: MessageType = DEFAULT_MESSAGE_TYPE
-    ) => resolve({ content, detail, groupId, messageType })
+      messageType: MessageType = DEFAULT_MESSAGE_TYPE,
+      showNotification: boolean = true
+    ) => resolve({ content, detail, groupId, messageType, showNotification })
   ),
   removeMessage: createAction(ActionKeys.MC_REMOVE_MESSAGE, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })

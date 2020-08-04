@@ -16,7 +16,7 @@ export interface NotificationMessage {
   count: number; // how many times did this message occur
 
   showDetail: boolean;
-  show_notification?: boolean;
+  show_notification: boolean;
   groupId?: string;
 }
 

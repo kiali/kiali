@@ -9,7 +9,7 @@ const showInMessageCenterValidation = (validation: ObjectValidation) => {
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
-        AlertUtils.addWarning(validationMessage(validation, check));
+        AlertUtils.addWarning(validationMessage(validation, check), false);
         break;
       case ValidationTypes.Error:
         AlertUtils.addError(validationMessage(validation, check));
@@ -32,8 +32,12 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
     }
   }
   if (elementsWithFailedValidations.length > 0) {
-    const messageCenterMethod = hasError ? AlertUtils.addError : AlertUtils.addWarning;
-    messageCenterMethod(`Some IstioConfigs (${elementsWithFailedValidations.join(', ')}) have warnings or errors`);
+    const message = `Some IstioConfigs (${elementsWithFailedValidations.join(', ')}) have warnings or errors`;
+    if (hasError) {
+      AlertUtils.addError(message);
+    } else {
+      AlertUtils.addWarning(message, false);
+    }
   }
 };
 

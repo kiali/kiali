@@ -37,14 +37,14 @@ export const addError = (message: string, error?: AxiosError, group?: string, ty
 };
 
 // info level message do not generate a toast notification
-export const addInfo = (content: string, group?: string) => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.INFO));
+export const addInfo = (content: string, showNotification?: boolean, group?: string) => {
+  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.INFO, showNotification));
 };
 
-export const addSuccess = (content: string, group?: string) => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.SUCCESS));
+export const addSuccess = (content: string, showNotification?: boolean, group?: string) => {
+  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.SUCCESS, showNotification));
 };
 
-export const addWarning = (content: string, group?: string) => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.WARNING));
+export const addWarning = (content: string, showNotification?: boolean, group?: string) => {
+  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.WARNING, showNotification));
 };
