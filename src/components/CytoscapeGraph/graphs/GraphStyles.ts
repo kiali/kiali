@@ -627,7 +627,7 @@ export class GraphStyles {
         style: {
           'overlay-color': PfColors.Purple200,
           'overlay-padding': '7px',
-          'overlay-opacity': 0.2
+          'overlay-opacity': 0.3
         }
       }
     ];

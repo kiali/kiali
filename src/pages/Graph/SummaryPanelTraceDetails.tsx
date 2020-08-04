@@ -92,13 +92,13 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
   render() {
     const node = decoratedNodeData(this.props.node);
     const tracesDetailsURL = node.app
-      ? `/namespaces/${node.namespace}/services/${node.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
+      ? `/namespaces/${node.namespace}/applications/${node.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
       : undefined;
     const jaegerTraceURL =
       node.app && this.props.jaegerURL ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}` : undefined;
     const info = getFormattedTraceInfo(this.props.trace);
     const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
-    const nodeName = node.workload || node.service || node.app;
+    const nodeName = node.workload || node.service || node.app!;
     const spans: Span[] | undefined = this.props.node.data('spans');
     return (
       <>
@@ -162,7 +162,8 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
                 <AngleRightIcon />
               </Button>
               <br />
-              {this.state.selectedSpan < spans.length && this.renderSpan(spans[this.state.selectedSpan])}
+              {this.state.selectedSpan < spans.length &&
+                this.renderSpan(nodeName + '.' + node.namespace, spans[this.state.selectedSpan])}
             </>
           )}
         </div>
@@ -170,9 +171,23 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     );
   }
 
-  private renderSpan(span: Span) {
+  private renderSpan(nodeFullName: string, span: Span) {
     const info = extractEnvoySpanInfo(span);
     if (info) {
+      if (
+        nodeFullName !== span.process.serviceName &&
+        info.inbound &&
+        nodeFullName === info.inbound + '.' + info.otherNamespace
+      ) {
+        // Special case: this span was added to the inbound workload (this node) while originating from the outbound node.
+        // So we need to reverse the logic: it's not an inbound request that we show here, but an outbound request, switching point of view.
+        info.inbound = undefined;
+        const split = span.process.serviceName.split('.');
+        info.outbound = split[0];
+        if (split.length > 1) {
+          info.otherNamespace = split[1];
+        }
+      }
       const details: string[] = [];
       if (info.statusCode) {
         details.push('code ' + info.statusCode);
