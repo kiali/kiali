@@ -40,7 +40,13 @@ const closeBoxStyle = style({
   marginTop: '-7px'
 });
 
-const nameStyle = style({});
+const nameStyle = style({
+  display: 'inline-block',
+  maxWidth: '95%',
+  textOverflow: 'ellipsis',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap'
+});
 
 const errorStyle = style({
   color: PFAlertColor.Danger
@@ -51,7 +57,7 @@ const secondaryStyle = style({
 });
 
 const navButtonStyle = style({
-  paddingTop: 10,
+  paddingTop: 5,
   paddingLeft: 0
 });
 
@@ -96,24 +102,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     const spans: Span[] | undefined = this.props.node.data('spans');
     return (
       <>
-        <span className={textHeaderStyle}>
-          Trace
-          {tracesDetailsURL && (
-            <>
-              {' '}
-              (<Link to={tracesDetailsURL}>Details</Link>
-              {jaegerTraceURL && (
-                <>
-                  {' - '}
-                  <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                    Jaeger <ExternalLinkAltIcon size="sm" />
-                  </a>
-                </>
-              )}
-              )
-            </>
-          )}
-        </span>
+        <span className={textHeaderStyle}>Trace</span>
         <span className={closeBoxStyle}>
           <Tooltip content="Close and clear trace selection">
             <Button id="close-trace" variant="plain" onClick={this.props.close}>
@@ -122,16 +111,32 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           </Tooltip>
         </span>
         <div>
-          <span className={nameStyleToUse}>{info.name}</span>
+          <Tooltip content={info.name}>
+            {tracesDetailsURL ? (
+              <Link to={tracesDetailsURL}>
+                <span className={nameStyleToUse}>{info.name}</span>
+              </Link>
+            ) : (
+              <span className={nameStyleToUse}>{info.name}</span>
+            )}
+          </Tooltip>
+          {tracesDetailsURL && jaegerTraceURL && (
+            <>
+              <br />
+              <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
+                See trace in Jaeger <ExternalLinkAltIcon size="sm" />
+              </a>
+              <br />
+            </>
+          )}
           <br />
-          <span className={secondaryStyle}>
-            {this.props.trace.traceID}
-            <br />
-            {info.fromNow + (info.duration ? ', full duration: ' + info.duration : '')}
-            <br />
-          </span>
+          <div className={secondaryStyle}>{'ID: ' + this.props.trace.traceID}</div>
+          <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
+          {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
           {spans && (
             <>
+              <br />
+              <div className={secondaryStyle}>{'Spans for node: ' + nodeName}</div>
               <Button
                 className={navButtonStyle}
                 variant={ButtonVariant.plain}
@@ -144,9 +149,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               >
                 <AngleLeftIcon />
               </Button>
-              <span className={navSpanStyle}>
-                Span on {nodeName} {this.state.selectedSpan + 1 + ' / ' + spans.length}
-              </span>
+              <span className={navSpanStyle}>{this.state.selectedSpan + 1 + ' of ' + spans.length}</span>
               <Button
                 variant={ButtonVariant.plain}
                 isDisabled={this.state.selectedSpan >= spans.length - 1}
@@ -182,42 +185,39 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
       }
       return (
         <>
-          Operation: {span.operationName}
-          <br />
-          <br />
-          Started at +{formatDuration(span.relativeStartTime)}
-          <br />
           {info.inbound && (
             <>
-              From{' '}
+              <span className={secondaryStyle}>{'From: '}</span>
               <Button
-                variant="link"
-                isInline={true}
+                variant={ButtonVariant.link}
                 onClick={() => {
                   this.focusOnWorkload(info.otherNamespace!, info.inbound!);
                 }}
+                isInline
               >
-                {info.inbound}
+                <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.inbound}</span>
               </Button>
-              {': '}
             </>
           )}
           {info.outbound && (
             <>
-              To{' '}
+              <span className={secondaryStyle}>{'To: '}</span>
               <Button
-                variant="link"
-                isInline={true}
+                variant={ButtonVariant.link}
                 onClick={() => {
                   this.focusOnService(info.otherNamespace!, info.outbound!);
                 }}
+                isInline
               >
-                {info.outbound}
+                <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.outbound}</span>
               </Button>
-              {': '}
             </>
           )}
-          {info.method} {info.url} {details.length > 0 && ' [' + details.join(', ') + ']'}
+          <div className={secondaryStyle}>{`Request: ${info.method} ${info.url}`}</div>
+          {!!details && <div className={secondaryStyle}>{`Response: [${details.join(', ')}]`}</div>}
+          <div className={secondaryStyle}>{`Operation: ${span.operationName}`}</div>
+          <div className={secondaryStyle}>{`Started at ${formatDuration(span.relativeStartTime)}`}</div>
+          <br />
         </>
       );
     }
