@@ -34,7 +34,12 @@ func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
 
 func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 	cfg := config.Get()
+	pURL := cfg.ExternalServices.Prometheus.URL
 	pauth := cfg.ExternalServices.Prometheus.Auth
+	if cfg.ExternalServices.CustomDashboards.Prometheus.URL != "" {
+		pURL = cfg.ExternalServices.CustomDashboards.Prometheus.URL
+		pauth = cfg.ExternalServices.CustomDashboards.Prometheus.Auth
+	}
 	gauth := cfg.ExternalServices.Grafana.Auth
 	if pauth.UseKialiToken || (cfg.ExternalServices.Grafana.Enabled && gauth.UseKialiToken) {
 		kialiToken, err := kubernetes.GetKialiToken()
@@ -63,10 +68,14 @@ func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 			},
 		}
 	}
+	nsLabel := cfg.ExternalServices.CustomDashboards.NamespaceLabel
+	if nsLabel == "" {
+		nsLabel = "kubernetes_namespace"
+	}
 	return kconf.Config{
 			GlobalNamespace: cfg.Deployment.Namespace,
 			Prometheus: kxconf.PrometheusConfig{
-				URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
+				URL: pURL,
 				Auth: kxconf.Auth{
 					Type:               pauth.Type,
 					Username:           pauth.Username,
@@ -76,7 +85,8 @@ func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 					CAFile:             pauth.CAFile,
 				},
 			},
-			Grafana: grafanaConfig,
+			Grafana:        grafanaConfig,
+			NamespaceLabel: nsLabel,
 		}, klog.LogAdapter{
 			Errorf:   log.Errorf,
 			Warningf: log.Warningf,

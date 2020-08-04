@@ -106,10 +106,15 @@ func (a *Auth) Obfuscate() {
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	Auth             Auth            `yaml:"auth,omitempty"`
-	ComponentStatus  ComponentStatus `yaml:"component_status,omitempty"`
-	CustomMetricsURL string          `yaml:"custom_metrics_url,omitempty"`
-	URL              string          `yaml:"url,omitempty"`
+	Auth            Auth            `yaml:"auth,omitempty"`
+	ComponentStatus ComponentStatus `yaml:"component_status,omitempty"`
+	URL             string          `yaml:"url,omitempty"`
+}
+
+// CustomDashboardsConfig describes configuration specific to Custom Dashboards
+type CustomDashboardsConfig struct {
+	Prometheus     PrometheusConfig `yaml:"prometheus,omitempty"`
+	NamespaceLabel string           `yaml:"namespace_label,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -188,10 +193,11 @@ type Extensions struct {
 
 // ExternalServices holds configurations for other systems that Kiali depends on
 type ExternalServices struct {
-	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
-	Istio      IstioConfig      `yaml:"istio,omitempty"`
-	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
-	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
+	Grafana          GrafanaConfig          `yaml:"grafana,omitempty"`
+	Istio            IstioConfig            `yaml:"istio,omitempty"`
+	Prometheus       PrometheusConfig       `yaml:"prometheus,omitempty"`
+	CustomDashboards CustomDashboardsConfig `yaml:"custom_dashboards,omitempty"`
+	Tracing          TracingConfig          `yaml:"tracing,omitempty"`
 }
 
 // LoginToken holds config used for generating the Kiali session tokens.
@@ -412,8 +418,7 @@ func NewConfig() (c *Config) {
 					AppLabel: "prometheus",
 					IsCore:   true,
 				},
-				CustomMetricsURL: "http://prometheus.istio-system:9090",
-				URL:              "http://prometheus.istio-system:9090",
+				URL: "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{
 				Auth: Auth{
