@@ -26,7 +26,6 @@ import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import Splitter from 'm-react-splitters';
 import RefreshContainer from '../../../components/Refresh/Refresh';
 import { KialiIcon, defaultIconStyle } from '../../../config/KialiIcon';
-import * as AlertUtils from '../../../utils/AlertUtils';
 import { FullScreenLogModal } from './FullScreenLogModal';
 
 export interface WorkloadPodLogsProps {
@@ -46,6 +45,7 @@ interface WorkloadPodLogsState {
   duration: DurationInSeconds;
   filteredAppLogs?: LogLines;
   filteredProxyLogs?: LogLines;
+  hideError?: string;
   hideLogValue: string;
   isLogWindowSelectExpanded: boolean;
   loadingAppLogs: boolean;
@@ -58,6 +58,7 @@ interface WorkloadPodLogsState {
   rawProxyLogs?: LogLines;
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
+  showError?: string;
   showLogValue: string;
   sideBySideOrientation: boolean;
   tailLines: number;
@@ -338,6 +339,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           id="log_show"
                           name="log_show"
                           style={{ width: '10em' }}
+                          isValid={!this.state.showError}
                           autoComplete="on"
                           type="text"
                           onKeyPress={this.checkSubmitShow}
@@ -346,8 +348,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           aria-label="show log text"
                           placeholder="Show..."
                         />
-                      </ToolbarItem>
-                      <ToolbarItem>
                         {this.state.showClearShowLogButton && (
                           <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
                             <Button variant={ButtonVariant.control} onClick={this.clearShow}>
@@ -355,12 +355,11 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                             </Button>
                           </Tooltip>
                         )}
-                      </ToolbarItem>
-                      <ToolbarItem>
                         <TextInput
                           id="log_hide"
                           name="log_hide"
                           style={{ width: '10em' }}
+                          isValid={!this.state.hideError}
                           autoComplete="on"
                           type="text"
                           onKeyPress={this.checkSubmitHide}
@@ -369,8 +368,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                           aria-label="hide log text"
                           placeholder="Hide..."
                         />
-                      </ToolbarItem>
-                      <ToolbarItem>
                         {this.state.showClearHideLogButton && (
                           <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
                             <Button variant={ButtonVariant.control} onClick={this.clearHide}>
@@ -378,6 +375,8 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                             </Button>
                           </Tooltip>
                         )}
+                        {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
+                        {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
                       </ToolbarItem>
                       <ToolbarItem>
                         <Tooltip
@@ -605,10 +604,13 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     if (!!showValue) {
       if (this.state.useRegex) {
         try {
-          const regexp = new RegExp(showValue);
+          const regexp = RegExp(showValue);
           filteredLogs = filteredLogs.filter(l => regexp.test(l));
+          if (!!this.state.showError) {
+            this.setState({ showError: undefined });
+          }
         } catch (e) {
-          AlertUtils.addError(`Failed log Show: ${e.message}`);
+          this.setState({ showError: `Show: ${e.message}` });
         }
       } else {
         filteredLogs = filteredLogs.filter(l => l.includes(showValue));
@@ -617,10 +619,13 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     if (!!hideValue) {
       if (this.state.useRegex) {
         try {
-          const regexp = new RegExp(hideValue);
+          const regexp = RegExp(hideValue);
           filteredLogs = filteredLogs.filter(l => !regexp.test(l));
+          if (!!this.state.hideError) {
+            this.setState({ hideError: undefined });
+          }
         } catch (e) {
-          AlertUtils.addError(`Failed log Hide: ${e.message}`);
+          this.setState({ hideError: `Hide: ${e.message}` });
         }
       } else {
         filteredLogs = filteredLogs.filter(l => !l.includes(hideValue));
@@ -640,6 +645,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const rawAppLogs = this.state.rawAppLogs ? this.state.rawAppLogs : ([] as LogLines);
     const rawProxyLogs = this.state.rawProxyLogs ? this.state.rawProxyLogs : ([] as LogLines);
     this.setState({
+      showError: undefined,
       showLogValue: '',
       showClearShowLogButton: false,
       filteredAppLogs: this.filterLogs(rawAppLogs, '', this.state.hideLogValue),
@@ -674,6 +680,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const rawAppLogs = this.state.rawAppLogs ? this.state.rawAppLogs : ([] as LogLines);
     const rawProxyLogs = this.state.rawProxyLogs ? this.state.rawProxyLogs : ([] as LogLines);
     this.setState({
+      hideError: undefined,
       hideLogValue: '',
       showClearHideLogButton: false,
       filteredAppLogs: this.filterLogs(rawAppLogs, this.state.showLogValue, ''),
