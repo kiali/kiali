@@ -14,6 +14,7 @@ import {
   FormSelectOption,
   Grid,
   GridItem,
+  Switch,
   TextInputBase as TextInput
 } from '@patternfly/react-core';
 import history from '../../../../app/History';
@@ -50,6 +51,8 @@ interface State {
   hostState: HostState;
   value: string;
   filename: string;
+  addHostGateway: boolean;
+  showTrafficControl: boolean;
 }
 
 interface ExperimentSpec {
@@ -93,8 +96,7 @@ const regex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*
 const formPadding = style({ padding: '30px 20px 30px 20px' });
 
 const durationTimeStyle = style({
-  marginTop: 15,
-  marginBottom: 15,
+  paddingTop: 8,
   color: PfColors.Blue400
 });
 const algorithms = [
@@ -109,8 +111,8 @@ const toggleTextFlat = ['More', 'Less'];
 const toggleTextWizard = ['Show Advanced Options', 'Hide Advanced Options'];
 
 const iter8oExpOptions = [
-  { value: 'Deployment', label: 'deployment/workload based' },
-  { value: 'Service', label: 'service based' }
+  { value: 'Deployment', label: 'WORKLOAD' },
+  { value: 'Service', label: 'SERVICE' }
 ];
 
 class ExperimentCreatePage extends React.Component<Props, State> {
@@ -157,7 +159,9 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       totalDuration: '50 minutes',
       hostState: initHost(''),
       value: '',
-      filename: ''
+      filename: '',
+      addHostGateway: false,
+      showTrafficControl: false
     };
   }
 
@@ -623,20 +627,25 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   }
 
   renderBaselineSelect() {
-    const usingMap = this.state.experiment.experimentKind === 'Deployment' ? this.state.workloads : this.state.services;
+    const isDeployment = this.state.experiment.experimentKind === 'Deployment';
+    const usingMap = isDeployment ? this.state.workloads : this.state.services;
     return [
       <FormGroup
         fieldId="baseline"
-        label="Baseline"
+        label={isDeployment ? 'Deployment Baseline' : 'Service Baseline'}
         isRequired={true}
         isValid={this.state.experiment.baseline !== ''}
-        helperText="The baseline deployment of the target service (i.e. reviews-v1)"
-        helperTextInvalid="Baseline deployment cannot be empty"
+        helperText={
+          isDeployment
+            ? 'The baseline deployment of the target service (i.e. reviews-v1)'
+            : 'The baseline service (i.e. reviews)'
+        }
+        helperTextInvalid={isDeployment ? 'Baseline deployment cannot be empty' : 'Baseline service cannot be empty'}
       >
         <FormSelect
           id="baseline"
           value={this.state.experiment.baseline}
-          placeholder="Baseline Deployment"
+          placeholder={isDeployment ? 'Baseline Deployment' : 'Baseline Service'}
           onChange={value => this.changeExperiment('baseline', value)}
         >
           {usingMap.map((wk, index) => (
@@ -648,16 +657,20 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   }
 
   renderCandidateSelect() {
+    const isDeployment = this.state.experiment.experimentKind === 'Deployment';
     const usingMap = this.state.experiment.experimentKind === 'Deployment' ? this.state.workloads : this.state.services;
-
     return [
       <FormGroup
         fieldId="candidate"
-        label="Select Candidate"
+        label={isDeployment ? 'Deployment Candidate' : 'Service Candidate'}
         isRequired={true}
         isValid={this.state.experiment.candidate !== ''}
-        helperText="The candidate deployment of the target service (i.e. reviews-v2)"
-        helperTextInvalid="Candidate deployment cannot be empty"
+        helperText={
+          isDeployment
+            ? 'The candidate deployment of the target service (i.e. reviews-v2)'
+            : 'The candidate service (i.e. reviews)'
+        }
+        helperTextInvalid={isDeployment ? 'Candidate deployment cannot be empty' : 'Candidate service cannot be empty'}
       >
         <TextInput
           id="candidate"
@@ -856,6 +869,9 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     return (
       <>
         <Grid gutter="md">
+          <GridItem span={12}>
+            <div className={durationTimeStyle}>Total Experiment Duration: {this.state.totalDuration}</div>
+          </GridItem>
           <GridItem span={6}>
             <FormGroup
               fieldId="interval"
@@ -889,9 +905,6 @@ class ExperimentCreatePage extends React.Component<Props, State> {
               />
             </FormGroup>
           </GridItem>
-        </Grid>
-
-        <Grid gutter="md">
           <GridItem span={6}>
             <FormGroup
               fieldId="algorithm"
@@ -986,9 +999,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   renderCriteria() {
     return (
       <>
-        <h1 className="pf-c-title pf-m-xl">
-          <p>Assessment Criteria</p>
-        </h1>
+        Assesstment Criteria:
         <ExperimentCriteriaForm
           iter8Info={this.state.iter8Info}
           criterias={this.state.experiment.criterias}
@@ -1003,9 +1014,6 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   renderHost() {
     return (
       <>
-        <h1 className="pf-c-title pf-m-xl">
-          <p>Host / Gateways (Optional)</p>
-        </h1>
         <ExperimentHostForm
           hosts={this.state.experiment.hosts}
           hostsOfGateway={this.state.hostsOfGateway}
@@ -1054,34 +1062,56 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   renderFullPage() {
     return (
       <>
-        <hr />
         {this.renderCriteria()}
-        <Expandable
-          toggleText={
-            this.state.showAdvanced
-              ? history.location.pathname.endsWith('/new')
-                ? toggleTextFlat[1]
-                : toggleTextWizard[1]
-              : history.location.pathname.endsWith('/new')
-              ? toggleTextFlat[0]
-              : toggleTextWizard[0]
-          }
-          isExpanded={this.state.showAdvanced}
-          onToggle={() => {
-            this.setState({
-              showAdvanced: !this.state.showAdvanced
-            });
-          }}
-        >
-          <h1 className="pf-c-title pf-m-xl">Traffic Control </h1>
-          <div className={durationTimeStyle}>Total Experiment Duration: {this.state.totalDuration}</div>
-          {this.renderTraffic()}
-          <p>&nbsp; &nbsp;&nbsp;</p>
-          {this.renderHost()}
-        </Expandable>
+        <Form>
+          <FormGroup label="Show Traffic Control" fieldId="showTrafficControl">
+            <Switch
+              id="showTrafficControl"
+              label={' '}
+              labelOff={' '}
+              isChecked={this.state.showTrafficControl}
+              onChange={this.onChangeShowTrafficControl}
+            />
+          </FormGroup>
+          {this.state.showTrafficControl && (
+            <FormGroup label="Traffic Control" fieldId="trafficControl">
+              {this.renderTraffic()}
+            </FormGroup>
+          )}
+          <FormGroup label="Add Host/Gateway" fieldId="addHostGateway">
+            <Switch
+              id="addHostGateway"
+              label={' '}
+              labelOff={' '}
+              isChecked={this.state.addHostGateway}
+              onChange={this.onChangeHostGateway}
+            />
+          </FormGroup>
+          {this.state.addHostGateway && (
+            <FormGroup label="Hosts" fieldId="hostsGateways">
+              {this.renderHost()}
+            </FormGroup>
+          )}
+        </Form>
       </>
     );
   }
+
+  onChangeHostGateway = () => {
+    this.setState(prevState => {
+      return {
+        addHostGateway: !prevState.addHostGateway
+      };
+    });
+  };
+
+  onChangeShowTrafficControl = () => {
+    this.setState(prevState => {
+      return {
+        showTrafficControl: !prevState.showTrafficControl
+      };
+    });
+  };
 
   render() {
     const isFormValid = this.isMainFormValid() && this.isSCFormValid();
