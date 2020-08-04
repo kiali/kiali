@@ -133,7 +133,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
   }
 
   render() {
-    const tracesDetailsURL = `/namespaces/${this.props.namespace}/services/${this.props.app}?tab=traces`;
+    const tracesDetailsURL = `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces`;
     const currentID = this.props.selectedTrace?.traceID;
 
     return (
