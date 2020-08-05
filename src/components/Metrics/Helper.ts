@@ -57,13 +57,21 @@ export const extractLabelsSettingsOnSeries = (
             checked: true,
             displayName: agg.displayName,
             values: {},
-            defaultValue: true
+            defaultValue: true,
+            singleSelection: agg.singleSelection
           };
           extracted.set(agg.label, lblObj);
         } else {
           lblObj.checked = true;
         }
-        lblObj.values[value] = true;
+        if (!lblObj.values.hasOwnProperty(value)) {
+          if (agg.singleSelection && Object.keys(lblObj.values).length > 0) {
+            // In single-selection mode, do not activate more than one label value at a time
+            lblObj.values[value] = false;
+          } else {
+            lblObj.values[value] = true;
+          }
+        }
       }
     });
   });
@@ -77,7 +85,8 @@ export const extractLabelsSettings = (dashboard: DashboardModel, stateSettings: 
       checked: false,
       displayName: agg.displayName,
       values: {},
-      defaultValue: true
+      defaultValue: true,
+      singleSelection: agg.singleSelection
     })
   );
   dashboard.charts.forEach(chart => extractLabelsSettingsOnSeries(chart.metrics, dashboard.aggregations, newSettings));
@@ -88,12 +97,18 @@ export const mergeLabelFilter = (
   lblSettings: LabelsSettings,
   label: PromLabel,
   value: string,
-  checked: boolean
+  checked: boolean,
+  singleSelection: boolean
 ): LabelsSettings => {
   // Note: we don't really care that the new map references same objects as the old one (at least at the moment) so shallow copy is fine
   const newSettings = new Map(lblSettings);
   const objLbl = newSettings.get(label);
   if (objLbl) {
+    if (singleSelection) {
+      for (const v of Object.keys(objLbl.values)) {
+        objLbl.values[v] = false;
+      }
+    }
     objLbl.values[value] = checked;
   }
   return newSettings;
@@ -166,7 +181,8 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
         displayName: '',
         checked: true,
         values: {},
-        defaultValue: true
+        defaultValue: true,
+        singleSelection: false
       };
       if (kvpair[1]) {
         kvpair[1].split(',').forEach(v => {

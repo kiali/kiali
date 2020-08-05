@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dropdown, DropdownToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownToggle, Radio } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import isEqual from 'lodash/isEqual';
 import { PromLabel } from '@kiali/k-charted-pf4';
@@ -64,8 +64,8 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   };
 
-  onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean) => {
-    const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked);
+  onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean) => {
+    const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked, singleSelection);
     this.updateLabelsSettingsURL(newValues);
     this.setState({ labelsSettings: newValues }, () => this.props.onLabelsFiltersChanged(newValues));
   };
@@ -138,14 +138,25 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         lblObj.checked && lblObj.values
           ? Object.keys(lblObj.values).map(val => (
               <div key={'groupings_' + promName + '_' + val} className={secondLevelStyle}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={lblObj.values[val]}
-                    onChange={event => this.onLabelsFiltersChanged(promName, val, event.target.checked)}
+                {lblObj.singleSelection ? (
+                  <Radio
+                    isChecked={lblObj.values[val]}
+                    id={val}
+                    onChange={_ => this.onLabelsFiltersChanged(promName, val, true, true)}
+                    label={prettyLabelValues(promName, val)}
+                    name={val}
+                    value={val}
                   />
-                  <span className={checkboxStyle}>{prettyLabelValues(promName, val)}</span>
-                </label>
+                ) : (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={lblObj.values[val]}
+                      onChange={event => this.onLabelsFiltersChanged(promName, val, event.target.checked, false)}
+                    />
+                    <span className={checkboxStyle}>{prettyLabelValues(promName, val)}</span>
+                  </label>
+                )}
               </div>
             ))
           : null;

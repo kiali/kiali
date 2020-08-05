@@ -8,6 +8,7 @@ export type LabelSettings = {
   displayName: LabelDisplayName;
   values: SingleLabelValues;
   defaultValue: boolean;
+  singleSelection: boolean;
 };
 export type LabelsSettings = Map<PromLabel, LabelSettings>;
 
