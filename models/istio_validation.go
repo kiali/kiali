@@ -112,10 +112,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0102 Only HTTP methods and fully-qualified gRPC names are allowed",
 		Severity: WarningSeverity,
 	},
-	"authorizationpolicy.selector.workloadnotfound": {
-		Message:  "KIA0103 No matching workload found for authorization policy selector in this namespace",
-		Severity: WarningSeverity,
-	},
 	"authorizationpolicy.nodest.matchingregistry": {
 		Message:  "KIA0104 This host has no matching entry in the service registry",
 		Severity: ErrorSeverity,
@@ -172,6 +168,18 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0302 No matching workload found for gateway selector in this namespace",
 		Severity: WarningSeverity,
 	},
+	"generic.multimatch.selectorless": {
+		Message:  "KIA0002 More than one selector-less object in the same namespace",
+		Severity: ErrorSeverity,
+	},
+	"generic.multimatch.selector": {
+		Message:  "KIA0003 More than one object applied to the same workload",
+		Severity: ErrorSeverity,
+	},
+	"generic.selector.workloadnotfound": {
+		Message:  "KIA0003 No matching workload found for the selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"peerauthentication.mtls.destinationrulemissing": {
 		Message:  "KIA0401 Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
@@ -179,18 +187,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"peerauthentications.mtls.destinationrulemissing": {
 		Message:  "KIA0501 Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
-	},
-	"peerauthentication.multimatch.selectorless": {
-		Message:  "KIA0502 More than one selector-less PeerAuthentication in the same namespace",
-		Severity: WarningSeverity,
-	},
-	"peerauthentication.multimatch.selector": {
-		Message:  "KIA0503 More than one PeerAuthentication applied to the same workload",
-		Severity: WarningSeverity,
-	},
-	"peerauthentication.selector.workloadnotfound": {
-		Message:  "KIA0504 No matching workload found for PeerAuthentication selector in this namespace",
-		Severity: WarningSeverity,
 	},
 	"peerauthentications.mtls.disabledestinationrulemissing": {
 		Message:  "KIA0505 Destination Rule disabling namespace-wide mTLS is missing",
@@ -203,18 +199,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
-	},
-	"requestauthentication.multimatch.selectorless": {
-		Message:  "KIA1201 More than one selector-less RequestAuthentication in the same namespace",
-		Severity: WarningSeverity,
-	},
-	"requestauthentication.multimatch.selector": {
-		Message:  "KIA1202 More than one RequestAuthentication applied to the same workload",
-		Severity: ErrorSeverity,
-	},
-	"requestauthentication.selector.workloadnotfound": {
-		Message:  "KIA1203 No matching workload found for the selector in this namespace",
-		Severity: WarningSeverity,
 	},
 	"service.deployment.port.mismatch": {
 		Message:  "KIA0701 Deployment exposing same port as Service not found",
@@ -236,14 +220,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0903 ServiceRole does not exists in this namespace",
 		Severity: ErrorSeverity,
 	},
-	"sidecar.selector.workloadnotfound": {
-		Message:  "KIA1001 No matching workload found for authorization policy selector in this namespace",
-		Severity: WarningSeverity,
-	},
-	"sidecar.multimatch.selectorless": {
-		Message:  "KIA1002 More than one selector-less Sidecar in the same namespace",
-		Severity: ErrorSeverity,
-	},
 	"sidecar.egress.invalidhostformat": {
 		Message:  "KIA1003 Invalid host format. 'namespace/dnsName' format expected",
 		Severity: ErrorSeverity,
@@ -251,10 +227,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"sidecar.egress.servicenotfound": {
 		Message:  "KIA1004 This host has no matching entry in the service registry",
 		Severity: WarningSeverity,
-	},
-	"sidecar.multimatch.selector": {
-		Message:  "KIA1005 More than one Sidecar applied to the same workload",
-		Severity: ErrorSeverity,
 	},
 	"sidecar.global.selector": {
 		Message:  "KIA1006 Global default sidecar should not have workloadSelector",

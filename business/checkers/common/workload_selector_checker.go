@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -38,16 +36,16 @@ func WorkloadSelectorNoWorkloadFoundChecker(subjectType string, subject kubernet
 }
 
 func (wsc GenericNoWorkloadFoundChecker) Check() ([]*models.IstioCheck, bool) {
-	checks, valid := make([]*models.IstioCheck, 0), true
+	checks := make([]*models.IstioCheck, 0)
 
 	labels := wsc.GetSelectorLabels(wsc.Subject)
 	if len(labels) > 0 {
 		if !wsc.hasMatchingWorkload(labels) {
-			check := models.Build(fmt.Sprintf("%s.selector.workloadnotfound", wsc.SubjectType), wsc.Path)
+			check := models.Build("generic.selector.workloadnotfound", wsc.Path)
 			checks = append(checks, &check)
 		}
 	}
-	return checks, valid
+	return checks, true
 }
 
 func (wsc GenericNoWorkloadFoundChecker) hasMatchingWorkload(labelSelector map[string]string) bool {

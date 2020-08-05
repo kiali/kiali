@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -100,7 +98,7 @@ func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects [
 
 	for _, subjectWithIndex := range subjects {
 		references := extractReferences(subjectWithIndex.Index, subjects)
-		checks := models.Build(fmt.Sprintf("%s.multimatch.selectorless", m.SubjectType), m.Path)
+		checks := models.Build("generic.multimatch.selectorless", m.Path)
 		validations.MergeValidations(
 			models.IstioValidations{
 				*subjectWithIndex.Key: &models.IstioValidation{
@@ -184,7 +182,7 @@ func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.Is
 			refs = append(refs, scs[i+1:]...)
 		}
 
-		checks := models.Build(fmt.Sprintf("%s.multimatch.selector", m.SubjectType), m.Path)
+		checks := models.Build("generic.multimatch.selector", m.Path)
 		validation := models.IstioValidations{
 			sck: &models.IstioValidation{
 				Name:       sck.Name,
