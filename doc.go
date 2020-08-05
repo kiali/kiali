@@ -542,7 +542,6 @@ type namespaceResponse struct {
 	Body models.Namespace
 }
 
-
 // Listing all the information related to a workload
 // swagger:response serviceDetailsResponse
 type ServiceDetailsResponse struct {

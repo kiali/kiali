@@ -114,4 +114,3 @@ func (o *K8SClientMock) UpdateWorkload(namespace string, workloadName string, wo
 	args := o.Called(namespace, workloadName, workloadType, jsonPatch)
 	return args.Error(1)
 }
-
