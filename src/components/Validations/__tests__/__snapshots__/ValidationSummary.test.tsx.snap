@@ -62,7 +62,7 @@ exports[`ValidationSummary renders error icon when all components are valid 1`] 
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",
@@ -123,7 +123,7 @@ exports[`ValidationSummary renders error icon when all components are valid 2`] 
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",
@@ -187,7 +187,7 @@ exports[`ValidationSummary renders success icon when all components are valid 1`
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",
@@ -248,7 +248,7 @@ exports[`ValidationSummary renders success icon when all components are valid 2`
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",
@@ -309,7 +309,7 @@ exports[`ValidationSummary renders warning icon when all components are valid 1`
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",
@@ -370,7 +370,7 @@ exports[`ValidationSummary renders warning icon when all components are valid 2`
   content={
     <React.Fragment>
       <Text
-        component="h4"
+        component="p"
         style={
           Object {
             "textAlign": "left",

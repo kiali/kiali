@@ -72,7 +72,7 @@ export class ValidationSummary extends React.PureComponent<Props> {
   tooltipSummary() {
     return (
       <>
-        <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.h4}>
+        <Text style={{ textAlign: 'left', textEmphasis: 'strong' }} component={TextVariants.p}>
           Istio config objects analyzed: {this.props.objectCount}
         </Text>
         <div className={tooltipListStyle}>
