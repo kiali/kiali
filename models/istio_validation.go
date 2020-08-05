@@ -85,21 +85,22 @@ const (
 )
 
 var ObjectTypeSingular = map[string]string{
-	"gateways":              "gateway",
-	"virtualservices":       "virtualservice",
-	"destinationrules":      "destinationrule",
-	"serviceentries":        "serviceentry",
-	"rules":                 "rule",
-	"quotaspecs":            "quotaspec",
-	"quotaspecbindings":     "quotaspecbinding",
-	"servicemeshpolicies":   "servicemeshpolicy",
-	"policies":              "policy",
-	"serviceroles":          "servicerole",
-	"servicerolebindings":   "servicerolebinding",
-	"clusterrbacconfigs":    "clusterrbacconfig",
-	"authorizationpolicies": "authorizationpolicy",
-	"sidecars":              "sidecar",
-	"peerauthentications":   "peerauthentication",
+	"gateways":               "gateway",
+	"virtualservices":        "virtualservice",
+	"destinationrules":       "destinationrule",
+	"serviceentries":         "serviceentry",
+	"rules":                  "rule",
+	"quotaspecs":             "quotaspec",
+	"quotaspecbindings":      "quotaspecbinding",
+	"servicemeshpolicies":    "servicemeshpolicy",
+	"policies":               "policy",
+	"serviceroles":           "servicerole",
+	"servicerolebindings":    "servicerolebinding",
+	"clusterrbacconfigs":     "clusterrbacconfig",
+	"authorizationpolicies":  "authorizationpolicy",
+	"sidecars":               "sidecar",
+	"peerauthentications":    "peerauthentication",
+	"requestauthentications": "requestauthentication",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -202,6 +203,18 @@ var checkDescriptors = map[string]IstioCheck{
 	"port.name.mismatch": {
 		Message:  "KIA0601 Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
+	},
+	"requestauthentication.multimatch.selectorless": {
+		Message:  "KIA1201 More than one selector-less RequestAuthentication in the same namespace",
+		Severity: WarningSeverity,
+	},
+	"requestauthentication.multimatch.selector": {
+		Message:  "KIA1005 More than one RequestAuthentication applied to the same workload",
+		Severity: ErrorSeverity,
+	},
+	"requestauthentication.selector.workloadnotfound": {
+		Message:  "KIA1001 No matching workload found for the selector in this namespace",
+		Severity: WarningSeverity,
 	},
 	"service.deployment.port.mismatch": {
 		Message:  "KIA0701 Deployment exposing same port as Service not found",
