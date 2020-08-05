@@ -62,17 +62,17 @@ func (ws ReferenceMap) HasMultipleReferences(wk models.IstioValidationKey) bool 
 func (m GenericMultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(m.analyzeSelectorLessSidecars())
-	validations.MergeValidations(m.analyzeSelectorSidecars())
+	validations.MergeValidations(m.analyzeSelectorLessSubjects())
+	validations.MergeValidations(m.analyzeSelectorSubjects())
 
 	return validations
 }
 
-func (m GenericMultiMatchChecker) analyzeSelectorLessSidecars() models.IstioValidations {
-	return m.buildSelectorLessSidecarValidations(m.selectorLessSidecars())
+func (m GenericMultiMatchChecker) analyzeSelectorLessSubjects() models.IstioValidations {
+	return m.buildSelectorLessSubjectValidations(m.selectorLessSubjects())
 }
 
-func (m GenericMultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
+func (m GenericMultiMatchChecker) selectorLessSubjects() []KeyWithIndex {
 	swi := make([]KeyWithIndex, 0, len(m.Subjects))
 
 	for i, s := range m.Subjects {
@@ -91,21 +91,21 @@ func (m GenericMultiMatchChecker) selectorLessSidecars() []KeyWithIndex {
 	return swi
 }
 
-func (m GenericMultiMatchChecker) buildSelectorLessSidecarValidations(sidecars []KeyWithIndex) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects []KeyWithIndex) models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	if len(sidecars) < 2 {
+	if len(subjects) < 2 {
 		return validations
 	}
 
-	for _, sidecarWithIndex := range sidecars {
-		references := extractReferences(sidecarWithIndex.Index, sidecars)
+	for _, subjectWithIndex := range subjects {
+		references := extractReferences(subjectWithIndex.Index, subjects)
 		checks := models.Build(fmt.Sprintf("%s.multimatch.selectorless", m.SubjectType), m.Path)
 		validations.MergeValidations(
 			models.IstioValidations{
-				*sidecarWithIndex.Key: &models.IstioValidation{
-					Name:       sidecarWithIndex.Key.Name,
-					ObjectType: sidecarWithIndex.Key.ObjectType,
+				*subjectWithIndex.Key: &models.IstioValidation{
+					Name:       subjectWithIndex.Key.Name,
+					ObjectType: subjectWithIndex.Key.ObjectType,
 					Valid:      false,
 					References: references,
 					Checks: []*models.IstioCheck{
@@ -118,10 +118,10 @@ func (m GenericMultiMatchChecker) buildSelectorLessSidecarValidations(sidecars [
 	return validations
 }
 
-func extractReferences(index int, sidecars []KeyWithIndex) []models.IstioValidationKey {
-	references := make([]models.IstioValidationKey, 0, len(sidecars)-1)
+func extractReferences(index int, subjects []KeyWithIndex) []models.IstioValidationKey {
+	references := make([]models.IstioValidationKey, 0, len(subjects)-1)
 
-	for _, s := range sidecars {
+	for _, s := range subjects {
 		if s.Index != index {
 			references = append(references, *s.Key)
 		}
@@ -130,16 +130,16 @@ func extractReferences(index int, sidecars []KeyWithIndex) []models.IstioValidat
 	return references
 }
 
-func (m GenericMultiMatchChecker) analyzeSelectorSidecars() models.IstioValidations {
-	sidecars := m.multiMatchSidecars()
-	return m.buildSidecarValidations(sidecars)
+func (m GenericMultiMatchChecker) analyzeSelectorSubjects() models.IstioValidations {
+	subjects := m.multiMatchSubjects()
+	return m.buildSubjectValidations(subjects)
 }
 
-func (m GenericMultiMatchChecker) multiMatchSidecars() ReferenceMap {
-	workloadSidecars := ReferenceMap{}
+func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
+	workloadSubjects := ReferenceMap{}
 
 	for _, s := range m.Subjects {
-		sidecarKey := models.BuildKey(m.SubjectType, s.GetObjectMeta().Name, s.GetObjectMeta().Namespace)
+		subjectKey := models.BuildKey(m.SubjectType, s.GetObjectMeta().Name, s.GetObjectMeta().Namespace)
 
 		selector := labels.SelectorFromSet(m.GetSelectorLabels(s))
 		if selector.Empty() {
@@ -152,32 +152,32 @@ func (m GenericMultiMatchChecker) multiMatchSidecars() ReferenceMap {
 			}
 
 			workloadKey := models.BuildKey(w.Type, w.Name, m.WorkloadList.Namespace.Name)
-			workloadSidecars.Add(workloadKey, sidecarKey)
+			workloadSubjects.Add(workloadKey, subjectKey)
 		}
 	}
 
-	return workloadSidecars
+	return workloadSubjects
 }
 
-func (m GenericMultiMatchChecker) buildSidecarValidations(workloadSidecar ReferenceMap) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildSubjectValidations(workloadSubject ReferenceMap) models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	for wk, scs := range workloadSidecar {
-		if !workloadSidecar.HasMultipleReferences(wk) {
+	for wk, scs := range workloadSubject {
+		if !workloadSubject.HasMultipleReferences(wk) {
 			continue
 		}
 
-		validations.MergeValidations(m.buildMultipleSidecarsValidation(scs))
+		validations.MergeValidations(m.buildMultipleSubjectValidation(scs))
 	}
 
 	return validations
 }
 
-func (m GenericMultiMatchChecker) buildMultipleSidecarsValidation(scs []models.IstioValidationKey) models.IstioValidations {
+func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.IstioValidationKey) models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for i, sck := range scs {
-		// Remove validation sidecar from references
+		// Remove validation subject from references
 		refs := make([]models.IstioValidationKey, 0, len(scs)-1)
 		refs = append(refs, scs[:i]...)
 		if len(scs) > i {
