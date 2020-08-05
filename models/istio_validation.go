@@ -209,11 +209,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"requestauthentication.multimatch.selector": {
-		Message:  "KIA1005 More than one RequestAuthentication applied to the same workload",
+		Message:  "KIA1202 More than one RequestAuthentication applied to the same workload",
 		Severity: ErrorSeverity,
 	},
 	"requestauthentication.selector.workloadnotfound": {
-		Message:  "KIA1001 No matching workload found for the selector in this namespace",
+		Message:  "KIA1203 No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"service.deployment.port.mismatch": {
