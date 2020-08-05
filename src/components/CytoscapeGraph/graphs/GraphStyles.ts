@@ -618,8 +618,8 @@ export class GraphStyles {
         selector: '*.find[^isGroup]',
         style: {
           'overlay-color': PfColors.Gold400,
-          'overlay-padding': '8px',
-          'overlay-opacity': 0.5
+          'overlay-padding': '7px',
+          'overlay-opacity': 0.3
         }
       },
       {

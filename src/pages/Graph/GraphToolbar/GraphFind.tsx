@@ -42,8 +42,9 @@ type GraphFindProps = ReduxProps & {
 };
 
 type GraphFindState = {
-  errorMessage: string;
+  findError?: string;
   findInputValue: string;
+  hideError?: string;
   hideInputValue: string;
 };
 
@@ -76,7 +77,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     super(props);
     const findValue = props.findValue ? props.findValue : '';
     const hideValue = props.hideValue ? props.hideValue : '';
-    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue };
+    this.state = { findInputValue: findValue, hideInputValue: hideValue };
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -91,9 +92,18 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
     const graphChanged = this.props.updateTime !== nextProps.updateTime;
     const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
-    const errorChanged = this.state.errorMessage !== nextState.errorMessage;
+    const findErrorChanged = this.state.findError !== nextState.findError;
+    const hideErrorChanged = this.state.hideError !== nextState.hideError;
 
-    return cyChanged || findChanged || hideChanged || graphChanged || showFindHelpChanged || errorChanged;
+    return (
+      cyChanged ||
+      findChanged ||
+      hideChanged ||
+      graphChanged ||
+      showFindHelpChanged ||
+      findErrorChanged ||
+      hideErrorChanged
+    );
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
@@ -123,9 +133,6 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   }
 
   render() {
-    const isFindValid: boolean = !(this.props.findValue.length > 0 && this.state.errorMessage.length > 0);
-    const isHideValid: boolean = !(this.props.hideValue.length > 0 && this.state.errorMessage.length > 0);
-
     return (
       <TourStopContainer info={GraphTourStops.Find}>
         <Form style={{ float: 'left' }} isHorizontal={true}>
@@ -139,7 +146,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               style={{ ...inputWidth }}
               type="text"
               autoComplete="on"
-              isValid={isFindValid}
+              isValid={!this.state.findError}
               onChange={this.updateFind}
               defaultValue={this.state.findInputValue}
               onKeyPress={this.checkSubmitFind}
@@ -160,7 +167,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               }}
               style={{ ...inputWidth }}
               autoComplete="on"
-              isValid={isHideValid}
+              isValid={!this.state.hideError}
               type="text"
               onChange={this.updateHide}
               defaultValue={this.state.hideInputValue}
@@ -187,7 +194,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
                 </Button>
               </Tooltip>
             )}
-            {this.state.errorMessage && <div style={{ color: 'red' }}>{this.state.errorMessage}</div>}
+            {this.state.findError && <div style={{ color: 'red' }}>{this.state.findError}</div>}
+            {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
           </span>
         </Form>
       </TourStopContainer>
@@ -202,7 +210,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if ('' === val) {
       this.clearFind();
     } else {
-      this.setState({ findInputValue: val, errorMessage: '' });
+      const diff = Math.abs(val.length - this.state.findInputValue.length);
+      this.setState({ findInputValue: val, findError: undefined });
+      // assume autocomplete or paste if length change is greater than a single key, so submit
+      if (diff > 1) {
+        this.props.setFindValue(val);
+      }
     }
   };
 
@@ -210,7 +223,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if ('' === val) {
       this.clearHide();
     } else {
-      this.setState({ hideInputValue: val, errorMessage: '' });
+      const diff = Math.abs(val.length - this.state.hideInputValue.length);
+      this.setState({ hideInputValue: val, hideError: undefined });
+      // assume autocomplete or paste if length change is greater than a single key, so submit
+      if (diff > 1) {
+        this.props.setHideValue(val);
+      }
     }
   };
 
@@ -249,7 +267,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
-    this.setState({ findInputValue: '', errorMessage: '' });
+    this.setState({ findInputValue: '', findError: undefined });
     this.props.setFindValue('');
   };
 
@@ -260,7 +278,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
-    this.setState({ hideInputValue: '', errorMessage: '' });
+    this.setState({ hideInputValue: '', hideError: undefined });
     this.props.setHideValue('');
   };
 
@@ -271,7 +289,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     compressOnHideChanged: boolean,
     layoutChanged: boolean
   ) => {
-    const selector = this.parseValue(this.props.hideValue);
+    const selector = this.parseValue(this.props.hideValue, false);
     let prevRemoved = this.removedElements;
 
     cy.startBatch();
@@ -368,7 +386,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   }
 
   private handleFind = (cy: any) => {
-    const selector = this.parseValue(this.props.findValue);
+    const selector = this.parseValue(this.props.findValue, true);
 
     cy.startBatch();
     // unhighlight old find-hits
@@ -380,14 +398,18 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     cy.endBatch();
   };
 
-  private setErrorMsg(errorMessage: string): undefined {
-    if (errorMessage !== this.state.errorMessage) {
-      this.setState({ errorMessage: errorMessage });
+  private setError(error: string | undefined, isFind: boolean): undefined {
+    if (isFind && error !== this.state.findError) {
+      const findError = !!error ? `Find: ${error}` : undefined;
+      this.setState({ findError: findError });
+    } else if (error !== this.state.hideError) {
+      const hideError = !!error ? `Hide: ${error}` : undefined;
+      this.setState({ hideError: hideError });
     }
     return undefined;
   }
 
-  private parseValue = (val: string): string | undefined => {
+  private parseValue = (val: string, isFind: boolean): string | undefined => {
     let preparedVal = this.prepareValue(val);
     if (!preparedVal) {
       return undefined;
@@ -398,24 +420,24 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     const conjunctive = preparedVal.includes(' AND ');
     const disjunctive = preparedVal.includes(' OR ');
     if (conjunctive && disjunctive) {
-      return this.setErrorMsg(`Expression can not contain both 'AND' and 'OR'`);
+      return this.setError(`Expression can not contain both 'AND' and 'OR'`, isFind);
     }
     const separator = disjunctive ? ',' : '';
     const expressions = disjunctive ? preparedVal.split(' OR ') : preparedVal.split(' AND ');
     let selector;
 
     for (const expression of expressions) {
-      const parsedExpression = this.parseExpression(expression, conjunctive, disjunctive);
+      const parsedExpression = this.parseExpression(expression, conjunctive, disjunctive, isFind);
       if (!parsedExpression) {
         return undefined;
       }
-      selector = this.appendSelector(selector, parsedExpression, separator);
+      selector = this.appendSelector(selector, parsedExpression, separator, isFind);
       if (!selector) {
         return undefined;
       }
     }
     // parsed successfully, clear any previous error message
-    this.setErrorMsg('');
+    this.setError(undefined, isFind);
     return selector;
   };
 
@@ -444,7 +466,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   private parseExpression = (
     expression: string,
     conjunctive: boolean,
-    disjunctive: boolean
+    disjunctive: boolean,
+    isFind: boolean
   ): ParsedExpression | undefined => {
     let op;
     if (expression.includes('!=')) {
@@ -476,17 +499,17 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     }
     if (!op) {
       if (expression.split(' ').length > 1) {
-        return this.setErrorMsg(`No valid operator found in expression`);
+        return this.setError(`No valid operator found in expression`, isFind);
       }
 
       const unaryExpression = this.parseUnaryFindExpression(expression.trim(), false);
-      return unaryExpression ? unaryExpression : this.setErrorMsg(`Invalid Node or Edge operand`);
+      return unaryExpression ? unaryExpression : this.setError(`Invalid Node or Edge operand`, isFind);
     }
 
     const tokens = expression.split(op);
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
-      return unaryExpression ? unaryExpression : this.setErrorMsg(`Invalid Node or Edge operand`);
+      return unaryExpression ? unaryExpression : this.setError(`Invalid Node or Edge operand`, isFind);
     }
 
     const field = tokens[0].trim();
@@ -499,27 +522,27 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'app':
         return { target: 'node', selector: `[${CyNode.app} ${op} "${val}"]` };
       case 'grpcin': {
-        const s = this.getNumericSelector(CyNode.grpcIn, op, val, expression);
+        const s = this.getNumericSelector(CyNode.grpcIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'grpcout': {
-        const s = this.getNumericSelector(CyNode.grpcOut, op, val, expression);
+        const s = this.getNumericSelector(CyNode.grpcOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'httpin': {
-        const s = this.getNumericSelector(CyNode.httpIn, op, val, expression);
+        const s = this.getNumericSelector(CyNode.httpIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'httpout': {
-        const s = this.getNumericSelector(CyNode.httpOut, op, val, expression);
+        const s = this.getNumericSelector(CyNode.httpOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'name': {
         const isNegation = op.startsWith('!');
         if (disjunctive && isNegation) {
-          return this.setErrorMsg(`Can not use 'OR' with negated 'name' operand`);
+          return this.setError(`Can not use 'OR' with negated 'name' operand`, isFind);
         } else if (conjunctive) {
-          return this.setErrorMsg(`Can not use 'AND' with 'name' operand`);
+          return this.setError(`Can not use 'AND' with 'name' operand`, isFind);
         }
         const agg = `[${CyNode.aggregateValue} ${op} "${val}"]`;
         const app = `[${CyNode.app} ${op} "${val}"]`;
@@ -551,8 +574,9 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
           case NodeType.UNKNOWN:
             return { target: 'node', selector: `[${CyNode.nodeType} ${op} "${nodeType}"]` };
           default:
-            this.setErrorMsg(
-              `Invalid node type [${nodeType}]. Expected app | operation | service | unknown | workload`
+            this.setError(
+              `Invalid node type [${nodeType}]. Expected app | operation | service | unknown | workload`,
+              isFind
             );
         }
         return undefined;
@@ -566,11 +590,11 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'service':
         return { target: 'node', selector: `[${CyNode.service} ${op} "${val}"]` };
       case 'tcpin': {
-        const s = this.getNumericSelector(CyNode.tcpIn, op, val, expression);
+        const s = this.getNumericSelector(CyNode.tcpIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'tcpout': {
-        const s = this.getNumericSelector(CyNode.tcpOut, op, val, expression);
+        const s = this.getNumericSelector(CyNode.tcpOut, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'version':
@@ -582,29 +606,29 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       // edges..
       //
       case 'grpc': {
-        const s = this.getNumericSelector(CyEdge.grpc, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.grpc, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%grpcerror':
       case '%grpcerr': {
-        const s = this.getNumericSelector(CyEdge.grpcPercentErr, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.grpcPercentErr, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%grpctraffic': {
-        const s = this.getNumericSelector(CyEdge.grpcPercentReq, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.grpcPercentReq, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'http': {
-        const s = this.getNumericSelector(CyEdge.http, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.http, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%httperror':
       case '%httperr': {
-        const s = this.getNumericSelector(CyEdge.httpPercentErr, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.httpPercentErr, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%httptraffic': {
-        const s = this.getNumericSelector(CyEdge.httpPercentReq, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.httpPercentReq, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'protocol': {
@@ -616,26 +640,32 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
           AlertUtils.addSuccess('Enabling "response time" edge labels for graph find/hide expression');
           this.props.setEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
         }
-        const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'tcp': {
-        const s = this.getNumericSelector(CyEdge.tcp, op, val, expression);
+        const s = this.getNumericSelector(CyEdge.tcp, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
-        return this.setErrorMsg(`Invalid operand [${field}]`);
+        return this.setError(`Invalid operand [${field}]`, isFind);
     }
   };
 
-  private getNumericSelector(field: string, op: string, val: any, _expression: string): string | undefined {
+  private getNumericSelector(
+    field: string,
+    op: string,
+    val: any,
+    _expression: string,
+    isFind: boolean
+  ): string | undefined {
     switch (op) {
       case '>':
       case '<':
       case '>=':
       case '<=':
         if (isNaN(val)) {
-          return this.setErrorMsg(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`);
+          return this.setError(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`, isFind);
         }
         return `[${field} ${op} ${val}]`;
       case '=':
@@ -649,7 +679,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         }
         return `[${field} ${op} ${val}]`;
       default:
-        return this.setErrorMsg(`Invalid operator [${op}] for numeric condition`);
+        return this.setError(`Invalid operator [${op}] for numeric condition`, isFind);
     }
   }
 
@@ -706,13 +736,14 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   private appendSelector = (
     selector: string,
     parsedExpression: ParsedExpression,
-    separator: string
+    separator: string,
+    isFind: boolean
   ): string | undefined => {
     if (!selector) {
       return parsedExpression.target + parsedExpression.selector;
     }
     if (!selector.startsWith(parsedExpression.target)) {
-      return this.setErrorMsg('Invalid expression. Can not mix node and edge criteria.');
+      return this.setError('Invalid expression. Can not mix node and edge criteria.', isFind);
     }
     return selector + separator + parsedExpression.selector;
   };
