@@ -3505,6 +3505,10 @@
         "label": {
           "type": "string",
           "x-go-name": "Label"
+        },
+        "singleSelection": {
+          "type": "boolean",
+          "x-go-name": "SingleSelection"
         }
       },
       "x-go-package": "github.com/kiali/k-charted/model"
