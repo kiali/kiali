@@ -30,3 +30,8 @@ func (o *K8SClientMock) GetProjects(labelSelector string) ([]osproject_v1.Projec
 	args := o.Called(labelSelector)
 	return args.Get(0).([]osproject_v1.Project), args.Error(1)
 }
+
+func (o *K8SClientMock) UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error) {
+	args := o.Called(project)
+	return args.Get(0).(*osproject_v1.Project), args.Error(1)
+}

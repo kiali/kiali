@@ -105,7 +105,13 @@ func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet
 	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
 }
 
+func (o *K8SClientMock) UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error) {
+	args := o.Called(namespace, jsonPatch)
+	return args.Get(0).(*core_v1.Namespace), args.Error(1)
+}
+
 func (o *K8SClientMock) UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error {
 	args := o.Called(namespace, workloadName, workloadType, jsonPatch)
 	return args.Error(1)
 }
+

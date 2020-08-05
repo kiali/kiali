@@ -641,6 +641,49 @@
         }
       }
     },
+    "/namespaces/{namespace}": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "summary": "Endpoint to update the Namespace configuration using Json Merge Patch strategy.",
+        "operationId": "namespaceUpdate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
       "get": {
         "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
@@ -7634,6 +7677,12 @@
         "items": {
           "$ref": "#/definitions/namespace"
         }
+      }
+    },
+    "namespaceResponse": {
+      "description": "namespaceResponse is a basic namespace",
+      "schema": {
+        "$ref": "#/definitions/namespace"
       }
     },
     "namespaceTlsResponse": {

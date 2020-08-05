@@ -212,8 +212,9 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName     string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -322,6 +323,7 @@ type Config struct {
 	InCluster                bool                     `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
 	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
+	IstioInjectionAction     bool                     `yaml:"istio_injection_action,omitempty"`
 	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
 	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
@@ -435,9 +437,11 @@ func NewConfig() (c *Config) {
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
+		IstioInjectionAction: true,
 		IstioLabels: IstioLabels{
-			AppLabelName:     "app",
-			VersionLabelName: "version",
+			AppLabelName:       "app",
+			InjectionLabelName: "istio-injection",
+			VersionLabelName:   "version",
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,

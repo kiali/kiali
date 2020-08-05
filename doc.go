@@ -63,7 +63,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails spansList tracesList errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -534,6 +534,14 @@ type namespaceAppHealthResponse struct {
 	// in:body
 	Body models.NamespaceAppHealth
 }
+
+// namespaceResponse is a basic namespace
+// swagger:response namespaceResponse
+type namespaceResponse struct {
+	// in:body
+	Body models.Namespace
+}
+
 
 // Listing all the information related to a workload
 // swagger:response serviceDetailsResponse

@@ -582,6 +582,31 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceList,
 			true,
 		},
+		// swagger:route PATCH /namespaces/{namespace} namespaces namespaceUpdate
+		// ---
+		// Endpoint to update the Namespace configuration using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: namespaceResponse
+		//
+		{
+			"NamespaceUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}",
+			handlers.NamespaceUpdate,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/metrics services serviceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single service
