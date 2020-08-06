@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -8,7 +9,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"io/ioutil"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
