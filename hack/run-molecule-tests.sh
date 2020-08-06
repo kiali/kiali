@@ -23,6 +23,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_DEBUG="$2"
       shift;shift
       ;;
+    -hcr|--helm-charts-repo)
+      HELM_CHARTS_REPO="$2"
+      shift;shift
+      ;;
     -ksh|--kiali-src-home)
       KIALI_SRC_HOME="$2"
       shift;shift
@@ -52,25 +56,26 @@ while [[ $# -gt 0 ]]; do
 
 $0 [option...] command
 
--at|--all-tests        Space-separated list of all the molecule tests to be run. Note that this list may not be the
-                       tests that are actually run - see --skip-tests.
-                       The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
--c|--color             True if you want color in the output. (default: true)
--ce|--client-exe       Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
--ct|--cluster-type     The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
--d|--debug             True if you want the molecule tests to output large amounts of debug messages. (default: true)
--ksh|--kiali_src-home  Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
--mp|--minikube-profile If cluster type is 'minikube' you can specify the profile that is in use via this option.
--nd|--never-destroy    Do not have the molecule framework destroy the test scaffolding. Setting this to true
-                       will help test failures by allowing you to examine the operator logs after a test finished.
-                       Default is 'false' - the operator resources will be deleted after a test completes, no matter
-                       if the test succeeded or failed.
--st|--skip-tests       Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
--tld|--test-logs-dir   Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
--udi|--use-dev-images  If true, the tests will use locally built dev images of Kiali and the operator. When using dev
-                       images, you must have already pushed locally built dev images into your cluster.
-                       If false, the cluster will put the latest images found on quay.io.
-                       Default: false
+-at|--all-tests         Space-separated list of all the molecule tests to be run. Note that this list may not be the
+                        tests that are actually run - see --skip-tests.
+                        The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
+-c|--color              True if you want color in the output. (default: true)
+-ce|--client-exe        Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
+-ct|--cluster-type      The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
+-d|--debug              True if you want the molecule tests to output large amounts of debug messages. (default: true)
+-hcr|--helm-charts-repo Location of the helm charts git repo.
+-ksh|--kiali_src-home   Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-mp|--minikube-profile  If cluster type is 'minikube' you can specify the profile that is in use via this option.
+-nd|--never-destroy     Do not have the molecule framework destroy the test scaffolding. Setting this to true
+                        will help test failures by allowing you to examine the operator logs after a test finished.
+                        Default is 'false' - the operator resources will be deleted after a test completes, no matter
+                        if the test succeeded or failed.
+-st|--skip-tests        Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
+-tld|--test-logs-dir    Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
+-udi|--use-dev-images   If true, the tests will use locally built dev images of Kiali and the operator. When using dev
+                        images, you must have already pushed locally built dev images into your cluster.
+                        If false, the cluster will put the latest images found on quay.io.
+                        Default: false
 HELPMSG
       exit 1
       ;;
@@ -84,9 +89,12 @@ done
 # Where the Kiali github source is located on the local machine. The operator/molecule test directory should exist here.
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 KIALI_SRC_HOME="${KIALI_SRC_HOME:-${SCRIPT_ROOT}/..}"
+HELM_CHARTS_REPO="${HELM_CHARTS_REPO:-${SCRIPT_ROOT}/../../../../../../helm-charts}"
+if [ ! -f "${HELM_CHARTS_REPO}/kiali-operator/Chart.yaml" ]; then echo "Kiali helm charts repo directory is invalid: ${HELM_CHARTS_REPO}"; exit 1; fi
 if [ ! -d "${KIALI_SRC_HOME}" ]; then echo "Kiali source home directory is invalid: ${KIALI_SRC_HOME}"; exit 1; fi
 if [ ! -d "${KIALI_SRC_HOME}/operator/molecule" ]; then echo "Kiali source home directory is missing the operator molecule tests: ${KIALI_SRC_HOME}"; exit 1; fi
 KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}"; pwd -P)"
+HELM_CHARTS_REPO="$(cd "${HELM_CHARTS_REPO}"; pwd -P)"
 
 # Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
 export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
@@ -237,7 +245,7 @@ echo "=== BUILD HELM CHARTS ==="
 echo "========================="
 echo
 
-make -C operator build-helm-chart
+make -C ${HELM_CHARTS_REPO} build-helm-charts
 
 # Run the tests
 echo
