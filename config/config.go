@@ -311,6 +311,10 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
+type KialiFeatureFlags struct {
+	IstioInjectionAction bool `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
@@ -323,9 +327,9 @@ type Config struct {
 	InCluster                bool                     `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
 	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
-	IstioInjectionAction     bool                     `yaml:"istio_injection_action,omitempty"`
 	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
+	KialiFeatureFlags        KialiFeatureFlags        `yaml:"kiali_feature_flags,omitempty"`
 	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
 	Server                   Server                   `yaml:",omitempty"`
@@ -437,11 +441,13 @@ func NewConfig() (c *Config) {
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
-		IstioInjectionAction: true,
 		IstioLabels: IstioLabels{
 			AppLabelName:       "app",
 			InjectionLabelName: "istio-injection",
 			VersionLabelName:   "version",
+		},
+		KialiFeatureFlags: KialiFeatureFlags{
+			IstioInjectionAction: true,
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
