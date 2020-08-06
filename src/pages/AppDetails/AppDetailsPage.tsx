@@ -46,6 +46,7 @@ const paramToTab: { [key: string]: number } = {
   out_metrics: 3,
   traces: 4
 };
+const nextTabIndex = 5;
 
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
@@ -89,18 +90,17 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   };
 
   private runtimeTabs() {
-    const staticTabsCount = 4;
     let dynamicTabsCount: number = 0;
 
     const tabs: JSX.Element[] = [];
     if (this.state.app) {
       this.state.app.runtimes.forEach(runtime => {
         runtime.dashboardRefs.forEach(dashboard => {
-          const tabKey = dynamicTabsCount + staticTabsCount;
-          paramToTab[dashboard.template] = tabKey;
+          const tabKey = dynamicTabsCount + nextTabIndex;
+          paramToTab['cd-' + dashboard.template] = tabKey;
 
           const tab = (
-            <Tab title={dashboard.title} key={dashboard.template} eventKey={tabKey}>
+            <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
               <CustomMetricsContainer
                 namespace={this.props.match.params.namespace}
                 app={this.props.match.params.app}
