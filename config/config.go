@@ -212,8 +212,9 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName     string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -310,6 +311,10 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
+type KialiFeatureFlags struct {
+	IstioInjectionAction bool `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem  `yaml:"additional_display_details,omitempty"`
@@ -324,6 +329,7 @@ type Config struct {
 	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
 	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
+	KialiFeatureFlags        KialiFeatureFlags        `yaml:"kiali_feature_flags,omitempty"`
 	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
 	Server                   Server                   `yaml:",omitempty"`
@@ -436,8 +442,12 @@ func NewConfig() (c *Config) {
 			},
 		},
 		IstioLabels: IstioLabels{
-			AppLabelName:     "app",
-			VersionLabelName: "version",
+			AppLabelName:       "app",
+			InjectionLabelName: "istio-injection",
+			VersionLabelName:   "version",
+		},
+		KialiFeatureFlags: KialiFeatureFlags{
+			IstioInjectionAction: true,
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,

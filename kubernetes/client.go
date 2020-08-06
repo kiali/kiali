@@ -65,6 +65,7 @@ type K8SClientInterface interface {
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
 }
 
@@ -72,6 +73,7 @@ type OSClientInterface interface {
 	GetProject(project string) (*osproject_v1.Project, error)
 	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
 	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
+	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
 // ClientInterface for mocks (only mocked function are necessary here)

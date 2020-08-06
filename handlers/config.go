@@ -52,6 +52,7 @@ type PublicConfig struct {
 	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
 	IstioTelemetryV2         bool                            `json:"istioTelemetryV2"`
+	KialiFeatureFlags        config.KialiFeatureFlags        `json:"kialiFeatureFlags,omitempty"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
 }
 
@@ -83,6 +84,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		IstioNamespace:           config.IstioNamespace,
 		IstioComponentNamespaces: config.IstioComponentNamespaces,
 		IstioLabels:              config.IstioLabels,
+		KialiFeatureFlags:        config.KialiFeatureFlags,
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
