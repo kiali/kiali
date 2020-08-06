@@ -117,6 +117,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioDetails.VirtualServices},
 		checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces, WorkloadList: workloads, Services: services, ServiceEntries: istioDetails.ServiceEntries},
+		checkers.RequestAuthenticationChecker{RequestAuthentications: istioDetails.RequestAuthentications, WorkloadList: workloads},
 	}
 }
 
@@ -220,6 +221,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validation on WorkloadEntries are not yet in place
 	case kubernetes.RequestAuthentications:
 		// Validation on RequestAuthentications are not yet in place
+		requestAuthnChecker := checkers.RequestAuthenticationChecker{RequestAuthentications: istioDetails.RequestAuthentications, WorkloadList: workloads}
+		objectCheckers = []ObjectChecker{requestAuthnChecker}
 	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
 	case kubernetes.AttributeManifests:
@@ -462,6 +465,15 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 				return in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 			}
 			go fetchIstioObjects(&istioDetails.Sidecars, namespace, getSidecars, &wg2, errChan2)
+		}
+		if nsCached && kialiCache.CheckIstioResource(kubernetes.RequestAuthentications) {
+			istioDetails.RequestAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+		} else {
+			wg2.Add(1)
+			getRequestAuthentications := func(namespace string) ([]kubernetes.IstioObject, error) {
+				return in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+			}
+			go fetchIstioObjects(&istioDetails.RequestAuthentications, namespace, getRequestAuthentications, &wg2, errChan2)
 		}
 		wg2.Wait()
 
