@@ -67,3 +67,58 @@ export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefin
   }
   return undefined;
 };
+
+type EnvoySpanInfo = {
+  responseFlags?: string;
+  statusCode?: number;
+  url?: string;
+  method?: string;
+  inbound?: string;
+  outbound?: string;
+  otherNamespace?: string;
+};
+
+export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo | undefined => {
+  const info: EnvoySpanInfo = {};
+  let hasAny = false;
+  span.tags.forEach(t => {
+    if (t.key === 'response_flags') {
+      if (t.value !== '-') {
+        info.responseFlags = t.value;
+        hasAny = true;
+      }
+    } else if (t.key === 'http.status_code') {
+      const val = parseInt(t.value, 10);
+      if (!isNaN(val) && val > 0) {
+        info.statusCode = val;
+        hasAny = true;
+      }
+    } else if (t.key === 'http.url') {
+      info.url = t.value;
+      hasAny = true;
+    } else if (t.key === 'http.method') {
+      info.method = t.value;
+      hasAny = true;
+    } else if (t.key === 'upstream_cluster') {
+      const parts = (t.value as string).split('|');
+      if (parts.length === 4) {
+        if (parts[0] === 'outbound') {
+          const svcParts = parts[3].split('.');
+          if (svcParts.length === 5) {
+            info.outbound = svcParts[0];
+            info.otherNamespace = svcParts[1];
+            hasAny = true;
+          }
+        } else if (parts[0] === 'inbound') {
+          const wkdNs = searchParentWorkload(span);
+          if (wkdNs) {
+            info.inbound = wkdNs.workload;
+            info.otherNamespace = wkdNs.namespace;
+            hasAny = true;
+          }
+        }
+      }
+    }
+  });
+  return hasAny ? info : undefined;
+};

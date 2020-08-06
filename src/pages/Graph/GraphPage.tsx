@@ -350,10 +350,6 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       this.errorBoundaryRef.current.cleanError();
     }
 
-    if (prev.summaryData !== this.props.summaryData) {
-      this.props.setTraceId(undefined);
-    }
-
     if (curr.showLegend && this.props.activeTour) {
       this.props.endTour();
     }
@@ -702,7 +698,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
-  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.fetchTrace(traceId)),
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),

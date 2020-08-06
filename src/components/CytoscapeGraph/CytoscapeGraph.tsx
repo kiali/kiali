@@ -55,6 +55,7 @@ type CytoscapeGraphProps = {
   refreshInterval: IntervalInMilliseconds;
   setActiveNamespaces?: (namespace: Namespace[]) => void;
   setNode?: (node?: NodeParamsType) => void;
+  setTraceId?: (traceId?: string) => void;
   setUpdateTime?: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
@@ -136,7 +137,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   componentDidMount() {
-    this.cyInitialization(this.getCy());
+    this.cyInitialization(this.getCy()!);
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps) {
@@ -213,6 +214,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     if (this.props.graphData.elements !== prevProps.graphData.elements) {
       this.updateHealth(cy);
     }
+
     if (this.props.trace) {
       showTrace(cy, this.props.trace);
     } else if (!this.props.trace && prevProps.trace) {
@@ -247,7 +249,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     );
   }
 
-  getCy() {
+  getCy(): Cy.Core | null {
     return this.cytoscapeReactWrapperRef.current ? this.cytoscapeReactWrapperRef.current.getCy() : null;
   }
 
@@ -276,7 +278,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
   private setCytoscapeReactWrapperRef(cyRef: any) {
     this.cytoscapeReactWrapperRef.current = cyRef;
-    this.cyInitialization(this.getCy());
+    this.cyInitialization(this.getCy()!);
   }
 
   private onResize = () => {
@@ -625,6 +627,11 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.cy.$(':selected').selectify().unselect().unselectify();
       if (target && !isCore(target)) {
         target.selectify().select().unselectify();
+      }
+
+      if (this.props.setTraceId && this.props.trace && this.cy.$('.span:selected').length === 0) {
+        // No selected node in trace => clear trace selection
+        this.props.setTraceId(undefined);
       }
     }
   };

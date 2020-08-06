@@ -626,8 +626,8 @@ export class GraphStyles {
         selector: '*.span[^isGroup]',
         style: {
           'overlay-color': PfColors.Purple200,
-          'overlay-padding': '8px',
-          'overlay-opacity': 0.5
+          'overlay-padding': '7px',
+          'overlay-opacity': 0.3
         }
       }
     ];
