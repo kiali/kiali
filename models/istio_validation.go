@@ -177,7 +177,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: ErrorSeverity,
 	},
 	"generic.selector.workloadnotfound": {
-		Message:  "KIA0003 No matching workload found for the selector in this namespace",
+		Message:  "KIA0004 No matching workload found for the selector in this namespace",
 		Severity: WarningSeverity,
 	},
 	"peerauthentication.mtls.destinationrulemissing": {
