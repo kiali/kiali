@@ -85,6 +85,7 @@ mkdir -p src/github.com/kiali
 cd src/github.com/kiali
 git clone git@github.com:kiali/kiali
 git clone git@github.com:kiali/kiali-operator kiali/operator
+git clone git@github.com:kiali/kiali-operator kiali/helm-charts
 export PATH=${PATH}:${GOPATH}/bin
 ----
 

@@ -46,3 +46,5 @@ tests/e2e/.kiali-e2e/
 # Do not commit operator code to this repo
 operator
 
+# Do not commit helm-charts code to this repo
+helm-charts

@@ -63,7 +63,7 @@ $0 [option...] command
 -ce|--client-exe        Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
 -ct|--cluster-type      The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug              True if you want the molecule tests to output large amounts of debug messages. (default: true)
--hcr|--helm-charts-repo Location of the helm charts git repo.
+-hcr|--helm-charts-repo Location of the helm charts git repo. (default: ../helm-charts)
 -ksh|--kiali_src-home   Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
 -mp|--minikube-profile  If cluster type is 'minikube' you can specify the profile that is in use via this option.
 -nd|--never-destroy     Do not have the molecule framework destroy the test scaffolding. Setting this to true
@@ -86,13 +86,15 @@ HELPMSG
   esac
 done
 
-# Where the Kiali github source is located on the local machine. The operator/molecule test directory should exist here.
+# Where the Kiali github source is located on the local machine.
+# - The operator/molecule test directory should exist here.
+# - The helm-charts directory should exist here.
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 KIALI_SRC_HOME="${KIALI_SRC_HOME:-${SCRIPT_ROOT}/..}"
-HELM_CHARTS_REPO="${HELM_CHARTS_REPO:-${SCRIPT_ROOT}/../../../../../../helm-charts}"
-if [ ! -f "${HELM_CHARTS_REPO}/kiali-operator/Chart.yaml" ]; then echo "Kiali helm charts repo directory is invalid: ${HELM_CHARTS_REPO}"; exit 1; fi
+HELM_CHARTS_REPO="${HELM_CHARTS_REPO:-${KIALI_SRC_HOME}/helm-charts}"
 if [ ! -d "${KIALI_SRC_HOME}" ]; then echo "Kiali source home directory is invalid: ${KIALI_SRC_HOME}"; exit 1; fi
 if [ ! -d "${KIALI_SRC_HOME}/operator/molecule" ]; then echo "Kiali source home directory is missing the operator molecule tests: ${KIALI_SRC_HOME}"; exit 1; fi
+if [ ! -f "${HELM_CHARTS_REPO}/kiali-operator/Chart.yaml" ]; then echo "Kiali helm charts repo directory is invalid: ${HELM_CHARTS_REPO}"; exit 1; fi
 KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}"; pwd -P)"
 HELM_CHARTS_REPO="$(cd "${HELM_CHARTS_REPO}"; pwd -P)"
 
