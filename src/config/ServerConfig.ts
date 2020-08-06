@@ -55,7 +55,11 @@ let serverConfig: ComputedServerConfig = {
   istioComponentNamespaces: new Map<string, string>(),
   istioLabels: {
     appLabelName: 'app',
+    injectionLabelName: 'istio-injection',
     versionLabelName: 'version'
+  },
+  kialiFeatureFlags: {
+    istioInjectionAction: true
   },
   prometheus: {
     globalScrapeInterval: 15,

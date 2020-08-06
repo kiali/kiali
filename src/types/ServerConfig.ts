@@ -1,6 +1,6 @@
 import { DurationInSeconds } from './Common';
 
-export type IstioLabelKey = 'appLabelName' | 'versionLabelName';
+export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName';
 
 // 3scale public config, typically to check if addon/extension is enabled
 interface ThreeScaleConfig {
@@ -19,6 +19,10 @@ interface Extensions {
   iter8: iter8Config;
 }
 
+interface KialiFeatureFlags {
+  istioInjectionAction: boolean;
+}
+
 export interface ServerConfig {
   extensions?: Extensions;
   installationTag?: string;
@@ -26,6 +30,7 @@ export interface ServerConfig {
   istioNamespace: string;
   istioComponentNamespaces?: Map<string, string>;
   istioLabels: { [key in IstioLabelKey]: string };
+  kialiFeatureFlags: KialiFeatureFlags;
   prometheus: {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;

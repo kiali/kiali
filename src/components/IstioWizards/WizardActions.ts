@@ -1105,3 +1105,14 @@ export const buildWorkloadThreeScalePatch = (
   }
   return JSON.stringify(patch);
 };
+
+export const buildNamespaceInjectionPatch = (enable: boolean): string => {
+  const labels = {};
+  labels[serverConfig.istioLabels.injectionLabelName] = enable ? 'enabled' : null;
+  const patch = {
+    metadata: {
+      labels: labels
+    }
+  };
+  return JSON.stringify(patch);
+};

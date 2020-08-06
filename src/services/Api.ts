@@ -133,6 +133,10 @@ export const getNamespaceValidations = (namespace: string) => {
   return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {});
 };
 
+export const updateNamespace = (namespace: string, jsonPatch: string): Promise<Response<string>> => {
+  return newRequest(HTTP_VERBS.PATCH, urls.namespace(namespace), {}, jsonPatch);
+};
+
 export const getIstioConfig = (namespace: string, objects: string[], validate: boolean, labelSelector: string) => {
   const params: any = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
   if (validate) {
