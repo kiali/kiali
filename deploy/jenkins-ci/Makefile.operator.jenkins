@@ -90,9 +90,6 @@ operator-build-release:
 	sed -i -r 's/^VERSION \?= v.*/VERSION \?= $(OPERATOR_VERSION_TO_RELEASE)/' Makefile
 	OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
 	  $(MAKE) clean build
-ifneq ($(IS_SNAPSHOT),y)
-	OPERATOR_IMAGE_VERSION="$(OPERATOR_VERSION_TO_RELEASE)" $(MAKE) update-helm-repo
-endif
 
 operator-push-quay:
 ifdef QUAY_USER
@@ -117,7 +114,6 @@ endif
 operator-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
 	git add Makefile
-	git add docs/charts
 	git commit -m "Release $(OPERATOR_VERSION)"
 	git push $(OPERATOR_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
 ifdef GH_TOKEN

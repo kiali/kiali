@@ -19,19 +19,17 @@
 	done ; \
 	exit 0
 
-.ensure-operator-helm-chart-exists:
-	@if [ ! -f "${ROOTDIR}/operator/_output/charts/kiali-operator/Chart.yaml" ]; then $(MAKE) -C operator build-helm-chart ; fi
-
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
 # You can tell it to also install Kiali by setting OPERATOR_INSTALL_KIALI=true.
 # The Kiali operator does not create secrets, but this calls the install script
 # which can create a Kiali secret for you as a convienence so you don't have
 # to remember to do it yourself. It will only do this if it was told to install Kiali.
-operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists operator-delete .ensure-operator-ns-does-not-exist .prepare-cluster
+operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists .find-helm-exe operator-delete .ensure-operator-ns-does-not-exist .prepare-cluster
 	@echo Deploy Operator
 	${ROOTDIR}/operator/deploy/deploy-kiali-operator.sh \
-    --helm-chart                    "source" \
+    --helm-chart                    "$(shell ls -dt1 ${HELM_CHARTS_REPO}/_output/charts/kiali-operator*.tgz | head -n 1)" \
+    --helm-exe                      "${HELM}" \
     --operator-cluster-role-creator "true" \
     --operator-image-name           "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
     --operator-image-pull-policy    "${OPERATOR_IMAGE_PULL_POLICY}" \
