@@ -1,12 +1,11 @@
 #
 # Targets related to the operator and server helm charts.
 #
-# This will attempt to find the Kiali helm-charts git repo by:
-# 1. See if you have a helm-charts repo in a peer directory next to the "operator" symlink.
-# ...or...
-# 2. If your "operator" directory is not a symlink, see if you have a helm-charts repo
-# as a peer to the top kiali directory (where the GOPATH points to).
-# If neither is found, these targets abort. In this case, pass HELM_CHARTS_REPO environment
+# This will attempt to find the Kiali helm-charts git repo by looking
+# for a directory named "helm-charts" that is a peer directory next to
+# the "operator" directory. If "operator" is a symlink, the helm-charts can be
+# a peer to the physical location.
+# If not found, these targets abort. In this case, pass HELM_CHARTS_REPO environment
 # variable to tell these targets where your helm-charts repo is located.
 #
 
@@ -14,9 +13,9 @@
 .ensure-helm-charts-repo-exists:
 	@$(eval HELM_CHARTS_REPO ?= $(shell \
 	if [ -L "${ROOTDIR}/operator" -a -d "${ROOTDIR}/operator" ]; then \
-	  REPO="$$(cd "$$(cd "${ROOTDIR}/operator" && pwd -P)/.." && pwd -P)/helm-charts" ;\
+	  REPO="$$(cd "$$(cd "${ROOTDIR}/operator" && pwd -P)/.." && pwd -P)/helm-charts"; \
 	else \
-	  REPO="$$(cd "${ROOTDIR}/../../../../../helm-charts" && pwd -P)"; \
+	  REPO="$$(cd "${ROOTDIR}" && pwd -P)/helm-charts"; \
 	fi; \
 	if [ ! -d "$${REPO}" -o ! -f "$${REPO}/kiali-operator/Chart.yaml" ]; then \
 	  echo "git clone git@github.com:kiali/helm-charts.git" $${REPO}; \
