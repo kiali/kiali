@@ -19,14 +19,18 @@ import { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
 import { AuthStrategy } from '../types/Auth';
 import { JaegerInfo } from '../types/JaegerInfo';
+import { LoginActions } from '../actions/LoginActions';
+import history from './History';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
   checkCredentials: () => void;
   isLoginError: boolean;
+  landingRoute?: string;
   setJaegerInfo: (jaegerInfo: JaegerInfo | null) => void;
-  setServerStatus: (serverStatus: ServerStatus) => void;
+  setLandingRoute: (route: string | undefined) => void;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
+  setServerStatus: (serverStatus: ServerStatus) => void;
 }
 
 type AuthenticationControllerProps = AuthenticationControllerReduxProps & {
@@ -88,6 +92,8 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         this.setState({
           stage: LoginStage.LOGGED_IN_AT_LOAD
         });
+      } else {
+        this.props.setLandingRoute(history.location.pathname + history.location.search);
       }
     }
 
@@ -158,6 +164,10 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       const configs = await Promise.all([API.getServerConfig(), getStatusPromise, getJaegerInfoPromise]);
       setServerConfig(configs[0].data);
 
+      if (this.props.landingRoute) {
+        history.replace(this.props.landingRoute);
+        this.props.setLandingRoute(undefined);
+      }
       this.setState({ stage: LoginStage.LOGGED_IN });
     } catch (err) {
       console.error('Error on post-login actions.', err);
@@ -184,14 +194,16 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
 
 const mapStateToProps = (state: KialiAppState) => ({
   authenticated: state.authentication.status === LoginStatus.loggedIn,
-  isLoginError: state.authentication.status === LoginStatus.error
+  isLoginError: state.authentication.status === LoginStatus.error,
+  landingRoute: state.authentication.landingRoute
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setJaegerInfo: bindActionCreators(JaegerActions.setInfo, dispatch),
-  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
+  setLandingRoute: bindActionCreators(LoginActions.setLandingRoute, dispatch),
   setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch),
-  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
+  setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus)
 });
 
 const AuthenticationControllerContainer = connect(mapStateToProps, mapDispatchToProps)(AuthenticationController);

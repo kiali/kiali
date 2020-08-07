@@ -34,6 +34,12 @@ const whitelistInputWithInitialState = (reducerName: string, inboundPaths: strin
     { whitelist: [reducerName] }
   );
 
+const authenticationPersistFilter = whitelistInputWithInitialState(
+  'authentication',
+  ['landingRoute'],
+  INITIAL_LOGIN_STATE
+);
+
 const namespacePersistFilter = whitelistInputWithInitialState(
   'namespaces',
   ['activeNamespaces'],
@@ -51,8 +57,8 @@ const userSettingsPersitFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph', 'userSettings'],
-  transforms: [namespacePersistFilter, graphPersistFilter, userSettingsPersitFilter]
+  whitelist: ['authentication', 'graph', 'jaegerState', 'namespaces', 'statusState', 'userSettings'],
+  transforms: [authenticationPersistFilter, graphPersistFilter, namespacePersistFilter, userSettingsPersitFilter]
 };
 
 const composeEnhancers =

@@ -1,11 +1,12 @@
-import { ActionType, createAction } from 'typesafe-actions';
+import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { LoginSession, LoginStatus } from '../store/Store';
 import { ActionKeys } from './ActionKeys';
 
 export interface LoginPayload {
-  status: LoginStatus;
-  session?: LoginSession;
   error?: any;
+  landingRoute?: string;
+  session?: LoginSession;
+  status: LoginStatus;
 }
 
 // synchronous action creators
@@ -40,7 +41,8 @@ export const LoginActions = {
       error: undefined
     } as LoginPayload)
   ),
-  sessionExpired: createAction(ActionKeys.SESSION_EXPIRED)
+  sessionExpired: createAction(ActionKeys.SESSION_EXPIRED),
+  setLandingRoute: createStandardAction(ActionKeys.SET_LANDING_ROUTE)<string | undefined>()
 };
 
 export type LoginAction = ActionType<typeof LoginActions>;

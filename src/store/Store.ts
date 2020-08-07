@@ -85,9 +85,10 @@ export interface LoginSession {
 }
 
 export interface LoginState {
-  status: LoginStatus;
-  session?: LoginSession;
+  landingRoute?: string;
   message: string;
+  session?: LoginSession;
+  status: LoginStatus;
 }
 
 export interface InterfaceSettings {
