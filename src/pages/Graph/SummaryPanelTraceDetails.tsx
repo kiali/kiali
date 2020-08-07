@@ -52,6 +52,10 @@ const errorStyle = style({
   color: PFAlertColor.Danger
 });
 
+const pStyle = style({
+  paddingTop: 9
+});
+
 const secondaryStyle = style({
   color: PfColors.Black600
 });
@@ -100,6 +104,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
     const nodeName = node.workload || node.service || node.app!;
     const spans: Span[] | undefined = this.props.node.data('spans');
+    const traceName = `${info.name} (${this.props.trace.traceID.slice(0, 7)})`;
     return (
       <>
         <span className={textHeaderStyle}>Trace</span>
@@ -114,10 +119,10 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           <Tooltip content={info.name}>
             {tracesDetailsURL ? (
               <Link to={tracesDetailsURL}>
-                <span className={nameStyleToUse}>{info.name}</span>
+                <span className={nameStyleToUse}>{traceName}</span>
               </Link>
             ) : (
-              <span className={nameStyleToUse}>{info.name}</span>
+              <span className={nameStyleToUse}>{traceName}</span>
             )}
           </Tooltip>
           {tracesDetailsURL && jaegerTraceURL && (
@@ -126,45 +131,44 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
                 See trace in Jaeger <ExternalLinkAltIcon size="sm" />
               </a>
-              <br />
             </>
           )}
-          <br />
-          <div className={secondaryStyle}>{'ID: ' + this.props.trace.traceID}</div>
-          <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
-          {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
+          <p className={pStyle}>
+            <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
+            {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
+          </p>
           {spans && (
-            <>
-              <br />
+            <p className={pStyle}>
               <div className={secondaryStyle}>{'Spans for node: ' + nodeName}</div>
-              <Button
-                className={navButtonStyle}
-                variant={ButtonVariant.plain}
-                isDisabled={this.state.selectedSpan === 0}
-                onClick={_ => {
-                  if (this.state.selectedSpan > 0) {
-                    this.setState({ selectedSpan: this.state.selectedSpan - 1 });
-                  }
-                }}
-              >
-                <AngleLeftIcon />
-              </Button>
-              <span className={navSpanStyle}>{this.state.selectedSpan + 1 + ' of ' + spans.length}</span>
-              <Button
-                variant={ButtonVariant.plain}
-                isDisabled={this.state.selectedSpan >= spans.length - 1}
-                onClick={_ => {
-                  if (this.state.selectedSpan < spans.length) {
-                    this.setState({ selectedSpan: this.state.selectedSpan + 1 });
-                  }
-                }}
-              >
-                <AngleRightIcon />
-              </Button>
-              <br />
+              <div>
+                <Button
+                  className={navButtonStyle}
+                  variant={ButtonVariant.plain}
+                  isDisabled={this.state.selectedSpan === 0}
+                  onClick={_ => {
+                    if (this.state.selectedSpan > 0) {
+                      this.setState({ selectedSpan: this.state.selectedSpan - 1 });
+                    }
+                  }}
+                >
+                  <AngleLeftIcon />
+                </Button>
+                <span className={navSpanStyle}>{this.state.selectedSpan + 1 + ' of ' + spans.length}</span>
+                <Button
+                  variant={ButtonVariant.plain}
+                  isDisabled={this.state.selectedSpan >= spans.length - 1}
+                  onClick={_ => {
+                    if (this.state.selectedSpan < spans.length) {
+                      this.setState({ selectedSpan: this.state.selectedSpan + 1 });
+                    }
+                  }}
+                >
+                  <AngleRightIcon />
+                </Button>
+              </div>
               {this.state.selectedSpan < spans.length &&
                 this.renderSpan(nodeName + '.' + node.namespace, spans[this.state.selectedSpan])}
-            </>
+            </p>
           )}
         </div>
       </>
@@ -173,6 +177,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 
   private renderSpan(nodeFullName: string, span: Span) {
     const info = extractEnvoySpanInfo(span);
+    const reqDetails: string[] = [];
     if (info) {
       if (
         nodeFullName !== span.process.serviceName &&
@@ -188,64 +193,56 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           info.otherNamespace = split[1];
         }
       }
-      const details: string[] = [];
       if (info.statusCode) {
-        details.push('code ' + info.statusCode);
+        reqDetails.push('code ' + info.statusCode);
       }
       if (info.responseFlags) {
-        details.push('flags ' + info.responseFlags);
+        reqDetails.push('flags ' + info.responseFlags);
       }
       if (span.duration) {
-        details.push(formatDuration(span.duration));
+        reqDetails.push(formatDuration(span.duration));
       }
-      return (
-        <>
-          {info.inbound && (
-            <>
-              <span className={secondaryStyle}>{'From: '}</span>
-              <Button
-                variant={ButtonVariant.link}
-                onClick={() => {
-                  this.focusOnWorkload(info.otherNamespace!, info.inbound!);
-                }}
-                isInline
-              >
-                <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.inbound}</span>
-              </Button>
-            </>
-          )}
-          {info.outbound && (
-            <>
-              <span className={secondaryStyle}>{'To: '}</span>
-              <Button
-                variant={ButtonVariant.link}
-                onClick={() => {
-                  this.focusOnService(info.otherNamespace!, info.outbound!);
-                }}
-                isInline
-              >
-                <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.outbound}</span>
-              </Button>
-            </>
-          )}
-          <div className={secondaryStyle}>{`Request: ${info.method} ${info.url}`}</div>
-          {!!details && <div className={secondaryStyle}>{`Response: [${details.join(', ')}]`}</div>}
-          <div className={secondaryStyle}>{`Operation: ${span.operationName}`}</div>
-          <div className={secondaryStyle}>{`Started at ${formatDuration(span.relativeStartTime)}`}</div>
-          <br />
-        </>
-      );
     }
-    // Else => this is probably a user-defined span
     return (
       <>
-        Operation: {span.operationName}
-        <br />
-        <br />
-        Started at +{formatDuration(span.relativeStartTime)}
-        <br />
-        Duration: {formatDuration(span.duration)}
-        <br />
+        {info?.inbound && (
+          <>
+            <span className={secondaryStyle}>{'From: '}</span>
+            <Button
+              variant={ButtonVariant.link}
+              onClick={() => {
+                this.focusOnWorkload(info.otherNamespace!, info.inbound!);
+              }}
+              isInline
+            >
+              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.inbound}</span>
+            </Button>
+          </>
+        )}
+        {info?.outbound && (
+          <>
+            <span className={secondaryStyle}>{'To: '}</span>
+            <Button
+              variant={ButtonVariant.link}
+              onClick={() => {
+                this.focusOnService(info.otherNamespace!, info.outbound!);
+              }}
+              isInline
+            >
+              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.outbound}</span>
+            </Button>
+          </>
+        )}
+        <div className={secondaryStyle}>{`Operation: ${span.operationName}`}</div>
+        {info ? (
+          <>
+            <div className={secondaryStyle}>{`Request: ${info.method} ${info.url}`}</div>
+            <div className={secondaryStyle}>{`Response: [${reqDetails.join(', ')}]`}</div>
+          </>
+        ) : (
+          <div className={secondaryStyle}>{`Duration: ${formatDuration(span.duration)}`}</div>
+        )}
+        <div className={secondaryStyle}>{`Started after ${formatDuration(span.relativeStartTime)}`}</div>
       </>
     );
   }
