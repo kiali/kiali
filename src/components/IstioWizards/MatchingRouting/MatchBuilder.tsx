@@ -120,7 +120,7 @@ class MatchBuilder extends React.Component<Props, State> {
             placeholder={placeholderText[this.props.category]}
           />
         )}
-        <Button disabled={!this.props.isValid} onClick={this.props.onAddMatch}>
+        <Button variant="secondary" disabled={!this.props.isValid} onClick={this.props.onAddMatch}>
           Add Match
         </Button>
       </InputGroup>

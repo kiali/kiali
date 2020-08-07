@@ -3,6 +3,8 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import Rules, { MOVE_TYPE, Rule } from './MatchingRouting/Rules';
 import RuleBuilder from './MatchingRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './MatchingRouting/MatchBuilder';
+import { WorkloadWeight } from './WeightedRouting';
+import { getDefaultWeights } from './WizardActions';
 
 type Props = {
   serviceName: string;
@@ -14,7 +16,7 @@ type Props = {
 type State = {
   category: string;
   operator: string;
-  routes: string[];
+  workloadWeights: WorkloadWeight[];
   matches: string[];
   headerName: string;
   matchValue: string;
@@ -25,7 +27,6 @@ type State = {
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
-const MSG_ROUTES_NON_EMPTY = 'Routes must be non empty';
 
 class MatchingRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -33,7 +34,7 @@ class MatchingRouting extends React.Component<Props, State> {
     this.state = {
       category: HEADERS,
       operator: PRESENCE,
-      routes: this.props.workloads.map(w => w.name),
+      workloadWeights: getDefaultWeights(this.props.workloads),
       matches: [],
       headerName: '',
       matchValue: '',
@@ -116,9 +117,18 @@ class MatchingRouting extends React.Component<Props, State> {
             prevState.matches.push(newMatch);
           }
         }
+        const newWorkloadWeights: WorkloadWeight[] = [];
+        prevState.workloadWeights.forEach(ww =>
+          newWorkloadWeights.push({
+            name: ww.name,
+            weight: ww.weight,
+            locked: ww.locked,
+            maxWeight: ww.maxWeight
+          })
+        );
         const newRule: Rule = {
           matches: prevState.matches,
-          routes: prevState.routes
+          workloadWeights: newWorkloadWeights
         };
         if (!this.isMatchesIncluded(prevState.rules, newRule)) {
           prevState.rules.push(newRule);
@@ -197,14 +207,9 @@ class MatchingRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectRoutes = (routes: string[]) => {
-    let validationMsg = '';
-    if (routes.length === 0) {
-      validationMsg = MSG_ROUTES_NON_EMPTY;
-    }
+  onSelectWeights = (_valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState({
-      routes: routes,
-      validationMsg: validationMsg
+      workloadWeights: workloads
     });
   };
 
@@ -272,14 +277,11 @@ class MatchingRouting extends React.Component<Props, State> {
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
           workloads={this.props.workloads}
-          routes={this.state.routes}
-          onSelectRoutes={this.onSelectRoutes}
+          onSelectWeights={this.onSelectWeights}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddRule}
         />
-        <br />
         <Rules rules={this.state.rules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
-        <br />
       </>
     );
   }

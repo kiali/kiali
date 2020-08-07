@@ -9,7 +9,6 @@ import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
 
 type Props = {
-  serviceName: string;
   workloads: WorkloadOverview[];
   initWeights: WorkloadWeight[];
   onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;

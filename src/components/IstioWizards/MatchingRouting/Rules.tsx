@@ -3,6 +3,7 @@ import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/rea
 import { style } from 'typestyle';
 import { PfColors } from '../../Pf/PfColors';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { WorkloadWeight } from '../WeightedRouting';
 
 export enum MOVE_TYPE {
   UP,
@@ -11,7 +12,7 @@ export enum MOVE_TYPE {
 
 export type Rule = {
   matches: string[];
-  routes: string[];
+  workloadWeights: WorkloadWeight[];
 };
 
 type Props = {
@@ -112,12 +113,12 @@ class Rules extends React.Component<Props> {
             )}
           </>,
           <>
-            {rule.routes.map((route, i) => (
-              <div key={'route_' + i}>
+            {rule.workloadWeights.map((wk, i) => (
+              <div key={'wk_' + i}>
                 <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
                   <Badge className={'virtualitem_badge_definition'}>WS</Badge>
                 </Tooltip>
-                {route}
+                {wk.name} ({wk.weight} %)
               </div>
             ))}
           </>

@@ -370,7 +370,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       >
         {this.props.type === WIZARD_WEIGHTED_ROUTING && (
           <WeightedRouting
-            serviceName={this.props.serviceName}
             workloads={this.props.workloads}
             initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
             onChange={this.onWeightsChange}

@@ -329,17 +329,14 @@ export const buildIstioConfig = (
         http: wState.rules.map(rule => {
           const httpRoute: HTTPRoute = {};
           httpRoute.route = [];
-          for (let iRoute = 0; iRoute < rule.routes.length; iRoute++) {
+          for (let iRoute = 0; iRoute < rule.workloadWeights.length; iRoute++) {
             const destW: HTTPRouteDestination = {
               destination: {
                 host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                subset: wkdNameVersion[rule.routes[iRoute]]
+                subset: wkdNameVersion[rule.workloadWeights[iRoute].name]
               }
             };
-            destW.weight = Math.floor(100 / rule.routes.length);
-            if (iRoute === 0) {
-              destW.weight = destW.weight + (100 % rule.routes.length);
-            }
+            destW.weight = rule.workloadWeights[iRoute].weight;
             httpRoute.route.push(destW);
           }
 
@@ -594,7 +591,7 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
     virtualServices.items[0].spec.http!.forEach(httpRoute => {
       const rule: Rule = {
         matches: [],
-        routes: []
+        workloadWeights: []
       };
       if (httpRoute.match) {
         httpRoute.match.forEach(m => (rule.matches = rule.matches.concat(parseHttpMatchRequest(m))));
@@ -606,12 +603,17 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
           // Not adding a route if a workload is not found with a destination subset
           // That means that a workload has been deleted after a VS/DR has been generated
           if (workload) {
-            rule.routes.push(workload);
+            rule.workloadWeights.push({
+              name: workload,
+              weight: r.weight ? r.weight : 0,
+              locked: false,
+              maxWeight: 100
+            });
           }
         });
       }
       // Not adding a rule if it has empty routes, probably this means that an existing workload was removed
-      if (rule.routes.length > 0) {
+      if (rule.workloadWeights.length > 0) {
         rules.push(rule);
       }
     });
