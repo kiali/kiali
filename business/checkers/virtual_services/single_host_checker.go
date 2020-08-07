@@ -92,6 +92,11 @@ func storeHost(hostCounter map[string]map[string]map[string]map[string][]*kubern
 		gwList = []string{"no-gateway"}
 	}
 
+	if !host.CompleteInput {
+		host.Cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+		host.Namespace = vs.GetObjectMeta().Namespace
+	}
+
 	for _, gw := range gwList {
 		if hostCounter[gw] == nil {
 			hostCounter[gw] = map[string]map[string]map[string][]*kubernetes.IstioObject{
