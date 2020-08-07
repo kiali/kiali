@@ -129,6 +129,7 @@ endif
 include make/Makefile.build.mk
 include make/Makefile.container.mk
 include make/Makefile.cluster.mk
+include make/Makefile.helm.mk
 include make/Makefile.operator.mk
 include make/Makefile.molecule.mk
 
@@ -143,6 +144,9 @@ help: Makefile
 	@echo
 	@echo "Cluster targets"
 	@sed -n 's/^##//p' make/Makefile.cluster.mk | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
+	@echo "Helm targets"
+	@sed -n 's/^##//p' make/Makefile.helm.mk | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 	@echo "Operator targets"
 	@sed -n 's/^##//p' make/Makefile.operator.mk | column -t -s ':' |  sed -e 's/^/ /'

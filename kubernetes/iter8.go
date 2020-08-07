@@ -8,6 +8,8 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kiali/kiali/config"
 )
 
 var iter8typeMeta = meta_v1.TypeMeta{
@@ -21,8 +23,13 @@ type Iter8ExperimentSpec struct {
 		ApiVersion string `json:"apiVersion"`
 		Name       string `json:"name"`
 		Namespace  string `json:"namespace"`
+		Kind       string `json:"kind"`
 		Baseline   string `json:"baseline"`
 		Candidate  string `json:"candidate"`
+		Hosts      []struct {
+			Name    string `json:"name"`
+			Gateway string `json:"gateway"`
+		} `json:"hosts,omitempty"`
 	} `json:"targetService"`
 	TrafficControl struct {
 		Strategy             string  `json:"strategy,omitempty"`
@@ -58,6 +65,12 @@ type Iter8ExperimentSpec struct {
 }
 
 type Iter8ExperimentAction string
+type Iter8Host struct {
+	// Name of the Host
+	Name string `json:"name"`
+	// The gateway
+	Gateway string `json:"gateway"`
+}
 
 type Iter8ExperimentStatus struct {
 	Conditions []struct {
@@ -300,9 +313,10 @@ func (in *K8SClient) IsIter8Api() bool {
 }
 
 func (in *K8SClient) Iter8ConfigMap() ([]string, error) {
+	conf := config.Get()
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
-	err := in.k8s.CoreV1().RESTClient().Get().Namespace("iter8").Resource("configmaps").
+	err := in.k8s.CoreV1().RESTClient().Get().Namespace(conf.Extensions.Iter8.Namespace).Resource("configmaps").
 		Name(Iter8ConfigMap).Do().Into(result)
 	if err == nil {
 		metrics := []Iter8AnalyticMetric{}

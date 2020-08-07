@@ -19,6 +19,7 @@ type AuthorizationPolicyChecker struct {
 	Services              []core_v1.Service
 	WorkloadList          models.WorkloadList
 	MtlsDetails           kubernetes.MTLSDetails
+	VirtualServices       []kubernetes.IstioObject
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -49,7 +50,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy kubernetes.IstioObject)
 		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, authPolicy, a.WorkloadList),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespace: a.Namespace, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, Services: a.Services},
+			ServiceEntries: serviceHosts, Services: a.Services, VirtualServices: a.VirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {

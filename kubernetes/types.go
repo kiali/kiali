@@ -528,11 +528,12 @@ type ServiceDetails struct {
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
 // Used to fetch all Istio information in a single operation instead to invoke individual APIs per each group.
 type IstioDetails struct {
-	VirtualServices  []IstioObject `json:"virtualservices"`
-	DestinationRules []IstioObject `json:"destinationrules"`
-	ServiceEntries   []IstioObject `json:"serviceentries"`
-	Gateways         []IstioObject `json:"gateways"`
-	Sidecars         []IstioObject `json:"sidecars"`
+	VirtualServices        []IstioObject `json:"virtualservices"`
+	DestinationRules       []IstioObject `json:"destinationrules"`
+	ServiceEntries         []IstioObject `json:"serviceentries"`
+	Gateways               []IstioObject `json:"gateways"`
+	Sidecars               []IstioObject `json:"sidecars"`
+	RequestAuthentications []IstioObject `json:"requestauthentications"`
 }
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations

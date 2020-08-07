@@ -13,9 +13,9 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func getTraces(client http.Client, endpoint *url.URL, namespace, service string, query models.TracingQuery) (response *JaegerResponse, err error) {
+func getTraces(client http.Client, endpoint *url.URL, namespace, app string, query models.TracingQuery) (response *JaegerResponse, err error) {
 	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
-	prepareQuery(endpoint, namespace, service, query)
+	prepareQuery(endpoint, namespace, app, query)
 	return queryTraces(client, endpoint)
 }
 
@@ -35,17 +35,17 @@ func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*Jae
 	}, nil
 }
 
-func getErrorTraces(client http.Client, endpoint *url.URL, namespace, service string, duration time.Duration) (errorTraces int, err error) {
+func getErrorTraces(client http.Client, endpoint *url.URL, namespace, app string, duration time.Duration) (errorTraces int, err error) {
 	errorTraces = 0
 	err = nil
 	u := endpoint
 	u.Path = path.Join(u.Path, "/api/traces")
 	q := u.Query()
-	queryService := service
+	queryApp := app
 	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
-		queryService = fmt.Sprintf("%s.%s", service, namespace)
+		queryApp = fmt.Sprintf("%s.%s", app, namespace)
 	}
-	q.Set("service", queryService)
+	q.Set("service", queryApp)
 	t := time.Now().UnixNano() / 1000
 	q.Set("start", fmt.Sprintf("%d", t-(duration.Nanoseconds()/1000)))
 	q.Set("end", fmt.Sprintf("%d", t))

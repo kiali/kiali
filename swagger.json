@@ -641,6 +641,49 @@
         }
       }
     },
+    "/namespaces/{namespace}": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "summary": "Endpoint to update the Namespace configuration using Json Merge Patch strategy.",
+        "operationId": "namespaceUpdate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph": {
       "get": {
         "description": "The backing JSON for an aggregate node detail graph. (supported graphTypes: app | versionedApp | workload)",
@@ -1320,6 +1363,51 @@
         }
       }
     },
+    "/namespaces/{namespace}/apps/{app}/errortraces": {
+      "get": {
+        "description": "Endpoint to get the number of traces in error for a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "errorTraces",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/errorTracesResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/apps/{app}/health": {
       "get": {
         "description": "Get health associated to the given app",
@@ -1527,6 +1615,93 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps/{app}/spans": {
+      "get": {
+        "description": "Endpoint to get Jaeger spans for a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "spansList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/spansResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps/{app}/traces": {
+      "get": {
+        "description": "Endpoint to get the traces of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "tracesList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/traceDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }
@@ -2315,51 +2490,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/services/{service}/errortraces": {
-      "get": {
-        "description": "Endpoint to get the number of traces in error for a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
-        "operationId": "errorTraces",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/errorTracesResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
         "produces": [
@@ -2652,93 +2782,6 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/services/{service}/spans": {
-      "get": {
-        "description": "Endpoint to get Jaeger spans for a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
-        "operationId": "spansList",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/spansResponse"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/services/{service}/traces": {
-      "get": {
-        "description": "Endpoint to get the traces of a given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "traces"
-        ],
-        "operationId": "tracesList",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/traceDetailsResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
           }
         }
       }
@@ -3505,6 +3548,10 @@
         "label": {
           "type": "string",
           "x-go-name": "Label"
+        },
+        "singleSelection": {
+          "type": "boolean",
+          "x-go-name": "SingleSelection"
         }
       },
       "x-go-package": "github.com/kiali/k-charted/model"
@@ -3673,6 +3720,10 @@
         "unit": {
           "type": "string",
           "x-go-name": "Unit"
+        },
+        "xAxis": {
+          "type": "string",
+          "x-go-name": "XAxis"
         }
       },
       "x-go-package": "github.com/kiali/k-charted/model"
@@ -4396,6 +4447,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Iter8ExperimentDetail": {
+      "description": "For Displaying Iter8 Experiment Tabs",
       "type": "object",
       "properties": {
         "action": {
@@ -4412,6 +4464,13 @@
         "experimentItem": {
           "$ref": "#/definitions/Iter8ExperimentItem"
         },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Iter8Host"
+          },
+          "x-go-name": "Hosts"
+        },
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
@@ -4422,6 +4481,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Iter8ExperimentItem": {
+      "description": "For Displaying Iter8 Experiment Details",
       "type": "object",
       "properties": {
         "assessmentConclusion": {
@@ -4467,6 +4527,10 @@
           "format": "int64",
           "x-go-name": "EndedAt"
         },
+        "kind": {
+          "type": "string",
+          "x-go-name": "Kind"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -4499,12 +4563,38 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Iter8Host": {
+      "type": "object",
+      "properties": {
+        "gateway": {
+          "type": "string",
+          "x-go-name": "Gateway"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Iter8Info": {
       "type": "object",
       "properties": {
+        "analyticsImgVersion": {
+          "type": "string",
+          "x-go-name": "AnalyticsImageVersion"
+        },
+        "controllerImgVersion": {
+          "type": "string",
+          "x-go-name": "ControllerImageVersion"
+        },
         "enabled": {
           "type": "boolean",
           "x-go-name": "Enabled"
+        },
+        "supportedVersion": {
+          "type": "boolean",
+          "x-go-name": "SupportedVersion"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -7587,6 +7677,12 @@
         "items": {
           "$ref": "#/definitions/namespace"
         }
+      }
+    },
+    "namespaceResponse": {
+      "description": "namespaceResponse is a basic namespace",
+      "schema": {
+        "$ref": "#/definitions/namespace"
       }
     },
     "namespaceTlsResponse": {

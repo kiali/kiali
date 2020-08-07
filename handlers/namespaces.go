@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -81,4 +82,28 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, validationSummary)
+}
+
+// NamespaceUpdate is the API to perform a patch on a Namespace configuration
+func NamespaceUpdate(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Namespace initialization error: "+err.Error())
+		return
+	}
+	namespace := params["namespace"]
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+	}
+	jsonPatch := string(body)
+
+	ns, err := business.Namespace.UpdateNamespace(namespace, jsonPatch)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	audit(r, "UPDATE on Namespace: "+namespace+" Patch: "+jsonPatch)
+	RespondWithJSON(w, http.StatusOK, ns)
 }

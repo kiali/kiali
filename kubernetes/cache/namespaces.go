@@ -11,6 +11,7 @@ type (
 		SetNamespaces(token string, namespaces []models.Namespace)
 		GetNamespaces(token string) []models.Namespace
 		GetNamespace(token string, namespace string) *models.Namespace
+		RefreshTokenNamespaces()
 	}
 )
 
@@ -58,4 +59,10 @@ func (c *kialiCacheImpl) GetNamespace(token string, namespace string) *models.Na
 			}
 		}
 	}
+}
+
+func (c *kialiCacheImpl) RefreshTokenNamespaces() {
+	defer c.tokenLock.Unlock()
+	c.tokenLock.Lock()
+	c.tokenNamespaces = make(map[string]namespaceCache)
 }

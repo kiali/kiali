@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -26,7 +26,8 @@ type ThreeScaleConfig struct {
 	TemplateName   string `json:"templateName"`
 }
 type Iter8Config struct {
-	Enabled bool `json:"enabled"`
+	Enabled   bool   `json:"enabled"`
+	Namespace string `json:"namespace"`
 }
 type Extensions struct {
 	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
@@ -51,6 +52,7 @@ type PublicConfig struct {
 	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
 	IstioTelemetryV2         bool                            `json:"istioTelemetryV2"`
+	KialiFeatureFlags        config.KialiFeatureFlags        `json:"kialiFeatureFlags,omitempty"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
 }
 
@@ -72,15 +74,17 @@ func Config(w http.ResponseWriter, r *http.Request) {
 				TemplateName:   config.Extensions.ThreeScale.TemplateName,
 			},
 			Iter8: Iter8Config{
-				Enabled: config.Extensions.Iter8.Enabled,
+				Enabled:   config.Extensions.Iter8.Enabled,
+				Namespace: config.Extensions.Iter8.Namespace,
 			},
 		},
 		InstallationTag:          config.InstallationTag,
-		IstioStatusEnabled:       config.ExternalServices.Istio.IstioStatusEnabled,
+		IstioStatusEnabled:       config.ExternalServices.Istio.ComponentStatuses.Enabled,
 		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,
 		IstioComponentNamespaces: config.IstioComponentNamespaces,
 		IstioLabels:              config.IstioLabels,
+		KialiFeatureFlags:        config.KialiFeatureFlags,
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,

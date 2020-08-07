@@ -26,20 +26,20 @@ func (in *JaegerService) client() (jaeger.ClientInterface, error) {
 	return in.jaeger, in.loaderErr
 }
 
-func (in *JaegerService) GetJaegerSpans(ns, srv string, query models.TracingQuery) ([]jaeger.Span, error) {
+func (in *JaegerService) GetJaegerSpans(ns, app string, query models.TracingQuery) ([]jaeger.Span, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	return client.GetSpans(ns, srv, query)
+	return client.GetSpans(ns, app, query)
 }
 
-func (in *JaegerService) GetJaegerTraces(ns, srv string, query models.TracingQuery) (traces *jaeger.JaegerResponse, err error) {
+func (in *JaegerService) GetJaegerTraces(ns, app string, query models.TracingQuery) (traces *jaeger.JaegerResponse, err error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	return client.GetTraces(ns, srv, query)
+	return client.GetTraces(ns, app, query)
 }
 
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
@@ -50,10 +50,10 @@ func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.Jae
 	return client.GetTraceDetail(traceID)
 }
 
-func (in *JaegerService) GetErrorTraces(ns, srv string, duration time.Duration) (errorTraces int, err error) {
+func (in *JaegerService) GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return 0, err
 	}
-	return client.GetErrorTraces(ns, srv, duration)
+	return client.GetErrorTraces(ns, app, duration)
 }

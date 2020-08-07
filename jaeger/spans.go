@@ -19,31 +19,31 @@ type Span struct {
 	TraceSize int `json:"traceSize"`
 }
 
-func getSpans(client http.Client, endpoint *url.URL, namespace, service string, query models.TracingQuery) ([]Span, error) {
+func getSpans(client http.Client, endpoint *url.URL, namespace, app string, query models.TracingQuery) ([]Span, error) {
 	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
-	prepareQuery(endpoint, namespace, service, query)
+	prepareQuery(endpoint, namespace, app, query)
 	response, err := queryTraces(client, endpoint)
 	if err != nil {
 		return []Span{}, err
 	}
 
-	spans := tracesToSpans(response.Data, service, namespace)
+	spans := tracesToSpans(response.Data, app, namespace)
 	if len(response.Data) == query.Limit {
 		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
 		log.Trace("Limit of traces was reached, trying to find more relevant spans...")
-		return findRelevantSpans(client, spans, endpoint, service, namespace, query)
+		return findRelevantSpans(client, spans, endpoint, app, namespace, query)
 	}
 
 	return spans, nil
 }
 
-func tracesToSpans(traces []jaegerModels.Trace, service, namespace string) []Span {
+func tracesToSpans(traces []jaegerModels.Trace, app, namespace string) []Span {
 	spans := []Span{}
 	for _, trace := range traces {
 		// First, get the desired processes for our service
 		processes := make(map[jaegerModels.ProcessID]bool)
 		for pId, process := range trace.Processes {
-			if process.ServiceName == service || process.ServiceName == service+"."+namespace {
+			if process.ServiceName == app || process.ServiceName == app+"."+namespace {
 				processes[pId] = true
 			}
 		}
@@ -57,20 +57,20 @@ func tracesToSpans(traces []jaegerModels.Trace, service, namespace string) []Spa
 			}
 		}
 	}
-	log.Tracef("Found %d spans in the %d traces for service %s", len(spans), len(traces), service)
+	log.Tracef("Found %d spans in the %d traces for app %s", len(spans), len(traces), app)
 	return spans
 }
 
-func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, service, namespace string, query models.TracingQuery) ([]Span, error) {
+func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, app, namespace string, query models.TracingQuery) ([]Span, error) {
 	spansMap := make(map[jaegerModels.SpanID]Span)
 
 	if query.Tags == "" {
 		// Query for errors
 		q := query
 		q.Tags = "{\"error\":\"true\"}"
-		prepareQuery(u, namespace, service, q)
+		prepareQuery(u, namespace, app, q)
 		response, _ := queryTraces(client, u)
-		errSpans := tracesToSpans(response.Data, service, namespace)
+		errSpans := tracesToSpans(response.Data, app, namespace)
 		for _, span := range errSpans {
 			spansMap[span.SpanID] = span
 		}
@@ -91,10 +91,10 @@ func findRelevantSpans(client http.Client, spansSample []Span, u *url.URL, servi
 	// %.1gms would print for instance 0.00012456 as 0.0001ms
 	q := query
 	q.MinDuration = fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000)
-	prepareQuery(u, namespace, service, q)
+	prepareQuery(u, namespace, app, q)
 	response, _ := queryTraces(client, u)
 	// TODO / Question: if limit is reached again we might limit to 99th percentile instead?
-	pct90Spans := tracesToSpans(response.Data, service, namespace)
+	pct90Spans := tracesToSpans(response.Data, app, namespace)
 	for _, span := range pct90Spans {
 		spansMap[span.SpanID] = span
 	}

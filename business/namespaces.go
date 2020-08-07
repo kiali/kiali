@@ -221,6 +221,35 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	return &result, nil
 }
 
+func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) (*models.Namespace, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
+	defer promtimer.ObserveNow(&err)
+
+	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces
+	_, err = in.GetNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.hasProjects {
+		_, err = in.k8s.UpdateProject(namespace, jsonPatch)
+	} else {
+		_, err = in.k8s.UpdateNamespace(namespace, jsonPatch)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh
+	if kialiCache != nil && err == nil {
+		kialiCache.RefreshNamespace(namespace)
+		kialiCache.RefreshTokenNamespaces()
+	}
+	// Call GetNamespace to update the caching
+	return in.GetNamespace(namespace)
+}
+
 func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
 	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
 	// this would just circle back to the same results.

@@ -43,8 +43,8 @@ func TestTwoSidecarsWithoutSelector(t *testing.T) {
 		workloadList(),
 	).Check()
 
-	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
-	assertMultimatchFailure(t, "sidecar.multimatch.selectorless", validations, "sidecar2", []string{"sidecar1"})
+	assertMultimatchFailure(t, "generic.multimatch.selectorless", validations, "sidecar1", []string{"sidecar2"})
+	assertMultimatchFailure(t, "generic.multimatch.selectorless", validations, "sidecar2", []string{"sidecar1"})
 }
 
 func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
@@ -62,9 +62,9 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 		Path:              "spec/workloadSelector",
 	}.Check()
 
-	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
-	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar3", []string{"sidecar1", "sidecar4"})
-	assertMultimatchFailure(t, "sidecar.multimatch.selector", validations, "sidecar4", []string{"sidecar1", "sidecar3"})
+	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar1", []string{"sidecar3", "sidecar4"})
+	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar3", []string{"sidecar1", "sidecar4"})
+	assertMultimatchFailure(t, "generic.multimatch.selector", validations, "sidecar4", []string{"sidecar1", "sidecar3"})
 }
 
 func assertMultimatchFailure(t *testing.T, code string, validations models.IstioValidations, item string, references []string) {

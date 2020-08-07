@@ -18,15 +18,10 @@ ISTIOCTL=
 ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="istio-system"
-USERNAME="admin"
-PASSPHRASE="admin"
 MTLS="true"
 DELETE_ISTIO="false"
-KIALI_ENABLED="false"
-KIALI_CREATE_SECRET="false"
-DASHBOARDS_ENABLED="false"
 ISTIO_EGRESSGATEWAY_ENABLED="true"
-CONFIG_PROFILE="default" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
+CONFIG_PROFILE="demo" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -42,10 +37,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     -cp|--config-profile)
       CONFIG_PROFILE="$2"
-      if [ "${2}" == "demo" -o "${2}" == "demo-auth" ]; then
-        KIALI_ENABLED="true"
-        DASHBOARDS_ENABLED="true"
-      fi
       shift;shift
       ;;
     -di|--delete-istio)
@@ -53,15 +44,6 @@ while [[ $# -gt 0 ]]; do
         DELETE_ISTIO="$2"
       else
         echo "ERROR: The --delete-istio flag must be 'true' or 'false'"
-        exit 1
-      fi
-      shift;shift
-      ;;
-    -de|--dashboards-enabled)
-      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
-        DASHBOARDS_ENABLED="$2"
-      else
-        echo "ERROR: The --dashboards-enabled flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -83,19 +65,6 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -ke|--kiali-enabled)
-      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
-        KIALI_ENABLED="$2"
-      else
-        echo "ERROR: The --kiali-enabled flag must be 'true' or 'false'"
-        exit 1
-      fi
-      shift;shift
-      ;;
-    -kt|--kiali-tag)
-      KIALI_TAG="$2"
-      shift;shift
-      ;;
     -m|--mtls)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         MTLS="$2"
@@ -107,16 +76,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     -n|--namespace)
       NAMESPACE="$2"
-      shift;shift
-      ;;
-    -p|--passphrase)
-      PASSPHRASE="$2"
-      KIALI_CREATE_SECRET="true"
-      shift;shift
-      ;;
-    -u|--username)
-      USERNAME="$2"
-      KIALI_CREATE_SECRET="true"
       shift;shift
       ;;
     -s|--set)
@@ -136,12 +95,9 @@ Valid command line arguments:
        Installs Istio with the given profile.
        Run "istioctl profile list" to see the valid list of configuration profiles available.
        See: https://istio.io/docs/setup/additional-setup/config-profiles/
-       Default: default
+       Default: demo
   -di|--delete-istio (true|false):
        Set to 'true' if you want to delete Istio, rather than install it.
-       Default: false
-  -de|--dashboards-enabled (true|false):
-       Set to 'true' if you want Jaeger and Grafana installed.
        Default: false
   -ic|--istioctl <path to istioctl binary>:
        Where the istioctl executable is found. Use this when developing Istio installer and testing it.
@@ -151,30 +107,15 @@ Valid command line arguments:
   -iee|--istio-egressgateway-enabled (true|false)
        When set to true, istio-egressgateway will be installed.
        Default: true
-  -ke|--kiali-enabled (true|false):
-       When set to true, Kiali will be installed.
-       Default: false
-  -kt|--kiali-tag <tag>:
-       Defines the docker tag that will identify the image to be pulled when Kiali is deployed.
-       If you want the latest-and-greatest image, set this to "latest".
-       If you have locally built your own development version of Kiali, set this to "dev".
-       Default: the tag default defined by the Istio Helm chart
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: false
   -n|--namespace <name>:
        Install Istio in this namespace.
        Default: istio-system
-  -p|--passphrase <pass>:
-       The passphrase for the Kiali secret - this is the password to use when logging into Kiali.
-       Default: admin
-  -u|--username <uname>:
-       The username for the Kiali secret - this is the name to use when logging into Kiali.
-       Default: admin
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
-       --set values.kiali.tag=v1.9
        --set components.telemetry.k8s.resources.requests.memory=100Mi
        --set components.telemetry.k8s.resources.requests.cpu=50m
   -h|--help:
@@ -264,38 +205,9 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
-
-  # Create the kiali secret
-  if [ "${KIALI_CREATE_SECRET}" == "true" ]; then
-    _ENCODED_USERNAME=$(echo -n "${USERNAME}" | base64)
-    _ENCODED_PASSPHRASE=$(echo -n "${PASSPHRASE}" | base64)
-
-    echo Creating the Kiali secret
-    cat <<EOF | ${CLIENT_EXE} apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kiali
-  namespace: ${NAMESPACE}
-  labels:
-    app: kiali
-type: Opaque
-data:
-  username: ${_ENCODED_USERNAME}
-  passphrase: ${_ENCODED_PASSPHRASE}
-EOF
-  fi
-fi
-
-if [ "${KIALI_TAG}" != "" ]; then
-  _KIALI_TAG_ARG="--set values.kiali.tag=${KIALI_TAG}"
 fi
 
 for s in \
-   "--set values.kiali.enabled=${KIALI_ENABLED}" \
-   "${_KIALI_TAG_ARG}" \
-   "--set addonComponents.tracing.enabled=${DASHBOARDS_ENABLED}" \
-   "--set addonComponents.grafana.enabled=${DASHBOARDS_ENABLED}" \
    "${MTLS_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "${CNI_OPTIONS}" \
@@ -321,26 +233,20 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   fi
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest apply --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
+  ${ISTIOCTL} manifest install --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
     exit 1
   fi
 
-  if [ "${KIALI_ENABLED}" == "true" ]; then
-    ${CLIENT_EXE} wait --for=condition=available --timeout=600s deployment/kiali -n ${NAMESPACE}
-    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["apps.openshift.io"], "resources":["deploymentconfigs"],"verbs": ["get", "list", "watch"]}}]' --type json
-    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["project.openshift.io"], "resources":["projects"],"verbs": ["get"]}}]' --type json
-    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["route.openshift.io"], "resources":["routes"],"verbs": ["get"]}}]' --type json
-  fi
+  echo Installing Addons except Kiali
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/grafana.yaml
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/jaeger.yaml
 
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
-    if [ "${KIALI_ENABLED}" == "true" ]; then
-      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/kiali
-    fi
-    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/prometheus
 
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands so sidecar injection works:"

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
@@ -58,7 +59,10 @@ const serverPrefix = "https://kubernetes.default.svc/"
 var kialiNamespace string
 
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
-	redirectURL, err := getKialiRoutePath()
+	// this is the prefix of the OAuthClient name as well as the Route name
+	clientIdPrefix := config.Get().Auth.OpenShift.ClientIdPrefix
+
+	redirectURL, err := getKialiRoutePath(clientIdPrefix)
 
 	if err != nil {
 		log.Error(err)
@@ -84,12 +88,12 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 	}
 
 	if version.Major == "1" && (strings.HasPrefix(version.Minor, "11") || strings.HasPrefix(version.Minor, "10")) {
-		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali-"+namespace, url.QueryEscape(*redirectURL), "token")
+		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, clientIdPrefix+"-"+namespace, url.QueryEscape(*redirectURL), "token")
 	} else {
 		// The logout endpoint on the OpenShift OAuth Server
 		metadata.LogoutEndpoint = fmt.Sprintf("%s/logout", server.Issuer)
 		// The redirect path when logging out of the OpenShift OAuth Server. Note: this has to be a relative link to the OAuth server
-		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", "kiali-"+namespace, url.QueryEscape(*redirectURL), "token")
+		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", clientIdPrefix+"-"+namespace, url.QueryEscape(*redirectURL), "token")
 		// The fully qualified endpoint to use logging into the OpenShift OAuth server.
 		metadata.AuthorizationEndpoint = fmt.Sprintf("%s%s", server.Issuer, metadata.LogoutRedirect)
 	}
@@ -149,14 +153,14 @@ func getKialiNamespace() (string, error) {
 	return kialiNamespace, nil
 }
 
-func getKialiRoutePath() (*string, error) {
+func getKialiRoutePath(routeName string) (*string, error) {
 	var route *OAuthRoute
 	var protocol string
 
 	namespace, err := getKialiNamespace()
 	if err != nil {
 		log.Error(err)
-		return nil, fmt.Errorf("cannot read Kiali's ServiceAccount: %v", err)
+		return nil, fmt.Errorf("cannot read Kiali's Namespace: %v", err)
 	}
 
 	conf, err := kubernetes.ConfigClient()
@@ -165,7 +169,7 @@ func getKialiRoutePath() (*string, error) {
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
 	}
 
-	response, err := request("GET", fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/kiali", namespace), &conf.BearerToken)
+	response, err := request("GET", fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/%s", namespace, routeName), &conf.BearerToken)
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)

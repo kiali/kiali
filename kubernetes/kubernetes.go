@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"bytes"
 	"fmt"
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -385,4 +386,25 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 		err = fmt.Errorf("Workload type %s not found", workloadType)
 	}
 	return err
+}
+
+func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error) {
+	bytePatch := []byte(jsonPatch)
+	ns, err := in.k8s.CoreV1().Namespaces().Patch(namespace, types.MergePatchType, bytePatch)
+	if err != nil {
+		return &core_v1.Namespace{}, err
+	}
+
+	return ns, nil
+}
+
+func (in *K8SClient) UpdateProject(name string, jsonPatch string) (*osproject_v1.Project, error) {
+	result := &osproject_v1.Project{}
+	bytePatch := []byte(jsonPatch)
+	err := in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", name).Body(bytePatch).Do().Into(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
