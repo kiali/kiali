@@ -129,7 +129,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 	}.Check()
 
 	noObjectValidationTest(t, validations, "virtual-1")
-	presentValidationTest(t, validations, "virtual-2")
+	noObjectValidationTest(t, validations, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews"),
@@ -141,7 +141,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	presentValidationTest(t, validations, "virtual-1")
+	noObjectValidationTest(t, validations, "virtual-1")
 	noObjectValidationTest(t, validations, "virtual-2")
 
 	vss = []kubernetes.IstioObject{
@@ -154,9 +154,13 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noObjectValidationTest(t, validations, "virtual-1")
-	noObjectValidationTest(t, validations, "virtual-2")
-	emptyValidationTest(t, validations)
+	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}
+	presentValidationTest(t, validations, "virtual-1")
+	presentReference(t, *(validations[refKey]), "virtual-1")
+
+	refKey.Name = "virtual-2"
+	presentValidationTest(t, validations, "virtual-2")
+	presentReference(t, *(validations[refKey]), "virtual-1")
 }
 
 func TestRepeatingSVCNSHost(t *testing.T) {
