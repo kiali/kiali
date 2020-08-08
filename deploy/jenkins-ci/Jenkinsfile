@@ -31,6 +31,9 @@
  *   - OPERATOR_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-operator.git
  *      description: SSH Url of the kiali-operator GitHub repository
+ *   - HELM_GITHUB_URI
+ *      defaultValue: git@github.com:kiali/helm-charts.git
+ *      description: SSH Url of the helm-charts GitHub repository
  *   - QUAY_NAME
  *      defaultValue: quay.io/kiali/kiali
  *      description: The name of the Quay repository to push the release
@@ -49,6 +52,9 @@
  *   - OPERATOR_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-operator/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the operator (changes to prepare for next version)
+ *   - HELM_PULL_URI
+ *      defaultValue: https://api.github.com/repos/kiali/helm-charts/pulls
+ *      description: The URL of the GitHub API to use to create pull requests for the helm charts (changes to prepare for next version)
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
@@ -61,6 +67,9 @@
  *   - SKIP_OPERATOR_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the operator
+ *   - SKIP_HELM_RELEASE
+ *      defaultValue: n
+ *      description: Set to 'y' if you don't want to release the helm charts
  *   - SHOULD_RELEASE_SITE
  *      defaultValue: auto
  *      description: Set to 'y' to force release of the website even for patch versions
@@ -75,19 +84,20 @@
  */
 
 node('kiali-build') {
-  def (backendForkUri, uiForkUri, operatorForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git']
-  def (backendDir, uiDir, operatorDir, siteDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/kiali.io']
-  def (backendMakefile, uiMakefile, operatorMakefile, siteMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins', 'Makefile.site.jenkins']
+  def (backendForkUri, uiForkUri, operatorForkUri,helmForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git', 'git@github.com:kiali-bot/helm-charts.git']
+  def (backendDir, uiDir, operatorDir, helmDir, siteDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts', 'src/github.com/kiali/kiali.io']
+  def (backendMakefile, uiMakefile, operatorMakefile, helmMakefile, siteMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins', 'Makefile.helm.jenkins', 'Makefile.site.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
-  def buildSite = (params.SHOULD_RELEASE_SITE == "auto" && params.RELEASE_TYPE == "minor") || params.SHOULD_RELEASE_SITE != "y"
+  def buildHelm = params.SKIP_HELM_RELEASE != "y"
+  def buildSite = (params.SHOULD_RELEASE_SITE == "auto" && params.RELEASE_TYPE == "minor") || params.SHOULD_RELEASE_SITE == "y"
   def quayTag = ""
 
   try {
     cleanWs()
     stage('Checkout code') {
-      if ( buildBackend || buildOperator || buildSite ) {
+      if ( buildBackend || buildOperator || buildSite || buildHelm ) {
         checkout([
           $class: 'GitSCM',
           branches: [[name: params.BACKEND_RELEASING_BRANCH]],
@@ -139,6 +149,24 @@ node('kiali-build') {
         sh "cd ${operatorDir}; git config user.name 'kiali-bot'"
         sh "cp ${backendDir}/deploy/jenkins-ci/${operatorMakefile} ${operatorDir}"
       }
+      if ( buildHelm ) {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: 'master']],
+          doGenerateSubmoduleConfigurations: false,
+          extensions: [
+            [$class: 'RelativeTargetDirectory', relativeTargetDir: helmDir]
+          ],
+          submoduleCfg: [],
+          userRemoteConfigs: [[
+            credentialsId: 'kiali-bot-gh-ssh',
+            url: params.HELM_GITHUB_URI]]
+        ])
+
+        sh "cd ${helmDir}; git config user.email 'kiali-dev@googlegroups.com'"
+        sh "cd ${helmDir}; git config user.name 'kiali-bot'"
+        sh "cp ${backendDir}/deploy/jenkins-ci/${helmMakefile} ${helmDir}"
+      }
 
       if ( buildSite ) {
         checkout([
@@ -174,6 +202,7 @@ node('kiali-build') {
             "BACKEND_FORK_URI=${backendForkUri}",
             "UI_FORK_URI=${uiForkUri}",
             "OPERATOR_FORK_URI=${operatorForkUri}",
+            "HELM_FORK_URI=${helmForkUri}",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
@@ -206,7 +235,14 @@ node('kiali-build') {
             sh "make -f ${operatorMakefile} -C ${operatorDir} operator-build-release"
           }
         }
+      }, helm: {
+        stage('Build Helm Charts') {
+          if ( buildHelm ) {
+            sh "make -f ${helmMakefile} -C ${helmDir} helm-build-release"
+          }
+        }
       },
+
       failFast: true
 
       stage('Release kiali-ui to NPM') {
@@ -260,6 +296,16 @@ node('kiali-build') {
           withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
             sshagent(['kiali-bot-gh-ssh']) {
               sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-version-tag operator-prepare-next-version"
+            }
+          }
+        }
+      }
+
+      stage('Create release cut in helm repo') {
+        if ( buildHelm ) {
+          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+            sshagent(['kiali-bot-gh-ssh']) {
+              sh "make -f ${helmMakefile} -C ${helmDir} helm-push-version-tag helm-prepare-next-version"
             }
           }
         }
