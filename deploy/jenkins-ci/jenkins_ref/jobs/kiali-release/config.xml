@@ -74,6 +74,12 @@ specified, the type of the release will be determined based on the current date.
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>HELM_GITHUB_URI</name>
+          <description>SSH Url of the helm-charts GitHub repository</description>
+          <defaultValue>git@github.com:kiali/helm-charts.git</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>QUAY_NAME</name>
           <description>The name of the Quay repository to push the release</description>
           <defaultValue>quay.io/kiali/kiali</defaultValue>
@@ -114,6 +120,13 @@ operator (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>HELM_PULL_URI</name>
+          <description>The URL of the GitHub API to use to create pull requests for the
+helm-charts (changes to prepare for next version)</description>
+          <defaultValue>https://api.github.com/repos/kiali/helm-charts/pulls</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>NPM_DRY_RUN</name>
           <description>Set to &quot;y&quot; if you want to make a &quot;dry run&quot; of the front-end release process</description>
           <defaultValue>y</defaultValue>
@@ -134,6 +147,12 @@ operator (changes to prepare for next version)</description>
         <hudson.model.StringParameterDefinition>
           <name>SKIP_OPERATOR_RELEASE</name>
           <description>Set to &apos;y&apos; if you don&apos;t want to release the operator</description>
+          <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_HELM_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the helm charts</description>
           <defaultValue>n</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>

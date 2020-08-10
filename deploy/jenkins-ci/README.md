@@ -51,7 +51,7 @@ The [bin/jq](https://stedolan.github.io/jq/) v1.6 and
 [bin/semver](https://github.com/fsaintjacques/semver-tool) v2.1.0
 are tools used to properly set version strings when building releases.
 
-The [Makefile](Makefile) and [Makefile.operator.jenkins](Makefile.operator.jenkins) are repeatedly invoked by the Pipeline. They
+The [Makefile](Makefile), [Makefile.operator.jenkins](Makefile.operator.jenkins), and [Makefile.helm.jenkins](Makefile.helm.jenkins) are repeatedly invoked by the Pipeline. They
 are analog and compliment the [Makefile.jenkins](https://github.com/kiali/kiali-ui/blob/master/Makefile.jenkins)
 of the kiali-ui repository. These are the files where the build
 steps are implemented. 
@@ -140,7 +140,9 @@ parameters as follows:
   generate the release from; e.g. `refs/heads/v0.20`.
 * OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
   generate the release from; e.g. `refs/heads/v0.20`.
-  
+
+Note that the Helm release always builds and pushes to the "master" branch because that is the branch that GitHub Pages gets the content for the Helm Chart Repository HTTP server.
+
 ### Building a patch release (back-end only)
 
 First, make sure that all fixes are properly committed to the
@@ -156,6 +158,7 @@ Set the Pipeline parameters as follows:
   generate the release from; e.g. `refs/heads/v0.20`.
 * SKIP_UI_RELEASE: Set to `y`.
 * SKIP_OPERATOR_RELEASE: Set to `y`.
+* SKIP_HELM_RELEASE: Set to `y`.
 
 The front-end that will be bundled in the container image will be the version
 specified in the main Makefile
@@ -187,7 +190,9 @@ Then, run Pipeline with the parameters as follows:
   generate the release from; e.g. `refs/heads/v1.0`.
 * OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
   generate the release from; e.g. `refs/heads/v1.0`.
-  
+
+Note that the Helm release always builds and pushes to the "master" branch because that is the branch that GitHub Pages gets the content for the Helm Chart Repository HTTP server.
+
 ### Building a snapshot release
 
 Set the RELEASE_TYPE parameter of the Pipeline to _snapshot.X_ value, where
@@ -281,6 +286,8 @@ When running the build, set the following parameters:
   `git@github.com:israel-hdez/swsui.git`.
 * OPERATOR_GITHUB_URI: Use the SSH url of your Kiali operator fork; e.g.
   `git@github.com:israel-hdez/kiali-operator.git`.
+* HELM_GITHUB_URI: Use the SSH url of your Kiali helm-charts fork; e.g.
+  `git@github.com:israel-hdez/helm-charts.git`.
 * QUAY_NAME: Use your own Quay.io repository for Kiali;
   e.g. `quay.io/edgarhz/kiali`.
 * QUAY_OPERATOR_NAME: Use your own Quay.io repository for the operator;
@@ -291,6 +298,8 @@ When running the build, set the following parameters:
   e.g. `https://api.github.com/repos/israel-hdez/swsui/pulls`.
 * OPERATOR_PULL_URI: Use the GitHub API base URL for your operator fork;
   e.g. `https://api.github.com/repos/israel-hdez/kiali-operator/pulls`.
+* HELM_PULL_URI: Use the GitHub API base URL for your helm-charts fork;
+  e.g. `https://api.github.com/repos/israel-hdez/helm-charts/pulls`.
 * NPM_DRY_RUN: Set to `y`.
 
 Once you run the first test build, if you need to run more test builds,
@@ -342,7 +351,8 @@ The image is preconfigured with two jobs:
 
 ### Building the Jenkins image
 
-In case you prefer to build the Jenkins image, all required files
+If you need to build the Jenkins image (you will want to do this
+if you changed config.xml to add or modify parameters), all required files
 are provided in the [/deploy/jenkins-ci](/deploy/jenkins-ci)
 directory of the repository. Inside that directory, simply run:
 
