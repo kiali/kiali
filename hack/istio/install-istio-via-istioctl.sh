@@ -222,6 +222,11 @@ echo "MANIFEST_CONFIG_SETTINGS_TO_APPLY=${MANIFEST_CONFIG_SETTINGS_TO_APPLY}"
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
+  echo Deleting Addons
+  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/prometheus.yaml
+  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/grafana.yaml
+  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/jaeger.yaml
+  echo Deleting Core Istio
   ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
