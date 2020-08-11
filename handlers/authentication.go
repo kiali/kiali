@@ -499,16 +499,6 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	return http.StatusUnauthorized, ""
 }
 
-func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
-	// If header exists return the value, must be 1 to use the API from Kiali
-	// Otherwise an empty string is returned and WWW-Authenticate will be Basic
-	if r.Header.Get("X-Auth-Type-Kiali-UI") == "1" {
-		w.Header().Set("WWW-Authenticate", "xBasic realm=\"Kiali\"")
-	} else {
-		w.Header().Set("WWW-Authenticate", "Basic realm=\"Kiali\"")
-	}
-}
-
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
 	saToken, err := kubernetes.GetKialiToken()

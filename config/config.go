@@ -62,17 +62,17 @@ var rwMutex sync.RWMutex
 
 // Server configuration
 type Server struct {
-	Address                    string               `yaml:",omitempty"`
-	AuditLog                   bool                 `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
-	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
-	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
-	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
-	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
-	Port                       int                  `yaml:",omitempty"`
-	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
-	WebFQDN                    string               `yaml:"web_fqdn,omitempty"`
-	WebRoot                    string               `yaml:"web_root,omitempty"`
-	WebSchema                  string               `yaml:"web_schema,omitempty"`
+	Address                    string `yaml:",omitempty"`
+	AuditLog                   bool   `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
+	CORSAllowAll               bool   `yaml:"cors_allow_all,omitempty"`
+	GzipEnabled                bool   `yaml:"gzip_enabled,omitempty"`
+	MetricsEnabled             bool   `yaml:"metrics_enabled,omitempty"`
+	MetricsPort                int    `yaml:"metrics_port,omitempty"`
+	Port                       int    `yaml:",omitempty"`
+	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
+	WebRoot                    string `yaml:"web_root,omitempty"`
+	WebSchema                  string `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -435,7 +435,7 @@ func NewConfig() (c *Config) {
 			SigningKey:        "kiali",
 		},
 		Server: Server{
-			AuditLog: true,
+			AuditLog:                   true,
 			GzipEnabled:                true,
 			MetricsEnabled:             true,
 			MetricsPort:                9090,
@@ -465,15 +465,6 @@ func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	configuration = *conf
-}
-
-func getDefaultStringFromFile(filename string, defaultValue string) (retVal string) {
-	if fileContents, err := ioutil.ReadFile(filename); err == nil {
-		retVal = string(fileContents)
-	} else {
-		retVal = defaultValue
-	}
-	return
 }
 
 // String marshals the given Config into a YAML string

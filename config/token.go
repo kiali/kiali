@@ -75,16 +75,6 @@ func GenerateToken(username string) (TokenGenerated, error) {
 	return TokenGenerated{Token: ss, ExpiresOn: timeExpire, Username: username}, nil
 }
 
-// ValidateToken checks if the input token is still valid
-func ValidateToken(tokenString string) (string, error) {
-	claims, err := GetTokenClaimsIfValid(tokenString)
-	if err != nil {
-		return "", err
-	}
-
-	return claims.Subject, nil
-}
-
 func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &IanaClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(GetSigningKey()), nil
