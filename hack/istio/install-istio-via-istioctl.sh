@@ -22,11 +22,16 @@ MTLS="true"
 DELETE_ISTIO="false"
 ISTIO_EGRESSGATEWAY_ENABLED="true"
 CONFIG_PROFILE="demo" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
+ADDONS="prometheus grafana jaeger"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--addons)
+      ADDONS="prometheus $2"
+      shift;shift
+      ;;
     -c|--client-exe)
       CLIENT_EXE_NAME="$2"
       shift;shift
@@ -85,6 +90,12 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--addons <space-separated addon names>:
+       The names of the addons you want to install along with the core Istio components.
+       Make sure this value is space-separated. Valid addon names can be found in your Istio
+       distribution directory samples/addons.
+       Note that "prometheus" will always be added to the list of addons, so you do not have to specify it.
+       Default: prometheus grafana jaeger
   -c|--client-exe <name>:
        Cluster client executable name - valid values are "kubectl" or "oc".
        Default: oc
@@ -222,10 +233,13 @@ echo "MANIFEST_CONFIG_SETTINGS_TO_APPLY=${MANIFEST_CONFIG_SETTINGS_TO_APPLY}"
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
+
   echo Deleting Addons
-  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/prometheus.yaml
-  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/grafana.yaml
-  ${CLIENT_EXE} delete -f ${ISTIO_DIR}/samples/addons/jaeger.yaml
+  for addon in $(ls -1 ${ISTIO_DIR}/samples/addons/*.yaml); do
+    echo "Deleting addon [${addon}]"
+    ${CLIENT_EXE} delete --ignore-not-found=true -f ${addon}
+  done
+
   echo Deleting Core Istio
   ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
@@ -244,10 +258,11 @@ else
     exit 1
   fi
 
-  echo Installing Addons except Kiali
-  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml
-  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/grafana.yaml
-  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/jaeger.yaml
+  echo "Installing Addons: [${ADDONS}]"
+  for addon in ${ADDONS}; do
+    echo "Installing addon: [${addon}]"
+    ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/${addon}.yaml
+  done
 
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
