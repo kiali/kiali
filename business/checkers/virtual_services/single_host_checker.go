@@ -15,7 +15,7 @@ type SingleHostChecker struct {
 }
 
 func (s SingleHostChecker) Check() models.IstioValidations {
-	hostCounter := make(map[string]map[string]map[string][]*kubernetes.IstioObject)
+	hostCounter := make(map[string]map[string]map[string]map[string][]*kubernetes.IstioObject)
 	validations := models.IstioValidations{}
 
 	for _, vs := range s.VirtualServices {
@@ -24,34 +24,32 @@ func (s SingleHostChecker) Check() models.IstioValidations {
 		}
 	}
 
-	for _, clusterCounter := range hostCounter {
-		for _, namespaceCounter := range clusterCounter {
-			for _, serviceCounter := range namespaceCounter {
-				isNamespaceWildcard := len(namespaceCounter["*"]) > 0
-				targetSameHost := len(serviceCounter) > 1
-				otherServiceHosts := len(namespaceCounter) > 1
-				for _, virtualService := range serviceCounter {
-					// Marking virtualService as invalid if:
-					// - there is more than one virtual service per a host
-					// - there is one virtual service with wildcard and there are other virtual services pointing
-					//   a host for that namespace
-					if hasGateways(virtualService) {
-						continue
-					}
-
-					if targetSameHost {
-						// Reference everything within serviceCounter
-						multipleVirtualServiceCheck(*virtualService, validations, serviceCounter)
-					}
-
-					if isNamespaceWildcard && otherServiceHosts {
-						// Reference the * or in case of * the other hosts inside namespace
-						// or other stars
-						refs := make([]*kubernetes.IstioObject, 0, len(namespaceCounter))
-						for _, serviceCounter := range namespaceCounter {
-							refs = append(refs, serviceCounter...)
+	for _, gateways := range hostCounter {
+		for _, clusterCounter := range gateways {
+			for _, namespaceCounter := range clusterCounter {
+				for _, serviceCounter := range namespaceCounter {
+					isNamespaceWildcard := len(namespaceCounter["*"]) > 0
+					targetSameHost := len(serviceCounter) > 1
+					otherServiceHosts := len(namespaceCounter) > 1
+					for _, virtualService := range serviceCounter {
+						// Marking virtualService as invalid if:
+						// - there is more than one virtual service per a host
+						// - there is one virtual service with wildcard and there are other virtual services pointing
+						//   a host for that namespace
+						if targetSameHost {
+							// Reference everything within serviceCounter
+							multipleVirtualServiceCheck(*virtualService, validations, serviceCounter)
 						}
-						multipleVirtualServiceCheck(*virtualService, validations, refs)
+
+						if isNamespaceWildcard && otherServiceHosts {
+							// Reference the * or in case of * the other hosts inside namespace
+							// or other stars
+							refs := make([]*kubernetes.IstioObject, 0, len(namespaceCounter))
+							for _, serviceCounter := range namespaceCounter {
+								refs = append(refs, serviceCounter...)
+							}
+							multipleVirtualServiceCheck(*virtualService, validations, refs)
+						}
 					}
 				}
 			}
@@ -86,24 +84,43 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
-func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioObject, vs kubernetes.IstioObject, host kubernetes.Host) {
+func storeHost(hostCounter map[string]map[string]map[string]map[string][]*kubernetes.IstioObject, vs kubernetes.IstioObject, host kubernetes.Host) {
 	vsList := []*kubernetes.IstioObject{&vs}
 
-	if hostCounter[host.Cluster] == nil {
-		hostCounter[host.Cluster] = map[string]map[string][]*kubernetes.IstioObject{
-			host.Namespace: {
-				host.Service: vsList,
-			},
-		}
-	} else if hostCounter[host.Cluster][host.Namespace] == nil {
-		hostCounter[host.Cluster][host.Namespace] = map[string][]*kubernetes.IstioObject{
-			host.Service: vsList,
-		}
-	} else if _, ok := hostCounter[host.Cluster][host.Namespace][host.Service]; !ok {
-		hostCounter[host.Cluster][host.Namespace][host.Service] = vsList
-	} else {
-		hostCounter[host.Cluster][host.Namespace][host.Service] = append(hostCounter[host.Cluster][host.Namespace][host.Service], &vs)
+	gwList := getGateways(&vs)
+	if len(gwList) == 0 {
+		gwList = []string{"no-gateway"}
+	}
 
+	if !host.CompleteInput {
+		host.Cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+		host.Namespace = vs.GetObjectMeta().Namespace
+	}
+
+	for _, gw := range gwList {
+		if hostCounter[gw] == nil {
+			hostCounter[gw] = map[string]map[string]map[string][]*kubernetes.IstioObject{
+				host.Cluster: {
+					host.Namespace: {
+						host.Service: vsList,
+					},
+				},
+			}
+		} else if hostCounter[gw][host.Cluster] == nil {
+			hostCounter[gw][host.Cluster] = map[string]map[string][]*kubernetes.IstioObject{
+				host.Namespace: {
+					host.Service: vsList,
+				},
+			}
+		} else if hostCounter[gw][host.Cluster][host.Namespace] == nil {
+			hostCounter[gw][host.Cluster][host.Namespace] = map[string][]*kubernetes.IstioObject{
+				host.Service: vsList,
+			}
+		} else if _, ok := hostCounter[gw][host.Cluster][host.Namespace][host.Service]; !ok {
+			hostCounter[gw][host.Cluster][host.Namespace][host.Service] = vsList
+		} else {
+			hostCounter[gw][host.Cluster][host.Namespace][host.Service] = append(hostCounter[gw][host.Cluster][host.Namespace][host.Service], &vs)
+		}
 	}
 }
 
@@ -137,10 +154,24 @@ func (s SingleHostChecker) getHosts(virtualService kubernetes.IstioObject) []kub
 	return targetHosts
 }
 
-func hasGateways(virtualService *kubernetes.IstioObject) bool {
-	if gateways, ok := (*virtualService).GetSpec()["gateways"]; ok {
-		vsGateways, ok := (gateways).([]interface{})
-		return ok && vsGateways != nil && len(vsGateways) > 0
+func getGateways(virtualService *kubernetes.IstioObject) []string {
+	gateways := make([]string, 0)
+
+	if gws, ok := (*virtualService).GetSpec()["gateways"]; ok {
+		vsGateways, ok := (gws).([]interface{})
+		if !ok || vsGateways == nil || len(vsGateways) == 0 {
+			return gateways
+		}
+
+		for _, gwRaw := range vsGateways {
+			gw, ok := gwRaw.(string)
+			if !ok {
+				continue
+			}
+
+			gateways = append(gateways, gw)
+		}
 	}
-	return false
+
+	return gateways
 }

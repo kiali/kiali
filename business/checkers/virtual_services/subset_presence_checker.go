@@ -78,15 +78,23 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) bool {
-	destinationRule, ok := checker.getDestinationRule(host)
-	if !ok || destinationRule == nil {
+	destinationRules, ok := checker.getDestinationRules(host)
+	if !ok || destinationRules == nil || len(destinationRules) == 0 {
 		return false
 	}
 
-	return hasSubsetDefined(destinationRule, subset)
+	for _, dr := range destinationRules {
+		if hasSubsetDefined(dr, subset) {
+			return true
+		}
+	}
+
+	return false
 }
 
-func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost string) (kubernetes.IstioObject, bool) {
+func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]kubernetes.IstioObject, bool) {
+	drs := make([]kubernetes.IstioObject, 0, len(checker.DestinationRules))
+
 	for _, destinationRule := range checker.DestinationRules {
 		host, ok := destinationRule.GetSpec()["host"]
 		if !ok {
@@ -103,11 +111,11 @@ func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost strin
 
 		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(vsHost.String(), drHost.Service, drHost.Namespace) {
-			return destinationRule, true
+			drs = append(drs, destinationRule)
 		}
 	}
 
-	return nil, false
+	return drs, len(drs) > 0
 }
 
 func hasSubsetDefined(destinationRule kubernetes.IstioObject, subsetTarget string) bool {
