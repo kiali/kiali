@@ -7,7 +7,6 @@
 : ${NAMESPACE_PORTAL:=travel-portal}
 : ${NAMESPACE_CONTROL:=travel-control}
 : ${ENABLE_OPERATION_METRICS:=false}
-: ${INSTALL_VERSION:=v1}
 : ${DELETE_DEMO:=false}
 : ${SHOW_GUI:=false}
 
@@ -24,10 +23,6 @@ while [ $# -gt 0 ]; do
       ;;
     -eo|--enable-operation-metrics)
       ENABLE_OPERATION_METRICS="$2"
-      shift;shift
-      ;;
-    -iv|--install-version)
-      INSTALL_VERSION="$2"
       shift;shift
       ;;
     -sg|--show-gui)
@@ -66,12 +61,6 @@ echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
 echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
-echo INSTALL_VERSION=${INSTALL_VERSION}
-
-if [ "${INSTALL_VERSION}" != "v1" -a "${INSTALL_VERSION}" != "v2" ]; then
-  echo "Version must be one of 'v1' or 'v2'. Aborting."
-  exit 1
-fi
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
@@ -142,21 +131,11 @@ EOF
   fi
 fi
 
-# Deploy the demo v1
+# Deploy the demo
 
-if [ "${INSTALL_VERSION}" == "v1" ]; then
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_agency.yaml) -n ${NAMESPACE_AGENCY}
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_control.yaml) -n ${NAMESPACE_CONTROL}
-fi
-
-# Deploy the demo v2
-
-if [ "${INSTALL_VERSION}" == "v2" ]; then
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_agency_v2.yaml) -n ${NAMESPACE_AGENCY}
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
-  ${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/lucasponce/travel-comparison-demo/v2/travel_control.yaml) -n ${NAMESPACE_CONTROL}
-fi
+${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_agency.yaml) -n ${NAMESPACE_AGENCY}
+${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
+${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_control.yaml) -n ${NAMESPACE_CONTROL}
 
 # Set up metric classification
 
