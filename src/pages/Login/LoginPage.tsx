@@ -303,7 +303,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
         brandImgSrc={kialiLogo}
         brandImgAlt="Kiali logo"
         footerListItems={listItem}
-        textContent="Service Mesh Observability."
+        textContent="Service mesh management for Istio."
         loginTitle="Log in Kiali"
       >
         {loginPane}

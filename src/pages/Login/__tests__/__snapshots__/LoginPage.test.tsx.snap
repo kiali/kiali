@@ -24,7 +24,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
   }
   footerListVariants="inline"
   loginTitle="Log in Kiali"
-  textContent="Service Mesh Observability."
+  textContent="Service mesh management for Istio."
 >
   <LoginForm
     helperText={
