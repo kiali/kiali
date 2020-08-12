@@ -29,7 +29,7 @@ secret="${KEY:-$(echo_kiali_signing_key)}"
 cookie="${COOKIE:-kiali-token}"
 ncookie="${NCOOKIE:-kiali-token-openid-nonce}"
 
-# Kiali issuers: kiali-openshift, kiali-token, kiali-open-id, kiali-login, kiali-ldap
+# Kiali issuers: kiali-openshift, kiali-token, kiali-open-id
 iss="${ISS:-kiali-open-id}"
 
 # When the session expires in epoch seconds - by default, expire it next Saturday

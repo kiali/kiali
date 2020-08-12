@@ -37,29 +37,19 @@ const (
 // The valid auth strategies and values for cookie handling
 const (
 	AuthStrategyOpenshift = "openshift"
-	AuthStrategyLogin     = "login"
 	AuthStrategyAnonymous = "anonymous"
-	AuthStrategyLDAP      = "ldap"
 	AuthStrategyToken     = "token"
 	AuthStrategyOpenId    = "openid"
 
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
-	AuthStrategyLoginIssuer     = "kiali-login"
 	AuthStrategyTokenIssuer     = "kiali-token"
-	AuthStrategyLDAPIssuer      = "kiali-ldap"
 	AuthStrategyOpenIdIssuer    = "kiali-open-id"
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
 	AuthTypeBearer = "bearer"
 	AuthTypeNone   = "none"
-)
-
-// the paths we expect the login secret to be located
-const (
-	LoginSecretUsername   = "/kiali-secret/username"
-	LoginSecretPassphrase = "/kiali-secret/passphrase"
 )
 
 const (
@@ -72,18 +62,17 @@ var rwMutex sync.RWMutex
 
 // Server configuration
 type Server struct {
-	Address                    string               `yaml:",omitempty"`
-	AuditLog                   bool                 `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
-	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
-	Credentials                security.Credentials `yaml:",omitempty"`
-	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
-	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
-	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
-	Port                       int                  `yaml:",omitempty"`
-	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
-	WebFQDN                    string               `yaml:"web_fqdn,omitempty"`
-	WebRoot                    string               `yaml:"web_root,omitempty"`
-	WebSchema                  string               `yaml:"web_schema,omitempty"`
+	Address                    string `yaml:",omitempty"`
+	AuditLog                   bool   `yaml:"audit_log,omitempty"` // When true, allows additional audit logging on Write operations
+	CORSAllowAll               bool   `yaml:"cors_allow_all,omitempty"`
+	GzipEnabled                bool   `yaml:"gzip_enabled,omitempty"`
+	MetricsEnabled             bool   `yaml:"metrics_enabled,omitempty"`
+	MetricsPort                int    `yaml:"metrics_port,omitempty"`
+	Port                       int    `yaml:",omitempty"`
+	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
+	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
+	WebRoot                    string `yaml:"web_root,omitempty"`
+	WebSchema                  string `yaml:"web_schema,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -262,7 +251,6 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	LDAP      LDAPConfig      `yaml:"ldap,omitempty"`
 	OpenId    OpenIdConfig    `yaml:"openid,omitempty"`
 	OpenShift OpenShiftConfig `yaml:"openshift,omitempty"`
 	Strategy  string          `yaml:"strategy,omitempty"`
@@ -282,23 +270,6 @@ type OpenIdConfig struct {
 	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
 	Scopes                []string `yaml:"scopes,omitempty"`
 	UsernameClaim         string   `yaml:"username_claim,omitempty"`
-}
-
-// LDAPConfig provides the details of the LDAP related configuration
-type LDAPConfig struct {
-	LDAPBase               string `yaml:"ldap_base,omitempty"`
-	LDAPBindDN             string `yaml:"ldap_bind_dn,omitempty"`
-	LDAPInsecureSkipVerify bool   `yaml:"ldap_insecure_skip_verify,omitempty"`
-	LDAPGroupFilter        string `yaml:"ldap_group_filter,omitempty"`
-	LDAPHost               string `yaml:"ldap_host,omitempty"`
-	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
-	LDAPMemberOfKey        string `yaml:"ldap_member_of_key,omitempty"`
-	LDAPPort               int    `yaml:"ldap_port,omitempty"`
-	LDAPRoleFilter         string `yaml:"ldap_role_filter,omitempty"`
-	LDAPSearchFilter       string `yaml:"ldap_search_filter,omitempty"`
-	LDAPUserFilter         string `yaml:"ldap_user_filter,omitempty"`
-	LDAPUserIDKey          string `yaml:"ldap_user_id_key,omitempty"`
-	LDAPUseSSL             bool   `yaml:"ldap_use_ssl,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -352,7 +323,7 @@ func NewConfig() (c *Config) {
 			},
 		},
 		Auth: AuthConfig{
-			Strategy: "login",
+			Strategy: "token",
 			OpenId: OpenIdConfig{
 				AuthenticationTimeout: 300,
 				AuthorizationEndpoint: "",
@@ -464,11 +435,7 @@ func NewConfig() (c *Config) {
 			SigningKey:        "kiali",
 		},
 		Server: Server{
-			AuditLog: true,
-			Credentials: security.Credentials{
-				Username:   getDefaultStringFromFile(LoginSecretUsername, ""),
-				Passphrase: getDefaultStringFromFile(LoginSecretPassphrase, ""),
-			},
+			AuditLog:                   true,
 			GzipEnabled:                true,
 			MetricsEnabled:             true,
 			MetricsPort:                9090,
@@ -500,15 +467,6 @@ func Set(conf *Config) {
 	configuration = *conf
 }
 
-func getDefaultStringFromFile(filename string, defaultValue string) (retVal string) {
-	if fileContents, err := ioutil.ReadFile(filename); err == nil {
-		retVal = string(fileContents)
-	} else {
-		retVal = defaultValue
-	}
-	return
-}
-
 // String marshals the given Config into a YAML string
 // WARNING: do NOT use the result of this function to retrieve any configuration: some fields are obfuscated for security reasons.
 func (conf Config) String() (str string) {
@@ -517,7 +475,6 @@ func (conf Config) String() (str string) {
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.Identity.Obfuscate()
-	obf.Server.Credentials.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	str, err := Marshal(&obf)
 	if err != nil {

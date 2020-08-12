@@ -24,12 +24,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/golang/glog"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
@@ -103,57 +101,12 @@ func main() {
 	server := server.NewServer()
 	server.Start()
 
-	// wait for the secret when a secret is required
-	if config.Get().Auth.Strategy == config.AuthStrategyLogin {
-		waitForSecret()
-	}
-
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
 	server.Stop()
-}
-
-// CheckLDAPConfiguration is to check if the required configuration is there in the LDAP configuration
-func CheckLDAPConfiguration(auth config.AuthConfig) bool {
-	if auth.LDAP.LDAPHost == "" || auth.LDAP.LDAPPort == 0 ||
-		auth.LDAP.LDAPBindDN == "" || auth.LDAP.LDAPBase == "" {
-		return false
-	}
-	return true
-}
-
-func waitForSecret() {
-	foundSecretChan := make(chan security.Credentials)
-	go func() {
-		errs := 0
-		for {
-			username, uErr := ioutil.ReadFile(config.LoginSecretUsername)
-			passphrase, pErr := ioutil.ReadFile(config.LoginSecretPassphrase)
-			if uErr == nil && pErr == nil {
-				if string(username) != "" && string(passphrase) != "" {
-					log.Info("Secret is now available.")
-					foundSecretChan <- security.Credentials{
-						Username:   string(username),
-						Passphrase: string(passphrase),
-					}
-					break
-				}
-			}
-			errs++
-			if (errs % 5) == 0 {
-				log.Warning("Kiali is missing a secret that contains both 'username' and 'passphrase'")
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
-	secret := <-foundSecretChan
-	cfg := config.Get()
-	cfg.Server.Credentials.Username = secret.Username
-	cfg.Server.Credentials.Passphrase = secret.Passphrase
-	config.Set(cfg)
 }
 
 func waitForTermination() {
@@ -178,9 +131,6 @@ func validateConfig() error {
 		return fmt.Errorf("server port is negative: %v", config.Get().Server.Port)
 	}
 
-	if err := config.Get().Server.Credentials.ValidateCredentials(); err != nil {
-		return fmt.Errorf("server credentials are invalid: %v", err)
-	}
 	if strings.Contains(config.Get().Server.StaticContentRootDirectory, "..") {
 		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.StaticContentRootDirectory)
 	}
@@ -203,16 +153,12 @@ func validateConfig() error {
 	// log some messages to let the administrator know when credentials are configured certain ways
 	auth := config.Get().Auth
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
-	if auth.Strategy == config.AuthStrategyLogin {
-		creds := config.Get().Server.Credentials
-		if creds.Username == "" && creds.Passphrase == "" {
-			// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning
-			log.Warningf("Credentials are missing. Create a proper secret. Please refer to the documentation for more details.")
-		}
-	} else if auth.Strategy == config.AuthStrategyAnonymous {
+	if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
-	} else if auth.Strategy == config.AuthStrategyLDAP && !CheckLDAPConfiguration(auth) {
-		return fmt.Errorf("Auth strategy is LDAP but there is no LDAP configuration")
+	} else if auth.Strategy != config.AuthStrategyOpenId &&
+		auth.Strategy != config.AuthStrategyOpenshift &&
+		auth.Strategy != config.AuthStrategyToken {
+		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
 	}
 
 	// Check the signing key for the JWT token is valid

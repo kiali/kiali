@@ -55,23 +55,8 @@ operator-delete: .ensure-oc-exists kiali-delete kiali-purge
 	${OC} delete --ignore-not-found=true customresourcedefinitions monitoringdashboards.monitoring.kiali.io
 	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
 
-## secret-create: Create a Kiali secret using CREDENTIALS_USERNAME and CREDENTIALS_PASSPHRASE.
-secret-create: .ensure-oc-exists
-	@echo Create the secret
-	${OC} create secret generic kiali -n "${NAMESPACE}" --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}"
-	${OC} label secret kiali app=kiali -n "${NAMESPACE}"
-
-## secret-delete: Delete the Kiali secret.
-secret-delete: .ensure-oc-exists
-	@echo Delete the secret
-	${OC} delete --ignore-not-found=true secret --selector="app=kiali" -n "${NAMESPACE}"
-
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
-ifeq ($(AUTH_STRATEGY),login)
-kiali-create: .ensure-operator-repo-exists .prepare-cluster secret-create
-else
 kiali-create: .ensure-operator-repo-exists .prepare-cluster
-endif
 	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
 	cat ${KIALI_CR_FILE} | \
 ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
@@ -89,7 +74,7 @@ KIALI_CR_SPEC_VERSION="${KIALI_CR_SPEC_VERSION}" \
 envsubst | ${OC} apply -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
-kiali-delete: .ensure-oc-exists secret-delete
+kiali-delete: .ensure-oc-exists
 	@echo Remove Kiali
 	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" ; true
 
