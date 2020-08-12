@@ -232,11 +232,7 @@ func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) 
 		return nil, err
 	}
 
-	if in.hasProjects {
-		_, err = in.k8s.UpdateProject(namespace, jsonPatch)
-	} else {
-		_, err = in.k8s.UpdateNamespace(namespace, jsonPatch)
-	}
+	_, err = in.k8s.UpdateNamespace(namespace, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
