@@ -90,7 +90,7 @@ node('kiali-build') {
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
-  def buildHelm = params.SKIP_HELM_RELEASE != "y" && params.RELEASE_TYPE != "patch"
+  def buildHelm = params.SKIP_HELM_RELEASE != "y" && (params.RELEASE_TYPE == "minor" || params.RELEASE_TYPE == "major")
   def buildSite = (params.SHOULD_RELEASE_SITE == "auto" && params.RELEASE_TYPE == "minor") || params.SHOULD_RELEASE_SITE == "y"
   def quayTag = ""
 
