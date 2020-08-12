@@ -155,6 +155,10 @@ func validateConfig() error {
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
+	} else if auth.Strategy != config.AuthStrategyOpenId &&
+		auth.Strategy != config.AuthStrategyOpenshift &&
+		auth.Strategy != config.AuthStrategyToken {
+		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
 	}
 
 	// Check the signing key for the JWT token is valid
