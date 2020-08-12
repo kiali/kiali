@@ -26,6 +26,7 @@ type Layer struct {
 	TLS            TLSService
 	Iter8          Iter8Service
 	IstioStatus    IstioStatusService
+	ProxyStatus    ProxyStatus
 }
 
 // Global clientfactory and prometheus clients.
@@ -123,6 +124,7 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
+	temporaryLayer.ProxyStatus = ProxyStatus{k8s: k8s}
 
 	return temporaryLayer
 }

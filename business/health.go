@@ -56,26 +56,37 @@ func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, query
 
 func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
+	wsNames := make([]string, 0, len(ws))
 
 	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
-	fetchRate := false
+	hasSidecar := false
 	for _, w := range ws {
 		if w.IstioSidecar {
-			fetchRate = true
-			break
+			wsNames = append(wsNames, w.Name)
+			hasSidecar = true
 		}
 	}
 
 	// Fetch services requests rates
 	var errRate error
-	if fetchRate {
+	if hasSidecar {
 		rate, err := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
 		health.Requests = rate
 		errRate = err
 	}
 
 	// Deployment status
-	health.WorkloadStatuses = castWorkloadStatuses(ws)
+	health.WorkloadStatuses = ws.CastWorkloadStatuses()
+
+	// Proxy status
+	if hasSidecar {
+		proxyStatuses, errProxy := in.businessLayer.ProxyStatus.GetWorkloadsProxyStatus(namespace, wsNames)
+		if errProxy != nil {
+			errRate = errProxy
+		}
+
+		fillAppProxyStatus(health, proxyStatuses)
+	}
 
 	return health, errRate
 }
@@ -90,7 +101,7 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}
-	status := models.WorkloadStatus{
+	status := &models.WorkloadStatus{
 		Name:              w.Name,
 		DesiredReplicas:   w.DesiredReplicas,
 		CurrentReplicas:   w.CurrentReplicas,
@@ -105,6 +116,16 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 		}, nil
 	}
 
+	// Add Proxy Status info
+	status.SyncedProxies, err = in.businessLayer.ProxyStatus.GetWorkloadProxyStatus(workload, namespace)
+	if err != nil {
+		return models.WorkloadHealth{
+			WorkloadStatus: status,
+			Requests:       models.NewEmptyRequestHealth(),
+		}, err
+	}
+
+	// Add Telemetry info
 	rate, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
 	return models.WorkloadHealth{
 		WorkloadStatus: status,
@@ -122,14 +143,16 @@ func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, q
 	if err != nil {
 		return nil, err
 	}
+
 	return in.getNamespaceAppHealth(namespace, appEntities, rateInterval, queryTime)
 }
 
 func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities namespaceApps, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
 	allHealth := make(models.NamespaceAppHealth)
+	wsNames := make([]string, 0)
 
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	fetchRates := false
+	sidecarPresent := false
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -137,11 +160,11 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 			h := models.EmptyAppHealth()
 			allHealth[app] = &h
 			if entities != nil {
-				h.WorkloadStatuses = castWorkloadStatuses(entities.Workloads)
+				h.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
 				for _, w := range entities.Workloads {
 					if w.IstioSidecar {
-						fetchRates = true
-						break
+						wsNames = append(wsNames, w.Name)
+						sidecarPresent = true
 					}
 				}
 			}
@@ -149,12 +172,20 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 	}
 
 	var errRate error
-	if fetchRates {
+	if sidecarPresent {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
 		errRate = err
 		// Fill with collected request rates
 		fillAppRequestRates(allHealth, rates)
+
+		// Add Proxy Statuses
+		proxyStatuses, errProxy := in.businessLayer.ProxyStatus.GetWorkloadsProxyStatus(namespace, wsNames)
+		if errProxy != nil {
+			errRate = errProxy
+		}
+
+		fillNamespaceAppProxyStatus(allHealth, proxyStatuses)
 	}
 
 	return allHealth, errRate
@@ -219,35 +250,47 @@ func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval stri
 		return nil, err
 	}
 
-	return in.getNamespaceWorkloadHealth(namespace, wl, rateInterval, queryTime), nil
+	return in.getNamespaceWorkloadHealth(namespace, wl, rateInterval, queryTime)
 }
 
-func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.Workloads, rateInterval string, queryTime time.Time) models.NamespaceWorkloadHealth {
+func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.Workloads, rateInterval string, queryTime time.Time) (models.NamespaceWorkloadHealth, error) {
 	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	fetchRates := false
+	hasSidecar := false
 
 	allHealth := make(models.NamespaceWorkloadHealth)
+	wsNames := make([]string, 0)
 	for _, w := range ws {
 		allHealth[w.Name] = models.EmptyWorkloadHealth()
-		allHealth[w.Name].WorkloadStatus = models.WorkloadStatus{
+		allHealth[w.Name].WorkloadStatus = &models.WorkloadStatus{
 			Name:              w.Name,
 			DesiredReplicas:   w.DesiredReplicas,
 			CurrentReplicas:   w.CurrentReplicas,
 			AvailableReplicas: w.AvailableReplicas,
 		}
 		if w.IstioSidecar {
-			fetchRates = true
+			wsNames = append(wsNames, w.Name)
+			hasSidecar = true
 		}
 	}
 
-	if fetchRates {
+	var err error
+	if hasSidecar {
 		// Fetch services requests rates
-		rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		var rates model.Vector
+		rates, err = in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
 		// Fill with collected request rates
 		fillWorkloadRequestRates(allHealth, rates)
+
+		// Fetch Proxy statuses
+		proxyStatuses, errProxy := in.businessLayer.ProxyStatus.GetWorkloadsProxyStatus(namespace, wsNames)
+		if errProxy != nil {
+			err = errProxy
+		}
+
+		fillNamespaceWorkloadProxyStatus(allHealth, proxyStatuses)
 	}
 
-	return allHealth
+	return allHealth, err
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
@@ -287,6 +330,27 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	}
 }
 
+// fillAppProxyStatus fills the App health with the proxy status of each workload
+func fillAppProxyStatus(allHealth models.AppHealth, proxyStatuses map[string]int32) {
+	for _, ws := range allHealth.WorkloadStatuses {
+		ws.SyncedProxies = proxyStatuses[ws.Name]
+	}
+}
+
+// fillNamespaceAppProxyStatus fills each AppHealth with the proxy status of each workload
+func fillNamespaceAppProxyStatus(allHealth models.NamespaceAppHealth, proxyStatuses map[string]int32) {
+	for _, appHealth := range allHealth {
+		fillAppProxyStatus(*appHealth, proxyStatuses)
+	}
+}
+
+// fillNamespaceWorkloadProxyStatus fills each WorkloadHealth with the proxy status of its workload
+func fillNamespaceWorkloadProxyStatus(allHealth models.NamespaceWorkloadHealth, proxyStatuses map[string]int32) {
+	for workloadName, workloadHealth := range allHealth {
+		workloadHealth.WorkloadStatus.SyncedProxies = proxyStatuses[workloadName]
+	}
+}
+
 func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
@@ -318,18 +382,4 @@ func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInte
 		rqHealth.AggregateOutbound(sample)
 	}
 	return rqHealth, err
-}
-
-func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
-	statuses := make([]models.WorkloadStatus, 0)
-	for _, w := range ws {
-		status := models.WorkloadStatus{
-			Name:              w.Name,
-			DesiredReplicas:   w.DesiredReplicas,
-			CurrentReplicas:   w.CurrentReplicas,
-			AvailableReplicas: w.AvailableReplicas}
-		statuses = append(statuses, status)
-
-	}
-	return statuses
 }

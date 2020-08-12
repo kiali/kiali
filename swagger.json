@@ -7258,6 +7258,11 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "syncedProxies": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "SyncedProxies"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"

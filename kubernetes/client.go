@@ -45,6 +45,7 @@ type IstioClientInterface interface {
 	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
 	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	GetProxyStatus() ([]*ProxyStatus, error)
 }
 
 type K8SClientInterface interface {

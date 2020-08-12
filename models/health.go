@@ -20,8 +20,8 @@ type ServiceHealth struct {
 
 // AppHealth contains aggregated health from various sources, for a given app
 type AppHealth struct {
-	WorkloadStatuses []WorkloadStatus `json:"workloadStatuses"`
-	Requests         RequestHealth    `json:"requests"`
+	WorkloadStatuses []*WorkloadStatus `json:"workloadStatuses"`
+	Requests         RequestHealth     `json:"requests"`
 }
 
 func NewEmptyRequestHealth() RequestHealth {
@@ -31,7 +31,7 @@ func NewEmptyRequestHealth() RequestHealth {
 // EmptyAppHealth create an empty AppHealth
 func EmptyAppHealth() AppHealth {
 	return AppHealth{
-		WorkloadStatuses: []WorkloadStatus{},
+		WorkloadStatuses: []*WorkloadStatus{},
 		Requests:         NewEmptyRequestHealth(),
 	}
 }
@@ -52,8 +52,8 @@ func EmptyWorkloadHealth() *WorkloadHealth {
 
 // WorkloadHealth contains aggregated health from various sources, for a given workload
 type WorkloadHealth struct {
-	WorkloadStatus WorkloadStatus `json:"workloadStatus"`
-	Requests       RequestHealth  `json:"requests"`
+	WorkloadStatus *WorkloadStatus `json:"workloadStatus"`
+	Requests       RequestHealth   `json:"requests"`
 }
 
 // WorkloadStatus gives
@@ -70,6 +70,24 @@ type WorkloadStatus struct {
 	DesiredReplicas   int32  `json:"desiredReplicas"`
 	CurrentReplicas   int32  `json:"currentReplicas"`
 	AvailableReplicas int32  `json:"availableReplicas"`
+	SyncedProxies     int32  `json:"syncedProxies"`
+}
+
+type ProxyStatuses string
+
+const (
+	Synced  ProxyStatuses = "Synced"
+	NotSent ProxyStatuses = "NOT_SENT"
+	Stale   ProxyStatuses = "Stale"
+	StaleNa ProxyStatuses = "Stale (Never Acknowledged)"
+)
+
+// ProxyStatus gives the sync status of the sidecar proxy.
+// In healthy scenarios all variables should be true.
+// If at least one variable is false, then the proxy isn't fully sync'ed with pilot.
+type ProxyStatus struct {
+	Component string        `json:"component"`
+	Status    ProxyStatuses `json:"status"`
 }
 
 // RequestHealth holds several stats about recent request errors
@@ -109,4 +127,18 @@ func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 	} else {
 		requests[protocol][code] = float64(sample.Value)
 	}
+}
+
+func (ws Workloads) CastWorkloadStatuses() []*WorkloadStatus {
+	statuses := make([]*WorkloadStatus, 0)
+	for _, w := range ws {
+		status := &WorkloadStatus{
+			Name:              w.Name,
+			DesiredReplicas:   w.DesiredReplicas,
+			CurrentReplicas:   w.CurrentReplicas,
+			AvailableReplicas: w.AvailableReplicas}
+		statuses = append(statuses, status)
+
+	}
+	return statuses
 }
