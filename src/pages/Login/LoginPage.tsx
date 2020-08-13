@@ -68,12 +68,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     }
   }
 
-  /* FOR FUTURE USE - IN CASE WE NEED A LOGIN FORM THAT ASKS FOR USERNAME
-  handleUsernameChange = value => {
-    this.setState({ username: value });
-  };
-*/
-
   handlePasswordChange = passwordValue => {
     this.setState({ password: passwordValue });
   };
@@ -103,32 +97,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
           filledInputs: false
         });
       }
-    } else {
-      this.setState({
-        isValidUsername: !!this.state.username,
-        isValidPassword: !!this.state.password,
-        filledInputs: !!this.state.username && !!this.state.password
-      });
-
-      if (!!this.state.username && !!this.state.password && this.props.authenticate) {
-        this.props.authenticate(this.state.username, this.state.password);
-        this.setState({ showHelperText: false, errorInput: '' });
-      } else {
-        let message = 'Invalid login credentials.';
-        message +=
-          !!!this.state.username && !!!this.state.password
-            ? 'Username and password are required.'
-            : !!this.state.username
-            ? 'Password is required.'
-            : 'Username is required.';
-
-        this.setState({
-          showHelperText: true,
-          errorInput: message,
-          isValidUsername: false,
-          isValidPassword: false
-        });
-      }
     }
   };
   renderMessage = (message: React.ReactNode | undefined, type: string | undefined, key: string) => {
@@ -154,22 +122,12 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (this.state.showHelperText) {
       messages.push(this.renderMessage(this.state.errorInput, undefined, 'helperText'));
     }
-    if (authenticationConfig.secretMissing) {
-      messages.push(
-        this.renderMessage(
-          `The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
-          creates a valid secret. Please refer to the Kiali documentation for more details.`,
-          'danger',
-          'secretMissing'
-        )
-      );
-    }
     if (this.props.status === LoginStatus.expired) {
       messages.push(
         this.renderMessage('Your session has expired or was terminated in another window.', 'warning', 'sessionExpired')
       );
     }
-    if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
+    if (this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
     if (this.props.postLoginErrorMsg) {
@@ -190,28 +148,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
     const isLoginButtonDisabled =
       isLoggingIn || (this.props.postLoginErrorMsg !== undefined && this.props.postLoginErrorMsg.length !== 0);
-
-    /* FOR FUTURE USE - IN CASE WE NEED A LOGIN FORM THAT ASKS FOR USERNAME AND PASSWORD
-    const loginForm = (
-      <LoginForm
-        usernameLabel="Username"
-        showHelperText={this.state.showHelperText || this.props.message !== '' || messages.length > 0}
-        helperText={<>{messages}</>}
-        usernameValue={this.state.username}
-        onChangeUsername={this.handleUsernameChange}
-        isValidUsername={this.state.isValidUsername && this.props.status !== LoginStatus.error}
-        passwordLabel="Password"
-        passwordValue={this.state.password}
-        onChangePassword={this.handlePasswordChange}
-        isValidPassword={this.state.isValidPassword && this.props.status !== LoginStatus.error}
-        rememberMeAriaLabel="Remember me Checkbox"
-        onLoginButtonClick={(e: any) => this.handleSubmit(e)}
-        style={{ marginTop: '10px' }}
-        loginButtonLabel={isLoggingIn ? 'Logging in...' : undefined}
-        isLoginButtonDisabled={isLoginButtonDisabled}
-      />
-    );
-*/
 
     const listItem = (
       <>

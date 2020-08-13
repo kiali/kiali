@@ -37,16 +37,13 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     );
   }
 
-  private textForAuthStrategy = (strategy: AuthStrategy) => {
+  private textForAuthStrategy = (_strategy: AuthStrategy) => {
     const line1 =
       this.props.timeOutCountDown <= 0
         ? 'Your session has expired.'
         : `Your session will expire in ${this.props.timeOutCountDown.toFixed()} seconds.`;
 
-    const line2 =
-      strategy === AuthStrategy.openshift
-        ? 'You will need to re-login with your cluster credentials. Please save your changes, if any.'
-        : 'Would you like to extend your session?';
+    const line2 = 'You will need to re-login. Please save your changes, if any.';
 
     return (
       <>
