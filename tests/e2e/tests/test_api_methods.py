@@ -264,10 +264,10 @@ def test_app_dashboard(kiali_client):
     APP_DASHBOARD_PATH = {'namespace': 'bookinfo', 'app':'ratings'}
     evaluate_response(kiali_client, method_name='appDashboard', path=APP_DASHBOARD_PATH)
 
-def test_threescale_info(kiali_client):
+def __test_threescale_info(kiali_client):
     evaluate_response(kiali_client, method_name='getThreeScaleInfo')
 
-def test_threescale_handelers(kiali_client):
+def __test_threescale_handelers(kiali_client):
     evaluate_response(kiali_client, method_name='getThreeScaleHandlers')
 
 def __test_threescale_service(kiali_client):
