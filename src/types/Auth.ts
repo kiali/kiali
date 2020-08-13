@@ -2,7 +2,6 @@ export interface AuthConfig {
   authorizationEndpoint?: string;
   logoutEndpoint?: string;
   logoutRedirect?: string;
-  secretMissing?: boolean;
   strategy: AuthStrategy;
 }
 
@@ -11,10 +10,8 @@ export type AuthInfo = {
 } & AuthConfig;
 
 export enum AuthStrategy {
-  login = 'login',
   anonymous = 'anonymous',
   openshift = 'openshift',
-  ldap = 'ldap',
   token = 'token',
   openid = 'openid'
 }

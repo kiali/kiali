@@ -1,8 +1,7 @@
 import { AuthConfig, AuthStrategy } from '../types/Auth';
 
 const authenticationConfig: AuthConfig = {
-  strategy: AuthStrategy.login,
-  secretMissing: false
+  strategy: AuthStrategy.token
 };
 
 // Returns true if authentication strategy is either 'openshift' or 'openid'

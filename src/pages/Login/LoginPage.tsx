@@ -10,7 +10,6 @@ import {
   ListItem,
   ListVariant,
   LoginFooterItem,
-  LoginForm,
   LoginPage as LoginNext,
   TextInput
 } from '@patternfly/react-core';
@@ -69,10 +68,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     }
   }
 
-  handleUsernameChange = value => {
-    this.setState({ username: value });
-  };
-
   handlePasswordChange = passwordValue => {
     this.setState({ password: passwordValue });
   };
@@ -102,32 +97,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
           filledInputs: false
         });
       }
-    } else {
-      this.setState({
-        isValidUsername: !!this.state.username,
-        isValidPassword: !!this.state.password,
-        filledInputs: !!this.state.username && !!this.state.password
-      });
-
-      if (!!this.state.username && !!this.state.password && this.props.authenticate) {
-        this.props.authenticate(this.state.username, this.state.password);
-        this.setState({ showHelperText: false, errorInput: '' });
-      } else {
-        let message = 'Invalid login credentials.';
-        message +=
-          !!!this.state.username && !!!this.state.password
-            ? 'Username and password are required.'
-            : !!this.state.username
-            ? 'Password is required.'
-            : 'Username is required.';
-
-        this.setState({
-          showHelperText: true,
-          errorInput: message,
-          isValidUsername: false,
-          isValidPassword: false
-        });
-      }
     }
   };
   renderMessage = (message: React.ReactNode | undefined, type: string | undefined, key: string) => {
@@ -153,56 +122,16 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (this.state.showHelperText) {
       messages.push(this.renderMessage(this.state.errorInput, undefined, 'helperText'));
     }
-    if (authenticationConfig.secretMissing) {
-      messages.push(
-        this.renderMessage(
-          `The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
-          creates a valid secret. Please refer to the Kiali documentation for more details.`,
-          'danger',
-          'secretMissing'
-        )
-      );
-    }
     if (this.props.status === LoginStatus.expired) {
       messages.push(
         this.renderMessage('Your session has expired or was terminated in another window.', 'warning', 'sessionExpired')
       );
     }
-    if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
+    if (this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
     if (this.props.postLoginErrorMsg) {
       messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
-    }
-    if (authenticationConfig.strategy === AuthStrategy.ldap) {
-      messages.push(
-        this.renderMessage(
-          <>
-            Authentication with LDAP strategy is deprecated and will be removed in a following release. As an
-            alternative, use the "openid" strategy using an OpenId provider with an LDAP connector. See{' '}
-            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
-              release notes for version 1.19.
-            </a>
-          </>,
-          'warning',
-          'deprecatedLdap'
-        )
-      );
-    }
-    if (authenticationConfig.strategy === AuthStrategy.login) {
-      messages.push(
-        this.renderMessage(
-          <>
-            Authentication with "login" strategy is deprecated and will be removed in a following release. As an
-            alternative, use the "token" strategy. See{' '}
-            <a href="https://kiali.io/news/release-notes/#_1_19_0" target="_blank" rel="noreferrer noopener">
-              release notes for version 1.19.
-            </a>
-          </>,
-          'warning',
-          'deprecatedLogin'
-        )
-      );
     }
     return messages;
   };
@@ -220,26 +149,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     const isLoginButtonDisabled =
       isLoggingIn || (this.props.postLoginErrorMsg !== undefined && this.props.postLoginErrorMsg.length !== 0);
 
-    const loginForm = (
-      <LoginForm
-        usernameLabel="Username"
-        showHelperText={this.state.showHelperText || this.props.message !== '' || messages.length > 0}
-        helperText={<>{messages}</>}
-        usernameValue={this.state.username}
-        onChangeUsername={this.handleUsernameChange}
-        isValidUsername={this.state.isValidUsername && this.props.status !== LoginStatus.error}
-        passwordLabel="Password"
-        passwordValue={this.state.password}
-        onChangePassword={this.handlePasswordChange}
-        isValidPassword={this.state.isValidPassword && this.props.status !== LoginStatus.error}
-        rememberMeAriaLabel="Remember me Checkbox"
-        onLoginButtonClick={(e: any) => this.handleSubmit(e)}
-        style={{ marginTop: '10px' }}
-        loginButtonLabel={isLoggingIn ? 'Logging in...' : undefined}
-        isLoginButtonDisabled={isLoginButtonDisabled}
-      />
-    );
-
     const listItem = (
       <>
         <ListItem>
@@ -252,9 +161,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     );
 
     let loginPane: React.ReactFragment;
-    if (authenticationConfig.strategy === AuthStrategy.login || authenticationConfig.strategy === AuthStrategy.ldap) {
-      loginPane = loginForm;
-    } else if (authenticationConfig.strategy === AuthStrategy.token) {
+    if (authenticationConfig.strategy === AuthStrategy.token) {
       loginPane = (
         <Form>
           <FormHelperText
