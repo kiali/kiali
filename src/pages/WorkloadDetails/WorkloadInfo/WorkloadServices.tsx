@@ -118,6 +118,8 @@ class WorkloadServices extends React.Component<WorkloadServicesProps> {
                 aria-label={'list_workloads_services'}
                 cells={this.columns()}
                 rows={this.rows()}
+                // This style is declared on _overrides.scss
+                className="table"
               >
                 <TableHeader />
                 <TableBody />

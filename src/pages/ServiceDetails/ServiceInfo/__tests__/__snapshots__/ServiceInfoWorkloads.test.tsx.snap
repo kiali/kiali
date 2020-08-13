@@ -43,6 +43,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
               },
             ]
           }
+          className="table"
           rows={
             Array [
               Object {

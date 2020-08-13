@@ -37,6 +37,8 @@ export interface IstioConfigItem {
   namespace: string;
   type: string;
   name: string;
+  creationTimeStamp?: string;
+  resourceVersion?: string;
   gateway?: Gateway;
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
@@ -158,7 +160,35 @@ export const dicIstioType = {
   envoyfilters: 'EnvoyFilter',
   attributemanifests: 'AttributeManifest',
   httpapispecs: 'HTTPAPISpec',
-  httpapispecbindings: 'HTTPAPISpecBinding'
+  httpapispecbindings: 'HTTPAPISpecBinding',
+  gateway: 'Gateway',
+  virtualservice: 'VirtualService',
+  destinationrule: 'DestinationRule',
+  serviceentry: 'ServiceEntry',
+  rule: 'Rule',
+  adapter: 'Adapter',
+  template: 'Template',
+  quotaspec: 'QuotaSpec',
+  quotaspecbinding: 'QuotaSpecBinding',
+  instance: 'Instance',
+  handler: 'Handler',
+  policy: 'Policy',
+  meshpolicy: 'MeshPolicy',
+  clusterrbacconfig: 'ClusterRbacConfig',
+  rbacconfig: 'RbacConfig',
+  authorizationpolicy: 'AuthorizationPolicy',
+  sidecar: 'Sidecar',
+  servicerole: 'ServiceRole',
+  servicerolebinding: 'ServiceRoleBinding',
+  servicemeshpolicy: 'ServiceMeshPolicy',
+  servicemeshrbacconfig: 'ServiceMeshRbacConfig',
+  peerauthentication: 'PeerAuthentication',
+  requestauthentication: 'RequestAuthentication',
+  workloadentry: 'WorkloadEntry',
+  envoyfilter: 'EnvoyFilter',
+  attributemanifest: 'AttributeManifest',
+  httpapispec: 'HTTPAPISpec',
+  httpapispecbinding: 'HTTPAPISpecBinding'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -275,6 +305,8 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
         namespace: istioConfigList.namespace.name,
         type: typeName,
         name: entry.metadata.name,
+        creationTimeStamp: entry.metadata.creationTimeStamp,
+        resourceVersion: entry.metadata.resourceVersion,
         validation: hasValidations(typeName, entry.metadata.name)
           ? istioConfigList.validations[typeName][entry.metadata.name]
           : undefined
@@ -285,5 +317,51 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     });
   });
 
+  return istioItems;
+};
+
+export const vsToIstioItems = (vss: VirtualService[], validations: Validations): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (name: string) => validations.virtualservice && validations.virtualservice[name];
+
+  const typeNameProto = dicIstioType['virtualservices']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  vss.forEach(vs => {
+    const item = {
+      namespace: vs.metadata.namespace || '',
+      type: typeName,
+      name: vs.metadata.name,
+      creationTimeStamp: vs.metadata.creationTimestamp,
+      resourceVersion: vs.metadata.resourceVersion,
+      validation: hasValidations(vs.metadata.name) ? validations.virtualservice[vs.metadata.name] : undefined
+    };
+    item[entryName] = vs;
+    istioItems.push(item);
+  });
+  return istioItems;
+};
+
+export const drToIstioItems = (drs: DestinationRule[], validations: Validations): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (name: string) => validations.destinationrule && validations.destinationrule[name];
+
+  const typeNameProto = dicIstioType['destinationrules']; // ex. serviceEntries -> ServiceEntry
+  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+
+  drs.forEach(dr => {
+    const item = {
+      namespace: dr.metadata.namespace || '',
+      type: typeName,
+      name: dr.metadata.name,
+      creationTimeStamp: dr.metadata.creationTimestamp,
+      resourceVersion: dr.metadata.resourceVersion,
+      validation: hasValidations(dr.metadata.name) ? validations.destinationrule[dr.metadata.name] : undefined
+    };
+    item[entryName] = dr;
+    istioItems.push(item);
+  });
   return istioItems;
 };

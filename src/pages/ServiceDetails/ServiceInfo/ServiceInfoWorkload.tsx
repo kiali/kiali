@@ -112,6 +112,8 @@ class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
                 aria-label={'list_workloads'}
                 cells={this.columns()}
                 rows={this.rows()}
+                // This style is declared on _overrides.scss
+                className="table"
               >
                 <TableHeader />
                 <TableBody />

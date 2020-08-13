@@ -13,10 +13,9 @@ describe('#ServiceInfo render correctly with data', () => {
         expect(wrapper.find('div#name').text()).toContain('reviews');
         expect(wrapper.find('div#endpoints').find('StackItem')).toHaveLength(3);
         const tabs = wrapper.find('div#service-tabs').find('li');
-        expect(tabs).toHaveLength(3);
+        expect(tabs).toHaveLength(2);
         expect(tabs.at(0).text().trim()).toEqual('Workloads (0)');
-        expect(tabs.at(1).text().trim()).toEqual('Virtual Services (1)');
-        expect(tabs.at(2).text().trim()).toEqual('Destination Rules (1)');
+        expect(tabs.at(1).text().trim()).toEqual('Istio Config (2)');
       });
   });
 });

@@ -110,6 +110,8 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
                 aria-label={'list_workloads_pods'}
                 cells={this.columns()}
                 rows={this.rows()}
+                // This style is declared on _overrides.scss
+                className="table"
               >
                 <TableHeader />
                 <TableBody />

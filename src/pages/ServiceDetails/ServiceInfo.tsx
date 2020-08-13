@@ -6,8 +6,6 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import { ServiceDetailsInfo, validationToSeverity } from '../../types/ServiceInfo';
-import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
-import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { ObjectValidation, PeerAuthentication, Validations, ValidationTypes } from '../../types/IstioObjects';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
@@ -23,6 +21,8 @@ import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import ServiceWizardDropdown from 'components/IstioWizards/ServiceWizardDropdown';
 import GraphDataSource from 'services/GraphDataSource';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
+import { drToIstioItems, vsToIstioItems } from '../../types/IstioConfigList';
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
@@ -49,8 +49,7 @@ const tabName = 'list';
 const defaultTab = 'workloads';
 const paramToTab: { [key: string]: number } = {
   workloads: 0,
-  virtualservices: 1,
-  destinationrules: 2
+  istioconfig: 1
 };
 
 class ServiceInfo extends React.Component<Props, ServiceInfoState> {
@@ -194,7 +193,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
   render() {
     const workloads = this.state.serviceDetails?.workloads || [];
-    const validations = this.state.validations || {};
     const validationChecks = this.validationChecks();
     const getSeverityIcon: any = (severity: ValidationTypes = ValidationTypes.Error) => (
       <span className={tabIconStyle}>
@@ -203,43 +201,47 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       </span>
     );
 
-    const getValidationIcon = (keys: string[], type: string) => {
+    const getValidationIcon = (keys: string[], types: string[]) => {
       let severity = ValidationTypes.Warning;
       keys.forEach(key => {
-        const validationsForIcon = (this.state.validations || {})![type][key];
-        if (validationToSeverity(validationsForIcon) === ValidationTypes.Error) {
-          severity = ValidationTypes.Error;
-        }
+        types.forEach(type => {
+          if (this.state.validations && this.state.validations[type]) {
+            const validationsForIcon = (this.state.validations || {})![type][key];
+            if (validationToSeverity(validationsForIcon) === ValidationTypes.Error) {
+              severity = ValidationTypes.Error;
+            }
+          }
+        });
       });
       return getSeverityIcon(severity);
     };
 
-    let vsTabTitle, drTabTitle: JSX.Element | undefined;
+    let istioTabTitle: JSX.Element | undefined;
     if (this.state.serviceDetails) {
-      vsTabTitle = (
+      let istioConfigIcon = undefined;
+      if (validationChecks.hasVirtualServiceChecks || validationChecks.hasDestinationRuleChecks) {
+        const names: string[] = [];
+        this.state.serviceDetails.virtualServices?.items.forEach(vs => names.push(vs.metadata.name));
+        this.state.serviceDetails.destinationRules?.items.forEach(dr => names.push(dr.metadata.name));
+        istioConfigIcon = getValidationIcon(names, ['virtualservice', 'destinationrule']);
+      }
+      istioTabTitle = (
         <>
-          Virtual Services ({this.state.serviceDetails.virtualServices.items.length})
-          {validationChecks.hasVirtualServiceChecks
-            ? getValidationIcon(
-                (this.state.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
-                'virtualservice'
-              )
-            : undefined}
-        </>
-      );
-
-      drTabTitle = (
-        <>
-          Destination Rules ({this.state.serviceDetails.destinationRules.items.length})
-          {validationChecks.hasDestinationRuleChecks
-            ? getValidationIcon(
-                (this.state.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
-                'destinationrule'
-              )
-            : undefined}
+          Istio Config (
+          {this.state.serviceDetails.virtualServices.items.length +
+            this.state.serviceDetails.destinationRules.items.length}
+          ){istioConfigIcon}
         </>
       );
     }
+
+    const vsIstioConfigItems = this.state.serviceDetails?.virtualServices
+      ? vsToIstioItems(this.state.serviceDetails.virtualServices.items, this.state.serviceDetails.validations)
+      : [];
+    const drIstioConfigItems = this.state.serviceDetails?.destinationRules
+      ? drToIstioItems(this.state.serviceDetails.destinationRules.items, this.state.serviceDetails.validations)
+      : [];
+    const istioConfigItems = vsIstioConfigItems.concat(drIstioConfigItems);
 
     return (
       <>
@@ -287,22 +289,9 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
                       />
                     </ErrorBoundaryWithMessage>
                   </Tab>
-                  <Tab eventKey={1} title={vsTabTitle}>
-                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
-                      <ServiceInfoVirtualServices
-                        service={this.state.serviceDetails}
-                        virtualServices={this.state.serviceDetails.virtualServices.items}
-                        validations={validations!.virtualservice}
-                      />
-                    </ErrorBoundaryWithMessage>
-                  </Tab>
-                  <Tab eventKey={2} title={drTabTitle}>
+                  <Tab eventKey={1} title={istioTabTitle}>
                     <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
-                      <ServiceInfoDestinationRules
-                        service={this.state.serviceDetails}
-                        destinationRules={this.state.serviceDetails.destinationRules.items}
-                        validations={validations!.destinationrule}
-                      />
+                      <IstioConfigSubList name={this.state.serviceDetails.service.name} items={istioConfigItems} />
                     </ErrorBoundaryWithMessage>
                   </Tab>
                 </ParameterizedTabs>
