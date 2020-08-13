@@ -2,7 +2,6 @@ export interface AuthConfig {
   authorizationEndpoint?: string;
   logoutEndpoint?: string;
   logoutRedirect?: string;
-  secretMissing?: boolean;
   strategy: AuthStrategy;
 }
 

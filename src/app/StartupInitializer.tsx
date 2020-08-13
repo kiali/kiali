@@ -37,7 +37,6 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
       authenticationConfig.authorizationEndpoint = authConfig.data.authorizationEndpoint;
       authenticationConfig.logoutEndpoint = authConfig.data.logoutEndpoint;
       authenticationConfig.logoutRedirect = authConfig.data.logoutRedirect;
-      authenticationConfig.secretMissing = authConfig.data.secretMissing;
       authenticationConfig.strategy = authConfig.data.strategy;
 
       if (authConfig.data.sessionInfo.expiresOn && authConfig.data.sessionInfo.username) {
