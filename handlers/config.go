@@ -82,7 +82,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 				Namespace: config.Extensions.Iter8.Namespace,
 			},
 		},
-		InstallationTag:          config.InstallationTag,
+		InstallationTag: config.InstallationTag,
 		IstioAnnotations: IstioAnnotations{
 			IstioInjectionAnnotation: config.ExternalServices.Istio.IstioInjectionAnnotation,
 		},

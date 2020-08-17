@@ -144,7 +144,7 @@ type TracingConfig struct {
 type IstioConfig struct {
 	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarAnnotation 	 string            `yaml:"istio_sidecar_annotation,omitempty"`
+	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
 	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
 	UrlServiceVersion        string            `yaml:"url_service_version"`
 }
@@ -367,9 +367,9 @@ func NewConfig() (c *Config) {
 				},
 			},
 			Istio: IstioConfig{
-				IstioIdentityDomain:    "svc.cluster.local",
+				IstioIdentityDomain:      "svc.cluster.local",
 				IstioInjectionAnnotation: "sidecar.istio.io/inject",
-				IstioSidecarAnnotation: "sidecar.istio.io/status",
+				IstioSidecarAnnotation:   "sidecar.istio.io/status",
 				ComponentStatuses: ComponentStatuses{
 					Enabled: true,
 					Components: []ComponentStatus{
