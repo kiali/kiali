@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"strconv"
 )
 
 type WorkloadList struct {
@@ -45,6 +46,10 @@ type WorkloadListItem struct {
 	// required: true
 	// example: 192892127
 	ResourceVersion string `json:"resourceVersion"`
+
+	// Define if Workload has an explicit Istio policy annotation
+	// It's mapped as a pointer to show three values nil, true, false
+	IstioInjectionAnnotation *bool `json:"istioInjectionAnnotation,omitempty"`
 
 	// Define if Pods related to this Workload has an IstioSidecar deployed
 	// required: true
@@ -137,6 +142,16 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		_, workload.VersionLabel = tplMeta.Labels[conf.IstioLabels.VersionLabelName]
 	} else {
 		workload.Labels = map[string]string{}
+	}
+	var annotation string
+	exist := false
+	if tplMeta != nil && tplMeta.Annotations != nil {
+		annotation, exist = tplMeta.Annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+	} else {
+		annotation, exist = meta.Annotations[conf.ExternalServices.Istio.IstioInjectionAnnotation]
+	}
+	if value, err := strconv.ParseBool(annotation); exist && err == nil {
+		workload.IstioInjectionAnnotation = &value
 	}
 	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
 	workload.ResourceVersion = meta.ResourceVersion

@@ -33,6 +33,9 @@ type Extensions struct {
 	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
 	Iter8      Iter8Config      `json:"iter8,omitempty"`
 }
+type IstioAnnotations struct {
+	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
+}
 
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
 // All durations are in seconds.
@@ -46,6 +49,7 @@ type PrometheusConfig struct {
 type PublicConfig struct {
 	Extensions               Extensions                      `json:"extensions,omitempty"`
 	InstallationTag          string                          `json:"installationTag,omitempty"`
+	IstioAnnotations         IstioAnnotations                `json:"istioAnnotations,omitempty"`
 	IstioStatusEnabled       bool                            `json:"istioStatusEnabled,omitempty"`
 	IstioIdentityDomain      string                          `json:"istioIdentityDomain,omitempty"`
 	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
@@ -79,6 +83,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		InstallationTag:          config.InstallationTag,
+		IstioAnnotations: IstioAnnotations{
+			IstioInjectionAnnotation: config.ExternalServices.Istio.IstioInjectionAnnotation,
+		},
 		IstioStatusEnabled:       config.ExternalServices.Istio.ComponentStatuses.Enabled,
 		IstioIdentityDomain:      config.ExternalServices.Istio.IstioIdentityDomain,
 		IstioNamespace:           config.IstioNamespace,
