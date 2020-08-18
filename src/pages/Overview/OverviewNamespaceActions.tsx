@@ -30,6 +30,14 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
     });
   };
 
+  componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
+    if (prevState.isKebabOpen) {
+      this.setState({
+        isKebabOpen: false
+      });
+    }
+  }
+
   render() {
     const namespaceActions = this.props.actions.map((action, i) => {
       if (action.isSeparator) {

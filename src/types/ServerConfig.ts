@@ -19,6 +19,10 @@ interface Extensions {
   iter8: iter8Config;
 }
 
+interface IstioAnnotations {
+  istioInjectionAnnotation: string;
+}
+
 interface KialiFeatureFlags {
   istioInjectionAction: boolean;
 }
@@ -26,6 +30,7 @@ interface KialiFeatureFlags {
 export interface ServerConfig {
   extensions?: Extensions;
   installationTag?: string;
+  istioAnnotations: IstioAnnotations;
   istioIdentityDomain: string;
   istioNamespace: string;
   istioComponentNamespaces?: Map<string, string>;

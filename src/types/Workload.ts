@@ -12,6 +12,7 @@ export interface Workload {
   type: string;
   createdAt: string;
   resourceVersion: string;
+  istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
   appLabel: boolean;

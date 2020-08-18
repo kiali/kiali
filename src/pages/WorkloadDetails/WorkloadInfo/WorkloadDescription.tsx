@@ -71,6 +71,15 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps> {
                   </Title>
                   <Labels labels={workload.labels || {}} />
                 </StackItem>
+                {workload.istioInjectionAnnotation !== undefined && (
+                  <StackItem>
+                    <Title headingLevel="h6" size="md">
+                      {' '}
+                      {'Istio Sidecar Inject Annotation'}{' '}
+                    </Title>
+                    {String(workload.istioInjectionAnnotation)}
+                  </StackItem>
+                )}
                 <StackItem id="type">
                   <Title headingLevel="h6" size="md">
                     {' '}

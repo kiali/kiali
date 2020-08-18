@@ -49,6 +49,10 @@ export const WIZARD_SUSPEND_TRAFFIC = 'suspend_traffic';
 export const WIZARD_THREESCALE_LINK = '3scale_link';
 export const WIZARD_THREESCALE_UNLINK = '3scale_unlink';
 
+export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
+export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
+export const WIZARD_REMOVE_AUTO_INJECTION = 'remove_auto_injection';
+
 export const SERVICE_WIZARD_ACTIONS = [WIZARD_WEIGHTED_ROUTING, WIZARD_MATCHING_ROUTING, WIZARD_SUSPEND_TRAFFIC];
 
 export const WIZARD_TITLES = {
@@ -1108,13 +1112,31 @@ export const buildWorkloadThreeScalePatch = (
   return JSON.stringify(patch);
 };
 
-export const buildNamespaceInjectionPatch = (enable: boolean): string => {
+export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean): string => {
   const labels = {};
-  labels[serverConfig.istioLabels.injectionLabelName] = enable ? 'enabled' : null;
+  labels[serverConfig.istioLabels.injectionLabelName] = remove ? null : enable ? 'enabled' : 'disabled';
   const patch = {
     metadata: {
       labels: labels
     }
   };
+  return JSON.stringify(patch);
+};
+
+export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolean, remove: boolean): string => {
+  const patch = {};
+  const annotations = {};
+  annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
+  if (workloadType === 'Pod') {
+    patch['annotations'] = annotations;
+  } else {
+    patch['spec'] = {
+      template: {
+        metadata: {
+          annotations: annotations
+        }
+      }
+    };
+  }
   return JSON.stringify(patch);
 };
