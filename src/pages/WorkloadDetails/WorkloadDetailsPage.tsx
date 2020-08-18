@@ -98,7 +98,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const logTab = (
       <Tab title="Logs" eventKey={2} key={'Logs'}>
         {hasPods ? (
-          <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload!.pods} />
+          <WorkloadPodLogs
+            namespace={this.props.match.params.namespace}
+            pods={this.state.workload!.pods}
+            duration={this.props.duration}
+          />
         ) : (
           <EmptyState variant={EmptyStateVariant.full}>
             <Title headingLevel="h5" size="lg">

@@ -18,19 +18,20 @@ import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
-import { DurationInSeconds, LogLines, TimeRange } from '../../../types/Common';
+import { DurationInSeconds, LogLines } from '../../../types/Common';
 import { RenderComponentScroll } from '../../../components/Nav/Page';
-import { retrieveDuration } from 'components/Time/TimeRangeHelper';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import Splitter from 'm-react-splitters';
-import RefreshContainer from '../../../components/Refresh/Refresh';
 import { KialiIcon, defaultIconStyle } from '../../../config/KialiIcon';
 import { FullScreenLogModal } from './FullScreenLogModal';
+import { DurationDropdownContainer } from '../../../components/DurationDropdown/DurationDropdown';
+import RefreshContainer from '../../../components/Refresh/Refresh';
+import { RightActionBar } from '../../../components/RightActionBar/RightActionBar';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
   pods: Pod[];
+  duration: DurationInSeconds;
 }
 
 interface ContainerInfo {
@@ -42,7 +43,6 @@ type TextAreaPosition = 'left' | 'right' | 'top' | 'bottom';
 
 interface WorkloadPodLogsState {
   containerInfo?: ContainerInfo;
-  duration: DurationInSeconds;
   filteredAppLogs?: LogLines;
   filteredProxyLogs?: LogLines;
   hideError?: string;
@@ -167,7 +167,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     if (this.props.pods.length < 1) {
       this.state = {
-        duration: retrieveDuration() || 600,
         hideLogValue: '',
         isLogWindowSelectExpanded: false,
         loadingAppLogs: false,
@@ -197,7 +196,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     this.state = {
       containerInfo: containerInfo,
-      duration: retrieveDuration() || 600,
       hideLogValue: '',
       isLogWindowSelectExpanded: false,
       loadingAppLogs: false,
@@ -221,21 +219,21 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         pod.name,
         this.state.containerInfo.container,
         this.state.tailLines,
-        this.state.duration
+        this.props.duration
       );
     }
   }
 
-  componentDidUpdate(_prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
+  componentDidUpdate(prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
     const prevContainer = prevState.containerInfo ? prevState.containerInfo.container : undefined;
     const newContainer = this.state.containerInfo ? this.state.containerInfo.container : undefined;
     const updateContainerInfo = this.state.containerInfo && this.state.containerInfo !== prevState.containerInfo;
     const updateContainer = newContainer && newContainer !== prevContainer;
-    const updateDuration = this.state.duration && prevState.duration !== this.state.duration;
+    const updateDuration = this.props.duration && this.props.duration !== prevProps.duration;
     const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
     if (updateContainerInfo || updateContainer || updateDuration || updateTailLines) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.state.duration);
+      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.props.duration);
     }
     this.proxyLogsRef.current.scrollTop = this.proxyLogsRef.current.scrollHeight;
     this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
@@ -251,167 +249,158 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
   render() {
     return (
-      <RenderComponentScroll key={this.state.sideBySideOrientation ? 'vertical' : 'horizontal'}>
-        {this.state.containerInfo && (
-          <Grid style={{ padding: '10px 10px 0 10px', height: '100%' }}>
-            <GridItem span={12}>
-              <Card style={{ height: '100%' }}>
-                <CardBody>
-                  {/*we need two FullScreenLogModal components because you cant pass anything to modal.open() */}
-                  <FullScreenLogModal
-                    logText={WorkloadPodLogs.linesToString(this.state.filteredAppLogs)}
-                    title={this.props.pods[this.state.podValue!].name}
-                    ref={this.appFullScreenLogModalRef}
-                  />
-                  <FullScreenLogModal
-                    logText={WorkloadPodLogs.linesToString(this.state.filteredProxyLogs)}
-                    title="Istio Proxy Logs (sidecar)"
-                    ref={this.proxyFullScreenLogModalRef}
-                  />
-                  <Toolbar className={toolbar}>
-                    <ToolbarGroup>
-                      <ToolbarItem className={displayFlex}>
-                        <ToolbarDropdown
-                          id={'wpl_pods'}
-                          nameDropdown="Pod"
-                          tooltip="Display logs for the selected pod"
-                          handleSelect={key => this.setPod(key)}
-                          value={this.state.podValue}
-                          label={this.props.pods[this.state.podValue!].name}
-                          options={this.podOptions!}
-                        />
-                      </ToolbarItem>
-                      <ToolbarItem className={`${displayFlex} ${toolbarSpace}`}>
-                        <ToolbarDropdown
-                          id={'wpl_containers'}
-                          nameDropdown="Container"
-                          tooltip="Choose container for selected pod"
-                          handleSelect={key => this.setContainer(key)}
-                          value={this.state.containerInfo.container}
-                          label={this.state.containerInfo.container}
-                          options={this.state.containerInfo.containerOptions!}
-                        />
-                      </ToolbarItem>
-                    </ToolbarGroup>
-                    <ToolbarGroup className={toolbarRight}>
-                      <ToolbarItem className={displayFlex}>
-                        <ToolbarDropdown
-                          id={'wpl_tailLines'}
-                          handleSelect={key => this.setTailLines(Number(key))}
-                          value={this.state.tailLines}
-                          label={TailLinesOptions[this.state.tailLines]}
-                          options={TailLinesOptions}
-                          tooltip={'Show up to last N log lines'}
-                          classNameSelect={toolbarTail}
-                        />
-                      </ToolbarItem>
-                      <ToolbarItem>
-                        <TimeRangeComponent
-                          tooltip="Time range for log messages"
-                          onChanged={this.setTimeRange}
-                          allowCustom={false}
-                        />
-                      </ToolbarItem>
-                      <ToolbarItem>
-                        <RefreshContainer
-                          id="workload_logging_refresh"
-                          hideLabel={true}
-                          disabled={!this.state.rawAppLogs}
-                          handleRefresh={this.handleRefresh}
-                        />
-                      </ToolbarItem>
-                    </ToolbarGroup>
-                  </Toolbar>
-                  <Toolbar className={toolbar}>
-                    <ToolbarGroup>
-                      <ToolbarItem>
-                        <Switch
-                          id="orientation-switch"
-                          label="Side by Side"
-                          isChecked={this.state.sideBySideOrientation}
-                          onChange={this.handleOrientationChange}
-                        />
-                      </ToolbarItem>
-                    </ToolbarGroup>
-                    <ToolbarGroup className={toolbarRight}>
-                      <ToolbarItem>
-                        <TextInput
-                          id="log_show"
-                          name="log_show"
-                          style={{ width: '10em' }}
-                          isValid={!this.state.showError}
-                          autoComplete="on"
-                          type="text"
-                          onKeyPress={this.checkSubmitShow}
-                          onChange={this.updateShow}
-                          defaultValue={this.state.showLogValue}
-                          aria-label="show log text"
-                          placeholder="Show..."
-                        />
-                        {this.state.showClearShowLogButton && (
-                          <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
-                            <Button variant={ButtonVariant.control} onClick={this.clearShow}>
-                              <KialiIcon.Close />
-                            </Button>
+      <>
+        <RightActionBar>
+          <DurationDropdownContainer id="workload-pod-logging-duration-dropdown" prefix="Last" />
+          <RefreshContainer id="workload-pod-logging-refresh" handleRefresh={this.handleRefresh} hideLabel={true} />
+        </RightActionBar>
+        <RenderComponentScroll key={this.state.sideBySideOrientation ? 'vertical' : 'horizontal'}>
+          {this.state.containerInfo && (
+            <Grid style={{ padding: '10px 10px 0 10px', height: '100%' }}>
+              <GridItem span={12}>
+                <Card style={{ height: '100%' }}>
+                  <CardBody>
+                    {/*we need two FullScreenLogModal components because you cant pass anything to modal.open() */}
+                    <FullScreenLogModal
+                      logText={WorkloadPodLogs.linesToString(this.state.filteredAppLogs)}
+                      title={this.props.pods[this.state.podValue!].name}
+                      ref={this.appFullScreenLogModalRef}
+                    />
+                    <FullScreenLogModal
+                      logText={WorkloadPodLogs.linesToString(this.state.filteredProxyLogs)}
+                      title="Istio Proxy Logs (sidecar)"
+                      ref={this.proxyFullScreenLogModalRef}
+                    />
+                    <Toolbar className={toolbar}>
+                      <ToolbarGroup>
+                        <ToolbarItem className={displayFlex}>
+                          <ToolbarDropdown
+                            id={'wpl_pods'}
+                            nameDropdown="Pod"
+                            tooltip="Display logs for the selected pod"
+                            handleSelect={key => this.setPod(key)}
+                            value={this.state.podValue}
+                            label={this.props.pods[this.state.podValue!].name}
+                            options={this.podOptions!}
+                          />
+                        </ToolbarItem>
+                        <ToolbarItem className={`${displayFlex} ${toolbarSpace}`}>
+                          <ToolbarDropdown
+                            id={'wpl_containers'}
+                            nameDropdown="Container"
+                            tooltip="Choose container for selected pod"
+                            handleSelect={key => this.setContainer(key)}
+                            value={this.state.containerInfo.container}
+                            label={this.state.containerInfo.container}
+                            options={this.state.containerInfo.containerOptions!}
+                          />
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                      <ToolbarGroup className={toolbarRight}>
+                        <ToolbarItem className={displayFlex}>
+                          <ToolbarDropdown
+                            id={'wpl_tailLines'}
+                            handleSelect={key => this.setTailLines(Number(key))}
+                            value={this.state.tailLines}
+                            label={TailLinesOptions[this.state.tailLines]}
+                            options={TailLinesOptions}
+                            tooltip={'Show up to last N log lines'}
+                            classNameSelect={toolbarTail}
+                          />
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                    </Toolbar>
+                    <Toolbar className={toolbar}>
+                      <ToolbarGroup>
+                        <ToolbarItem>
+                          <Switch
+                            id="orientation-switch"
+                            label="Side by Side"
+                            isChecked={this.state.sideBySideOrientation}
+                            onChange={this.handleOrientationChange}
+                          />
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                      <ToolbarGroup className={toolbarRight}>
+                        <ToolbarItem>
+                          <TextInput
+                            id="log_show"
+                            name="log_show"
+                            style={{ width: '10em' }}
+                            isValid={!this.state.showError}
+                            autoComplete="on"
+                            type="text"
+                            onKeyPress={this.checkSubmitShow}
+                            onChange={this.updateShow}
+                            defaultValue={this.state.showLogValue}
+                            aria-label="show log text"
+                            placeholder="Show..."
+                          />
+                          {this.state.showClearShowLogButton && (
+                            <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
+                              <Button variant={ButtonVariant.control} onClick={this.clearShow}>
+                                <KialiIcon.Close />
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <TextInput
+                            id="log_hide"
+                            name="log_hide"
+                            style={{ width: '10em' }}
+                            isValid={!this.state.hideError}
+                            autoComplete="on"
+                            type="text"
+                            onKeyPress={this.checkSubmitHide}
+                            onChange={this.updateHide}
+                            defaultValue={this.state.hideLogValue}
+                            aria-label="hide log text"
+                            placeholder="Hide..."
+                          />
+                          {this.state.showClearHideLogButton && (
+                            <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
+                              <Button variant={ButtonVariant.control} onClick={this.clearHide}>
+                                <KialiIcon.Close />
+                              </Button>
+                            </Tooltip>
+                          )}
+                          {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
+                          {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
+                        </ToolbarItem>
+                        <ToolbarItem>
+                          <Tooltip
+                            key="show_hide_log_help"
+                            position="top"
+                            content="Show only lines containing a substring. Hide all lines containing a substring. Case sensitive."
+                          >
+                            <KialiIcon.Info className={infoIcons} />
                           </Tooltip>
-                        )}
-                        <TextInput
-                          id="log_hide"
-                          name="log_hide"
-                          style={{ width: '10em' }}
-                          isValid={!this.state.hideError}
-                          autoComplete="on"
-                          type="text"
-                          onKeyPress={this.checkSubmitHide}
-                          onChange={this.updateHide}
-                          defaultValue={this.state.hideLogValue}
-                          aria-label="hide log text"
-                          placeholder="Hide..."
-                        />
-                        {this.state.showClearHideLogButton && (
-                          <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
-                            <Button variant={ButtonVariant.control} onClick={this.clearHide}>
-                              <KialiIcon.Close />
-                            </Button>
+                        </ToolbarItem>
+                        <ToolbarItem className={toolbarSpace}>
+                          <Switch
+                            id="regex-switch"
+                            label="Activate Regex"
+                            isChecked={this.state.useRegex}
+                            onChange={this.handleRegexChange}
+                          />
+                          <Tooltip
+                            key="show_log_regex_help"
+                            position="top"
+                            content="Use Regex instead of substring for more advanced use"
+                          >
+                            <KialiIcon.Info className={infoIcons} />
                           </Tooltip>
-                        )}
-                        {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
-                        {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-                      </ToolbarItem>
-                      <ToolbarItem>
-                        <Tooltip
-                          key="show_hide_log_help"
-                          position="top"
-                          content="Show only lines containing a substring. Hide all lines containing a substring. Case sensitive."
-                        >
-                          <KialiIcon.Info className={infoIcons} />
-                        </Tooltip>
-                      </ToolbarItem>
-                      <ToolbarItem className={toolbarSpace}>
-                        <Switch
-                          id="regex-switch"
-                          label="Activate Regex"
-                          isChecked={this.state.useRegex}
-                          onChange={this.handleRegexChange}
-                        />
-                        <Tooltip
-                          key="show_log_regex_help"
-                          position="top"
-                          content="Use Regex instead of substring for more advanced use"
-                        >
-                          <KialiIcon.Info className={infoIcons} />
-                        </Tooltip>
-                      </ToolbarItem>
-                    </ToolbarGroup>
-                  </Toolbar>
-                  <div className={splitter}>{this.getSplitter()}</div>
-                </CardBody>
-              </Card>
-            </GridItem>
-          </Grid>
-        )}
-        {this.state.loadingAppLogsError && <div>{this.state.loadingAppLogsError}</div>}
-      </RenderComponentScroll>
+                        </ToolbarItem>
+                      </ToolbarGroup>
+                    </Toolbar>
+                    <div className={splitter}>{this.getSplitter()}</div>
+                  </CardBody>
+                </Card>
+              </GridItem>
+            </Grid>
+          )}
+          {this.state.loadingAppLogsError && <div>{this.state.loadingAppLogsError}</div>}
+        </RenderComponentScroll>
+      </>
     );
   }
 
@@ -540,10 +529,6 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     });
   };
 
-  private setTimeRange = (range: TimeRange) => {
-    this.setState({ duration: range as DurationInSeconds });
-  };
-
   private setTailLines = (tailLines: number) => {
     this.setState({ tailLines: tailLines });
   };
@@ -565,7 +550,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       pod.name,
       this.state.containerInfo!.container,
       this.state.tailLines,
-      this.state.duration
+      this.props.duration
     );
   };
 

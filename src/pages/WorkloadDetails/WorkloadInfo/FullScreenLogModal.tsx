@@ -49,29 +49,51 @@ export class FullScreenLogModal extends React.PureComponent<FullScreenLogProps, 
     this.setState({ show: false });
   };
 
+  componentDidUpdate(
+    _prevProps: Readonly<FullScreenLogProps>,
+    _prevState: Readonly<FullScreenLogState>,
+    _snapshot?: any
+  ) {
+    if (this.textareaRef.current) {
+      this.textareaRef.current.scrollTop = this.textareaRef.current.scrollHeight;
+    }
+  }
+
+  renderToolbar = () => {
+    return (
+      <Toolbar>
+        <ToolbarGroup>
+          <ToolbarItem>
+            <h2>{this.props.title}</h2>
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup style={{ marginLeft: 'auto' }}>
+          <ToolbarItem>
+            <Tooltip key="collapse_fs" position="top" content="Collapse full screen">
+              <Button variant={ButtonVariant.link} onClick={this.close} isInline>
+                <KialiIcon.Compress className={defaultIconStyle} />
+              </Button>
+            </Tooltip>
+          </ToolbarItem>
+        </ToolbarGroup>
+      </Toolbar>
+    );
+  };
+
   render() {
     if (!this.state.show || !this.props.logText) {
       return null;
     }
 
     return (
-      <Modal isSmall={false} isOpen={this.state.show} title="" className={modalStyle} showClose={false}>
-        <Toolbar>
-          <ToolbarGroup>
-            <ToolbarItem>
-              <h2>{this.props.title}</h2>
-            </ToolbarItem>
-          </ToolbarGroup>
-          <ToolbarGroup style={{ marginLeft: 'auto' }}>
-            <ToolbarItem>
-              <Tooltip key="collapse_fs" position="top" content="Collapse full screen">
-                <Button variant={ButtonVariant.link} onClick={this.close} isInline>
-                  <KialiIcon.Compress className={defaultIconStyle} />
-                </Button>
-              </Tooltip>
-            </ToolbarItem>
-          </ToolbarGroup>
-        </Toolbar>
+      <Modal
+        isSmall={false}
+        isOpen={this.state.show}
+        header={this.renderToolbar()}
+        title=""
+        className={modalStyle}
+        showClose={false}
+      >
         <textarea ref={this.textareaRef} value={this.props.logText} className={textAreaStyle} readOnly={true} />
       </Modal>
     );
