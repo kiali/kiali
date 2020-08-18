@@ -6498,6 +6498,11 @@
           "x-go-name": "DesiredReplicas",
           "example": 2
         },
+        "istioInjectionAnnotation": {
+          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "type": "boolean",
+          "x-go-name": "IstioInjectionAnnotation"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
@@ -6644,6 +6649,11 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "istioInjectionAnnotation": {
+          "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
+          "type": "boolean",
+          "x-go-name": "IstioInjectionAnnotation"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
