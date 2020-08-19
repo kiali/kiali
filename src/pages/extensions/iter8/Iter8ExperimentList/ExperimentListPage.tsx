@@ -4,7 +4,7 @@ import { RenderContent } from '../../../../components/Nav/Page';
 import ExperimentListContainer from './ExperimentListContainer';
 import * as ExpListFilters from './FiltersAndSorts';
 
-const ExperimentListPage: React.SFC<{}> = () => {
+const ExperimentListPage: React.FunctionComponent = () => {
   return (
     <RenderContent>
       <ExperimentListContainer

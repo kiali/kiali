@@ -11,7 +11,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   isLoading: state.globalState.loadingCounter > 0
 });
 
-export const PfSpinner: React.SFC<PfSpinnerProps> = props => {
+export const PfSpinner: React.FunctionComponent<PfSpinnerProps> = props => {
   const { isLoading } = props;
   // It is more than likely it won't have any children; but it could.
   return isLoading ? <Spinner id="loading_kiali_spinner" size={'lg'} /> : <></>;

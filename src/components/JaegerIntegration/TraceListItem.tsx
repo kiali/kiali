@@ -36,7 +36,7 @@ const secondaryRightStyle = style({
   float: 'right'
 });
 
-export const TraceListItem: React.SFC<Props> = props => {
+export const TraceListItem: React.FunctionComponent<Props> = props => {
   const formattedTrace = getFormattedTraceInfo(props.trace);
   const tooltipContent = `${formattedTrace.name} (${props.trace.traceID.slice(0, 7)})`;
   const nameStyleToUse = formattedTrace.errors ? nameStyle + ' ' + errorStyle : nameStyle;

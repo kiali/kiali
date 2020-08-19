@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import AppListContainer from './AppListComponent';
 import * as AppListFilters from './FiltersAndSorts';
 
-const AppListPage: React.SFC<{}> = () => {
+const AppListPage: React.FunctionComponent = () => {
   return (
     <RenderContent>
       <AppListContainer

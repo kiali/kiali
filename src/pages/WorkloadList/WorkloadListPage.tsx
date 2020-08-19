@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import WorkloadListContainer from './WorkloadListComponent';
 import * as WorkloadListFilters from './FiltersAndSorts';
 
-const WorkloadListPage: React.SFC<{}> = () => {
+const WorkloadListPage: React.FunctionComponent = () => {
   return (
     <RenderContent>
       <WorkloadListContainer

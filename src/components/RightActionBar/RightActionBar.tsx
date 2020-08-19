@@ -9,6 +9,6 @@ export const actionBarStyle = style({
   display: 'flex'
 });
 
-export const RightActionBar: React.SFC<{}> = props => {
+export const RightActionBar: React.FunctionComponent = props => {
   return <span className={actionBarStyle}>{props.children}</span>;
 };

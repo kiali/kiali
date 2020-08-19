@@ -5,7 +5,7 @@ type Props = {
   urlTruncate?: number;
 };
 
-export const TextOrLink: React.SFC<Props> = props => {
+export const TextOrLink: React.FunctionComponent<Props> = props => {
   if (props.text.startsWith('http://') || props.text.startsWith('https://')) {
     let truncated = props.text;
     if (props.urlTruncate && props.text.length > props.urlTruncate) {

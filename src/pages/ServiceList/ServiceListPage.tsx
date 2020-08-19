@@ -4,7 +4,7 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { RenderContent } from '../../components/Nav/Page';
 import * as ServiceListFilters from './FiltersAndSorts';
 
-const ServiceListPage: React.SFC<{}> = () => {
+const ServiceListPage: React.FunctionComponent = () => {
   return (
     <RenderContent>
       <ServiceListContainer

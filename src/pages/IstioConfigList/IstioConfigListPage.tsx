@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as IstioConfigListFilters from './FiltersAndSorts';
 import IstioConfigListContainer from './IstioConfigListComponent';
 
-const IstioConfigListPage: React.SFC<{}> = () => {
+const IstioConfigListPage: React.FunctionComponent = () => {
   return (
     <RenderContent>
       <IstioConfigListContainer
