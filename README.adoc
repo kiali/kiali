@@ -292,7 +292,7 @@ Kiali can display API Documentation of your services. See https://user-images.gi
 
 === Configure your services
 
-Your services must be annotated with the type of API ('rest', 'grpc', 'graphql') and a URL to the spec of the API. 
+Your services must be annotated with the type of API ('rest', 'grpc', 'graphql') and a URL to the spec of the API.
 If the API spec is served from the service itself, Kiali will infer the hostname and port :
 
 [source,yaml]
@@ -303,7 +303,7 @@ metadata:
   name: myservice
   annotations:
     kiali.io/api-type: rest
-    kiali.io/api-spec: /v1/api-spec  
+    kiali.io/api-spec: /v1/api-spec
 spec:
 ...
 ----
@@ -318,7 +318,7 @@ metadata:
   name: petstore
   annotations:
     kiali.io/api-type: rest
-    kiali.io/api-spec: https://petstore.swagger.io/v2/swagger.json  
+    kiali.io/api-spec: https://petstore.swagger.io/v2/swagger.json
 spec:
 ...
 ----
@@ -472,6 +472,51 @@ spec:
       mode: DISABLE
 ...
 ----
+
+== Experimental
+
+=== Observing a Remote Cluster
+
+There are certain use cases where Kiali needs to be deployed in one cluster (Control Plane) and observe a different cluster (Data Plane). link:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-11ea-834b-56eec038ce4d.png:[Diagram].
+
+Follow these steps:
+
+1: You should have the link:https://github.com/istio/istio/wiki/Central-Istiod-single-cluster-steps[remote central istiod with a single cluster] setup running
+
+2: Create the link:https://github.com/istio/istio/blob/master/samples/addons/kiali.yaml[Kiali ClusterRole, ClusterRoleBinding, and ServiceAccount] in the Data Plane cluster
+
+3: Create a remote secret in the Control Plane, using the Data Plane ServiceAccount you just created. This allows the Control Plane to read from and modify the Data Plane
+[source,shell]
+----
+istioctl x create-remote-secret --service-account kiali-service-account --context=$DataPlane --name kiali | kubectl apply -n istio-system --context=$ControlPlane -f -
+----
+
+4: You will now run Kiali in the Control Plane. You need to add the remote secret to the Kiali Deployment by specifying a Volume and VolumeMount. When Kiali sees */kiali-remote-secret/kiali* it will use the remote cluster's API server instead of the local API server
+[source,yaml]
+----
+spec:
+  template:
+    spec:
+      containers:
+      - volumeMounts:
+        - mountPath: /kiali-remote-secret
+          name: kiali-remote-secret
+      volumes:
+      - name: kiali-remote-secret
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: istio-remote-secret-kiali
+----
+
+5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig:[envoyMetricsService]. These metrics are *required*:
+
+  - istio_requests_total
+  - istio_request_duration_milliseconds
+  - istio_response_bytes
+  - istio_request_bytes
+
+6: Kiali in the Control Plane should now be fully functional with the Data Plane
 
 == Contributing
 

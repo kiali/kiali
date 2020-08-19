@@ -1,9 +1,12 @@
 package kubernetes
 
 import (
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -24,6 +27,8 @@ import (
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
+
+const RemoteSecretData = "/kiali-remote-secret/kiali"
 
 var (
 	emptyListOptions = meta_v1.ListOptions{}
@@ -179,13 +184,45 @@ func (client *K8SClient) GetToken() string {
 	return client.token
 }
 
+// Point the k8s client to a remote cluster's API server
+func UseRemoteCreds(remoteSecret *RemoteSecret) (*rest.Config, error) {
+	caData := remoteSecret.Clusters[0].Cluster.CertificateAuthorityData
+	rootCaDecoded, err := base64.StdEncoding.DecodeString(caData)
+	if err != nil {
+		return nil, err
+	}
+	// Basically implement rest.InClusterConfig() with the remote creds
+	tlsClientConfig := rest.TLSClientConfig{
+		CAData: []byte(rootCaDecoded),
+	}
+
+	serverParse := strings.Split(remoteSecret.Clusters[0].Cluster.Server, ":")
+	if len(serverParse) != 3 {
+		return nil, errors.New("Invalid remote API server URL")
+	}
+	host := strings.TrimPrefix(serverParse[1], "//")
+	port := serverParse[2]
+
+	// There's no need to add the BearerToken because it's ignored later on
+	return &rest.Config{
+		Host:            "https://" + net.JoinHostPort(host, port),
+		TLSClientConfig: tlsClientConfig,
+	}, nil
+}
+
 // ConfigClient return a client with the correct configuration
 // Returns configuration if Kiali is in Cluster when InCluster is true
 // Returns configuration if Kiali is not int Cluster when InCluster is false
 // It returns an error on any problem
 func ConfigClient() (*rest.Config, error) {
 	if kialiConfig.Get().InCluster {
-		incluster, err := rest.InClusterConfig()
+		var incluster *rest.Config
+		var err error
+		if remoteSecret, readErr := GetRemoteSecret(RemoteSecretData); readErr == nil {
+			incluster, err = UseRemoteCreds(remoteSecret)
+		} else {
+			incluster, err = rest.InClusterConfig()
+		}
 		if err != nil {
 			return nil, err
 		}
