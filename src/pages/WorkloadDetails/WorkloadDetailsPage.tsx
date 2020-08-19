@@ -78,9 +78,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <WorkloadInfo
-          workloadName={this.props.match.params.workload}
+          workload={this.state.workload}
           namespace={this.props.match.params.namespace}
           duration={this.props.duration}
+          refreshWorkload={this.fetchWorkload}
         />
       </Tab>
     );

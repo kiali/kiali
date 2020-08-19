@@ -25,8 +25,9 @@ import { isIstioNamespace } from '../../config/ServerConfig';
 
 type WorkloadInfoProps = {
   namespace: string;
-  workloadName: string;
+  workload?: Workload;
   duration: DurationInSeconds;
+  refreshWorkload: () => void;
 };
 
 interface ValidationChecks {
@@ -34,7 +35,6 @@ interface ValidationChecks {
 }
 
 type WorkloadInfoState = {
-  workload?: Workload;
   validations?: Validations;
   currentTab: string;
   health?: WorkloadHealth;
@@ -76,30 +76,28 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       });
     }
 
-    if (prev.duration !== this.props.duration) {
+    // Fetch WorkloadInfo backend on duration changes or workload updates (reference comparison)
+    if (prev.duration !== this.props.duration || prev.workload !== this.props.workload) {
       this.fetchBackend();
     }
   }
 
   private fetchBackend = () => {
-    this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workloadName);
-    API.getWorkload(this.props.namespace, this.props.workloadName)
-      .then(details =>
-        this.setState({
-          workload: details.data,
-          validations: this.workloadValidations(details.data)
-        })
+    if (this.props.workload) {
+      this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
+      this.setState({
+        validations: this.workloadValidations(this.props.workload)
+      });
+      API.getWorkloadHealth(
+        this.props.namespace,
+        this.props.workload.name,
+        this.props.workload ? this.props.workload.type : '',
+        this.props.duration,
+        this.props.workload ? this.props.workload.istioSidecar : false
       )
-      .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
-    API.getWorkloadHealth(
-      this.props.namespace,
-      this.props.workloadName,
-      this.state.workload ? this.state.workload.type : '',
-      this.props.duration,
-      this.state.workload ? this.state.workload.istioSidecar : false
-    )
-      .then(health => this.setState({ health: health }))
-      .catch(error => AlertUtils.addError('Could not fetch Health.', error));
+        .then(health => this.setState({ health: health }))
+        .catch(error => AlertUtils.addError('Could not fetch Health.', error));
+    }
     if (serverConfig.extensions?.threescale.enabled) {
       // 3scale info should be placed under control plane namespace
       API.getIstioConfig(serverConfig.istioNamespace, ['rules'], false, 'kiali_wizard=threescale')
@@ -181,7 +179,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       hasPodsChecks: false
     };
 
-    const pods = this.state.workload?.pods || [];
+    const pods = this.props.workload?.pods || [];
 
     validationChecks.hasPodsChecks = pods.some(
       pod =>
@@ -198,7 +196,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   }
 
   render() {
-    const workload = this.state.workload;
+    const workload = this.props.workload;
     const pods = workload?.pods || [];
     const services = workload?.services || [];
     const validationChecks = this.validationChecks();
@@ -237,13 +235,13 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       <>
         <RightActionBar>
           <DurationDropdownContainer id="workload-info-duration-dropdown" prefix="Last" />
-          <RefreshButtonContainer handleRefresh={this.fetchBackend} />
+          <RefreshButtonContainer handleRefresh={this.props.refreshWorkload} />
           {workload && (
             <WorkloadWizardDropdown
               namespace={this.props.namespace}
               workload={workload}
               rules={this.state.threescaleRules}
-              onChange={this.fetchBackend}
+              onChange={this.props.refreshWorkload}
             />
           )}
         </RightActionBar>
@@ -272,7 +270,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Pods')}>
                     <WorkloadPods
                       namespace={this.props.namespace}
-                      workload={this.state.workload?.name || ''}
+                      workload={this.props.workload?.name || ''}
                       pods={pods}
                       validations={this.state.validations?.pod || {}}
                     />
@@ -282,7 +280,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Services')}>
                     <WorkloadServices
                       services={services}
-                      workload={this.state.workload?.name || ''}
+                      workload={this.props.workload?.name || ''}
                       namespace={this.props.namespace}
                     />
                   </ErrorBoundaryWithMessage>
