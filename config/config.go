@@ -441,31 +441,6 @@ func NewConfig() (c *Config) {
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
-		HealthConfig: HealthConfig{
-			Rate: []Rate{
-				{
-					Namespace: ".*",
-					Kind:      ".*",
-					Name:      ".*",
-					Tolerance: []Tolerance{
-						{
-							Code:      "^[4-5]\\d\\d$",
-							Protocol:  "http",
-							Direction: ".*",
-							Degraded:  0.1,
-							Failure:   20,
-						},
-						{
-							Code:      "^[1-9]$|^1[0-6]$",
-							Protocol:  "grpc",
-							Direction: ".*",
-							Degraded:  0.1,
-							Failure:   20,
-						},
-					},
-				},
-			},
-		},
 		IstioLabels: IstioLabels{
 			AppLabelName:       "app",
 			InjectionLabelName: "istio-injection",
@@ -504,6 +479,37 @@ func NewConfig() (c *Config) {
 	return
 }
 
+// Add Health Default Configuration
+func (conf *Config) AddHealthDefault() {
+	// Health default configuration
+	healthConfig := HealthConfig{
+		Rate: []Rate{
+			{
+				Namespace: ".*",
+				Kind:      ".*",
+				Name:      ".*",
+				Tolerance: []Tolerance{
+					{
+						Code:      "^5\\d\\d$",
+						Protocol:  "http",
+						Direction: ".*",
+						Degraded:  0.1,
+						Failure:   20,
+					},
+					{
+						Code:      "^[1-9]$|^1[0-6]$",
+						Protocol:  "grpc",
+						Direction: ".*",
+						Degraded:  0.1,
+						Failure:   20,
+					},
+				},
+			},
+		},
+	}
+	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
+}
+
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()
@@ -518,6 +524,7 @@ func Get() (conf *Config) {
 func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
+	conf.AddHealthDefault()
 	configuration = *conf
 }
 
