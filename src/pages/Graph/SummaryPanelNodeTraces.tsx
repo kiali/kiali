@@ -174,7 +174,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
           </SimpleList>
         )}
         <Button style={summaryFont} onClick={() => history.push(tracesDetailsURL)}>
-          Go to Tracing
+          Show Traces
         </Button>
       </div>
     );

@@ -125,14 +125,6 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               <span className={nameStyleToUse}>{traceName}</span>
             )}
           </Tooltip>
-          {tracesDetailsURL && jaegerTraceURL && (
-            <>
-              <br />
-              <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
-                See trace in Jaeger <ExternalLinkAltIcon size="sm" />
-              </a>
-            </>
-          )}
           <p className={pStyle}>
             <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
             {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
@@ -169,6 +161,14 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               {this.state.selectedSpan < spans.length &&
                 this.renderSpan(nodeName + '.' + node.namespace, spans[this.state.selectedSpan])}
             </p>
+          )}
+          {tracesDetailsURL && jaegerTraceURL && (
+            <>
+              <br />
+              <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
+                Show in Tracing <ExternalLinkAltIcon size="sm" />
+              </a>
+            </>
           )}
         </div>
       </>
