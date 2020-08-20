@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
+	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -78,11 +79,53 @@ func getClientFactory(istioConfig *rest.Config, expiry time.Duration) (*clientFa
 
 // NewClient creates a new ClientInterface based on a users k8s token
 func (cf *clientFactory) newClient(token string) (ClientInterface, error) {
-	config := cf.baseIstioConfig
+	config := *cf.baseIstioConfig
 
 	config.BearerToken = token
 
-	return NewClientFromConfig(config)
+	// There is a feature when using OpenID strategy to allow using a proxy
+	// for the cluster API.  People may want to place a proxy in
+	// front of the cluster API when using Kubernetes-as-a-service and
+	// the provider does not support configuring OpenID integration.
+	// If OpenID integration is not available, people may opt into
+	// an API proxy (like kube-oidc-proxy) as a workaround for OIDC integration.
+	// Clearly, under this scenario, the cluster API must be accessed
+	// through the proxy (not directly).
+	//
+	// So, if OpenID strategy is active, check if a proxy is configured.
+	// If there is, use it UNLESS the token is the one of the Kiali SA. If
+	// the token is the one of the Kiali SA, the proxy can be bypassed.
+	cfg := kialiConfig.Get()
+	if cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.ApiProxy != "" && cfg.Auth.OpenId.ApiProxyCAData != "" {
+		kialiToken, err := GetKialiToken()
+		if err != nil {
+			return nil, err
+		}
+
+		if kialiToken != token {
+			// Using `UseRemoteCreds` function as a  helper
+			apiProxyConfig, errProxy := UseRemoteCreds(&RemoteSecret{
+				Clusters: []RemoteSecretClusterListItem{
+					{
+						Cluster: RemoteSecretCluster{
+							CertificateAuthorityData: cfg.Auth.OpenId.ApiProxyCAData,
+							Server:                   cfg.Auth.OpenId.ApiProxy,
+						},
+						Name: "api_proxy",
+					},
+				},
+			})
+
+			if errProxy != nil {
+				return nil, errProxy
+			}
+
+			config.Host = apiProxyConfig.Host
+			config.TLSClientConfig = apiProxyConfig.TLSClientConfig
+		}
+	}
+
+	return NewClientFromConfig(&config)
 }
 
 // GetClient returns a client for the specified token. Creating one if necessary.

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strconv"
+
 	kmodel "github.com/kiali/k-charted/model"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -11,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
-	"strconv"
 )
 
 type WorkloadList struct {
