@@ -264,6 +264,8 @@ type OpenShiftConfig struct {
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
+	ApiProxy              string   `yaml:"api_proxy,omitempty"`
+	ApiProxyCAData        string   `yaml:"api_proxy_ca_data,omitempty"`
 	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
 	ClientId              string   `yaml:"client_id,omitempty"`
@@ -326,6 +328,8 @@ func NewConfig() (c *Config) {
 		Auth: AuthConfig{
 			Strategy: "token",
 			OpenId: OpenIdConfig{
+				ApiProxy:              "",
+				ApiProxyCAData:        "",
 				AuthenticationTimeout: 300,
 				AuthorizationEndpoint: "",
 				ClientId:              "",
