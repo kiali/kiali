@@ -35,7 +35,7 @@ $ source .kiali-e2e/bin/activate
 $ pip install -U pip
 $ pip install -r requirements.txt
 
-# Update config/env.yaml with kiali_hostname and kiali_token (oc whoami -t)
+# Update config/env.yaml with kiali_hostname, kiali_token (oc whoami -t) and kiali_swagger_address: 'https://raw.githubusercontent.com/kiali/kiali/<master>/swagger.json'
 
 # Login to Openshift Cluster 
 $ oc login https://<openshift>:<port> --username=<username> --password=<password> --insecure-skip-tls-verify=true
