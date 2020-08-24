@@ -75,7 +75,7 @@
     "eventemitter3": "4.0.0",
     "js-yaml": "3.13.1",
     "json-beautify": "1.0.1",
-    "lodash": "4.17.19",
+    "lodash": "4.17.20",
     "logfmt": "1.2.1",
     "m-react-splitters": "1.2.0",
     "moment": "2.24.0",
@@ -127,6 +127,7 @@
     "typescript": "3.8.3"
   },
   "resolutions": {
+    "dot-prop": "4.2.1",
     "hoist-non-react-statics": "3.3.0",
     "kind-of": "6.0.3",
     "victory": "~34.0.1",
