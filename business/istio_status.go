@@ -8,6 +8,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -77,7 +78,17 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 		if !nss[n] {
 			go func(n string, depsChan chan []apps_v1.Deployment, errChan chan error) {
 				defer wg.Done()
-				ds, err := iss.k8s.GetDeployments(n)
+				var ds []apps_v1.Deployment
+				var err error
+				if kialiCache != nil && kialiCache.CheckNamespace(n) {
+					ds, err = kialiCache.GetDeployments(n)
+				} else {
+					// Adding a warning to enable cache for fetching Istio Status.
+					// It should use cache, as it's an intensive operation but we won't fail otherwise
+					// If user doesn't have access to istio namespace AND it doesn't have enabled cache it won't get the Istio status
+					log.Warningf("Kiali has not [%s] namespace cached. It is required to fetch Istio Status correctly", n)
+					ds, err = iss.k8s.GetDeployments(n)
+				}
 				depsChan <- ds
 				errChan <- err
 			}(n, depsChan, errChan)
