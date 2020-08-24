@@ -20,20 +20,27 @@ func NewRouter() *mux.Router {
 	rootRouter := mux.NewRouter().StrictSlash(false)
 	appRouter := rootRouter
 
-	// Due to PathPrefix matching behavior on sub-routers
-	// we need to explicitly redirect /foo -> /foo/
-	// See https://github.com/gorilla/mux/issues/31
-	if webRoot != "/" {
-		rootRouter.HandleFunc(webRoot, func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
-		})
+	staticFileServer := http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
 
+	if webRoot != "/" {
 		// help the user out - if a request comes in for "/", redirect to our true webroot
 		rootRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 		})
 
 		appRouter = rootRouter.PathPrefix(conf.Server.WebRoot).Subrouter()
+		staticFileServer = http.StripPrefix(webRootWithSlash, staticFileServer)
+
+		// Because of OIDC, when we receive a request for the webroot without
+		// the trailing slash, we can not redirect the user to the correct
+		// webroot as the hash params are lost (and they are not sent to the
+		// server).
+		//
+		// See https://github.com/kiali/kiali/issues/3103
+		rootRouter.HandleFunc(webRoot, func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = webRootWithSlash
+			rootRouter.ServeHTTP(w, r)
+		})
 	}
 
 	appRouter = appRouter.StrictSlash(true)
@@ -60,13 +67,6 @@ func NewRouter() *mux.Router {
 		http.ServeFile(w, r, conf.Server.StaticContentRootDirectory+"/index.html")
 	})
 
-	// Build our static files routes by first creating the file server handler that will serve
-	// the webapp js files and other static content. Then tell the router about our fixed
-	// routes which pass all static file requests to the file handler.
-	staticFileServer := http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
-	if webRoot != "/" {
-		staticFileServer = http.StripPrefix(webRootWithSlash, staticFileServer)
-	}
 	appRouter.PathPrefix("/").Handler(staticFileServer)
 
 	return rootRouter
