@@ -36,7 +36,10 @@ const loginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: Ki
     case getType(LoginActions.loginFailure):
       let message = 'Error connecting to Kiali';
 
-      if (action.payload.error.request.status === 401) {
+      const response_data = action.payload.error.response.data;
+      if (response_data && typeof response_data.error == 'string' && response_data.error.length > 0) {
+        message = `Login unsuccessful: ${response_data.error}`;
+      } else if (action.payload.error.response.status === 401) {
         message =
           'Unauthorized. The provided credentials are not valid to access Kiali. Please check your credentials and try again.';
       }
