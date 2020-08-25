@@ -57,6 +57,9 @@ func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, er
 		} else {
 			mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 		}
+		if err != nil {
+			return mps, err
+		}
 	} else {
 		// ServiceMeshPolicies are namespace scoped.
 		// And Maistra will only consider resources under control-plane namespace

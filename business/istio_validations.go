@@ -563,6 +563,10 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		} else {
 			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
 		}
+		if err != nil {
+			errChan <- err
+			return
+		}
 		icm, err := kubernetes.GetIstioConfigMap(istioConfig)
 		if err != nil {
 			errChan <- err
