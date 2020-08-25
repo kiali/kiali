@@ -80,7 +80,7 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 				defer wg.Done()
 				var ds []apps_v1.Deployment
 				var err error
-				if kialiCache != nil && kialiCache.CheckNamespace(n) {
+				if IsNamespaceCached(n) {
 					ds, err = kialiCache.GetDeployments(n)
 				} else {
 					// Adding a warning to enable cache for fetching Istio Status.
