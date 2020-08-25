@@ -426,7 +426,7 @@ func NewConfig() (c *Config) {
 			Burst:                       200,
 			CacheDuration:               5 * 60,
 			CacheEnabled:                true,
-			CacheIstioTypes:             []string{"DestinationRule", "Gateway", "ServiceEntry", "VirtualService"},
+			CacheIstioTypes:             []string{"DestinationRule", "Gateway", "ServiceEntry", "VirtualService", "Sidecar", "PeerAuthentication", "RequestAuthentication", "AuthorizationPolicy"},
 			CacheNamespaces:             []string{".*"},
 			CacheTokenNamespaceDuration: 10,
 			ExcludeWorkloads:            []string{"CronJob", "DeploymentConfig", "Job", "ReplicationController"},

@@ -39,6 +39,18 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	if c.CheckIstioResource(kubernetes.ServiceEntries) {
 		(*informer)[kubernetes.ServiceEntries] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.ServiceEntries, c.refreshDuration, namespace)
 	}
+	if c.CheckIstioResource(kubernetes.Sidecars) {
+		(*informer)[kubernetes.Sidecars] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Sidecars, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
+		(*informer)[kubernetes.PeerAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.PeerAuthentications, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.RequestAuthentications) {
+		(*informer)[kubernetes.RequestAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.RequestAuthentications, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
+		(*informer)[kubernetes.AuthorizationPolicies] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.AuthorizationPolicies, c.refreshDuration, namespace)
+	}
 }
 
 func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
@@ -47,7 +59,11 @@ func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
 		isSynced = nsCache[kubernetes.VirtualServices].HasSynced() &&
 			nsCache[kubernetes.DestinationRules].HasSynced() &&
 			nsCache[kubernetes.Gateways].HasSynced() &&
-			nsCache[kubernetes.ServiceEntries].HasSynced()
+			nsCache[kubernetes.ServiceEntries].HasSynced() &&
+			nsCache[kubernetes.Sidecars].HasSynced() &&
+			nsCache[kubernetes.PeerAuthentications].HasSynced() &&
+			nsCache[kubernetes.RequestAuthentications].HasSynced() &&
+			nsCache[kubernetes.AuthorizationPolicies].HasSynced()
 	} else {
 		isSynced = false
 	}

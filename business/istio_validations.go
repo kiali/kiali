@@ -506,8 +506,16 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 
 		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
 		if !in.k8s.IsMaistraApi() {
-			if meshpeerAuthns, iErr := in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
-				details.MeshPeerAuthentications = meshpeerAuthns
+			var meshpeerauths []kubernetes.IstioObject
+			var iErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.PeerAuthentications) && kialiCache.CheckNamespace(config.Get().IstioNamespace) {
+				if meshpeerauths, iErr = kialiCache.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+					details.MeshPeerAuthentications = meshpeerauths
+				} else {
+					errChan <- iErr
+				}
+			} else if meshpeerauths, iErr = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+				details.MeshPeerAuthentications = meshpeerauths
 			} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
 				errChan <- iErr
 			}
@@ -530,7 +538,13 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		peerAuthns, err := in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+		var peerAuthns []kubernetes.IstioObject
+		var err error
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.PeerAuthentications) && kialiCache.CheckNamespace(namespace) {
+			peerAuthns, err = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+		} else {
+			peerAuthns, err = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+		}
 		if err != nil {
 			errChan <- err
 		} else {
@@ -540,8 +554,16 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
+		cfg := config.Get()
 
-		icm, err := in.k8s.GetIstioConfigMap()
+		var istioConfig *core_v1.ConfigMap
+		var err error
+		if kialiCache != nil && kialiCache.CheckNamespace(cfg.IstioNamespace) {
+			istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+		} else {
+			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+		}
+		icm, err := kubernetes.GetIstioConfigMap(istioConfig)
 		if err != nil {
 			errChan <- err
 		} else {
@@ -571,9 +593,77 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.RBACDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		authDetails, err := in.k8s.GetAuthorizationDetails(namespace)
+		var err error
+		authDetails := &kubernetes.RBACDetails{}
+
+		innerErrChan := make(chan error, 1)
+		var wg sync.WaitGroup
+		wg.Add(4)
+
+		go func(errChan chan error) {
+			defer wg.Done()
+			var err error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.AuthorizationPolicies) && kialiCache.CheckNamespace(namespace) {
+				authDetails.AuthorizationPolicies, err = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+			} else {
+				authDetails.AuthorizationPolicies, err = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+			}
+			if err != nil {
+				errChan <- err
+			}
+		}(innerErrChan)
+
+		go func(errChan chan error) {
+			defer wg.Done()
+			var err error
+			// RBAC objects are deprecated and won't be used in the cache
+			authDetails.ServiceRoleBindings, err = in.k8s.GetIstioObjects(namespace, kubernetes.ServiceRoleBindings, "")
+			if err != nil {
+				errChan <- err
+			}
+		}(innerErrChan)
+
+		go func(errChan chan error) {
+			defer wg.Done()
+			var err error
+			// RBAC objects are deprecated and won't be used in the cache
+			authDetails.ServiceRoles, err = in.k8s.GetIstioObjects(namespace, kubernetes.ServiceRoles, "")
+			if err != nil {
+				errChan <- err
+			}
+		}(innerErrChan)
+
+		go func(errChan chan error) {
+			defer wg.Done()
+			// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
+			// RBAC objects are deprecated and won't be used in the cache
+			if !in.k8s.IsMaistraApi() {
+				if crc, err := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, ""); err == nil {
+					authDetails.ClusterRbacConfigs = crc
+				} else {
+					errChan <- err
+				}
+			} else {
+				if smrc, err := in.k8s.GetIstioObjects(namespace, kubernetes.ServiceMeshRbacConfigs, ""); err == nil {
+					authDetails.ServiceMeshRbacConfigs = smrc
+				} else {
+					errChan <- err
+				}
+			}
+		}(innerErrChan)
+
+		wg.Wait()
+		close(innerErrChan)
+
+		for e := range innerErrChan {
+			if e != nil { // Check that default value wasn't returned
+				err = e
+				break
+			}
+		}
+
 		if err != nil {
-			if checkForbidden("GetAuthorizationDetails", err, "") {
+			if checkForbidden("fetchAuthorizationDetails", err, "") {
 				return
 			}
 			select {

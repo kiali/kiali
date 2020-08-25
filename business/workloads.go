@@ -272,7 +272,11 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = layer.k8s.GetStatefulSets(namespace)
+			if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+				fulset, err = kialiCache.GetStatefulSets(namespace)
+			} else {
+				fulset, err = layer.k8s.GetStatefulSets(namespace)
+			}
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -780,7 +784,11 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		}
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
-			fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
+			if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+				fulset, err = kialiCache.GetStatefulSet(namespace, workloadName)
+			} else {
+				fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
+			}
 			if err != nil {
 				fulset = nil
 			}

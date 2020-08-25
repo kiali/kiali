@@ -328,7 +328,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeAuthorizationPolicies {
-			if ap, apErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.AuthorizationPolicies, criteria.LabelSelector); apErr == nil {
+			var ap []kubernetes.IstioObject
+			var apErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.AuthorizationPolicies) && kialiCache.CheckNamespace(criteria.Namespace) {
+				ap, apErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.AuthorizationPolicies, criteria.LabelSelector)
+			} else {
+				ap, apErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.AuthorizationPolicies, criteria.LabelSelector)
+			}
+			if apErr == nil {
 				(&istioConfigList.AuthorizationPolicies).Parse(ap)
 			} else {
 				errChan <- apErr
@@ -339,7 +346,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludePeerAuthentication {
-			if pa, paErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.PeerAuthentications, criteria.LabelSelector); paErr == nil {
+			var pa []kubernetes.IstioObject
+			var paErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.PeerAuthentications) && kialiCache.CheckNamespace(criteria.Namespace) {
+				pa, paErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.PeerAuthentications, criteria.LabelSelector)
+			} else {
+				pa, paErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.PeerAuthentications, criteria.LabelSelector)
+			}
+			if paErr == nil {
 				(&istioConfigList.PeerAuthentications).Parse(pa)
 			} else {
 				errChan <- paErr
@@ -350,7 +364,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeSidecars {
-			if sc, scErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Sidecars, criteria.LabelSelector); scErr == nil {
+			var sc []kubernetes.IstioObject
+			var scErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.Sidecars) && kialiCache.CheckNamespace(criteria.Namespace) {
+				sc, scErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.Sidecars, criteria.LabelSelector)
+			} else {
+				sc, scErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Sidecars, criteria.LabelSelector)
+			}
+			if scErr == nil {
 				(&istioConfigList.Sidecars).Parse(sc)
 			} else {
 				errChan <- scErr
@@ -418,7 +439,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeRequestAuthentications {
-			if ra, raErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.RequestAuthentications, criteria.LabelSelector); raErr == nil {
+			var ra []kubernetes.IstioObject
+			var raErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.RequestAuthentications) && kialiCache.CheckNamespace(criteria.Namespace) {
+				ra, raErr = kialiCache.GetIstioObjects(criteria.Namespace, kubernetes.RequestAuthentications, criteria.LabelSelector)
+			} else {
+				ra, raErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.RequestAuthentications, criteria.LabelSelector)
+			}
+			if raErr == nil {
 				(&istioConfigList.RequestAuthentications).Parse(ra)
 			} else {
 				errChan <- raErr

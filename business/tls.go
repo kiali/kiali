@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/mtls"
+	core_v1 "k8s.io/api/core/v1"
 )
 
 type TLSService struct {
@@ -49,11 +50,12 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, error) {
 	var mps []kubernetes.IstioObject
 	var err error
-
 	controlPlaneNs := config.Get().IstioNamespace
 	if !in.k8s.IsMaistraApi() {
-		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, ""); err != nil {
-			return mps, nil
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.PeerAuthentications) && kialiCache.CheckNamespace(controlPlaneNs) {
+			mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+		} else {
+			mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 		}
 	} else {
 		// ServiceMeshPolicies are namespace scoped.
@@ -152,8 +154,11 @@ func (in TLSService) getPeerAuthentications(namespace string) ([]kubernetes.Isti
 	if namespace == config.Get().IstioNamespace {
 		return []kubernetes.IstioObject{}, nil
 	}
-
-	return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.PeerAuthentications) && kialiCache.CheckNamespace(namespace) {
+		return kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	} else {
+		return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	}
 }
 
 func (in TLSService) getNamespaces() ([]string, error) {
@@ -175,7 +180,18 @@ func (in *TLSService) hasAutoMTLSEnabled() bool {
 		return *in.enabledAutoMtls
 	}
 
-	mc, err := in.k8s.GetIstioConfigMap()
+	cfg := config.Get()
+	var istioConfig *core_v1.ConfigMap
+	var err error
+	if kialiCache != nil && kialiCache.CheckNamespace(cfg.IstioNamespace) {
+		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+	} else {
+		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+	}
+	if err != nil {
+		return true
+	}
+	mc, err := kubernetes.GetIstioConfigMap(istioConfig)
 	if err != nil {
 		return true
 	}

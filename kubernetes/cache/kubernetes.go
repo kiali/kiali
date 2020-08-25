@@ -15,8 +15,11 @@ import (
 
 type (
 	KubernetesCache interface {
+		GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 		GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
+		GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+		GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error)
 		GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 		GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 		GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
@@ -26,22 +29,46 @@ type (
 func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
 	(*informer)[kubernetes.DeploymentType] = sharedInformers.Apps().V1().Deployments().Informer()
+	(*informer)[kubernetes.StatefulSetType] = sharedInformers.Apps().V1().StatefulSets().Informer()
 	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
 	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
+	(*informer)[kubernetes.ConfigMapType] = sharedInformers.Core().V1().ConfigMaps().Informer()
 }
 
 func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
 	var isSynced bool
 	if nsCache, exist := c.nsCache[namespace]; exist {
 		isSynced = nsCache[kubernetes.DeploymentType].HasSynced() &&
+			nsCache[kubernetes.StatefulSetType].HasSynced() &&
 			nsCache[kubernetes.ReplicaSetType].HasSynced() &&
 			nsCache[kubernetes.ServiceType].HasSynced() &&
-			nsCache[kubernetes.PodType].HasSynced()
+			nsCache[kubernetes.PodType].HasSynced() &&
+			nsCache[kubernetes.ConfigMapType].HasSynced()
 	} else {
 		isSynced = false
 	}
 	return isSynced
+}
+
+func (c *kialiCacheImpl) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.ConfigMapType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			cm, ok := obj.(*core_v1.ConfigMap)
+			if !ok {
+				return nil, errors.New("bad ConfigMap type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
+			return cm, nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
@@ -79,6 +106,46 @@ func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 			}
 			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
 			return dep, nil
+		}
+	}
+	return nil, nil
+}
+
+func (c *kialiCacheImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		ss := nsCache[kubernetes.StatefulSetType].GetStore().List()
+		lenSs := len(ss)
+		if lenSs > 0 {
+			_, ok := ss[0].(*apps_v1.StatefulSet)
+			if !ok {
+				return nil, errors.New("bad StatefulSet type found in cache")
+			}
+			nsSs := make([]apps_v1.StatefulSet, lenSs)
+			for i, s := range ss {
+				nsSs[i] = *(s.(*apps_v1.StatefulSet))
+			}
+			log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] = %d", namespace, lenSs)
+			return nsSs, nil
+		}
+	}
+	return []apps_v1.StatefulSet{}, nil
+}
+
+func (c *kialiCacheImpl) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.StatefulSetType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			ss, ok := obj.(*apps_v1.StatefulSet)
+			if !ok {
+				return nil, errors.New("bad StatefulSet type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: StatefulSet] for [namespace: %s] [name: %s]", namespace, name)
+			return ss, nil
 		}
 	}
 	return nil, nil

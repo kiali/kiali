@@ -11,6 +11,7 @@ import (
 
 const (
 	// Kubernetes Controllers
+	ConfigMapType             = "ConfigMap"
 	CronJobType               = "CronJob"
 	DeploymentType            = "Deployment"
 	DeploymentConfigType      = "DeploymentConfig"
