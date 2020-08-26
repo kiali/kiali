@@ -50,6 +50,7 @@ type (
 		istioClient            kubernetes.K8SClient
 		k8sApi                 kube.Interface
 		istioNetworkingGetter  cache.Getter
+		istioSecurityGetter    cache.Getter
 		refreshDuration        time.Duration
 		cacheNamespaces        []string
 		cacheIstioTypes        map[string]bool
@@ -122,6 +123,7 @@ func NewKialiCache() (KialiCache, error) {
 
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
 	kialiCacheImpl.istioNetworkingGetter = istioClient.GetIstioNetworkingApi()
+	kialiCacheImpl.istioSecurityGetter = istioClient.GetIstioSecurityApi()
 
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil

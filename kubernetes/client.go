@@ -40,7 +40,6 @@ type PodLogs struct {
 }
 
 type IstioClientInterface interface {
-	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
 	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
@@ -85,7 +84,6 @@ type OSClientInterface interface {
 type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
-	GetIstioConfigMap() (*IstioMeshConfig, error)
 	IsMaistraApi() bool
 	IsOpenShift() bool
 	IsMixerDisabled() bool

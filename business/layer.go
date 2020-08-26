@@ -50,6 +50,19 @@ func initKialiCache() {
 	}
 }
 
+func IsNamespaceCached(namespace string) bool {
+	ok := kialiCache != nil && kialiCache.CheckNamespace(namespace)
+	return ok
+}
+
+func IsResourceCached(namespace string, resource string) bool {
+	ok := IsNamespaceCached(namespace)
+	if ok && resource != "" {
+		ok = kialiCache.CheckIstioResource(resource)
+	}
+	return ok
+}
+
 func GetUnauthenticated() (*Layer, error) {
 	return Get("")
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"sync"
 
 	"gopkg.in/yaml.v2"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,7 +20,7 @@ import (
 var (
 	portNameMatcher    = regexp.MustCompile(`^[\-].*`)
 	portProtocols      = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
-	istioConfigmapName = "istio"
+	IstioConfigMapName = "istio"
 )
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
@@ -351,86 +351,21 @@ func (in *K8SClient) getAuthenticationResources() map[string]bool {
 	return *in.authenticationResources
 }
 
-// GetAuthorizationDetails returns ServiceRoles, ServiceRoleBindings and ClusterRbacDetails
-func (in *K8SClient) GetAuthorizationDetails(namespace string) (*RBACDetails, error) {
-	rb := &RBACDetails{}
-
-	errChan := make(chan error, 1)
-	var wg sync.WaitGroup
-	wg.Add(4)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if aps, err := in.GetIstioObjects(namespace, AuthorizationPolicies, ""); err == nil {
-			rb.AuthorizationPolicies = aps
-		} else {
-			errChan <- err
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if srb, err := in.GetIstioObjects(namespace, ServiceRoleBindings, ""); err == nil {
-			rb.ServiceRoleBindings = srb
-		} else {
-			errChan <- err
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if sr, err := in.GetIstioObjects(namespace, ServiceRoles, ""); err == nil {
-			rb.ServiceRoles = sr
-		} else {
-			errChan <- err
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
-		if !in.IsMaistraApi() {
-			if crc, err := in.GetIstioObjects("", ClusterRbacConfigs, ""); err == nil {
-				rb.ClusterRbacConfigs = crc
-			} else {
-				errChan <- err
-			}
-		} else {
-			if smrc, err := in.GetIstioObjects(namespace, ServiceMeshRbacConfigs, ""); err == nil {
-				rb.ServiceMeshRbacConfigs = smrc
-			} else {
-				errChan <- err
-			}
-		}
-	}(errChan)
-
-	wg.Wait()
-	close(errChan)
-
-	for e := range errChan {
-		if e != nil { // Check that default value wasn't returned
-			return rb, e
-		}
-	}
-
-	return rb, nil
-}
-
-func (in *K8SClient) GetIstioConfigMap() (*IstioMeshConfig, error) {
+func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error) {
 	meshConfig := &IstioMeshConfig{}
 
-	cfg := config.Get()
-	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, istioConfigmapName)
-	if err != nil {
-		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
-		return nil, err
+	// Used for test cases
+	if istioConfig == nil || istioConfig.Data == nil {
+		return meshConfig, nil
 	}
 
+	var err error
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	log.Tracef("meshConfig: %v", meshConfigYaml)
 	if !ok {
-		log.Warningf("GetIstioConfigMap: Cannot find Istio mesh configuration.")
-		return nil, err
+		errMsg := "GetIstioConfigMap: Cannot find Istio mesh configuration [%v]."
+		log.Warningf(errMsg, istioConfig)
+		return nil, fmt.Errorf(errMsg, istioConfig)
 	}
 
 	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
@@ -447,7 +382,13 @@ func (in *K8SClient) IsMixerDisabled() bool {
 		return *in.isMixerDisabled
 	}
 
-	meshConfig, err := in.GetIstioConfigMap()
+	cfg := config.Get()
+	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName)
+	if err != nil {
+		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
+		return false
+	}
+	meshConfig, err := GetIstioConfigMap(istioConfig)
 	if err != nil {
 		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
 		return true

@@ -39,15 +39,48 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	if c.CheckIstioResource(kubernetes.ServiceEntries) {
 		(*informer)[kubernetes.ServiceEntries] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.ServiceEntries, c.refreshDuration, namespace)
 	}
+	if c.CheckIstioResource(kubernetes.Sidecars) {
+		(*informer)[kubernetes.Sidecars] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Sidecars, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
+		(*informer)[kubernetes.PeerAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.PeerAuthentications, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.RequestAuthentications) {
+		(*informer)[kubernetes.RequestAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.RequestAuthentications, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
+		(*informer)[kubernetes.AuthorizationPolicies] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.AuthorizationPolicies, c.refreshDuration, namespace)
+	}
 }
 
 func (c *kialiCacheImpl) isIstioSynced(namespace string) bool {
 	var isSynced bool
 	if nsCache, exist := c.nsCache[namespace]; exist {
-		isSynced = nsCache[kubernetes.VirtualServices].HasSynced() &&
-			nsCache[kubernetes.DestinationRules].HasSynced() &&
-			nsCache[kubernetes.Gateways].HasSynced() &&
-			nsCache[kubernetes.ServiceEntries].HasSynced()
+		isSynced = true
+		if c.CheckIstioResource(kubernetes.VirtualServices) {
+			isSynced = isSynced && nsCache[kubernetes.VirtualServices].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.DestinationRules) {
+			isSynced = isSynced && nsCache[kubernetes.DestinationRules].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.Gateways) {
+			isSynced = isSynced && nsCache[kubernetes.Gateways].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.ServiceEntries) {
+			isSynced = isSynced && nsCache[kubernetes.ServiceEntries].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.Sidecars) {
+			isSynced = isSynced && nsCache[kubernetes.Sidecars].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.PeerAuthentications) {
+			isSynced = isSynced && nsCache[kubernetes.PeerAuthentications].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.RequestAuthentications) {
+			isSynced = isSynced && nsCache[kubernetes.RequestAuthentications].HasSynced()
+		}
+		if c.CheckIstioResource(kubernetes.AuthorizationPolicies) {
+			isSynced = isSynced && nsCache[kubernetes.AuthorizationPolicies].HasSynced()
+		}
 	} else {
 		isSynced = false
 	}

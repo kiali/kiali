@@ -3,6 +3,8 @@ package business
 import (
 	"sync"
 
+	core_v1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -49,11 +51,15 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, error) {
 	var mps []kubernetes.IstioObject
 	var err error
-
 	controlPlaneNs := config.Get().IstioNamespace
 	if !in.k8s.IsMaistraApi() {
-		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, ""); err != nil {
-			return mps, nil
+		if IsResourceCached(controlPlaneNs, kubernetes.PeerAuthentications) {
+			mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+		} else {
+			mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+		}
+		if err != nil {
+			return mps, err
 		}
 	} else {
 		// ServiceMeshPolicies are namespace scoped.
@@ -87,7 +93,7 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 			var err error
 			// Check if namespace is cached
 			// Namespace access is checked in the upper call
-			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRules) && kialiCache.CheckNamespace(ns) {
+			if IsResourceCached(ns, kubernetes.DestinationRules) {
 				drs, err = kialiCache.GetIstioObjects(ns, kubernetes.DestinationRules, "")
 			} else {
 				drs, err = in.k8s.GetIstioObjects(ns, kubernetes.DestinationRules, "")
@@ -152,8 +158,11 @@ func (in TLSService) getPeerAuthentications(namespace string) ([]kubernetes.Isti
 	if namespace == config.Get().IstioNamespace {
 		return []kubernetes.IstioObject{}, nil
 	}
-
-	return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	if IsResourceCached(namespace, kubernetes.PeerAuthentications) {
+		return kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	} else {
+		return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+	}
 }
 
 func (in TLSService) getNamespaces() ([]string, error) {
@@ -175,7 +184,18 @@ func (in *TLSService) hasAutoMTLSEnabled() bool {
 		return *in.enabledAutoMtls
 	}
 
-	mc, err := in.k8s.GetIstioConfigMap()
+	cfg := config.Get()
+	var istioConfig *core_v1.ConfigMap
+	var err error
+	if IsNamespaceCached(cfg.IstioNamespace) {
+		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+	} else {
+		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+	}
+	if err != nil {
+		return true
+	}
+	mc, err := kubernetes.GetIstioConfigMap(istioConfig)
 	if err != nil {
 		return true
 	}

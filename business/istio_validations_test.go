@@ -65,7 +65,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
-	k8s.On("GetIstioConfigMap").Return(&kubernetes.IstioMeshConfig{}, nil)
+	k8s.On("GetConfigMap", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.ConfigMap{}, nil)
 
 	svc := setupWorkloadService(k8s)
 	return svc
@@ -87,7 +87,10 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "peerauthentications", "").Return(fakePolicies(), nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "requestauthentications", "").Return([]kubernetes.IstioObject{}, nil)
-	k8s.On("GetAuthorizationDetails", mock.AnythingOfType("string")).Return(&kubernetes.RBACDetails{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "clusterrbacconfigs", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "authorizationpolicies", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "servicerolebindings", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceroles", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(fakeCombinedIstioDetails().ServiceEntries, nil)
 
@@ -102,7 +105,10 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return(fakeCombinedIstioDetails().DestinationRules, nil)
-	k8s.On("GetAuthorizationDetails", mock.AnythingOfType("string")).Return(&kubernetes.RBACDetails{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "authorizationpolicies", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "clusterrbacconfigs", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "servicerolebindings", "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceroles", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(fakeCombinedIstioDetails().ServiceEntries, nil)
 	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "gateways", "").Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
