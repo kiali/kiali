@@ -194,3 +194,61 @@ func FilterIstioObjectsForSelector(selector labels.Selector, allObjects []IstioO
 	}
 	return istioObjects
 }
+
+func FilterIstioObjectsForWorkloadSelector(workloadSelector labels.Selector, allObjects []IstioObject) []IstioObject {
+	// IstioObjects with workloadSelectors:
+	// Networking:
+	// - Gateways 			-> spec/selector map<string, string> selector
+	// - EnvoyFilters 		-> spec/workloadSelector -> map<string, string> labels
+	// - Sidecars			-> spec/workloadSelector -> map<string, string> labels
+	// Security:
+	// - RequestAuthentications -> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	// - PeerAuthentications	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	// - AuthorizationPolicies	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	istioObjects := []IstioObject{}
+	for _, object := range allObjects {
+		var wkLabels map[string]interface{}
+		wkLabels = nil
+		switch object.GetTypeMeta().Kind {
+		case GatewayType:
+			if selector, ok := object.GetSpec()["selector"]; ok {
+				if selectorMap, ok := selector.(map[string]interface{}); ok {
+					wkLabels = selectorMap
+				}
+			}
+		case EnvoyFilterType, SidecarType:
+			if workloadSelectorField, ok := object.GetSpec()["workloadSelector"]; ok {
+				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
+					if labelsField, ok := workloadSelectorFieldM["labels"]; ok {
+						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
+							wkLabels = labelsFieldM
+						}
+					}
+				}
+			}
+		case RequestAuthenticationsType, PeerAuthenticationsType, AuthorizationPoliciesType:
+			if workloadSelectorField, ok := object.GetSpec()["selector"]; ok {
+				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
+					if labelsField, ok := workloadSelectorFieldM["matchLabels"]; ok {
+						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
+							wkLabels = labelsFieldM
+						}
+					}
+				}
+			}
+		}
+		if wkLabels != nil {
+			wkLabelsM := make(map[string]string, len(wkLabels))
+			for k, v := range wkLabels {
+				if vs, ok := v.(string); ok {
+					wkLabelsM[k] = vs
+				}
+			}
+			if workloadSelector.Matches(labels.Set(wkLabelsM)) {
+				istioObjects = append(istioObjects, object)
+			}
+
+		}
+	}
+	return istioObjects
+}

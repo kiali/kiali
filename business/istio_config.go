@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type IstioConfigService struct {
@@ -45,7 +46,7 @@ type IstioConfigCriteria struct {
 	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
 	IncludeAuthorizationPolicies  bool
-	IncludePeerAuthentication     bool
+	IncludePeerAuthentications    bool
 	IncludeWorkloadEntries        bool
 	IncludeRequestAuthentications bool
 	IncludeEnvoyFilters           bool
@@ -53,6 +54,69 @@ type IstioConfigCriteria struct {
 	IncludeHttpApiSpecBindings    bool
 	IncludeHttpApiSpecs           bool
 	LabelSelector                 string
+	WorkloadSelector			  string
+}
+
+func (icc IstioConfigCriteria) Include(resource string) bool {
+	// Flag used to skip object that are not used in a query when a WorkloadSelector is present
+	isWorkloadSelector := icc.WorkloadSelector != ""
+	switch resource {
+	case kubernetes.Gateways:
+		return icc.IncludeGateways
+	case kubernetes.VirtualServices:
+		return icc.IncludeVirtualServices && !isWorkloadSelector
+	case kubernetes.DestinationRules:
+		return icc.IncludeDestinationRules && !isWorkloadSelector
+	case kubernetes.ServiceEntries:
+		return icc.IncludeServiceEntries && !isWorkloadSelector
+	case kubernetes.Rules:
+		return icc.IncludeRules && !isWorkloadSelector
+	case kubernetes.Adapters:
+		return icc.IncludeAdapters && !isWorkloadSelector
+	case kubernetes.Templates:
+		return icc.IncludeTemplates && !isWorkloadSelector
+	case kubernetes.Handlers:
+		return icc.IncludeHandlers && !isWorkloadSelector
+	case kubernetes.Instances:
+		return icc.IncludeInstances && !isWorkloadSelector
+	case kubernetes.QuotaSpecs:
+		return icc.IncludeQuotaSpecs && !isWorkloadSelector
+	case kubernetes.QuotaSpecBindings:
+		return icc.IncludeQuotaSpecBindings && !isWorkloadSelector
+	case kubernetes.Policies:
+		return icc.IncludePolicies && !isWorkloadSelector
+	case kubernetes.MeshPolicies:
+		return icc.IncludeMeshPolicies && !isWorkloadSelector
+	case kubernetes.ServiceMeshPolicies:
+		return icc.IncludeServiceMeshPolicies && !isWorkloadSelector
+	case kubernetes.ClusterRbacConfigs:
+		return icc.IncludeClusterRbacConfigs && !isWorkloadSelector
+	case kubernetes.RbacConfigs:
+		return icc.IncludeRbacConfigs && !isWorkloadSelector
+	case kubernetes.ServiceMeshRbacConfigs:
+		return icc.IncludeServiceMeshRbacConfigs && !isWorkloadSelector
+	case kubernetes.ServiceRoles:
+		return icc.IncludeServiceRoles && !isWorkloadSelector
+	case kubernetes.Sidecars:
+		return icc.IncludeSidecars
+	case kubernetes.AuthorizationPolicies:
+		return icc.IncludeAuthorizationPolicies
+	case kubernetes.PeerAuthentications:
+		return icc.IncludePeerAuthentications
+	case kubernetes.WorkloadEntries:
+		return icc.IncludeWorkloadEntries && !isWorkloadSelector
+	case kubernetes.RequestAuthentications:
+		return icc.IncludeRequestAuthentications
+	case kubernetes.EnvoyFilters:
+		return icc.IncludeEnvoyFilters
+	case kubernetes.AttributeManifests:
+		return icc.IncludeAttributeManifests && !isWorkloadSelector
+	case kubernetes.HttpApiSpecBindings:
+		return icc.IncludeHttpApiSpecBindings && !isWorkloadSelector
+	case kubernetes.HttpApiSpecs:
+		return icc.IncludeHttpApiSpecs && !isWorkloadSelector
+	}
+	return false
 }
 
 // IstioConfig types used in the IstioConfig New Page Form
@@ -115,6 +179,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, err
 	}
 
+	isWorkloadSelector := criteria.WorkloadSelector != ""
+	var workloadSelector labels.Selector
+
+	if isWorkloadSelector {
+		if workloadSelector, err = labels.Parse(criteria.WorkloadSelector); err != nil {
+			return models.IstioConfigList{}, err
+		}
+	}
+
 	errChan := make(chan error, 26)
 
 	var wg sync.WaitGroup
@@ -122,7 +195,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeGateways {
+		if criteria.Include(kubernetes.Gateways) {
 			var gg []kubernetes.IstioObject
 			var ggErr error
 			// Check if namespace is cached
@@ -132,6 +205,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				gg, ggErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Gateways, criteria.LabelSelector)
 			}
 			if ggErr == nil {
+				if isWorkloadSelector {
+					gg = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, gg)
+				}
 				(&istioConfigList.Gateways).Parse(gg)
 			} else {
 				errChan <- ggErr
@@ -141,7 +217,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeVirtualServices {
+		if criteria.Include(kubernetes.VirtualServices) {
 			var vs []kubernetes.IstioObject
 			var vsErr error
 			// Check if namespace is cached
@@ -160,7 +236,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeDestinationRules {
+		if criteria.Include(kubernetes.DestinationRules) {
 			var dr []kubernetes.IstioObject
 			var drErr error
 			// Check if namespace is cached
@@ -179,7 +255,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeServiceEntries {
+		if criteria.Include(kubernetes.ServiceEntries) {
 			var se []kubernetes.IstioObject
 			var seErr error
 			// Check if namespace is cached
@@ -198,7 +274,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeRules {
+		if criteria.Include(kubernetes.Rules) {
 			if mr, mrErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Rules, criteria.LabelSelector); mrErr == nil {
 				istioConfigList.Rules = models.CastIstioRulesCollection(mr)
 			} else {
@@ -209,7 +285,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeAdapters {
+		if criteria.Include(kubernetes.Adapters) {
 			if aa, aaErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Adapters, criteria.LabelSelector); aaErr == nil {
 				istioConfigList.Adapters = models.CastIstioAdaptersCollection(aa)
 			} else {
@@ -220,7 +296,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeTemplates {
+		if criteria.Include(kubernetes.Templates) {
 			if tt, ttErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Templates, criteria.LabelSelector); ttErr == nil {
 				istioConfigList.Templates = models.CastIstioTemplatesCollection(tt)
 			} else {
@@ -231,7 +307,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeHandlers {
+		if criteria.Include(kubernetes.Handlers) {
 			if hh, hhErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Handlers, criteria.LabelSelector); hhErr == nil {
 				istioConfigList.Handlers = models.CastIstioHandlersCollection(hh)
 			} else {
@@ -242,7 +318,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeInstances {
+		if criteria.Include(kubernetes.Instances) {
 			if ii, iiErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Instances, criteria.LabelSelector); iiErr == nil {
 				istioConfigList.Instances = models.CastIstioInstancesCollection(ii)
 			} else {
@@ -253,7 +329,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeQuotaSpecs {
+		if criteria.Include(kubernetes.QuotaSpecs) {
 			if qs, qsErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.QuotaSpecs, criteria.LabelSelector); qsErr == nil {
 				(&istioConfigList.QuotaSpecs).Parse(qs)
 			} else {
@@ -264,7 +340,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeQuotaSpecBindings {
+		if criteria.Include(kubernetes.QuotaSpecBindings) {
 			if qb, qbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.QuotaSpecBindings, criteria.LabelSelector); qbErr == nil {
 				(&istioConfigList.QuotaSpecBindings).Parse(qb)
 			} else {
@@ -275,7 +351,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludePolicies {
+		if criteria.Include(kubernetes.Policies) {
 			if pc, pcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Policies, criteria.LabelSelector); pcErr == nil {
 				(&istioConfigList.Policies).Parse(pc)
 			} else {
@@ -288,7 +364,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		defer wg.Done()
 		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
-		if criteria.IncludeMeshPolicies && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
+		if criteria.Include(kubernetes.MeshPolicies) && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
 			if mp, mpErr := in.k8s.GetIstioObjects("", kubernetes.MeshPolicies, criteria.LabelSelector); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
 			} else {
@@ -303,7 +379,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		defer wg.Done()
 		// ClusterRbacConfigs are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
-		if criteria.IncludeClusterRbacConfigs && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
+		if criteria.Include(kubernetes.ClusterRbacConfigs) && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
 			if crc, crcErr := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, criteria.LabelSelector); crcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
 			} else {
@@ -316,7 +392,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeRbacConfigs {
+		if criteria.Include(kubernetes.RbacConfigs) {
 			if rc, rcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.RbacConfigs, criteria.LabelSelector); rcErr == nil {
 				(&istioConfigList.RbacConfigs).Parse(rc)
 			} else {
@@ -327,7 +403,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeAuthorizationPolicies {
+		if criteria.Include(kubernetes.AuthorizationPolicies) {
 			var ap []kubernetes.IstioObject
 			var apErr error
 			if IsResourceCached(criteria.Namespace, kubernetes.AuthorizationPolicies) {
@@ -336,6 +412,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				ap, apErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.AuthorizationPolicies, criteria.LabelSelector)
 			}
 			if apErr == nil {
+				if isWorkloadSelector {
+					ap = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, ap)
+				}
 				(&istioConfigList.AuthorizationPolicies).Parse(ap)
 			} else {
 				errChan <- apErr
@@ -345,7 +424,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludePeerAuthentication {
+		if criteria.Include(kubernetes.PeerAuthentications) {
 			var pa []kubernetes.IstioObject
 			var paErr error
 			if IsResourceCached(criteria.Namespace, kubernetes.PeerAuthentications) {
@@ -354,6 +433,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				pa, paErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.PeerAuthentications, criteria.LabelSelector)
 			}
 			if paErr == nil {
+				if isWorkloadSelector {
+					pa = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, pa)
+				}
 				(&istioConfigList.PeerAuthentications).Parse(pa)
 			} else {
 				errChan <- paErr
@@ -363,7 +445,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeSidecars {
+		if criteria.Include(kubernetes.Sidecars) {
 			var sc []kubernetes.IstioObject
 			var scErr error
 			if IsResourceCached(criteria.Namespace, kubernetes.Sidecars) {
@@ -372,6 +454,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				sc, scErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Sidecars, criteria.LabelSelector)
 			}
 			if scErr == nil {
+				if isWorkloadSelector {
+					sc = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, sc)
+				}
 				(&istioConfigList.Sidecars).Parse(sc)
 			} else {
 				errChan <- scErr
@@ -381,7 +466,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeServiceRoles {
+		if criteria.Include(kubernetes.ServiceRoles) {
 			if sr, srErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceRoles, criteria.LabelSelector); srErr == nil {
 				(&istioConfigList.ServiceRoles).Parse(sr)
 			} else {
@@ -392,7 +477,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeServiceRoleBindings {
+		if criteria.Include(kubernetes.ServiceRoleBindings) {
 			if srb, srbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceRoleBindings, criteria.LabelSelector); srbErr == nil {
 				(&istioConfigList.ServiceRoleBindings).Parse(srb)
 			} else {
@@ -404,7 +489,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		// This query is only executed if Maistra API is present, backend will ignore it in other environments
-		if criteria.IncludeServiceMeshPolicies && in.k8s.IsMaistraApi() {
+		if criteria.Include(kubernetes.ServiceMeshPolicies) && in.k8s.IsMaistraApi() {
 			if smp, smpErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceMeshPolicies, criteria.LabelSelector); smpErr == nil {
 				(&istioConfigList.ServiceMeshPolicies).Parse(smp)
 			} else {
@@ -416,7 +501,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		// This query is only executed if Maistra API is present, backend will ignore it in other environments
-		if criteria.IncludeServiceMeshRbacConfigs && in.k8s.IsMaistraApi() {
+		if criteria.Include(kubernetes.ServiceMeshRbacConfigs) && in.k8s.IsMaistraApi() {
 			if smrc, smrcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceMeshRbacConfigs, criteria.LabelSelector); smrcErr == nil {
 				(&istioConfigList.ServiceMeshRbacConfigs).Parse(smrc)
 			} else {
@@ -427,7 +512,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeWorkloadEntries {
+		if criteria.Include(kubernetes.WorkloadEntries) {
 			if we, weErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector); weErr == nil {
 				(&istioConfigList.WorkloadEntries).Parse(we)
 			} else {
@@ -438,7 +523,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeRequestAuthentications {
+		if criteria.Include(kubernetes.RequestAuthentications) {
 			var ra []kubernetes.IstioObject
 			var raErr error
 			if IsResourceCached(criteria.Namespace, kubernetes.RequestAuthentications) {
@@ -447,6 +532,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				ra, raErr = in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.RequestAuthentications, criteria.LabelSelector)
 			}
 			if raErr == nil {
+				if isWorkloadSelector {
+					ra = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, ra)
+				}
 				(&istioConfigList.RequestAuthentications).Parse(ra)
 			} else {
 				errChan <- raErr
@@ -456,8 +544,11 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeEnvoyFilters {
+		if criteria.Include(kubernetes.EnvoyFilters) {
 			if ef, efErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.EnvoyFilters, criteria.LabelSelector); efErr == nil {
+				if isWorkloadSelector {
+					ef = kubernetes.FilterIstioObjectsForWorkloadSelector(workloadSelector, ef)
+				}
 				(&istioConfigList.EnvoyFilters).Parse(ef)
 			} else {
 				errChan <- efErr
@@ -467,7 +558,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeAttributeManifests {
+		if criteria.Include(kubernetes.AttributeManifests) {
 			if am, amErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.AttributeManifests, criteria.LabelSelector); amErr == nil {
 				(&istioConfigList.AttributeManifests).Parse(am)
 			} else {
@@ -478,7 +569,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeHttpApiSpecBindings {
+		if criteria.Include(kubernetes.HttpApiSpecBindings) {
 			if hb, hbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.HttpApiSpecBindings, criteria.LabelSelector); hbErr == nil {
 				(&istioConfigList.HttpApiSpecBindings).Parse(hb)
 			} else {
@@ -489,7 +580,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeHttpApiSpecs {
+		if criteria.Include(kubernetes.HttpApiSpecs) {
 			if hs, hsErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.HttpApiSpecs, criteria.LabelSelector); hsErr == nil {
 				(&istioConfigList.HttpApiSpecs).Parse(hs)
 			} else {
@@ -1079,7 +1170,7 @@ func checkType(types []string, name string) bool {
 	return false
 }
 
-func ParseIstioConfigCriteria(namespace string, objects string, labelSelector string) IstioConfigCriteria {
+func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector string) IstioConfigCriteria {
 	defaultInclude := objects == ""
 	criteria := IstioConfigCriteria{}
 	criteria.Namespace = namespace
@@ -1104,7 +1195,7 @@ func ParseIstioConfigCriteria(namespace string, objects string, labelSelector st
 	criteria.IncludeServiceRoleBindings = defaultInclude
 	criteria.IncludeSidecars = defaultInclude
 	criteria.IncludeAuthorizationPolicies = defaultInclude
-	criteria.IncludePeerAuthentication = defaultInclude
+	criteria.IncludePeerAuthentications = defaultInclude
 	criteria.IncludeWorkloadEntries = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
 	criteria.IncludeEnvoyFilters = defaultInclude
@@ -1112,6 +1203,7 @@ func ParseIstioConfigCriteria(namespace string, objects string, labelSelector st
 	criteria.IncludeHttpApiSpecBindings = defaultInclude
 	criteria.IncludeHttpApiSpecs = defaultInclude
 	criteria.LabelSelector = labelSelector
+	criteria.WorkloadSelector = workloadSelector
 
 	if defaultInclude {
 		return criteria
@@ -1182,7 +1274,7 @@ func ParseIstioConfigCriteria(namespace string, objects string, labelSelector st
 		criteria.IncludeAuthorizationPolicies = true
 	}
 	if checkType(types, kubernetes.PeerAuthentications) {
-		criteria.IncludePeerAuthentication = true
+		criteria.IncludePeerAuthentications = true
 	}
 	if checkType(types, kubernetes.WorkloadEntries) {
 		criteria.IncludeWorkloadEntries = true
