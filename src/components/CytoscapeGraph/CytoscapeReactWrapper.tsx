@@ -81,7 +81,6 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     const opts = {
       container: this.divParentRef.current,
       boxSelectionEnabled: false,
-      autounselectify: true,
       style: GraphStyles.styles(),
       ...GraphStyles.options()
     };

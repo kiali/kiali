@@ -147,7 +147,7 @@ const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zInde
 const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PfColors.GrayBackground });
 const cytoscapeToolbarWrapperDivStyle = style({
   position: 'absolute',
-  bottom: '10px',
+  bottom: '5px',
   zIndex: 2,
   borderStyle: 'hidden'
 });

@@ -1,7 +1,13 @@
 import * as React from 'react';
 import * as Cy from 'cytoscape';
 import { Button, Toolbar, ToolbarItem, Tooltip } from '@patternfly/react-core';
-import { ExpandArrowsAltIcon, SearchMinusIcon, SearchPlusIcon, TopologyIcon } from '@patternfly/react-icons';
+import {
+  ExpandArrowsAltIcon,
+  PficonDragdropIcon,
+  SearchMinusIcon,
+  SearchPlusIcon,
+  TopologyIcon
+} from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -33,11 +39,15 @@ type CytoscapeToolbarProps = ReduxProps & {
   cytoscapeGraphRef: any;
 };
 
+type CytoscapeToolbarState = {
+  allowGrab: boolean;
+};
+
 const buttonStyle = style({
   backgroundColor: PfColors.White,
   marginRight: '1px'
 });
-const selectedTopologyButtonStyle = style({
+const activeButtonStyle = style({
   color: PFKialiColor.Active
 });
 const cytoscapeToolbarStyle = style({
@@ -47,7 +57,7 @@ const cytoscapeToolbarPadStyle = style({ marginLeft: '9px' });
 
 const ZOOM_STEP = 0.2;
 
-export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps> {
+export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps, CytoscapeToolbarState> {
   constructor(props: CytoscapeToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
@@ -59,6 +69,8 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     } else {
       HistoryManager.setParam(URLParam.GRAPH_LAYOUT, props.layout.name);
     }
+
+    this.state = { allowGrab: false };
   }
 
   componentDidUpdate() {
@@ -70,13 +82,27 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     return (
       <Toolbar className={cytoscapeToolbarStyle}>
         <ToolbarItem>
+          <Tooltip content={this.state.allowGrab ? 'Disable Drag' : 'Enable Drag'}>
+            <Button
+              id="toolbar_grab"
+              aria-label="Toggle Drag"
+              className={buttonStyle}
+              variant="plain"
+              onClick={() => this.toggleDrag()}
+              isActive={this.state.allowGrab}
+            >
+              <PficonDragdropIcon className={this.state.allowGrab ? activeButtonStyle : undefined} />
+            </Button>
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
           <Tooltip content="Zoom In">
             <Button
               id="toolbar_zoom_in"
               aria-label="Zoom In"
-              className={buttonStyle}
+              className={[cytoscapeToolbarPadStyle, buttonStyle].join(' ')}
               variant="plain"
-              onClick={this.zoomIn}
+              onClick={() => this.zoomIn()}
             >
               <SearchPlusIcon />
             </Button>
@@ -89,7 +115,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               aria-label="Zoom Out"
               className={buttonStyle}
               variant="plain"
-              onClick={this.zoomOut}
+              onClick={() => this.zoomOut()}
             >
               <SearchMinusIcon />
             </Button>
@@ -102,7 +128,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               aria-label="Zoom to Fit"
               className={[cytoscapeToolbarPadStyle, buttonStyle].join(' ')}
               variant="plain"
-              onClick={this.fit}
+              onClick={() => this.fit()}
             >
               <ExpandArrowsAltIcon />
             </Button>
@@ -122,9 +148,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               isActive={this.props.layout.name === DagreGraph.getLayout().name}
             >
               <TopologyIcon
-                className={
-                  this.props.layout.name === DagreGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
-                }
+                className={this.props.layout.name === DagreGraph.getLayout().name ? activeButtonStyle : undefined}
               />
             </Button>
           </Tooltip>
@@ -144,9 +168,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
                 isActive={this.props.layout.name === CoseGraph.getLayout().name}
               >
                 <TopologyIcon
-                  className={
-                    this.props.layout.name === CoseGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
-                  }
+                  className={this.props.layout.name === CoseGraph.getLayout().name ? activeButtonStyle : undefined}
                 />{' '}
                 1
               </Button>
@@ -167,9 +189,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
               isActive={this.props.layout.name === ColaGraph.getLayout().name}
             >
               <TopologyIcon
-                className={
-                  this.props.layout.name === ColaGraph.getLayout().name ? selectedTopologyButtonStyle : undefined
-                }
+                className={this.props.layout.name === ColaGraph.getLayout().name ? activeButtonStyle : undefined}
               />{' '}
               2
             </Button>
@@ -194,14 +214,23 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     );
   }
 
-  getCy(): Cy.Core | null {
+  private getCy = (): Cy.Core | null => {
     if (this.props.cytoscapeGraphRef.current) {
       return this.props.cytoscapeGraphRef.current.getCy();
     }
     return null;
-  }
+  };
 
-  zoom(step: number) {
+  private toggleDrag = () => {
+    const cy = this.getCy();
+    if (!cy) {
+      return;
+    }
+    cy.autoungrabify(this.state.allowGrab);
+    this.setState({ allowGrab: !this.state.allowGrab });
+  };
+
+  private zoom = (step: number) => {
     const cy = this.getCy();
     const container = cy ? cy.container() : undefined;
     if (cy && container) {
@@ -213,17 +242,17 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
         }
       });
     }
-  }
+  };
 
-  zoomIn = () => {
+  private zoomIn = () => {
     this.zoom(ZOOM_STEP);
   };
 
-  zoomOut = () => {
+  private zoomOut = () => {
     this.zoom(-ZOOM_STEP);
   };
 
-  fit = () => {
+  private fit = () => {
     const cy = this.getCy();
     if (cy) {
       CytoscapeGraphUtils.safeFit(cy);
