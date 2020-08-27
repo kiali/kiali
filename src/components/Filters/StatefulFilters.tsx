@@ -134,7 +134,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   updateActiveFilters(activeFilters: ActiveFiltersInfo) {
     const cleanFilters = FilterHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
     FilterSelected.setSelected(cleanFilters);
-    this.setState({ activeFilters: cleanFilters });
+    this.setState({ activeFilters: cleanFilters, currentValue: '' });
     this.props.onFilterChange();
   }
 
