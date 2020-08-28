@@ -71,9 +71,7 @@ func (l YamlFixtureLoader) GetAllResources() []kubernetes.IstioObject {
 	allResources := []kubernetes.IstioObject{}
 
 	for _, m := range l.resources {
-		for _, r := range m {
-			allResources = append(allResources, r)
-		}
+		allResources = append(allResources, m...)
 	}
 	return allResources
 }
