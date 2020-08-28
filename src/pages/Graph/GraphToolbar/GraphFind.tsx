@@ -17,6 +17,7 @@ import { style } from 'typestyle';
 import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
+import { AutoComplete } from 'utils/AutoComplete';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -63,13 +64,50 @@ const thinGroupStyle = style({
   paddingRight: '10px'
 });
 
+const operands: string[] = [
+  '%grpcerr',
+  '%grpctraffic',
+  '%httperr',
+  '%httptraffic',
+  'app',
+  'circuitbreaker',
+  'grpc',
+  'grpcerr',
+  'grpcin',
+  'grpcout',
+  'http',
+  'httpin',
+  'httpout',
+  'mtls',
+  'name',
+  'namespace',
+  'node',
+  'operation',
+  'outside',
+  'protocol',
+  'responsetime',
+  'service',
+  'serviceentry',
+  'sidecar',
+  'tcp',
+  'traffic',
+  'trafficsource',
+  'unused',
+  'version',
+  'tcpin',
+  'tcpout',
+  'workload'
+];
+
 export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: () => null
   };
 
+  private findAutoComplete: AutoComplete;
   private findInputRef;
   private hiddenElements: any | undefined;
+  private hideAutoComplete: AutoComplete;
   private hideInputRef;
   private removedElements: any | undefined;
 
@@ -77,6 +115,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     super(props);
     const findValue = props.findValue ? props.findValue : '';
     const hideValue = props.hideValue ? props.hideValue : '';
+    this.findAutoComplete = new AutoComplete(operands);
+    this.hideAutoComplete = new AutoComplete(operands);
     this.state = { findInputValue: findValue, hideInputValue: hideValue };
     if (props.showFindHelp) {
       props.toggleFindHelp();
@@ -149,7 +189,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               isValid={!this.state.findError}
               onChange={this.updateFind}
               defaultValue={this.state.findInputValue}
-              onKeyPress={this.checkSubmitFind}
+              onKeyDownCapture={this.checkSpecialKeyFind}
               placeholder="Find..."
             />
             {this.props.findValue && (
@@ -171,7 +211,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               type="text"
               onChange={this.updateHide}
               defaultValue={this.state.hideInputValue}
-              onKeyPress={this.checkSubmitHide}
+              onKeyDownCapture={this.checkSpecialKeyHide}
               placeholder="Hide..."
             />
             {this.props.hideValue && (
@@ -211,8 +251,9 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       this.clearFind();
     } else {
       const diff = Math.abs(val.length - this.state.findInputValue.length);
+      this.findAutoComplete.setRoot(val);
       this.setState({ findInputValue: val, findError: undefined });
-      // assume autocomplete or paste if length change is greater than a single key, so submit
+      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
         this.props.setFindValue(val);
       }
@@ -224,27 +265,52 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       this.clearHide();
     } else {
       const diff = Math.abs(val.length - this.state.hideInputValue.length);
+      this.hideAutoComplete.setRoot(val);
       this.setState({ hideInputValue: val, hideError: undefined });
-      // assume autocomplete or paste if length change is greater than a single key, so submit
+      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
         this.props.setHideValue(val);
       }
     }
   };
 
-  private checkSubmitFind = event => {
+  private checkSpecialKeyFind = event => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
-    if (keyCode === 13) {
-      event.preventDefault();
-      this.submitFind();
+    switch (keyCode) {
+      case 9: // tab (autocomplete)
+        event.preventDefault();
+        const next = this.findAutoComplete.next();
+        if (!!next) {
+          this.findInputRef.value = next;
+          this.setState({ findInputValue: next, findError: undefined });
+        }
+        break;
+      case 13: // return (submit)
+        event.preventDefault();
+        this.submitFind();
+        break;
+      default:
+        break;
     }
   };
 
-  private checkSubmitHide = event => {
+  private checkSpecialKeyHide = event => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
-    if (keyCode === 13) {
-      event.preventDefault();
-      this.submitHide();
+    switch (keyCode) {
+      case 9: // tab (autocomplete)
+        event.preventDefault();
+        const next = this.hideAutoComplete.next();
+        if (!!next) {
+          this.hideInputRef.value = next;
+          this.setState({ hideInputValue: next, hideError: undefined });
+        }
+        break;
+      case 13: // return (submit)
+        event.preventDefault();
+        this.submitHide();
+        break;
+      default:
+        break;
     }
   };
 
@@ -267,6 +333,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
+    this.findAutoComplete.setRoot('');
     this.setState({ findInputValue: '', findError: undefined });
     this.props.setFindValue('');
   };
@@ -278,6 +345,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
+    this.hideAutoComplete.setRoot('');
     this.setState({ hideInputValue: '', hideError: undefined });
     this.props.setHideValue('');
   };
