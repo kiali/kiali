@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	auth_v1 "k8s.io/api/authorization/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -990,22 +988,22 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 
 	istioObjects := loader.GetAllResources()
 
-	s, _ := labels.Parse("app=my-gateway")
+	s := "app=my-gateway"
 	gw := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
 	assert.Equal(1, len(gw))
 	assert.Equal("my-gateway", gw[0].GetObjectMeta().Name)
 
-	s, _ = labels.Parse("app=my-envoyfilter")
+	s  = "app=my-envoyfilter"
 	ef := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
 	assert.Equal(1, len(ef))
 	assert.Equal("my-envoyfilter", ef[0].GetObjectMeta().Name)
 
-	s, _ = labels.Parse("app=my-sidecar")
+	s = "app=my-sidecar"
 	sc := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
 	assert.Equal(1, len(sc))
 	assert.Equal("my-sidecar", sc[0].GetObjectMeta().Name)
 
-	s, _ = labels.Parse("app=my-security")
+	s = "app=my-security"
 	sec := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
 	assert.Equal(3, len(sec))
 }

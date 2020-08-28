@@ -15,7 +15,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 type IstioConfigService struct {
@@ -180,12 +179,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""
-	var workloadSelector labels.Selector
-
+	workloadSelector := ""
 	if isWorkloadSelector {
-		if workloadSelector, err = labels.Parse(criteria.WorkloadSelector); err != nil {
-			return models.IstioConfigList{}, err
-		}
+		workloadSelector = criteria.WorkloadSelector
 	}
 
 	errChan := make(chan error, 26)
