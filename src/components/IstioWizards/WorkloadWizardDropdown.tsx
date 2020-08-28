@@ -170,9 +170,9 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         // If sidecar is present, we offer first the disable action
         items.push(this.props.workload.istioSidecar ? disableAction : enableAction);
       }
-      items.push(<DropdownSeparator key={'separator_injection'} />);
     }
     if (serverConfig.extensions?.threescale.enabled && this.props.workload) {
+      items.push(<DropdownSeparator key={'separator_injection'} />);
       if (isThreeScaleLinked(this.props.workload)) {
         items.push(
           <DropdownItem
