@@ -54,7 +54,7 @@ type IstioConfigCriteria struct {
 	IncludeHttpApiSpecBindings    bool
 	IncludeHttpApiSpecs           bool
 	LabelSelector                 string
-	WorkloadSelector			  string
+	WorkloadSelector              string
 }
 
 func (icc IstioConfigCriteria) Include(resource string) bool {

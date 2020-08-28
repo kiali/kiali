@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -8,14 +9,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	auth_v1 "k8s.io/api/authorization/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
-	"k8s.io/apimachinery/pkg/labels"
-	"fmt"
 )
 
 func TestParseListParams(t *testing.T) {
