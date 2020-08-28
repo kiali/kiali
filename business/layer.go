@@ -63,10 +63,6 @@ func IsResourceCached(namespace string, resource string) bool {
 	return ok
 }
 
-func GetUnauthenticated() (*Layer, error) {
-	return Get("")
-}
-
 // Get the business.Layer
 func Get(token string) (*Layer, error) {
 	// Kiali Cache will be initialized once at first use of Business layer

@@ -6,16 +6,20 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type RemoteSecretCluster struct {
+	CertificateAuthorityData string `yaml:"certificate-authority-data"`
+	Server                   string `yaml:"server"`
+}
+
+type RemoteSecretClusterListItem struct {
+	Cluster RemoteSecretCluster `yaml:"cluster"`
+	Name    string              `yaml:"name"`
+}
+
 type RemoteSecret struct {
-	APIVersion string `yaml:"apiVersion"`
-	Clusters   []struct {
-		Cluster struct {
-			CertificateAuthorityData string `yaml:"certificate-authority-data"`
-			Server                   string `yaml:"server"`
-		} `yaml:"cluster"`
-		Name string `yaml:"name"`
-	} `yaml:"clusters"`
-	Contexts []struct {
+	APIVersion string                        `yaml:"apiVersion"`
+	Clusters   []RemoteSecretClusterListItem `yaml:"clusters"`
+	Contexts   []struct {
 		Context struct {
 			Cluster string `yaml:"cluster"`
 			User    string `yaml:"user"`
