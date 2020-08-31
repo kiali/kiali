@@ -994,7 +994,7 @@ func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
 	assert.Equal(1, len(gw))
 	assert.Equal("my-gateway", gw[0].GetObjectMeta().Name)
 
-	s  = "app=my-envoyfilter"
+	s = "app=my-envoyfilter"
 	ef := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
 	assert.Equal(1, len(ef))
 	assert.Equal("my-envoyfilter", ef[0].GetObjectMeta().Name)
