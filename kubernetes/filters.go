@@ -254,7 +254,7 @@ func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects [
 			wkLabelsS := []string{}
 			for k, v := range wkLabels {
 				if vs, ok := v.(string); ok {
-					wkLabelsS = append(wkLabelsS, k + "=" + vs)
+					wkLabelsS = append(wkLabelsS, k+"="+vs)
 				}
 			}
 			if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
