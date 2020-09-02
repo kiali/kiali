@@ -37,7 +37,12 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		labelSelector = query.Get("labelSelector")
 	}
 
-	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	workloadSelector := ""
+	if _, found := query["workloadSelector"]; found {
+		workloadSelector = query.Get("workloadSelector")
+	}
+
+	criteria := business.ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelector)
 
 	// Get business layer
 	business, err := getBusiness(r)

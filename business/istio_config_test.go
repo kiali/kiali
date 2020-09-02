@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -20,7 +21,7 @@ func TestParseListParams(t *testing.T) {
 	namespace := "bookinfo"
 	objects := ""
 	labelSelector := ""
-	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria := ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.Equal(t, "bookinfo", criteria.Namespace)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -32,7 +33,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeMeshPolicies)
 
 	objects = "gateways"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -44,7 +45,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -56,7 +57,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -68,7 +69,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "serviceentries"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -80,7 +81,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -92,7 +93,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "quotaspecs"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -104,7 +105,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "quotaspecbindings"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -116,7 +117,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "virtualservices,rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -128,7 +129,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules,virtualservices"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
@@ -140,7 +141,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "meshpolicies"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeMeshPolicies)
 	assert.False(t, criteria.IncludeGateways)
@@ -152,7 +153,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeQuotaSpecBindings)
 
 	objects = "notsupported"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -164,7 +165,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "notsupported,rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector)
+	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
@@ -973,4 +974,37 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert.Equal("templates", createTemplate.ObjectType)
 	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)
 	assert.Nil(err)
+}
+
+func TestFilterIstioObjectsForWorkloadSelector(t *testing.T) {
+	assert := assert.New(t)
+
+	path := fmt.Sprintf("../tests/data/filters/workload-selector-filter.yaml")
+	loader := &data.YamlFixtureLoader{Filename: path}
+	err := loader.Load()
+
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+
+	istioObjects := loader.GetAllResources()
+
+	s := "app=my-gateway"
+	gw := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
+	assert.Equal(1, len(gw))
+	assert.Equal("my-gateway", gw[0].GetObjectMeta().Name)
+
+	s = "app=my-envoyfilter"
+	ef := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
+	assert.Equal(1, len(ef))
+	assert.Equal("my-envoyfilter", ef[0].GetObjectMeta().Name)
+
+	s = "app=my-sidecar"
+	sc := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
+	assert.Equal(1, len(sc))
+	assert.Equal("my-sidecar", sc[0].GetObjectMeta().Name)
+
+	s = "app=my-security"
+	sec := kubernetes.FilterIstioObjectsForWorkloadSelector(s, istioObjects)
+	assert.Equal(3, len(sec))
 }

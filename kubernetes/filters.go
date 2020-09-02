@@ -194,3 +194,75 @@ func FilterIstioObjectsForSelector(selector labels.Selector, allObjects []IstioO
 	}
 	return istioObjects
 }
+
+func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects []IstioObject) []IstioObject {
+	// IstioObjects with workloadSelectors:
+	// Networking:
+	// - Gateways 			-> spec/selector map<string, string> selector
+	// - EnvoyFilters 		-> spec/workloadSelector -> map<string, string> labels
+	// - Sidecars			-> spec/workloadSelector -> map<string, string> labels
+	// Security:
+	// - RequestAuthentications -> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	// - PeerAuthentications	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	// - AuthorizationPolicies	-> spec/selector (istio.type.v1beta1.WorkloadSelector) -> map<string, string> match_labels
+	istioObjects := []IstioObject{}
+
+	// workloadSelector is a representation of the template labels of a workload
+	workloadLabels := map[string]string{}
+	aLabels := strings.Split(workloadSelector, ",")
+	for _, labels := range aLabels {
+		label := strings.Split(labels, "=")
+		if len(label) == 2 {
+			workloadLabels[label[0]] = label[1]
+		} else if len(label) == 1 {
+			workloadLabels[label[0]] = ""
+		}
+	}
+
+	for _, object := range allObjects {
+		var wkLabels map[string]interface{}
+		wkLabels = nil
+		switch object.GetTypeMeta().Kind {
+		case GatewayType:
+			if selector, ok := object.GetSpec()["selector"]; ok {
+				if selectorMap, ok := selector.(map[string]interface{}); ok {
+					wkLabels = selectorMap
+				}
+			}
+		case EnvoyFilterType, SidecarType:
+			if workloadSelectorField, ok := object.GetSpec()["workloadSelector"]; ok {
+				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
+					if labelsField, ok := workloadSelectorFieldM["labels"]; ok {
+						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
+							wkLabels = labelsFieldM
+						}
+					}
+				}
+			}
+		case RequestAuthenticationsType, PeerAuthenticationsType, AuthorizationPoliciesType:
+			if workloadSelectorField, ok := object.GetSpec()["selector"]; ok {
+				if workloadSelectorFieldM, ok := workloadSelectorField.(map[string]interface{}); ok {
+					if labelsField, ok := workloadSelectorFieldM["matchLabels"]; ok {
+						if labelsFieldM, ok := labelsField.(map[string]interface{}); ok {
+							wkLabels = labelsFieldM
+						}
+					}
+				}
+			}
+		}
+		if wkLabels != nil {
+			wkLabelsS := []string{}
+			for k, v := range wkLabels {
+				if vs, ok := v.(string); ok {
+					wkLabelsS = append(wkLabelsS, k+"="+vs)
+				}
+			}
+			if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+				if resourceSelector.Matches(labels.Set(workloadLabels)) {
+					istioObjects = append(istioObjects, object)
+				}
+			}
+		}
+	}
+	return istioObjects
+}

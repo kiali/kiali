@@ -63,6 +63,19 @@ func (l *YamlFixtureLoader) sortResources(resources kubernetes.IstioObjectList) 
 	}
 }
 
+func (l YamlFixtureLoader) GetAllResources() []kubernetes.IstioObject {
+	if !l.loaded {
+		return nil
+	}
+
+	allResources := []kubernetes.IstioObject{}
+
+	for _, m := range l.resources {
+		allResources = append(allResources, m...)
+	}
+	return allResources
+}
+
 func (l YamlFixtureLoader) GetResources(kind string) []kubernetes.IstioObject {
 	if !l.loaded {
 		return nil
