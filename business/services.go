@@ -370,3 +370,47 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 
 	return validations
 }
+
+// GetServiceAppName returns the "Application" name (app label) that relates to a service
+// This label is taken from pods, not the service object itself.
+// Consistency accross pods is assumed, ie. only one app label for all the pods under this service (only one will be returned).
+func (in *SvcService) GetServiceAppName(namespace, service string) (string, error) {
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+		return "", err
+	}
+
+	svc, eps, err := in.getServiceDefinition(namespace, service)
+	if err != nil {
+		return "", err
+	}
+
+	labelsSelector := labels.Set(svc.Spec.Selector).String()
+	// If service doesn't have any selector, we can't know which are the pods applying.
+	if labelsSelector == "" {
+		return "", nil
+	}
+
+	var pods []core_v1.Pod
+	// Check if namespace is cached
+	// Namespace access is checked in the upper caller
+	if IsNamespaceCached(namespace) {
+		pods, err = kialiCache.GetPods(namespace, labelsSelector)
+	} else {
+		pods, err = in.k8s.GetPods(namespace, labelsSelector)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	appLabelName := config.Get().IstioLabels.AppLabelName
+	for _, pod := range kubernetes.FilterPodsForEndpoints(eps, pods) {
+		if app := pod.Labels[appLabelName]; app != "" {
+			return app, nil
+		}
+	}
+
+	// No app label found
+	return "", nil
+}

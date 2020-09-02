@@ -36,10 +36,10 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, info)
 }
 
-func TracesList(w http.ResponseWriter, r *http.Request) {
+func AppTraces(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "TracesList initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "AppTraces initialization error: "+err.Error())
 		return
 	}
 	params := mux.Vars(r)
@@ -50,7 +50,29 @@ func TracesList(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Jaeger.GetJaegerTraces(namespace, app, q)
+	traces, err := business.Jaeger.GetAppTraces(namespace, app, q)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, traces)
+}
+
+func ServiceTraces(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "ServiceTraces initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	traces, err := business.Jaeger.GetServiceTraces(namespace, service, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -98,7 +120,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, trace)
 }
 
-// ServiceSpans is the API handler to fetch Jaeger spans of a specific service
+// AppSpans is the API handler to fetch Jaeger spans of a specific service
 func AppSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {

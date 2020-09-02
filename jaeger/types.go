@@ -17,6 +17,7 @@ type JaegerServices struct {
 type JaegerResponse struct {
 	Data   []jaegerModels.Trace `json:"data"`
 	Errors []structuredError    `json:"errors"`
+	App    string               `json:"app"`
 }
 
 type JaegerSingleTrace struct {
