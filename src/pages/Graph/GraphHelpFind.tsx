@@ -171,7 +171,8 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['!traffic', 'edges with no traffic'],
       ['http > 0.5', `edges with http rate > 0.5 rps`],
       ['rt > 500', `edges with response time > 500ms. (requires response time edge labels)`],
-      ['%httptraffic >= 50.0', `edges with >= 50% of the outgoing http request traffic of the parent`]
+      ['%httptraffic >= 50.0', `edges with >= 50% of the outgoing http request traffic of the parent`],
+      ['node = svc and svc startswith det or !traffic', 'service node starting with "det" or edges with no traffic']
     ];
   };
 
@@ -209,12 +210,11 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
   private noteRows = (): string[][] => {
     return [
-      ['Expressions can not combine "AND" with "OR".'],
       ['Parentheses are not supported (or needed).'],
-      ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
-      ['Expressions can not combine node and edge criteria.'],
+      ['Use OR to combine node and edge criteria.'],
       ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
       [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],
+      ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
       ['Abbrevations: namespace|ns, service|svc, workload|wl operation|op'],
       ['Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'],
       ['Hiding nodes will automatically hide connected edges.'],

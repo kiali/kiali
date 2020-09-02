@@ -358,6 +358,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     layoutChanged: boolean
   ) => {
     const selector = this.parseValue(this.props.hideValue, false);
+    console.debug(`Hide selector=[${selector}]`);
     let prevRemoved = this.removedElements;
 
     cy.startBatch();
@@ -455,6 +456,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
   private handleFind = (cy: any) => {
     const selector = this.parseValue(this.props.findValue, true);
+    console.debug(`Find selector=[${selector}]`);
 
     cy.startBatch();
     // unhighlight old find-hits
@@ -483,30 +485,32 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       return undefined;
     }
 
-    preparedVal = preparedVal.replace(/ and /gi, ' AND ');
-    preparedVal = preparedVal.replace(/ or /gi, ' OR ');
-    const conjunctive = preparedVal.includes(' AND ');
-    const disjunctive = preparedVal.includes(' OR ');
-    if (conjunctive && disjunctive) {
-      return this.setError(`Expression can not contain both 'AND' and 'OR'`, isFind);
-    }
-    const separator = disjunctive ? ',' : '';
-    const expressions = disjunctive ? preparedVal.split(' OR ') : preparedVal.split(' AND ');
-    let selector;
+    // generate separate selectors for each disjunctive clause and then stitch them together. This
+    // lets us mix node and edge criteria.
+    const orClauses = preparedVal.split(' OR ');
+    let orSelector;
 
-    for (const expression of expressions) {
-      const parsedExpression = this.parseExpression(expression, conjunctive, disjunctive, isFind);
-      if (!parsedExpression) {
-        return undefined;
+    for (const clause of orClauses) {
+      const expressions = clause.split(' AND ');
+      const conjunctive = expressions.length > 1;
+      let selector;
+
+      for (const expression of expressions) {
+        const parsedExpression = this.parseExpression(expression, conjunctive, isFind);
+        if (!parsedExpression) {
+          return undefined;
+        }
+        selector = this.appendSelector(selector, parsedExpression, isFind);
+        if (!selector) {
+          return undefined;
+        }
       }
-      selector = this.appendSelector(selector, parsedExpression, separator, isFind);
-      if (!selector) {
-        return undefined;
-      }
+      // parsed successfully, clear any previous error message
+      this.setError(undefined, isFind);
+      orSelector = !orSelector ? selector : `${orSelector},${selector}`;
     }
-    // parsed successfully, clear any previous error message
-    this.setError(undefined, isFind);
-    return selector;
+
+    return orSelector;
   };
 
   private prepareValue = (val: string): string => {
@@ -528,13 +532,17 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     val = val.replace(/ contains /gi, ' *= ');
     val = val.replace(/ startswith /gi, ' ^= ');
     val = val.replace(/ endswith /gi, ' $= ');
+
+    // uppercase conjunctions
+    val = val.replace(/ and /gi, ' AND ');
+    val = val.replace(/ or /gi, ' OR ');
+
     return val.trim();
   };
 
   private parseExpression = (
     expression: string,
     conjunctive: boolean,
-    disjunctive: boolean,
     isFind: boolean
   ): ParsedExpression | undefined => {
     let op;
@@ -607,9 +615,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       }
       case 'name': {
         const isNegation = op.startsWith('!');
-        if (disjunctive && isNegation) {
-          return this.setError(`Can not use 'OR' with negated 'name' operand`, isFind);
-        } else if (conjunctive) {
+        if (conjunctive) {
           return this.setError(`Can not use 'AND' with 'name' operand`, isFind);
         }
         const agg = `[${CyNode.aggregateValue} ${op} "${val}"]`;
@@ -804,16 +810,15 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
   private appendSelector = (
     selector: string,
     parsedExpression: ParsedExpression,
-    separator: string,
     isFind: boolean
   ): string | undefined => {
     if (!selector) {
       return parsedExpression.target + parsedExpression.selector;
     }
     if (!selector.startsWith(parsedExpression.target)) {
-      return this.setError('Invalid expression. Can not mix node and edge criteria.', isFind);
+      return this.setError('Invalid expression. Can not AND node and edge criteria.', isFind);
     }
-    return selector + separator + parsedExpression.selector;
+    return selector + parsedExpression.selector;
   };
 }
 

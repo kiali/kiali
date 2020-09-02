@@ -210,9 +210,23 @@ describe('Parse find value test', () => {
 
     // check composites
     // @ts-ignore
-    expect(instance.parseValue('ns=foo OR ns=bar')).toEqual('node[namespace = "foo"],[namespace = "bar"]');
+    expect(instance.parseValue('ns=foo OR ns=bar')).toEqual('node[namespace = "foo"],node[namespace = "bar"]'); // OR same target
     // @ts-ignore
-    expect(instance.parseValue('ns=foo AND ns=bar')).toEqual('node[namespace = "foo"][namespace = "bar"]');
+    expect(instance.parseValue('ns=foo AND ns=bar')).toEqual('node[namespace = "foo"][namespace = "bar"]'); // AND same target
+    // @ts-ignore
+    expect(instance.parseValue('ns=foo OR ns=bar AND app=foo')).toEqual(
+      'node[namespace = "foo"],node[namespace = "bar"][app = "foo"]'
+    ); // AND and OR same target
+    // @ts-ignore
+    expect(instance.parseValue('ns=foo OR protocol=http')).toEqual('node[namespace = "foo"],edge[protocol = "http"]'); // OR different targets
+    // @ts-ignore
+    expect(instance.parseValue('ns=foo OR protocol=http OR !traffic')).toEqual(
+      'node[namespace = "foo"],edge[protocol = "http"],edge[^hasTraffic]'
+    ); // OR different targets
+    // @ts-ignore
+    expect(instance.parseValue('ns=foo AND ns=bar OR protocol=http AND !traffic')).toEqual(
+      'node[namespace = "foo"][namespace = "bar"],edge[protocol = "http"][^hasTraffic]'
+    ); // OR different targets, each with AND
 
     // check find by name
     // @ts-ignore
@@ -231,8 +245,6 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('!foo')).toEqual(undefined); // invalid negated unary
     // @ts-ignore
     expect(instance.parseValue('node = appp')).toEqual(undefined); // invalid node type
-    // @ts-ignore
-    expect(instance.parseValue('ns=foo OR ns=bar AND app=foo')).toEqual(undefined); // AND and OR
     // @ts-ignore
     expect(instance.parseValue('ns=foo AND http > 5.0')).toEqual(undefined); // Node and Edge
   });
