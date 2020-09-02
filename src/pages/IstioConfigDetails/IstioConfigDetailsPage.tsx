@@ -18,8 +18,6 @@ import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropd
 import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
 import './IstioConfigDetailsPage.css';
 import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
-import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
-import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
@@ -30,10 +28,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateIcon,
-  EmptyStateVariant,
   Grid,
   GridItem,
   Stack,
@@ -43,11 +37,12 @@ import {
   TitleLevel,
   TitleSize
 } from '@patternfly/react-core';
-import { KialiIcon } from '../../config/KialiIcon';
 import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { PfColors } from '../../components/Pf/PfColors';
 import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink';
+import VirtualServiceCard from './IstioObjectDetails/VirtualServiceCard';
+import DestinationRuleCard from './IstioObjectDetails/DestinationRuleCard';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -74,8 +69,7 @@ interface IstioConfigDetailsState {
 
 const tabName = 'list';
 const paramToTab: { [key: string]: number } = {
-  overview: 0,
-  yaml: 1
+  yaml: 0
 };
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
@@ -96,7 +90,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   }
 
   defaultTab() {
-    return this.hasOverview() ? 'overview' : 'yaml';
+    return 'yaml';
   }
 
   objectTitle() {
@@ -245,24 +239,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   onCancel = () => {
-    if (this.hasOverview()) {
-      this.setState(
-        prevState => {
-          return {
-            isModified: false,
-            yamlModified: '',
-            currentTab: 'overview',
-            istioObjectDetails: prevState.originalIstioObjectDetails,
-            istioValidations: prevState.originalIstioValidations
-          };
-        },
-        () => {
-          this.props.history.push(this.props.location.pathname + '?list=overview');
-        }
-      );
-    } else {
-      this.backToList();
-    }
+    this.backToList();
   };
 
   onDelete = () => {
@@ -331,6 +308,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
+  // Not all Istio types have an overview card
+  hasOverview = (): boolean => {
+    return (
+      this.props.match.params.objectType === 'virtualservices' ||
+      this.props.match.params.objectType === 'destinationrules'
+    );
+  };
+
   objectReferences = (): ObjectReference[] => {
     const istioValidations: ObjectValidation = this.state.istioValidations || ({} as ObjectValidation);
     return istioValidations.references || ([] as ObjectReference[]);
@@ -340,7 +325,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const yamlSource = this.fetchYaml();
     const objectReferences = this.objectReferences();
     const refPresent = objectReferences.length > 0;
-    const editorSpan = refPresent ? 9 : 12;
+    const showCards = refPresent || this.hasOverview();
+    const editorSpan = showCards ? 9 : 12;
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []
@@ -376,32 +362,48 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
               />
             ) : null}
           </GridItem>
-          {refPresent ? (
+          {showCards && (
             <GridItem span={3}>
-              <Card>
-                <CardHeader>
-                  <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
-                    Validation references
-                  </Title>
-                </CardHeader>
-                <CardBody>
-                  <Stack>
-                    {objectReferences.map((reference, i) => {
-                      return (
-                        <StackItem key={'rel-object-' + i}>
-                          <ReferenceIstioObjectLink
-                            name={reference.name}
-                            type={reference.objectType}
-                            namespace={reference.namespace}
-                          />
-                        </StackItem>
-                      );
-                    })}
-                  </Stack>
-                </CardBody>
-              </Card>
+              {this.state.istioObjectDetails && this.state.istioObjectDetails.virtualService && (
+                <VirtualServiceCard
+                  virtualService={this.state.istioObjectDetails.virtualService}
+                  validation={this.state.istioValidations}
+                  namespace={this.state.istioObjectDetails.namespace.name}
+                />
+              )}
+              {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule && (
+                <DestinationRuleCard
+                  destinationRule={this.state.istioObjectDetails.destinationRule}
+                  validation={this.state.istioValidations}
+                  namespace={this.state.istioObjectDetails.namespace.name}
+                />
+              )}
+              {refPresent && (
+                <Card>
+                  <CardHeader>
+                    <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+                      Validation references
+                    </Title>
+                  </CardHeader>
+                  <CardBody>
+                    <Stack>
+                      {objectReferences.map((reference, i) => {
+                        return (
+                          <StackItem key={'rel-object-' + i}>
+                            <ReferenceIstioObjectLink
+                              name={reference.name}
+                              type={reference.objectType}
+                              namespace={reference.namespace}
+                            />
+                          </StackItem>
+                        );
+                      })}
+                    </Stack>
+                  </CardBody>
+                </Card>
+              )}
             </GridItem>
-          ) : undefined}
+          )}
         </Grid>
         {this.renderActionButtons()}
       </>
@@ -442,86 +444,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
-  // Not all Istio types have components to render an overview tab
-  hasOverview = (): boolean => {
-    return (
-      this.props.match.params.objectType === 'virtualservices' ||
-      this.props.match.params.objectType === 'destinationrules'
-    );
-  };
-
-  renderOverview = (): any => {
-    if (this.state.istioObjectDetails) {
-      if (this.state.istioObjectDetails.virtualService) {
-        return (
-          <VirtualServiceDetail
-            virtualService={this.state.istioObjectDetails.virtualService}
-            validation={this.state.istioValidations}
-            namespace={this.state.istioObjectDetails.namespace.name}
-          />
-        );
-      }
-      if (this.state.istioObjectDetails.destinationRule) {
-        return (
-          <DestinationRuleDetail
-            destinationRule={this.state.istioObjectDetails.destinationRule}
-            validation={this.state.istioValidations}
-            namespace={this.state.istioObjectDetails.namespace.name}
-          />
-        );
-      }
-    } else {
-      // In theory it shouldn't enter here, but we show a nice error page anyway.
-
-      return (
-        <EmptyState variant={EmptyStateVariant.full}>
-          <EmptyStateIcon icon={KialiIcon.Error} />
-          <Title headingLevel={TitleLevel.h5} size={TitleSize.lg}>
-            Error loading object {this.props.match.params.object}
-          </Title>
-          <EmptyStateBody>
-            This might mean the resource is not ready yet or has been deleted and the cluster has not finished
-            propagating the changes.
-          </EmptyStateBody>
-        </EmptyState>
-      );
-    }
-  };
-
-  renderTabs = (): any => {
-    const tabs: JSX.Element[] = [];
-    if (this.hasOverview()) {
-      tabs.push(
-        <Tab key="istio-overview" title="Overview" eventKey={0}>
-          <RenderComponentScroll>{this.renderOverview()}</RenderComponentScroll>
-        </Tab>
-      );
-    }
-
-    tabs.push(
-      <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={1}>
-        <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
-      </Tab>
-    );
-
-    return (
-      <ParameterizedTabs
-        id="basic-tabs"
-        onSelect={tabValue => {
-          this.setState({ currentTab: tabValue });
-        }}
-        tabMap={paramToTab}
-        tabName={tabName}
-        defaultTab={this.defaultTab()}
-        activeTab={this.state.currentTab}
-        mountOnEnter={false}
-        unmountOnExit={true}
-      >
-        {tabs}
-      </ParameterizedTabs>
-    );
-  };
-
   render() {
     return (
       <>
@@ -532,7 +454,22 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           <div style={{ paddingBottom: 14 }} />
           {this.renderActions()}
         </RenderHeader>
-        {this.renderTabs()}
+        <ParameterizedTabs
+          id="basic-tabs"
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+          }}
+          tabMap={paramToTab}
+          tabName={tabName}
+          defaultTab={this.defaultTab()}
+          activeTab={this.state.currentTab}
+          mountOnEnter={false}
+          unmountOnExit={true}
+        >
+          <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
+            <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
+          </Tab>
+        </ParameterizedTabs>
         <Prompt
           message={location => {
             if (this.state.isModified) {
