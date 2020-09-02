@@ -21,6 +21,7 @@ ISTIO_NAMESPACE="istio-system"
 RATE=1
 AUTO_INJECTION="true"
 DELETE_BOOKINFO="false"
+MINIKUBE_PROFILE="minikube"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -48,6 +49,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -n|--namespace)
       NAMESPACE="$2"
+      shift;shift
+      ;;
+    -mp|--minikube-profile)
+      MINIKUBE_PROFILE="$2"
       shift;shift
       ;;
     -b|--bookinfo.yaml)
@@ -78,6 +83,7 @@ Valid command line arguments:
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
+  -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
@@ -227,11 +233,13 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
     # for now, we only support minikube k8s environments
-    if minikube status > /dev/null 2>&1 ; then
-      INGRESS_HOST=$(minikube ip)
+    if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
+      INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
       echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+    else
+      echo "Failed to get minikube status. Make sure minikube is up and your profile is defined properly (--minikube-profile option)"
     fi
   fi
 
