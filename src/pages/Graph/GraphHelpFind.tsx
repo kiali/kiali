@@ -210,7 +210,8 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
   private noteRows = (): string[][] => {
     return [
-      ['Parentheses are not supported (or needed).'],
+      ['Press Tab key to autocomplete operands.'],
+      ['OR has precedence over AND.  Parentheses are not supported.'],
       ['Use OR to combine node and edge criteria.'],
       ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
       [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],

@@ -1,20 +1,38 @@
 export class AutoComplete {
-  private rootOptions: string[];
+  private endings: string[];
+  private start: string;
 
   constructor(private options: string[]) {
-    this.rootOptions = options;
+    this.endings = [...options];
+    this.start = '';
   }
 
-  setRoot(root: string) {
-    this.rootOptions = !root ? this.options : this.options.filter(o => o.startsWith(root) && o !== root);
-  }
-
-  next(): string | undefined {
-    if (!this.rootOptions) {
-      return undefined;
+  setInput(input: string, delims?: string[]) {
+    delims = !delims ? [' '] : delims;
+    let lastDelim = -1;
+    for (const d of delims) {
+      const i = input.lastIndexOf(d);
+      lastDelim = i > lastDelim ? i : lastDelim;
     }
-    const next = this.rootOptions.shift();
-    this.rootOptions.push(next!);
-    return next;
+
+    this.start = lastDelim < 0 ? '' : input.slice(0, lastDelim + 1);
+    const end = lastDelim < 0 ? input : input.slice(lastDelim + 1);
+
+    this.endings = !end ? [...this.options] : this.options.filter(o => o.startsWith(end) && o !== end);
+
+    if (!this.endings.length) {
+      this.start = input;
+    }
+
+    console.log(`input=[${input}] start=[${this.start}] end=[${end}] endings=[${this.endings.length}]`);
+  }
+
+  next(): string {
+    if (!this.endings.length) {
+      return this.start;
+    }
+    const nextEnding = this.endings.shift();
+    this.endings.push(nextEnding!);
+    return `${this.start}${nextEnding}`;
   }
 }

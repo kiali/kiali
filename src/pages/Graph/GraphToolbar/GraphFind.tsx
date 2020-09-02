@@ -251,7 +251,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       this.clearFind();
     } else {
       const diff = Math.abs(val.length - this.state.findInputValue.length);
-      this.findAutoComplete.setRoot(val);
+      this.findAutoComplete.setInput(val, [' ', '!']);
       this.setState({ findInputValue: val, findError: undefined });
       // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
@@ -265,7 +265,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       this.clearHide();
     } else {
       const diff = Math.abs(val.length - this.state.hideInputValue.length);
-      this.hideAutoComplete.setRoot(val);
+      this.hideAutoComplete.setInput(val, [' ', '!']);
       this.setState({ hideInputValue: val, hideError: undefined });
       // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
@@ -282,6 +282,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         const next = this.findAutoComplete.next();
         if (!!next) {
           this.findInputRef.value = next;
+          this.findInputRef.scrollLeft = this.findInputRef.scrollWidth;
           this.setState({ findInputValue: next, findError: undefined });
         }
         break;
@@ -302,6 +303,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         const next = this.hideAutoComplete.next();
         if (!!next) {
           this.hideInputRef.value = next;
+          this.hideInputRef.scrollLeft = this.hideInputRef.scrollWidth;
           this.setState({ hideInputValue: next, hideError: undefined });
         }
         break;
@@ -333,7 +335,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
-    this.findAutoComplete.setRoot('');
+    this.findAutoComplete.setInput('');
     this.setState({ findInputValue: '', findError: undefined });
     this.props.setFindValue('');
   };
@@ -345,7 +347,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     if (htmlInputElement !== null) {
       htmlInputElement.value = '';
     }
-    this.hideAutoComplete.setRoot('');
+    this.hideAutoComplete.setInput('');
     this.setState({ hideInputValue: '', hideError: undefined });
     this.props.setHideValue('');
   };
