@@ -19,27 +19,15 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
               },
               Object {
                 "title": "Type",
-                "transforms": Array [
-                  [Function],
-                ],
               },
               Object {
                 "title": "Labels",
-                "transforms": Array [
-                  [Function],
-                ],
               },
               Object {
                 "title": "Created at",
-                "transforms": Array [
-                  [Function],
-                ],
               },
               Object {
                 "title": "Resource version",
-                "transforms": Array [
-                  [Function],
-                ],
               },
             ]
           }

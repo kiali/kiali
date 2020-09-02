@@ -30,12 +30,12 @@ class WorkloadServices extends React.Component<WorkloadServicesProps> {
     // https://github.com/patternfly/patternfly-next/issues/2373
     return [
       { title: 'Name', transforms: [cellWidth(10) as any] },
-      { title: 'Created at', transforms: [cellWidth(10) as any] },
-      { title: 'Type', transforms: [cellWidth(10) as any] },
-      { title: 'Labels', transforms: [cellWidth(30) as any] },
-      { title: 'Resource Version', transforms: [cellWidth(10) as any] },
-      { title: 'Ip', transforms: [cellWidth(40) as any] },
-      { title: 'Ports', transforms: [cellWidth(20) as any] }
+      { title: 'Created at' },
+      { title: 'Type' },
+      { title: 'Labels' },
+      { title: 'Resource Version' },
+      { title: 'Ip' },
+      { title: 'Ports' }
     ];
   }
 

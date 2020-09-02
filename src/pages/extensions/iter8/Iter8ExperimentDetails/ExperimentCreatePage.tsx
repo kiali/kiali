@@ -286,7 +286,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   };
 
   fetchGateways = (namespace: string) => {
-    this.promises.register('gateways', API.getIstioConfig(namespace, ['gateways'], false, '')).then(response => {
+    this.promises.register('gateways', API.getIstioConfig(namespace, ['gateways'], false, '', '')).then(response => {
       let gatewayhostpair: Host[] = [];
       let gateways: string[] = [];
       gateways.push('-- select gateway --');

@@ -31,13 +31,13 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
     // https://github.com/patternfly/patternfly-next/issues/2373
     return [
       { title: 'Status', transforms: [cellWidth(10) as any] },
-      { title: 'Name', transforms: [cellWidth(10) as any] },
-      { title: 'Created at', transforms: [cellWidth(10) as any] },
-      { title: 'Created by', transforms: [cellWidth(10) as any] },
-      { title: 'Labels', transforms: [cellWidth(60) as any] },
-      { title: 'Istio Init Containers', transforms: [cellWidth(60) as any] },
-      { title: 'Istio Containers', transforms: [cellWidth(60) as any] },
-      { title: 'Phase', transforms: [cellWidth(10) as any] }
+      { title: 'Name' },
+      { title: 'Created at' },
+      { title: 'Created by' },
+      { title: 'Labels' },
+      { title: 'Istio Init Containers' },
+      { title: 'Istio Containers' },
+      { title: 'Phase' }
     ];
   }
 

@@ -22,6 +22,8 @@ import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { serverConfig } from '../../config';
 import { isIstioNamespace } from '../../config/ServerConfig';
+import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
+import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
 
 type WorkloadInfoProps = {
   namespace: string;
@@ -39,6 +41,7 @@ type WorkloadInfoState = {
   currentTab: string;
   health?: WorkloadHealth;
   threescaleRules: IstioRule[];
+  workloadIstioConfig?: IstioConfigList;
 };
 
 const tabIconStyle = style({
@@ -49,8 +52,18 @@ const tabName = 'list';
 const defaultTab = 'pods';
 const paramToTab: { [key: string]: number } = {
   pods: 0,
-  services: 1
+  services: 1,
+  istioconfig: 2
 };
+
+const workloadIstioResources = [
+  'gateways',
+  'authorizationpolicies',
+  'peerauthentications',
+  'sidecars',
+  'requestauthentications',
+  'envoyfilters'
+];
 
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   private graphDataSource = new GraphDataSource();
@@ -97,10 +110,21 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       )
         .then(health => this.setState({ health: health }))
         .catch(error => AlertUtils.addError('Could not fetch Health.', error));
+
+      const labels = this.props.workload.labels;
+      const wkLabels: string[] = [];
+      Object.keys(labels).forEach(key => {
+        const label = key + (labels[key] ? '=' + labels[key] : '');
+        wkLabels.push(label);
+      });
+      const workloadSelector = wkLabels.join(',');
+      API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
+        .then(response => this.setState({ workloadIstioConfig: response.data }))
+        .catch(error => AlertUtils.addError('Could not fetch Istio Config.', error));
     }
     if (serverConfig.extensions?.threescale.enabled) {
       // 3scale info should be placed under control plane namespace
-      API.getIstioConfig(serverConfig.istioNamespace, ['rules'], false, 'kiali_wizard=threescale')
+      API.getIstioConfig(serverConfig.istioNamespace, ['rules'], false, 'kiali_wizard=threescale', '')
         .then(response => {
           this.setState({
             threescaleRules: response.data.rules
@@ -208,7 +232,30 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       </span>
     );
 
-    const getValidationIcon = (keys: string[], type: string) => {
+    const getIstioValidationIcon = (typeNames: { [key: string]: string[] }) => {
+      let severity = ValidationTypes.Correct;
+      if (this.state.workloadIstioConfig && this.state.workloadIstioConfig.validations) {
+        const istioValidations = this.state.workloadIstioConfig.validations;
+        Object.keys(istioValidations).forEach(type => {
+          const typeValidations = istioValidations[type];
+          Object.keys(typeValidations).forEach(name => {
+            const nameValidation = typeValidations[name];
+            if (typeNames[type] && typeNames[type].includes(name)) {
+              const itemSeverity = validationToSeverity(nameValidation);
+              if (
+                (itemSeverity === ValidationTypes.Warning && severity !== ValidationTypes.Error) ||
+                itemSeverity === ValidationTypes.Error
+              ) {
+                severity = itemSeverity;
+              }
+            }
+          });
+        });
+      }
+      return severity !== ValidationTypes.Correct ? getSeverityIcon(severity) : undefined;
+    };
+
+    const getWorkloadValidationIcon = (keys: string[], type: string) => {
       let severity = ValidationTypes.Warning;
       keys.forEach(key => {
         const validations = this.state.validations![type][key];
@@ -223,7 +270,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       <>
         Pods ({pods.length}){' '}
         {validationChecks.hasPodsChecks
-          ? getValidationIcon(
+          ? getWorkloadValidationIcon(
               pods.map(a => a.name),
               'pod'
             )
@@ -231,6 +278,35 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       </>
     );
 
+    const istioConfigItems = this.state.workloadIstioConfig ? toIstioItems(this.state.workloadIstioConfig) : [];
+    let istioTabTitle: JSX.Element | undefined;
+    let istioConfigIcon = undefined;
+    // Helper to iterate at same time on workloadIstioConfig resources and validations
+    const wkIstioTypes = [
+      { field: 'gateways', validation: 'gateway' },
+      { field: 'sidecars', validation: 'sidecar' },
+      { field: 'envoyFilters', validation: 'envoyfilter' },
+      { field: 'requestAuthentications', validation: 'requestauthentication' },
+      { field: 'authorizationPolicies', validation: 'authorizationpolicy' },
+      { field: 'peerAuthentications', validation: 'peerauthentication' }
+    ];
+    if (this.state.workloadIstioConfig?.validations) {
+      const typeNames: { [key: string]: string[] } = {};
+      wkIstioTypes.forEach(wkIstioType => {
+        if (this.state.workloadIstioConfig && this.state.workloadIstioConfig.validations[wkIstioType.validation]) {
+          typeNames[wkIstioType.validation] = [];
+          this.state.workloadIstioConfig[wkIstioType.field]?.forEach(r =>
+            typeNames[wkIstioType.validation].push(r.metadata.name)
+          );
+        }
+      });
+      istioConfigIcon = getIstioValidationIcon(typeNames);
+    }
+    istioTabTitle = (
+      <>
+        Istio Config ({istioConfigItems.length}){istioConfigIcon}
+      </>
+    );
     return (
       <>
         <RightActionBar>
@@ -283,6 +359,11 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                       workload={this.props.workload?.name || ''}
                       namespace={this.props.namespace}
                     />
+                  </ErrorBoundaryWithMessage>
+                </Tab>
+                <Tab title={istioTabTitle} eventKey={2}>
+                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Istio Config')}>
+                    <IstioConfigSubList name={this.props.workload?.name || ''} items={istioConfigItems} />
                   </ErrorBoundaryWithMessage>
                 </Tab>
               </ParameterizedTabs>

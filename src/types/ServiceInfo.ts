@@ -92,14 +92,7 @@ const numberOfChecks = (type: ValidationTypes, object: ObjectValidation) =>
 export const validationToSeverity = (object: ObjectValidation): ValidationTypes => {
   const warnChecks = numberOfChecks(ValidationTypes.Warning, object);
   const errChecks = numberOfChecks(ValidationTypes.Error, object);
-
-  return object && object.valid
-    ? ValidationTypes.Correct
-    : object && !object.valid && errChecks > 0
-    ? ValidationTypes.Error
-    : object && !object.valid && warnChecks > 0
-    ? ValidationTypes.Warning
-    : ValidationTypes.Correct;
+  return errChecks > 0 ? ValidationTypes.Error : warnChecks > 0 ? ValidationTypes.Warning : ValidationTypes.Correct;
 };
 
 export const checkForPath = (object: ObjectValidation | undefined, path: string): ObjectCheck[] => {

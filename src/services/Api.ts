@@ -137,13 +137,22 @@ export const updateNamespace = (namespace: string, jsonPatch: string): Promise<R
   return newRequest(HTTP_VERBS.PATCH, urls.namespace(namespace), {}, jsonPatch);
 };
 
-export const getIstioConfig = (namespace: string, objects: string[], validate: boolean, labelSelector: string) => {
+export const getIstioConfig = (
+  namespace: string,
+  objects: string[],
+  validate: boolean,
+  labelSelector: string,
+  workloadSelector: string
+) => {
   const params: any = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
   if (validate) {
     params.validate = validate;
   }
   if (labelSelector) {
     params.labelSelector = labelSelector;
+  }
+  if (workloadSelector) {
+    params.workloadSelector = workloadSelector;
   }
   return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {});
 };

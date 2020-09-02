@@ -131,7 +131,7 @@ class ThreeScaleNewPage extends React.Component<Props, ThreeScaleState> {
         .registerAll(
           'handlers',
           this.props.activeNamespaces.map(n =>
-            API.getIstioConfig(n.name, ['handlers'], false, 'kiali_wizard=threescale')
+            API.getIstioConfig(n.name, ['handlers'], false, 'kiali_wizard=threescale', '')
           )
         )
         .then(responses => {

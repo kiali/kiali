@@ -89,7 +89,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         this.promises
           .registerAll(
             'gateways',
-            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false, ''))
+            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false, '', ''))
           )
           .then(responses => {
             let gatewayList: string[] = [];
@@ -120,7 +120,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         AlertUtils.addError('Could not fetch Service Details.', error);
       });
 
-    API.getIstioConfig(this.props.namespace, ['peerauthentications'], false, '')
+    API.getIstioConfig(this.props.namespace, ['peerauthentications'], false, '', '')
       .then(results => {
         this.setState({
           peerAuthentications: results.data.peerAuthentications
@@ -290,7 +290,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
                     </ErrorBoundaryWithMessage>
                   </Tab>
                   <Tab eventKey={1} title={istioTabTitle}>
-                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
+                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Istio Config')}>
                       <IstioConfigSubList name={this.state.serviceDetails.service.name} items={istioConfigItems} />
                     </ErrorBoundaryWithMessage>
                   </Tab>

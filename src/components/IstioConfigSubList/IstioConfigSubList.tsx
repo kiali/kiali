@@ -28,11 +28,11 @@ class IstioConfigSubList extends React.Component<Props> {
     // https://github.com/patternfly/patternfly-next/issues/2373
     return [
       { title: 'Status', transforms: [cellWidth(10) as any] },
-      { title: 'Name', transforms: [cellWidth(10) as any] },
-      { title: 'Type', transforms: [cellWidth(10) as any] },
-      { title: 'Created at', transforms: [cellWidth(20) as any] },
-      { title: 'Resource version', transforms: [cellWidth(10) as any] },
-      { title: 'Actions', transforms: [cellWidth(10) as any] }
+      { title: 'Name' },
+      { title: 'Type' },
+      { title: 'Created at' },
+      { title: 'Resource version' },
+      { title: 'Actions' }
     ];
   }
 
@@ -92,7 +92,7 @@ class IstioConfigSubList extends React.Component<Props> {
           },
           { title: this.overviewLink(item) },
           { title: dicIstioType[item.type] },
-          { title: <LocalTime time={item.creationTimeStamp || ''} /> },
+          { title: <LocalTime time={item.creationTimestamp || ''} /> },
           { title: item.resourceVersion },
           { title: this.yamlLink(item) }
         ]
@@ -102,7 +102,7 @@ class IstioConfigSubList extends React.Component<Props> {
 
     return rows;
   }
-
+  table;
   render() {
     return (
       <Grid>

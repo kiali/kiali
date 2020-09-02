@@ -37,7 +37,7 @@ export interface IstioConfigItem {
   namespace: string;
   type: string;
   name: string;
-  creationTimeStamp?: string;
+  creationTimestamp?: string;
   resourceVersion?: string;
   gateway?: Gateway;
   virtualService?: VirtualService;
@@ -305,7 +305,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
         namespace: istioConfigList.namespace.name,
         type: typeName,
         name: entry.metadata.name,
-        creationTimeStamp: entry.metadata.creationTimeStamp,
+        creationTimestamp: entry.metadata.creationTimestamp,
         resourceVersion: entry.metadata.resourceVersion,
         validation: hasValidations(typeName, entry.metadata.name)
           ? istioConfigList.validations[typeName][entry.metadata.name]
@@ -333,7 +333,7 @@ export const vsToIstioItems = (vss: VirtualService[], validations: Validations):
       namespace: vs.metadata.namespace || '',
       type: typeName,
       name: vs.metadata.name,
-      creationTimeStamp: vs.metadata.creationTimestamp,
+      creationTimestamp: vs.metadata.creationTimestamp,
       resourceVersion: vs.metadata.resourceVersion,
       validation: hasValidations(vs.metadata.name) ? validations.virtualservice[vs.metadata.name] : undefined
     };
@@ -356,7 +356,7 @@ export const drToIstioItems = (drs: DestinationRule[], validations: Validations)
       namespace: dr.metadata.namespace || '',
       type: typeName,
       name: dr.metadata.name,
-      creationTimeStamp: dr.metadata.creationTimestamp,
+      creationTimestamp: dr.metadata.creationTimestamp,
       resourceVersion: dr.metadata.resourceVersion,
       validation: hasValidations(dr.metadata.name) ? validations.destinationrule[dr.metadata.name] : undefined
     };

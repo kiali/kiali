@@ -160,7 +160,7 @@ class IstioConfigListComponent extends FilterComponent.Component<
     return this.promises
       .registerAll(
         'configs',
-        namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true, ''))
+        namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true, '', ''))
       )
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
