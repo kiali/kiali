@@ -238,7 +238,7 @@ def test_service_spans(kiali_client):
 
     for service in services:
         name = service.get('name')
-        spansList = kiali_client.request(method_name='spansList', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        spansList = kiali_client.request(method_name='appSpans', path={'namespace': bookinfo_namespace, 'service': name}).json()
         for span in spansList:
             assert span.get('traceID') != None
             assert span.get('spanID') != None
@@ -255,7 +255,7 @@ def test_service_traces_detail(kiali_client):
 
     for service in services:
         name = service.get('name')
-        tracesDetailsList = kiali_client.request(method_name='tracesList', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        tracesDetailsList = kiali_client.request(method_name='appTraces', path={'namespace': bookinfo_namespace, 'service': name}).json()
         assert tracesDetailsList != None
 
         for tracesDetail in tracesDetailsList.get('data'):
