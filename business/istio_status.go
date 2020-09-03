@@ -76,6 +76,9 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 
 	for _, n := range comNs {
 		if !nss[n] {
+			wg.Add(1)
+			nss[n] = true
+
 			go func(n string, depsChan chan []apps_v1.Deployment, errChan chan error) {
 				defer wg.Done()
 				var ds []apps_v1.Deployment
@@ -92,9 +95,6 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 				depsChan <- ds
 				errChan <- err
 			}(n, depsChan, errChan)
-
-			wg.Add(1)
-			nss[n] = true
 		}
 	}
 
