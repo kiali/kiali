@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.24.0-SNAPSHOT
+VERSION ?= v1.24.0-snapshot.0
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -17,7 +17,7 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # WARNING: If you have previously build a container image but
 # later want to change the CONSOLE_VERSION then you must run
 # the 'clean' target first before re-building the container image.
-CONSOLE_VERSION ?= latest
+CONSOLE_VERSION ?= 1.24.0-snapshot.0
 CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
