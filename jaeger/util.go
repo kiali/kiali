@@ -1,7 +1,6 @@
 package jaeger
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -9,18 +8,20 @@ import (
 	"strconv"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
-func prepareQuery(u *url.URL, namespace, app string, query models.TracingQuery) {
-	queryApp := app
-	if config.Get().ExternalServices.Tracing.NamespaceSelector && namespace != config.Get().IstioNamespace {
-		queryApp = fmt.Sprintf("%s.%s", app, namespace)
+func buildJaegerServiceName(namespace, app string) string {
+	conf := config.Get()
+	if conf.ExternalServices.Tracing.NamespaceSelector && namespace != conf.IstioNamespace {
+		return app + "." + namespace
 	}
-	log.Errorf("%+v", queryApp)
+	return app
+}
+
+func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-	q.Set("service", queryApp)
+	q.Set("service", jaegerServiceName)
 	q.Set("start", query.StartMicros)
 	if query.EndMicros != "" {
 		q.Set("end", query.EndMicros)

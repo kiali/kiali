@@ -19,7 +19,7 @@ def before_all_tests(kiali_client):
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
                           'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
-                          'meshTls', 'namespaceValidations', 'spansList', 'tracesList']
+                          'meshTls', 'namespaceValidations', 'appSpans', 'appTraces']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -286,13 +286,13 @@ def test_namespace_spans_list(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
-    evaluate_response(kiali_client, method_name='spansList', path={'namespace': 'bookinfo'})
+    evaluate_response(kiali_client, method_name='appSpans', path={'namespace': 'bookinfo'})
 
 def test_namespace_traces_list(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
-    evaluate_response(kiali_client, method_name='tracesList', path={'namespace': 'bookinfo'})
+    evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo'})
 
 def test_negative_400(kiali_client):
 

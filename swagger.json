@@ -1621,7 +1621,7 @@
     },
     "/namespaces/{namespace}/apps/{app}/spans": {
       "get": {
-        "description": "Endpoint to get Jaeger spans for a given service",
+        "description": "Endpoint to get Jaeger spans for a given app",
         "produces": [
           "application/json"
         ],
@@ -1632,7 +1632,7 @@
         "tags": [
           "traces"
         ],
-        "operationId": "spansList",
+        "operationId": "appSpans",
         "parameters": [
           {
             "type": "string",
@@ -1663,7 +1663,7 @@
     },
     "/namespaces/{namespace}/apps/{app}/traces": {
       "get": {
-        "description": "Endpoint to get the traces of a given service",
+        "description": "Endpoint to get the traces of a given app",
         "produces": [
           "application/json"
         ],
@@ -1674,7 +1674,7 @@
         "tags": [
           "traces"
         ],
-        "operationId": "tracesList",
+        "operationId": "appTraces",
         "parameters": [
           {
             "type": "string",
@@ -2782,6 +2782,51 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/services/{service}/traces": {
+      "get": {
+        "description": "Endpoint to get the traces of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "serviceTraces",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/traceDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }

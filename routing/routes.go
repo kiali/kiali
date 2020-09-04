@@ -373,9 +373,9 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces spansList
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given service
+		// Endpoint to get Jaeger spans for a given app
 		//
 		//		Produces:
 		//		- application/json
@@ -386,13 +386,34 @@ func NewRoutes() (r *Routes) {
 		// 		500: internalError
 		//		200: spansResponse
 		{
-			"ServiceSpans",
+			"AppSpans",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/spans",
 			handlers.AppSpans,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/traces traces tracesList
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/traces traces appTraces
+		// ---
+		// Endpoint to get the traces of a given app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: traceDetailsResponse
+		//
+		{
+			"AppTraces",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/traces",
+			handlers.AppTraces,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/traces traces serviceTraces
 		// ---
 		// Endpoint to get the traces of a given service
 		//
@@ -407,10 +428,10 @@ func NewRoutes() (r *Routes) {
 		//      200: traceDetailsResponse
 		//
 		{
-			"TracesList",
+			"ServiceTraces",
 			"GET",
-			"/api/namespaces/{namespace}/apps/{app}/traces",
-			handlers.TracesList,
+			"/api/namespaces/{namespace}/services/{service}/traces",
+			handlers.ServiceTraces,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/errortraces traces errorTraces

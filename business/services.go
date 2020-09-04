@@ -370,3 +370,22 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 
 	return validations
 }
+
+// GetServiceAppName returns the "Application" name (app label) that relates to a service
+// This label is taken from the service selector, which means it is assumed that pods are selected using that label
+func (in *SvcService) GetServiceAppName(namespace, service string) (string, error) {
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+		return "", err
+	}
+
+	svc, err := in.k8s.GetService(namespace, service)
+	if err != nil {
+		return "", err
+	}
+
+	appLabelName := config.Get().IstioLabels.AppLabelName
+	app := svc.Spec.Selector[appLabelName]
+	return app, nil
+}

@@ -34,12 +34,24 @@ func (in *JaegerService) GetJaegerSpans(ns, app string, query models.TracingQuer
 	return client.GetSpans(ns, app, query)
 }
 
-func (in *JaegerService) GetJaegerTraces(ns, app string, query models.TracingQuery) (traces *jaeger.JaegerResponse, err error) {
+func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	return client.GetTraces(ns, app, query)
+	return client.GetAppTraces(ns, app, query)
+}
+
+func (in *JaegerService) GetServiceTraces(ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+	client, err := in.client()
+	if err != nil {
+		return nil, err
+	}
+	app, err := in.businessLayer.Svc.GetServiceAppName(ns, service)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetServiceTraces(ns, app, service, query)
 }
 
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
