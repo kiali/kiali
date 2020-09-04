@@ -1621,7 +1621,7 @@
     },
     "/namespaces/{namespace}/apps/{app}/spans": {
       "get": {
-        "description": "Endpoint to get Jaeger spans for a given service",
+        "description": "Endpoint to get Jaeger spans for a given app",
         "produces": [
           "application/json"
         ],

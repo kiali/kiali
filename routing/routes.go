@@ -375,7 +375,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
 		// ---
-		// Endpoint to get Jaeger spans for a given service
+		// Endpoint to get Jaeger spans for a given app
 		//
 		//		Produces:
 		//		- application/json

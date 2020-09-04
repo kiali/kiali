@@ -18,11 +18,11 @@ import (
 
 func getAppTraces(client http.Client, endpoint *url.URL, namespace, app string, query models.TracingQuery) (response *JaegerResponse, err error) {
 	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
-	jsn := buildJaegerServiceName(namespace, app)
-	prepareQuery(endpoint, jsn, query)
+	jaegerServiceName := buildJaegerServiceName(namespace, app)
+	prepareQuery(endpoint, jaegerServiceName, query)
 	r, err := queryTraces(client, endpoint)
 	if r != nil {
-		r.App = jsn
+		r.App = jaegerServiceName
 	}
 	return r, err
 }

@@ -11,9 +11,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-type JaegerServiceName = string
-
-func buildJaegerServiceName(namespace, app string) JaegerServiceName {
+func buildJaegerServiceName(namespace, app string) string {
 	conf := config.Get()
 	if conf.ExternalServices.Tracing.NamespaceSelector && namespace != conf.IstioNamespace {
 		return app + "." + namespace
@@ -21,9 +19,9 @@ func buildJaegerServiceName(namespace, app string) JaegerServiceName {
 	return app
 }
 
-func prepareQuery(u *url.URL, jsn JaegerServiceName, query models.TracingQuery) {
+func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-	q.Set("service", jsn)
+	q.Set("service", jaegerServiceName)
 	q.Set("start", query.StartMicros)
 	if query.EndMicros != "" {
 		q.Set("end", query.EndMicros)
