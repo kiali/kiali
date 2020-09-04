@@ -3476,6 +3476,51 @@
         }
       }
     },
+    "/namespaces/{namespace}/workloads/{workload}/traces": {
+      "get": {
+        "description": "Endpoint to get the traces of a given workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "workloadTraces",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The workload name.",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/traceDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",

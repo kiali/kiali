@@ -434,6 +434,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceTraces,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/traces traces workloadTraces
+		// ---
+		// Endpoint to get the traces of a given workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: traceDetailsResponse
+		//
+		{
+			"WorkloadTraces",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/traces",
+			handlers.WorkloadTraces,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/errortraces traces errorTraces
 		// ---
 		// Endpoint to get the number of traces in error for a given service

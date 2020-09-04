@@ -54,6 +54,18 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	return client.GetServiceTraces(ns, app, service, query)
 }
 
+func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+	client, err := in.client()
+	if err != nil {
+		return nil, err
+	}
+	app, err := in.businessLayer.Workload.GetWorkloadAppName(ns, workload)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetWorkloadTraces(ns, app, workload, query)
+}
+
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
 	client, err := in.client()
 	if err != nil {

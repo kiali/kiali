@@ -17,6 +17,7 @@ type ClientInterface interface {
 	GetSpans(ns, app string, query models.TracingQuery) ([]Span, error)
 	GetAppTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetServiceTraces(ns, app, service string, query models.TracingQuery) (traces *JaegerResponse, err error)
+	GetWorkloadTraces(ns, app, workload string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
 	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
 }
@@ -70,6 +71,11 @@ func (in *Client) GetAppTraces(ns, app string, query models.TracingQuery) (trace
 // GetServiceTraces fetches traces of a service
 func (in *Client) GetServiceTraces(ns, app, service string, query models.TracingQuery) (traces *JaegerResponse, err error) {
 	return getServiceTraces(in.client, in.endpoint, ns, app, service, query)
+}
+
+// GetWorkloadTraces fetches traces of a workload
+func (in *Client) GetWorkloadTraces(ns, app, workload string, query models.TracingQuery) (traces *JaegerResponse, err error) {
+	return getWorkloadTraces(in.client, in.endpoint, ns, app, workload, query)
 }
 
 // GetTraceDetail fetches a specific trace from its ID

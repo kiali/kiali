@@ -15,9 +15,9 @@ type JaegerServices struct {
 }
 
 type JaegerResponse struct {
-	Data   []jaegerModels.Trace `json:"data"`
-	Errors []structuredError    `json:"errors"`
-	App    string               `json:"app"`
+	Data              []jaegerModels.Trace `json:"data"`
+	Errors            []structuredError    `json:"errors"`
+	JaegerServiceName string               `json:"jaegerServiceName"`
 }
 
 type JaegerSingleTrace struct {
