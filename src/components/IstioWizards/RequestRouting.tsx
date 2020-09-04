@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import Rules, { MOVE_TYPE, Rule } from './MatchingRouting/Rules';
-import RuleBuilder from './MatchingRouting/RuleBuilder';
-import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './MatchingRouting/MatchBuilder';
-import { WorkloadWeight } from './WeightedRouting';
+import Rules, { MOVE_TYPE, Rule } from './RequestRouting/Rules';
+import RuleBuilder from './RequestRouting/RuleBuilder';
+import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
+import { WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 
 type Props = {
@@ -28,7 +28,7 @@ const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.'
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
 
-class MatchingRouting extends React.Component<Props, State> {
+class RequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -287,4 +287,4 @@ class MatchingRouting extends React.Component<Props, State> {
   }
 }
 
-export default MatchingRouting;
+export default RequestRouting;

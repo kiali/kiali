@@ -36,7 +36,7 @@ const evenlyButtonStyle = style({
   textAlign: 'right'
 });
 
-class WeightedRouting extends React.Component<Props, State> {
+class TrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -210,4 +210,4 @@ class WeightedRouting extends React.Component<Props, State> {
   }
 }
 
-export default WeightedRouting;
+export default TrafficShifting;

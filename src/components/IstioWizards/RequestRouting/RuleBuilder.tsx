@@ -4,7 +4,7 @@ import MatchBuilder from './MatchBuilder';
 import Matches from './Matches';
 import { style } from 'typestyle';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
-import WeightedRouting, { WorkloadWeight } from '../WeightedRouting';
+import TrafficShifting, { WorkloadWeight } from '../TrafficShifting';
 import { getDefaultWeights } from '../WizardActions';
 
 type Props = {
@@ -67,14 +67,14 @@ class RuleBuilder extends React.Component<Props, State> {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>
-          <Tab eventKey={0} title={'Select Matching'}>
+          <Tab eventKey={0} title={'Request Matching'}>
             <div style={{ marginTop: '20px' }}>
               <MatchBuilder {...this.props} />
               <Matches {...this.props} />
             </div>
           </Tab>
-          <Tab eventKey={1} title={'Select Routes'}>
-            <WeightedRouting
+          <Tab eventKey={1} title={'Route To'}>
+            <TrafficShifting
               workloads={this.props.workloads}
               initWeights={getDefaultWeights(this.props.workloads)}
               onChange={this.props.onSelectWeights}

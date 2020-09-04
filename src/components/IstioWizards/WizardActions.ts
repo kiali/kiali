@@ -1,7 +1,7 @@
 import { TLSStatus } from '../../types/TLSStatus';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { WorkloadWeight } from './WeightedRouting';
-import { Rule } from './MatchingRouting/Rules';
+import { WorkloadWeight } from './TrafficShifting';
+import { Rule } from './RequestRouting/Rules';
 import { SuspendedRoute } from './SuspendTraffic';
 import {
   AuthorizationPolicy,
@@ -42,8 +42,8 @@ import { ThreeScaleState } from '../../pages/extensions/threescale/ThreeScaleNew
 import { Workload } from '../../types/Workload';
 import { ThreeScaleCredentialsState } from './ThreeScaleCredentials';
 
-export const WIZARD_WEIGHTED_ROUTING = 'weighted_routing';
-export const WIZARD_MATCHING_ROUTING = 'matching_routing';
+export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
+export const WIZARD_REQUEST_ROUTING = 'request_routing';
 export const WIZARD_SUSPEND_TRAFFIC = 'suspend_traffic';
 
 export const WIZARD_THREESCALE_LINK = '3scale_link';
@@ -53,18 +53,18 @@ export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
 export const WIZARD_REMOVE_AUTO_INJECTION = 'remove_auto_injection';
 
-export const SERVICE_WIZARD_ACTIONS = [WIZARD_WEIGHTED_ROUTING, WIZARD_MATCHING_ROUTING, WIZARD_SUSPEND_TRAFFIC];
+export const SERVICE_WIZARD_ACTIONS = [WIZARD_TRAFFIC_SHIFTING, WIZARD_REQUEST_ROUTING, WIZARD_SUSPEND_TRAFFIC];
 
 export const WIZARD_TITLES = {
-  [WIZARD_WEIGHTED_ROUTING]: 'Create Weighted Routing',
-  [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing',
+  [WIZARD_TRAFFIC_SHIFTING]: 'Create Traffic Shifting',
+  [WIZARD_REQUEST_ROUTING]: 'Create Request Routing',
   [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic',
   [WIZARD_THREESCALE_LINK]: 'Link a 3scale Account'
 };
 
 export const WIZARD_UPDATE_TITLES = {
-  [WIZARD_WEIGHTED_ROUTING]: 'Update Weighted Routing',
-  [WIZARD_MATCHING_ROUTING]: 'Update Matching Routing',
+  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting',
+  [WIZARD_REQUEST_ROUTING]: 'Update Request Routing',
   [WIZARD_SUSPEND_TRAFFIC]: 'Update Suspended Traffic'
 };
 
@@ -308,7 +308,7 @@ export const buildIstioConfig = (
       : undefined;
 
   switch (wProps.type) {
-    case WIZARD_WEIGHTED_ROUTING: {
+    case WIZARD_TRAFFIC_SHIFTING: {
       // VirtualService from the weights
       wizardVS.spec = {
         http: [
@@ -327,7 +327,7 @@ export const buildIstioConfig = (
       };
       break;
     }
-    case WIZARD_MATCHING_ROUTING: {
+    case WIZARD_REQUEST_ROUTING: {
       // VirtualService from the routes
       wizardVS.spec = {
         http: wState.rules.map(rule => {

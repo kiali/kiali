@@ -21,11 +21,11 @@ import {
   KIALI_RELATED_LABEL,
   KIALI_WIZARD_LABEL,
   SERVICE_WIZARD_ACTIONS,
-  WIZARD_MATCHING_ROUTING,
+  WIZARD_REQUEST_ROUTING,
   WIZARD_SUSPEND_TRAFFIC,
   WIZARD_TITLES,
   WIZARD_UPDATE_TITLES,
-  WIZARD_WEIGHTED_ROUTING
+  WIZARD_TRAFFIC_SHIFTING
 } from './WizardActions';
 import ServiceWizard from './ServiceWizard';
 
@@ -171,8 +171,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
   onAction = (key: string) => {
     const updateLabel = this.getVSWizardLabel();
     switch (key) {
-      case WIZARD_WEIGHTED_ROUTING:
-      case WIZARD_MATCHING_ROUTING:
+      case WIZARD_TRAFFIC_SHIFTING:
+      case WIZARD_REQUEST_ROUTING:
       case WIZARD_SUSPEND_TRAFFIC: {
         this.setState({ showWizard: true, wizardType: key, updateWizard: key === updateLabel });
         break;
@@ -259,8 +259,8 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
 
   renderDropdownItem = (eventKey: string, updateLabel: string) => {
     switch (eventKey) {
-      case WIZARD_WEIGHTED_ROUTING:
-      case WIZARD_MATCHING_ROUTING:
+      case WIZARD_TRAFFIC_SHIFTING:
+      case WIZARD_REQUEST_ROUTING:
       case WIZARD_SUSPEND_TRAFFIC:
         // An Item is rendered under two conditions:
         // a) No traffic -> Wizard can create new one

@@ -4,8 +4,8 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import MatchingRouting from './MatchingRouting';
-import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
+import RequestRouting from './RequestRouting';
+import TrafficShifting, { WorkloadWeight } from './TrafficShifting';
 import TrafficPolicyContainer, {
   ConsistentHashType,
   TrafficPolicyState,
@@ -13,7 +13,7 @@ import TrafficPolicyContainer, {
 } from '../../components/IstioWizards/TrafficPolicy';
 import { ROUND_ROBIN } from './TrafficPolicy';
 import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
-import { Rule } from './MatchingRouting/Rules';
+import { Rule } from './RequestRouting/Rules';
 import {
   buildIstioConfig,
   fqdnServiceName,
@@ -26,11 +26,11 @@ import {
   getInitTlsMode,
   getInitWeights,
   hasGateway,
-  WIZARD_MATCHING_ROUTING,
+  WIZARD_REQUEST_ROUTING,
   WIZARD_SUSPEND_TRAFFIC,
   WIZARD_TITLES,
   WIZARD_UPDATE_TITLES,
-  WIZARD_WEIGHTED_ROUTING,
+  WIZARD_TRAFFIC_SHIFTING,
   ServiceWizardProps,
   ServiceWizardState
 } from './WizardActions';
@@ -88,11 +88,11 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       let isMainWizardValid: boolean;
       switch (this.props.type) {
         // By default the rule of Weighted routing should be valid
-        case WIZARD_WEIGHTED_ROUTING:
+        case WIZARD_TRAFFIC_SHIFTING:
           isMainWizardValid = true;
           break;
         // By default no rules is a no valid scenario
-        case WIZARD_MATCHING_ROUTING:
+        case WIZARD_REQUEST_ROUTING:
           isMainWizardValid = false;
           break;
         case WIZARD_SUSPEND_TRAFFIC:
@@ -197,8 +197,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onCreateUpdate = () => {
     const promises: Promise<Response<string>>[] = [];
     switch (this.props.type) {
-      case WIZARD_WEIGHTED_ROUTING:
-      case WIZARD_MATCHING_ROUTING:
+      case WIZARD_TRAFFIC_SHIFTING:
+      case WIZARD_REQUEST_ROUTING:
       case WIZARD_SUSPEND_TRAFFIC:
         const [dr, vs, gw, pa] = buildIstioConfig(this.props, this.state);
         // Gateway is only created when user has explicit selected this option
@@ -368,15 +368,15 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           </Button>
         ]}
       >
-        {this.props.type === WIZARD_WEIGHTED_ROUTING && (
-          <WeightedRouting
+        {this.props.type === WIZARD_TRAFFIC_SHIFTING && (
+          <TrafficShifting
             workloads={this.props.workloads}
             initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
             onChange={this.onWeightsChange}
           />
         )}
-        {this.props.type === WIZARD_MATCHING_ROUTING && (
-          <MatchingRouting
+        {this.props.type === WIZARD_REQUEST_ROUTING && (
+          <RequestRouting
             serviceName={this.props.serviceName}
             workloads={this.props.workloads}
             initRules={getInitRules(this.props.workloads, this.props.virtualServices)}
@@ -391,8 +391,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             onChange={this.onSuspendedChange}
           />
         )}
-        {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
-          this.props.type === WIZARD_MATCHING_ROUTING ||
+        {(this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+          this.props.type === WIZARD_REQUEST_ROUTING ||
           this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
           <Expandable
             isExpanded={this.state.showAdvanced}

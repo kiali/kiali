@@ -3,7 +3,7 @@ import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/rea
 import { style } from 'typestyle';
 import { PfColors } from '../../Pf/PfColors';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { WorkloadWeight } from '../WeightedRouting';
+import { WorkloadWeight } from '../TrafficShifting';
 
 export enum MOVE_TYPE {
   UP,
@@ -84,7 +84,7 @@ class Rules extends React.Component<Props> {
         props: {}
       },
       {
-        title: 'Matching',
+        title: 'Request Matching',
         props: {}
       },
       {
