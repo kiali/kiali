@@ -9,7 +9,7 @@ import {
 } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
-import AceEditor from 'react-ace';
+import AceEditor, { Annotation } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { ObjectReference, ObjectValidation } from '../../types/IstioObjects';
@@ -43,6 +43,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink';
 import VirtualServiceCard from './IstioObjectDetails/VirtualServiceCard';
 import DestinationRuleCard from './IstioObjectDetails/DestinationRuleCard';
+import { AxiosError } from 'axios';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -276,8 +277,24 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         })
         .catch(error => {
           AlertUtils.addError('Could not update IstioConfig details.', error);
+          this.setState({
+            yamlValidations: this.injectGalleyError(error)
+          });
         });
     });
+  };
+
+  injectGalleyError = (error: AxiosError): AceValidations => {
+    const msg: string[] = API.getErrorString(error).split(':');
+    const errMsg: string = msg.slice(1, msg.length).join(':');
+    const anno: Annotation = {
+      column: 0,
+      row: 0,
+      text: errMsg,
+      type: 'error'
+    };
+
+    return { annotations: [anno], markers: [] };
   };
 
   onEditorChange = (value: string) => {
