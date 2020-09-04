@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-  Button,
   Card,
   CardBody,
   Checkbox,
@@ -22,26 +21,28 @@ import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { RenderComponentScroll, RenderHeader } from '../Nav/Page';
 import { KialiAppState } from '../../store/Store';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
-import { JaegerItem, transformTraceData } from './JaegerResults';
+import { TraceDetails } from './JaegerResults/TraceDetails';
 import { JaegerScatter } from './JaegerScatter';
 import { HistoryManager, URLParam } from '../../app/History';
-import { config, serverConfig } from '../../config';
+import { config } from '../../config';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import RefreshContainer from 'components/Refresh/Refresh';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
+import transformTraceData from './JaegerResults/transform';
 
-interface AppTracesProps {
+interface TracesProps {
   namespace: string;
-  app: string;
+  target: string;
+  targetKind: 'app' | 'workload' | 'service';
   urlJaeger: string;
   namespaceSelector: boolean;
   showErrors: boolean;
   duration: number;
 }
 
-interface AppTracesState {
+interface TracesState {
   url: string;
   width: number;
   showErrors: boolean;
@@ -54,6 +55,7 @@ interface AppTracesState {
   traceId?: string;
   selectedTrace?: JaegerTrace;
   jaegerErrors: JaegerError[];
+  targetApp?: string;
 }
 
 export const traceDurationUnits: { [key: string]: string } = {
@@ -62,10 +64,10 @@ export const traceDurationUnits: { [key: string]: string } = {
   s: 's'
 };
 
-class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
+class TracesComponent extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
 
-  constructor(props: AppTracesProps) {
+  constructor(props: TracesProps) {
     super(props);
     const limit =
       HistoryManager.getParam(URLParam.JAEGER_LIMIT_TRACES) ||
@@ -82,6 +84,10 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
       'none';
 
     const traceId = HistoryManager.getParam(URLParam.JAEGER_TRACE_ID) || undefined;
+    let targetApp: string | undefined = undefined;
+    if (this.props.targetKind === 'app') {
+      targetApp = this.props.namespaceSelector ? this.props.target + '.' + this.props.namespace : this.props.target;
+    }
     this.state = {
       url: '',
       width: 0,
@@ -93,7 +99,8 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
       selectedLimitSpans: limit,
       traces: [],
       traceId: traceId,
-      jaegerErrors: []
+      jaegerErrors: [],
+      targetApp: targetApp
     };
     this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => this.setState({ jaegerErrors: errors }));
   }
@@ -108,7 +115,8 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
   private refresh = () => {
     this.fetcher.fetch({
       namespace: this.props.namespace,
-      app: this.props.app,
+      target: this.props.target,
+      targetKind: this.props.targetKind,
       spanLimit: Number(this.state.selectedLimitSpans),
       intervalDuration: this.state.selectedTraceIntervalDuration,
       tags: buildTags(this.state.showErrors, this.state.selectedStatusCode)
@@ -128,9 +136,16 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
       .catch(error => AlertUtils.addError('Could not fetch trace.', error));
   };
 
-  private onTracesUpdated = (traces: JaegerTrace[]) => {
+  private onTracesUpdated = (traces: JaegerTrace[], app: string) => {
     const durations = this.getIntervalTraceDurations(traces);
-    this.setState({ traces: traces, traceIntervalDurations: durations });
+    const newState: Partial<TracesState> = {
+      traces: traces,
+      traceIntervalDurations: durations
+    };
+    if (this.state.targetApp === undefined && app) {
+      newState.targetApp = app;
+    }
+    this.setState(newState as TracesState);
   };
 
   private setErrorTraces = (value: string) => {
@@ -149,13 +164,12 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
   };
 
   private getJaegerUrl = () => {
-    const app =
-      this.props.namespaceSelector && serverConfig.istioNamespace !== this.props.namespace
-        ? `${this.props.app}.${this.props.namespace}`
-        : `${this.props.app}`;
+    if (this.props.urlJaeger === '' || !this.state.targetApp) {
+      return undefined;
+    }
 
     const range = getTimeRangeMicros();
-    let url = `${this.props.urlJaeger}/search?service=${app}&start=${range.from}&limit=${this.state.selectedLimitSpans}`;
+    let url = `${this.props.urlJaeger}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.selectedLimitSpans}`;
     if (range.to) {
       url += `&end=${range.to}`;
     }
@@ -225,6 +239,7 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
   };
 
   render() {
+    const jaegerURL = this.getJaegerUrl();
     return (
       <>
         {this.renderActions()}
@@ -309,17 +324,18 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
-                      {this.props.urlJaeger !== '' && (
+                      {jaegerURL && (
                         <ToolbarGroup style={{ marginLeft: 'auto' }}>
                           <ToolbarItem>
                             <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                              <Button
-                                variant="link"
-                                onClick={() => window.open(this.getJaegerUrl(), '_blank')}
+                              <a
+                                href={jaegerURL}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 style={{ marginLeft: '10px' }}
                               >
                                 View in Tracing <ExternalLinkAltIcon />
-                              </Button>
+                              </a>
                             </Tooltip>
                           </ToolbarItem>
                         </ToolbarGroup>
@@ -338,10 +354,13 @@ class AppTracesC extends React.Component<AppTracesProps, AppTracesState> {
                     </GridItem>
                     <GridItem span={12}>
                       {this.state.selectedTrace && (
-                        <JaegerItem
+                        <TraceDetails
                           trace={this.state.selectedTrace}
-                          namespace={this.props.namespace}
-                          app={this.props.app}
+                          focusElement={
+                            this.props.namespaceSelector
+                              ? this.props.target + '.' + this.props.namespace
+                              : this.props.target
+                          }
                           jaegerURL={this.props.urlJaeger}
                         />
                       )}
@@ -373,6 +392,6 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-export const AppTraces = connect(mapStateToProps)(AppTracesC);
+export const TracesContainer = connect(mapStateToProps)(TracesComponent);
 
-export default AppTraces;
+export default TracesContainer;

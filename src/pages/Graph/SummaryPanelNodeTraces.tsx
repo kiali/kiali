@@ -15,9 +15,9 @@ import { JaegerTrace } from 'types/JaegerInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
-import { transformTraceData } from 'components/JaegerIntegration/JaegerResults';
 import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
+import transformTraceData from 'components/JaegerIntegration/JaegerResults/transform';
 
 type Props = {
   namespace: string;
@@ -105,7 +105,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
     };
     this.promises.cancelAll();
     this.promises
-      .register('traces', API.getJaegerTraces(this.props.namespace, this.props.app, params))
+      .register('traces', API.getAppTraces(this.props.namespace, this.props.app, params))
       .then(response => {
         const traces = response.data.data
           ? (response.data.data

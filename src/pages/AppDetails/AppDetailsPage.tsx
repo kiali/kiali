@@ -19,7 +19,7 @@ import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { JaegerInfo } from '../../types/JaegerInfo';
 import { PfColors } from '../../components/Pf/PfColors';
-import AppTraces from '../../components/JaegerIntegration/AppTraces';
+import TracesComponent from '../../components/JaegerIntegration/TracesComponent';
 
 type AppDetailsState = {
   app?: App;
@@ -60,13 +60,14 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   componentDidUpdate(prevProps: AppDetailsProps) {
+    const active = activeTab(tabName, defaultTab);
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.app !== prevProps.match.params.app ||
-      this.state.currentTab !== activeTab(tabName, defaultTab) ||
+      this.state.currentTab !== active ||
       this.props.duration !== prevProps.duration
     ) {
-      this.setState({ currentTab: activeTab(tabName, defaultTab) }, () => this.fetchJaegerErrors());
+      this.setState({ currentTab: active }, () => this.fetchJaegerErrors());
       this.fetchApp();
     }
   }
@@ -158,11 +159,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     // Default tabs
-    const tabsArray: any[] = [overTab, trafficTab, inTab, outTab];
+    const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab, outTab];
 
     // Conditional Traces tab
     if (this.props.jaegerInfo && this.props.jaegerInfo.enabled) {
-      let jaegerTag: any = undefined;
       if (this.props.jaegerInfo.integration) {
         const jaegerTitle =
           this.state.nbErrorTraces > 0 ? (
@@ -172,11 +172,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           ) : (
             'Traces'
           );
-        jaegerTag = (
+        tabsArray.push(
           <Tab eventKey={4} style={{ textAlign: 'center' }} title={jaegerTitle} key={tracesTabName}>
-            <AppTraces
+            <TracesComponent
               namespace={this.props.match.params.namespace}
-              app={this.props.match.params.app}
+              target={this.props.match.params.app}
+              targetKind={'app'}
               showErrors={this.state.nbErrorTraces > 0}
               duration={this.props.duration}
             />
@@ -186,7 +187,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         const service = this.props.jaegerInfo.namespaceSelector
           ? this.props.match.params.app + '.' + this.props.match.params.namespace
           : this.props.match.params.app;
-        jaegerTag = (
+        tabsArray.push(
           <Tab
             eventKey={4}
             href={this.props.jaegerInfo.url + `/search?service=${service}`}
@@ -199,7 +200,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           />
         );
       }
-      tabsArray.push(jaegerTag);
     }
 
     return tabsArray;

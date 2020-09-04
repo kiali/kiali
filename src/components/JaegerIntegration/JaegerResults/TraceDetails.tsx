@@ -6,10 +6,7 @@ import { JaegerTrace, Span } from '../../../types/JaegerInfo';
 import { JaegerTraceTitle } from './JaegerTraceTitle';
 import { SpanDetail } from './SpanDetail';
 import { style } from 'typestyle';
-import { cleanServiceSelector } from './transform';
 import { isErrorTag } from '../JaegerHelper';
-import { KialiAppState } from '../../../store/Store';
-import { connect } from 'react-redux';
 import { PfColors } from '../../Pf/PfColors';
 import { getFormattedTraceInfo } from './FormattedTraceInfo';
 
@@ -17,20 +14,19 @@ const labelStyle = style({
   margin: '5px'
 });
 
-interface JaegerScatterProps {
+interface Props {
   trace: JaegerTrace;
-  namespaceSelector: boolean;
-  namespace: string;
-  app: string;
+  focusElement: string;
   jaegerURL: string;
 }
 
-interface JaegerScatterState {
+interface State {
   spansSelected: Span[];
   appSelected: string;
 }
-class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState> {
-  constructor(props: JaegerScatterProps) {
+
+export class TraceDetails extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { spansSelected: [], appSelected: '' };
   }
@@ -39,8 +35,7 @@ class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState
     if (this.state.appSelected === app) {
       return 'primary';
     } else {
-      const srv = this.props.namespaceSelector ? cleanServiceSelector(app, this.props.namespace) : app;
-      if (this.props.app === srv) {
+      if (this.props.focusElement === app) {
         return 'tertiary';
       } else {
         return 'secondary';
@@ -108,13 +103,3 @@ class JaegerItemC extends React.Component<JaegerScatterProps, JaegerScatterState
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true
-  };
-};
-
-export const JaegerItem = connect(mapStateToProps)(JaegerItemC);
-
-export default JaegerItem;

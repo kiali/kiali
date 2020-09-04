@@ -1,14 +1,15 @@
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
-import { transformTraceData } from './JaegerResults';
-import { traceDurationUnits } from './AppTraces';
+import { traceDurationUnits } from './TracesComponent';
 import { TracingQuery } from 'types/Tracing';
 import { getTimeRangeMicros } from './JaegerHelper';
+import transformTraceData from './JaegerResults/transform';
 
 type FetchOptions = {
   namespace: string;
-  app: string;
+  target: string;
+  targetKind: 'app' | 'workload' | 'service';
   intervalDuration: string;
   spanLimit: number;
   tags: string;
@@ -17,9 +18,11 @@ type FetchOptions = {
 export class TracesFetcher {
   private traces: JaegerTrace[] = [];
   private lastFetchMicros: number | undefined = undefined;
-  private lastFetchError = false;
 
-  constructor(private onChange: (traces: JaegerTrace[]) => void, private onErrors: (err: JaegerError[]) => void) {}
+  constructor(
+    private onChange: (traces: JaegerTrace[], app: string) => void,
+    private onErrors: (err: JaegerError[]) => void
+  ) {}
 
   fetch = (opts: FetchOptions) => {
     const range = getTimeRangeMicros();
@@ -34,9 +37,14 @@ export class TracesFetcher {
       tags: opts.tags,
       limit: opts.spanLimit
     };
-    API.getJaegerTraces(opts.namespace, opts.app, q)
+    const apiCall =
+      opts.targetKind === 'app'
+        ? API.getAppTraces
+        : opts.targetKind === 'service'
+        ? API.getServiceTraces
+        : API.getWorkloadTraces;
+    apiCall(opts.namespace, opts.target, q)
       .then(response => {
-        this.lastFetchError = false;
         const traces = response.data.data
           ? (response.data.data
               .map(trace => transformTraceData(trace))
@@ -53,16 +61,13 @@ export class TracesFetcher {
         if (traces.length > 0) {
           this.lastFetchMicros = Math.max(...traces.map(s => s.startTime));
         }
-        this.onChange(this.filterTraces(opts.intervalDuration));
+        this.onChange(this.filterTraces(opts.intervalDuration), response.data.app);
         if (response.data.errors && response.data.errors.length > 0) {
           this.onErrors(response.data.errors);
         }
       })
       .catch(error => {
-        if (!this.lastFetchError) {
-          AlertUtils.addError('Could not fetch traces.', error);
-          this.lastFetchError = true;
-        }
+        AlertUtils.addError('Could not fetch traces.', error);
       });
   };
 

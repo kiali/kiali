@@ -4,9 +4,9 @@ import * as AlertUtils from '../utils/AlertUtils';
 import { KialiAppState } from '../store/Store';
 import * as API from '../services/Api';
 import { KialiAppAction } from './KialiAppAction';
-import { transformTraceData } from 'components/JaegerIntegration/JaegerResults';
 import { JaegerActions } from './JaegerActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
+import transformTraceData from 'components/JaegerIntegration/JaegerResults/transform';
 
 export const JaegerThunkActions = {
   setTraceId: (traceId?: string) => {

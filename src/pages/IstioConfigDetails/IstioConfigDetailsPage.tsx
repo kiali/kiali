@@ -195,10 +195,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       this.aceEditorRef.current!['editor'].onChangeAnnotation();
     }
 
-    if (this.state.currentTab !== activeTab(tabName, this.defaultTab())) {
-      this.setState({
-        currentTab: activeTab(tabName, this.defaultTab())
-      });
+    const active = activeTab(tabName, this.defaultTab());
+    if (this.state.currentTab !== active) {
+      this.setState({ currentTab: active });
     }
 
     if (!this.propsMatch(prevProps)) {

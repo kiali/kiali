@@ -13,6 +13,8 @@ import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ServiceInfo from './ServiceInfo';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
+import TracesComponent from 'components/JaegerIntegration/TracesComponent';
+import { JaegerInfo } from 'types/JaegerInfo';
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -20,6 +22,7 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
+  jaegerInfo?: JaegerInfo;
 }
 
 const tabName = 'tab';
@@ -42,13 +45,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
+    const active = activeTab(tabName, defaultTab);
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service ||
-      this.state.currentTab !== activeTab(tabName, defaultTab) ||
+      this.state.currentTab !== active ||
       prevProps.duration !== this.props.duration
     ) {
-      this.setState({ currentTab: activeTab(tabName, defaultTab) });
+      this.setState({ currentTab: active });
     }
   }
 
@@ -84,7 +88,22 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     );
 
     // Default tabs
-    const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
+    const tabsArray: JSX.Element[] = [overviewTab, trafficTab, inboundMetricsTab];
+
+    // Conditional Traces tab
+    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+      tabsArray.push(
+        <Tab eventKey={3} title="Traces" key="Traces">
+          <TracesComponent
+            namespace={this.props.match.params.namespace}
+            target={this.props.match.params.service}
+            targetKind={'service'}
+            showErrors={false}
+            duration={this.props.duration}
+          />
+        </Tab>
+      );
+    }
 
     return (
       <>
@@ -114,7 +133,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  jaegerInfo: state.jaegerState.info
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

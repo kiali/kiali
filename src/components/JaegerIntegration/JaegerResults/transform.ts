@@ -4,11 +4,6 @@ import moment from 'moment';
 // Imported from Jaeger-UIU
 import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData } from '../../../types/JaegerInfo';
 
-export const cleanServiceSelector = (service: string, namespace: string) => {
-  const re = new RegExp('.' + namespace + '$');
-  return service.replace(re, '');
-};
-
 class TreeNode {
   value: string;
   children: any[];

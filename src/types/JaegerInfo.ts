@@ -80,6 +80,7 @@ export type JaegerError = {
 export type JaegerResponse = {
   data: JaegerTrace[] | null;
   errors: JaegerError[];
+  app: string;
 };
 
 export type JaegerSingleResponse = {
