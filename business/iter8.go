@@ -177,14 +177,18 @@ func (in *Iter8Service) fetchIter8Experiments(namespace string) ([]models.Iter8E
 	return experiments, nil
 }
 
-func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte) (models.Iter8ExperimentDetail, error) {
+func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte, jsonBody bool) (models.Iter8ExperimentDetail, error) {
 	var err error
+	var jsonByte string
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "CreateIter8Experiment")
 	defer promtimer.ObserveNow(&err)
-
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
 
-	jsonByte, err := in.ParseJsonForCreate(body)
+	if !jsonBody {
+		jsonByte, err = in.ParseJsonForCreate(body)
+	} else {
+		jsonByte = string(body)
+	}
 
 	iter8ExperimentObject, err := in.k8s.CreateIter8Experiment(namespace, jsonByte)
 	if err != nil {
@@ -201,7 +205,7 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
-	action := models.ExperimentAction{}
+	action := models.Iter8ExperimentActon{}
 	err = json.Unmarshal(body, &action)
 	if err != nil {
 		return iter8ExperimentDetail, err
@@ -209,7 +213,19 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	experiment, err := in.GetIter8Experiment(namespace, name)
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	newExperimentSpec.Parse(experiment)
-	newExperimentSpec.Action = action.Action
+	m := make(map[string]int32)
+	for _, s := range action.TrafficSplit {
+		x, err := strconv.ParseInt(s[1], 10, 64)
+		if err == nil {
+			m[s[0]] = int32(x)
+		}
+	}
+
+	newAction := kubernetes.ExperimentAction{
+		Action:       action.Action,
+		TrafficSplit: m,
+	}
+	newExperimentSpec.Action = &newAction
 
 	var newObject []byte
 	newObject, err = json.Marshal(newExperimentSpec)
@@ -242,29 +258,28 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 		ObjectMeta: v1.ObjectMeta{
 			Name: newExperimentSpec.Name,
 		},
-		Spec:    kubernetes.Iter8ExperimentSpec{},
-		Metrics: kubernetes.Iter8ExperimentMetrics{},
-		Status:  kubernetes.Iter8ExperimentStatus{},
+		Spec:   kubernetes.Iter8ExperimentSpec{},
+		Status: kubernetes.Iter8ExperimentStatus{},
 	}
-	object.Spec.TargetService.ApiVersion = "v1"
-	object.Spec.TargetService.Name = newExperimentSpec.Service
-	object.Spec.TargetService.Baseline = newExperimentSpec.Baseline
-	object.Spec.TargetService.Candidate = newExperimentSpec.Candidate
+	object.Spec.Service.APIVersion = "v1"
+	object.Spec.Service.Name = newExperimentSpec.Service
+	object.Spec.Service.Baseline = newExperimentSpec.Baseline
+	object.Spec.Service.Candidates = newExperimentSpec.Candidates
 	if newExperimentSpec.ExperimentKind == "" {
-		object.Spec.TargetService.Kind = "Deployment"
+		object.Spec.Service.Kind = "Deployment"
 	} else {
-		object.Spec.TargetService.Kind = newExperimentSpec.ExperimentKind
+		object.Spec.Service.Kind = newExperimentSpec.ExperimentKind
 	}
-
-	object.Spec.TrafficControl.Strategy = newExperimentSpec.TrafficControl.Algorithm
-	object.Spec.TrafficControl.MaxTrafficPercentage = newExperimentSpec.TrafficControl.MaxTrafficPercentage
-	object.Spec.TrafficControl.MaxIterations = newExperimentSpec.TrafficControl.MaxIterations
-	object.Spec.TrafficControl.TrafficStepSize = newExperimentSpec.TrafficControl.TrafficStepSize
-	object.Spec.TrafficControl.Interval = newExperimentSpec.TrafficControl.Interval
-	object.Spec.Analysis.AnalyticsService = "http://iter8-analytics.iter8:" + strconv.Itoa(in.GetAnalyticPort())
+	object.Spec.Duration.Interval = newExperimentSpec.Duration.Interval
+	object.Spec.Duration.MaxIterations = newExperimentSpec.Duration.MaxIterations
+	object.Spec.TrafficControl.Strategy = newExperimentSpec.TrafficControl.Strategy
+	object.Spec.TrafficControl.MaxIncrement = newExperimentSpec.TrafficControl.MaxIncrement
+	object.Spec.TrafficControl.OnTermination = newExperimentSpec.TrafficControl.OnTermination
+	object.Spec.TrafficControl.Percentage = newExperimentSpec.TrafficControl.Percentage
+	object.Spec.TrafficControl.Match = newExperimentSpec.TrafficControl.Match
 
 	for _, host := range newExperimentSpec.Hosts {
-		object.Spec.TargetService.Hosts = append(object.Spec.TargetService.Hosts,
+		object.Spec.Service.Hosts = append(object.Spec.Service.Hosts,
 			struct {
 				Name    string `json:"name"`
 				Gateway string `json:"gateway"`
@@ -274,63 +289,40 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 			})
 	}
 	for _, criteria := range newExperimentSpec.Criterias {
-		min_max := struct {
-			Min float64 `json:"min,omitempty"`
-			Max float64 `json:"max,omitempty"`
-		}{
-			Min: 0.1,
-			Max: 1.0,
+
+		if criteria.Tolerance != 0 {
+			threshold := kubernetes.Iter8Threshold{
+				Type:                     criteria.ToleranceType,
+				Value:                    criteria.Tolerance,
+				CutoffTrafficOnViolation: criteria.StopOnFailure,
+			}
+
+			object.Spec.Criteria = append(object.Spec.Criteria,
+				struct {
+					Metric    string                     `json:"metric"`
+					Threshold *kubernetes.Iter8Threshold `json:"threshold,omitempty"`
+					IsReward  bool                       `json:"isReward,omitempty"`
+				}{
+					Metric:    criteria.Metric,
+					Threshold: &threshold,
+					IsReward:  criteria.IsReward,
+				})
+		} else {
+			object.Spec.Criteria = append(object.Spec.Criteria,
+				struct {
+					Metric    string                     `json:"metric"`
+					Threshold *kubernetes.Iter8Threshold `json:"threshold,omitempty"`
+					IsReward  bool                       `json:"isReward,omitempty"`
+				}{
+					Metric:   criteria.Metric,
+					IsReward: criteria.IsReward,
+				})
 		}
-		object.Spec.Analysis.SuccessCriteria = append(object.Spec.Analysis.SuccessCriteria,
-			struct {
-				MetricName    string  `json:"metricName,omitempty"`
-				ToleranceType string  `json:"toleranceType,omitempty"`
-				Tolerance     float64 `json:"tolerance,omitempty"`
-				SampleSize    int     `json:"sampleSize,omitempty"`
-				MinMax        struct {
-					Min float64 `json:"min,omitempty"`
-					Max float64 `json:"max,omitempty"`
-				} `json:"min_max,omitempty"`
-				StopOnFailure bool `json:"stopOnFailure,omitempty"`
-			}{
-				MetricName:    criteria.Metric,
-				ToleranceType: criteria.ToleranceType,
-				Tolerance:     criteria.Tolerance,
-				SampleSize:    criteria.SampleSize,
-				StopOnFailure: criteria.StopOnFailure,
-				MinMax:        min_max,
-			})
+
 	}
-	if len(object.Spec.Analysis.SuccessCriteria) == 0 {
-		min_max := struct {
-			Min float64 `json:"min,omitempty"`
-			Max float64 `json:"max,omitempty"`
-		}{
-			Min: 0.1,
-			Max: 1.0,
-		}
-		object.Spec.Analysis.SuccessCriteria = append(object.Spec.Analysis.SuccessCriteria,
-			struct {
-				MetricName    string  `json:"metricName,omitempty"`
-				ToleranceType string  `json:"toleranceType,omitempty"`
-				Tolerance     float64 `json:"tolerance,omitempty"`
-				SampleSize    int     `json:"sampleSize,omitempty"`
-				MinMax        struct {
-					Min float64 `json:"min,omitempty"`
-					Max float64 `json:"max,omitempty"`
-				} `json:"min_max,omitempty"`
-				StopOnFailure bool `json:"stopOnFailure,omitempty"`
-			}{
-				MetricName:    "iter8_latency",
-				ToleranceType: "threshold",
-				Tolerance:     200,
-				SampleSize:    5,
-				StopOnFailure: false,
-				MinMax:        min_max,
-			})
-	}
-	if newExperimentSpec.Action != "" {
-		object.Action = kubernetes.Iter8ExperimentAction(newExperimentSpec.Action)
+
+	if newExperimentSpec.Action != nil {
+		object.Spec.ManualOverride = newExperimentSpec.Action
 	}
 
 	b, err2 := json.Marshal(object)
@@ -352,7 +344,7 @@ func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
 	defer promtimer.ObserveNow(&err)
 
-	metricNames, err = in.k8s.Iter8ConfigMap()
+	metricNames, err = in.k8s.Iter8MetricMap()
 	return metricNames, err
 }
 

@@ -3887,6 +3887,28 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "CounterMetric": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "preferred_direction": {
+          "type": "string",
+          "x-go-name": "PreferredDirection"
+        },
+        "query_template": {
+          "type": "string",
+          "x-go-name": "QueryTemplate"
+        },
+        "unit": {
+          "type": "string",
+          "x-go-name": "Unit"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
+    },
     "DashboardRef": {
       "description": "DashboardRef holds template name and title for a custom dashboard",
       "type": "object",
@@ -4066,6 +4088,72 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "HTTPMatchRequest": {
+      "type": "object",
+      "properties": {
+        "authority": {
+          "$ref": "#/definitions/StringMatch"
+        },
+        "gateways": {
+          "description": "Gateways for matching",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Gateways"
+        },
+        "headers": {
+          "description": "Headers to match",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/StringMatch"
+          },
+          "x-go-name": "Headers"
+        },
+        "ignore_uri_case": {
+          "description": "Flag to specify whether the URI matching should be case-insensitive.",
+          "type": "boolean",
+          "x-go-name": "IgnoreURICase"
+        },
+        "method": {
+          "$ref": "#/definitions/StringMatch"
+        },
+        "name": {
+          "description": "The name assigned to a match.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "port": {
+          "description": "Specifies the ports on the host that is being addressed.",
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Port"
+        },
+        "query_params": {
+          "description": "Query parameters for matching.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/StringMatch"
+          },
+          "x-go-name": "QueryParams"
+        },
+        "scheme": {
+          "$ref": "#/definitions/StringMatch"
+        },
+        "sourceLabels": {
+          "description": "SourceLabels for matching",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "SourceLabels"
+        },
+        "uri": {
+          "$ref": "#/definitions/StringMatch"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Initializer": {
       "type": "object",
@@ -4444,17 +4532,52 @@
       "title": "IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.",
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Iter8CandidateStatus": {
+      "type": "object",
+      "properties": {
+        "criterionAssessment": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Iter8CriterionAssessment"
+          },
+          "x-go-name": "CriteriaAssessments"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "requestCount": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Request_Count"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Weight"
+        },
+        "winProbability": {
+          "type": "number",
+          "format": "float",
+          "x-go-name": "WinProbability"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Iter8Criteria": {
       "type": "object",
       "properties": {
+        "isReward": {
+          "type": "boolean",
+          "x-go-name": "IsReward"
+        },
         "metric": {
           "type": "string",
           "x-go-name": "Metric"
-        },
-        "sampleSize": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "SampleSize"
         },
         "stopOnFailure": {
           "type": "boolean",
@@ -4462,7 +4585,7 @@
         },
         "tolerance": {
           "type": "number",
-          "format": "double",
+          "format": "float",
           "x-go-name": "Tolerance"
         },
         "toleranceType": {
@@ -4484,12 +4607,112 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "status": {
-          "$ref": "#/definitions/Iter8SuccessCrideriaStatus"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8CriterionAssessment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "metric_id": {
+          "type": "string",
+          "x-go-name": "MetricID"
+        },
+        "statistics": {
+          "type": "object",
+          "properties": {
+            "ratio_statitics": {
+              "type": "object",
+              "properties": {
+                "credible_interval": {
+                  "type": "object",
+                  "properties": {
+                    "lower": {
+                      "type": "number",
+                      "format": "float",
+                      "x-go-name": "Lower"
+                    },
+                    "upper": {
+                      "type": "number",
+                      "format": "float",
+                      "x-go-name": "Upper"
+                    }
+                  },
+                  "x-go-name": "CredibleInterval"
+                },
+                "improvement_over_baseline": {
+                  "type": "object",
+                  "properties": {
+                    "lower": {
+                      "type": "number",
+                      "format": "float",
+                      "x-go-name": "Lower"
+                    },
+                    "upper": {
+                      "type": "number",
+                      "format": "float",
+                      "x-go-name": "Upper"
+                    }
+                  },
+                  "x-go-name": "ImprovementOverBaseline"
+                },
+                "probability_of_beating_baseline": {
+                  "type": "number",
+                  "format": "float",
+                  "x-go-name": "ProbabilityOfBeatingBaseline"
+                },
+                "probability_of_being_best_version": {
+                  "type": "number",
+                  "format": "float",
+                  "x-go-name": "ProbabilityOfBeingBestVersion"
+                }
+              },
+              "x-go-name": "RatioStatistics"
+            },
+            "value": {
+              "type": "number",
+              "format": "float",
+              "x-go-name": "Value"
+            }
+          },
+          "x-go-name": "Statistics"
+        },
+        "threshold_assessment": {
+          "type": "object",
+          "properties": {
+            "probability_of_satisfying_threshold": {
+              "type": "number",
+              "format": "float",
+              "x-go-name": "ProbabilityOfSatisfyingTHreshold"
+            },
+            "threshold_breached": {
+              "type": "boolean",
+              "x-go-name": "ThresholdBreached"
+            }
+          },
+          "x-go-name": "ThresholdAssessment"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
+    },
+    "Iter8Duration": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "string",
+          "x-go-name": "Interval"
+        },
+        "maxIterations": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "MaxIterations"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Iter8ExperimentDetail": {
       "description": "For Displaying Iter8 Experiment Tabs",
@@ -4506,8 +4729,15 @@
           },
           "x-go-name": "CriteriaDetails"
         },
+        "duration": {
+          "$ref": "#/definitions/Iter8Duration"
+        },
         "experimentItem": {
           "$ref": "#/definitions/Iter8ExperimentItem"
+        },
+        "experimentType": {
+          "type": "string",
+          "x-go-name": "ExperimentType"
         },
         "hosts": {
           "type": "array",
@@ -4529,48 +4759,27 @@
       "description": "For Displaying Iter8 Experiment Details",
       "type": "object",
       "properties": {
-        "assessmentConclusion": {
+        "baseline": {
+          "$ref": "#/definitions/Iter8CandidateStatus"
+        },
+        "candidates": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Iter8CandidateStatus"
           },
-          "x-go-name": "AssessmentConclusion"
+          "x-go-name": "Candidates"
         },
-        "baseline": {
+        "endTime": {
           "type": "string",
-          "x-go-name": "Baseline"
+          "x-go-name": "EndTime"
         },
-        "baselinePercentage": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "BaselinePercentage"
-        },
-        "baselineVersion": {
+        "experimentKind": {
           "type": "string",
-          "x-go-name": "BaselineVersion"
+          "x-go-name": "ExperimentType"
         },
-        "candidate": {
+        "initTime": {
           "type": "string",
-          "x-go-name": "Candidate"
-        },
-        "candidatePercentage": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "CandidatePercentage"
-        },
-        "candidateVersion": {
-          "type": "string",
-          "x-go-name": "CandidateVersion"
-        },
-        "createdAt": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "CreatedAt"
-        },
-        "endedAt": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "EndedAt"
+          "x-go-name": "InitTime"
         },
         "kind": {
           "type": "string",
@@ -4588,10 +4797,9 @@
           "type": "string",
           "x-go-name": "Phase"
         },
-        "startedAt": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "StartedAt"
+        "startTime": {
+          "type": "string",
+          "x-go-name": "StartTime"
         },
         "status": {
           "type": "string",
@@ -4604,6 +4812,9 @@
         "targetServiceNamespace": {
           "type": "string",
           "x-go-name": "TargetServiceNamespace"
+        },
+        "winner": {
+          "$ref": "#/definitions/Iter8SuccessCrideriaStatus"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4644,24 +4855,40 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Iter8Match": {
+      "description": "Match contains matching criteria for requests",
+      "type": "object",
+      "properties": {
+        "http": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HTTPMatchRequest"
+          },
+          "x-go-name": "HTTP"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Iter8Metric": {
       "type": "object",
       "properties": {
-        "absent_value": {
-          "type": "string",
-          "x-go-name": "AbsentValue"
+        "denominator": {
+          "$ref": "#/definitions/CounterMetric"
         },
-        "is_counter": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "numerator": {
+          "$ref": "#/definitions/CounterMetric"
+        },
+        "preferred_direction": {
+          "type": "string",
+          "x-go-name": "PreferredDirection"
+        },
+        "zero_to_one": {
           "type": "boolean",
-          "x-go-name": "IsCounter"
-        },
-        "query_template": {
-          "type": "string",
-          "x-go-name": "QueryTemplate"
-        },
-        "sample_size_template": {
-          "type": "string",
-          "x-go-name": "SampleSizeTemplate"
+          "x-go-name": "ZeroToOne"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4669,20 +4896,22 @@
     "Iter8SuccessCrideriaStatus": {
       "type": "object",
       "properties": {
-        "abort_experiment": {
-          "type": "boolean",
-          "x-go-name": "AbortExperiment"
+        "current_best_version": {
+          "type": "string",
+          "x-go-name": "Winner"
         },
-        "conclusions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Conclusions"
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         },
-        "success_criterion_met": {
+        "probability_of_winning_for_best_version": {
+          "type": "number",
+          "format": "float",
+          "x-go-name": "Probability"
+        },
+        "winning_version_found": {
           "type": "boolean",
-          "x-go-name": "SuccessCriterionMet"
+          "x-go-name": "WinnerFound"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4690,28 +4919,26 @@
     "Iter8TrafficControl": {
       "type": "object",
       "properties": {
-        "algorithm": {
-          "type": "string",
-          "x-go-name": "Algorithm"
+        "match": {
+          "$ref": "#/definitions/Iter8Match"
         },
-        "interval": {
-          "type": "string",
-          "x-go-name": "Interval"
-        },
-        "maxIterations": {
+        "maxIncrement": {
           "type": "integer",
-          "format": "int64",
-          "x-go-name": "MaxIterations"
+          "format": "int32",
+          "x-go-name": "MaxIncrement"
         },
-        "maxTrafficPercentage": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "MaxTrafficPercentage"
+        "onTermination": {
+          "type": "string",
+          "x-go-name": "OnTermination"
         },
-        "trafficStepSize": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "TrafficStepSize"
+        "percentage": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Percentage"
+        },
+        "strategy": {
+          "type": "string",
+          "x-go-name": "Strategy"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6398,6 +6625,24 @@
       "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "StringMatch": {
+      "type": "object",
+      "properties": {
+        "exact": {
+          "type": "string",
+          "x-go-name": "Exact"
+        },
+        "prefix": {
+          "type": "string",
+          "x-go-name": "Prefix"
+        },
+        "regex": {
+          "type": "string",
+          "x-go-name": "Regex"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Time": {
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",

@@ -1,6 +1,8 @@
 package models
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -11,95 +13,117 @@ type Iter8Info struct {
 	AnalyticsImageVersion  string `json:"analyticsImgVersion"`
 }
 
-type ExperimentAction struct {
-	Action string `json:"action"`
+type Iter8CandidateStatus struct {
+	Name                string                                `json:"name"`
+	Version             string                                `json:"version"`
+	Weight              int32                                 `json:"weight"`
+	WinProbability      float32                               `json:"winProbability"`
+	Request_Count       int32                                 `json:"requestCount"`
+	CriteriaAssessments []kubernetes.Iter8CriterionAssessment `json:"criterionAssessment"`
 }
 
 // For Displaying Iter8 Experiment Details
 type Iter8ExperimentItem struct {
-	Name                   string   `json:"name"`
-	Phase                  string   `json:"phase"`
-	CreatedAt              int64    `json:"createdAt"`
-	Status                 string   `json:"status"`
-	Baseline               string   `json:"baseline"`
-	BaselinePercentage     int      `json:"baselinePercentage"`
-	BaselineVersion        string   `json:"baselineVersion"`
-	Candidate              string   `json:"candidate"`
-	CandidatePercentage    int      `json:"candidatePercentage"`
-	CandidateVersion       string   `json:"candidateVersion"`
-	Namespace              string   `json:"namespace"`
-	StartedAt              int64    `json:"startedAt"`
-	EndedAt                int64    `json:"endedAt"`
-	TargetService          string   `json:"targetService"`
-	TargetServiceNamespace string   `json:"targetServiceNamespace"`
-	AssessmentConclusion   []string `json:"assessmentConclusion"`
-	Kind                   string   `json:"kind"`
+	Name                   string                     `json:"name"`
+	Phase                  string                     `json:"phase"`
+	Status                 string                     `json:"status"`
+	Baseline               Iter8CandidateStatus       `json:"baseline"`
+	Candidates             []Iter8CandidateStatus     `json:"candidates"`
+	Namespace              string                     `json:"namespace"`
+	InitTime               string                     `json:"initTime"`
+	StartTime              string                     `json:"startTime"`
+	EndTime                string                     `json:"endTime"`
+	TargetService          string                     `json:"targetService"`
+	TargetServiceNamespace string                     `json:"targetServiceNamespace"`
+	Winner                 Iter8SuccessCrideriaStatus `json:"winner"`
+	Kind                   string                     `json:"kind"`
+	ExperimentType         string                     `json:"experimentKind"`
 }
 
 // For Displaying Iter8 Experiment Tabs
 type Iter8ExperimentDetail struct {
-	ExperimentItem  Iter8ExperimentItem   `json:"experimentItem"`
-	CriteriaDetails []Iter8CriteriaDetail `json:"criterias"`
-	Hosts           []Iter8Host           `json:"hosts"`
-	TrafficControl  Iter8TrafficControl   `json:"trafficControl"`
-	Permissions     ResourcePermissions   `json:"permissions"`
-	Action          string                `json:"action"`
+	ExperimentItem  Iter8ExperimentItem      `json:"experimentItem"`
+	CriteriaDetails []Iter8CriteriaDetail    `json:"criterias"`
+	Hosts           []Iter8Host              `json:"hosts"`
+	TrafficControl  Iter8TrafficControl      `json:"trafficControl"`
+	Permissions     ResourcePermissions      `json:"permissions"`
+	ExperimentType  string                   `json:"experimentType"`
+	Duration        kubernetes.Iter8Duration `json:"duration"`
+	Action          string                   `json:"action"`
 }
 
 type Iter8CriteriaDetail struct {
-	Name     string                     `json:"name"`
-	Criteria Iter8Criteria              `json:"criteria"`
-	Metric   Iter8Metric                `json:"metric"`
-	Status   Iter8SuccessCrideriaStatus `json:"status"`
+	Name     string        `json:"name"`
+	Criteria Iter8Criteria `json:"criteria"`
+	Metric   Iter8Metric   `json:"metric"`
 }
 
 type Iter8Metric struct {
-	AbsentValue        string `json:"absent_value"`
-	IsCounter          bool   `json:"is_counter"`
-	QueryTemplate      string `json:"query_template"`
-	SampleSizeTemplate string `json:"sample_size_template"`
+	Name               string                   `json:"name"`
+	Numerator          kubernetes.CounterMetric `json:"numerator" yaml:"numerator"`
+	Denominator        kubernetes.CounterMetric `json:"denominator" yaml:"denominator"`
+	ZeroToOne          *bool                    `json:"zero_to_one,omitempty" yaml:"zero_to_one,omitempty"`
+	PreferredDirection *string                  `json:"preferred_direction,omitempty" yaml:"preferred_direction,omitempty"`
 }
 
 type Iter8SuccessCrideriaStatus struct {
-	Conclusions         []string `json:"conclusions"`
-	SuccessCriterionMet bool     `json:"success_criterion_met"`
-	AbortExperiment     bool     `json:"abort_experiment"`
+	Name        *string  `json:"name,omitempty"`
+	WinnerFound *bool    `json:"winning_version_found"`
+	Winner      string   `json:"current_best_version,omitempty"`
+	Probability *float32 `json:"probability_of_winning_for_best_version,omitempty"`
 }
 
 // Spec for Creating Experiment
 type Iter8ExperimentSpec struct {
-	Name           string              `json:"name"`
-	Namespace      string              `json:"namespace"`
-	Service        string              `json:"service"`
-	APIVersion     string              `json:"apiversion"`
-	Baseline       string              `json:"baseline"`
-	Candidate      string              `json:"candidate"`
-	TrafficControl Iter8TrafficControl `json:"trafficControl"`
-	Criterias      []Iter8Criteria     `json:"criterias"`
-	Hosts          []Iter8Host         `json:"hosts"`
-	Action         string              `json:"action"`
-	ExperimentKind string              `json:"experimentKind"`
+	Name           string                       `json:"name"`
+	Namespace      string                       `json:"namespace"`
+	Service        string                       `json:"service"`
+	APIVersion     string                       `json:"apiversion"`
+	Baseline       string                       `json:"baseline"`
+	Candidates     []string                     `json:"candidates"`
+	TrafficControl Iter8TrafficControl          `json:"trafficControl"`
+	Criterias      []Iter8Criteria              `json:"criterias"`
+	Hosts          []Iter8Host                  `json:"hosts"`
+	Action         *kubernetes.ExperimentAction `json:"action"`
+	TrafficSplit   map[string]int32             `json:"trafficSplit,omitempty"`
+	ExperimentKind string                       `json:"experimentKind"`
+	ExperimentType string                       `json:"experimentType"`
+	Duration       kubernetes.Iter8Duration     `json:"duration"`
+	Cleanup        bool                         `json:"cleanup"`
+	Metrics        Iter8Metrics                 `json:"metrics"`
 }
-
+type Iter8ExperimentActon struct {
+	Action       string     `json:"action"`
+	TrafficSplit [][]string `json:"trafficSplit,omitempty"`
+}
 type Iter8Host struct {
 	Name    string `json:"name"`
 	Gateway string `json:"gateway"`
 }
 
 type Iter8TrafficControl struct {
-	Algorithm            string  `json:"algorithm"`
-	Interval             string  `json:"interval"`
-	MaxIterations        int     `json:"maxIterations"`
-	MaxTrafficPercentage float64 `json:"maxTrafficPercentage"`
-	TrafficStepSize      float64 `json:"trafficStepSize"`
+	Strategy      string     `json:"strategy,omitempty"`      // v1.0.0
+	OnTermination string     `json:"onTermination,omitempty"` // v1.0.0
+	Match         Iter8Match `json:"match,omitempty"`         // v1.0.0
+	Percentage    int32      `json:"percentage,omitempty"`    // v1.0.0
+	MaxIncrement  int32      `json:"maxIncrement,omitempty"`
 }
 
 type Iter8Criteria struct {
 	Metric        string  `json:"metric"`
 	ToleranceType string  `json:"toleranceType"`
-	Tolerance     float64 `json:"tolerance"`
-	SampleSize    int     `json:"sampleSize"`
+	Tolerance     float32 `json:"tolerance"`
 	StopOnFailure bool    `json:"stopOnFailure"`
+	IsReward      bool    `json:"isReward"`
+}
+type Iter8Metrics struct {
+	CounterMetrics []kubernetes.CounterMetric `json:"counter_metrics,omitempty"`
+	RatioMetrics   []kubernetes.RatioMetric   `json:"ratio_metrics,omitempty"`
+}
+
+// Match contains matching criteria for requests
+type Iter8Match struct {
+	HTTP []kubernetes.HTTPMatchRequest `json:"http,omitempty"`
 }
 
 type Iter8AnalyticsConfig struct {
@@ -118,97 +142,139 @@ type Iter8AnalyticsConfig struct {
 }
 
 func (i *Iter8ExperimentSpec) Parse(iter8Object Iter8ExperimentDetail) {
+	candidates := make([]string, len(iter8Object.ExperimentItem.Candidates))
+	for i, c := range iter8Object.ExperimentItem.Candidates {
+		candidates[i] = c.Name
+	}
 	i.Name = iter8Object.ExperimentItem.Name
 	i.Namespace = iter8Object.ExperimentItem.Namespace
 	i.Service = iter8Object.ExperimentItem.TargetService
-	i.Candidate = iter8Object.ExperimentItem.Candidate
-	i.Baseline = iter8Object.ExperimentItem.Baseline
+	i.Candidates = candidates
+	i.Baseline = iter8Object.ExperimentItem.Baseline.Name
 	i.ExperimentKind = iter8Object.ExperimentItem.Kind
 	i.TrafficControl = iter8Object.TrafficControl
 	i.Criterias = make([]Iter8Criteria, len(iter8Object.CriteriaDetails))
 	for k, c := range iter8Object.CriteriaDetails {
 		i.Criterias[k] = c.Criteria
 	}
+	i.Duration = iter8Object.Duration
+	i.ExperimentType = iter8Object.ExperimentType
 }
-
 func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 
 	spec := iter8Object.GetSpec()
 	status := iter8Object.GetStatus()
-	metrics := iter8Object.GetMetrics()
 
-	criterias := make([]Iter8CriteriaDetail, len(spec.Analysis.SuccessCriteria))
-	for i, c := range spec.Analysis.SuccessCriteria {
-		metricName := c.MetricName
-		successCrideriaStatus := Iter8SuccessCrideriaStatus{}
-		for j, a := range status.Assestment.SuccessCriteriaStatus {
-			if a.MetricName == c.MetricName {
-				successCrideriaStatus = Iter8SuccessCrideriaStatus{
-					status.Assestment.SuccessCriteriaStatus[j].Conclusions,
-					status.Assestment.SuccessCriteriaStatus[j].SuccessCriterionMet,
-					status.Assestment.SuccessCriteriaStatus[j].AbortExperiment,
-				}
-			}
+	type MetricMap map[string]kubernetes.CounterMetric
+	counterMetrics := MetricMap{}
+	for _, cm := range spec.Metrics.CounterMetrics {
+		metricDetail := kubernetes.CounterMetric{
+			Name:               cm.Name,
+			QueryTemplate:      cm.QueryTemplate,
+			PreferredDirection: cm.PreferredDirection,
+			Unit:               cm.Unit,
 		}
+		counterMetrics[cm.Name] = metricDetail
+	}
+
+	type RMetricMap map[string]Iter8Metric
+	rMetrics := RMetricMap{}
+	// ratioMetrics := make([]Iter8Metric, len(spec.Metrics.RatioMetrics))
+	for _, m := range spec.Metrics.RatioMetrics {
+		metricDetail := Iter8Metric{
+			Name:               m.Name,
+			Denominator:        counterMetrics[m.Denominator],
+			Numerator:          counterMetrics[m.Numerator],
+			PreferredDirection: m.PreferredDirection,
+		}
+		rMetrics[m.Name] = metricDetail
+	}
+
+	criterias := make([]Iter8CriteriaDetail, len(spec.Criteria))
+
+	for i, c := range spec.Criteria {
 		criteriaDetail := Iter8CriteriaDetail{
-			Name: c.MetricName,
+			Name: c.Metric,
 			Criteria: Iter8Criteria{
-				Metric:        c.MetricName,
-				SampleSize:    c.SampleSize,
-				Tolerance:     c.Tolerance,
-				ToleranceType: c.ToleranceType,
-				StopOnFailure: c.StopOnFailure,
+				Metric:   c.Metric,
+				IsReward: c.IsReward,
 			},
-			Metric: Iter8Metric{
-				AbsentValue:        metrics[metricName].AbsentValue,
-				IsCounter:          metrics[metricName].IsCounter,
-				QueryTemplate:      metrics[metricName].QueryTemplate,
-				SampleSizeTemplate: metrics[metricName].SampleSizeTemplate,
-			},
-			Status: successCrideriaStatus,
+			Metric: rMetrics[c.Metric],
 		}
+		if c.Threshold != nil {
+			criteriaDetail.Criteria.Tolerance = c.Threshold.Value
+			criteriaDetail.Criteria.ToleranceType = c.Threshold.Type
+			criteriaDetail.Criteria.StopOnFailure = c.Threshold.CutoffTrafficOnViolation
+		}
+
 		criterias[i] = criteriaDetail
 	}
 
-	hosts := make([]Iter8Host, len(spec.TargetService.Hosts))
-	for i, h := range spec.TargetService.Hosts {
+	hosts := make([]Iter8Host, len(spec.Service.Hosts))
+	for i, h := range spec.Service.Hosts {
 		host := Iter8Host{}
 		host.Name = h.Name
 		host.Gateway = h.Gateway
 		hosts[i] = host
 	}
 	trafficControl := Iter8TrafficControl{
-		Algorithm:            spec.TrafficControl.Strategy,
-		Interval:             spec.TrafficControl.Interval,
-		MaxIterations:        spec.TrafficControl.MaxIterations,
-		MaxTrafficPercentage: spec.TrafficControl.MaxTrafficPercentage,
-		TrafficStepSize:      spec.TrafficControl.TrafficStepSize,
+		Strategy:      spec.TrafficControl.Strategy,
+		MaxIncrement:  spec.TrafficControl.MaxIncrement,
+		Percentage:    spec.TrafficControl.Percentage,
+		OnTermination: spec.TrafficControl.OnTermination,
 	}
 
-	targetServiceNamespace := spec.TargetService.Namespace
+	targetServiceNamespace := spec.Service.Namespace
 	if targetServiceNamespace == "" {
 		targetServiceNamespace = iter8Object.GetObjectMeta().Namespace
 	}
 
+	candidateStatus := make([]Iter8CandidateStatus, len(status.Assestment.Candidates))
+	for i, c := range status.Assestment.Candidates {
+		cs := Iter8CandidateStatus{
+			Name:                c.Name,
+			Weight:              c.Weight,
+			WinProbability:      c.WinProbability,
+			Request_Count:       c.RequestCount,
+			CriteriaAssessments: c.CriterionAssessments,
+		}
+		candidateStatus[i] = cs
+	}
+
+	kind := spec.Service.Kind
+	if kind == "" {
+		kind = "Deployment"
+	}
+	endTime := ""
+	if (status.EndTimestamp != meta_v1.Time{}) {
+		endTime = status.EndTimestamp.String()
+	}
 	i.ExperimentItem = Iter8ExperimentItem{
-		Name:                   iter8Object.GetObjectMeta().Name,
-		Phase:                  status.Phase,
-		Status:                 status.Message,
-		Baseline:               spec.TargetService.Baseline,
-		BaselinePercentage:     status.TrafficSplitPercentage.Baseline,
-		Candidate:              spec.TargetService.Candidate,
-		CandidatePercentage:    status.TrafficSplitPercentage.Candidate,
-		CreatedAt:              status.CreateTimeStamp,
-		StartedAt:              status.StartTimeStamp,
-		EndedAt:                status.EndTimestamp,
-		TargetService:          spec.TargetService.Name,
+		Name:   iter8Object.GetObjectMeta().Name,
+		Phase:  status.Phase,
+		Status: status.Message,
+		Baseline: Iter8CandidateStatus{
+			Name:                status.Assestment.Baseline.Name,
+			Weight:              status.Assestment.Baseline.Weight,
+			CriteriaAssessments: status.Assestment.Baseline.CriterionAssessments,
+			WinProbability:      status.Assestment.Baseline.WinProbability,
+			Request_Count:       status.Assestment.Baseline.RequestCount,
+		},
+		Candidates:             candidateStatus,
+		InitTime:               status.InitTimeStamp.String(),
+		StartTime:              status.StartTimeStamp.String(),
+		EndTime:                endTime,
+		TargetService:          spec.Service.Name,
 		TargetServiceNamespace: targetServiceNamespace,
-		AssessmentConclusion:   status.Assestment.Conclusions,
-		Kind:                   spec.TargetService.Kind,
+		Kind:                   kind,
+		Winner:                 status.Assestment.Winner,
+		ExperimentType:         status.ExperimentType,
 	}
 	i.CriteriaDetails = criterias
 	i.TrafficControl = trafficControl
 	i.Hosts = hosts
+	i.Duration = spec.Duration
+	i.ExperimentType = status.ExperimentType
 }
 
 func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
@@ -220,16 +286,46 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 	i.Namespace = iter8Object.GetObjectMeta().Namespace
 	i.Phase = status.Phase
 	i.Status = status.Message
-	i.CreatedAt = iter8Object.GetStatus().CreateTimeStamp
-	i.StartedAt = iter8Object.GetStatus().StartTimeStamp
-	i.EndedAt = iter8Object.GetStatus().EndTimestamp
+	i.InitTime = status.InitTimeStamp.String()
+	i.StartTime = status.StartTimeStamp.String()
+	if (status.StartTimeStamp != meta_v1.Time{}) {
+		i.StartTime = status.StartTimeStamp.String()
+	}
+	if (status.EndTimestamp != meta_v1.Time{}) {
+		i.EndTime = status.EndTimestamp.String()
+	}
 
-	i.Baseline = spec.TargetService.Baseline
-	i.BaselinePercentage = status.TrafficSplitPercentage.Baseline
-	i.Candidate = spec.TargetService.Candidate
-	i.CandidatePercentage = status.TrafficSplitPercentage.Candidate
-	i.TargetService = spec.TargetService.Name
-	i.TargetServiceNamespace = spec.TargetService.Namespace
+	baselineStatue := Iter8CandidateStatus{
+		Name:           status.Assestment.Baseline.Name,
+		Weight:         status.Assestment.Baseline.Weight,
+		WinProbability: status.Assestment.Baseline.WinProbability,
+	}
+	candidateStatus := make([]Iter8CandidateStatus, len(status.Assestment.Candidates))
+	for i, c := range status.Assestment.Candidates {
+		cs := Iter8CandidateStatus{
+			Name:           c.Name,
+			Weight:         c.Weight,
+			WinProbability: c.WinProbability,
+		}
+		candidateStatus[i] = cs
+	}
 
-	i.Kind = spec.TargetService.Kind
+	i.Baseline = baselineStatue
+	i.Candidates = candidateStatus
+	i.TargetService = spec.Service.Name
+	i.TargetServiceNamespace = spec.Service.Namespace
+
+	i.Kind = spec.Service.Kind
+	if i.Kind == "" {
+		i.Kind = "Deployment"
+	}
+	i.ExperimentType = status.ExperimentType
+	// successCrideriaStatus := Iter8SuccessCrideriaStatus{}
+	// successCrideriaStatus = Iter8SuccessCrideriaStatus{
+	// 	status.Assestment.Winner.Name,
+	// 	status.Assestment.Winner.WinnerFound,
+	// 	status.Assestment.Winner.Winner,
+	// 	status.Assestment.Winner.Probability,
+	// }
+	i.Winner = status.Assestment.Winner
 }

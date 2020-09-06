@@ -17,59 +17,111 @@ var iter8typeMeta = meta_v1.TypeMeta{
 	APIVersion: ApiIter8Version,
 }
 
-// Linked with https://github.com/iter8-tools/iter8-controller/blob/master/pkg/apis/iter8/v1alpha1/experiment_types.go
+// ExperimentSpec defines the desired state of Experiment
 type Iter8ExperimentSpec struct {
-	TargetService struct {
-		ApiVersion string `json:"apiVersion"`
-		Name       string `json:"name"`
-		Namespace  string `json:"namespace"`
-		Kind       string `json:"kind"`
-		Baseline   string `json:"baseline"`
-		Candidate  string `json:"candidate"`
-		Hosts      []struct {
+	Service struct {
+		core_v1.ObjectReference `json:",inline"`
+		Baseline                string   `json:"baseline"`
+		Candidates              []string `json:"candidates"`
+		Hosts                   []struct {
 			Name    string `json:"name"`
 			Gateway string `json:"gateway"`
 		} `json:"hosts,omitempty"`
-	} `json:"targetService"`
+		Port *int32 `json:"port,omitempty"`
+	} `json:"service"`
+
+	Criteria []struct {
+		Metric    string          `json:"metric"`
+		Threshold *Iter8Threshold `json:"threshold,omitempty"`
+		IsReward  bool            `json:"isReward,omitempty"`
+	} `json:"criteria,omitempty"`
 	TrafficControl struct {
-		Strategy             string  `json:"strategy,omitempty"`
-		MaxTrafficPercentage float64 `json:"maxTrafficPercentage,omitempty"`
-		TrafficStepSize      float64 `json:"trafficStepSize,omitempty"`
-		Interval             string  `json:"interval,omitempty"`
-		MaxIterations        int     `json:"maxIterations,omitempty"`
-		OnSuccess            string  `json:"onSuccess,omitempty"`
-		Confidence           float64 `json:"confidence,omitempty"`
+		Strategy      string `json:"strategy,omitempty"`
+		OnTermination string `json:"onTermination,omitempty"`
+		Match         struct {
+			HTTP []HTTPMatchRequest `json:"http,omitempty"`
+		} `json:"match,omitempty"`
+		Percentage   int32 `json:"percentage,omitempty"`
+		MaxIncrement int32 `json:"maxIncrement,omitempty"`
 	} `json:"trafficControl,omitempty"`
-	Analysis struct {
-		AnalyticsService string `json:"analyticsService,omitempty"`
-		GrafanaEndpoint  string `json:"grafanaEndpoint,omitempty"`
-		SuccessCriteria  []struct {
-			MetricName    string  `json:"metricName,omitempty"`
-			ToleranceType string  `json:"toleranceType,omitempty"`
-			Tolerance     float64 `json:"tolerance,omitempty"`
-			SampleSize    int     `json:"sampleSize,omitempty"`
-			MinMax        struct {
-				Min float64 `json:"min,omitempty"`
-				Max float64 `json:"max,omitempty"`
-			} `json:"min_max,omitempty"`
-			StopOnFailure bool `json:"stopOnFailure,omitempty"`
-		} `json:"successCriteria,omitempty"`
-		Reward *struct {
-			MetricName string `json:"metricName,omitempty"`
-			MinMax     string `json:"min_max,omitempty"`
-		} `json:"reward,omitempty"`
-	} `json:"analysis,omitempty"`
-	Assessment       string                   `json:"assessment,omitempty"`
-	Cleanup          string                   `json:"cleanup,omitempty"`
-	RoutingReference *core_v1.ObjectReference `json:"routingReference,omitempty"`
+	AnalyticsEndpoint string        `json:"analyticsEndpoint,omitempty"`
+	Duration          Iter8Duration `json:"duration,omitempty"`
+	Cleanup           bool          `json:"cleanup,omitempty"`
+	Metrics           struct {
+		CounterMetrics []CounterMetric `json:"counter_metrics,omitempty"`
+		RatioMetrics   []RatioMetric   `json:"ratio_metrics,omitempty"`
+	} `json:"metrics,omitempty"`
+	ManualOverride *ExperimentAction `json:"manualOverride,omitempty"`
+}
+
+type Iter8Duration struct {
+	Interval      *string `json:"interval,omitempty"`
+	MaxIterations *int32  `json:"maxIterations,omitempty"`
+}
+type Iter8Threshold struct {
+	Type                     string  `json:"type,omitempty"`
+	Value                    float32 `json:"value,omitempty"`
+	CutoffTrafficOnViolation bool    `json:"cutoffTrafficOnViolation,omitempty"`
+}
+
+type ExperimentAction struct {
+	Action       string           `json:"action"`
+	TrafficSplit map[string]int32 `json:"trafficSplit,omitempty"`
+}
+
+type CounterMetric struct {
+	Name               string  `json:"name" yaml:"name"`
+	QueryTemplate      string  `json:"query_template" yaml:"query_template"`
+	PreferredDirection *string `json:"preferred_direction,omitempty" yaml:"preferred_direction,omitempty"`
+	Unit               *string `json:"unit,omitempty" yaml:"unit,omitempty"`
+}
+
+type RatioMetric struct {
+	Name               string  `json:"name" yaml:"name"`
+	Numerator          string  `json:"numerator" yaml:"numerator"`
+	Denominator        string  `json:"denominator" yaml:"denominator"`
+	ZeroToOne          *bool   `json:"zero_to_one,omitempty" yaml:"zero_to_one,omitempty"`
+	PreferredDirection *string `json:"preferred_direction,omitempty" yaml:"preferred_direction,omitempty"`
 }
 
 type Iter8ExperimentAction string
 type Iter8Host struct {
-	// Name of the Host
-	Name string `json:"name"`
-	// The gateway
+	Name    string `json:"name"`
 	Gateway string `json:"gateway"`
+}
+
+type Iter8CriterionAssessment struct {
+	ID         string `json:"id"`
+	MetricID   string `json:"metric_id"`
+	Statistics struct {
+		Value           *float32 `json:"value,omitempty"`
+		RatioStatistics struct {
+			ImprovementOverBaseline struct {
+				Lower *float32 `json:"lower"`
+				Upper *float32 `json:"upper"`
+			} `json:"improvement_over_baseline"`
+			ProbabilityOfBeatingBaseline  *float32 `json:"probability_of_beating_baseline"`
+			ProbabilityOfBeingBestVersion *float32 `json:"probability_of_being_best_version"`
+			CredibleInterval              struct {
+				Lower *float32 `json:"lower"`
+				Upper *float32 `json:"upper"`
+			} `json:"credible_interval"`
+		} `json:"ratio_statitics,omitempty"`
+	} `json:"statistics,omitempty"`
+	ThresholdAssessment *struct {
+		ThresholdBreached                bool     `json:"threshold_breached"`
+		ProbabilityOfSatisfyingTHreshold *float32 `json:"probability_of_satisfying_threshold"`
+	} `json:"threshold_assessment,omitempty"`
+}
+
+type Iter8VersionAssessment struct {
+	ID                   string                     `json:"id"`
+	Name                 string                     `json:"name"`
+	Weight               int32                      `json:"weight"`
+	WinProbability       float32                    `json:"win_probability"`
+	RequestCount         int32                      `json:"request_count"`
+	CriterionAssessments []Iter8CriterionAssessment `json:"criterion_assessments,omitempty"`
+	Rollback             bool
 }
 
 type Iter8ExperimentStatus struct {
@@ -80,38 +132,68 @@ type Iter8ExperimentStatus struct {
 		Status             string `json:"status"`
 		Type               string `json:"type"`
 	} `json:"conditions"`
-	CreateTimeStamp   int64                  `json:"createTimestamp"`
-	StartTimeStamp    int64                  `json:"startTimestamp"`
-	EndTimestamp      int64                  `json:"endTimestamp"`
-	LastIncrementTime string                 `json:"lastIncrementTime"`
-	CurrentIteration  int                    `json:"currentIteration"`
-	AnalysisState     map[string]interface{} `json:"analysisState"`
-	GrafanaURL        string                 `json:"grafanaURL"`
-	Assestment        struct {
-		Conclusions           []string `json:"conclusions"`
-		AllSuccessCriteriaMet bool     `json:"all_success_criteria_met,omitempty"`
-		AbortExperiment       bool     `json:"abort_experiment,omitempty"`
-		SuccessCriteriaStatus []struct {
-			// Name of the metric to which the criterion applies
-			// example: iter8_latency
-			MetricName string `json:"metric_name"`
-
-			// Assessment of this success criteria in plain English
-			Conclusions []string `json:"conclusions"`
-
-			// Indicates whether or not the success criterion for the corresponding metric has been met
-			SuccessCriterionMet bool `json:"success_criterion_met"`
-
-			// Indicates whether or not the experiment must be aborted on the basis of the criterion for this metric
-			AbortExperiment bool `json:"abort_experiment"`
-		} `json:"success_criteria,omitempty"`
+	InitTimeStamp    meta_v1.Time           `json:"initTimestamp"`
+	StartTimeStamp   meta_v1.Time           `json:"startTimestamp"`
+	EndTimestamp     meta_v1.Time           `json:"endTimestamp,omitempty"`
+	LastUpdateTime   string                 `json:"lastUpdateTime"`
+	CurrentIteration int                    `json:"currentIteration"`
+	AnalysisState    map[string]interface{} `json:"analysisState"`
+	GrafanaURL       string                 `json:"grafanaURL"`
+	Assestment       struct {
+		Baseline   Iter8VersionAssessment   `json:"baseline"`
+		Candidates []Iter8VersionAssessment `json:"candidates"`
+		Winner     struct {
+			Name        *string  `json:"name,omitempty"`
+			WinnerFound *bool    `json:"winning_version_found"`
+			Winner      string   `json:"current_best_version,omitempty"`
+			Probability *float32 `json:"probability_of_winning_for_best_version,omitempty"`
+		} `json:"winner"`
 	} `json:"assessment"`
-	TrafficSplitPercentage struct {
-		Baseline  int `json:"baseline"`
-		Candidate int `json:"candidate"`
-	} `json:"trafficSplitPercentage"`
-	Phase   string `json:"phase"`
-	Message string `json:"message"`
+	Phase          string   `json:"phase"`
+	Message        string   `json:"message"`
+	ExperimentType string   `json:"experimentType,omitempty"`
+	EffectiveHosts []string `json:"effectiveHosts,omitempty"`
+}
+
+type HTTPMatchRequest struct {
+	// The name assigned to a match.
+	Name string `json:"name,omitempty"`
+
+	// URI to match
+	URI *StringMatch `json:"uri,omitempty"`
+
+	// Scheme Scheme
+	Scheme *StringMatch `json:"scheme,omitempty"`
+
+	// HTTP Method
+	Method *StringMatch `json:"method,omitempty"`
+
+	// HTTP Authority
+	Authority *StringMatch `json:"authority,omitempty"`
+
+	// Headers to match
+	Headers map[string]StringMatch `json:"headers,omitempty"`
+
+	// Specifies the ports on the host that is being addressed.
+	Port uint32 `json:"port,omitempty"`
+
+	// SourceLabels for matching
+	SourceLabels map[string]string `json:"sourceLabels,omitempty"`
+
+	// Gateways for matching
+	Gateways []string `json:"gateways,omitempty"`
+
+	// Query parameters for matching.
+	QueryParams map[string]StringMatch `json:"query_params,omitempty"`
+
+	// Flag to specify whether the URI matching should be case-insensitive.
+	IgnoreURICase bool `json:"ignore_uri_case,omitempty"`
+}
+
+type StringMatch struct {
+	Exact  *string `json:"exact,omitempty"`
+	Prefix *string `json:"prefix,omitempty"`
+	Regex  *string `json:"regex,omitempty"`
 }
 
 type Iter8ExperimentMetrics map[string]struct {
@@ -128,8 +210,6 @@ type Iter8Experiment interface {
 	SetSpec(Iter8ExperimentSpec)
 	GetStatus() Iter8ExperimentStatus
 	SetStatus(Iter8ExperimentStatus)
-	GetMetrics() Iter8ExperimentMetrics
-	SetMetrics(Iter8ExperimentMetrics)
 	GetTypeMeta() meta_v1.TypeMeta
 	SetTypeMeta(meta_v1.TypeMeta)
 	GetObjectMeta() meta_v1.ObjectMeta
@@ -144,11 +224,11 @@ type Iter8ExperimentList interface {
 
 type Iter8ExperimentObject struct {
 	meta_v1.TypeMeta   `json:",inline"`
-	meta_v1.ObjectMeta `json:"metadata"`
-	Spec               Iter8ExperimentSpec    `json:"spec"`
-	Status             Iter8ExperimentStatus  `json:"status"`
-	Metrics            Iter8ExperimentMetrics `json:"metrics"`
-	Action             Iter8ExperimentAction  `json:"action,omitempty"`
+	meta_v1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec Iter8ExperimentSpec `json:"spec"`
+	// +optional
+	Status Iter8ExperimentStatus `json:"status,omitempty"`
 }
 
 type Iter8ExperimentObjectList struct {
@@ -174,15 +254,6 @@ func (in *Iter8ExperimentObject) GetStatus() Iter8ExperimentStatus {
 // SetStatus for a wrapper
 func (in *Iter8ExperimentObject) SetStatus(status Iter8ExperimentStatus) {
 	in.Status = status
-}
-
-func (in *Iter8ExperimentObject) GetMetrics() Iter8ExperimentMetrics {
-	return in.Metrics
-}
-
-// SetSpec for a wrapper
-func (in *Iter8ExperimentObject) SetMetrics(metrics Iter8ExperimentMetrics) {
-	in.Metrics = metrics
 }
 
 // GetTypeMeta from a wrapper
@@ -221,7 +292,6 @@ func (in *Iter8ExperimentObject) DeepCopyInto(out *Iter8ExperimentObject) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
 	out.Status = in.Status
-	out.Metrics = in.Metrics
 }
 
 // DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GenericIstioObject.
@@ -281,14 +351,6 @@ func (in *Iter8ExperimentObjectList) DeepCopyObject() runtime.Object {
 	return nil
 }
 
-// Metric structure of cm/iter8_metric
-type Iter8AnalyticMetric struct {
-	Name               string `yaml:"name"`
-	IsCounter          bool   `yaml:"is_counter"`
-	AbsentValue        string `yaml:"absent_value"`
-	SampleSizeTemplate string `yaml:"sample_size_query_template"`
-}
-
 type Iter8ClientInterface interface {
 	CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error)
 	UpdateIter8Experiment(namespace string, name string, json string) (Iter8Experiment, error)
@@ -296,7 +358,7 @@ type Iter8ClientInterface interface {
 	GetIter8Experiment(namespace string, name string) (Iter8Experiment, error)
 	GetIter8Experiments(namespace string) ([]Iter8Experiment, error)
 	IsIter8Api() bool
-	Iter8ConfigMap() ([]string, error)
+	Iter8MetricMap() ([]string, error)
 }
 
 func (in *K8SClient) IsIter8Api() bool {
@@ -312,15 +374,15 @@ func (in *K8SClient) IsIter8Api() bool {
 	return *in.isIter8Api
 }
 
-func (in *K8SClient) Iter8ConfigMap() ([]string, error) {
+func (in *K8SClient) Iter8MetricMap() ([]string, error) {
 	conf := config.Get()
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
 	err := in.k8s.CoreV1().RESTClient().Get().Namespace(conf.Extensions.Iter8.Namespace).Resource("configmaps").
 		Name(Iter8ConfigMap).Do().Into(result)
 	if err == nil {
-		metrics := []Iter8AnalyticMetric{}
-		err = yaml.Unmarshal([]byte(result.Data["metrics"]), &metrics)
+		metrics := []RatioMetric{}
+		err = yaml.Unmarshal([]byte(result.Data["ratio_metrics.yaml"]), &metrics)
 		if err == nil {
 			for _, m := range metrics {
 				mnames = append(mnames, m.Name)

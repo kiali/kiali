@@ -51,25 +51,56 @@ func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 		handleErrorResponse(w, err)
 		return
 	}
-	workloadList, err := business.Workload.GetWorkloadList(namespace)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
-	}
-	workloads := workloadList.Workloads
-	for _, w := range workloads {
-		conf := config.Get()
-		if w.Name == experiment.ExperimentItem.Baseline {
-			experiment.ExperimentItem.BaselineVersion = w.Labels[conf.IstioLabels.VersionLabelName]
-		} else if w.Name == experiment.ExperimentItem.Candidate {
-			experiment.ExperimentItem.CandidateVersion = w.Labels[conf.IstioLabels.VersionLabelName]
+	if experiment.ExperimentItem.Kind == "Deployment" {
+		workloadList, err := business.Workload.GetWorkloadList(namespace)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		for _, w := range workloadList.Workloads {
+			conf := config.Get()
+			if w.Name == experiment.ExperimentItem.Baseline.Name {
+				experiment.ExperimentItem.Baseline.Version = w.Labels[conf.IstioLabels.VersionLabelName]
+			} else {
+				for _, c := range experiment.ExperimentItem.Candidates {
+					if w.Name == c.Name {
+						c.Version = w.Labels[conf.IstioLabels.VersionLabelName]
+					}
+				}
+
+			}
+		}
+	} else {
+		serviceList, err := business.Svc.GetServiceList(namespace)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		for _, s := range serviceList.Services {
+			conf := config.Get()
+			if s.Name == experiment.ExperimentItem.Baseline.Name {
+				experiment.ExperimentItem.Baseline.Version = s.Labels[conf.IstioLabels.VersionLabelName]
+			} else {
+				for _, c := range experiment.ExperimentItem.Candidates {
+					if s.Name == c.Name {
+						c.Version = s.Labels[conf.IstioLabels.VersionLabelName]
+					}
+				}
+
+			}
 		}
 	}
+
 	RespondWithJSON(w, http.StatusOK, experiment)
 }
 
 func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
+	jsonBody := false
 	params := mux.Vars(r)
+	queryParams := r.URL.Query()
+	if json := queryParams.Get("type"); json != "" {
+		jsonBody = true
+	}
 	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
@@ -81,7 +112,7 @@ func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	experiment, err := business.Iter8.CreateIter8Experiment(namespace, body)
+	experiment, err := business.Iter8.CreateIter8Experiment(namespace, body, jsonBody)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

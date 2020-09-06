@@ -32,7 +32,7 @@ func (o *K8SClientMock) DeleteIter8Experiment(namespace string, name string) err
 	return args.Error(0)
 }
 
-func (o *K8SClientMock) Iter8ConfigMap() ([]string, error) {
+func (o *K8SClientMock) Iter8MetricMap() ([]string, error) {
 	args := o.Called()
 	return args.Get(0).([]string), args.Error(1)
 }
