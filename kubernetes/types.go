@@ -488,6 +488,8 @@ type IstioObject interface {
 	runtime.Object
 	GetSpec() map[string]interface{}
 	SetSpec(map[string]interface{})
+	GetStatus() map[string]interface{}
+	SetStatus(map[string]interface{})
 	GetTypeMeta() meta_v1.TypeMeta
 	SetTypeMeta(meta_v1.TypeMeta)
 	GetObjectMeta() meta_v1.ObjectMeta
@@ -560,6 +562,7 @@ type GenericIstioObject struct {
 	meta_v1.TypeMeta   `json:",inline" yaml:",inline"`
 	meta_v1.ObjectMeta `json:"metadata" yaml:"metadata"`
 	Spec               map[string]interface{} `json:"spec"`
+	Status             map[string]interface{} `json:"status"`
 }
 
 // GenericIstioObjectList is the generic Kubernetes API list wrapper
@@ -597,6 +600,16 @@ func (in *GenericIstioObject) GetObjectMeta() meta_v1.ObjectMeta {
 // SetObjectMeta for a wrapper
 func (in *GenericIstioObject) SetObjectMeta(metadata meta_v1.ObjectMeta) {
 	in.ObjectMeta = metadata
+}
+
+// GetStatus from a wrapper
+func (in *GenericIstioObject) GetStatus() map[string]interface{} {
+	return in.Status
+}
+
+// SetStatus for a wrapper
+func (in *GenericIstioObject) SetStatus(status map[string]interface{}) {
+	in.Status = status
 }
 
 func (in *GenericIstioObject) HasWorkloadSelectorLabels() bool {

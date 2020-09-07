@@ -26,6 +26,7 @@ type VirtualServices struct {
 type VirtualService struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Status map[string]interface{} `json:"status,omitempty"`
 	Spec     struct {
 		Hosts    interface{} `json:"hosts,omitempty"`
 		Gateways interface{} `json:"gateways,omitempty"`
@@ -48,6 +49,7 @@ func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject
 func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.TypeMeta = virtualService.GetTypeMeta()
 	vService.Metadata = virtualService.GetObjectMeta()
+	vService.Status = virtualService.GetStatus()
 	vService.Spec.Hosts = virtualService.GetSpec()["hosts"]
 	vService.Spec.Gateways = virtualService.GetSpec()["gateways"]
 	vService.Spec.Http = virtualService.GetSpec()["http"]
