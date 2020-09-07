@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type AttributeManifests []AttributeManifest
 //
 // swagger:model attributeManifest
 type AttributeManifest struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Revision   interface{} `json:"revision"`
 		Name       interface{} `json:"name"`
 		Attributes interface{} `json:"attributes"`
@@ -39,8 +36,7 @@ func (ams *AttributeManifests) Parse(attributeManifests []kubernetes.IstioObject
 }
 
 func (am *AttributeManifest) Parse(attributeManifest kubernetes.IstioObject) {
-	am.TypeMeta = attributeManifest.GetTypeMeta()
-	am.Metadata = attributeManifest.GetObjectMeta()
+	am.IstioBase.Parse(attributeManifest)
 	am.Spec.Revision = attributeManifest.GetSpec()["revision"]
 	am.Spec.Name = attributeManifest.GetSpec()["name"]
 	am.Spec.Attributes = attributeManifest.GetSpec()["attributes"]

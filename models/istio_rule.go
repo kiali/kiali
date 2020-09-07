@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -26,9 +24,8 @@ type IstioRules []IstioRule
 //
 // swagger:model istioRule
 type IstioRule struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Match   interface{} `json:"match"`
 		Actions interface{} `json:"actions"`
 	} `json:"spec"`
@@ -49,9 +46,8 @@ type IstioAdapters []IstioAdapter
 //
 // swagger:model istioAdapter
 type IstioAdapter struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     interface{}        `json:"spec"`
+	IstioBase
+	Spec interface{} `json:"spec"`
 }
 
 // IstioTemplates istioTemplates
@@ -69,9 +65,8 @@ type IstioTemplates []IstioTemplate
 //
 // swagger:model istioTemplate
 type IstioTemplate struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     interface{}        `json:"spec"`
+	IstioBase
+	Spec interface{} `json:"spec"`
 }
 
 // IstioHandlers istioHandlers
@@ -89,9 +84,8 @@ type IstioHandlers []IstioHandler
 //
 // swagger:model istioHandler
 type IstioHandler struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     interface{}        `json:"spec"`
+	IstioBase
+	Spec interface{} `json:"spec"`
 }
 
 // IstioInstances istioInstances
@@ -109,9 +103,8 @@ type IstioInstances []IstioInstance
 //
 // swagger:model istioInstance
 type IstioInstance struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     interface{}        `json:"spec"`
+	IstioBase
+	Spec interface{} `json:"spec"`
 }
 
 func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
@@ -124,8 +117,7 @@ func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
 
 func CastIstioRule(rule kubernetes.IstioObject) IstioRule {
 	istioRule := IstioRule{}
-	istioRule.TypeMeta = rule.GetTypeMeta()
-	istioRule.Metadata = rule.GetObjectMeta()
+	istioRule.IstioBase.Parse(rule)
 	istioRule.Spec.Match = rule.GetSpec()["match"]
 	istioRule.Spec.Actions = rule.GetSpec()["actions"]
 	return istioRule
@@ -141,8 +133,7 @@ func CastIstioAdaptersCollection(adapters []kubernetes.IstioObject) IstioAdapter
 
 func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
 	istioAdapter := IstioAdapter{}
-	istioAdapter.TypeMeta = adapter.GetTypeMeta()
-	istioAdapter.Metadata = adapter.GetObjectMeta()
+	istioAdapter.IstioBase.Parse(adapter)
 	istioAdapter.Spec = adapter.GetSpec()
 	return istioAdapter
 }
@@ -157,8 +148,7 @@ func CastIstioTemplatesCollection(templates []kubernetes.IstioObject) IstioTempl
 
 func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
 	istioTemplate := IstioTemplate{}
-	istioTemplate.TypeMeta = template.GetTypeMeta()
-	istioTemplate.Metadata = template.GetObjectMeta()
+	istioTemplate.IstioBase.Parse(template)
 	istioTemplate.Spec = template.GetSpec()
 	return istioTemplate
 }
@@ -173,8 +163,7 @@ func CastIstioHandlersCollection(handlers []kubernetes.IstioObject) IstioHandler
 
 func CastIstioHandler(handler kubernetes.IstioObject) IstioHandler {
 	istioHandler := IstioHandler{}
-	istioHandler.TypeMeta = handler.GetTypeMeta()
-	istioHandler.Metadata = handler.GetObjectMeta()
+	istioHandler.IstioBase.Parse(handler)
 	istioHandler.Spec = handler.GetSpec()
 	return istioHandler
 }
@@ -189,8 +178,7 @@ func CastIstioInstancesCollection(instances []kubernetes.IstioObject) IstioInsta
 
 func CastIstioInstance(instance kubernetes.IstioObject) IstioInstance {
 	istioInstance := IstioInstance{}
-	istioInstance.TypeMeta = instance.GetTypeMeta()
-	istioInstance.Metadata = instance.GetObjectMeta()
+	istioInstance.IstioBase.Parse(instance)
 	istioInstance.Spec = instance.GetSpec()
 	return istioInstance
 }

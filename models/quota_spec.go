@@ -1,16 +1,13 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type QuotaSpecs []QuotaSpec
 type QuotaSpec struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Rules interface{} `json:"rules"`
 	} `json:"spec"`
 }
@@ -24,7 +21,6 @@ func (qss *QuotaSpecs) Parse(quotaSpecs []kubernetes.IstioObject) {
 }
 
 func (qs *QuotaSpec) Parse(quotaSpec kubernetes.IstioObject) {
-	qs.TypeMeta = quotaSpec.GetTypeMeta()
-	qs.Metadata = quotaSpec.GetObjectMeta()
+	qs.IstioBase.Parse(quotaSpec)
 	qs.Spec.Rules = quotaSpec.GetSpec()["rules"]
 }

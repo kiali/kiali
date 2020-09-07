@@ -1,16 +1,11 @@
 package models
 
-import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kiali/kiali/kubernetes"
-)
+import "github.com/kiali/kiali/kubernetes"
 
 type Gateways []Gateway
 type Gateway struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Servers  interface{} `json:"servers"`
 		Selector interface{} `json:"selector"`
 	} `json:"spec"`
@@ -25,8 +20,7 @@ func (gws *Gateways) Parse(gateways []kubernetes.IstioObject) {
 }
 
 func (gw *Gateway) Parse(gateway kubernetes.IstioObject) {
-	gw.TypeMeta = gateway.GetTypeMeta()
-	gw.Metadata = gateway.GetObjectMeta()
+	gw.IstioBase.Parse(gateway)
 	gw.Spec.Servers = gateway.GetSpec()["servers"]
 	gw.Spec.Selector = gateway.GetSpec()["selector"]
 }

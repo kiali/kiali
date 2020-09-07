@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type HttpApiSpecBindings []HttpApiSpecBinding
 //
 // swagger:model httpApiSpecBinding
 type HttpApiSpecBinding struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Services interface{} `json:"services"`
 		ApiSpecs interface{} `json:"apiSpecs"`
 	} `json:"spec"`
@@ -38,8 +35,7 @@ func (has *HttpApiSpecBindings) Parse(httpApiSpecBindings []kubernetes.IstioObje
 }
 
 func (ha *HttpApiSpecBinding) Parse(httpApiSpecBinding kubernetes.IstioObject) {
-	ha.TypeMeta = httpApiSpecBinding.GetTypeMeta()
-	ha.Metadata = httpApiSpecBinding.GetObjectMeta()
+	ha.IstioBase.Parse(httpApiSpecBinding)
 	ha.Spec.Services = httpApiSpecBinding.GetSpec()["services"]
 	ha.Spec.ApiSpecs = httpApiSpecBinding.GetSpec()["apiSpecs"]
 }

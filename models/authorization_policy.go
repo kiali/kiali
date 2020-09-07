@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type AuthorizationPolicies []AuthorizationPolicy
 //
 // swagger:model authorizationPolicy
 type AuthorizationPolicy struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Selector interface{} `json:"selector"`
 		Rules    interface{} `json:"rules"`
 		Action   interface{} `json:"action"`
@@ -39,8 +36,7 @@ func (aps *AuthorizationPolicies) Parse(authorizationPolicies []kubernetes.Istio
 }
 
 func (ap *AuthorizationPolicy) Parse(authorizationPolicy kubernetes.IstioObject) {
-	ap.TypeMeta = authorizationPolicy.GetTypeMeta()
-	ap.Metadata = authorizationPolicy.GetObjectMeta()
+	ap.IstioBase.Parse(authorizationPolicy)
 	ap.Spec.Selector = authorizationPolicy.GetSpec()["selector"]
 	ap.Spec.Rules = authorizationPolicy.GetSpec()["rules"]
 	ap.Spec.Action = authorizationPolicy.GetSpec()["action"]

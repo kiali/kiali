@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type RequestAuthentications []RequestAuthentication
 //
 // swagger:model requestAuthentication
 type RequestAuthentication struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Selector interface{} `json:"selector"`
 		JwtRules interface{} `json:"jwtRules"`
 	} `json:"spec"`
@@ -38,8 +35,7 @@ func (ras *RequestAuthentications) Parse(requestAuthentications []kubernetes.Ist
 }
 
 func (ra *RequestAuthentication) Parse(requestAuthentication kubernetes.IstioObject) {
-	ra.TypeMeta = requestAuthentication.GetTypeMeta()
-	ra.Metadata = requestAuthentication.GetObjectMeta()
+	ra.IstioBase.Parse(requestAuthentication)
 	ra.Spec.Selector = requestAuthentication.GetSpec()["selector"]
 	ra.Spec.JwtRules = requestAuthentication.GetSpec()["jwtRules"]
 }

@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -17,9 +15,8 @@ type MeshPolicySpec struct {
 
 type MeshPolicies []MeshPolicy
 type MeshPolicy struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     MeshPolicySpec     `json:"spec"`
+	IstioBase
+	Spec MeshPolicySpec `json:"spec"`
 }
 
 func (mps *MeshPolicies) Parse(meshPolicies []kubernetes.IstioObject) {
@@ -31,8 +28,7 @@ func (mps *MeshPolicies) Parse(meshPolicies []kubernetes.IstioObject) {
 }
 
 func (mp *MeshPolicy) Parse(meshPolicy kubernetes.IstioObject) {
-	mp.TypeMeta = meshPolicy.GetTypeMeta()
-	mp.Metadata = meshPolicy.GetObjectMeta()
+	mp.IstioBase.Parse(meshPolicy)
 	mp.Spec.Targets = meshPolicy.GetSpec()["targets"]
 	mp.Spec.Peers = meshPolicy.GetSpec()["peers"]
 	mp.Spec.PeerIsOptional = meshPolicy.GetSpec()["peersIsOptional"]
@@ -46,9 +42,8 @@ func (mp *MeshPolicy) Parse(meshPolicy kubernetes.IstioObject) {
 
 type ServiceMeshPolicies []ServiceMeshPolicy
 type ServiceMeshPolicy struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     MeshPolicySpec     `json:"spec"`
+	IstioBase
+	Spec MeshPolicySpec `json:"spec"`
 }
 
 func (mps *ServiceMeshPolicies) Parse(smPolicies []kubernetes.IstioObject) {
@@ -60,8 +55,7 @@ func (mps *ServiceMeshPolicies) Parse(smPolicies []kubernetes.IstioObject) {
 }
 
 func (mp *ServiceMeshPolicy) Parse(smPolicy kubernetes.IstioObject) {
-	mp.TypeMeta = smPolicy.GetTypeMeta()
-	mp.Metadata = smPolicy.GetObjectMeta()
+	mp.IstioBase.Parse(smPolicy)
 	mp.Spec.Targets = smPolicy.GetSpec()["targets"]
 	mp.Spec.Peers = smPolicy.GetSpec()["peers"]
 	mp.Spec.PeerIsOptional = smPolicy.GetSpec()["peersIsOptional"]
