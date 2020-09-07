@@ -80,6 +80,28 @@ func ServiceTraces(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, traces)
 }
 
+func WorkloadTraces(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "WorkloadTraces initialization error: "+err.Error())
+		return
+	}
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	workload := params["workload"]
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	traces, err := business.Jaeger.GetWorkloadTraces(namespace, workload, q)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, traces)
+}
+
 func ErrorTraces(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {

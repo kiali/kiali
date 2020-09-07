@@ -1213,3 +1213,15 @@ func controllerPriority(type1, type2 string) string {
 		return type2
 	}
 }
+
+// GetWorkloadAppName returns the "Application" name (app label) that relates to a workload
+func (in *WorkloadService) GetWorkloadAppName(namespace, workload string) (string, error) {
+	wkd, err := fetchWorkload(in.businessLayer, namespace, workload, "")
+	if err != nil {
+		return "", err
+	}
+
+	appLabelName := config.Get().IstioLabels.AppLabelName
+	app := wkd.Labels[appLabelName]
+	return app, nil
+}

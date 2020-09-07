@@ -22,7 +22,7 @@ func getAppTraces(client http.Client, endpoint *url.URL, namespace, app string, 
 	prepareQuery(endpoint, jaegerServiceName, query)
 	r, err := queryTraces(client, endpoint)
 	if r != nil {
-		r.App = jaegerServiceName
+		r.JaegerServiceName = jaegerServiceName
 	}
 	return r, err
 }
@@ -45,6 +45,39 @@ func getServiceTraces(client http.Client, endpoint *url.URL, namespace, app, ser
 		r.Data = traces
 	}
 	return r, err
+}
+
+func getWorkloadTraces(client http.Client, endpoint *url.URL, namespace, app, workload string, query models.TracingQuery) (*JaegerResponse, error) {
+	r, err := getAppTraces(client, endpoint, namespace, app, query)
+	// Filter out app traces based on the node_id tag, that contains workload information.
+	if r != nil && err == nil {
+		traces := []jaegerModels.Trace{}
+		for _, trace := range r.Data {
+			if matchesWorkload(trace, namespace, workload) {
+				traces = append(traces, trace)
+			}
+		}
+		r.Data = traces
+	}
+	return r, err
+}
+
+func matchesWorkload(trace jaegerModels.Trace, namespace, workload string) bool {
+	// For envoy traces, with a workload named "ai-locals", node_id is like:
+	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
+	for _, span := range trace.Spans {
+		for _, tag := range span.Tags {
+			if tag.Key == "node_id" {
+				if v, ok := tag.Value.(string); ok {
+					parts := strings.Split(v, "~")
+					if len(parts) >= 3 && strings.HasPrefix(parts[2], workload) && strings.HasSuffix(parts[2], namespace) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
