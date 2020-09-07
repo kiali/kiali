@@ -136,14 +136,14 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       .catch(error => AlertUtils.addError('Could not fetch trace.', error));
   };
 
-  private onTracesUpdated = (traces: JaegerTrace[], app: string) => {
+  private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
     const durations = this.getIntervalTraceDurations(traces);
     const newState: Partial<TracesState> = {
       traces: traces,
       traceIntervalDurations: durations
     };
-    if (this.state.targetApp === undefined && app) {
-      newState.targetApp = app;
+    if (this.state.targetApp === undefined && jaegerServiceName) {
+      newState.targetApp = jaegerServiceName;
     }
     this.setState(newState as TracesState);
   };

@@ -91,13 +91,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   };
 
   private runtimeTabs() {
-    let dynamicTabsCount: number = 0;
+    let tabOffset = 0;
 
     const tabs: JSX.Element[] = [];
     if (this.state.app) {
       this.state.app.runtimes.forEach(runtime => {
         runtime.dashboardRefs.forEach(dashboard => {
-          const tabKey = dynamicTabsCount + nextTabIndex;
+          const tabKey = tabOffset + nextTabIndex;
           paramToTab['cd-' + dashboard.template] = tabKey;
 
           const tab = (
@@ -110,7 +110,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             </Tab>
           );
           tabs.push(tab);
-          dynamicTabsCount = dynamicTabsCount + 1;
+          tabOffset++;
         });
       });
     }

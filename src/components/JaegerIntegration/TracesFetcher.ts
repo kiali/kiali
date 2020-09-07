@@ -20,7 +20,7 @@ export class TracesFetcher {
   private lastFetchMicros: number | undefined = undefined;
 
   constructor(
-    private onChange: (traces: JaegerTrace[], app: string) => void,
+    private onChange: (traces: JaegerTrace[], jaegerServiceName: string) => void,
     private onErrors: (err: JaegerError[]) => void
   ) {}
 
@@ -61,7 +61,7 @@ export class TracesFetcher {
         if (traces.length > 0) {
           this.lastFetchMicros = Math.max(...traces.map(s => s.startTime));
         }
-        this.onChange(this.filterTraces(opts.intervalDuration), response.data.app);
+        this.onChange(this.filterTraces(opts.intervalDuration), response.data.jaegerServiceName);
         if (response.data.errors && response.data.errors.length > 0) {
           this.onErrors(response.data.errors);
         }

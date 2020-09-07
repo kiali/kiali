@@ -18,6 +18,8 @@ import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import TracesComponent from 'components/JaegerIntegration/TracesComponent';
+import { JaegerInfo } from 'types/JaegerInfo';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -26,6 +28,7 @@ type WorkloadDetailsState = {
 
 type WorkloadDetailsPageProps = RouteComponentProps<WorkloadId> & {
   duration: DurationInSeconds;
+  jaegerInfo?: JaegerInfo;
 };
 
 const tabName = 'tab';
@@ -36,8 +39,10 @@ const paramToTab: { [key: string]: number } = {
   traffic: 1,
   logs: 2,
   in_metrics: 3,
-  out_metrics: 4
+  out_metrics: 4,
+  traces: 5
 };
+const nextTabIndex = 6;
 
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
@@ -137,11 +142,26 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       </Tab>
     );
 
-    return [overTab, trafficTab, logTab, inTab, outTab];
+    const tabsArray: JSX.Element[] = [overTab, trafficTab, logTab, inTab, outTab];
+
+    if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
+      tabsArray.push(
+        <Tab eventKey={5} title="Traces" key="Traces">
+          <TracesComponent
+            namespace={this.props.match.params.namespace}
+            target={this.props.match.params.workload}
+            targetKind={'workload'}
+            showErrors={false}
+            duration={this.props.duration}
+          />
+        </Tab>
+      );
+    }
+
+    return tabsArray;
   }
 
   private runtimeTabs() {
-    const staticTabsCount = 5;
     const tabs: JSX.Element[] = [];
 
     if (this.state.workload) {
@@ -149,10 +169,10 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       const version = this.state.workload.labels[serverConfig.istioLabels.versionLabelName];
       const isLabeled = app && version;
       if (isLabeled) {
-        let dynamicTabsCount: number = 0;
+        let tabOffset = 0;
         this.state.workload.runtimes.forEach(runtime => {
           runtime.dashboardRefs.forEach(dashboard => {
-            const tabKey = dynamicTabsCount + staticTabsCount;
+            const tabKey = tabOffset + nextTabIndex;
             paramToTab[dashboard.template] = tabKey;
             const tab = (
               <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
@@ -165,7 +185,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               </Tab>
             );
             tabs.push(tab);
-            dynamicTabsCount = dynamicTabsCount + 1;
+            tabOffset++;
           });
         });
       }
@@ -210,7 +230,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state)
+  duration: durationSelector(state),
+  jaegerInfo: state.jaegerState.info
 });
 
 const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);
