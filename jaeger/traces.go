@@ -6,90 +6,23 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 	"time"
-
-	jaegerModels "github.com/jaegertracing/jaeger/model/json"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
-func getAppTraces(client http.Client, endpoint *url.URL, namespace, app string, query models.TracingQuery) (response *JaegerResponse, err error) {
-	endpoint.Path = path.Join(endpoint.Path, "/api/traces")
+func getAppTraces(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {
+	url := *baseURL
+	url.Path = path.Join(url.Path, "/api/traces")
 	jaegerServiceName := buildJaegerServiceName(namespace, app)
-	prepareQuery(endpoint, jaegerServiceName, query)
-	r, err := queryTraces(client, endpoint)
+	prepareQuery(&url, jaegerServiceName, q)
+	r, err := queryTraces(client, &url)
 	if r != nil {
 		r.JaegerServiceName = jaegerServiceName
 	}
 	return r, err
-}
-
-func getServiceTraces(client http.Client, endpoint *url.URL, namespace, app, service string, query models.TracingQuery) (*JaegerResponse, error) {
-	r, err := getAppTraces(client, endpoint, namespace, app, query)
-	// Filter out app traces based on operation name.
-	// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
-	svcNs := service + "." + namespace
-	if r != nil && err == nil {
-		traces := []jaegerModels.Trace{}
-		for _, trace := range r.Data {
-			for _, span := range trace.Spans {
-				if strings.HasPrefix(span.OperationName, svcNs) {
-					traces = append(traces, trace)
-					break
-				}
-			}
-		}
-		r.Data = traces
-	}
-	return r, err
-}
-
-func getWorkloadTraces(client http.Client, endpoint *url.URL, namespace, app, workload string, query models.TracingQuery) (*JaegerResponse, error) {
-	r, err := getAppTraces(client, endpoint, namespace, app, query)
-	// Filter out app traces based on the node_id tag, that contains workload information.
-	if r != nil && err == nil {
-		traces := []jaegerModels.Trace{}
-		for _, trace := range r.Data {
-			if matchesWorkload(trace, namespace, workload) {
-				traces = append(traces, trace)
-			}
-		}
-		r.Data = traces
-	}
-	return r, err
-}
-
-func matchesWorkload(trace jaegerModels.Trace, namespace, workload string) bool {
-	// For envoy traces, with a workload named "ai-locals", node_id is like:
-	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
-	for _, span := range trace.Spans {
-		for _, tag := range span.Tags {
-			if tag.Key == "node_id" {
-				if v, ok := tag.Value.(string); ok {
-					parts := strings.Split(v, "~")
-					if len(parts) >= 3 && strings.HasPrefix(parts[2], workload) && strings.HasSuffix(parts[2], namespace) {
-						return true
-					}
-				}
-			}
-		}
-		if process, ok := trace.Processes[span.ProcessID]; ok {
-			// Tag not found => try with 'hostname' in process' tags
-			for _, tag := range process.Tags {
-				if tag.Key == "hostname" {
-					if v, ok := tag.Value.(string); ok {
-						if strings.HasPrefix(v, workload) {
-							return true
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
 }
 
 func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {

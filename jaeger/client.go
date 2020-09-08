@@ -14,10 +14,7 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetSpans(ns, app string, query models.TracingQuery) ([]Span, error)
 	GetAppTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error)
-	GetServiceTraces(ns, app, service string, query models.TracingQuery) (traces *JaegerResponse, err error)
-	GetWorkloadTraces(ns, app, workload string, query models.TracingQuery) (traces *JaegerResponse, err error)
 	GetTraceDetail(traceId string) (*JaegerSingleTrace, error)
 	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
 }
@@ -25,8 +22,8 @@ type ClientInterface interface {
 // Client for Jaeger API.
 type Client struct {
 	ClientInterface
-	client   http.Client
-	endpoint *url.URL
+	client  http.Client
+	baseURL *url.URL
 }
 
 func NewClient(token string) (*Client, error) {
@@ -54,36 +51,21 @@ func NewClient(token string) (*Client, error) {
 			return nil, err
 		}
 		client := http.Client{Transport: transport, Timeout: timeout}
-		return &Client{client: client, endpoint: u}, nil
+		return &Client{client: client, baseURL: u}, nil
 	}
-}
-
-// GetSpans fetches traces of an app and extract related spans
-func (in *Client) GetSpans(ns, app string, query models.TracingQuery) ([]Span, error) {
-	return getSpans(in.client, in.endpoint, ns, app, query)
 }
 
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(ns, app string, query models.TracingQuery) (traces *JaegerResponse, err error) {
-	return getAppTraces(in.client, in.endpoint, ns, app, query)
-}
-
-// GetServiceTraces fetches traces of a service
-func (in *Client) GetServiceTraces(ns, app, service string, query models.TracingQuery) (traces *JaegerResponse, err error) {
-	return getServiceTraces(in.client, in.endpoint, ns, app, service, query)
-}
-
-// GetWorkloadTraces fetches traces of a workload
-func (in *Client) GetWorkloadTraces(ns, app, workload string, query models.TracingQuery) (traces *JaegerResponse, err error) {
-	return getWorkloadTraces(in.client, in.endpoint, ns, app, workload, query)
+	return getAppTraces(in.client, in.baseURL, ns, app, query)
 }
 
 // GetTraceDetail fetches a specific trace from its ID
 func (in *Client) GetTraceDetail(traceId string) (*JaegerSingleTrace, error) {
-	return getTraceDetail(in.client, in.endpoint, traceId)
+	return getTraceDetail(in.client, in.baseURL, traceId)
 }
 
 // GetErrorTraces fetches number of traces in error for the given app
 func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error) {
-	return getErrorTraces(in.client, in.endpoint, ns, app, duration)
+	return getErrorTraces(in.client, in.baseURL, ns, app, duration)
 }

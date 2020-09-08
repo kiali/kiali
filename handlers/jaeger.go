@@ -147,7 +147,7 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, trace)
 }
 
-// AppSpans is the API handler to fetch Jaeger spans of a specific service
+// AppSpans is the API handler to fetch Jaeger spans of a specific app
 func AppSpans(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
@@ -164,7 +164,59 @@ func AppSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spans, err := business.Jaeger.GetJaegerSpans(namespace, app, q)
+	spans, err := business.Jaeger.GetAppSpans(namespace, app, q)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, spans)
+}
+
+// ServiceSpans is the API handler to fetch Jaeger spans of a specific service
+func ServiceSpans(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	spans, err := business.Jaeger.GetServiceSpans(namespace, service, q)
+	if err != nil {
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, spans)
+}
+
+// WorkloadSpans is the API handler to fetch Jaeger spans of a specific workload
+func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	workload := params["workload"]
+	q, err := readQuery(r.URL.Query())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	spans, err := business.Jaeger.GetWorkloadSpans(namespace, workload, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
