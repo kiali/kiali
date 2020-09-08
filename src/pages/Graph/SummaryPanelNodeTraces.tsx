@@ -84,7 +84,7 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     if (
-      prevProps.queryTime !== this.props.queryTime ||
+      (this.state.useGraphRefresh && prevProps.queryTime !== this.props.queryTime) ||
       prevProps.nodeData.namespace !== this.props.nodeData.namespace ||
       prevProps.nodeData.app !== this.props.nodeData.app ||
       prevProps.nodeData.workload !== this.props.nodeData.workload ||
