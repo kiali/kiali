@@ -3746,6 +3746,13 @@
         },
         "spec": {
           "$ref": "#/definitions/ClusterRbacConfigSpec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3997,6 +4004,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4817,6 +4831,13 @@
         },
         "spec": {
           "$ref": "#/definitions/MeshPolicySpec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5327,6 +5348,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5426,6 +5454,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5459,6 +5494,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5510,6 +5552,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5837,6 +5886,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5895,6 +5951,13 @@
         },
         "spec": {
           "$ref": "#/definitions/MeshPolicySpec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5917,6 +5980,13 @@
         },
         "spec": {
           "$ref": "#/definitions/ClusterRbacConfigSpec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6007,6 +6077,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6040,6 +6117,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6110,6 +6194,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6771,6 +6862,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "AttributeManifest",
@@ -6831,6 +6929,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "AuthorizationPolicy",
@@ -6875,6 +6980,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "DestinationRule",
@@ -6930,6 +7042,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "EnvoyFilter",
@@ -7010,6 +7129,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "HttpApiSpec",
@@ -7046,6 +7172,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "HttpApiSpecBinding",
@@ -7092,6 +7225,13 @@
         "spec": {
           "type": "object",
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "IstioAdapter",
@@ -7128,6 +7268,13 @@
         "spec": {
           "type": "object",
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "IstioHandler",
@@ -7164,6 +7311,13 @@
         "spec": {
           "type": "object",
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "IstioInstance",
@@ -7210,6 +7364,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "IstioRule",
@@ -7246,6 +7407,13 @@
         "spec": {
           "type": "object",
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "IstioTemplate",
@@ -7321,6 +7489,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "PeerAuthentication",
@@ -7367,6 +7542,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "RequestAuthentication",
@@ -7429,6 +7611,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "VirtualService",
@@ -7514,6 +7703,13 @@
             }
           },
           "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
         }
       },
       "x-go-name": "WorkloadEntry",
