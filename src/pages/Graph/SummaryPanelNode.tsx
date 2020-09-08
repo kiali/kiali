@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
-import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData, DestService } from '../../types/Graph';
 import {
   shouldRefreshData,
   updateHealth,
@@ -79,7 +79,6 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderTraces =
-      nodeType === NodeType.SERVICE &&
       !nodeData.isInaccessible &&
       this.props.jaegerState.info &&
       this.props.jaegerState.info.enabled &&
@@ -157,11 +156,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             </div>
           </Tab>
           <Tab style={summaryFont} title="Traces" eventKey={1}>
-            <SummaryPanelNodeTraces
-              namespace={nodeData.namespace}
-              app={nodeData.app || nodeData.service!}
-              queryTime={this.props.queryTime}
-            />
+            <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime} />
           </Tab>
         </SimpleTabs>
       </div>
@@ -207,7 +202,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
   };
 
   private renderDestServices = (data: DecoratedGraphNodeData) => {
-    const destServices = data.destServices;
+    const destServices: DestService[] | undefined = data.destServices;
 
     const entries: any[] = [];
     if (!destServices) {

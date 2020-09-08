@@ -42,10 +42,21 @@ export const getTimeRangeMicros = () => {
 };
 
 const workloadFromNodeRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+.([a-z0-9-]+)/;
+const workloadFromHostnameRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+/;
 type WorkloadAndNamespace = { workload: string; namespace: string };
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
   if (!nodeKV) {
+    // Tag not found => try with 'hostname' in process' tags
+    const hostnameKV = span.process.tags.find(tag => tag.key === 'hostname');
+    if (hostnameKV) {
+      const result = workloadFromHostnameRegex.exec(hostnameKV.value);
+      if (result && result.length > 1) {
+        // As the namespace is not provided here, assume same as service's
+        const split = span.process.serviceName.split('.');
+        return { workload: result[1], namespace: split.length > 1 ? split[1] : '' };
+      }
+    }
     return undefined;
   }
   // Example of node value:
@@ -63,6 +74,22 @@ export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefin
     const ref = span.references.find(s => s.refType === 'CHILD_OF' || s.refType === 'FOLLOWS_FROM');
     if (ref && ref.span) {
       return getWorkloadFromSpan(ref.span);
+    }
+  }
+  return undefined;
+};
+
+type AppAndNamespace = { app: string; namespace: string };
+export const getAppFromSpan = (span: Span): AppAndNamespace | undefined => {
+  const split = span.process.serviceName.split('.');
+  return { app: split[0], namespace: split.length > 1 ? split[1] : '' };
+};
+
+export const searchParentApp = (span: Span): AppAndNamespace | undefined => {
+  if (Array.isArray(span.references)) {
+    const ref = span.references.find(s => s.refType === 'CHILD_OF' || s.refType === 'FOLLOWS_FROM');
+    if (ref && ref.span) {
+      return getAppFromSpan(ref.span);
     }
   }
   return undefined;

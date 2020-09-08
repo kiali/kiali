@@ -11,7 +11,7 @@ import {
 import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { NodeType, ProtocolTraffic, hasProtocolTraffic } from '../../types/Graph';
+import { NodeType, ProtocolTraffic, hasProtocolTraffic, DestService } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
 import { REQUESTS_THRESHOLDS } from '../../types/Health';
 import history, { URLParam } from '../../app/History';
@@ -57,7 +57,7 @@ export interface ServiceNode {
   name: string;
   isServiceEntry?: string;
   isInaccessible: boolean;
-  destServices?: { namespace: string; name: string }[];
+  destServices?: DestService[];
 }
 
 export interface UnknownNode {

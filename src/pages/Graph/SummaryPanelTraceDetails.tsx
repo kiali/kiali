@@ -95,9 +95,14 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 
   render() {
     const node = decoratedNodeData(this.props.node);
-    const tracesDetailsURL = node.app
-      ? `/namespaces/${node.namespace}/applications/${node.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
-      : undefined;
+    const tracesDetailsURL =
+      `/namespaces/${node.namespace}` +
+      (node.workload
+        ? `/workloads/${node.workload}`
+        : node.service
+        ? `/services/${node.service}`
+        : `/applications/${node.app!}`) +
+      `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`;
     const jaegerTraceURL =
       node.app && this.props.jaegerURL ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}` : undefined;
     const info = getFormattedTraceInfo(this.props.trace);
@@ -117,20 +122,16 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
         </span>
         <div>
           <Tooltip content={info.name}>
-            {tracesDetailsURL ? (
-              <Link to={tracesDetailsURL}>
-                <span className={nameStyleToUse}>{traceName}</span>
-              </Link>
-            ) : (
+            <Link to={tracesDetailsURL}>
               <span className={nameStyleToUse}>{traceName}</span>
-            )}
+            </Link>
           </Tooltip>
-          <p className={pStyle}>
+          <div className={pStyle}>
             <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
             {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
-          </p>
+          </div>
           {spans && (
-            <p className={pStyle}>
+            <div className={pStyle}>
               <div className={secondaryStyle}>{'Spans for node: ' + nodeName}</div>
               <div>
                 <Button
@@ -160,7 +161,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               </div>
               {this.state.selectedSpan < spans.length &&
                 this.renderSpan(nodeName + '.' + node.namespace, spans[this.state.selectedSpan])}
-            </p>
+            </div>
           )}
           {tracesDetailsURL && jaegerTraceURL && (
             <>
