@@ -1,15 +1,20 @@
 package business
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
@@ -30,6 +35,58 @@ type OpenIdMetadata struct {
 
 var cachedOpenIdMetadata *OpenIdMetadata
 
+func ExtractOpenIdClaimsOfInterest(token string) (sub, nonce string, expiresOn time.Time, errorMessage string, detailedError error) {
+	// Parse the received id_token from the IdP
+	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
+	if err != nil {
+		errorMessage = "Cannot parse received id_token from the OpenId provider"
+		detailedError = err
+		return
+	}
+	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
+
+	if nonceClaim, ok := idTokenClaims["nonce"]; !ok {
+		nonce = nonceClaim.(string)
+	}
+
+	// Set a default value for expiration date
+	expiresOn = time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+
+	// If the expiration date is present on the claim, we use that
+	expiresInNumber := int64(0)
+
+	// As it turns out, the response from the exp claim can be either a f64 and
+	// a json.Number. With this, we take care of it, converting to the int64
+	// that we need to use timestamps in go.
+	switch exp := idTokenClaims["exp"].(type) {
+	case float64:
+		// This can not fail
+		expiresInNumber = int64(exp)
+	case json.Number:
+		// This can fail, so we short-circuit if we get an invalid value.
+		expiresInNumber, err = exp.Int64()
+
+		if err != nil {
+			errorMessage = "Token exp claim is present, but invalid."
+			detailedError = err
+			return
+		}
+	}
+
+	if expiresInNumber != 0 {
+		expiresOn = time.Unix(expiresInNumber, 0)
+	}
+
+	// Now that we know that the OpenId token is valid, parse/decode it to extract
+	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	sub = "OpenId User" // Set a default value
+	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
+		sub = userClaim.(string)
+	}
+
+	return
+}
+
 // GetConfiguredOpenIdScopes gets the list of scopes set in Kiali configuration making sure
 // that the mandatory "openid" scope is present in the returned list.
 func GetConfiguredOpenIdScopes() []string {
@@ -49,6 +106,47 @@ func GetConfiguredOpenIdScopes() []string {
 	}
 
 	return scopes
+}
+
+func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
+	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	cipherSessionData, err := base64.StdEncoding.DecodeString(authCookie.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
+	if err != nil {
+		return nil, err
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := aesGCM.NonceSize()
+	nonce, cipherSessionData := cipherSessionData[:nonceSize], cipherSessionData[nonceSize:]
+
+	sessionDataJson, err := aesGCM.Open(nil, nonce, cipherSessionData, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var sessionData config.IanaClaims
+	err = json.Unmarshal(sessionDataJson, &sessionData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sessionData, nil
 }
 
 // GetOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
@@ -141,4 +239,85 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 	// Return parsed metadata
 	cachedOpenIdMetadata = &metadata
 	return cachedOpenIdMetadata, nil
+}
+
+func RequestOpenIdToken(code, redirect_uri string) (string, error) {
+	openIdMetadata, err := GetOpenIdMetadata()
+	if err != nil {
+		return "", err
+	}
+
+	cfg := config.Get().Auth.OpenId
+
+	// Create HTTP client
+	httpTransport := &http.Transport{}
+	if cfg.InsecureSkipVerifyTLS {
+		httpTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
+	}
+
+	// Exchange authentication code for a token
+	requestParams := url.Values{}
+	requestParams.Set("client_id", cfg.ClientId) // Can omit if not authenticated
+	requestParams.Set("code", code)
+	requestParams.Set("grant_type", "authorization_code")
+	requestParams.Set("redirect_uri", redirect_uri)
+	response, err := httpClient.PostForm(openIdMetadata.TokenURL, requestParams)
+	if err != nil {
+		return "", fmt.Errorf("failure when requesting token from IdP: %s", err.Error())
+	}
+
+	defer response.Body.Close()
+	rawTokenResponse, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read token response from IdP: %s", err.Error())
+	}
+
+	if response.StatusCode != 200 {
+		return "", fmt.Errorf("cannot get token from IdP (HTTP response status = %s)", response.Status)
+	}
+
+	// Parse token response
+	var tokenResponse struct {
+		IdToken     string `json:"id_token"`
+	}
+
+	err = json.Unmarshal(rawTokenResponse, &tokenResponse)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse OpenId token response: %s", err.Error())
+	}
+
+	if len(tokenResponse.IdToken) == 0 {
+		return "", errors.New("the IdP did not provide an id_token")
+	}
+	
+	return tokenResponse.IdToken, nil
+}
+
+func VerifyOpenIdUserAccess(token string) (int, string, error) {
+	// Create business layer using the id_token
+	business, err := Get(token)
+	if err != nil {
+		return http.StatusInternalServerError, "Error instantiating the business layer", err
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	nsList, err := business.Namespace.GetNamespaces()
+	if err != nil {
+		return http.StatusUnauthorized, "Token is not valid or is expired", err
+	}
+
+	// If namespace list is empty, return unauthorized error
+	if len(nsList) == 0 {
+		return http.StatusUnauthorized, "Not enough privileges to login", nil
+	}
+
+	return http.StatusOK, "", nil
 }
