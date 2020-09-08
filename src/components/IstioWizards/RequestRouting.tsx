@@ -5,6 +5,7 @@ import RuleBuilder from './RequestRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
 import { WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
+import { FaultInjectionRoute } from './FaultInjection';
 
 type Props = {
   serviceName: string;
@@ -20,6 +21,7 @@ type State = {
   matches: string[];
   headerName: string;
   matchValue: string;
+  faultInjectionRoute: FaultInjectionRoute;
   rules: Rule[];
   validationMsg: string;
 };
@@ -35,6 +37,25 @@ class RequestRouting extends React.Component<Props, State> {
       category: HEADERS,
       operator: PRESENCE,
       workloadWeights: getDefaultWeights(this.props.workloads),
+      faultInjectionRoute: {
+        workloads: [],
+        delayed: false,
+        delay: {
+          percentage: {
+            value: 100
+          },
+          fixedDelay: '5s'
+        },
+        isValidDelay: true,
+        aborted: false,
+        abort: {
+          percentage: {
+            value: 100
+          },
+          httpStatus: 503
+        },
+        isValidAbort: true
+      },
       matches: [],
       headerName: '',
       matchValue: '',
@@ -130,14 +151,23 @@ class RequestRouting extends React.Component<Props, State> {
           matches: prevState.matches,
           workloadWeights: newWorkloadWeights
         };
+        if (prevState.faultInjectionRoute.delayed && prevState.faultInjectionRoute.isValidDelay) {
+          newRule.delay = prevState.faultInjectionRoute.delay;
+        }
+        if (prevState.faultInjectionRoute.aborted && prevState.faultInjectionRoute.isValidAbort) {
+          newRule.abort = prevState.faultInjectionRoute.abort;
+        }
         if (!this.isMatchesIncluded(prevState.rules, newRule)) {
           prevState.rules.push(newRule);
+          prevState.faultInjectionRoute.delayed = false;
+          prevState.faultInjectionRoute.aborted = false;
           return {
             matches: [],
             headerName: '',
             matchValue: '',
             rules: prevState.rules,
-            validationMsg: ''
+            validationMsg: '',
+            faultInjectionRoute: prevState.faultInjectionRoute
           };
         } else {
           return {
@@ -145,7 +175,8 @@ class RequestRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             rules: prevState.rules,
-            validationMsg: MSG_SAME_MATCHING
+            validationMsg: MSG_SAME_MATCHING,
+            faultInjectionRoute: prevState.faultInjectionRoute
           };
         }
       },
@@ -277,7 +308,17 @@ class RequestRouting extends React.Component<Props, State> {
           matches={this.state.matches}
           onRemoveMatch={this.onRemoveMatch}
           workloads={this.props.workloads}
+          weights={this.state.workloadWeights}
           onSelectWeights={this.onSelectWeights}
+          faultInjectionRoute={this.state.faultInjectionRoute}
+          onSelectFaultInjection={(valid, faultInjectionRoute) => {
+            this.setState(_prevState => {
+              return {
+                faultInjectionRoute: faultInjectionRoute,
+                validationMsg: !valid ? 'Fault Injection not valid' : ''
+              };
+            });
+          }}
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddRule}
         />

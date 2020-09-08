@@ -2,7 +2,6 @@ import { TLSStatus } from '../../types/TLSStatus';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { WorkloadWeight } from './TrafficShifting';
 import { Rule } from './RequestRouting/Rules';
-import { SuspendedRoute } from './SuspendTraffic';
 import {
   AuthorizationPolicy,
   AuthorizationPolicyRule,
@@ -41,10 +40,11 @@ import { RequestAuthenticationState } from '../../pages/IstioConfigNew/RequestAu
 import { ThreeScaleState } from '../../pages/extensions/threescale/ThreeScaleNew/ThreeScaleNewPage';
 import { Workload } from '../../types/Workload';
 import { ThreeScaleCredentialsState } from './ThreeScaleCredentials';
+import { FaultInjectionRoute } from './FaultInjection';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
-export const WIZARD_SUSPEND_TRAFFIC = 'suspend_traffic';
+export const WIZARD_FAULT_INJECTION = 'fault_injection';
 
 export const WIZARD_THREESCALE_LINK = '3scale_link';
 export const WIZARD_THREESCALE_UNLINK = '3scale_unlink';
@@ -53,19 +53,19 @@ export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
 export const WIZARD_REMOVE_AUTO_INJECTION = 'remove_auto_injection';
 
-export const SERVICE_WIZARD_ACTIONS = [WIZARD_TRAFFIC_SHIFTING, WIZARD_REQUEST_ROUTING, WIZARD_SUSPEND_TRAFFIC];
+export const SERVICE_WIZARD_ACTIONS = [WIZARD_REQUEST_ROUTING, WIZARD_FAULT_INJECTION, WIZARD_TRAFFIC_SHIFTING];
 
 export const WIZARD_TITLES = {
-  [WIZARD_TRAFFIC_SHIFTING]: 'Create Traffic Shifting',
   [WIZARD_REQUEST_ROUTING]: 'Create Request Routing',
-  [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic',
+  [WIZARD_FAULT_INJECTION]: 'Create Fault Injection',
+  [WIZARD_TRAFFIC_SHIFTING]: 'Create Traffic Shifting',
   [WIZARD_THREESCALE_LINK]: 'Link a 3scale Account'
 };
 
 export const WIZARD_UPDATE_TITLES = {
-  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting',
   [WIZARD_REQUEST_ROUTING]: 'Update Request Routing',
-  [WIZARD_SUSPEND_TRAFFIC]: 'Update Suspended Traffic'
+  [WIZARD_FAULT_INJECTION]: 'Update Fault Injection',
+  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting'
 };
 
 export type ServiceWizardProps = {
@@ -96,7 +96,7 @@ export type ServiceWizardState = {
   showAdvanced: boolean;
   workloads: WorkloadWeight[];
   rules: Rule[];
-  suspendedRoutes: SuspendedRoute[];
+  faultInjectionRoute: FaultInjectionRoute;
   valid: ServiceWizardValid;
   advancedOptionsValid: boolean;
   vsHosts: string[];
@@ -122,8 +122,6 @@ export type WorkloadWizardState = {
   valid: WorkloadWizardValid;
   threeScale: ThreeScaleCredentialsState;
 };
-
-const SERVICE_UNAVAILABLE = 503;
 
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
@@ -347,65 +345,49 @@ export const buildIstioConfig = (
           if (rule.matches.length > 0) {
             httpRoute.match = buildHTTPMatchRequest(rule.matches);
           }
+
+          if (rule.delay || rule.abort) {
+            httpRoute.fault = {};
+            if (rule.delay) {
+              httpRoute.fault.delay = rule.delay;
+            }
+            if (rule.abort) {
+              httpRoute.fault.abort = rule.abort;
+            }
+          }
           return httpRoute;
         })
       };
       break;
     }
-    case WIZARD_SUSPEND_TRAFFIC: {
-      // VirtualService from the suspendedRoutes
-      const httpRoute: HTTPRoute = {
-        route: []
-      };
-      // Let's use the # os suspended notes to create weights
-      const totalRoutes = wState.suspendedRoutes.length;
-      const closeRoutes = wState.suspendedRoutes.filter(s => s.suspended).length;
-      const openRoutes = totalRoutes - closeRoutes;
-      let firstValue = true;
-      // If we have some suspended routes, we need to use weights
-      if (closeRoutes < totalRoutes) {
-        for (let i = 0; i < wState.suspendedRoutes.length; i++) {
-          const suspendedRoute = wState.suspendedRoutes[i];
-          const destW: HTTPRouteDestination = {
-            destination: {
-              host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-              subset: wkdNameVersion[suspendedRoute.workload]
-            }
-          };
-          if (suspendedRoute.suspended) {
-            // A suspended route has a 0 weight
-            destW.weight = 0;
-          } else {
-            destW.weight = Math.floor(100 / openRoutes);
-            // We need to adjust the rest
-            if (firstValue) {
-              destW.weight += 100 % openRoutes;
-              firstValue = false;
-            }
-          }
-          httpRoute.route!.push(destW);
-        }
-      } else {
-        // All routes are suspended, so we use an fault/abort rule
-        httpRoute.route = [
-          {
-            destination: {
-              host: fqdnServiceName(wProps.serviceName, wProps.namespace)
-            }
-          }
-        ];
-        httpRoute.fault = {
-          abort: {
-            httpStatus: SERVICE_UNAVAILABLE,
-            percentage: {
-              value: 100
-            }
-          }
-        };
-      }
+    case WIZARD_FAULT_INJECTION: {
+      // VirtualService from the weights mapped in the FaultInjectionRoute
       wizardVS.spec = {
-        http: [httpRoute]
+        http: [
+          {
+            route: wState.faultInjectionRoute.workloads.map(workload => {
+              return {
+                destination: {
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                  subset: wkdNameVersion[workload.name]
+                },
+                weight: workload.weight
+              };
+            })
+          }
+        ]
       };
+      if (wizardVS.spec.http && wizardVS.spec.http[0]) {
+        if (wState.faultInjectionRoute.delayed || wState.faultInjectionRoute.aborted) {
+          wizardVS.spec.http[0].fault = {};
+          if (wState.faultInjectionRoute.delayed) {
+            wizardVS.spec.http[0].fault.delay = wState.faultInjectionRoute.delay;
+          }
+          if (wState.faultInjectionRoute.aborted) {
+            wizardVS.spec.http[0].fault.abort = wState.faultInjectionRoute.abort;
+          }
+        }
+      }
       break;
     }
     default:
@@ -616,6 +598,14 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
           }
         });
       }
+      if (httpRoute.fault) {
+        if (httpRoute.fault.delay) {
+          rule.delay = httpRoute.fault.delay;
+        }
+        if (httpRoute.fault.abort) {
+          rule.abort = httpRoute.fault.abort;
+        }
+      }
       // Not adding a rule if it has empty routes, probably this means that an existing workload was removed
       if (rule.workloadWeights.length > 0) {
         rules.push(rule);
@@ -625,30 +615,54 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
   return rules;
 };
 
-export const getInitSuspendedRoutes = (
+export const getInitFaultInjectionRoute = (
   workloads: WorkloadOverview[],
   virtualServices: VirtualServices
-): SuspendedRoute[] => {
-  const wkdVersionName = getWorkloadsByVersion(workloads);
-  const routes: SuspendedRoute[] = workloads.map(wk => ({
-    workload: wk.name,
-    suspended: true,
-    httpStatus: SERVICE_UNAVAILABLE
-  }));
-  if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
-    // All routes are suspended default value is correct
-    if (virtualServices.items[0].spec.http![0].fault) {
-      return routes;
-    }
-    // Iterate on route weights to identify the suspended routes
-    virtualServices.items[0].spec.http![0].route!.forEach(route => {
-      if (route.weight && route.weight > 0) {
-        const workloadName = wkdVersionName[route.destination.subset || ''];
-        routes.filter(w => w.workload === workloadName).forEach(w => (w.suspended = false));
-      }
-    });
+): FaultInjectionRoute => {
+  // Read potential predefined weights
+  let initWeights = getInitWeights(workloads, virtualServices);
+  if (workloads.length > 0 && initWeights.length === 0) {
+    initWeights = getDefaultWeights(workloads);
   }
-  return routes;
+  const fiRoute = {
+    workloads: initWeights,
+    delayed: false,
+    delay: {
+      percentage: {
+        value: 100
+      },
+      fixedDelay: '5s'
+    },
+    isValidDelay: true,
+    aborted: false,
+    abort: {
+      percentage: {
+        value: 100
+      },
+      httpStatus: 503
+    },
+    isValidAbort: true
+  };
+  // This use case is intended for VS with single HTTP Route, others scenarios should use the Request Routing Wizard
+  if (
+    virtualServices.items.length === 1 &&
+    virtualServices.items[0].spec.http &&
+    virtualServices.items[0].spec.http.length === 1 &&
+    virtualServices.items[0].spec.http[0].fault
+  ) {
+    const fault = virtualServices.items[0].spec.http[0].fault;
+    if (fault.delay) {
+      fiRoute.delayed = true;
+      fiRoute.delay.percentage.value = fault.delay.percentage ? fault.delay.percentage.value : 100;
+      fiRoute.delay.fixedDelay = fault.delay.fixedDelay;
+    }
+    if (fault.abort) {
+      fiRoute.aborted = true;
+      fiRoute.abort.percentage.value = fault.abort.percentage ? fault.abort.percentage.value : 100;
+      fiRoute.abort.httpStatus = fault.abort.httpStatus;
+    }
+  }
+  return fiRoute;
 };
 
 export const getInitTlsMode = (destinationRules: DestinationRules): [string, string, string, string] => {

@@ -2,8 +2,17 @@ import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PfColors } from '../../Pf/PfColors';
-import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {
+  Badge,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Title,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { WorkloadWeight } from '../TrafficShifting';
+import { Abort, Delay } from '../../../types/IstioObjects';
 
 export enum MOVE_TYPE {
   UP,
@@ -13,6 +22,8 @@ export enum MOVE_TYPE {
 export type Rule = {
   matches: string[];
   workloadWeights: WorkloadWeight[];
+  delay?: Delay;
+  abort?: Abort;
 };
 
 type Props = {
@@ -64,7 +75,10 @@ class Rules extends React.Component<Props> {
       onClick: (event, rowIndex, rowData, extraData) => this.props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
     };
 
-    const actions: any[] = [removeAction];
+    const actions: any[] = [];
+    if (this.props.rules.length > 0) {
+      actions.push(removeAction);
+    }
     if (rowIndex > 0) {
       actions.push(moveUpAction);
     }
@@ -95,36 +109,73 @@ class Rules extends React.Component<Props> {
 
     let isValid: boolean = true;
     const matchAll: number = this.matchAllIndex(this.props.rules);
-    const routeRules = this.props.rules.map((rule, order) => {
-      isValid = matchAll === -1 || order <= matchAll;
-      return {
-        cells: [
-          <>{order + 1}</>,
-          <>
-            {rule.matches.length === 0
-              ? 'Any request'
-              : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
-            {!isValid && (
-              <div className={validationStyle}>
-                Match 'Any request' is defined in a previous rule.
-                <br />
-                This rule is not accessible.
-              </div>
-            )}
-          </>,
-          <>
-            {rule.workloadWeights.map((wk, i) => (
-              <div key={'wk_' + i}>
-                <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
-                  <Badge className={'virtualitem_badge_definition'}>WS</Badge>
-                </Tooltip>
-                {wk.name} ({wk.weight} %)
-              </div>
-            ))}
-          </>
-        ]
-      };
-    });
+    const routeRules =
+      this.props.rules.length > 0
+        ? this.props.rules.map((rule, order) => {
+            isValid = matchAll === -1 || order <= matchAll;
+            return {
+              cells: [
+                <>{order + 1}</>,
+                <>
+                  {rule.matches.length === 0
+                    ? 'Any request'
+                    : rule.matches.map((match, i) => <div key={'match_' + i}>{match}</div>)}
+                  {!isValid && (
+                    <div className={validationStyle}>
+                      Match 'Any request' is defined in a previous rule.
+                      <br />
+                      This rule is not accessible.
+                    </div>
+                  )}
+                </>,
+                <>
+                  {rule.workloadWeights.map((wk, i) => (
+                    <div key={'wk_' + i}>
+                      <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
+                        <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+                      </Tooltip>
+                      {wk.name} ({wk.weight} %)
+                    </div>
+                  ))}
+                  {rule.delay && (
+                    <div key={'delay'}>
+                      <Tooltip position={TooltipPosition.top} content={<>Fault Injection: Delay</>}>
+                        <Badge className={'faultinjection_badge_definition'}>FI</Badge>
+                      </Tooltip>
+                      {rule.delay.percentage?.value}% requests delayed ({rule.delay.fixedDelay})
+                    </div>
+                  )}
+                  {rule.abort && (
+                    <div key={'abort'}>
+                      <Tooltip position={TooltipPosition.top} content={<>Fault Injection: Abort</>}>
+                        <Badge className={'faultinjection_badge_definition'}>FI</Badge>
+                      </Tooltip>
+                      {rule.abort.percentage?.value}% requests aborted (HTTP Status {rule.abort.httpStatus})
+                    </div>
+                  )}
+                </>
+              ]
+            };
+          })
+        : [
+            {
+              cells: [
+                {
+                  title: (
+                    <EmptyState variant={EmptyStateVariant.full}>
+                      <Title headingLevel="h5" size="lg">
+                        No Rules Defined
+                      </Title>
+                      <EmptyStateBody className={noRulesStyle}>
+                        A Request Routing scenario needs at least a Route Rule
+                      </EmptyStateBody>
+                    </EmptyState>
+                  ),
+                  props: { colSpan: 3 }
+                }
+              ]
+            }
+          ];
 
     return (
       <>
@@ -139,7 +190,6 @@ class Rules extends React.Component<Props> {
           <TableHeader />
           <TableBody />
         </Table>
-        {this.props.rules.length === 0 && <div className={noRulesStyle}>No Rules Defined</div>}
       </>
     );
   }

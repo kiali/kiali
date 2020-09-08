@@ -8,8 +8,8 @@ type Props = {
 };
 
 const labelContainerStyle = style({
-  marginTop: 5,
-  height: 30
+  marginTop: 10,
+  height: 40
 });
 
 class Matches extends React.Component<Props> {

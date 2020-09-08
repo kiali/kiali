@@ -86,6 +86,7 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
 const nsRegexp = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.)+[a-zA-Z]{2,63}$)/;
 const ipRegexp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
+const fixedDelayRegexp = /^[\d]+\.?[\d]*(h|m|s|ms)$/;
 
 // Gateway hosts have namespace/dnsName with namespace optional
 export const isGatewayHostValid = (gatewayHost: string): boolean => {
@@ -146,4 +147,15 @@ export const isValidUrl = (url: string): boolean => {
     return false;
   }
   return true;
+};
+
+export const isValidFixedDelay = (fixedDelay: string): boolean => {
+  if (fixedDelay === '0ms' || fixedDelay === '0s' || fixedDelay === '0m' || fixedDelay === '0h') {
+    return false;
+  }
+  return fixedDelayRegexp.test(fixedDelay);
+};
+
+export const isValidAbortStatusCode = (statusCode: number): boolean => {
+  return statusCode >= 100 && statusCode <= 599;
 };

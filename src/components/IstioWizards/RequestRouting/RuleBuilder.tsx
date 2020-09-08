@@ -5,7 +5,8 @@ import Matches from './Matches';
 import { style } from 'typestyle';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
 import TrafficShifting, { WorkloadWeight } from '../TrafficShifting';
-import { getDefaultWeights } from '../WizardActions';
+import FaultInjection, { FaultInjectionRoute } from '../FaultInjection';
+import { PfColors } from '../../Pf/PfColors';
 
 type Props = {
   // MatchBuilder props
@@ -25,7 +26,11 @@ type Props = {
   onRemoveMatch: (match: string) => void;
 
   workloads: WorkloadOverview[];
+  weights: WorkloadWeight[];
   onSelectWeights: (valid: boolean, workloads: WorkloadWeight[]) => void;
+
+  faultInjectionRoute: FaultInjectionRoute;
+  onSelectFaultInjection: (valid: boolean, faultInjectionRoute: FaultInjectionRoute) => void;
 
   // RuleBuilder
   validationMsg: string;
@@ -40,6 +45,12 @@ type State = {
 const addRuleStyle = style({
   width: '100%',
   textAlign: 'right'
+});
+
+const validationStyle = style({
+  marginRight: 20,
+  color: PfColors.Red100,
+  display: 'inline'
 });
 
 class RuleBuilder extends React.Component<Props, State> {
@@ -76,15 +87,26 @@ class RuleBuilder extends React.Component<Props, State> {
           <Tab eventKey={1} title={'Route To'}>
             <TrafficShifting
               workloads={this.props.workloads}
-              initWeights={getDefaultWeights(this.props.workloads)}
+              initWeights={this.props.weights}
               onChange={this.props.onSelectWeights}
             />
           </Tab>
+          <Tab eventKey={2} title={'Fault Injection'}>
+            <div style={{ marginTop: '10px' }}>
+              <FaultInjection
+                initFaultInjectionRoute={this.props.faultInjectionRoute}
+                onChange={this.props.onSelectFaultInjection}
+              />
+            </div>
+          </Tab>
         </Tabs>
         <div className={addRuleStyle}>
-          <Button variant="secondary" isDisabled={!this.props.isValid} onClick={this.props.onAddRule}>
-            Add Rule
-          </Button>
+          <span>
+            {this.props.validationMsg.length > 0 && <div className={validationStyle}>{this.props.validationMsg}</div>}
+            <Button variant="secondary" isDisabled={!this.props.isValid} onClick={this.props.onAddRule}>
+              Add Rule
+            </Button>
+          </span>
         </div>
       </>
     );
