@@ -76,6 +76,18 @@ func matchesWorkload(trace jaegerModels.Trace, namespace, workload string) bool 
 				}
 			}
 		}
+		if process, ok := trace.Processes[span.ProcessID]; ok {
+			// Tag not found => try with 'hostname' in process' tags
+			for _, tag := range process.Tags {
+				if tag.Key == "hostname" {
+					if v, ok := tag.Value.(string); ok {
+						if strings.HasPrefix(v, workload) {
+							return true
+						}
+					}
+				}
+			}
+		}
 	}
 	return false
 }
