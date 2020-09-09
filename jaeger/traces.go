@@ -95,7 +95,16 @@ func matchesWorkload(trace jaegerModels.Trace, namespace, workload string) bool 
 func getTraceDetail(client http.Client, endpoint *url.URL, traceID string) (*JaegerSingleTrace, error) {
 	u := endpoint
 	u.Path = path.Join(u.Path, "/api/traces/"+traceID)
-	response, err := queryTraces(client, u)
+	resp, code, reqError := makeRequest(client, u.String(), nil)
+	if reqError != nil {
+		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
+		return nil, reqError
+	}
+	// Jaeger would return "200 OK" when trace is not found, with an empty response
+	if len(resp) == 0 {
+		return nil, nil
+	}
+	response, err := unmarshal(resp, u)
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +147,14 @@ func queryTraces(client http.Client, u *url.URL) (*JaegerResponse, error) {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &JaegerResponse{}, reqError
 	}
+	return unmarshal(resp, u)
+}
+
+func unmarshal(r []byte, u *url.URL) (*JaegerResponse, error) {
 	var response JaegerResponse
-	if errMarshal := json.Unmarshal([]byte(resp), &response); errMarshal != nil {
+	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Jaeger response: %s [URL: %v]", errMarshal, u)
-		return &JaegerResponse{}, errMarshal
+		return nil, errMarshal
 	}
 	return &response, nil
 }

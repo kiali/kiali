@@ -55,7 +55,7 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	reqLimit := query.Limit
 	query.Limit *= 2
 	r, err := client.GetServiceTraces(ns, app, service, query)
-	if reqLimit > 0 && r != nil {
+	if reqLimit > 0 && r != nil && len(r.Data) > reqLimit {
 		r.Data = r.Data[:reqLimit]
 	}
 	return r, err
@@ -77,7 +77,7 @@ func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.Tra
 	reqLimit := query.Limit
 	query.Limit *= 5
 	r, err := client.GetWorkloadTraces(ns, app, workload, query)
-	if reqLimit > 0 && r != nil {
+	if reqLimit > 0 && r != nil && len(r.Data) > reqLimit {
 		r.Data = r.Data[:reqLimit]
 	}
 	return r, err
