@@ -556,9 +556,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		var istioConfig *core_v1.ConfigMap
 		var err error
 		if IsNamespaceCached(cfg.IstioNamespace) {
-			istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+			istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, kubernetes.GetIstioConfigMapName())
 		} else {
-			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.IstioConfigMapName)
+			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, kubernetes.GetIstioConfigMapName())
 		}
 		if err != nil {
 			errChan <- err
