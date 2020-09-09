@@ -22,7 +22,13 @@ export const JaegerThunkActions = {
               }
             }
           })
-          .catch(error => AlertUtils.addError('Could not fetch trace.', error));
+          .catch(error => {
+            dispatch(JaegerActions.setTrace(undefined));
+            AlertUtils.addMessage({
+              ...AlertUtils.extractAxiosError('Could not fetch trace', error),
+              showNotification: false
+            });
+          });
       } else {
         dispatch(JaegerActions.setTrace(undefined));
       }

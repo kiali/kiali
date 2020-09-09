@@ -4,12 +4,22 @@ import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { AxiosError } from 'axios';
 import * as API from '../services/Api';
 
+export type Message = {
+  content: string;
+  detail?: string;
+  group?: string;
+  type?: MessageType;
+  showNotification?: boolean;
+};
+
 export const add = (content: string, group?: string, type?: MessageType) => {
   store.dispatch(MessageCenterActions.addMessage(content, '', group, type));
 };
 
-export const addDetail = (content: string, detail: string, group?: string, type?: MessageType) => {
-  store.dispatch(MessageCenterActions.addMessage(content, detail, group, type));
+export const addMessage = (msg: Message) => {
+  store.dispatch(
+    MessageCenterActions.addMessage(msg.content, msg.detail || '', msg.group, msg.type, msg.showNotification)
+  );
 };
 
 export const addError = (message: string, error?: AxiosError, group?: string, type?: MessageType) => {
@@ -17,23 +27,29 @@ export const addError = (message: string, error?: AxiosError, group?: string, ty
     store.dispatch(MessageCenterActions.addMessage(message, '', group, MessageType.ERROR));
     return;
   }
+  const finalType: MessageType = type ? type : MessageType.ERROR;
+  const err = extractAxiosError(message, error);
+  addMessage({
+    ...err,
+    group: group,
+    type: finalType
+  });
+};
+
+export const extractAxiosError = (message: string, error: AxiosError): { content: string; detail: string } => {
   const errorString: string = API.getErrorString(error);
   const errorDetail: string = API.getErrorDetail(error);
-  let finalMessage: string = message;
-  let finalDetail: string = errorString;
-  let finalType: MessageType = type ? type : MessageType.ERROR;
   if (message) {
     // combine error string and detail into a single detail
     if (errorString && errorDetail) {
-      finalDetail = `${errorString}\nAdditional Detail:\n${errorDetail}`;
+      return { content: message, detail: `${errorString}\nAdditional Detail:\n${errorDetail}` };
     } else if (errorDetail) {
-      finalDetail = errorDetail;
+      return { content: message, detail: errorDetail };
+    } else {
+      return { content: message, detail: errorString };
     }
-  } else {
-    finalMessage = errorString;
-    finalDetail = errorDetail;
   }
-  addDetail(finalMessage, finalDetail, group, finalType);
+  return { content: errorString, detail: errorDetail };
 };
 
 // info level message do not generate a toast notification
