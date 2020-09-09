@@ -500,8 +500,8 @@ func (conf *Config) AddHealthDefault() {
 						Code:      "^4\\d\\d$",
 						Protocol:  "http",
 						Direction: ".*",
-						Degraded:  20,
-						Failure:   30,
+						Degraded:  10,
+						Failure:   20,
 					},
 					{
 						Code:      "^[1-9]$|^1[0-6]$",
