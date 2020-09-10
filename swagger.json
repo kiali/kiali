@@ -2786,6 +2786,48 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/spans": {
+      "get": {
+        "description": "Endpoint to get Jaeger spans for a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "serviceSpans",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/spansResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/traces": {
       "get": {
         "description": "Endpoint to get the traces of a given service",
@@ -3472,6 +3514,48 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/workloads/{workload}/spans": {
+      "get": {
+        "description": "Endpoint to get Jaeger spans for a given workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "traces"
+        ],
+        "operationId": "workloadSpans",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The workload name.",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/spansResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }
@@ -4803,6 +4887,79 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "JaegerSpan": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Duration"
+        },
+        "flags": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Flags"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Log"
+          },
+          "x-go-name": "Logs"
+        },
+        "operationName": {
+          "type": "string",
+          "x-go-name": "OperationName"
+        },
+        "parentSpanID": {
+          "$ref": "#/definitions/SpanID"
+        },
+        "process": {
+          "$ref": "#/definitions/Process"
+        },
+        "processID": {
+          "$ref": "#/definitions/ProcessID"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "x-go-name": "References"
+        },
+        "spanID": {
+          "$ref": "#/definitions/SpanID"
+        },
+        "startTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "StartTime"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValue"
+          },
+          "x-go-name": "Tags"
+        },
+        "traceID": {
+          "$ref": "#/definitions/TraceID"
+        },
+        "traceSize": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TraceSize"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Warnings"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/jaeger"
     },
     "KeyValue": {
       "type": "object",
@@ -6310,6 +6467,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Span": {
+      "description": "Span is a span denoting a piece of work in some infrastructure\nWhen converting to UI model, ParentSpanID and Process should be dereferenced into\nReferences and ProcessID, respectively.\nWhen converting to ES model, ProcessID and Warnings should be omitted. Even if\nincluded, ES with dynamic settings off will automatically ignore unneeded fields.",
       "type": "object",
       "properties": {
         "duration": {
@@ -6367,11 +6525,6 @@
         "traceID": {
           "$ref": "#/definitions/TraceID"
         },
-        "traceSize": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "TraceSize"
-        },
         "warnings": {
           "type": "array",
           "items": {
@@ -6380,7 +6533,7 @@
           "x-go-name": "Warnings"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/jaeger"
+      "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
     "SpanID": {
       "description": "SpanID is the id of a span",
@@ -8103,7 +8256,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/Span"
+          "$ref": "#/definitions/JaegerSpan"
         }
       }
     },
