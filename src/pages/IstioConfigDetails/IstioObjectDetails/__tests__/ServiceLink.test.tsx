@@ -32,11 +32,11 @@ describe('SerivceLink component', () => {
   describe('when is FQDN', () => {
     it('should render link', () => {
       let wrapper = serviceLink('bookinfo', 'reviews.bookinfo.svc.cluster.local', true);
-      testLink(wrapper, '/namespaces/bookinfo/services/reviews', 'reviews.bookinfo.svc.cluster.local');
+      testLink(wrapper, '/namespaces/bookinfo/services/reviews?list=istioconfig', 'reviews.bookinfo.svc.cluster.local');
 
       // It keeps FQDN namespace
       wrapper = serviceLink('bookinfo', 'reviews.default.svc.cluster.local', true);
-      testLink(wrapper, '/namespaces/default/services/reviews', 'reviews.default.svc.cluster.local');
+      testLink(wrapper, '/namespaces/default/services/reviews?list=istioconfig', 'reviews.default.svc.cluster.local');
     });
 
     it('if is not valid, should render plain text', () => {
@@ -53,7 +53,7 @@ describe('SerivceLink component', () => {
   describe('when is shortname', () => {
     it('should render link', () => {
       const wrapper = serviceLink('bookinfo', 'reviews', true);
-      testLink(wrapper, '/namespaces/bookinfo/services/reviews', 'reviews');
+      testLink(wrapper, '/namespaces/bookinfo/services/reviews?list=istioconfig', 'reviews');
     });
 
     it('if is not valid, should render plain text', () => {
@@ -65,7 +65,7 @@ describe('SerivceLink component', () => {
   describe('when is svc.namespace format', () => {
     it('should render link', () => {
       let wrapper = serviceLink('bookinfo', 'reviews.bookinfo', true);
-      testLink(wrapper, '/namespaces/bookinfo/services/reviews', 'reviews');
+      testLink(wrapper, '/namespaces/bookinfo/services/reviews?list=istioconfig', 'reviews');
 
       wrapper = serviceLink('bookinfo', 'reviews.default', true);
       testPlain(wrapper, 'reviews.default');

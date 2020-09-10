@@ -3,7 +3,7 @@ import DelayFault from './FaultInjection/DelayFault';
 import AbortFault from './FaultInjection/AbortFault';
 import { Abort, Delay } from '../../types/IstioObjects';
 import { Form } from '@patternfly/react-core';
-import { isValidAbortStatusCode, isValidFixedDelay } from '../../utils/IstioConfigUtils';
+import { isValidAbortStatusCode, isValidDuration } from '../../utils/IstioConfigUtils';
 import { WorkloadWeight } from './TrafficShifting';
 
 type Props = {
@@ -37,7 +37,7 @@ class FaultInjection extends React.Component<Props, State> {
         aborted: this.props.initFaultInjectionRoute.aborted,
         abort: this.props.initFaultInjectionRoute.abort,
         isValidDelay: this.props.initFaultInjectionRoute.delayed
-          ? isValidFixedDelay(this.props.initFaultInjectionRoute.delay.fixedDelay)
+          ? isValidDuration(this.props.initFaultInjectionRoute.delay.fixedDelay)
           : true,
         isValidAbort: this.props.initFaultInjectionRoute.aborted
           ? isValidAbortStatusCode(this.props.initFaultInjectionRoute.abort.httpStatus)
@@ -56,7 +56,7 @@ class FaultInjection extends React.Component<Props, State> {
           aborted: this.props.initFaultInjectionRoute.aborted,
           abort: this.props.initFaultInjectionRoute.abort,
           isValidDelay: this.props.initFaultInjectionRoute.delayed
-            ? isValidFixedDelay(this.props.initFaultInjectionRoute.delay.fixedDelay)
+            ? isValidDuration(this.props.initFaultInjectionRoute.delay.fixedDelay)
             : true,
           isValidAbort: this.props.initFaultInjectionRoute.aborted
             ? isValidAbortStatusCode(this.props.initFaultInjectionRoute.abort.httpStatus)
@@ -83,7 +83,7 @@ class FaultInjection extends React.Component<Props, State> {
             workloads: prevState.faultInjectionRoute.workloads,
             delayed: delayed,
             delay: delay,
-            isValidDelay: delayed ? isValidFixedDelay(delay.fixedDelay) : true,
+            isValidDelay: delayed ? isValidDuration(delay.fixedDelay) : true,
             aborted: prevState.faultInjectionRoute.aborted,
             abort: prevState.faultInjectionRoute.abort,
             isValidAbort: prevState.faultInjectionRoute.isValidAbort

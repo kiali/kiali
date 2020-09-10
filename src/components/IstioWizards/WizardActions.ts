@@ -41,10 +41,12 @@ import { ThreeScaleState } from '../../pages/extensions/threescale/ThreeScaleNew
 import { Workload } from '../../types/Workload';
 import { ThreeScaleCredentialsState } from './ThreeScaleCredentials';
 import { FaultInjectionRoute } from './FaultInjection';
+import { TimeoutRetryRoute } from './RequestTimeouts';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
 export const WIZARD_FAULT_INJECTION = 'fault_injection';
+export const WIZARD_REQUEST_TIMEOUTS = 'request_timeouts';
 
 export const WIZARD_THREESCALE_LINK = '3scale_link';
 export const WIZARD_THREESCALE_UNLINK = '3scale_unlink';
@@ -53,19 +55,26 @@ export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
 export const WIZARD_REMOVE_AUTO_INJECTION = 'remove_auto_injection';
 
-export const SERVICE_WIZARD_ACTIONS = [WIZARD_REQUEST_ROUTING, WIZARD_FAULT_INJECTION, WIZARD_TRAFFIC_SHIFTING];
+export const SERVICE_WIZARD_ACTIONS = [
+  WIZARD_REQUEST_ROUTING,
+  WIZARD_FAULT_INJECTION,
+  WIZARD_TRAFFIC_SHIFTING,
+  WIZARD_REQUEST_TIMEOUTS
+];
 
 export const WIZARD_TITLES = {
   [WIZARD_REQUEST_ROUTING]: 'Create Request Routing',
   [WIZARD_FAULT_INJECTION]: 'Create Fault Injection',
   [WIZARD_TRAFFIC_SHIFTING]: 'Create Traffic Shifting',
+  [WIZARD_REQUEST_TIMEOUTS]: 'Create Request Timeouts',
   [WIZARD_THREESCALE_LINK]: 'Link a 3scale Account'
 };
 
 export const WIZARD_UPDATE_TITLES = {
   [WIZARD_REQUEST_ROUTING]: 'Update Request Routing',
   [WIZARD_FAULT_INJECTION]: 'Update Fault Injection',
-  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting'
+  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting',
+  [WIZARD_REQUEST_TIMEOUTS]: 'Update Request Timeouts'
 };
 
 export type ServiceWizardProps = {
@@ -97,6 +106,7 @@ export type ServiceWizardState = {
   workloads: WorkloadWeight[];
   rules: Rule[];
   faultInjectionRoute: FaultInjectionRoute;
+  timeoutRetryRoute: TimeoutRetryRoute;
   valid: ServiceWizardValid;
   advancedOptionsValid: boolean;
   vsHosts: string[];
@@ -355,6 +365,12 @@ export const buildIstioConfig = (
               httpRoute.fault.abort = rule.abort;
             }
           }
+          if (rule.timeout) {
+            httpRoute.timeout = rule.timeout;
+          }
+          if (rule.retries) {
+            httpRoute.retries = rule.retries;
+          }
           return httpRoute;
         })
       };
@@ -386,6 +402,33 @@ export const buildIstioConfig = (
           if (wState.faultInjectionRoute.aborted) {
             wizardVS.spec.http[0].fault.abort = wState.faultInjectionRoute.abort;
           }
+        }
+      }
+      break;
+    }
+    case WIZARD_REQUEST_TIMEOUTS: {
+      // VirtualService from the weights mapped in the TimeoutRetryRoute
+      wizardVS.spec = {
+        http: [
+          {
+            route: wState.timeoutRetryRoute.workloads.map(workload => {
+              return {
+                destination: {
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                  subset: wkdNameVersion[workload.name]
+                },
+                weight: workload.weight
+              };
+            })
+          }
+        ]
+      };
+      if (wizardVS.spec.http && wizardVS.spec.http[0]) {
+        if (wState.timeoutRetryRoute.isTimeout) {
+          wizardVS.spec.http[0].timeout = wState.timeoutRetryRoute.timeout;
+        }
+        if (wState.timeoutRetryRoute.isRetry) {
+          wizardVS.spec.http[0].retries = wState.timeoutRetryRoute.retries;
         }
       }
       break;
@@ -606,6 +649,12 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
           rule.abort = httpRoute.fault.abort;
         }
       }
+      if (httpRoute.timeout) {
+        rule.timeout = httpRoute.timeout;
+      }
+      if (httpRoute.retries) {
+        rule.retries = httpRoute.retries;
+      }
       // Not adding a rule if it has empty routes, probably this means that an existing workload was removed
       if (rule.workloadWeights.length > 0) {
         rules.push(rule);
@@ -663,6 +712,51 @@ export const getInitFaultInjectionRoute = (
     }
   }
   return fiRoute;
+};
+
+export const getInitTimeoutRetryRoute = (
+  workloads: WorkloadOverview[],
+  virtualServices: VirtualServices
+): TimeoutRetryRoute => {
+  // Read potential predefined weights
+  let initWeights = getInitWeights(workloads, virtualServices);
+  if (workloads.length > 0 && initWeights.length === 0) {
+    initWeights = getDefaultWeights(workloads);
+  }
+  const trRoute = {
+    workloads: initWeights,
+    isTimeout: false,
+    timeout: '2s',
+    isValidTimeout: true,
+    isRetry: false,
+    retries: {
+      attempts: 3,
+      perTryTimeout: '2s',
+      retryOn: 'gateway-error,connect-failure,refused-stream'
+    },
+    isValidRetry: true
+  };
+  // This use case is intended for VS with single HTTP Route, others scenarios should use the Request Routing Wizard
+  if (
+    virtualServices.items.length === 1 &&
+    virtualServices.items[0].spec.http &&
+    virtualServices.items[0].spec.http.length === 1
+  ) {
+    if (virtualServices.items[0].spec.http[0].timeout) {
+      trRoute.isTimeout = true;
+      trRoute.timeout = virtualServices.items[0].spec.http[0].timeout;
+    }
+    if (virtualServices.items[0].spec.http[0].retries) {
+      trRoute.isRetry = true;
+      trRoute.retries.attempts = virtualServices.items[0].spec.http[0].retries.attempts;
+      if (virtualServices.items[0].spec.http[0].retries.perTryTimeout) {
+        trRoute.retries.perTryTimeout = virtualServices.items[0].spec.http[0].retries.perTryTimeout;
+      }
+      if (virtualServices.items[0].spec.http[0].retries.retryOn) {
+      }
+    }
+  }
+  return trRoute;
 };
 
 export const getInitTlsMode = (destinationRules: DestinationRules): [string, string, string, string] => {

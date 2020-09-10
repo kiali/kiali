@@ -6,6 +6,7 @@ import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/Matc
 import { WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
+import { TimeoutRetryRoute } from './RequestTimeouts';
 
 type Props = {
   serviceName: string;
@@ -22,6 +23,7 @@ type State = {
   headerName: string;
   matchValue: string;
   faultInjectionRoute: FaultInjectionRoute;
+  timeoutRetryRoute: TimeoutRetryRoute;
   rules: Rule[];
   validationMsg: string;
 };
@@ -56,6 +58,19 @@ class RequestRouting extends React.Component<Props, State> {
         },
         isValidAbort: true
       },
+      timeoutRetryRoute: {
+        workloads: [],
+        isTimeout: false,
+        timeout: '2s',
+        isValidTimeout: true,
+        isRetry: false,
+        retries: {
+          attempts: 3,
+          perTryTimeout: '2s',
+          retryOn: 'gateway-error,connect-failure,refused-stream'
+        },
+        isValidRetry: true
+      },
       matches: [],
       headerName: '',
       matchValue: '',
@@ -72,6 +87,9 @@ class RequestRouting extends React.Component<Props, State> {
         continue;
       }
       found = item.matches.every(value => rule.matches.includes(value));
+      if (found) {
+        break;
+      }
     }
     return found;
   };
@@ -93,51 +111,54 @@ class RequestRouting extends React.Component<Props, State> {
   };
 
   onAddMatch = () => {
-    // Change only state when there is a match
-    if (this.state.matchValue !== '') {
-      this.setState(prevState => {
-        const newMatch: string =
+    this.setState(prevState => {
+      let newMatch: string;
+      if (this.state.matchValue !== '') {
+        newMatch =
           prevState.category +
           (prevState.category === HEADERS ? ' [' + prevState.headerName + '] ' : ' ') +
           prevState.operator +
           ' ' +
           prevState.matchValue;
-        prevState.matches.push(newMatch);
-        return {
-          matches: prevState.matches,
-          headerName: '',
-          matchValue: ''
-        };
-      });
+      } else {
+        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + REGEX + ' ' + ANYTHING;
+      }
+      this.addNewMatch(prevState.matches, newMatch);
+      return {
+        matches: prevState.matches,
+        headerName: '',
+        matchValue: ''
+      };
+    });
+  };
+
+  addNewMatch = (matches: string[], newMatch: string) => {
+    // Non HEADERS matches can only appear once, so, newMatch will update the old one
+    let foundMatch: string | undefined = undefined;
+    let newMatchType = '';
+    if (newMatch.startsWith(HEADERS)) {
+      // We check the headers [<headerName>]
+      newMatchType = newMatch.substring(0, newMatch.indexOf(']') + 1);
+    } else {
+      newMatchType = newMatch.split(' ')[0];
     }
-    if (this.state.operator === PRESENCE && this.state.category === HEADERS && this.state.headerName !== '') {
-      this.setState(prevState => {
-        const newMatch: string = prevState.category + ' [' + prevState.headerName + '] ' + REGEX + ' ' + ANYTHING;
-        prevState.matches.push(newMatch);
-        return {
-          matches: prevState.matches,
-          headerName: '',
-          matchValue: ''
-        };
-      });
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i];
+      if (match.startsWith(newMatchType)) {
+        foundMatch = match;
+        break;
+      }
     }
+    if (foundMatch) {
+      const index = matches.indexOf(foundMatch, 0);
+      matches.splice(index, 1);
+    }
+    matches.push(newMatch);
   };
 
   onAddRule = () => {
     this.setState(
       prevState => {
-        // Just if there is a missing match
-        if (this.state.matchValue !== '') {
-          const newMatch: string =
-            prevState.category +
-            (prevState.category === HEADERS ? ' [' + prevState.headerName + '] ' : ' ') +
-            prevState.operator +
-            ' ' +
-            prevState.matchValue;
-          if (!prevState.matches.includes(newMatch)) {
-            prevState.matches.push(newMatch);
-          }
-        }
         const newWorkloadWeights: WorkloadWeight[] = [];
         prevState.workloadWeights.forEach(ww =>
           newWorkloadWeights.push({
@@ -148,7 +169,7 @@ class RequestRouting extends React.Component<Props, State> {
           })
         );
         const newRule: Rule = {
-          matches: prevState.matches,
+          matches: Object.assign([], prevState.matches),
           workloadWeights: newWorkloadWeights
         };
         if (prevState.faultInjectionRoute.delayed && prevState.faultInjectionRoute.isValidDelay) {
@@ -157,17 +178,22 @@ class RequestRouting extends React.Component<Props, State> {
         if (prevState.faultInjectionRoute.aborted && prevState.faultInjectionRoute.isValidAbort) {
           newRule.abort = prevState.faultInjectionRoute.abort;
         }
+        if (prevState.timeoutRetryRoute.isTimeout && prevState.timeoutRetryRoute.isValidTimeout) {
+          newRule.timeout = prevState.timeoutRetryRoute.timeout;
+        }
+        if (prevState.timeoutRetryRoute.isRetry && prevState.timeoutRetryRoute.isValidRetry) {
+          newRule.retries = prevState.timeoutRetryRoute.retries;
+        }
         if (!this.isMatchesIncluded(prevState.rules, newRule)) {
           prevState.rules.push(newRule);
-          prevState.faultInjectionRoute.delayed = false;
-          prevState.faultInjectionRoute.aborted = false;
           return {
-            matches: [],
-            headerName: '',
-            matchValue: '',
+            matches: prevState.matches,
+            headerName: prevState.headerName,
+            matchValue: prevState.matchValue,
             rules: prevState.rules,
             validationMsg: '',
-            faultInjectionRoute: prevState.faultInjectionRoute
+            faultInjectionRoute: prevState.faultInjectionRoute,
+            timeoutRetryRoute: prevState.timeoutRetryRoute
           };
         } else {
           return {
@@ -176,7 +202,8 @@ class RequestRouting extends React.Component<Props, State> {
             matchValue: prevState.matchValue,
             rules: prevState.rules,
             validationMsg: MSG_SAME_MATCHING,
-            faultInjectionRoute: prevState.faultInjectionRoute
+            faultInjectionRoute: prevState.faultInjectionRoute,
+            timeoutRetryRoute: prevState.timeoutRetryRoute
           };
         }
       },
@@ -187,7 +214,8 @@ class RequestRouting extends React.Component<Props, State> {
   onRemoveMatch = (matchToRemove: string) => {
     this.setState(prevState => {
       return {
-        matches: prevState.matches.filter(m => matchToRemove !== m)
+        matches: prevState.matches.filter(m => matchToRemove !== m),
+        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
       };
     });
   };
@@ -316,6 +344,15 @@ class RequestRouting extends React.Component<Props, State> {
               return {
                 faultInjectionRoute: faultInjectionRoute,
                 validationMsg: !valid ? 'Fault Injection not valid' : ''
+              };
+            });
+          }}
+          timeoutRetryRoute={this.state.timeoutRetryRoute}
+          onSelectTimeoutRetry={(valid, timeoutRetryRoute) => {
+            this.setState(_prevState => {
+              return {
+                timeoutRetryRoute: timeoutRetryRoute,
+                validationMsg: !valid ? 'Request Timeout not valid' : ''
               };
             });
           }}

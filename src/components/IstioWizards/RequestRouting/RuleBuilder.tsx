@@ -7,6 +7,7 @@ import { WorkloadOverview } from '../../../types/ServiceInfo';
 import TrafficShifting, { WorkloadWeight } from '../TrafficShifting';
 import FaultInjection, { FaultInjectionRoute } from '../FaultInjection';
 import { PfColors } from '../../Pf/PfColors';
+import RequestTimeouts, { TimeoutRetryRoute } from '../RequestTimeouts';
 
 type Props = {
   // MatchBuilder props
@@ -31,6 +32,9 @@ type Props = {
 
   faultInjectionRoute: FaultInjectionRoute;
   onSelectFaultInjection: (valid: boolean, faultInjectionRoute: FaultInjectionRoute) => void;
+
+  timeoutRetryRoute: TimeoutRetryRoute;
+  onSelectTimeoutRetry: (valid: boolean, timeoutRetryRoute: TimeoutRetryRoute) => void;
 
   // RuleBuilder
   validationMsg: string;
@@ -96,6 +100,14 @@ class RuleBuilder extends React.Component<Props, State> {
               <FaultInjection
                 initFaultInjectionRoute={this.props.faultInjectionRoute}
                 onChange={this.props.onSelectFaultInjection}
+              />
+            </div>
+          </Tab>
+          <Tab eventKey={3} title={'Request Timeouts'}>
+            <div style={{ marginTop: '10px' }}>
+              <RequestTimeouts
+                initTimeoutRetry={this.props.timeoutRetryRoute}
+                onChange={this.props.onSelectTimeoutRetry}
               />
             </div>
           </Tab>

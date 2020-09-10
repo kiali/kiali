@@ -320,7 +320,9 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
             gateways={this.state.gateways}
             peerAuthentications={this.state.peerAuthentications}
             tlsStatus={details.namespaceMTLS}
-            onChange={this.fetchBackend}
+            onChange={() => {
+              this.fetchBackend();
+            }}
           />
         )}
       </RightActionBar>

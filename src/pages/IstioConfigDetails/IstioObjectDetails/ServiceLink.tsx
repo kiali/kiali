@@ -60,7 +60,7 @@ class ServiceLink extends React.PureComponent<Props> {
     const link = this.getHost();
     //Render the actual link
     return (
-      <Link to={'/namespaces/' + link[0] + '/services/' + link[1]}>
+      <Link to={'/namespaces/' + link[0] + '/services/' + link[1] + '?list=istioconfig'}>
         {this.props.host + ' '}
         <ServiceIcon />
       </Link>

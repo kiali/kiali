@@ -32,13 +32,16 @@ import {
   WIZARD_TRAFFIC_SHIFTING,
   ServiceWizardProps,
   ServiceWizardState,
-  getInitFaultInjectionRoute
+  getInitFaultInjectionRoute,
+  WIZARD_REQUEST_TIMEOUTS,
+  getInitTimeoutRetryRoute
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
 import { DestinationRule, PeerAuthentication, PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { style } from 'typestyle';
+import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -64,6 +67,19 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
         httpStatus: 503
       },
       isValidAbort: true
+    },
+    timeoutRetryRoute: {
+      workloads: [],
+      isTimeout: false,
+      timeout: '2s',
+      isValidTimeout: true,
+      isRetry: false,
+      retries: {
+        attempts: 3,
+        perTryTimeout: '2s',
+        retryOn: 'gateway-error,connect-failure,refused-stream'
+      },
+      isValidRetry: true
     },
     valid: {
       mainWizard: true,
@@ -119,6 +135,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           isMainWizardValid = false;
           break;
         case WIZARD_FAULT_INJECTION:
+        case WIZARD_REQUEST_TIMEOUTS:
         default:
           isMainWizardValid = true;
           break;
@@ -223,6 +240,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
+      case WIZARD_REQUEST_TIMEOUTS:
         const [dr, vs, gw, pa] = buildIstioConfig(this.props, this.state);
         // Gateway is only created when user has explicit selected this option
         if (gw) {
@@ -359,6 +377,16 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     });
   };
 
+  onTimeoutRetryRouteChange = (valid: boolean, timeoutRetryRoute: TimeoutRetryRoute) => {
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        timeoutRetryRoute: timeoutRetryRoute
+      };
+    });
+  };
+
   isValid = (state: ServiceWizardState): boolean => {
     return state.valid.mainWizard && state.valid.vsHosts && state.valid.tls && state.valid.lb && state.valid.gateway;
   };
@@ -391,13 +419,6 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           </Button>
         ]}
       >
-        {this.props.type === WIZARD_TRAFFIC_SHIFTING && (
-          <TrafficShifting
-            workloads={this.props.workloads}
-            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
-            onChange={this.onWeightsChange}
-          />
-        )}
         {this.props.type === WIZARD_REQUEST_ROUTING && (
           <RequestRouting
             serviceName={this.props.serviceName}
@@ -412,9 +433,23 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             onChange={this.onFaultInjectionRouteChange}
           />
         )}
-        {(this.props.type === WIZARD_TRAFFIC_SHIFTING ||
-          this.props.type === WIZARD_REQUEST_ROUTING ||
-          this.props.type === WIZARD_FAULT_INJECTION) && (
+        {this.props.type === WIZARD_TRAFFIC_SHIFTING && (
+          <TrafficShifting
+            workloads={this.props.workloads}
+            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
+            onChange={this.onWeightsChange}
+          />
+        )}
+        {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
+          <RequestTimeouts
+            initTimeoutRetry={getInitTimeoutRetryRoute(this.props.workloads, this.props.virtualServices)}
+            onChange={this.onTimeoutRetryRouteChange}
+          />
+        )}
+        {(this.props.type === WIZARD_REQUEST_ROUTING ||
+          this.props.type === WIZARD_FAULT_INJECTION ||
+          this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+          this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
           <Expandable
             className={advancedOptionsStyle}
             isExpanded={this.state.showAdvanced}
