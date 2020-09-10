@@ -51,7 +51,14 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	if err != nil {
 		return nil, err
 	}
-	return client.GetServiceTraces(ns, app, service, query)
+	// Artificial increase of limit (see explanation in GetWorkloadTraces)
+	reqLimit := query.Limit
+	query.Limit *= 2
+	r, err := client.GetServiceTraces(ns, app, service, query)
+	if reqLimit > 0 && r != nil && len(r.Data) > reqLimit {
+		r.Data = r.Data[:reqLimit]
+	}
+	return r, err
 }
 
 func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
@@ -63,7 +70,17 @@ func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.Tra
 	if err != nil {
 		return nil, err
 	}
-	return client.GetWorkloadTraces(ns, app, workload, query)
+	// Because Traces are fetched per App and not Workloads, the 'limit' query param will apply to app's traces, not workloads,
+	// so it will not be consistent with the final result. In other words, we ask for 15 traces but could very well end up with
+	// only 3 traces for the workload even if there's more.
+	// To try to attenuate this effect, we will artificially increase the limit, then cut it down after workload filtering.
+	reqLimit := query.Limit
+	query.Limit *= 5
+	r, err := client.GetWorkloadTraces(ns, app, workload, query)
+	if reqLimit > 0 && r != nil && len(r.Data) > reqLimit {
+		r.Data = r.Data[:reqLimit]
+	}
+	return r, err
 }
 
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {

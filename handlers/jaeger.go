@@ -139,6 +139,11 @@ func TraceDetails(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
+	if trace == nil {
+		// Trace not found
+		RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Trace %s not found", traceID))
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, trace)
 }
 
