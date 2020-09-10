@@ -79,6 +79,8 @@ export const safeFit = (cy: Cy.Core, centerElements?: Cy.Collection) => {
     cy.zoom(ZoomOptions.maxZoom);
     !!centerElements && !!centerElements.length ? cy.center(centerElements) : cy.center();
   }
+  // 'fit' is a custom event that we emit allowing us to reset cytoscapeGraph.customViewport
+  cy.emit('fit');
 };
 
 export const runLayout = (cy: Cy.Core, layout: Layout) => {

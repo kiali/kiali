@@ -167,8 +167,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
 
     if (hideChanged || (graphChanged && !!this.props.hideValue)) {
       const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
-      const layoutChanged = this.props.layout !== prevProps.layout;
-      this.handleHide(this.props.cy, hideChanged, graphChanged, compressOnHideChanged, layoutChanged);
+      this.handleHide(this.props.cy, hideChanged, graphChanged, compressOnHideChanged);
     }
   }
 
@@ -352,16 +351,9 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     this.props.setHideValue('');
   };
 
-  private handleHide = (
-    cy: any,
-    hideChanged: boolean,
-    graphChanged: boolean,
-    compressOnHideChanged: boolean,
-    layoutChanged: boolean
-  ) => {
+  private handleHide = (cy: any, hideChanged: boolean, graphChanged: boolean, compressOnHideChanged: boolean) => {
     const selector = this.parseValue(this.props.hideValue, false);
     console.debug(`Hide selector=[${selector}]`);
-    let prevRemoved = this.removedElements;
 
     cy.startBatch();
 
@@ -371,7 +363,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     }
     this.hiddenElements = undefined;
 
-    // restore removed elements when we are working with the same graph. . Either way,release for garbage collection.  If the graph has changed
+    // restore removed elements when we are working with the same graph. Either way,release for garbage collection.  If the graph has changed
     if (!!this.removedElements && !graphChanged) {
       this.removedElements.restore();
     }
@@ -409,52 +401,10 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     cy.endBatch();
 
     const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
-    const same = this.areSameElements(prevRemoved, this.removedElements);
-    prevRemoved = undefined;
     if (hideChanged || (compressOnHideChanged && selector) || hasRemovedElements) {
-      const zoom = cy.zoom();
-      const pan = cy.pan();
-
-      // I don't know why but for some reason the first layout may not leave some elements in their final
-      // position.  Running the layout a second time seems to solve the issue, so for now we'll take the hit
-      // when removing nodes and run it a second time.
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      CytoscapeGraphUtils.runLayout(cy, this.props.layout); // intentionally run a second time
-
-      // after the layout perform a fit to minimize movement, unless we need to maintain a custom zoom/pan.
-      // Absorb small zoom/pan changes made by the layout, only re-establish significant, user-generated changes.
-      const zoomChanged = Math.abs(zoom - cy.zoom()) > 0.1;
-      const panChanged = Math.abs(pan.x - cy.pan().x) > 20 || Math.abs(pan.y - cy.pan().y) > 20;
-
-      if (!same || compressOnHideChanged || layoutChanged || !(zoomChanged || panChanged)) {
-        CytoscapeGraphUtils.safeFit(cy);
-      } else {
-        if (zoomChanged) {
-          cy.zoom(zoom);
-        }
-        if (panChanged) {
-          cy.pan(pan);
-        }
-      }
     }
   };
-
-  private areSameElements(elemsA: any, elemsB: any): boolean {
-    if (elemsA === elemsB) {
-      return true;
-    }
-    if (!elemsA || !elemsB) {
-      return false;
-    }
-    if (elemsA.length !== elemsB.length) {
-      return false;
-    }
-    const idsA = elemsA.map(e => e.id).sort();
-    return elemsB
-      .map(e => e.id)
-      .sort()
-      .every((eId, index) => eId === idsA[index]);
-  }
 
   private handleFind = (cy: any) => {
     const selector = this.parseValue(this.props.findValue, true);

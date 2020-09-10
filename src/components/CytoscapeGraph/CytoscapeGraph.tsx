@@ -70,16 +70,6 @@ type CytoscapeGraphProps = {
   updateSummary?: (event: CytoscapeClickEvent) => void;
 };
 
-type Position = {
-  x: number;
-  y: number;
-};
-
-type InitialValues = {
-  position?: Position;
-  zoom?: number;
-};
-
 export interface GraphNodeTapEvent {
   aggregate?: string;
   aggregateValue?: string;
@@ -112,28 +102,25 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   static tapTimeout: any;
   static readonly DataNodeId = 'data-node-id';
 
-  private graphHighlighter?: GraphHighlighter;
-  private trafficRenderer?: TrafficRender;
-  private focusSelector?: string;
-  private cytoscapeReactWrapperRef: any;
   private readonly contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
+  private cy?: Cy.Core;
+  private customViewport: boolean;
+  private cytoscapeReactWrapperRef: any;
+  private focusSelector?: string;
+  private graphHighlighter?: GraphHighlighter;
   private namespaceChanged: boolean;
   private nodeChanged: boolean;
   private resetSelection: boolean = false;
-  private initialValues: InitialValues;
-  private cy?: Cy.Core;
+  private trafficRenderer?: TrafficRender;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
+    this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
+    this.customViewport = false;
+    this.cytoscapeReactWrapperRef = React.createRef();
     this.focusSelector = props.focusSelector;
     this.namespaceChanged = false;
     this.nodeChanged = false;
-    this.initialValues = {
-      position: undefined,
-      zoom: undefined
-    };
-    this.cytoscapeReactWrapperRef = React.createRef();
-    this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
   }
 
   componentDidMount() {
@@ -284,17 +271,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private onResize = () => {
     if (this.cy) {
       this.cy.resize();
-      const currentPosition = this.cy.pan();
-      const currentZoom = this.cy.zoom();
-      if (
-        this.initialValues.position &&
-        this.initialValues.position.x === currentPosition.x &&
-        this.initialValues.position.y === currentPosition.y &&
-        this.initialValues.zoom === currentZoom
-      ) {
-        // There was a resize, but we are in the initial pan/zoom state, we can fit again.
-        this.safeFit(this.cy);
-      }
+      // always fit to the newly sized space
+      this.safeFit(this.cy, true);
     }
   };
 
@@ -409,6 +387,21 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       }
     });
 
+    cy.on('viewport', (evt: Cy.EventObject) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent) {
+        this.customViewport = true;
+      }
+    });
+
+    // 'fit' is a custom event that we emit allowing us to reset cytoscapeGraph.customViewport
+    cy.on('fit', (evt: Cy.EventObject) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent) {
+        this.customViewport = false;
+      }
+    });
+
     cy.on('nodehtml-create-or-update', 'node', (evt: Cy.EventObjectNode, data: any) => {
       const { label, isNew } = data;
       const { target } = evt;
@@ -515,7 +508,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   }
 
   private focus(cy: Cy.Core) {
-    if (!!!this.focusSelector) {
+    if (!this.focusSelector) {
       return;
     }
 
@@ -544,11 +537,12 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     new FocusAnimation(cy).start(selected);
   }
 
-  private safeFit(cy: Cy.Core) {
+  private safeFit(cy: Cy.Core, force?: boolean) {
+    if (!force && this.customViewport) {
+      return;
+    }
     this.focus(cy);
     CytoscapeGraphUtils.safeFit(cy);
-    this.initialValues.position = { ...cy.pan() };
-    this.initialValues.zoom = cy.zoom();
   }
 
   private processGraphUpdate(cy: Cy.Core, updateLayout: boolean) {
@@ -594,7 +588,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     // Run layout and fit outside of the batch operation for it to take effect on the new nodes
     if (updateLayout) {
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      this.safeFit(cy);
     }
 
     // We opt-in for manual selection to be able to control when to select a node/edge

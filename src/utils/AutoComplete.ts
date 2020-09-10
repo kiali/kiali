@@ -23,8 +23,6 @@ export class AutoComplete {
     if (!this.endings.length) {
       this.start = input;
     }
-
-    console.log(`input=[${input}] start=[${this.start}] end=[${end}] endings=[${this.endings.length}]`);
   }
 
   next(): string {
