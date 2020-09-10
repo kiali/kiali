@@ -47,7 +47,7 @@ export interface WorkloadStatus {
 export const TRAFFICSTATUS = 'Traffic Status';
 
 const createTrafficTitle = (time: string) => {
-  return TRAFFICSTATUS + ' (Last ' + time + ') .';
+  return TRAFFICSTATUS + ' (Last ' + time + ')';
 };
 
 /*

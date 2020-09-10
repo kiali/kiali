@@ -5,7 +5,7 @@ exports[`HealthDetails renders deployments failure 1`] = `
   key="0"
 >
   <strong>
-     Traffic Status (Last 1m) .
+     Traffic Status (Last 1m)
      
   </strong>
   <ul
@@ -38,7 +38,7 @@ exports[`HealthDetails renders healthy 1`] = `
   key="0"
 >
   <strong>
-     Traffic Status (Last 1m) .
+     Traffic Status (Last 1m)
      
   </strong>
   <ul

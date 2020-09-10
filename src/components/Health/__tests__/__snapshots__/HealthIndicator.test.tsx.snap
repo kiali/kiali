@@ -87,7 +87,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "name": "No health information",
                     "priority": 0,
                   },
-                  "title": "Traffic Status (Last 10m) .",
+                  "title": "Traffic Status (Last 10m)",
                 },
               ],
               "statusConfig": Object {
@@ -99,7 +99,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "priority": 0,
                 },
                 "threshold": undefined,
-                "title": "Traffic Status (Last 10m) .",
+                "title": "Traffic Status (Last 10m)",
                 "value": -1,
               },
             },
