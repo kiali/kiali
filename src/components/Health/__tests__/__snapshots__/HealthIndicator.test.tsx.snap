@@ -23,62 +23,74 @@ exports[`HealthIndicator renders healthy 1`] = `
       <HealthDetails
         health={
           AppHealth {
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "class": "icon-healthy",
-                      "color": "#3e8635",
-                      "icon": [Function],
-                      "name": "Healthy",
-                      "priority": 1,
+            "health": Object {
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-healthy",
+                        "color": "#3e8635",
+                        "icon": [Function],
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "A: 1 / 1",
                     },
-                    "text": "A: 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "class": "icon-healthy",
-                      "color": "#3e8635",
-                      "icon": [Function],
-                      "name": "Healthy",
-                      "priority": 1,
+                    Object {
+                      "status": Object {
+                        "class": "icon-healthy",
+                        "color": "#3e8635",
+                        "icon": [Function],
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "B: 2 / 2",
                     },
-                    "text": "B: 2 / 2",
+                  ],
+                  "status": Object {
+                    "class": "icon-healthy",
+                    "color": "#3e8635",
+                    "icon": [Function],
+                    "name": "Healthy",
+                    "priority": 1,
                   },
-                ],
-                "status": Object {
-                  "class": "icon-healthy",
-                  "color": "#3e8635",
-                  "icon": [Function],
-                  "name": "Healthy",
-                  "priority": 1,
+                  "title": "Pod Status",
                 },
-                "title": "Pod Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "class": "icon-na",
-                      "color": "#6a6e73",
-                      "icon": [Function],
-                      "name": "No health information",
-                      "priority": 0,
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "#6a6e73",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Inbound: No requests",
                     },
-                    "text": "Inbound: No requests",
-                  },
-                  Object {
-                    "status": Object {
-                      "class": "icon-na",
-                      "color": "#6a6e73",
-                      "icon": [Function],
-                      "name": "No health information",
-                      "priority": 0,
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "#6a6e73",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Outbound: No requests",
                     },
-                    "text": "Outbound: No requests",
+                  ],
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#6a6e73",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
                   },
-                ],
+                  "title": "Traffic Status (Last 10m) .",
+                },
+              ],
+              "statusConfig": Object {
                 "status": Object {
                   "class": "icon-na",
                   "color": "#6a6e73",
@@ -86,13 +98,14 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "name": "No health information",
                   "priority": 0,
                 },
-                "title": "Error Rate over 10m",
+                "threshold": undefined,
+                "title": "Traffic Status (Last 10m) .",
+                "value": -1,
               },
-            ],
+            },
             "requests": Object {
-              "errorRatio": -1,
-              "inboundErrorRatio": -1,
-              "outboundErrorRatio": -1,
+              "inbound": Object {},
+              "outbound": Object {},
             },
           }
         }

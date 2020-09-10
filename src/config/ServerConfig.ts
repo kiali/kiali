@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 import { ServerConfig } from '../types/ServerConfig';
+import { parseHealthConfig } from './HealthConfig';
 
 export type Durations = { [key: number]: string };
 
@@ -49,6 +50,9 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // Set some defaults. Mainly used in tests, because
 // these will be overwritten on user login.
 let serverConfig: ComputedServerConfig = {
+  healthConfig: {
+    rate: []
+  },
   installationTag: 'Kiali Console',
   istioAnnotations: {
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
@@ -93,6 +97,9 @@ export const setServerConfig = (svcConfig: ServerConfig) => {
     ...svcConfig,
     durations: {}
   };
+  serverConfig.healthConfig = svcConfig.healthConfig
+    ? parseHealthConfig(svcConfig.healthConfig)
+    : serverConfig.healthConfig;
 
   computeValidDurations(serverConfig);
 };

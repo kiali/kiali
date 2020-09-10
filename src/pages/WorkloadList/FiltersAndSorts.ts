@@ -7,7 +7,7 @@ import {
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
-import { getRequestErrorsStatus, WithWorkloadHealth, hasHealth } from '../../types/Health';
+import { WithWorkloadHealth, hasHealth } from '../../types/Health';
 import {
   presenceValues,
   istioSidecarFilter,
@@ -20,6 +20,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
+import { calculateErrorRate } from '../../types/ErrorRate';
 
 const missingLabels = (r: WorkloadListItem): number => {
   return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
@@ -158,8 +159,10 @@ export const sortFields: SortField<WorkloadListItem>[] = [
 
         if (statusForA.priority === statusForB.priority) {
           // If both workloads have same health status, use error rate to determine order.
-          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
-          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
+          const ratioA = calculateErrorRate(a.namespace, a.name, 'workload', a.health.requests).errorRatio.global.status
+            .value;
+          const ratioB = calculateErrorRate(b.namespace, b.name, 'workload', b.health.requests).errorRatio.global.status
+            .value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 

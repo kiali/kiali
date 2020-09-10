@@ -166,7 +166,6 @@ export const renderHealth = (health?: Health) => {
             'n/a'
           )}
         </span>
-        <span style={{ marginLeft: '4px' }}>health</span>
       </Badge>
     </>
   );

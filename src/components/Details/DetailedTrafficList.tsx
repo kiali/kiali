@@ -1,22 +1,14 @@
-import {
-  ApplicationsIcon,
-  BundleIcon,
-  ErrorCircleOIcon,
-  InfoAltIcon,
-  CheckCircleIcon,
-  ServiceIcon,
-  UnknownIcon,
-  WarningTriangleIcon
-} from '@patternfly/react-icons';
+import { ApplicationsIcon, BundleIcon, InfoAltIcon, ServiceIcon, UnknownIcon } from '@patternfly/react-icons';
 import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { NodeType, ProtocolTraffic, hasProtocolTraffic } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
-import { REQUESTS_THRESHOLDS } from '../../types/Health';
 import history, { URLParam } from '../../app/History';
-import { PfColors } from '../Pf/PfColors';
 import { style } from 'typestyle';
+import { getTrafficHealth } from '../../types/ErrorRate';
+import { NA } from '../../types/Health';
+import { createIcon } from '../../components/Health/Helper';
 
 type DetailedTrafficProps = {
   direction: Direction;
@@ -127,7 +119,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     sortedTraffic.map(item =>
       rows.push({
         cells: [
-          { title: this.renderStatusColumn(item.traffic), props: DetailedTrafficList.COLUMN_PROPS },
+          { title: this.renderStatusColumn(item), props: DetailedTrafficList.COLUMN_PROPS },
           {
             title: this.renderWorkloadColumn(item.node, item.proxy !== undefined),
             props: DetailedTrafficList.COLUMN_PROPS
@@ -206,25 +198,13 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     return <Link to={metricsLink}>View metrics</Link>;
   };
 
-  private renderStatusColumn = (traffic: ProtocolTraffic) => {
-    if (hasProtocolTraffic(traffic) && traffic.protocol !== 'tcp') {
-      let percentError: number;
-      if (traffic.protocol === 'http') {
-        percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
-      } else {
-        percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
-      }
-      let healthIcon = <CheckCircleIcon size={'md'} color={PfColors.Green400} />;
-
-      if (percentError > REQUESTS_THRESHOLDS.failure) {
-        healthIcon = <ErrorCircleOIcon size={'md'} color={PfColors.Red100} />;
-      } else if (percentError > REQUESTS_THRESHOLDS.degraded) {
-        healthIcon = <WarningTriangleIcon size={'md'} color={PfColors.Orange400} />;
-      }
-
-      return healthIcon;
+  private renderStatusColumn = (item: TrafficItem) => {
+    const traffic = item.traffic;
+    if (traffic.protocol !== 'tcp' && hasProtocolTraffic(traffic)) {
+      const status = getTrafficHealth(item, this.props.direction);
+      return createIcon(status.status, 'md');
     } else {
-      return <UnknownIcon size={'md'} />;
+      return createIcon(NA, 'md');
     }
   };
 

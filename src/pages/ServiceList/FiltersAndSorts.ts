@@ -1,5 +1,5 @@
 import { ActiveFiltersInfo, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
-import { getRequestErrorsStatus, WithServiceHealth, hasHealth } from '../../types/Health';
+import { WithServiceHealth, hasHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import {
@@ -13,6 +13,7 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
+import { calculateErrorRate } from '../../types/ErrorRate';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -77,8 +78,10 @@ export const sortFields: SortField<ServiceListItem>[] = [
 
         if (statusForA.priority === statusForB.priority) {
           // If both services have same health status, use error rate to determine order.
-          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
-          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
+          const ratioA = calculateErrorRate(a.namespace, a.name, 'service', a.health.requests).errorRatio.global.status
+            .value;
+          const ratioB = calculateErrorRate(b.namespace, b.name, 'service', b.health.requests).errorRatio.global.status
+            .value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 

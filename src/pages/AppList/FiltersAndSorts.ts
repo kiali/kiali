@@ -1,7 +1,8 @@
 import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
+import { calculateErrorRate } from '../../types/ErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
-import { getRequestErrorsStatus, WithAppHealth, hasHealth } from '../../types/Health';
+import { WithAppHealth, hasHealth } from '../../types/Health';
 import {
   istioSidecarFilter,
   healthFilter,
@@ -63,8 +64,10 @@ export const sortFields: SortField<AppListItem>[] = [
 
         if (statusForA.priority === statusForB.priority) {
           // If both apps have same health status, use error rate to determine order.
-          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
-          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
+          const ratioA = calculateErrorRate(a.namespace, a.name, 'app', a.health.requests).errorRatio.global.status
+            .value;
+          const ratioB = calculateErrorRate(b.namespace, b.name, 'app', b.health.requests).errorRatio.global.status
+            .value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 

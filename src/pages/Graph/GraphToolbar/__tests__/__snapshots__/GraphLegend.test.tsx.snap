@@ -275,14 +275,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="20% Error (Danger)"
+                alt="Failure"
                 src="edge-danger.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              20% Error (Danger)
+              Failure
             </span>
           </div>
           <div
@@ -291,14 +291,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="0.1 - 20% Error (Warn)"
+                alt="Degraded"
                 src="edge-warn.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              0.1 - 20% Error (Warn)
+              Degraded
             </span>
           </div>
           <div
@@ -307,14 +307,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="0.1 Error (Success)"
+                alt="Healthy"
                 src="edge-success.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              0.1 Error (Success)
+              Healthy
             </span>
           </div>
           <div

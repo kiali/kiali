@@ -68,9 +68,9 @@ const legendData: GraphLegendItem[] = [
   {
     title: 'Edges',
     data: [
-      { label: '20% Error (Danger)', icon: edgeDangerImage },
-      { label: '0.1 - 20% Error (Warn)', icon: edgeWarnImage },
-      { label: '0.1 Error (Success)', icon: edgeSuccessImage },
+      { label: 'Failure', icon: edgeDangerImage },
+      { label: 'Degraded', icon: edgeWarnImage },
+      { label: 'Healthy', icon: edgeSuccessImage },
       { label: 'TCP Connection', icon: edgeTcpImage },
       { label: 'Idle', icon: edgeIdlemage },
       { label: 'mTLS (badge)', icon: edgeMtlsImage }

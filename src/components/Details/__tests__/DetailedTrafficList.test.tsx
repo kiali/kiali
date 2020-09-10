@@ -1,14 +1,18 @@
 import * as React from 'react';
 import { MemoryRouter, Router } from 'react-router';
 import { mount } from 'enzyme';
-import { ErrorCircleOIcon, CheckCircleIcon, UnknownIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import DetailedTrafficList, { AppNode, ServiceNode, TrafficItem, WorkloadNode } from '../DetailedTrafficList';
 import history from '../../../app/History';
 import { NodeType } from '../../../types/Graph';
-import { REQUESTS_THRESHOLDS } from '../../../types/Health';
-import { PfColors } from '../../Pf/PfColors';
+import { createIcon } from '../../../components/Health/Helper';
+import { HEALTHY, DEGRADED, FAILURE, NA } from '../../../types/Health';
+import { setServerConfig } from '../../../config/ServerConfig';
+import { healthConfig } from '../../../types/__testData__/HealthConfig';
 
 describe('DetailedTrafficList', () => {
+  beforeAll(() => {
+    setServerConfig(healthConfig);
+  });
   const buildHttpItemWithError = (error: number): TrafficItem => ({
     node: {
       id: 'id1',
@@ -23,7 +27,20 @@ describe('DetailedTrafficList', () => {
         http: '14',
         httpPercentErr: error.toString()
       },
-      responses: {}
+      responses: {
+        '501': {
+          flags: {
+            '-': error.toString()
+          },
+          hosts: {}
+        },
+        '200': {
+          flags: {
+            '-': (100 - error).toString()
+          },
+          hosts: {}
+        }
+      }
     }
   });
 
@@ -41,7 +58,20 @@ describe('DetailedTrafficList', () => {
         grpc: '14',
         grpcPercentErr: error.toString()
       },
-      responses: {}
+      responses: {
+        '1': {
+          flags: {
+            '-': error.toString()
+          },
+          hosts: {}
+        },
+        '0': {
+          flags: {
+            '-': (100 - error).toString()
+          },
+          hosts: {}
+        }
+      }
     }
   });
 
@@ -153,18 +183,18 @@ describe('DetailedTrafficList', () => {
   });
 
   it('renders green status if HTTP traffic has no errors', () => {
-    const trafficItem = buildHttpItemWithError(REQUESTS_THRESHOLDS.degraded / 2);
+    const trafficItem = buildHttpItemWithError(0.05);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
       </MemoryRouter>
     );
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<CheckCircleIcon size={'md'} color={PfColors.Green400} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(HEALTHY, 'md')).html())).toBeTruthy();
   });
 
   it('renders warning status if HTTP traffic has errors below error threshold', () => {
-    const trafficItem = buildHttpItemWithError((REQUESTS_THRESHOLDS.degraded + REQUESTS_THRESHOLDS.failure) / 2);
+    const trafficItem = buildHttpItemWithError(10.05);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
@@ -172,11 +202,11 @@ describe('DetailedTrafficList', () => {
     );
 
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<WarningTriangleIcon size={'md'} color={PfColors.Orange400} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(DEGRADED, 'md')).html())).toBeTruthy();
   });
 
   it('renders error status if HTTP traffic has errors above error threshold', () => {
-    const trafficItem = buildHttpItemWithError(REQUESTS_THRESHOLDS.failure * 2);
+    const trafficItem = buildHttpItemWithError(40);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
@@ -184,11 +214,11 @@ describe('DetailedTrafficList', () => {
     );
 
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<ErrorCircleOIcon size={'md'} color={PfColors.Red100} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(FAILURE, 'md')).html())).toBeTruthy();
   });
 
   it('renders green status if GRPC traffic has no errors', () => {
-    const trafficItem = buildGrpcItemWithError(REQUESTS_THRESHOLDS.degraded / 2);
+    const trafficItem = buildGrpcItemWithError(0.05);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
@@ -196,11 +226,11 @@ describe('DetailedTrafficList', () => {
     );
 
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<CheckCircleIcon size={'md'} color={PfColors.Green400} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(HEALTHY, 'md')).html())).toBeTruthy();
   });
 
   it('renders warning status if GRPC traffic has errors below error threshold', () => {
-    const trafficItem = buildGrpcItemWithError((REQUESTS_THRESHOLDS.degraded + REQUESTS_THRESHOLDS.failure) / 2);
+    const trafficItem = buildGrpcItemWithError(10.05);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
@@ -208,11 +238,11 @@ describe('DetailedTrafficList', () => {
     );
 
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<WarningTriangleIcon size={'md'} color={PfColors.Orange400} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(DEGRADED, 'md')).html())).toBeTruthy();
   });
 
   it('renders error status if GRPC traffic has errors above error threshold', () => {
-    const trafficItem = buildGrpcItemWithError(REQUESTS_THRESHOLDS.failure * 2);
+    const trafficItem = buildGrpcItemWithError(40);
     const wrapper = mount(
       <MemoryRouter>
         <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
@@ -220,7 +250,7 @@ describe('DetailedTrafficList', () => {
     );
 
     const cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<ErrorCircleOIcon size={'md'} color={PfColors.Red100} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(FAILURE, 'md')).html())).toBeTruthy();
   });
 
   it('renders unknown status if traffic is TCP or unknown', () => {
@@ -233,7 +263,7 @@ describe('DetailedTrafficList', () => {
     );
 
     let cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<UnknownIcon size={'md'} />)).toBeTruthy();
+    expect(cell.contains(createIcon(NA, 'md'))).toBeTruthy();
 
     // Unknown
     trafficItem = buildUnknownProtocolItem();
@@ -244,7 +274,7 @@ describe('DetailedTrafficList', () => {
     );
 
     cell = wrapper.find('BodyCell').at(DetailedTrafficList.STATUS_COLUMN_IDX);
-    expect(cell.contains(<UnknownIcon size={'md'} />)).toBeTruthy();
+    expect(cell.html().includes(mount(createIcon(NA, 'md')).html())).toBeTruthy();
   });
 
   it('renders traffic type correctly', () => {

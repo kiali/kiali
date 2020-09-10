@@ -8,12 +8,28 @@ import {
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { getName } from '../utils/RateIntervals';
 import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
+import { calculateErrorRate } from './ErrorRate';
+import { ToleranceConfig } from './ServerConfig';
+import { serverConfig } from '../config';
 
-interface HealthItem {
+interface HealthConfig {
+  items: HealthItem[];
+  statusConfig?: HealthItemConfig;
+}
+
+export interface HealthItem {
   status: Status;
   title: string;
   text?: string;
   children?: HealthSubItem[];
+}
+
+export interface HealthItemConfig {
+  status: Status;
+  title: string;
+  text?: string;
+  value: number;
+  threshold?: ToleranceConfig;
 }
 
 interface HealthSubItem {
@@ -28,10 +44,24 @@ export interface WorkloadStatus {
   availableReplicas: number;
 }
 
+export const TRAFFICSTATUS = 'Traffic Status';
+
+const createTrafficTitle = (time: string) => {
+  return TRAFFICSTATUS + ' (Last ' + time + ') .';
+};
+
+/*
+RequestType interface
+- where the structure is type {<protocol>: {<code>:value ...} ...}
+
+Example: { "http": {"200": 2, "404": 1 ...} ... }
+*/
+export interface RequestType {
+  [key: string]: { [key: string]: number };
+}
 export interface RequestHealth {
-  errorRatio: number;
-  inboundErrorRatio: number;
-  outboundErrorRatio: number;
+  inbound: RequestType;
+  outbound: RequestType;
 }
 
 export interface Status {
@@ -85,20 +115,16 @@ interface Thresholds {
   unit: string;
 }
 
-export const REQUESTS_THRESHOLDS: Thresholds = {
-  degraded: 0.1,
-  failure: 20,
-  unit: '%'
-};
-
-interface ThresholdStatus {
+export interface ThresholdStatus {
   value: number;
   status: Status;
   violation?: string;
 }
 
+const POD_STATUS = 'Pod Status';
+
 // Use -1 rather than NaN to allow straigthforward comparison
-const RATIO_NA = -1;
+export const RATIO_NA = -1;
 
 export const ratioCheck = (availableReplicas: number, currentReplicas: number, desiredReplicas: number): Status => {
   /*
@@ -154,31 +180,40 @@ export const mergeStatus = (s1: Status, s2: Status): Status => {
   return s1.priority > s2.priority ? s1 : s2;
 };
 
-const ascendingThresholdCheck = (value: number, thresholds: Thresholds): ThresholdStatus => {
-  if (value >= thresholds.failure) {
-    return {
-      value: value,
-      status: FAILURE,
-      violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.failure + thresholds.unit
-    };
-  } else if (value >= thresholds.degraded) {
-    return {
-      value: value,
-      status: DEGRADED,
-      violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.degraded + thresholds.unit
-    };
+export const ascendingThresholdCheck = (value: number, thresholds: Thresholds): ThresholdStatus => {
+  if (value > 0) {
+    if (value >= thresholds.failure) {
+      return {
+        value: value,
+        status: FAILURE,
+        violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.failure + thresholds.unit
+      };
+    } else if (value >= thresholds.degraded) {
+      return {
+        value: value,
+        status: DEGRADED,
+        violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.degraded + thresholds.unit
+      };
+    }
   }
+
   return { value: value, status: HEALTHY };
 };
 
-export const getRequestErrorsStatus = (ratio: number): ThresholdStatus => {
-  if (ratio < 0) {
-    return {
-      value: RATIO_NA,
-      status: NA
+export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfig): ThresholdStatus => {
+  if (tolerance && ratio >= 0) {
+    let thresholds = {
+      degraded: tolerance.degraded,
+      failure: tolerance.failure,
+      unit: '%'
     };
+    return ascendingThresholdCheck(100 * ratio, thresholds);
   }
-  return ascendingThresholdCheck(100 * ratio, REQUESTS_THRESHOLDS);
+
+  return {
+    value: RATIO_NA,
+    status: NA
+  };
 };
 
 export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix: string): HealthSubItem => {
@@ -189,10 +224,24 @@ export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix
 };
 
 export abstract class Health {
-  constructor(public items: HealthItem[]) {}
+  constructor(public health: HealthConfig) {}
 
   getGlobalStatus(): Status {
-    return this.items.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+    return this.health.items.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+  }
+
+  getStatusConfig(): ToleranceConfig | undefined {
+    // Check if the config applied is the kiali defaults one
+    const tolConfDefault = serverConfig.healthConfig.rate[serverConfig.healthConfig.rate.length - 1].tolerance;
+    for (let tol of tolConfDefault) {
+      // Check if the tolerance applied is one of kiali defaults
+      if (this.health.statusConfig && tol === this.health.statusConfig.threshold) {
+        // In the case is a kiali's default return undefined
+        return undefined;
+      }
+    }
+    // Otherwise return the threshold configuration that kiali used to calculate the status
+    return this.health.statusConfig?.threshold;
   }
 }
 
@@ -202,49 +251,64 @@ interface HealthContext {
 }
 
 export class ServiceHealth extends Health {
-  public static fromJson = (json: any, ctx: HealthContext) => new ServiceHealth(json.requests, ctx);
+  public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext) =>
+    new ServiceHealth(ns, srv, json.requests, ctx);
 
-  private static computeItems(requests: RequestHealth, ctx: HealthContext): HealthItem[] {
+  private static computeItems(ns: string, srv: string, requests: RequestHealth, ctx: HealthContext): HealthConfig {
     const items: HealthItem[] = [];
+    let statusConfig: HealthItemConfig | undefined = undefined;
     if (ctx.hasSidecar) {
       // Request errors
-      const reqErrorsRatio = getRequestErrorsStatus(requests.errorRatio);
-      const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
+      const reqError = calculateErrorRate(ns, srv, 'service', requests);
+      const reqErrorsText =
+        reqError.errorRatio.global.status.status === NA
+          ? 'No requests'
+          : reqError.errorRatio.global.status.value.toFixed(2) + '%';
       const item: HealthItem = {
-        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
-        status: reqErrorsRatio.status,
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        status: reqError.errorRatio.global.status.status,
         children: [
           {
             text: 'Inbound: ' + reqErrorsText,
-            status: reqErrorsRatio.status
+            status: reqError.errorRatio.global.status.status
           }
         ]
       };
       items.push(item);
+      statusConfig = {
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        status: reqError.errorRatio.global.status.status,
+        threshold: reqError.errorRatio.global.toleranceConfig,
+        value: reqError.errorRatio.global.status.value
+      };
     } else {
       items.push({
-        title: 'Error Rate',
+        title: TRAFFICSTATUS,
         status: NA,
         text: 'No Istio sidecar'
       });
     }
-    return items;
+    return { items, statusConfig };
   }
 
-  constructor(public requests: RequestHealth, ctx: HealthContext) {
-    super(ServiceHealth.computeItems(requests, ctx));
+  constructor(ns: string, srv: string, public requests: RequestHealth, ctx: HealthContext) {
+    super(ServiceHealth.computeItems(ns, srv, requests, ctx));
   }
 }
 
 export class AppHealth extends Health {
-  public static fromJson = (json: any, ctx: HealthContext) => new AppHealth(json.workloadStatuses, json.requests, ctx);
+  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext) =>
+    new AppHealth(ns, app, json.workloadStatuses, json.requests, ctx);
 
   private static computeItems(
+    ns: string,
+    app: string,
     workloadStatuses: WorkloadStatus[],
     requests: RequestHealth,
     ctx: HealthContext
-  ): HealthItem[] {
+  ): HealthConfig {
     const items: HealthItem[] = [];
+    let statusConfig: HealthItemConfig | undefined = undefined;
     {
       // Pods
       const children: HealthSubItem[] = workloadStatuses.map(d => {
@@ -256,7 +320,7 @@ export class AppHealth extends Health {
       });
       const podsStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
       const item: HealthItem = {
-        title: 'Pod Status',
+        title: POD_STATUS,
         status: podsStatus,
         children: children
       };
@@ -264,34 +328,50 @@ export class AppHealth extends Health {
     }
     // Request errors
     if (ctx.hasSidecar) {
-      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
-      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const reqError = calculateErrorRate(ns, app, 'app', requests);
+      const reqIn = reqError.errorRatio.inbound.status;
+      const reqOut = reqError.errorRatio.outbound.status;
       const both = mergeStatus(reqIn.status, reqOut.status);
       const item: HealthItem = {
-        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
+      statusConfig = {
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        status: reqError.errorRatio.global.status.status,
+        threshold: reqError.errorRatio.global.toleranceConfig,
+        value: reqError.errorRatio.global.status.value
+      };
       items.push(item);
     }
-    return items;
+    return { items, statusConfig };
   }
 
-  constructor(workloadStatuses: WorkloadStatus[], public requests: RequestHealth, ctx: HealthContext) {
-    super(AppHealth.computeItems(workloadStatuses, requests, ctx));
+  constructor(
+    ns: string,
+    app: string,
+    workloadStatuses: WorkloadStatus[],
+    public requests: RequestHealth,
+    ctx: HealthContext
+  ) {
+    super(AppHealth.computeItems(ns, app, workloadStatuses, requests, ctx));
   }
 }
 
 export class WorkloadHealth extends Health {
-  public static fromJson = (json: any, ctx: HealthContext) =>
-    new WorkloadHealth(json.workloadStatus, json.requests, ctx);
+  public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext) =>
+    new WorkloadHealth(ns, workload, json.workloadStatus, json.requests, ctx);
 
   private static computeItems(
+    ns: string,
+    workload: string,
     workloadStatus: WorkloadStatus,
     requests: RequestHealth,
     ctx: HealthContext
-  ): HealthItem[] {
+  ): HealthConfig {
     const items: HealthItem[] = [];
+    let statusConfig: HealthItemConfig | undefined = undefined;
     {
       // Pods
       const podsStatus = ratioCheck(
@@ -300,7 +380,7 @@ export class WorkloadHealth extends Health {
         workloadStatus.desiredReplicas
       );
       const item: HealthItem = {
-        title: 'Pod Status',
+        title: POD_STATUS,
         status: podsStatus,
         children: [
           {
@@ -336,30 +416,40 @@ export class WorkloadHealth extends Health {
     }
     // Request errors
     if (ctx.hasSidecar) {
-      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
-      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const reqError = calculateErrorRate(ns, workload, 'workload', requests);
+      const reqIn = reqError.errorRatio.inbound.status;
+      const reqOut = reqError.errorRatio.outbound.status;
       const both = mergeStatus(reqIn.status, reqOut.status);
       const item: HealthItem = {
-        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
       items.push(item);
+
+      statusConfig = {
+        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        status: reqError.errorRatio.global.status.status,
+        threshold: reqError.errorRatio.global.toleranceConfig,
+        value: reqError.errorRatio.global.status.value
+      };
     }
-    return items;
+    return { items, statusConfig };
   }
 
-  constructor(workloadStatus: WorkloadStatus, public requests: RequestHealth, ctx: HealthContext) {
-    super(WorkloadHealth.computeItems(workloadStatus, requests, ctx));
+  constructor(
+    ns: string,
+    workload: string,
+    workloadStatus: WorkloadStatus,
+    public requests: RequestHealth,
+    ctx: HealthContext
+  ) {
+    super(WorkloadHealth.computeItems(ns, workload, workloadStatus, requests, ctx));
   }
 }
 
 export const healthNotAvailable = (): AppHealth => {
-  return new AppHealth(
-    [],
-    { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
-    { rateInterval: 60, hasSidecar: true }
-  );
+  return new AppHealth('', '', [], { inbound: {}, outbound: {} }, { rateInterval: 60, hasSidecar: true });
 };
 
 export type NamespaceAppHealth = { [app: string]: AppHealth };

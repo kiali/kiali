@@ -6,7 +6,7 @@ import {
   PFColorVal,
   PFAlertColorVals
 } from '../../../components/Pf/PfColors';
-import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
+import { FAILURE, DEGRADED } from '../../../types/Health';
 import {
   EdgeLabelMode,
   GraphType,
@@ -21,6 +21,8 @@ import NodeImageKey from '../../../assets/img/node-background-key.png';
 import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
+
+import { getEdgeHealth } from '../../../types/ErrorRate';
 
 export const DimClass = 'mousedim';
 
@@ -276,32 +278,27 @@ export class GraphStyles {
     };
 
     const getEdgeColor = (ele: Cy.EdgeSingular): string => {
-      let rate = 0;
-      let pErr = 0;
       const edgeData = decoratedEdgeData(ele);
-      if (edgeData.http > 0) {
-        rate = edgeData.http;
-        pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
-      } else if (edgeData.grpc > 0) {
-        rate = edgeData.grpc;
-        pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
-      } else if (edgeData.tcp > 0) {
-        rate = edgeData.tcp;
-      }
 
-      if (rate === 0) {
+      if (!edgeData.hasTraffic) {
         return EdgeColorDead;
       }
       if (edgeData.protocol === 'tcp') {
         return EdgeColorTCPWithTraffic;
       }
-      if (pErr > REQUESTS_THRESHOLDS.failure) {
-        return EdgeColorFailure;
+
+      const sourceNodeData = decoratedNodeData(ele.source());
+      const destNodeData = decoratedNodeData(ele.target());
+      const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
+
+      switch (statusEdge.status) {
+        case FAILURE:
+          return EdgeColorFailure;
+        case DEGRADED:
+          return EdgeColorDegraded;
+        default:
+          return EdgeColor;
       }
-      if (pErr > REQUESTS_THRESHOLDS.degraded) {
-        return EdgeColorDegraded;
-      }
-      return EdgeColor;
     };
 
     const getEdgeLabel = (ele: Cy.EdgeSingular, includeProtocol?: boolean): string => {

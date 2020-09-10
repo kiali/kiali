@@ -84,7 +84,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
         position={PopoverPosition.auto}
         className={'health_indicator'}
       >
-        {icon}
+        <>{icon}</>
       </Tooltip>
     );
   }
