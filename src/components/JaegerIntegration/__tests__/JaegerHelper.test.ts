@@ -1,5 +1,5 @@
 import { buildTags, getWorkloadFromSpan, searchParentWorkload } from '../JaegerHelper';
-import { Span } from 'types/JaegerInfo';
+import { Span, KeyValuePair } from 'types/JaegerInfo';
 
 describe('JaegerHelper', () => {
   it('should build tags', () => {
@@ -13,20 +13,38 @@ describe('JaegerHelper', () => {
     const span = {
       tags: [
         { key: 'node_id', value: 'sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local' }
-      ]
+      ],
+      process: {
+        serviceName: 'svc.default',
+        tags: [{ key: 'any', value: 'any' }]
+      }
     } as Span;
     const wkdNs = getWorkloadFromSpan(span);
     expect(wkdNs).toBeDefined();
     expect(wkdNs!.namespace).toEqual('default');
     expect(wkdNs!.workload).toEqual('ai-locals');
 
-    const span3 = { tags: [{ key: 'node_id', value: 'not going to work' }] } as Span;
-    const wkdNs3 = getWorkloadFromSpan(span3);
+    span.tags = [{ key: 'node_id', value: 'not going to work' } as KeyValuePair];
+    const wkdNs3 = getWorkloadFromSpan(span);
     expect(wkdNs3).toBeUndefined();
 
-    const span4 = { tags: [{ key: '-', value: 'not going to work' }] } as Span;
-    const wkdNs4 = getWorkloadFromSpan(span4);
+    span.tags = [{ key: '-', value: 'not going to work' } as KeyValuePair];
+    const wkdNs4 = getWorkloadFromSpan(span);
     expect(wkdNs4).toBeUndefined();
+  });
+
+  it('should get workload from span hostname', () => {
+    const span = {
+      tags: [{ key: '-', value: '-' }],
+      process: {
+        serviceName: 'svc.default',
+        tags: [{ key: 'hostname', value: 'my-pod-123456-abcdef' }]
+      }
+    } as Span;
+    const wkdNs = getWorkloadFromSpan(span);
+    expect(wkdNs).toBeDefined();
+    expect(wkdNs!.namespace).toEqual('default');
+    expect(wkdNs!.workload).toEqual('my-pod');
   });
 
   it('tests more regex', () => {

@@ -156,6 +156,11 @@ export const hasProtocolTraffic = (protocolTraffic: ProtocolTraffic): protocolTr
   );
 };
 
+export interface DestService {
+  namespace: string;
+  name: string;
+}
+
 // Node data expected from server
 export interface GraphNodeData {
   id: string;
@@ -168,7 +173,7 @@ export interface GraphNodeData {
   service?: string;
   aggregate?: string;
   aggregateValue?: string;
-  destServices?: any;
+  destServices?: DestService[];
   traffic?: ProtocolTraffic[];
   hasCB?: boolean;
   hasMissingSC?: boolean;

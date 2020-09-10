@@ -255,7 +255,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     if (isServiceEntry) {
       // For service entries, metrics are grouped by destination_service_name and we need to match it per "data.destServices"
       return getDatapoints(m, (metric: Metric) => {
-        return data.destServices && data.destServices.some(svc => svc.name === metric['destination_service_name']);
+        return data.destServices
+          ? data.destServices.some(svc => svc.name === metric['destination_service_name'])
+          : false;
       });
     }
     let label: string;

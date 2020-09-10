@@ -3,57 +3,75 @@ import { CyNode } from './CytoscapeGraphUtils';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
 import {
   getWorkloadFromSpan,
-  searchParentWorkload as getParentWorkloadFromSpan
+  searchParentWorkload,
+  searchParentApp,
+  getAppFromSpan
 } from 'components/JaegerIntegration/JaegerHelper';
-import { NodeType } from 'types/Graph';
+import { NodeType, DestService, GraphType } from 'types/Graph';
 
-export const showTrace = (cy: Cy.Core, trace: JaegerTrace) => {
+export const showTrace = (cy: Cy.Core, graphType: GraphType, trace: JaegerTrace) => {
   if (!cy) {
     return;
   }
 
   cy.startBatch();
   hideTrace(cy);
+  trace.spans.forEach(span => showSpanSubtrace(cy, graphType, span));
+  cy.endBatch();
+};
 
-  trace.spans.forEach(span => {
-    const split = span.process.serviceName.split('.');
-    const app = split[0];
-    let selector = `[${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${app}"]`;
-    selector = split.length > 1 ? `${selector}[${CyNode.namespace}="${split[1]}"]` : selector;
-    const serviceSelection = cy.elements(selector);
-    if (!!serviceSelection) {
-      const serviceNode = singleNode(serviceSelection);
-      addSpan(serviceNode, span);
+const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
+  const split = span.process.serviceName.split('.');
+  const app = split[0];
+
+  // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
+  let lastSelection: Cy.NodeCollection | undefined = undefined;
+
+  if (graphType === GraphType.APP) {
+    // Parent app
+    const sourceAppNs = searchParentApp(span);
+    if (sourceAppNs) {
+      const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
-
-    const sourceWlNs = getParentWorkloadFromSpan(span);
-    let sourceWlSelection: any;
+  } else {
+    // Parent workload
+    const sourceWlNs = searchParentWorkload(span);
     if (sourceWlNs) {
       const selector = `node[${CyNode.workload}="${sourceWlNs.workload}"][${CyNode.namespace}="${sourceWlNs.namespace}"]`;
-      sourceWlSelection = !!serviceSelection ? serviceSelection.incomers(selector) : cy.elements(selector);
-      if (!!sourceWlSelection) {
-        addSpan(singleNode(sourceWlSelection), span);
-        if (!!serviceSelection) {
-          addSpan(singleEdge(sourceWlSelection.edgesTo(serviceSelection)), span);
-        }
-      }
+      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
+  }
 
+  // Inbound service entry (experimental)
+  const seSelectionIncoming = getServiceEntrySelection(span, cy, 'from_addr');
+  lastSelection = nextHop(span, seSelectionIncoming, lastSelection);
+
+  // Main service
+  const nsSelector = split.length > 1 ? `[${CyNode.namespace}="${split[1]}"]` : '';
+  const selector = `[${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${app}"]${nsSelector}`;
+  lastSelection = nextHop(span, cy.elements(selector), lastSelection);
+
+  if (graphType === GraphType.APP) {
+    // Main app
+    const destAppNs = getAppFromSpan(span);
+    if (destAppNs) {
+      const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${destAppNs.app}"][${CyNode.namespace}="${destAppNs.namespace}"]`;
+      console.log(cy.elements(selector));
+      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
+    }
+  } else {
+    // Main workload
     const destWlNs = getWorkloadFromSpan(span);
-    let destWlSelection: any;
     if (destWlNs) {
       const selector = `node[${CyNode.workload}="${destWlNs.workload}"][${CyNode.namespace}="${destWlNs.namespace}"]`;
-      destWlSelection = !!serviceSelection ? serviceSelection.outgoers(selector) : cy.elements(selector);
-      if (!!destWlSelection) {
-        addSpan(singleNode(destWlSelection), span);
-        if (!!serviceSelection) {
-          addSpan(singleEdge(serviceSelection.edgesTo(destWlSelection)), span);
-        }
-      }
+      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
-  });
+  }
 
-  cy.endBatch();
+  // Outbound service entry (experimental)
+  const seSelection = getServiceEntrySelection(span, cy, 'to_addr');
+  nextHop(span, seSelection, lastSelection);
 };
 
 const singleEdge = (edges: Cy.EdgeCollection): Cy.EdgeSingular | undefined => {
@@ -91,4 +109,43 @@ export const hideTrace = (cy: Cy.Core) => {
   const spanHits = cy.elements('*.span');
   spanHits.removeClass('span');
   spanHits.data('spans', undefined);
+};
+
+const getServiceEntrySelection = (span: Span, cy: Cy.Core, key: string): Cy.NodeCollection | undefined => {
+  const addr = span.tags.find(tag => tag.key === key);
+  if (addr) {
+    const addrHost = addr.value.split(':')[0];
+    return cy.elements(`[${CyNode.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
+      const destServices: DestService[] | undefined = ele.data(CyNode.destServices);
+      if (destServices) {
+        // TODO: improve host matching, as "startsWith" allows false-positives
+        if (destServices.some(s => s.name.startsWith(addrHost))) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+  return undefined;
+};
+
+const nextHop = (
+  span: Span,
+  next: Cy.NodeCollection | undefined,
+  last: Cy.NodeCollection | undefined
+): Cy.NodeCollection | undefined => {
+  if (!!next && next.length !== 0) {
+    const node = singleNode(next);
+    addSpan(node, span);
+    if (last) {
+      // Try both inbound and outbound, because of TCP edges where direction might not be correctly represented in graph
+      let edge = last.edgesTo(next);
+      if (!edge || edge.length === 0) {
+        edge = next.edgesTo(last);
+      }
+      addSpan(singleEdge(edge), span);
+    }
+    return next;
+  }
+  return last;
 };

@@ -18,10 +18,10 @@ import { TimeInSeconds } from 'types/Common';
 import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import transformTraceData from 'components/JaegerIntegration/JaegerResults/transform';
+import { DecoratedGraphNodeData } from 'types/Graph';
 
 type Props = {
-  namespace: string;
-  app: string;
+  nodeData: DecoratedGraphNodeData;
   queryTime: TimeInSeconds;
   setTraceId: (traceId?: string) => void;
   selectedTrace?: JaegerTrace;
@@ -84,10 +84,11 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     if (
-      this.state.useGraphRefresh &&
-      (prevProps.queryTime !== this.props.queryTime ||
-        prevProps.namespace !== this.props.namespace ||
-        prevProps.app !== this.props.app)
+      (this.state.useGraphRefresh && prevProps.queryTime !== this.props.queryTime) ||
+      prevProps.nodeData.namespace !== this.props.nodeData.namespace ||
+      prevProps.nodeData.app !== this.props.nodeData.app ||
+      prevProps.nodeData.workload !== this.props.nodeData.workload ||
+      prevProps.nodeData.service !== this.props.nodeData.service
     ) {
       this.loadTraces();
     }
@@ -103,9 +104,15 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
       startMicros: this.props.queryTime * 1000000,
       limit: tracesLimit
     };
+    const d = this.props.nodeData;
+    const promise = d.workload
+      ? API.getWorkloadTraces(d.namespace, d.workload, params)
+      : d.service
+      ? API.getServiceTraces(d.namespace, d.service, params)
+      : API.getAppTraces(d.namespace, d.app!, params);
     this.promises.cancelAll();
     this.promises
-      .register('traces', API.getAppTraces(this.props.namespace, this.props.app, params))
+      .register('traces', promise)
       .then(response => {
         const traces = response.data.data
           ? (response.data.data
@@ -133,7 +140,11 @@ class SummaryPanelNodeTraces extends React.Component<Props, State> {
   }
 
   render() {
-    const tracesDetailsURL = `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces`;
+    const d = this.props.nodeData;
+    const tracesDetailsURL =
+      `/namespaces/${d.namespace}` +
+      (d.workload ? `/workloads/${d.workload}` : d.service ? `/services/${d.service}` : `/applications/${d.app!}`) +
+      '?tab=traces';
     const currentID = this.props.selectedTrace?.traceID;
 
     return (
