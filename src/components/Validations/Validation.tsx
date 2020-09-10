@@ -1,5 +1,10 @@
 import React, { CSSProperties } from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InfoCircleIcon
+} from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
@@ -36,6 +41,12 @@ const WarningValidation: ValidationType = {
   icon: ExclamationTriangleIcon
 };
 
+const InfoValidation: ValidationType = {
+  name: 'Info',
+  color: PFAlertColor.Info,
+  icon: InfoCircleIcon
+};
+
 const CorrectValidation: ValidationType = {
   name: 'Valid',
   color: PFAlertColor.Success,
@@ -45,7 +56,8 @@ const CorrectValidation: ValidationType = {
 export const severityToValidation: { [severity: string]: ValidationType } = {
   error: ErrorValidation,
   warning: WarningValidation,
-  correct: CorrectValidation
+  correct: CorrectValidation,
+  info: InfoValidation
 };
 
 class Validation extends React.Component<Props> {

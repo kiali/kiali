@@ -12,7 +12,7 @@ import * as API from '../../services/Api';
 import AceEditor, { Annotation } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { ObjectReference, ObjectValidation } from '../../types/IstioObjects';
+import { ObjectReference, ObjectValidation, ValidationMessage } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll, RenderHeader } from '../../components/Nav/Page';
@@ -44,6 +44,7 @@ import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink'
 import VirtualServiceCard from './IstioObjectDetails/VirtualServiceCard';
 import DestinationRuleCard from './IstioObjectDetails/DestinationRuleCard';
 import { AxiosError } from 'axios';
+import IstioStatusMessageList from './IstioObjectDetails/IstioStatusMessageList';
 
 const rightToolbarStyle = style({
   position: 'absolute',
@@ -192,8 +193,16 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     // Hack to force redisplay of annotations after update
     // See https://github.com/securingsincity/react-ace/issues/300
     if (this.aceEditorRef.current) {
+      const editor = this.aceEditorRef.current!['editor'];
+
       // tslint:disable-next-line
-      this.aceEditorRef.current!['editor'].onChangeAnnotation();
+      editor.onChangeAnnotation();
+
+      // Fold Status field
+      const { startRow, endRow } = this.getStatusRange(this.fetchYaml());
+      if (!this.state.isModified) {
+        editor.session.foldAll(startRow, endRow, 0);
+      }
     }
 
     const active = activeTab(tabName, this.defaultTab());
@@ -324,6 +333,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
+  getStatusMessages = (): ValidationMessage[] => {
+    const istioObject = getIstioObject(this.state.istioObjectDetails);
+    return istioObject && istioObject.status ? istioObject.status.validationMessages : [];
+  };
+
   // Not all Istio types have an overview card
   hasOverview = (): boolean => {
     return (
@@ -337,11 +351,33 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioValidations.references || ([] as ObjectReference[]);
   };
 
+  getStatusRange = (yaml: string | undefined): any => {
+    let range = {
+      startRow: -1,
+      endRow: -1
+    };
+
+    if (!!yaml) {
+      const ylines = yaml.split('\n');
+      ylines.forEach((line: string, i: number) => {
+        if (line.startsWith('status:')) {
+          range.startRow = i;
+        }
+        if (line.startsWith('spec:') && range.startRow !== -1) {
+          range.endRow = i;
+        }
+      });
+    }
+
+    return range;
+  };
+
   renderEditor = () => {
     const yamlSource = this.fetchYaml();
+    const istioStatusMsgs = this.getStatusMessages();
     const objectReferences = this.objectReferences();
     const refPresent = objectReferences.length > 0;
-    const showCards = refPresent || this.hasOverview();
+    const showCards = refPresent || this.hasOverview() || !!istioStatusMsgs;
     const editorSpan = showCards ? 9 : 12;
     let editorValidations: AceValidations = {
       markers: [],
@@ -394,6 +430,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                   namespace={this.state.istioObjectDetails.namespace.name}
                 />
               )}
+              {istioStatusMsgs && istioStatusMsgs.length > 0 && <IstioStatusMessageList messages={istioStatusMsgs} />}
               {refPresent && (
                 <Card>
                   <CardHeader>

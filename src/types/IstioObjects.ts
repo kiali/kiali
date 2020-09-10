@@ -42,6 +42,19 @@ export interface IstioObject {
   kind?: string;
   apiVersion?: string;
   metadata: K8sMetadata;
+  status?: IstioStatus;
+}
+
+export interface IstioStatus {
+  validationMessages: ValidationMessage[];
+  conditions?: any[];
+}
+
+export interface ValidationMessage {
+  code: string;
+  documentation_url: string;
+  level: string;
+  message: string;
 }
 
 // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
@@ -50,7 +63,8 @@ export type Validations = { [key1: string]: { [key2: string]: ObjectValidation }
 export enum ValidationTypes {
   Error = 'error',
   Warning = 'warning',
-  Correct = 'correct'
+  Correct = 'correct',
+  Info = 'info'
 }
 
 export interface ObjectValidation {
