@@ -147,6 +147,7 @@ type IstioConfig struct {
 	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
 	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
 	UrlServiceVersion        string            `yaml:"url_service_version"`
+	Revision                 string            `yaml:"revision,omitempty"`
 }
 
 type ComponentStatuses struct {
@@ -415,6 +416,7 @@ func NewConfig() (c *Config) {
 					},
 				},
 				UrlServiceVersion: "http://istiod:15014/version",
+				Revision:          "",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
