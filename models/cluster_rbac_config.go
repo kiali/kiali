@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -14,9 +12,8 @@ type ClusterRbacConfigSpec struct {
 
 type ClusterRbacConfigs []ClusterRbacConfig
 type ClusterRbacConfig struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta    `json:"metadata"`
-	Spec     ClusterRbacConfigSpec `json:"spec"`
+	IstioBase
+	Spec ClusterRbacConfigSpec `json:"spec"`
 }
 
 func (rcs *ClusterRbacConfigs) Parse(clusterRbacConfigs []kubernetes.IstioObject) {
@@ -28,8 +25,7 @@ func (rcs *ClusterRbacConfigs) Parse(clusterRbacConfigs []kubernetes.IstioObject
 }
 
 func (rc *ClusterRbacConfig) Parse(clusterRbacConfig kubernetes.IstioObject) {
-	rc.TypeMeta = clusterRbacConfig.GetTypeMeta()
-	rc.Metadata = clusterRbacConfig.GetObjectMeta()
+	rc.IstioBase.Parse(clusterRbacConfig)
 	rc.Spec.Mode = clusterRbacConfig.GetSpec()["mode"]
 	rc.Spec.Inclusion = clusterRbacConfig.GetSpec()["inclusion"]
 	rc.Spec.Exclusion = clusterRbacConfig.GetSpec()["exclusion"]
@@ -40,9 +36,8 @@ func (rc *ClusterRbacConfig) Parse(clusterRbacConfig kubernetes.IstioObject) {
 
 type ServiceMeshRbacConfigs []ServiceMeshRbacConfig
 type ServiceMeshRbacConfig struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta    `json:"metadata"`
-	Spec     ClusterRbacConfigSpec `json:"spec"`
+	IstioBase
+	Spec ClusterRbacConfigSpec `json:"spec"`
 }
 
 func (rcs *ServiceMeshRbacConfigs) Parse(smRbacConfigs []kubernetes.IstioObject) {
@@ -54,8 +49,7 @@ func (rcs *ServiceMeshRbacConfigs) Parse(smRbacConfigs []kubernetes.IstioObject)
 }
 
 func (rc *ServiceMeshRbacConfig) Parse(smRbacConfig kubernetes.IstioObject) {
-	rc.TypeMeta = smRbacConfig.GetTypeMeta()
-	rc.Metadata = smRbacConfig.GetObjectMeta()
+	rc.IstioBase.Parse(smRbacConfig)
 	rc.Spec.Mode = smRbacConfig.GetSpec()["mode"]
 	rc.Spec.Inclusion = smRbacConfig.GetSpec()["inclusion"]
 	rc.Spec.Exclusion = smRbacConfig.GetSpec()["exclusion"]

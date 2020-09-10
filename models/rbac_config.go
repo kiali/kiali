@@ -1,16 +1,13 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type RbacConfigs []RbacConfig
 type RbacConfig struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Mode      interface{} `json:"mode"`
 		Inclusion interface{} `json:"inclusion"`
 		Exclusion interface{} `json:"exclusion"`
@@ -26,8 +23,7 @@ func (rcs *RbacConfigs) Parse(rbacConfigs []kubernetes.IstioObject) {
 }
 
 func (rc *RbacConfig) Parse(rbacConfig kubernetes.IstioObject) {
-	rc.TypeMeta = rbacConfig.GetTypeMeta()
-	rc.Metadata = rbacConfig.GetObjectMeta()
+	rc.IstioBase.Parse(rbacConfig)
 	rc.Spec.Mode = rbacConfig.GetSpec()["mode"]
 	rc.Spec.Inclusion = rbacConfig.GetSpec()["inclusion"]
 	rc.Spec.Exclusion = rbacConfig.GetSpec()["exclusion"]

@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type EnvoyFilters []EnvoyFilter
 //
 // swagger:model envoyFilter
 type EnvoyFilter struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		WorkloadSelector interface{} `json:"workloadSelector"`
 		ConfigPatches    interface{} `json:"configPatches"`
 	} `json:"spec"`
@@ -38,8 +35,7 @@ func (efs *EnvoyFilters) Parse(envoyFilters []kubernetes.IstioObject) {
 }
 
 func (ef *EnvoyFilter) Parse(envoyFilter kubernetes.IstioObject) {
-	ef.TypeMeta = envoyFilter.GetTypeMeta()
-	ef.Metadata = envoyFilter.GetObjectMeta()
+	ef.IstioBase.Parse(envoyFilter)
 	ef.Spec.WorkloadSelector = envoyFilter.GetSpec()["workloadSelector"]
 	ef.Spec.ConfigPatches = envoyFilter.GetSpec()["configPatches"]
 }

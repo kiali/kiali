@@ -1,16 +1,13 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type ServiceEntries []ServiceEntry
 type ServiceEntry struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Hosts            interface{} `json:"hosts"`
 		Addresses        interface{} `json:"addresses"`
 		Ports            interface{} `json:"ports"`
@@ -32,8 +29,7 @@ func (ses *ServiceEntries) Parse(serviceEntries []kubernetes.IstioObject) {
 }
 
 func (se *ServiceEntry) Parse(serviceEntry kubernetes.IstioObject) {
-	se.TypeMeta = serviceEntry.GetTypeMeta()
-	se.Metadata = serviceEntry.GetObjectMeta()
+	se.IstioBase.Parse(serviceEntry)
 	se.Spec.Hosts = serviceEntry.GetSpec()["hosts"]
 	se.Spec.Addresses = serviceEntry.GetSpec()["addresses"]
 	se.Spec.Ports = serviceEntry.GetSpec()["ports"]

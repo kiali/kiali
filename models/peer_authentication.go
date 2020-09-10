@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type PeerAuthentications []PeerAuthentication
 //
 // swagger:model peerAuthentication
 type PeerAuthentication struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Selector      interface{} `json:"selector"`
 		Mtls          interface{} `json:"mtls"`
 		PortLevelMtls interface{} `json:"portLevelMtls"`
@@ -39,8 +36,7 @@ func (pas *PeerAuthentications) Parse(peerAuthentications []kubernetes.IstioObje
 }
 
 func (pa *PeerAuthentication) Parse(peerAuthentication kubernetes.IstioObject) {
-	pa.TypeMeta = peerAuthentication.GetTypeMeta()
-	pa.Metadata = peerAuthentication.GetObjectMeta()
+	pa.IstioBase.Parse(peerAuthentication)
 	pa.Spec.Selector = peerAuthentication.GetSpec()["selector"]
 	pa.Spec.Mtls = peerAuthentication.GetSpec()["mtls"]
 	pa.Spec.PortLevelMtls = peerAuthentication.GetSpec()["portLevelMtls"]

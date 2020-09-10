@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -25,9 +23,8 @@ type DestinationRules struct {
 //
 // swagger:model destinationRule
 type DestinationRule struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Host          interface{} `json:"host,omitempty"`
 		TrafficPolicy interface{} `json:"trafficPolicy,omitempty"`
 		Subsets       interface{} `json:"subsets,omitempty"`
@@ -45,8 +42,7 @@ func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject)
 }
 
 func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
-	dRule.TypeMeta = destinationRule.GetTypeMeta()
-	dRule.Metadata = destinationRule.GetObjectMeta()
+	dRule.IstioBase.Parse(destinationRule)
 	dRule.Spec.Host = destinationRule.GetSpec()["host"]
 	dRule.Spec.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
 	dRule.Spec.Subsets = destinationRule.GetSpec()["subsets"]

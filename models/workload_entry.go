@@ -1,8 +1,6 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -21,9 +19,8 @@ type WorkloadEntries []WorkloadEntry
 //
 // swagger:model workloadEntry
 type WorkloadEntry struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Address        interface{} `json:"address"`
 		Ports          interface{} `json:"ports"`
 		Labels         interface{} `json:"labels"`
@@ -43,8 +40,7 @@ func (wes *WorkloadEntries) Parse(workloadEntries []kubernetes.IstioObject) {
 }
 
 func (we *WorkloadEntry) Parse(workloadEntry kubernetes.IstioObject) {
-	we.TypeMeta = workloadEntry.GetTypeMeta()
-	we.Metadata = workloadEntry.GetObjectMeta()
+	we.IstioBase.Parse(workloadEntry)
 	we.Spec.Address = workloadEntry.GetSpec()["address"]
 	we.Spec.Ports = workloadEntry.GetSpec()["ports"]
 	we.Spec.Labels = workloadEntry.GetSpec()["labels"]

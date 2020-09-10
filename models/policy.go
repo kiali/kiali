@@ -1,16 +1,13 @@
 package models
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type Policies []Policy
 type Policy struct {
-	meta_v1.TypeMeta
-	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
+	IstioBase
+	Spec struct {
 		Targets          interface{} `json:"targets"`
 		Peers            interface{} `json:"peers"`
 		PeerIsOptional   interface{} `json:"peerIsOptional"`
@@ -29,8 +26,7 @@ func (ps *Policies) Parse(policies []kubernetes.IstioObject) {
 }
 
 func (p *Policy) Parse(policy kubernetes.IstioObject) {
-	p.TypeMeta = policy.GetTypeMeta()
-	p.Metadata = policy.GetObjectMeta()
+	p.IstioBase.Parse(policy)
 	p.Spec.Targets = policy.GetSpec()["targets"]
 	p.Spec.Peers = policy.GetSpec()["peers"]
 	p.Spec.PeerIsOptional = policy.GetSpec()["peersIsOptional"]
