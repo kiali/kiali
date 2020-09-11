@@ -439,7 +439,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 			return http.StatusUnauthorized, ""
 		}
 	} else {
-		// If not present, check presence of a session for the "authentication code" flow
+		// If not present, check presence of a session for the "authorization code" flow
 		var err error = nil
 		claims, err = business.GetOpenIdAesSession(r)
 		if err != nil {
@@ -719,7 +719,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	// the Kiali's signing key).
 	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), config.GetSigningKey())))
 
-	// Use OpenId's "implicit flow" by default. Use "authentication code" flow if possible.
+	// Use OpenId's "implicit flow" by default. Use "authorization code" flow if possible.
 	responseType := "id_token"
 	if business.IsOpenIdCodeFlowPossible() {
 		responseType = "code"
@@ -746,7 +746,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true // Return true to mark request as handled (because an error is already being sent back)
 	}
 
-	if checkFailure := business.CheckOpenIdAuthenticationCodeFlowParams(openIdParams); len(checkFailure) != 0 {
+	if checkFailure := business.CheckOpenIdAuthorizationCodeFlowParams(openIdParams); len(checkFailure) != 0 {
 		log.Infof("Not handling OpenId code flow authentication: %s", checkFailure)
 		return false
 	}
@@ -789,7 +789,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 
 	// Create Kiali's session cookie and set it in the response
 
-	// For the OpenId's "authentication code" flow we don't want
+	// For the OpenId's "authorization code" flow we don't want
 	// any of the session data to be readable even in the browser's
 	// developer console. So, we cipher the session data using AES-GCM
 	// which allows to leave aside the usage of JWT tokens. So, this
@@ -804,7 +804,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	// Cihper the session data
+	// Cipher the session data
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create cipher", err.Error())

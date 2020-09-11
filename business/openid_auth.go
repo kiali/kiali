@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
@@ -114,7 +115,7 @@ func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params
 //	return ""
 //}
 
-func CheckOpenIdAuthenticationCodeFlowParams(params *OpenIdCallbackParams) string {
+func CheckOpenIdAuthorizationCodeFlowParams(params *OpenIdCallbackParams) string {
 	if params.NonceHash == nil {
 		return "No nonce code present. Login window timed out."
 	}
@@ -122,7 +123,7 @@ func CheckOpenIdAuthenticationCodeFlowParams(params *OpenIdCallbackParams) strin
 		return "State parameter is empty or invalid."
 	}
 	if params.Code == "" {
-		return "No authentication code is present."
+		return "No authorization code is present."
 	}
 
 	return ""
@@ -333,7 +334,7 @@ func IsOpenIdCodeFlowPossible() bool {
 	switch len(config.GetSigningKey()) {
 	case 16, 24, 32:
 	default:
-		log.Warningf("Cannot use OpenId authentication code flow because signing key is not 16, 24 nor 32 bytes long")
+		log.Warningf("Cannot use OpenId authorization code flow because signing key is not 16, 24 nor 32 bytes long")
 		return false
 	}
 
@@ -375,7 +376,7 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 		Transport: httpTransport,
 	}
 
-	// Exchange authentication code for a token
+	// Exchange authorization code for a token
 	requestParams := url.Values{}
 	requestParams.Set("client_id", cfg.ClientId) // Can omit if not authenticated
 	requestParams.Set("code", openIdParams.Code)
@@ -434,7 +435,6 @@ func ValidateOpenIdState(openIdParams *OpenIdCallbackParams) (validationFailure 
 		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", openIdParams.Nonce, timestamp, config.GetSigningKey())))
 
 		if fmt.Sprintf("%x", csrfHash) != csrfToken {
-			//RespondWithError(w, http.StatusForbidden, "Request rejected because of CSRF mitigation.")
 			validationFailure = "CSRF mitigation"
 		}
 	} else {
