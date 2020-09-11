@@ -482,7 +482,7 @@ func NewConfig() (c *Config) {
 	return
 }
 
-// Add Health Default Configuration
+// AddHealthDefault Configuration
 func (conf *Config) AddHealthDefault() {
 	// Health default configuration
 	healthConfig := HealthConfig{
@@ -509,6 +509,13 @@ func (conf *Config) AddHealthDefault() {
 						Code:      "^[1-9]$|^1[0-6]$",
 						Protocol:  "grpc",
 						Direction: ".*",
+						Failure:   10,
+					},
+					{
+						Code:      "^-$", // no response is indicated with a "-" code
+						Protocol:  "http|grpc",
+						Direction: ".*",
+						Degraded:  0.1,
 						Failure:   10,
 					},
 				},

@@ -86,13 +86,14 @@
             {
               "protocol": "grpc",
               "rates": {
-                "grpcIn": "50.00"
+                "grpcIn": "50.00",
+                "grpcOut": "600.00"
               }
             },
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "750.00"
+                "httpOut": "1250.00"
               }
             }
           ]
@@ -228,13 +229,49 @@
           "traffic": {
             "protocol": "http",
             "rates": {
-              "http": "400.00",
-              "httpPercentReq": "53.3"
+              "http": "900.00",
+              "httpNoResponse": "500.00",
+              "httpPercentErr": "55.6",
+              "httpPercentReq": "72.0"
             },
             "responses": {
+              "-": {
+                "flags": {
+                  "DC": "55.6"
+                },
+                "hosts": {
+                  "istio-egressgateway.istio-system.svc.cluster.local": "55.6"
+                }
+              },
               "200": {
                 "flags": {
-                  "-": "100.0"
+                  "-": "44.4"
+                },
+                "hosts": {
+                  "istio-egressgateway.istio-system.svc.cluster.local": "44.4"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "485623cf19d454363bc392d13e19902f",
+          "source": "d75c918a12f72a1ea1797911cb9770f7",
+          "target": "332209947916c37701f39500789b6792",
+          "traffic": {
+            "protocol": "grpc",
+            "rates": {
+              "grpc": "600.00",
+              "grpcNoResponse": "600.00",
+              "grpcPercentErr": "100.0",
+              "grpcPercentReq": "100.0"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "DC": "100.0"
                 },
                 "hosts": {
                   "istio-egressgateway.istio-system.svc.cluster.local": "100.0"
@@ -253,7 +290,7 @@
             "protocol": "http",
             "rates": {
               "http": "300.00",
-              "httpPercentReq": "40.0"
+              "httpPercentReq": "24.0"
             },
             "responses": {
               "200": {
@@ -277,7 +314,7 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "6.7"
+              "httpPercentReq": "4.0"
             },
             "responses": {
               "200": {
