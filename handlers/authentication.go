@@ -800,26 +800,26 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	sessionData := business.BuildOpenIdJwtClaims(openIdParams)
 	sessionDataJson, err := json.Marshal(sessionData)
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to marshal json", err.Error())
 		return true
 	}
 
 	// Cihper the session data
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create cipher", err.Error())
 		return true
 	}
 
 	aesGcm, err := cipher.NewGCM(block)
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create gcm", err.Error())
 		return true
 	}
 
 	aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to generate random bytes", err.Error())
 		return true
 	}
 
