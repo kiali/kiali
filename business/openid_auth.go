@@ -3,6 +3,7 @@ package business
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -19,6 +20,10 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+const (
+	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
+)
+
 type OpenIdMetadata struct {
 	// Taken from https://github.com/coreos/go-oidc/blob/8d771559cf6e5111c9b9159810d0e4538e7cdc82/oidc.go
 	Issuer      string   `json:"issuer"`
@@ -33,24 +38,107 @@ type OpenIdMetadata struct {
 	ResponseTypesSupported []string `json:"response_types_supported"`
 }
 
+type OpenIdCallbackParams struct {
+	Code          string
+	ExpiresOn     time.Time
+	IdToken       string
+	Nonce         string
+	NonceHash     []byte
+	ParsedIdToken *jwt.Token
+	State         string
+	Subject       string
+}
+
 var cachedOpenIdMetadata *OpenIdMetadata
 
-func ExtractOpenIdClaimsOfInterest(token string) (sub, nonce string, expiresOn time.Time, errorMessage string, detailedError error) {
-	// Parse the received id_token from the IdP
-	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
-	if err != nil {
-		errorMessage = "Cannot parse received id_token from the OpenId provider"
-		detailedError = err
-		return
+func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams) *config.IanaClaims {
+	return &config.IanaClaims{
+		SessionId: openIdParams.IdToken,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   openIdParams.Subject,
+			ExpiresAt: openIdParams.ExpiresOn.Unix(),
+			Issuer:    config.AuthStrategyOpenIdIssuer,
+		},
 	}
+}
+
+func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params *OpenIdCallbackParams, err error) {
+	params = &OpenIdCallbackParams{}
+
+	// Get the nonce code hash
+	var nonceCookie *http.Cookie
+	if nonceCookie, err = r.Cookie(OpenIdNonceCookieName); err == nil {
+		params.Nonce = nonceCookie.Value
+
+		hash := sha256.Sum224([]byte(nonceCookie.Value))
+		params.NonceHash = make([]byte, sha256.Size224)
+		copy(params.NonceHash, hash[:])
+	}
+
+	// Parse/fetch received form data
+	err = r.ParseForm()
+	if err != nil {
+		err = fmt.Errorf("error parsing form info: %w", err)
+	} else {
+		// Read relevant form data parameters
+		params.Code = r.Form.Get("code")
+		params.IdToken = r.Form.Get("id_token")
+		params.State = r.Form.Get("state")
+	}
+
+	// Cleanup: Delete the nonce cookie since we no longer need it.
+	deleteNonceCookie := http.Cookie{
+		Name:     OpenIdNonceCookieName,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteNonceCookie)
+
+	return
+}
+
+//func CheckOpenIdImplicitFlowParams(params *OpenIdCallbackParams) string {
+//	if params.NonceHash == nil {
+//		return "No nonce code present. Login window timed out."
+//	}
+//	if params.State == "" {
+//		return "State parameter is empty or invalid."
+//	}
+//	if params.IdToken == "" {
+//		return "Token is empty or invalid."
+//	}
+//
+//	return ""
+//}
+
+func CheckOpenIdAuthenticationCodeFlowParams(params *OpenIdCallbackParams) string {
+	if params.NonceHash == nil {
+		return "No nonce code present. Login window timed out."
+	}
+	if params.State == "" {
+		return "State parameter is empty or invalid."
+	}
+	if params.Code == "" {
+		return "No authentication code is present."
+	}
+
+	return ""
+}
+
+func ParseOpenIdToken(openIdParams *OpenIdCallbackParams) error {
+	// Parse the received id_token from the IdP
+	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(openIdParams.IdToken, jwt.MapClaims{})
+	if err != nil {
+		return fmt.Errorf("cannot parse received id_token from the OpenId provider: %w", err)
+	}
+	openIdParams.ParsedIdToken = parsedIdToken
 	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
 
-	if nonceClaim, ok := idTokenClaims["nonce"]; !ok {
-		nonce = nonceClaim.(string)
-	}
-
 	// Set a default value for expiration date
-	expiresOn = time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	openIdParams.ExpiresOn = time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
 
 	// If the expiration date is present on the claim, we use that
 	expiresInNumber := int64(0)
@@ -67,24 +155,22 @@ func ExtractOpenIdClaimsOfInterest(token string) (sub, nonce string, expiresOn t
 		expiresInNumber, err = exp.Int64()
 
 		if err != nil {
-			errorMessage = "Token exp claim is present, but invalid."
-			detailedError = err
-			return
+			return fmt.Errorf("token exp claim is present, but invalid: %w", err)
 		}
 	}
 
 	if expiresInNumber != 0 {
-		expiresOn = time.Unix(expiresInNumber, 0)
+		openIdParams.ExpiresOn = time.Unix(expiresInNumber, 0)
 	}
 
 	// Now that we know that the OpenId token is valid, parse/decode it to extract
 	// the name of the service account. The "subject" is passed to the front-end to be displayed.
-	sub = "OpenId User" // Set a default value
+	openIdParams.Subject = "OpenId User" // Set a default value
 	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
-		sub = userClaim.(string)
+		openIdParams.Subject = userClaim.(string)
 	}
 
-	return
+	return nil
 }
 
 // GetConfiguredOpenIdScopes gets the list of scopes set in Kiali configuration making sure
@@ -241,10 +327,37 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 	return cachedOpenIdMetadata, nil
 }
 
-func RequestOpenIdToken(code, redirect_uri string) (string, error) {
+func IsOpenIdCodeFlowPossible() bool {
+	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
+	// encoded cookies.
+	switch len(config.GetSigningKey()) {
+	case 16, 24, 32:
+	default:
+		log.Warningf("Cannot use OpenId authentication code flow because signing key is not 16, 24 nor 32 bytes long")
+		return false
+	}
+
+	// IdP provider's metadata must list "code" in it's supported response types
+	metadata, err := GetOpenIdMetadata()
+	if err != nil {
+		// On error, just inform that code flow is not possible
+		log.Warningf("Error when fetching OpenID provider's metadata: %s", err.Error())
+		return false
+	}
+
+	for _, v := range metadata.ResponseTypesSupported {
+		if v == "code" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string) error {
 	openIdMetadata, err := GetOpenIdMetadata()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	cfg := config.Get().Auth.OpenId
@@ -265,39 +378,70 @@ func RequestOpenIdToken(code, redirect_uri string) (string, error) {
 	// Exchange authentication code for a token
 	requestParams := url.Values{}
 	requestParams.Set("client_id", cfg.ClientId) // Can omit if not authenticated
-	requestParams.Set("code", code)
+	requestParams.Set("code", openIdParams.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
 	response, err := httpClient.PostForm(openIdMetadata.TokenURL, requestParams)
 	if err != nil {
-		return "", fmt.Errorf("failure when requesting token from IdP: %s", err.Error())
+		return fmt.Errorf("failure when requesting token from IdP: %w", err)
 	}
 
 	defer response.Body.Close()
 	rawTokenResponse, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read token response from IdP: %s", err.Error())
+		return fmt.Errorf("failed to read token response from IdP: %w", err)
 	}
 
 	if response.StatusCode != 200 {
-		return "", fmt.Errorf("cannot get token from IdP (HTTP response status = %s)", response.Status)
+		return fmt.Errorf("request failed (HTTP response status = %s)", response.Status)
 	}
 
 	// Parse token response
 	var tokenResponse struct {
-		IdToken     string `json:"id_token"`
+		IdToken string `json:"id_token"`
 	}
 
 	err = json.Unmarshal(rawTokenResponse, &tokenResponse)
 	if err != nil {
-		return "", fmt.Errorf("cannot parse OpenId token response: %s", err.Error())
+		return fmt.Errorf("cannot parse OpenId token response: %w", err)
 	}
 
 	if len(tokenResponse.IdToken) == 0 {
-		return "", errors.New("the IdP did not provide an id_token")
+		return errors.New("the IdP did not provide an id_token")
 	}
-	
-	return tokenResponse.IdToken, nil
+
+	openIdParams.IdToken = tokenResponse.IdToken
+	return nil
+}
+
+func ValidateOpenIdNonceCode(openIdParams *OpenIdCallbackParams) (validationFailure string) {
+	// Parse the received id_token from the IdP and check nonce code
+	idTokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
+	nonceHashHex := fmt.Sprintf("%x", openIdParams.NonceHash)
+	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || nonceHashHex != nonceClaim.(string) {
+		validationFailure = "nonce code mismatch"
+	}
+	return
+}
+
+// - CSRF mitigation
+func ValidateOpenIdState(openIdParams *OpenIdCallbackParams) (validationFailure string) {
+	state := openIdParams.State
+
+	separator := strings.LastIndexByte(state, '-')
+	if separator != -1 {
+		csrfToken, timestamp := state[:separator], state[separator+1:]
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", openIdParams.Nonce, timestamp, config.GetSigningKey())))
+
+		if fmt.Sprintf("%x", csrfHash) != csrfToken {
+			//RespondWithError(w, http.StatusForbidden, "Request rejected because of CSRF mitigation.")
+			validationFailure = "CSRF mitigation"
+		}
+	} else {
+		validationFailure = "State parameter is invalid"
+	}
+
+	return
 }
 
 func VerifyOpenIdUserAccess(token string) (int, string, error) {

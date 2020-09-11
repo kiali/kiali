@@ -25,10 +25,6 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-const (
-	openIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
-)
-
 type AuthenticationHandler struct {
 	saToken string
 }
@@ -152,7 +148,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Check if the nonce cookie is present
-	nonceCookie, err := r.Cookie(openIdNonceCookieName)
+	nonceCookie, err := r.Cookie(business.OpenIdNonceCookieName)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "No nonce code present. Login window timed out.")
 		return false
@@ -163,7 +159,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Delete the nonce cookie since we no longer need it.
 	deleteNonceCookie := http.Cookie{
-		Name:     openIdNonceCookieName,
+		Name:     business.OpenIdNonceCookieName,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Path:     config.Get().Server.WebRoot,
@@ -697,9 +693,9 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	nonceCookie := http.Cookie{
 		Expires:  expirationTime,
 		HttpOnly: true,
-		Name:     openIdNonceCookieName,
+		Name:     business.OpenIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		Value:    nonceCode,
 	}
 	http.SetCookie(w, &nonceCookie)
@@ -725,7 +721,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 
 	// Use OpenId's "implicit flow" by default. Use "authentication code" flow if possible.
 	responseType := "id_token"
-	if isOpenIdCodeFlowPossible() {
+	if business.IsOpenIdCodeFlowPossible() {
 		responseType = "code"
 	}
 
@@ -743,33 +739,46 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
-	err := r.ParseForm()
+	// Read received HTTP params and check for data completeness
+	openIdParams, err := business.ExtractOpenIdCallbackParams(w, r)
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusBadRequest, fmt.Errorf("error parsing form info: %+v", err))
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return true // Return true to mark request as handled (because an error is already being sent back)
 	}
 
-	// Continue only if there are "code" and "state" params in the request
-	code := r.Form.Get("code")
-	state := r.Form.Get("state")
-	if len(code) == 0 || len(state) == 0 {
-		log.Trace("Not handling OpenId code flow authentication because the required params are not present.")
+	if checkFailure := business.CheckOpenIdAuthenticationCodeFlowParams(openIdParams); len(checkFailure) != 0 {
+		log.Infof("Not handling OpenId code flow authentication: %s", checkFailure)
 		return false
 	}
 
 	// Start handling the callback for OpenId authentication (code flow)
 
-	// TODO: Validate "state" and "nonce"
+	// CSRF mitigation
+	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Request rejected: %s", stateError))
+		return true
+	}
 
 	// Exchange the received code for a token
-	openIdToken, err := business.RequestOpenIdToken(code, httputil.GuessKialiURL(r))
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusForbidden, "the IdP did not provide the user credentials", err.Error())
-		return false
+	// err := business.RequestOpenIdToken(code, httputil.GuessKialiURL(r))
+	if err := business.RequestOpenIdToken(openIdParams, httputil.GuessKialiURL(r)); err != nil {
+		RespondWithDetailedError(w, http.StatusForbidden, "failure when retrieving user identity", err.Error())
+		return true
+	}
+
+	if err := business.ParseOpenIdToken(openIdParams); err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return true
+	}
+
+	// Replay attack mitigation
+	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
+		return true
 	}
 
 	// Check if user trying to login has enough privileges to login
-	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdToken)
+	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
 	if detailedError != nil {
 		RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
 		return true
@@ -778,17 +787,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	// Extract some data from the id_token
-	subject, _, expiresOn, errMsg, detailedError := business.ExtractOpenIdClaimsOfInterest(openIdToken)
-	if detailedError != nil {
-		RespondWithDetailedError(w, http.StatusUnauthorized, errMsg, detailedError.Error())
-		return true
-	} else if len(errMsg) != 0 {
-		RespondWithError(w, http.StatusUnauthorized, errMsg)
-		return true
-	}
-
-	// Create Kiali's authentication cookie and set it in the response
+	// Create Kiali's session cookie and set it in the response
 
 	// For the OpenId's "authentication code" flow we don't want
 	// any of the session data to be readable even in the browser's
@@ -798,21 +797,12 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	// set a cookie with the ciphered string. Yet, we use the
 	// "IanaClaims" type just for convenience to avoid creating new types and
 	// to bring some type convergence on types for the auth source code.
-	sessionData := config.IanaClaims{
-		SessionId: openIdToken,
-		StandardClaims: jwt.StandardClaims{
-			Subject:   subject,
-			ExpiresAt: expiresOn.Unix(),
-			Issuer:    config.AuthStrategyOpenIdIssuer,
-		},
-	}
+	sessionData := business.BuildOpenIdJwtClaims(openIdParams)
 	sessionDataJson, err := json.Marshal(sessionData)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
 		return true
 	}
-
-	log.Debugf("Claims to be encrypted: %s", string(sessionDataJson))
 
 	// Cihper the session data
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
@@ -827,54 +817,27 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	nonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
+	aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials", err.Error())
 		return true
 	}
 
-	cipherSessionData := aesGcm.Seal(nonce, nonce, sessionDataJson, nil)
+	cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sessionDataJson, nil)
 	authCookie := http.Cookie{
 		Name:     config.TokenCookieName + "-aes",
 		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
-		Expires:  expiresOn,
+		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &authCookie)
 
-	// Let's redirect (remove the openid params) to let Kiali-UI to boot
+	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
 	conf := config.Get()
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 
 	return true
-}
-
-func isOpenIdCodeFlowPossible() bool {
-	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
-	// encoded cookies.
-	switch len(config.GetSigningKey()) {
-	case 16, 24, 32:
-	default:
-		log.Warningf("Cannot use OpenId authentication code flow because signing key is not 16, 24 nor 32 bytes long")
-		return false
-	}
-
-	// IdP provider's metadata must list "code" in it's supported response types
-	metadata, err := business.GetOpenIdMetadata()
-	if err != nil {
-		// On error, just inform that code flow is not possible
-		log.Warningf("Error when fetching OpenID provider's metadata: %s", err.Error())
-		return false
-	}
-
-	for _, v := range metadata.ResponseTypesSupported {
-		if v == "code" {
-			return true
-		}
-	}
-
-	return false
 }
