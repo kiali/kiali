@@ -4739,12 +4739,8 @@
           "type": "string",
           "x-go-name": "ExperimentType"
         },
-        "hosts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Iter8Host"
-          },
-          "x-go-name": "Hosts"
+        "networking": {
+          "$ref": "#/definitions/Iter8Networking"
         },
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
@@ -4831,7 +4827,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Iter8Info": {
       "type": "object",
@@ -4892,6 +4888,25 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Iter8Networking": {
+      "type": "object",
+      "properties": {
+        "hosts": {
+          "description": "List of hosts used to receive external traffic\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Iter8Host"
+          },
+          "x-go-name": "Hosts"
+        },
+        "id": {
+          "description": "id of router\n+optional",
+          "type": "string",
+          "x-go-name": "ID"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Iter8SuccessCrideriaStatus": {
       "type": "object",

@@ -133,6 +133,29 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 
 	return iter8ExperimentDetail, nil
 }
+func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (kubernetes.Iter8ExperimentCRD, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
+	defer promtimer.ObserveNow(&err)
+	Iter8ExperimentCRD := kubernetes.Iter8ExperimentCRD{}
+	iter8ExperimentObject, gErr := in.k8s.GetIter8Experiment(namespace, name)
+	if gErr == nil {
+		Iter8ExperimentCRD.Spec = iter8ExperimentObject.GetSpec()
+		objectMeta := iter8ExperimentObject.GetObjectMeta()
+		Iter8ExperimentCRD.ObjectMeta.Name = objectMeta.Name
+		Iter8ExperimentCRD.ObjectMeta.Labels = objectMeta.Labels
+		Iter8ExperimentCRD.ObjectMeta.Namespace = objectMeta.Namespace
+		Iter8ExperimentCRD.Spec.Metrics = struct {
+			CounterMetrics []kubernetes.CounterMetric `json:"counter_metrics,omitempty"`
+			RatioMetrics   []kubernetes.RatioMetric   `json:"ratio_metrics,omitempty"`
+		}{}
+		Iter8ExperimentCRD.APIVersion = "iter8.tools/v1alpha2"
+		Iter8ExperimentCRD.Kind = "Experiment"
+	}
+
+
+	return Iter8ExperimentCRD, gErr
+}
 
 func (in *Iter8Service) GetIter8ExperimentsByNamespace(namespace string) ([]models.Iter8ExperimentItem, error) {
 	var err error
@@ -278,16 +301,22 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.Percentage = newExperimentSpec.TrafficControl.Percentage
 	object.Spec.TrafficControl.Match = newExperimentSpec.TrafficControl.Match
 
-	for _, host := range newExperimentSpec.Hosts {
-		object.Spec.Service.Hosts = append(object.Spec.Service.Hosts,
-			struct {
-				Name    string `json:"name"`
-				Gateway string `json:"gateway"`
-			}{
-				Name:    host.Name,
-				Gateway: host.Gateway,
-			})
+	if (newExperimentSpec.Hosts !=  nil || newExperimentSpec.RoutingID != "") {
+		hosts := make([]kubernetes.Iter8Host, len(newExperimentSpec.Hosts))
+		for i, host := range newExperimentSpec.Hosts{
+			hosts[i] =
+				kubernetes.Iter8Host {
+					Name:    host.Name,
+					Gateway: host.Gateway,
+				}
+		}
+		networking := kubernetes.Iter8Networking{
+			ID : newExperimentSpec.RoutingID,
+			Hosts: hosts,
+		}
+		object.Spec.Networking = &networking
 	}
+
 	for _, criteria := range newExperimentSpec.Criterias {
 
 		if criteria.Tolerance != 0 {

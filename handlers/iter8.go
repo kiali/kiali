@@ -37,6 +37,22 @@ func Iter8Experiments(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, experiments)
 }
 
+func Iter8ExperimentGetYaml(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	business, err := getBusiness(r)
+	namespace := params["namespace"]
+	name := params["name"]
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	yamlSpec, err := business.Iter8.GetIter8ExperimentYaml(namespace, name)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	RespondWithJSON(w, http.StatusOK,  yamlSpec)
+}
 func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	business, err := getBusiness(r)

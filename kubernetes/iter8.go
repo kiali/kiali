@@ -23,10 +23,6 @@ type Iter8ExperimentSpec struct {
 		core_v1.ObjectReference `json:",inline"`
 		Baseline                string   `json:"baseline"`
 		Candidates              []string `json:"candidates"`
-		Hosts                   []struct {
-			Name    string `json:"name"`
-			Gateway string `json:"gateway"`
-		} `json:"hosts,omitempty"`
 		Port *int32 `json:"port,omitempty"`
 	} `json:"service"`
 
@@ -52,6 +48,7 @@ type Iter8ExperimentSpec struct {
 		RatioMetrics   []RatioMetric   `json:"ratio_metrics,omitempty"`
 	} `json:"metrics,omitempty"`
 	ManualOverride *ExperimentAction `json:"manualOverride,omitempty"`
+	Networking *Iter8Networking `json:"networking,omitempty"`
 }
 
 type Iter8Duration struct {
@@ -69,6 +66,15 @@ type ExperimentAction struct {
 	TrafficSplit map[string]int32 `json:"trafficSplit,omitempty"`
 }
 
+type Iter8Networking struct {
+	// id of router
+	// +optional
+	ID string `json:"id,omitempty"`
+
+	// List of hosts used to receive external traffic
+	// +optional
+	Hosts []Iter8Host `json:"hosts,omitempty"`
+}
 type CounterMetric struct {
 	Name               string  `json:"name" yaml:"name"`
 	QueryTemplate      string  `json:"query_template" yaml:"query_template"`
@@ -221,6 +227,14 @@ type Iter8ExperimentList interface {
 	runtime.Object
 	GetItems() []Iter8Experiment
 }
+
+type Iter8ExperimentCRD struct {
+	meta_v1.TypeMeta   `json:",inline"`
+	meta_v1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec Iter8ExperimentSpec `json:"spec"`
+}
+
 
 type Iter8ExperimentObject struct {
 	meta_v1.TypeMeta   `json:",inline"`
