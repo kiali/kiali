@@ -114,7 +114,7 @@ func Iter8ExperimentCreate(w http.ResponseWriter, r *http.Request) {
 	jsonBody := false
 	params := mux.Vars(r)
 	queryParams := r.URL.Query()
-	if json := queryParams.Get("type"); json != "" {
+	if json := queryParams.Get("type"); json == "json" {
 		jsonBody = true
 	}
 	business, err := getBusiness(r)

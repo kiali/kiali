@@ -93,7 +93,7 @@ type Iter8ExperimentSpec struct {
 	Cleanup        bool                         `json:"cleanup"`
 	Metrics        Iter8Metrics                 `json:"metrics"`
 }
-type Iter8ExperimentActon struct {
+type Iter8ExperimentAction struct {
 	Action       string     `json:"action"`
 	TrafficSplit [][]string `json:"trafficSplit,omitempty"`
 }

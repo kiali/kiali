@@ -227,7 +227,7 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 	defer promtimer.ObserveNow(&err)
 
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
-	action := models.Iter8ExperimentActon{}
+	action := models.Iter8ExperimentAction{}
 	err = json.Unmarshal(body, &action)
 	if err != nil {
 		return iter8ExperimentDetail, err

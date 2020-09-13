@@ -17,6 +17,7 @@ var iter8typeMeta = meta_v1.TypeMeta{
 	APIVersion: ApiIter8Version,
 }
 
+// Linked with https://github.com/iter8-tools/iter8-controller/blob/master/pkg/apis/iter8/v1alpha2/experiment_types.go
 // ExperimentSpec defines the desired state of Experiment
 type Iter8ExperimentSpec struct {
 	Service struct {
