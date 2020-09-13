@@ -84,7 +84,7 @@ type Iter8ExperimentSpec struct {
 	TrafficControl Iter8TrafficControl          `json:"trafficControl"`
 	Criterias      []Iter8Criteria              `json:"criterias"`
 	Hosts          []kubernetes.Iter8Host       `json:"hosts"`
-	RoutingID      string						`json:"routingID"`
+	RoutingID      string                       `json:"routingID"`
 	Action         *kubernetes.ExperimentAction `json:"action"`
 	TrafficSplit   map[string]int32             `json:"trafficSplit,omitempty"`
 	ExperimentKind string                       `json:"experimentKind"`
@@ -207,7 +207,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		criterias[i] = criteriaDetail
 	}
 
-	if (spec.Networking != nil) {
+	if spec.Networking != nil {
 		hosts := make([]kubernetes.Iter8Host, len(spec.Networking.Hosts))
 		for i, h := range spec.Networking.Hosts {
 			host := kubernetes.Iter8Host{}
@@ -222,7 +222,6 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		}
 		i.Networking = networking
 	}
-
 
 	trafficControl := Iter8TrafficControl{
 		Strategy:      spec.TrafficControl.Strategy,

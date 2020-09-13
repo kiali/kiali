@@ -23,7 +23,7 @@ type Iter8ExperimentSpec struct {
 		core_v1.ObjectReference `json:",inline"`
 		Baseline                string   `json:"baseline"`
 		Candidates              []string `json:"candidates"`
-		Port *int32 `json:"port,omitempty"`
+		Port                    *int32   `json:"port,omitempty"`
 	} `json:"service"`
 
 	Criteria []struct {
@@ -48,7 +48,7 @@ type Iter8ExperimentSpec struct {
 		RatioMetrics   []RatioMetric   `json:"ratio_metrics,omitempty"`
 	} `json:"metrics,omitempty"`
 	ManualOverride *ExperimentAction `json:"manualOverride,omitempty"`
-	Networking *Iter8Networking `json:"networking,omitempty"`
+	Networking     *Iter8Networking  `json:"networking,omitempty"`
 }
 
 type Iter8Duration struct {
@@ -234,7 +234,6 @@ type Iter8ExperimentCRD struct {
 
 	Spec Iter8ExperimentSpec `json:"spec"`
 }
-
 
 type Iter8ExperimentObject struct {
 	meta_v1.TypeMeta   `json:",inline"`

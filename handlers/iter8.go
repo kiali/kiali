@@ -51,7 +51,7 @@ func Iter8ExperimentGetYaml(w http.ResponseWriter, r *http.Request) {
 		handleErrorResponse(w, err)
 		return
 	}
-	RespondWithJSON(w, http.StatusOK,  yamlSpec)
+	RespondWithJSON(w, http.StatusOK, yamlSpec)
 }
 func Iter8ExperimentGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)

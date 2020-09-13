@@ -153,7 +153,6 @@ func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (k
 		Iter8ExperimentCRD.Kind = "Experiment"
 	}
 
-
 	return Iter8ExperimentCRD, gErr
 }
 
@@ -301,17 +300,17 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.Percentage = newExperimentSpec.TrafficControl.Percentage
 	object.Spec.TrafficControl.Match = newExperimentSpec.TrafficControl.Match
 
-	if (newExperimentSpec.Hosts !=  nil || newExperimentSpec.RoutingID != "") {
+	if newExperimentSpec.Hosts != nil || newExperimentSpec.RoutingID != "" {
 		hosts := make([]kubernetes.Iter8Host, len(newExperimentSpec.Hosts))
-		for i, host := range newExperimentSpec.Hosts{
+		for i, host := range newExperimentSpec.Hosts {
 			hosts[i] =
-				kubernetes.Iter8Host {
+				kubernetes.Iter8Host{
 					Name:    host.Name,
 					Gateway: host.Gateway,
 				}
 		}
 		networking := kubernetes.Iter8Networking{
-			ID : newExperimentSpec.RoutingID,
+			ID:    newExperimentSpec.RoutingID,
 			Hosts: hosts,
 		}
 		object.Spec.Networking = &networking
