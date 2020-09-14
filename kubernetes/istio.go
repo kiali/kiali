@@ -18,9 +18,8 @@ import (
 )
 
 var (
-	portNameMatcher    = regexp.MustCompile(`^[\-].*`)
-	portProtocols      = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
-	IstioConfigMapName = "istio"
+	portNameMatcher = regexp.MustCompile(`^[\-].*`)
+	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
