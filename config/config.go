@@ -142,12 +142,12 @@ type TracingConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
+	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
+	ConfigMapName            string            `yaml:"config_map_name,omitempty"`
 	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
 	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
-	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
 	UrlServiceVersion        string            `yaml:"url_service_version"`
-	ConfigMapName            string            `yaml:"config_map_name,omitempty"`
 }
 
 type ComponentStatuses struct {
@@ -415,8 +415,8 @@ func NewConfig() (c *Config) {
 						},
 					},
 				},
-				UrlServiceVersion: "http://istiod:15014/version",
 				ConfigMapName:     "istio",
+				UrlServiceVersion: "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
