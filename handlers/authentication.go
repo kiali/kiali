@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,10 +23,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
-)
-
-const (
-	openIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
 )
 
 type AuthenticationHandler struct {
@@ -149,7 +148,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Check if the nonce cookie is present
-	nonceCookie, err := r.Cookie(openIdNonceCookieName)
+	nonceCookie, err := r.Cookie(business.OpenIdNonceCookieName)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "No nonce code present. Login window timed out.")
 		return false
@@ -160,7 +159,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Delete the nonce cookie since we no longer need it.
 	deleteNonceCookie := http.Cookie{
-		Name:     openIdNonceCookieName,
+		Name:     business.OpenIdNonceCookieName,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Path:     config.Get().Server.WebRoot,
@@ -264,7 +263,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
+	// Now that we know that the OpenId token is valid, parse/decode it to extract
 	// the name of the service account. The "subject" is passed to the front-end to be displayed.
 	tokenSubject := "OpenId User" // Set a default value
 	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
@@ -429,42 +428,61 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 }
 
 func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	// First, check presence of a session for the "implicit flow"
+	var claims *config.IanaClaims
+
 	tokenString := getTokenStringFromRequest(r)
-	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %s", err.Error())
+	if len(tokenString) != 0 {
+		var err error = nil
+		if claims, err = config.GetTokenClaimsIfValid(tokenString); err != nil {
+			log.Warningf("Token is invalid: %s", err.Error())
+			return http.StatusUnauthorized, ""
+		}
 	} else {
-		// Session ID claim must be present
-		if len(claims.SessionId) == 0 {
-			log.Warning("Token is invalid: sid claim is required")
+		// If not present, check presence of a session for the "authorization code" flow
+		var err error = nil
+		claims, err = business.GetOpenIdAesSession(r)
+		if err != nil {
+			log.Warningf("There was an error when decoding the session: %s", err.Error())
 			return http.StatusUnauthorized, ""
 		}
-
-		business, err := business.Get(claims.SessionId)
-		if err != nil {
-			log.Warning("Could not get the business layer : ", err)
-			return http.StatusInternalServerError, ""
-		}
-
-		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
-		parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
-		if err != nil {
-			log.Warning("Cannot parse sid claim of the Kiali token : ", err)
-			return http.StatusInternalServerError, ""
-		}
-		if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
-			log.Warning("Kiali token rejected because of subject claim mismatch")
+		if claims == nil {
+			log.Warningf("User seems to not be logged in")
 			return http.StatusUnauthorized, ""
 		}
-
-		_, err = business.Namespace.GetNamespaces()
-		if err == nil {
-			// Internal header used to propagate the subject of the request for audit purposes
-			r.Header.Add("Kiali-User", claims.Subject)
-			return http.StatusOK, claims.SessionId
-		}
-
-		log.Warning("Token error: ", err)
 	}
+
+	// Session ID claim must be present
+	if len(claims.SessionId) == 0 {
+		log.Warning("Token is invalid: sid claim is required")
+		return http.StatusUnauthorized, ""
+	}
+
+	business, err := business.Get(claims.SessionId)
+	if err != nil {
+		log.Warning("Could not get the business layer : ", err)
+		return http.StatusInternalServerError, ""
+	}
+
+	// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
+	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
+	if err != nil {
+		log.Warning("Cannot parse sid claim of the Kiali token : ", err)
+		return http.StatusInternalServerError, ""
+	}
+	if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
+		log.Warning("Kiali token rejected because of subject claim mismatch")
+		return http.StatusUnauthorized, ""
+	}
+
+	_, err = business.Namespace.GetNamespaces()
+	if err == nil {
+		// Internal header used to propagate the subject of the request for audit purposes
+		r.Header.Add("Kiali-User", claims.Subject)
+		return http.StatusOK, claims.SessionId
+	}
+
+	log.Warning("Token error: ", err)
 
 	return http.StatusUnauthorized, ""
 }
@@ -596,7 +614,12 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := getTokenStringFromRequest(r)
-	if claims, _ := config.GetTokenClaimsIfValid(token); claims != nil {
+	claims, _ := config.GetTokenClaimsIfValid(token)
+	if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
+		claims, _ = business.GetOpenIdAesSession(r)
+	}
+
+	if claims != nil {
 		response.SessionInfo = sessionInfo{
 			ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
 			Username:  claims.Subject,
@@ -670,9 +693,9 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	nonceCookie := http.Cookie{
 		Expires:  expirationTime,
 		HttpOnly: true,
-		Name:     openIdNonceCookieName,
+		Name:     business.OpenIdNonceCookieName,
 		Path:     conf.Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		Value:    nonceCode,
 	}
 	http.SetCookie(w, &nonceCookie)
@@ -696,14 +719,125 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 	// the Kiali's signing key).
 	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), config.GetSigningKey())))
 
+	// Use OpenId's "implicit flow" by default. Use "authorization code" flow if possible.
+	responseType := "id_token"
+	if business.IsOpenIdCodeFlowPossible() {
+		responseType = "code"
+	}
+
 	// Send redirection to browser
-	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=id_token&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
+	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
 		authorizationEndpoint,
 		url.QueryEscape(conf.Auth.OpenId.ClientId),
+		responseType,
 		url.QueryEscape(httputil.GuessKialiURL(r)),
 		url.QueryEscape(scopes),
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
 		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
 	)
 	http.Redirect(w, r, redirectUri, http.StatusFound)
+}
+
+func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
+	// Read received HTTP params and check for data completeness
+	openIdParams, err := business.ExtractOpenIdCallbackParams(w, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return true // Return true to mark request as handled (because an error is already being sent back)
+	}
+
+	if checkFailure := business.CheckOpenIdAuthorizationCodeFlowParams(openIdParams); len(checkFailure) != 0 {
+		log.Infof("Not handling OpenId code flow authentication: %s", checkFailure)
+		return false
+	}
+
+	// Start handling the callback for OpenId authentication (code flow)
+
+	// CSRF mitigation
+	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Request rejected: %s", stateError))
+		return true
+	}
+
+	// Exchange the received code for a token
+	// err := business.RequestOpenIdToken(code, httputil.GuessKialiURL(r))
+	if err := business.RequestOpenIdToken(openIdParams, httputil.GuessKialiURL(r)); err != nil {
+		RespondWithDetailedError(w, http.StatusForbidden, "failure when retrieving user identity", err.Error())
+		return true
+	}
+
+	if err := business.ParseOpenIdToken(openIdParams); err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return true
+	}
+
+	// Replay attack mitigation
+	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
+		return true
+	}
+
+	// Check if user trying to login has enough privileges to login
+	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
+	if detailedError != nil {
+		RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
+		return true
+	} else if httpStatus != http.StatusOK {
+		RespondWithError(w, httpStatus, errMsg)
+		return true
+	}
+
+	// Create Kiali's session cookie and set it in the response
+
+	// For the OpenId's "authorization code" flow we don't want
+	// any of the session data to be readable even in the browser's
+	// developer console. So, we cipher the session data using AES-GCM
+	// which allows to leave aside the usage of JWT tokens. So, this
+	// builds a bare JSON serialized into a string, cipher it and
+	// set a cookie with the ciphered string. Yet, we use the
+	// "IanaClaims" type just for convenience to avoid creating new types and
+	// to bring some type convergence on types for the auth source code.
+	sessionData := business.BuildOpenIdJwtClaims(openIdParams)
+	sessionDataJson, err := json.Marshal(sessionData)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to marshal json", err.Error())
+		return true
+	}
+
+	// Cipher the session data
+	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create cipher", err.Error())
+		return true
+	}
+
+	aesGcm, err := cipher.NewGCM(block)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create gcm", err.Error())
+		return true
+	}
+
+	aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to generate random bytes", err.Error())
+		return true
+	}
+
+	cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sessionDataJson, nil)
+	authCookie := http.Cookie{
+		Name:     config.TokenCookieName + "-aes",
+		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
+		Expires:  openIdParams.ExpiresOn,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &authCookie)
+
+	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
+	conf := config.Get()
+	webRoot := conf.Server.WebRoot
+	webRootWithSlash := webRoot + "/"
+	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
+
+	return true
 }
