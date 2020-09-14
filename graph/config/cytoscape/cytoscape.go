@@ -91,7 +91,7 @@ type EdgeData struct {
 	Traffic      	ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
 	ResponseTime 	string          `json:"responseTime,omitempty"` // in millis
 	IsMTLS       	string          `json:"isMTLS,omitempty"`       // set to the percentage of traffic using a mutual TLS connection
-	DestPrincipal 	string		 	`json:"destPrincipal,omitempty"`
+	DestPrincipal 	string		    `json:"destPrincipal,omitempty"`
 	SourcePrincipal string       	`json:"sourcePrincipal,omitempty"`
 }
 
