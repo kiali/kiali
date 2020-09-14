@@ -47,7 +47,7 @@ class IstioConfigSubList extends React.Component<Props> {
                 <Title headingLevel="h5" size="lg">
                   No Istio Config found
                 </Title>
-                <EmptyStateBody>No Istio Config found found for {this.props.name}</EmptyStateBody>
+                <EmptyStateBody>No Istio Config found for {this.props.name}</EmptyStateBody>
               </EmptyState>
             ),
             props: { colSpan: 6 }

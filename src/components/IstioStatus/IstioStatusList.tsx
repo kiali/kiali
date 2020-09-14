@@ -29,11 +29,11 @@ class IstioStatusList extends React.Component<Props> {
 
     return ['core', 'addon'].map((group: string) => {
       return (
-        <>
+        <React.Fragment key={'status-' + group}>
           {groups[group]().map(status => {
-            return <IstioComponentStatus componentStatus={status} />;
+            return <IstioComponentStatus key={`status-${group}-${status.name}`} componentStatus={status} />;
           })}
-        </>
+        </React.Fragment>
       );
     });
   };
