@@ -54,7 +54,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
 	// 1) query for requests originating from a workload outside the namespace.
-	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,connection_security_policy", appLabel, verLabel, appLabel, verLabel)
+	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,source_principal,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,destination_principal,connection_security_policy", appLabel, verLabel, appLabel, verLabel)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
@@ -90,6 +90,12 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	a.populateSecurityPolicyMap(securityPolicyMap, &inVector)
 
 	applySecurityPolicy(trafficMap, securityPolicyMap)
+
+	principalMap := make(map[string]map[graph.MetadataKey]string)
+	a.populatePrincipalMap(principalMap, &outVector)
+	a.populatePrincipalMap(principalMap, &inVector)
+
+	applyPrincipal(trafficMap, principalMap)
 }
 
 func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]PolicyRates, vector *model.Vector) {
@@ -171,6 +177,80 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 				if mtls > 0 {
 					e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
 				}
+			}
+		}
+	}
+}
+
+func (a SecurityPolicyAppender) populatePrincipalMap(principalMap map[string]map[graph.MetadataKey]string, vector *model.Vector) {
+	for _, s := range *vector {
+		m := s.Metric
+		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
+		lSourceWl, sourceWlOk := m["source_workload"]
+		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
+		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
+		lSourcePrincipal, sourcePrincipalOk := m["source_principal"]
+		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
+		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
+		lDestWl, destWlOk := m["destination_workload"]
+		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
+		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
+		lDestPrincipal, destPrincipalOk := m["destination_principal"]
+
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk {
+			log.Warningf("Skipping %v, missing expected labels", m.String())
+			continue
+		}
+
+		sourceWlNs := string(lSourceWlNs)
+		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
+		sourceVer := string(lSourceVer)
+		sourcePrincipal := string(lSourcePrincipal)
+		destSvcNs := string(lDestSvcNs)
+		destSvcName := string(lDestSvcName)
+		destWlNs := string(lDestWlNs)
+		destWl := string(lDestWl)
+		destApp := string(lDestApp)
+		destVer := string(lDestVer)
+		destPrincipal := string(lDestPrincipal)
+
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, "", "", "", "", destPrincipal)
+			a.addPrincipal(principalMap, destSvcNs, destSvcName, "", "", "", sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
+		} else {
+			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
+		}
+	}
+}
+
+func (a SecurityPolicyAppender) addPrincipal(principalMap map[string]map[graph.MetadataKey]string, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, destPrincipal string) {
+	sourceId, _ := graph.Id(sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	destId, _ := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	key := fmt.Sprintf("%s %s", sourceId, destId)
+	var ok bool
+	if _, ok = principalMap[key]; !ok {
+		kPrincipalMap := make(map[graph.MetadataKey]string)
+		kPrincipalMap[graph.SourcePrincipal] = sourcePrincipal
+		kPrincipalMap[graph.DestPrincipal] = destPrincipal
+		principalMap[key] = kPrincipalMap
+	}
+}
+
+func applyPrincipal(trafficMap graph.TrafficMap, principalMap map[string]map[graph.MetadataKey]string) {
+	for _, s := range trafficMap {
+		for _, e := range s.Edges {
+			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
+			if kPrincipalMap, ok := principalMap[key]; ok {
+				e.Metadata[graph.SourcePrincipal] = kPrincipalMap[graph.SourcePrincipal]
+				e.Metadata[graph.DestPrincipal] = kPrincipalMap[graph.DestPrincipal]
 			}
 		}
 	}

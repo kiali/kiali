@@ -88,9 +88,11 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Traffic      ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
-	ResponseTime string          `json:"responseTime,omitempty"` // in millis
-	IsMTLS       string          `json:"isMTLS,omitempty"`       // set to the percentage of traffic using a mutual TLS connection
+	Traffic      	ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
+	ResponseTime 	string          `json:"responseTime,omitempty"` // in millis
+	IsMTLS       	string          `json:"isMTLS,omitempty"`       // set to the percentage of traffic using a mutual TLS connection
+	DestPrincipal 	string		 	`json:"destPrincipal,omitempty"`
+	SourcePrincipal string       	`json:"sourcePrincipal,omitempty"`
 }
 
 type NodeWrapper struct {
@@ -281,6 +283,12 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				Traffic: ProtocolTraffic{
 					Protocol: protocol,
 				},
+			}
+			if e.Metadata[graph.SourcePrincipal] != nil {
+				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
+			}
+			if e.Metadata[graph.DestPrincipal] != nil {
+				ed.DestPrincipal = e.Metadata[graph.DestPrincipal].(string)
 			}
 			addEdgeTelemetry(e, &ed)
 

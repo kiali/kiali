@@ -30,6 +30,8 @@ const (
 	IsUnused        MetadataKey = "isUnused"
 	ProtocolKey     MetadataKey = "protocol"
 	ResponseTime    MetadataKey = "responseTime"
+	SourcePrincipal MetadataKey = "sourcePrincipal"
+	DestPrincipal   MetadataKey = "destPrincipal"
 )
 
 // DestServicesMetadata key=Service.Key()
