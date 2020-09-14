@@ -180,6 +180,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
                   namespace={this.props.match.params.namespace}
                   app={app}
                   version={version}
+                  workload={this.state.workload!.name}
                   template={dashboard.template}
                 />
               </Tab>

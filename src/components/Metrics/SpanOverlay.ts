@@ -5,34 +5,44 @@ import * as API from '../../services/Api';
 import { TimeRange, durationToBounds, guardTimeRange } from '../../types/Common';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { Span, TracingQuery } from 'types/Tracing';
+import { MetricsObjectTypes } from 'types/Metrics';
 
 export type JaegerLineInfo = LineInfo & { traceId?: string };
+
+type FetchOptions = {
+  namespace: string;
+  target: string;
+  targetKind: MetricsObjectTypes;
+  range: TimeRange;
+};
 
 export class SpanOverlay {
   private spans: Span[] = [];
   private lastFetchError = false;
 
-  constructor(
-    private namespace: string,
-    private service: string,
-    public onChange: (overlay?: Overlay<JaegerLineInfo>) => void
-  ) {}
+  constructor(public onChange: (overlay?: Overlay<JaegerLineInfo>) => void) {}
 
-  fetch(range: TimeRange) {
-    const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
-    const opts: TracingQuery = {
+  fetch(opts: FetchOptions) {
+    const boundsMillis = guardTimeRange(opts.range, durationToBounds, b => b);
+    const q: TracingQuery = {
       startMicros: boundsMillis.from * 1000,
       endMicros: boundsMillis.to ? boundsMillis.to * 1000 : undefined
     };
     // Remove any out-of-bound spans
     this.spans = this.spans.filter(
-      s => s.startTime >= opts.startMicros && (opts.endMicros === undefined || s.startTime <= opts.endMicros)
+      s => s.startTime >= q.startMicros && (q.endMicros === undefined || s.startTime <= q.endMicros)
     );
     // Start fetching from last fetched data when available
     if (this.spans.length > 0) {
-      opts.startMicros = 1 + Math.max(...this.spans.map(s => s.startTime));
+      q.startMicros = 1 + Math.max(...this.spans.map(s => s.startTime));
     }
-    API.getAppSpans(this.namespace, this.service, opts)
+    const apiCall =
+      opts.targetKind === MetricsObjectTypes.APP
+        ? API.getAppSpans
+        : opts.targetKind === MetricsObjectTypes.SERVICE
+        ? API.getServiceSpans
+        : API.getWorkloadSpans;
+    apiCall(opts.namespace, opts.target, q)
       .then(res => {
         this.lastFetchError = false;
         // Incremental refresh: we keep existing spans

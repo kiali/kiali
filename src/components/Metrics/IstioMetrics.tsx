@@ -68,9 +68,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(props.namespace, props.object, changed =>
-      this.setState({ spanOverlay: changed })
-    );
+    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
   private initOptions(settings: MetricsSettings): IstioMetricsOptions {
@@ -93,7 +91,12 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
   private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.state.timeRange);
+      this.spanOverlay.fetch({
+        namespace: this.props.namespace,
+        target: this.props.object,
+        targetKind: this.props.objectType,
+        range: this.state.timeRange
+      });
     }
   };
 
@@ -145,12 +148,12 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         }
       })
       .catch(err => {
-        AlertUtils.addError(
-          'Could not fetch Grafana info. Turning off links to Grafana.',
-          err,
-          'default',
-          MessageType.INFO
-        );
+        AlertUtils.addMessage({
+          ...AlertUtils.extractAxiosError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
       });
   }
 
@@ -183,8 +186,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       this.onDomainChange([datum.start as Date, datum.end as Date]);
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
+      const domain =
+        this.props.objectType === MetricsObjectTypes.APP
+          ? 'applications'
+          : this.props.objectType === MetricsObjectTypes.SERVICE
+          ? 'services'
+          : 'workloads';
       history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
       );
     }
   };

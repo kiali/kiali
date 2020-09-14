@@ -45,6 +45,7 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   namespace: string;
   app: string;
   version?: string;
+  workload?: string;
   template: string;
 };
 
@@ -69,7 +70,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
     this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
-    this.spanOverlay = new SpanOverlay(props.namespace, props.app, changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
   private initOptions(settings: MetricsSettings): DashboardQuery {
@@ -93,7 +94,12 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
   private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {
-      this.spanOverlay.fetch(this.state.timeRange);
+      this.spanOverlay.fetch({
+        namespace: this.props.namespace,
+        target: this.props.workload || this.props.app,
+        targetKind: this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP,
+        range: this.state.timeRange
+      });
     }
   };
 

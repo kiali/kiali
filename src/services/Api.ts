@@ -515,6 +515,14 @@ export const getAppSpans = (namespace: string, app: string, params: TracingQuery
   return newRequest<Span[]>(HTTP_VERBS.GET, urls.appSpans(namespace, app), params, {});
 };
 
+export const getServiceSpans = (namespace: string, service: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.serviceSpans(namespace, service), params, {});
+};
+
+export const getWorkloadSpans = (namespace: string, workload: string, params: TracingQuery) => {
+  return newRequest<Span[]>(HTTP_VERBS.GET, urls.workloadSpans(namespace, workload), params, {});
+};
+
 export const getIstioPermissions = (namespaces: string[]) => {
   return newRequest<IstioPermissions>(HTTP_VERBS.GET, urls.istioPermissions, { namespaces: namespaces.join(',') }, {});
 };
