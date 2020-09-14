@@ -351,15 +351,6 @@ func (in *K8SClient) getAuthenticationResources() map[string]bool {
 	return *in.authenticationResources
 }
 
-func GetIstioConfigMapName() string {
-	revision := config.Get().ExternalServices.Istio.Revision
-	name := IstioConfigMapName
-	if revision != "" {
-		name = fmt.Sprintf("%s-%s", IstioConfigMapName, revision)
-	}
-	return name
-}
-
 func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error) {
 	meshConfig := &IstioMeshConfig{}
 
@@ -392,7 +383,7 @@ func (in *K8SClient) IsMixerDisabled() bool {
 	}
 
 	cfg := config.Get()
-	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, GetIstioConfigMapName())
+	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
 		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
 		return false
