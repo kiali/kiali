@@ -66,10 +66,12 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 	deps := make([]apps_v1.Deployment, 0)
 
 	comNs := config.Get().IstioComponentNamespaces
-	// In case there isn't any namespace set up, check the control plane namespace
-	if comNs == nil || len(comNs) == 0 {
-		comNs = map[string]string{"istiod": config.Get().IstioNamespace}
+	if comNs == nil {
+		comNs = map[string]string{}
 	}
+
+	// Always add the Istio Namespace to fetch istio-related components
+	comNs["default"] = config.Get().IstioNamespace
 
 	depsChan := make(chan []apps_v1.Deployment, len(comNs))
 	errChan := make(chan error, len(comNs))
