@@ -24,3 +24,8 @@ type JaegerSingleTrace struct {
 	Data   jaegerModels.Trace `json:"data"`
 	Errors []structuredError  `json:"errors"`
 }
+
+type JaegerSpan struct {
+	jaegerModels.Span
+	TraceSize int `json:"traceSize"`
+}
