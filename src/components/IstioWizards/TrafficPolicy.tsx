@@ -4,7 +4,13 @@ import { Form, FormGroup, FormSelect, FormSelectOption, Radio, Switch, TextInput
 import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 import { KialiAppState } from '../../store/Store';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
-import { HTTPCookie, LoadBalancerSettings, PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
+import {
+  ConnectionPoolSettings,
+  HTTPCookie,
+  LoadBalancerSettings,
+  OutlierDetection as OutlierDetectionProps,
+  PeerAuthenticationMutualTLSMode
+} from '../../types/IstioObjects';
 
 export const UNSET = 'UNSET';
 export const DISABLE = 'DISABLE';
@@ -32,6 +38,10 @@ type Props = ReduxProps & {
   nsWideStatus?: TLSStatus;
   hasPeerAuthentication: boolean;
   peerAuthenticationMode: PeerAuthenticationMutualTLSMode;
+  addConnectionPool: boolean;
+  connectionPool: ConnectionPoolSettings;
+  addOutlierDetection: boolean;
+  outlierDetection: OutlierDetectionProps;
 };
 
 export enum ConsistentHashType {
@@ -51,6 +61,10 @@ export type TrafficPolicyState = {
   consistentHashType: ConsistentHashType;
   loadBalancer: LoadBalancerSettings;
   peerAuthnSelector: PeerAuthenticationSelectorState;
+  addConnectionPool: boolean;
+  connectionPool: ConnectionPoolSettings;
+  addOutlierDetection: boolean;
+  outlierDetection: OutlierDetectionProps;
 };
 
 export type PeerAuthenticationSelectorState = {
@@ -104,7 +118,11 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
         addPeerAuthentication: props.hasPeerAuthentication,
         addPeerAuthnModified: false,
         mode: props.peerAuthenticationMode
-      }
+      },
+      addConnectionPool: props.addConnectionPool,
+      connectionPool: props.connectionPool,
+      addOutlierDetection: props.addOutlierDetection,
+      outlierDetection: props.outlierDetection
     };
   }
 

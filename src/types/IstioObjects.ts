@@ -329,7 +329,7 @@ export interface ConnectionPoolSettingsHTTPSettings {
   http2MaxRequests?: number;
   maxRequestsPerConnection?: number;
   maxRetries?: number;
-  idleTimeout?: number;
+  idleTimeout?: string;
   h2UpgradePolicy?: string;
 }
 

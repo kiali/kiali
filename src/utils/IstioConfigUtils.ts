@@ -1,5 +1,5 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
-import { IstioObject } from '../types/IstioObjects';
+import { ConnectionPoolSettings, IstioObject, OutlierDetection } from '../types/IstioObjects';
 import _ from 'lodash';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
@@ -158,4 +158,36 @@ export const isValidDuration = (duration: string): boolean => {
 
 export const isValidAbortStatusCode = (statusCode: number): boolean => {
   return statusCode >= 100 && statusCode <= 599;
+};
+
+export const isValidConnectionPool = (connectionPool: ConnectionPoolSettings): boolean => {
+  if (connectionPool.tcp) {
+    if (connectionPool.tcp.connectTimeout && !isValidDuration(connectionPool.tcp.connectTimeout)) {
+      return false;
+    }
+    if (connectionPool.tcp.tcpKeepalive) {
+      if (connectionPool.tcp.tcpKeepalive.interval && !isValidDuration(connectionPool.tcp.tcpKeepalive.interval)) {
+        return false;
+      }
+      if (connectionPool.tcp.tcpKeepalive.time && !isValidDuration(connectionPool.tcp.tcpKeepalive.time)) {
+        return false;
+      }
+    }
+  }
+  if (connectionPool.http) {
+    if (connectionPool.http.idleTimeout && !isValidDuration(connectionPool.http.idleTimeout)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export const isValidOutlierDetection = (outlierDetection: OutlierDetection): boolean => {
+  if (outlierDetection.interval && !isValidDuration(outlierDetection.interval)) {
+    return false;
+  }
+  if (outlierDetection.baseEjectionTime && !isValidDuration(outlierDetection.baseEjectionTime)) {
+    return false;
+  }
+  return true;
 };

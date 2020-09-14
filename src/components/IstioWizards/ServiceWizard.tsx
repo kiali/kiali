@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Expandable, Modal } from '@patternfly/react-core';
+import { Button, Expandable, Modal, Tab, Tabs } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
@@ -34,7 +34,9 @@ import {
   ServiceWizardState,
   getInitFaultInjectionRoute,
   WIZARD_REQUEST_TIMEOUTS,
-  getInitTimeoutRetryRoute
+  getInitTimeoutRetryRoute,
+  getInitConnectionPool,
+  getInitOutlierDetection
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
@@ -42,11 +44,13 @@ import VirtualServiceHosts from './VirtualServiceHosts';
 import { DestinationRule, PeerAuthentication, PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { style } from 'typestyle';
 import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
+import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
     showWizard: false,
     showAdvanced: false,
+    advancedTabKey: 0,
     workloads: [],
     rules: [],
     faultInjectionRoute: {
@@ -86,7 +90,9 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
       vsHosts: true,
       tls: true,
       lb: true,
-      gateway: true
+      gateway: true,
+      cp: true,
+      od: true
     },
     advancedOptionsValid: true,
     vsHosts: [fqdnServiceName],
@@ -106,7 +112,11 @@ const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState =>
         addPeerAuthentication: false,
         addPeerAuthnModified: false,
         mode: PeerAuthenticationMutualTLSMode.UNSET
-      }
+      },
+      addConnectionPool: false,
+      connectionPool: {},
+      addOutlierDetection: false,
+      outlierDetection: {}
     },
     gateway: undefined
   };
@@ -160,6 +170,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         this.props.destinationRules,
         this.props.peerAuthentications
       );
+      const initConnetionPool = getInitConnectionPool(this.props.destinationRules);
+      const initOutlierDetection = getInitOutlierDetection(this.props.destinationRules);
       const trafficPolicy: TrafficPolicyState = {
         tlsModified: initMtlsMode !== '',
         mtlsMode: initMtlsMode !== '' ? initMtlsMode : UNSET,
@@ -178,7 +190,24 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           addPeerAuthentication: initPeerAuthentication !== undefined,
           addPeerAuthnModified: false,
           mode: initPeerAuthentication || PeerAuthenticationMutualTLSMode.UNSET
-        }
+        },
+        addConnectionPool: initConnetionPool ? true : false,
+        connectionPool: initConnetionPool
+          ? initConnetionPool
+          : {
+              tcp: {
+                maxConnections: 1
+              },
+              http: {
+                http1MaxPendingRequests: 1
+              }
+            },
+        addOutlierDetection: initOutlierDetection ? true : false,
+        outlierDetection: initOutlierDetection
+          ? initOutlierDetection
+          : {
+              consecutiveErrors: 1
+            }
       };
       const gateway: GatewaySelectorState = {
         addGateway: false,
@@ -205,7 +234,9 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           vsHosts: true,
           tls: true,
           lb: true,
-          gateway: true
+          gateway: true,
+          cp: true,
+          od: true
         },
         vsHosts:
           initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
@@ -337,6 +368,21 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     });
   };
 
+  onCircuitBreaker = (circuitBreaker: CircuitBreakerState) => {
+    this.setState(prevState => {
+      prevState.valid.cp = circuitBreaker.isValidConnectionPool;
+      prevState.valid.od = circuitBreaker.isValidOutlierDetection;
+      prevState.trafficPolicy.addConnectionPool = circuitBreaker.addConnectionPool;
+      prevState.trafficPolicy.connectionPool = circuitBreaker.connectionPool;
+      prevState.trafficPolicy.addOutlierDetection = circuitBreaker.addOutlierDetection;
+      prevState.trafficPolicy.outlierDetection = circuitBreaker.outlierDetection;
+      return {
+        valid: prevState.valid,
+        trafficPolicy: prevState.trafficPolicy
+      };
+    });
+  };
+
   onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
@@ -388,7 +434,21 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   };
 
   isValid = (state: ServiceWizardState): boolean => {
-    return state.valid.mainWizard && state.valid.vsHosts && state.valid.tls && state.valid.lb && state.valid.gateway;
+    return (
+      state.valid.mainWizard &&
+      state.valid.vsHosts &&
+      state.valid.tls &&
+      state.valid.lb &&
+      state.valid.gateway &&
+      state.valid.cp &&
+      state.valid.od
+    );
+  };
+
+  advancedHandleTabClick = (_event, tabIndex) => {
+    this.setState({
+      advancedTabKey: tabIndex
+    });
   };
 
   render() {
@@ -460,29 +520,56 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
               });
             }}
           >
-            <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
-            <TrafficPolicyContainer
-              mtlsMode={this.state.trafficPolicy.mtlsMode}
-              clientCertificate={this.state.trafficPolicy.clientCertificate}
-              privateKey={this.state.trafficPolicy.privateKey}
-              caCertificates={this.state.trafficPolicy.caCertificates}
-              hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
-              loadBalancer={this.state.trafficPolicy.loadBalancer}
-              nsWideStatus={this.props.tlsStatus}
-              hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
-              peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
-              onTrafficPolicyChange={this.onTrafficPolicy}
-            />
-            <br />
-            <GatewaySelector
-              serviceName={this.props.serviceName}
-              hasGateway={hasGateway(this.props.virtualServices)}
-              gateway={gatewaySelected}
-              isMesh={isMesh}
-              gateways={this.props.gateways}
-              onGatewayChange={this.onGateway}
-            />
-            <br />
+            <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+              <Tab eventKey={0} title={'Hosts'}>
+                <div style={{ marginTop: '20px' }}>
+                  <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
+                </div>
+              </Tab>
+              <Tab eventKey={1} title={'Gateways'}>
+                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                  <GatewaySelector
+                    serviceName={this.props.serviceName}
+                    hasGateway={hasGateway(this.props.virtualServices)}
+                    gateway={gatewaySelected}
+                    isMesh={isMesh}
+                    gateways={this.props.gateways}
+                    onGatewayChange={this.onGateway}
+                  />
+                </div>
+              </Tab>
+              <Tab eventKey={2} title={'Traffic Policy'}>
+                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                  <TrafficPolicyContainer
+                    mtlsMode={this.state.trafficPolicy.mtlsMode}
+                    clientCertificate={this.state.trafficPolicy.clientCertificate}
+                    privateKey={this.state.trafficPolicy.privateKey}
+                    caCertificates={this.state.trafficPolicy.caCertificates}
+                    hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
+                    loadBalancer={this.state.trafficPolicy.loadBalancer}
+                    nsWideStatus={this.props.tlsStatus}
+                    hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
+                    peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
+                    addConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                    connectionPool={this.state.trafficPolicy.connectionPool}
+                    addOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                    outlierDetection={this.state.trafficPolicy.outlierDetection}
+                    onTrafficPolicyChange={this.onTrafficPolicy}
+                  />
+                </div>
+              </Tab>
+              <Tab eventKey={3} title={'Circuit Breaker'}>
+                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                  <CircuitBreaker
+                    hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                    connectionPool={this.state.trafficPolicy.connectionPool}
+                    hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                    outlierDetection={this.state.trafficPolicy.outlierDetection}
+                    onCircuitBreakerChange={this.onCircuitBreaker}
+                  />
+                </div>
+              </Tab>
+            </Tabs>
           </Expandable>
         )}
       </Modal>

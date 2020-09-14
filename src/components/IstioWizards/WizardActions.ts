@@ -7,6 +7,7 @@ import {
   AuthorizationPolicyRule,
   AuthorizationPolicyWorkloadSelector,
   Condition,
+  ConnectionPoolSettings,
   DestinationRule,
   DestinationRules,
   Gateway,
@@ -18,6 +19,7 @@ import {
   IstioRule,
   LoadBalancerSettings,
   Operation,
+  OutlierDetection,
   PeerAuthentication,
   PeerAuthenticationMutualTLSMode,
   PeerAuthenticationWorkloadSelector,
@@ -98,11 +100,14 @@ export type ServiceWizardValid = {
   tls: boolean;
   lb: boolean;
   gateway: boolean;
+  cp: boolean;
+  od: boolean;
 };
 
 export type ServiceWizardState = {
   showWizard: boolean;
   showAdvanced: boolean;
+  advancedTabKey: number;
   workloads: WorkloadWeight[];
   rules: Rule[];
   faultInjectionRoute: FaultInjectionRoute;
@@ -525,6 +530,20 @@ export const buildIstioConfig = (
     }
   }
 
+  if (wState.trafficPolicy.addConnectionPool) {
+    if (!wizardDR.spec.trafficPolicy) {
+      wizardDR.spec.trafficPolicy = {};
+    }
+    wizardDR.spec.trafficPolicy.connectionPool = wState.trafficPolicy.connectionPool;
+  }
+
+  if (wState.trafficPolicy.addOutlierDetection) {
+    if (!wizardDR.spec.trafficPolicy) {
+      wizardDR.spec.trafficPolicy = {};
+    }
+    wizardDR.spec.trafficPolicy.outlierDetection = wState.trafficPolicy.outlierDetection;
+  }
+
   // If traffic policy has empty objects, it will be invalidated because galleys expects at least one non-empty field.
   if (!wizardDR.spec.trafficPolicy) {
     wizardDR.spec.trafficPolicy = null;
@@ -807,6 +826,28 @@ export const getInitPeerAuthentication = (
     }
   }
   return paMode;
+};
+
+export const getInitConnectionPool = (destinationRules: DestinationRules): ConnectionPoolSettings | undefined => {
+  if (
+    destinationRules.items.length === 1 &&
+    destinationRules.items[0].spec.trafficPolicy &&
+    destinationRules.items[0].spec.trafficPolicy?.connectionPool
+  ) {
+    return destinationRules.items[0].spec.trafficPolicy?.connectionPool;
+  }
+  return undefined;
+};
+
+export const getInitOutlierDetection = (destinationRules: DestinationRules): OutlierDetection | undefined => {
+  if (
+    destinationRules.items.length === 1 &&
+    destinationRules.items[0].spec.trafficPolicy &&
+    destinationRules.items[0].spec.trafficPolicy?.outlierDetection
+  ) {
+    return destinationRules.items[0].spec.trafficPolicy?.outlierDetection;
+  }
+  return undefined;
 };
 
 export const hasGateway = (virtualServices: VirtualServices): boolean => {
