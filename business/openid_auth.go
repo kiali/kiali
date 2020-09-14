@@ -460,7 +460,7 @@ func VerifyOpenIdUserAccess(token string) (int, string, error) {
 
 	// If namespace list is empty, return unauthorized error
 	if len(nsList) == 0 {
-		return http.StatusUnauthorized, "Not enough privileges to login", nil
+		return http.StatusUnauthorized, "Cannot view any namespaces. Please read Kiali's RBAC documentation for more details.", nil
 	}
 
 	return http.StatusOK, "", nil
