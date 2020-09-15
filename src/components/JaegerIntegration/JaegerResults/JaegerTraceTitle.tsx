@@ -3,11 +3,13 @@ import { CardHeader, Text, TextVariants, Tooltip } from '@patternfly/react-core'
 import { PfColors } from '../../Pf/PfColors';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { FormattedTraceInfo } from './FormattedTraceInfo';
+import { Link } from 'react-router-dom';
 
 interface Props {
   traceID: string;
   formattedTrace: FormattedTraceInfo;
   onClickLink: string;
+  graphURL: string;
 }
 
 export class JaegerTraceTitle extends React.Component<Props> {
@@ -34,6 +36,8 @@ export class JaegerTraceTitle extends React.Component<Props> {
               </a>
             </Tooltip>
           )}
+          {' - '}
+          <Link to={this.props.graphURL}>View on Graph</Link>
           {formattedTrace.duration && (
             <span style={{ float: 'right', position: 'relative' }}>{formattedTrace.duration}</span>
           )}

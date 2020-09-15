@@ -356,11 +356,9 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                       {this.state.selectedTrace && (
                         <TraceDetails
                           trace={this.state.selectedTrace}
-                          focusElement={
-                            this.props.namespaceSelector
-                              ? this.props.target + '.' + this.props.namespace
-                              : this.props.target
-                          }
+                          namespace={this.props.namespace}
+                          target={this.props.target}
+                          targetKind={this.props.targetKind}
                           jaegerURL={this.props.urlJaeger}
                         />
                       )}
