@@ -29,7 +29,7 @@ import {
 import * as API from '../../../../services/Api';
 import * as AlertUtils from '../../../../utils/AlertUtils';
 import history from '../../../../app/History';
-import { Iter8Experiment, Iter8Info } from '../../../../types/Iter8';
+import { Iter8Experiment, Iter8Info, Winner } from '../../../../types/Iter8';
 import { Link } from 'react-router-dom';
 import * as FilterComponent from '../../../../components/FilterList/FilterComponent';
 
@@ -90,7 +90,7 @@ const columns = [
   },
   {
     title: 'Phase',
-    transforms: [sortable, cellWidth(15) as any]
+    transforms: [sortable, cellWidth(5) as any]
   },
   {
     title: 'Baseline',
@@ -200,8 +200,6 @@ class ExperimentListPage extends React.Component<Props, State> {
           return a.status < b.status ? -1 : a.status > b.status ? 1 : 0;
         case 4:
           return a.baseline < b.baseline ? -1 : a.baseline > b.baseline ? 1 : 0;
-        case 5:
-          return a.candidate < b.candidate ? -1 : a.candidate > b.candidate ? 1 : 0;
       }
       return 0;
     });
@@ -239,6 +237,10 @@ class ExperimentListPage extends React.Component<Props, State> {
     history.push('/extensions/iter8/new');
   };
 
+  goNewExperimentFromFile = () => {
+    history.push('/extensions/iter8/newfromfile');
+  };
+
   // It contains a create new experiment action.
   actionsToolbar = () => {
     return (
@@ -256,6 +258,13 @@ class ExperimentListPage extends React.Component<Props, State> {
             onClick={() => this.goNewExperimentPage()}
           >
             Create New Experiment
+          </DropdownItem>,
+          <DropdownItem
+            key="createExperimentFromFile"
+            isDisabled={!this.state.iter8Info.enabled}
+            onClick={() => this.goNewExperimentFromFile()}
+          >
+            Create New Experiment from YAML
           </DropdownItem>
         ]}
       />
@@ -285,7 +294,7 @@ class ExperimentListPage extends React.Component<Props, State> {
     );
   };
 
-  getStatusString = (phase: string, status: string) => {
+  getStatusTooltip = (phase: string, status: string, winnerFound: boolean, winnerName: string) => {
     let statusValue = 'Status: In Progress';
     let retStatus = status;
     if (status.length > 0) {
@@ -295,8 +304,8 @@ class ExperimentListPage extends React.Component<Props, State> {
       }
       if (status.includes('Failed')) {
         statusValue = 'Status: Failed';
-      } else if (status.includes('Succeeded')) {
-        statusValue = 'Status: Succeeded';
+      } else if (status.includes('Completed')) {
+        statusValue = 'Status: Completed';
       }
     }
     return (
@@ -307,15 +316,18 @@ class ExperimentListPage extends React.Component<Props, State> {
         <Text>
           <h2>{statusValue}</h2> {retStatus}
         </Text>
+        <Text>
+          <h2>Winner Found:</h2> {winnerFound ? winnerName : 'False'}
+        </Text>
       </TextContent>
     );
   };
 
-  experimentStatusIcon = (key: string, phase: string, candidate: number, status: string) => {
+  experimentStatusIcon = (key: string, phase: string, winnerStatus: Winner, status: string) => {
     let className = greenIconStyle;
 
-    let statusString = this.getStatusString(phase, status);
-    if (candidate === 0) {
+    let statusString = this.getStatusTooltip(phase, status, winnerStatus.winning_version_found, winnerStatus.name);
+    if (!winnerStatus.winning_version_found) {
       className = redIconStyle;
     }
     switch (phase) {
@@ -409,6 +421,11 @@ class ExperimentListPage extends React.Component<Props, State> {
   // Helper used to build the table content.
   rows = (): IRow[] => {
     return this.state.experimentLists.map(h => {
+      let candidates: string[] = [];
+      for (const c of h.candidates) {
+        candidates.push(c.name);
+      }
+
       return {
         cells: [
           <>
@@ -419,8 +436,9 @@ class ExperimentListPage extends React.Component<Props, State> {
             >
               <Badge className={'virtualitem_badge_definition'}>IT8</Badge>
             </Tooltip>
+            <Badge className={'virtualitem_badge_definition'}>{h.experimentKind}</Badge>
             <Link
-              to={`/extensions/namespaces/${h.namespace}/iter8/${h.name}?target=${h.targetService}&startTime=${h.startedAt}&endTime=${h.endedAt}&baseline=${h.baseline}&candidate=${h.candidate}`}
+              to={`/extensions/namespaces/${h.namespace}/iter8/${h.name}?target=${h.targetService}&startTime=${h.startTime}&endTime=${h.endTime}&baseline=${h.baseline.name}&candidates=${candidates}`}
               key={'Experiment_' + h.namespace + '_' + h.namespace}
             >
               {h.name}
@@ -441,15 +459,21 @@ class ExperimentListPage extends React.Component<Props, State> {
               ? this.redirectLink(h.namespace, h.targetService, 'Service')
               : this.redirectLink(h.namespace, '', h.kind)}
           </>,
-          <>{this.experimentStatusIcon(h.name + '_' + h.namespace, h.phase, h.candidatePercentage, h.status)}</>,
+          <>{this.experimentStatusIcon(h.name + '_' + h.namespace, h.phase, h.winner, h.status)}</>,
 
           <>
-            {this.redirectLink(h.namespace, h.baseline, h.kind)}
-            <br /> {h.baselinePercentage}%
+            {this.redirectLink(h.namespace, h.baseline.name, h.kind)}
+            <br /> {h.baseline.weight}%
           </>,
           <>
-            {this.redirectLink(h.namespace, h.candidate, h.kind)}
-            <br /> {h.candidatePercentage}%
+            {h.candidates.map(can => {
+              return (
+                <>
+                  {this.redirectLink(h.namespace, can.name, h.kind)}
+                  &nbsp;{can.weight}% <br />
+                </>
+              );
+            })}
           </>
         ]
       };

@@ -17,21 +17,26 @@ import history from '../../../../app/History';
 const headerCells: ICell[] = [
   {
     title: 'Metric Name',
-    transforms: [cellWidth(20) as any],
+    transforms: [cellWidth(30) as any],
     props: {}
   },
   {
     title: 'Threshold',
-    transforms: [wrappable],
+    transforms: [wrappable, cellWidth(10) as any],
     props: {}
   },
   {
     title: 'Threshold Type',
-    transforms: [wrappable, cellWidth(20) as any],
+    transforms: [wrappable, cellWidth(15) as any],
     props: {}
   },
   {
     title: 'Stop on Failure',
+    transforms: [wrappable],
+    props: {}
+  },
+  {
+    title: 'Reward',
     transforms: [wrappable],
     props: {}
   },
@@ -43,12 +48,12 @@ const headerCells: ICell[] = [
 
 const toleranceType: NameValuePair[] = [
   {
-    name: 'threshold',
+    name: 'absolute',
     value: 'absolute'
   },
   {
-    name: 'delta',
-    value: 'delta'
+    name: 'relative',
+    value: 'relative'
   }
 ];
 
@@ -86,8 +91,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
   actionResolver = (rowData, { rowIndex }) => {
     const removeAction = {
       title: 'Remove Criteria',
-      // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
+      onClick: (_, rowIndex) => {
         this.props.onRemove('Criteria', rowIndex);
       }
     };
@@ -104,7 +108,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         tolerance: prevState.addCriteria.tolerance,
         toleranceType: prevState.addCriteria.toleranceType,
         stopOnFailure: prevState.addCriteria.stopOnFailure,
-        sampleSize: 5
+        isReward: prevState.addCriteria.isReward
       },
       validName: true
     }));
@@ -117,7 +121,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         tolerance: parseFloat(value.trim()),
         toleranceType: prevState.addCriteria.toleranceType,
         stopOnFailure: prevState.addCriteria.stopOnFailure,
-        sampleSize: 5
+        isReward: prevState.addCriteria.isReward
       },
       validName: true
     }));
@@ -129,7 +133,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         tolerance: prevState.addCriteria.tolerance,
         toleranceType: value.trim(),
         stopOnFailure: prevState.addCriteria.stopOnFailure,
-        sampleSize: 5
+        isReward: prevState.addCriteria.isReward
       },
       validName: true
     }));
@@ -142,7 +146,20 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         tolerance: prevState.addCriteria.tolerance,
         toleranceType: prevState.addCriteria.toleranceType,
         stopOnFailure: !prevState.addCriteria.stopOnFailure,
-        sampleSize: 5
+        isReward: prevState.addCriteria.isReward
+      },
+      validName: true
+    }));
+  };
+
+  onIsReward = () => {
+    this.setState(prevState => ({
+      addCriteria: {
+        metric: prevState.addCriteria.metric,
+        tolerance: prevState.addCriteria.tolerance,
+        toleranceType: prevState.addCriteria.toleranceType,
+        stopOnFailure: prevState.addCriteria.stopOnFailure,
+        isReward: !prevState.addCriteria.isReward
       },
       validName: true
     }));
@@ -163,8 +180,9 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
           cells: [
             <>{gw.metric}</>,
             <>{gw.tolerance}</>,
-            <>{gw.toleranceType === 'threshold' ? 'abosulte' : 'delta'}</>,
-            <>{gw.stopOnFailure ? 'true' : 'false'}</>
+            <>{gw.toleranceType}</>,
+            <>{gw.stopOnFailure ? 'true' : 'false'}</>,
+            <>{gw.isReward ? 'true' : 'false'}</>
           ]
         }))
         .concat([
@@ -209,12 +227,22 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
               </>,
               <>
                 <Checkbox
-                  label="Stop On Failure"
+                  label="YES"
                   id="stopOnFailure"
                   name="stopOnFailure"
                   aria-label="Stop On Failure"
                   isChecked={this.state.addCriteria.stopOnFailure}
                   onChange={this.onAddStopOnFailure}
+                />
+              </>,
+              <>
+                <Checkbox
+                  label="YES"
+                  id="isReward"
+                  name="isReward"
+                  aria-label="Reward"
+                  isChecked={this.state.addCriteria.isReward}
+                  onChange={this.onIsReward}
                 />
               </>,
               <>
@@ -236,7 +264,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
         cells: [
           <>{gw.metric}</>,
           <>{gw.tolerance}</>,
-          <>{gw.toleranceType === 'threshold' ? 'abosulte' : 'delta'}</>,
+          <>{gw.toleranceType}</>,
           <>{gw.stopOnFailure ? 'true' : 'false'}</>
         ]
       }));

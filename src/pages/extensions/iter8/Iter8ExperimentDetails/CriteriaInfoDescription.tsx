@@ -1,26 +1,7 @@
 import * as React from 'react';
-import {
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
-  Grid,
-  GridItem,
-  List,
-  ListItem,
-  Title,
-  Tooltip
-} from '@patternfly/react-core';
-import { Iter8Info, SuccessCriteria } from '../../../../types/Iter8';
-import {
-  Table,
-  TableBody,
-  TableHeader,
-  IRow,
-  ICell,
-  cellWidth,
-  expandable,
-  RowWrapperProps
-} from '@patternfly/react-table';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, Grid, GridItem, Title, Tooltip } from '@patternfly/react-core';
+import { CriteriaInfoDetail, Iter8Info } from '../../../../types/Iter8';
+import { Table, TableBody, TableHeader, IRow, ICell, cellWidth, RowWrapperProps } from '@patternfly/react-table';
 import { KialiIcon } from '../../../../config/KialiIcon';
 import { style } from 'typestyle';
 import { css } from '@patternfly/react-styles';
@@ -29,7 +10,7 @@ import styles from '@patternfly/react-styles/css/components/Table/table';
 
 interface ExperimentInfoDescriptionProps {
   iter8Info: Iter8Info;
-  criterias: SuccessCriteria[];
+  criterias: CriteriaInfoDetail[];
 }
 
 type State = {
@@ -49,12 +30,13 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
       criteriaExpanded: [],
       columns: [
         {
-          title: 'Metric Name',
-          cellFormatters: [expandable]
+          title: 'Metric Name'
         },
-        'Definitions',
-        'Success Criteria Conclusions',
-        'Status'
+        'Threshold Type:',
+        'Threshold ',
+        'Is Reward',
+        'Stop On Failure',
+        'Preferred Direction'
       ],
       rows: this.getRows()
     };
@@ -64,35 +46,30 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
     let rows: IRow[] = [];
     this.props.criterias.map(criteria => {
       const crows: IRow[] = [
-        { cells: [{ title: 'Query Template' }, { title: criteria.metric.query_template }] },
-        { cells: [{ title: 'Sample Size Template' }, { title: criteria.metric.sample_size_template }] }
+        {
+          cells: [
+            { title: <>{'Numerator'}</> },
+            { title: <>{criteria.metric.numerator.name}</> },
+            { title: <>{criteria.metric.numerator.query_template}</> }
+          ]
+        },
+        {
+          cells: [
+            { title: <>{'Denominator'}</> },
+            { title: <>{criteria.metric.denominator.name}</> },
+            { title: <>{criteria.metric.denominator.query_template}</> }
+          ]
+        }
       ];
       let number = rows.push({
         isOpen: false,
         cells: [
           { title: <>{criteria.name}</> },
-          {
-            title: (
-              <ul>
-                <li>Threshold : {criteria.criteria.tolerance}</li>
-                <li>Threshold Type: {criteria.criteria.toleranceType}</li>
-                <li>Sample Size: {criteria.criteria.sampleSize}</li>
-              </ul>
-            )
-          },
-          {
-            title: (
-              <List>
-                {criteria.status.conclusions &&
-                  criteria.status.conclusions.map((c, _) => {
-                    return <ListItem> {c} </ListItem>;
-                  })}
-              </List>
-            )
-          },
-          {
-            title: <>{this.getIcon(String(criteria.status.success_criterion_met))}</>
-          }
+          { title: <>{criteria.criteria.toleranceType}</> },
+          { title: <>{criteria.criteria.tolerance}</> },
+          { title: <>{criteria.criteria.isReward ? 'YES' : '-'}</> },
+          { title: <>{criteria.criteria.stopOnFailure ? 'True' : 'False'}</> },
+          { title: <>{criteria.metric.preferred_direction}</> }
         ]
       });
       rows.push({
@@ -113,7 +90,11 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
   };
 
   columns = (): ICell[] => {
-    return [{ title: 'Name', transforms: [cellWidth(15) as any] }, { title: 'Template' }];
+    return [
+      { title: 'Type', transforms: [cellWidth(15) as any] },
+      { title: 'Name', transforms: [cellWidth(15) as any] },
+      { title: 'Template' }
+    ];
   };
 
   getIcon = (s: string) => {

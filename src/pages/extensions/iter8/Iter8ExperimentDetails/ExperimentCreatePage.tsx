@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Iter8Info } from '../../../../types/Iter8';
+import { Criteria, ExperimentSpec, Host, Iter8Info } from '../../../../types/Iter8';
 import { style } from 'typestyle';
 import * as API from '../../../../services/Api';
 import * as AlertUtils from '../../../../utils/AlertUtils';
@@ -7,13 +7,13 @@ import {
   ActionGroup,
   Button,
   ButtonVariant,
-  Expandable,
   Form,
   FormGroup,
   FormSelect,
   FormSelectOption,
   Grid,
   GridItem,
+  Popover,
   Switch,
   TextInputBase as TextInput
 } from '@patternfly/react-core';
@@ -27,6 +27,7 @@ import { KialiAppState } from '../../../../store/Store';
 import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
 import { PfColors } from '../../../../components/Pf/PfColors';
+import HelpIcon from '@patternfly/react-icons/dist/js/icons/help-icon';
 
 interface Props {
   serviceName: string;
@@ -45,7 +46,7 @@ interface State {
   hostsOfGateway: Host[];
   metricNames: string[];
   showAdvanced: boolean;
-  showTrafficStep: boolean;
+  showMaxIncrement: boolean;
   reloadService: boolean;
   totalDuration: string;
   hostState: HostState;
@@ -53,41 +54,7 @@ interface State {
   filename: string;
   addHostGateway: boolean;
   showTrafficControl: boolean;
-}
-
-interface ExperimentSpec {
-  name: string;
-  namespace: string;
-  service: string;
-  apiversion: string;
-  baseline: string;
-  candidate: string;
-  experimentKind: string;
-  trafficControl: TrafficControl;
-  criterias: Criteria[];
-  hosts: Host[];
-}
-
-interface TrafficControl {
-  algorithm: string;
-  interval: string;
-  intervalInSecond: number;
-  maxIterations: number;
-  maxTrafficPercentage: number;
-  trafficStepSize: number;
-}
-
-export interface Criteria {
-  metric: string;
-  toleranceType: string;
-  tolerance: number;
-  sampleSize: number;
-  stopOnFailure: boolean;
-}
-
-export interface Host {
-  name: string;
-  gateway: string;
+  showDurationControl: boolean;
 }
 
 // Style constants
@@ -99,16 +66,8 @@ const durationTimeStyle = style({
   paddingTop: 8,
   color: PfColors.Blue400
 });
-const algorithms = [
-  'check_and_increment',
-  'epsilon_greedy',
-  'increment_without_check',
-  'posterior_bayesian_routing',
-  'optimistic_bayesian_routing'
-];
-
-const toggleTextFlat = ['More', 'Less'];
-const toggleTextWizard = ['Show Advanced Options', 'Hide Advanced Options'];
+const algorithms = ['progressive', 'top_2', 'uniform'];
+const onTermination = ['to_winner', 'to_baseline', 'keep_last'];
 
 const iter8oExpOptions = [
   { value: 'Deployment', label: 'WORKLOAD' },
@@ -134,18 +93,21 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         apiversion: 'v1',
         service: this.props.serviceName,
         baseline: '',
-        candidate: '',
+        candidates: [],
         experimentKind: 'Deployment',
         trafficControl: {
-          algorithm: 'check_and_increment',
+          algorithm: 'progressive',
+          maxIncrement: 10,
+          onTermination: 'to_winner'
+        },
+        duration: {
           interval: '30s',
           intervalInSecond: 30,
-          maxIterations: 10,
-          maxTrafficPercentage: 50,
-          trafficStepSize: 10
+          maxIterations: 10
         },
         criterias: [],
-        hosts: []
+        hosts: [],
+        routerID: ''
       },
       namespaces: [],
       services: [],
@@ -154,14 +116,15 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       hostsOfGateway: [],
       metricNames: [],
       showAdvanced: history.location.pathname.endsWith('/new') ? true : this.props.showAdvanced,
-      showTrafficStep: true,
+      showMaxIncrement: true,
       reloadService: false,
-      totalDuration: '50 minutes',
+      totalDuration: '5 mins',
       hostState: initHost(''),
       value: '',
       filename: '',
       addHostGateway: false,
-      showTrafficControl: false
+      showTrafficControl: false,
+      showDurationControl: false
     };
   }
 
@@ -177,7 +140,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       this.setState(prevState => {
         const newExperiment = prevState.experiment;
         newExperiment.baseline = '';
-        newExperiment.candidate = '';
+        newExperiment.candidates = [];
         newExperiment.namespace = allNamespaces[0];
         return {
           experiment: newExperiment,
@@ -414,7 +377,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   createExperiment = () => {
     const nsName = this.state.experiment.namespace;
     this.promises
-      .register('Create Iter8 Experiment', API.createExperiment(nsName, JSON.stringify(this.state.experiment)))
+      .register('Create Iter8 Experiment', API.createExperiment(nsName, JSON.stringify(this.state.experiment), {}))
       .then(_ => this.goExperimentsPage())
       .catch(error => AlertUtils.addError('Could not create Experiment.', error));
   };
@@ -437,22 +400,29 @@ class ExperimentCreatePage extends React.Component<Props, State> {
             newExperiment.service = value.trim();
             break;
           case 'algorithm':
-            if (value.trim() === 'check_and_increment') {
+            if (value.trim() === 'progressive') {
               this.setState({
-                showTrafficStep: true
+                showMaxIncrement: true
               });
             } else {
               this.setState({
-                showTrafficStep: false
+                showMaxIncrement: false
               });
             }
             newExperiment.trafficControl.algorithm = value.trim();
+            break;
+          case 'onTermination':
+            newExperiment.trafficControl.onTermination = value.trim();
             break;
           case 'baseline':
             newExperiment.baseline = value.trim();
             break;
           case 'candidate':
-            newExperiment.candidate = value.trim();
+            let candidates = value.trim().split(',');
+            candidates = candidates.map(function (el) {
+              return el.trim();
+            });
+            newExperiment.candidates = candidates;
             break;
           case 'kubernets':
             newExperiment.apiversion = 'v1';
@@ -466,7 +436,9 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           case 'toleranceType':
             newExperiment.criterias[0].toleranceType = value.trim();
             break;
-
+          case 'routerID':
+            newExperiment.routerID = value.trim();
+            break;
           default:
         }
         return {
@@ -489,24 +461,21 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         const newExperiment = prevState.experiment;
         switch (field) {
           case 'maxIteration':
-            newExperiment.trafficControl.maxIterations = value;
+            newExperiment.duration.maxIterations = value;
             break;
-          case 'maxTrafficPercentage':
-            newExperiment.trafficControl.maxTrafficPercentage = value;
-            break;
-          case 'trafficStepSize':
-            newExperiment.trafficControl.trafficStepSize = value;
+          case 'maxIncrement':
+            newExperiment.trafficControl.maxIncrement = value;
             break;
           case 'tolerance':
             newExperiment.criterias[0].tolerance = value;
             break;
           case 'interval':
-            newExperiment.trafficControl.intervalInSecond = value;
-            newExperiment.trafficControl.interval = newExperiment.trafficControl.intervalInSecond + 's';
+            newExperiment.duration.intervalInSecond = value;
+            newExperiment.duration.interval = newExperiment.duration.intervalInSecond + 's';
             break;
           default:
         }
-        const totalSecond = newExperiment.trafficControl.maxIterations * newExperiment.trafficControl.intervalInSecond;
+        const totalSecond = newExperiment.duration.maxIterations * newExperiment.duration.intervalInSecond;
         const hours = Math.floor(totalSecond / 60 / 60);
         const minutes = Math.floor(totalSecond / 60) - hours * 60;
         return {
@@ -530,101 +499,17 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         this.state.experiment.experimentKind === 'Service') &&
       this.state.experiment.namespace !== '' &&
       this.state.experiment.baseline !== '' &&
-      this.state.experiment.candidate !== ''
+      this.state.experiment.candidates.length !== 0
     );
   };
 
   isTCFormValid = (): boolean => {
-    return (
-      this.state.experiment.trafficControl.interval !== '' && this.state.experiment.trafficControl.maxIterations > 0
-    );
+    return this.state.experiment.duration.interval !== '' && this.state.experiment.duration.maxIterations > 0;
   };
 
   isSCFormValid = (): boolean => {
     return this.state.experiment.criterias.length !== 0;
   };
-
-  renderGeneral() {
-    return (
-      <>
-        <FormGroup
-          fieldId="name"
-          label="Experiment Name"
-          isRequired={true}
-          isValid={this.state.experiment.name !== '' && this.state.experiment.name.search(regex) === 0}
-          helperTextInvalid="Name cannot be empty and must be a DNS subdomain name as defined in RFC 1123."
-        >
-          <TextInput
-            id="name"
-            value={this.state.experiment.name}
-            placeholder="Experiment Name"
-            onChange={value => this.changeExperiment('name', value)}
-          />
-        </FormGroup>
-        <FormGroup label="Istio Resource" fieldId="istio-resource">
-          <FormSelect
-            value={this.state.experiment.experimentKind}
-            onChange={this.onExperimentKindChange}
-            id="istio-resource"
-            name="istio-resource"
-          >
-            {iter8oExpOptions.map((option, index) => (
-              <FormSelectOption key={index} value={option.value} label={option.label} />
-            ))}
-          </FormSelect>
-        </FormGroup>
-
-        <FormGroup
-          fieldId="baseline"
-          label="Baseline"
-          isRequired={true}
-          isValid={this.state.experiment.baseline !== ''}
-          helperText="The baseline deployment of the target service (i.e. reviews-v1)"
-          helperTextInvalid="Baseline deployment cannot be empty"
-        >
-          <FormSelect
-            id="baseline"
-            value={this.state.experiment.baseline}
-            placeholder="Baseline Deployment"
-            onChange={value => this.changeExperiment('baseline', value)}
-          >
-            {this.state.workloads.map((wk, index) => (
-              <FormSelectOption label={wk} key={'workloadBaseline' + index} value={wk} />
-            ))}
-          </FormSelect>
-        </FormGroup>
-
-        <FormGroup
-          fieldId="candidate"
-          label="Select Candidate"
-          isRequired={true}
-          isValid={this.state.experiment.candidate !== ''}
-          helperText="The candidate deployment of the target service (i.e. reviews-v2)"
-          helperTextInvalid="Candidate deployment cannot be empty"
-        >
-          <TextInput
-            id="candidate"
-            value={this.state.experiment.candidate}
-            placeholder="Select from list or enter a new one"
-            onChange={value => this.changeExperiment('candidate', value)}
-            list={'candidateName'}
-            autoComplete={'off'}
-          />
-          <datalist id="candidateName">
-            {this.state.workloads.map((wk, index) =>
-              wk !== this.state.experiment.baseline ? (
-                <option label={wk} key={'workloadCandidate' + index} value={wk}>
-                  {wk}
-                </option>
-              ) : (
-                ''
-              )
-            )}
-          </datalist>
-        </FormGroup>
-      </>
-    );
-  }
 
   renderBaselineSelect() {
     const isDeployment = this.state.experiment.experimentKind === 'Deployment';
@@ -661,20 +546,20 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     const usingMap = this.state.experiment.experimentKind === 'Deployment' ? this.state.workloads : this.state.services;
     return [
       <FormGroup
-        fieldId="candidate"
-        label={isDeployment ? 'Deployment Candidate' : 'Service Candidate'}
+        fieldId="candidates"
+        label={isDeployment ? 'Deployment Candidate(s)' : 'Service Candidate(s)'}
         isRequired={true}
-        isValid={this.state.experiment.candidate !== ''}
+        isValid={this.state.experiment.candidates.length !== 0}
         helperText={
           isDeployment
-            ? 'The candidate deployment of the target service (i.e. reviews-v2)'
-            : 'The candidate service (i.e. reviews)'
+            ? 'Name or a List of names of candidate deployment of the target service (i.e. reviews-v2, or reviews-v2,reviews-v3)'
+            : 'Name or a List of names of candidate service (i.e. reviews)'
         }
         helperTextInvalid={isDeployment ? 'Candidate deployment cannot be empty' : 'Candidate service cannot be empty'}
       >
         <TextInput
           id="candidate"
-          value={this.state.experiment.candidate}
+          value={this.state.experiment.candidates.join(',')}
           placeholder="Select from list or enter a new one"
           onChange={value => this.changeExperiment('candidate', value)}
           list={'candidateName'}
@@ -795,77 +680,34 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     );
   }
 
-  renderTrafficInWizard() {
-    return (
-      <>
-        <FormGroup
-          fieldId="interval"
-          label="Interval (seconds)"
-          isValid={this.state.experiment.trafficControl.interval !== ''}
-          helperText="Frequency with which the controller calls the analytics service"
-          helperTextInvalid="Interval cannot be empty"
-        >
-          <TextInput
-            id="interval"
-            value={this.state.experiment.trafficControl.intervalInSecond}
-            placeholder="Time interval i.e. 30s"
-            onChange={value => this.changeExperimentNumber('interval', Number(value))}
-          />
-        </FormGroup>
+  onAddToList = (newCriteria: Criteria, newHost: Host) => {
+    this.setState(prevState => {
+      if (newHost != null && newHost.name !== '') {
+        prevState.experiment.hosts.push(newHost);
+      } else if (newCriteria != null) {
+        prevState.experiment.criterias.push(newCriteria);
+      }
+      return {
+        iter8Info: prevState.iter8Info,
+        experiment: {
+          name: prevState.experiment.name,
+          namespace: prevState.experiment.namespace,
+          service: prevState.experiment.service,
+          apiversion: prevState.experiment.apiversion,
+          baseline: prevState.experiment.baseline,
+          candidates: prevState.experiment.candidates,
+          trafficControl: prevState.experiment.trafficControl,
+          criterias: prevState.experiment.criterias,
+          hosts: prevState.experiment.hosts,
+          duration: prevState.experiment.duration,
+          experimentKind: prevState.experiment.experimentKind,
+          routerID: prevState.experiment.routerID
+        }
+      };
+    });
+  };
 
-        <FormGroup
-          fieldId="maxIteration"
-          label="Maximum Iteration"
-          isValid={this.state.experiment.trafficControl.maxIterations > 0}
-          helperText="Maximum number of iterations for this experiment"
-          helperTextInvalid="Maximun Iteration cannot be empty"
-        >
-          <TextInput
-            id="maxIteration"
-            type="number"
-            value={this.state.experiment.trafficControl.maxIterations}
-            placeholder="Maximum Iteration"
-            onChange={value => this.changeExperimentNumber('maxIteration', Number(value))}
-          />
-        </FormGroup>
-
-        <FormGroup
-          fieldId="algorithm"
-          label="Algorithm"
-          helperText="Strategy used to analyze the candidate and shift the traffic"
-        >
-          <FormSelect
-            value={this.state.experiment.trafficControl.algorithm}
-            id="algorithm"
-            name="Algorithm"
-            onChange={value => this.changeExperiment('algorithm', value)}
-          >
-            {algorithms.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={'p' + index} value={option} label={option} />
-            ))}
-          </FormSelect>
-        </FormGroup>
-
-        <FormGroup
-          style={this.state.showTrafficStep ? {} : { display: 'none' }}
-          fieldId="trafficStepSize"
-          label="Traffic Step Size"
-          isValid={this.state.experiment.trafficControl.trafficStepSize > 0}
-          helperText="The maximum traffic increment per iteration"
-          helperTextInvalid="Traffic Step Size must be > 0"
-        >
-          <TextInput
-            id="trafficStepSize"
-            value={this.state.experiment.trafficControl.trafficStepSize}
-            placeholder="Traffic Step Size"
-            onChange={value => this.changeExperimentNumber('trafficStepSize', parseFloat(value))}
-          />
-        </FormGroup>
-      </>
-    );
-  }
-
-  renderTraffic() {
+  renderDuration() {
     return (
       <>
         <Grid gutter="md">
@@ -876,13 +718,13 @@ class ExperimentCreatePage extends React.Component<Props, State> {
             <FormGroup
               fieldId="interval"
               label="Interval (seconds)"
-              isValid={this.state.experiment.trafficControl.interval !== ''}
+              isValid={this.state.experiment.duration.interval !== ''}
               helperText="Frequency with which the controller calls the analytics service"
               helperTextInvalid="Interval cannot be empty"
             >
               <TextInput
                 id="interval"
-                value={this.state.experiment.trafficControl.intervalInSecond}
+                value={this.state.experiment.duration.intervalInSecond}
                 placeholder="Time interval i.e. 30s"
                 onChange={value => this.changeExperimentNumber('interval', Number(value))}
               />
@@ -892,19 +734,28 @@ class ExperimentCreatePage extends React.Component<Props, State> {
             <FormGroup
               fieldId="maxIteration"
               label="Maximum Iteration"
-              isValid={this.state.experiment.trafficControl.maxIterations > 0}
+              isValid={this.state.experiment.duration.maxIterations > 0}
               helperText="Maximum number of iterations for this experiment"
               helperTextInvalid="Maximun Iteration cannot be empty"
             >
               <TextInput
                 id="maxIteration"
                 type="number"
-                value={this.state.experiment.trafficControl.maxIterations}
+                value={this.state.experiment.duration.maxIterations}
                 placeholder="Maximum Iteration"
                 onChange={value => this.changeExperimentNumber('maxIteration', Number(value))}
               />
             </FormGroup>
           </GridItem>
+        </Grid>
+      </>
+    );
+  }
+
+  renderTraffic() {
+    return (
+      <>
+        <Grid gutter="md">
           <GridItem span={6}>
             <FormGroup
               fieldId="algorithm"
@@ -925,18 +776,37 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           </GridItem>
           <GridItem span={6}>
             <FormGroup
-              style={this.state.showTrafficStep ? {} : { display: 'none' }}
-              fieldId="trafficStepSize"
-              label="Traffic Step Size"
-              isValid={this.state.experiment.trafficControl.trafficStepSize > 0}
-              helperText="The maximum traffic increment per iteration"
-              helperTextInvalid="Traffic Step Size must be > 0"
+              fieldId="onTermination"
+              label="onTermination"
+              helperText="The traffic split behavior after the termination of the experiment."
+            >
+              <FormSelect
+                value={this.state.experiment.trafficControl.onTermination}
+                id="onTermination"
+                name="On Termination"
+                onChange={value => this.changeExperiment('onTermination', value)}
+              >
+                {onTermination.map((option, index) => (
+                  <FormSelectOption isDisabled={false} key={'ot' + index} value={option} label={option} />
+                ))}
+              </FormSelect>
+            </FormGroup>
+          </GridItem>
+
+          <GridItem span={12}>
+            <FormGroup
+              style={this.state.showMaxIncrement ? {} : { display: 'none' }}
+              fieldId="maxIncrement"
+              label="Max Increment"
+              isValid={this.state.experiment.trafficControl.maxIncrement > 0}
+              helperText="Maximum possible increase in traffic for a candidate in a single iteration (measured in percent). Default value: 2 (percent)"
+              helperTextInvalid="Max Increment must be > 0"
             >
               <TextInput
-                id="trafficStepSize"
-                value={this.state.experiment.trafficControl.trafficStepSize}
-                placeholder="Traffic Step Size"
-                onChange={value => this.changeExperimentNumber('trafficStepSize', parseFloat(value))}
+                id="maxIncrement"
+                value={this.state.experiment.trafficControl.maxIncrement}
+                placeholder="Max Increment"
+                onChange={value => this.changeExperimentNumber('maxIncrement', Number(value))}
               />
             </FormGroup>
           </GridItem>
@@ -944,31 +814,6 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       </>
     );
   }
-
-  onAddToList = (newCriteria: Criteria, newHost: Host) => {
-    this.setState(prevState => {
-      if (newHost != null && newHost.name !== '') {
-        prevState.experiment.hosts.push(newHost);
-      } else if (newCriteria != null) {
-        prevState.experiment.criterias.push(newCriteria);
-      }
-      return {
-        iter8Info: prevState.iter8Info,
-        experiment: {
-          name: prevState.experiment.name,
-          namespace: prevState.experiment.namespace,
-          service: prevState.experiment.service,
-          apiversion: prevState.experiment.apiversion,
-          baseline: prevState.experiment.baseline,
-          candidate: prevState.experiment.candidate,
-          trafficControl: prevState.experiment.trafficControl,
-          criterias: prevState.experiment.criterias,
-          hosts: prevState.experiment.hosts,
-          experimentKind: prevState.experiment.experimentKind
-        }
-      };
-    });
-  };
 
   onRemoveFromList = (type: string, index: number) => {
     this.setState(prevState => {
@@ -986,11 +831,13 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           service: prevState.experiment.service,
           apiversion: prevState.experiment.apiversion,
           baseline: prevState.experiment.baseline,
-          candidate: prevState.experiment.candidate,
+          candidates: prevState.experiment.candidates,
           trafficControl: prevState.experiment.trafficControl,
           criterias: prevState.experiment.criterias,
           hosts: prevState.experiment.hosts,
-          experimentKind: prevState.experiment.experimentKind
+          duration: prevState.experiment.duration,
+          experimentKind: prevState.experiment.experimentKind,
+          routerID: prevState.experiment.routerID
         }
       };
     });
@@ -1014,47 +861,32 @@ class ExperimentCreatePage extends React.Component<Props, State> {
   renderHost() {
     return (
       <>
-        <ExperimentHostForm
-          hosts={this.state.experiment.hosts}
-          hostsOfGateway={this.state.hostsOfGateway}
-          gateways={this.state.gateways}
-          onAdd={this.onAddToList}
-          onRemove={this.onRemoveFromList}
-        />
-      </>
-    );
-  }
-
-  renderSimplePage() {
-    return (
-      <>
-        <hr />
-        <Expandable
-          toggleText={
-            this.state.showAdvanced
-              ? history.location.pathname.endsWith('/new')
-                ? toggleTextFlat[1]
-                : toggleTextWizard[1]
-              : history.location.pathname.endsWith('/new')
-              ? toggleTextFlat[0]
-              : toggleTextWizard[0]
-          }
-          isExpanded={this.state.showAdvanced}
-          onToggle={() => {
-            this.setState({
-              showAdvanced: !this.state.showAdvanced
-            });
-          }}
-        >
-          {this.renderCriteria()}
-          <hr />
-          <p>&nbsp; &nbsp;&nbsp;</p>
-          <h1 className="pf-c-title pf-m-xl">Traffic Control </h1>
-          <div className={durationTimeStyle}>Total Experiment Duration: {this.state.totalDuration}</div>
-          {this.renderTrafficInWizard()}
-          <p>&nbsp; &nbsp;&nbsp;</p>
-          {this.renderHost()}
-        </Expandable>{' '}
+        <Grid gutter="md">
+          <GridItem span={12}>
+            <FormGroup
+              fieldId="routerID"
+              label="Router ID"
+              isValid={this.state.experiment.routerID !== ''}
+              helperText="Refers to the id of router used to handle traffic for the experiment. Default value: first entry of effective host."
+            >
+              <TextInput
+                id="routerID"
+                value={this.state.experiment.routerID}
+                placeholder="ID of router"
+                onChange={value => this.changeExperiment('routerID', value)}
+              />
+            </FormGroup>
+          </GridItem>
+          <GridItem span={12}>
+            <ExperimentHostForm
+              hosts={this.state.experiment.hosts}
+              hostsOfGateway={this.state.hostsOfGateway}
+              gateways={this.state.gateways}
+              onAdd={this.onAddToList}
+              onRemove={this.onRemoveFromList}
+            />
+          </GridItem>
+        </Grid>
       </>
     );
   }
@@ -1064,6 +896,20 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       <>
         {this.renderCriteria()}
         <Form>
+          <FormGroup label="Show Duration" fieldId="showDuration">
+            <Switch
+              id="showDuration"
+              label={' '}
+              labelOff={' '}
+              isChecked={this.state.showDurationControl}
+              onChange={this.onChangeShowDurationControl}
+            />
+          </FormGroup>
+          {this.state.showDurationControl && (
+            <FormGroup label="Experiment Duration" fieldId="drationControall">
+              {this.renderDuration()}
+            </FormGroup>
+          )}
           <FormGroup label="Show Traffic Control" fieldId="showTrafficControl">
             <Switch
               id="showTrafficControl"
@@ -1074,11 +920,80 @@ class ExperimentCreatePage extends React.Component<Props, State> {
             />
           </FormGroup>
           {this.state.showTrafficControl && (
-            <FormGroup label="Traffic Control" fieldId="trafficControl">
-              {this.renderTraffic()}
-            </FormGroup>
+            <>
+              <FormGroup
+                /* label="Traffic Control"*/
+                fieldId="trafficControl"
+                label={
+                  <Popover
+                    position={'right'}
+                    hideOnOutsideClick={true}
+                    maxWidth={'40rem'}
+                    headerContent={<div>Traffic Control</div>}
+                    bodyContent={
+                      <div>
+                        <p>
+                          Configuration that affect how application traffic is split across different versions of the
+                          service during and after the experiment.
+                        </p>{' '}
+                        <b>Traffic Control Strategies:</b> (reference{' '}
+                        <a
+                          href="https://iter8.tools/reference/algorithms/#traffic-control-strategies"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          here
+                        </a>{' '}
+                        for detail )
+                        <table>
+                          <tr className={'tr'}>
+                            <td>Progressive:&nbsp;</td>
+                            <td>Progressively shift all traffic to the winner.</td>
+                          </tr>
+                          <tr>
+                            <td>top_2:&nbsp;</td>
+                            <td>Converge towards a 50-50 traffic split between the best two versions</td>
+                          </tr>
+                          <tr>
+                            <td>uniform:&nbsp;</td>
+                            <td>Converge towards a uniform traffic split across all versions.</td>
+                          </tr>
+                        </table>{' '}
+                        <b>On Termination: </b>
+                        <table>
+                          <tr>
+                            <td valign={'top'}>to_winner:&nbsp;</td>
+                            <td>
+                              If a winning version is found at the end of the experiment, all traffic will flow to this
+                              version after the experiment terminates.
+                            </td>
+                          </tr>
+                          <tr>
+                            <td valign={'top'}>to_baseline:&nbsp;</td>
+                            <td>All traffic will flow to the baseline version, after the experiment terminates. </td>
+                          </tr>
+                          <tr>
+                            <td valign={'top'}>keep_last:&nbsp;</td>
+                            <td>
+                              Ensure that the traffic split used during the final iteration of the experiment continues
+                              even after the experiment has terminated
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                    }
+                  >
+                    <Button variant="link">
+                      Traffic Control <HelpIcon noVerticalAlign />
+                    </Button>
+                  </Popover>
+                }
+              >
+                {this.renderTraffic()}
+              </FormGroup>
+            </>
           )}
-          <FormGroup label="Add Host/Gateway" fieldId="addHostGateway">
+          <FormGroup label="Show Networking Control" fieldId="addHostGateway">
             <Switch
               id="addHostGateway"
               label={' '}
@@ -1088,7 +1003,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
             />
           </FormGroup>
           {this.state.addHostGateway && (
-            <FormGroup label="Hosts" fieldId="hostsGateways">
+            <FormGroup label="Networking" fieldId="hostsGateways">
               {this.renderHost()}
             </FormGroup>
           )}
@@ -1113,6 +1028,14 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     });
   };
 
+  onChangeShowDurationControl = () => {
+    this.setState(prevState => {
+      return {
+        showDurationControl: !prevState.showDurationControl
+      };
+    });
+  };
+
   render() {
     const isFormValid = this.isMainFormValid() && this.isSCFormValid();
     return (
@@ -1120,43 +1043,38 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         <RenderContent>
           <div className={containerPadding}>
             <Form className={formPadding} isHorizontal={true}>
-              {history.location.pathname.endsWith('/new') ? this.renderFullGeneral() : this.renderGeneral()}
-              {history.location.pathname.endsWith('/new') ? this.renderFullPage() : this.renderSimplePage()}
-
-              {history.location.pathname.endsWith('/new') ? (
-                <ActionGroup>
-                  <span
-                    style={{
-                      float: 'left',
-                      paddingTop: '10px',
-                      paddingBottom: '10px',
-                      width: '100%'
-                    }}
-                  >
-                    <span style={{ float: 'right', paddingRight: '5px' }}>
-                      <Button
-                        variant={ButtonVariant.primary}
-                        isDisabled={!isFormValid}
-                        onClick={() => this.createExperiment()}
-                      >
-                        Create
-                      </Button>
-                    </span>
-                    <span style={{ float: 'right', paddingRight: '5px' }}>
-                      <Button
-                        variant={ButtonVariant.secondary}
-                        onClick={() => {
-                          this.goExperimentsPage();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </span>
+              {this.renderFullGeneral()}
+              {this.renderFullPage()}
+              <ActionGroup>
+                <span
+                  style={{
+                    float: 'left',
+                    paddingTop: '10px',
+                    paddingBottom: '10px',
+                    width: '100%'
+                  }}
+                >
+                  <span style={{ float: 'right', paddingRight: '5px' }}>
+                    <Button
+                      variant={ButtonVariant.primary}
+                      isDisabled={!isFormValid}
+                      onClick={() => this.createExperiment()}
+                    >
+                      Create
+                    </Button>
                   </span>
-                </ActionGroup>
-              ) : (
-                ''
-              )}
+                  <span style={{ float: 'right', paddingRight: '5px' }}>
+                    <Button
+                      variant={ButtonVariant.secondary}
+                      onClick={() => {
+                        this.goExperimentsPage();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </span>
+                </span>
+              </ActionGroup>
             </Form>
           </div>
         </RenderContent>

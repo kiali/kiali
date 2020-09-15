@@ -26,20 +26,21 @@ import {
 } from '@patternfly/react-core';
 
 import LocalTime from '../../../../components/Time/LocalTime';
+import * as API from '../../../../services/Api';
 import { Link } from 'react-router-dom';
 import { Iter8ExpDetailsInfo } from '../../../../types/Iter8';
 import { RenderComponentScroll } from '../../../../components/Nav/Page';
 import { GraphType } from '../../../../types/Graph';
 import history from '../../../../app/History';
+import jsyaml from 'js-yaml';
+import YAML from 'yaml';
 
 interface ExperimentInfoDescriptionProps {
   target: string;
   namespace: string;
-  experimentDetails?: Iter8ExpDetailsInfo;
+  experimentDetails: Iter8ExpDetailsInfo;
   experiment: string;
   duration: number;
-  baseline: string;
-  candidate: string;
   actionTaken: string;
 }
 
@@ -50,6 +51,7 @@ type MiniGraphCardState = {
 class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps, MiniGraphCardState> {
   constructor(props) {
     super(props);
+
     this.state = { isKebabOpen: false };
   }
 
@@ -60,7 +62,7 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
   serviceInfo() {
     return [
       <DataListCell key="service-icon" isIcon={true}>
-        <Badge>S</Badge>
+        <Badge className={'virtualitem_badge_definition'}>S</Badge>
       </DataListCell>,
       <DataListCell key="targetService">
         <Text component={TextVariants.h3}>Service</Text>
@@ -95,33 +97,43 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     let badgeKind = kind === 'Deployment' ? 'W' : 'S';
     return [
       <DataListCell key="workload-icon" isIcon={true}>
-        <Badge>{badgeKind}</Badge>
+        <Badge className={'virtualitem_badge_definition'}>{badgeKind}</Badge>
       </DataListCell>,
-      <DataListCell key="baseline">
+      <DataListCell key={bname}>
         <Text component={TextVariants.h3}>{bname}</Text>
         <List>{workloadList}</List>
       </DataListCell>
     ];
   }
 
+  candidatesInfo() {
+    this.props.experimentDetails?.experimentItem.candidates.map(can => {
+      let kind = this.props.experimentDetails?.experimentItem.kind
+        ? this.props.experimentDetails?.experimentItem.kind
+        : 'Deployment';
+      return this.baselineInfo('Candidate', can.name, kind);
+    });
+  }
+
   percentageInfo(bname: string, bpercentage: number) {
     return [
       <DataListCell key={bname}>
-        <Text component={TextVariants.h3}>Percentage</Text>
+        <Text component={TextVariants.h3}>Weight</Text>
         <Text>{bpercentage} %</Text>
       </DataListCell>
     ];
   }
 
-  gatewayInfo(badgeKind: string, nameString: string, namespace: string, gatewayname: string) {
+  gatewayInfo(badgeKind: string, namespace: string, gatewayname: string) {
     let linkTo = '/namespaces/' + namespace + '/istio/gateways/' + gatewayname;
     return [
       <DataListCell key="workload-icon" isIcon={true}>
-        <Badge>{badgeKind}</Badge>
+        <Badge className={'virtualitem_badge_definition'}>{badgeKind}</Badge>
       </DataListCell>,
       <DataListCell key="gateway">
+        <Text>Gateway</Text>
         <Text component={TextVariants.h3}>
-          <Link to={linkTo}>{nameString}</Link>
+          <Link to={linkTo}>{gatewayname}</Link>
         </Text>
       </DataListCell>
     ];
@@ -137,6 +149,23 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     );
   }
 
+  onDownloadClick = () => {
+    API.getExperimentYAML(this.props.namespace, this.props.experimentDetails.experimentItem.name)
+      .then(response => response.data)
+      .then(data => {
+        const url = window.URL.createObjectURL(
+          new Blob([YAML.stringify(jsyaml.safeLoad(JSON.stringify(data, null, 2)))], { type: 'application/json' })
+        );
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', this.props.experimentDetails.experimentItem.name + `.yaml`);
+        // 3. Append to html page
+        document.body.appendChild(link); // 4. Force download
+        link.click(); // 5. Clean up and remove the link
+        link.parentNode?.removeChild(link);
+      });
+  };
+
   renderCardHead() {
     const graphCardActions = [
       <DropdownItem key="viewGraph" onClick={this.showFullMetric}>
@@ -144,8 +173,12 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
       </DropdownItem>,
       <DropdownItem key="viewGraph" onClick={this.showFullGraph}>
         Show traffic graph
+      </DropdownItem>,
+      <DropdownItem key="viewGraph" onClick={this.onDownloadClick}>
+        Download Experiment YAML
       </DropdownItem>
     ];
+
     return [
       <CardHead>
         <CardActions>
@@ -159,6 +192,8 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
         </CardActions>
         <CardHeader>
           <Title style={{ float: 'left' }} headingLevel="h3" size="2xl">
+            <Badge className={'virtualitem_badge_definition'}>{this.props.experimentDetails.experimentType}</Badge>
+            &nbsp;&nbsp;
             {this.props.experimentDetails !== undefined ? this.props.experimentDetails.experimentItem.name : 'N/A'}
           </Title>
         </CardHeader>
@@ -180,10 +215,11 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
     }
 
     let hasHosts = this.props.experimentDetails
-      ? this.props.experimentDetails.hosts.length > 0
-        ? true
+      ? this.props.experimentDetails.networking && this.props.experimentDetails.networking.hosts
+        ? this.props.experimentDetails.networking.hosts.length > 0
         : false
       : false;
+
     return (
       <RenderComponentScroll>
         <Grid gutter="md" style={{ margin: '10px' }}>
@@ -208,49 +244,55 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                       <DataListItemCells
                         dataListCells={this.baselineInfo(
                           'Baseline',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline : '',
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline.name : '',
                           this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
                         )}
                       />
                       <DataListItemCells
                         dataListCells={this.percentageInfo(
                           'Baseline',
-                          this.props.experimentDetails
-                            ? this.props.experimentDetails.experimentItem.baselinePercentage
-                            : 0
+                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline.weight : 0
                         )}
                       />
                     </DataListItemRow>
                   </DataListItem>
-                  <DataListItem aria-labelledby="Candidate">
-                    <DataListItemRow>
-                      <DataListItemCells
-                        dataListCells={this.baselineInfo(
-                          'Candidate',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.candidate : '',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
-                        )}
-                      />
-                      <DataListItemCells
-                        dataListCells={this.percentageInfo(
-                          'Candidate',
-                          this.props.experimentDetails
-                            ? this.props.experimentDetails.experimentItem.candidatePercentage
-                            : 0
-                        )}
-                      />
-                    </DataListItemRow>
-                  </DataListItem>
+                  {this.props.experimentDetails?.experimentItem.candidates.map(can => {
+                    let kind = this.props.experimentDetails?.experimentItem.kind
+                      ? this.props.experimentDetails?.experimentItem.kind
+                      : 'Deployment';
+                    return (
+                      <DataListItem aria-labelledby="Candidate">
+                        <DataListItemRow>
+                          <DataListItemCells dataListCells={this.baselineInfo('Candidate', can.name, kind)} />
+                          <DataListItemCells dataListCells={this.percentageInfo('Candidate', can.weight)} />
+                        </DataListItemRow>
+                      </DataListItem>
+                    );
+                  })}
                   {hasHosts ? (
                     <DataListItem aria-labelledby="Gateway">
                       <DataListItemRow>
                         <DataListItemCells
                           dataListCells={this.gatewayInfo(
-                            'G',
-                            this.props.experimentDetails ? this.props.experimentDetails.hosts[0].name : '',
+                            'H',
+
                             this.props.namespace,
-                            this.props.experimentDetails ? this.props.experimentDetails.hosts[0].gateway : ''
+                            this.props.experimentDetails.networking
+                              ? this.props.experimentDetails.networking.hosts[0].gateway
+                              : ''
                           )}
+                        />
+                        <DataListItemCells
+                          dataListCells={
+                            <DataListCell key="gateway">
+                              <Text>Name</Text>
+                              <Text component={TextVariants.h3}>
+                                {this.props.experimentDetails.networking
+                                  ? this.props.experimentDetails.networking.hosts[0].name
+                                  : ''}
+                              </Text>
+                            </DataListCell>
+                          }
                         />
                       </DataListItemRow>
                     </DataListItem>
@@ -273,11 +315,43 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                     <Text component={TextVariants.h3}> Phase: </Text>
                     {this.props.experimentDetails ? this.props.experimentDetails.experimentItem.phase : ''}
                   </StackItem>
-                  <StackItem id={'assessment'}>
-                    <Text component={TextVariants.h3}> Assessment: </Text>
-                    {this.props.experimentDetails && this.props.experimentDetails.experimentItem.assessmentConclusion
-                      ? this.getConclusionList(this.props.experimentDetails.experimentItem.assessmentConclusion)
-                      : ''}
+                  <StackItem id={'Winner'}>
+                    {this.props.experimentDetails.experimentItem.endTime !== '' ? (
+                      <Grid>
+                        <GridItem span={12}>
+                          <StackItem>
+                            {this.props.experimentDetails.experimentItem.winner.winning_version_found ? (
+                              <>
+                                <Text component={TextVariants.h3}> Winner Found: </Text>
+                                {this.props.experimentDetails.experimentItem.winner.name}
+                              </>
+                            ) : (
+                              <Text component={TextVariants.h3}> Winner not Found </Text>
+                            )}
+                          </StackItem>
+                        </GridItem>
+                      </Grid>
+                    ) : (
+                      <Grid>
+                        <GridItem span={6}>
+                          <StackItem>
+                            <Text component={TextVariants.h3}>
+                              {' '}
+                              {this.props.experimentDetails.experimentItem.endTime === ''
+                                ? 'Current Best Version'
+                                : 'Winner Version'}{' '}
+                            </Text>
+                            {this.props.experimentDetails.experimentItem.winner.name}
+                          </StackItem>
+                        </GridItem>
+                        <GridItem span={6}>
+                          <StackItem>
+                            <Text component={TextVariants.h3}> Probability of Winning: </Text>
+                            {this.props.experimentDetails.experimentItem.winner.probability_of_winning_for_best_version}
+                          </StackItem>
+                        </GridItem>
+                      </Grid>
+                    )}
                   </StackItem>
                   <StackItem>
                     <Grid>
@@ -286,10 +360,8 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                           <Text component={TextVariants.h3}> Created at </Text>
                           <LocalTime
                             time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.createdAt
-                                ? new Date(
-                                    this.props.experimentDetails.experimentItem.createdAt / 1000000
-                                  ).toISOString()
+                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.initTime
+                                ? this.props.experimentDetails.experimentItem.initTime
                                 : ''
                             }
                           />
@@ -300,10 +372,8 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                           <Text component={TextVariants.h3}> Started at </Text>
                           <LocalTime
                             time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.startedAt
-                                ? new Date(
-                                    this.props.experimentDetails.experimentItem.startedAt / 1000000
-                                  ).toISOString()
+                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.startTime
+                                ? this.props.experimentDetails.experimentItem.startTime
                                 : ''
                             }
                           />
@@ -314,8 +384,8 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                           <Text component={TextVariants.h3}> Ended at </Text>
                           <LocalTime
                             time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.endedAt
-                                ? new Date(this.props.experimentDetails.experimentItem.endedAt / 1000000).toISOString()
+                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.endTime
+                                ? this.props.experimentDetails.experimentItem.endTime
                                 : ''
                             }
                           />
@@ -346,9 +416,13 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
 
   private showFullMetric = () => {
     const graphUrl = `/namespaces/${this.props.namespace}/services/${this.props.target}?tab=metrics&bylbl=destination_version`;
-
+    let candidateVersions: string[];
+    candidateVersions = [];
+    this.props.experimentDetails?.experimentItem.candidates.map(can => {
+      candidateVersions.push(can.version);
+    });
     if (this.props.experimentDetails !== undefined) {
-      const params = `=${this.props.experimentDetails.experimentItem.baselineVersion},${this.props.experimentDetails.experimentItem.candidateVersion}`;
+      const params = `=${this.props.experimentDetails.experimentItem.baseline.version},${candidateVersions.join()}`;
       history.push(graphUrl + encodeURIComponent(params));
     } else {
       history.push(graphUrl);

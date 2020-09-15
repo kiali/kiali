@@ -57,7 +57,7 @@ class ExperimentHostForm extends React.Component<Props, HostState> {
     const removeAction = {
       title: 'Remove Host',
       // @ts-ignore
-      onClick: (event, rowIndex, rowData, extraData) => {
+      onClick: (event, rowIndex) => {
         this.props.onRemove('Host', rowIndex);
       }
     };

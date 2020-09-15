@@ -70,29 +70,13 @@ const filterByBaseline = (items: Iter8Experiment[], names: string[]): Iter8Exper
     if (names.length > 0) {
       baselineFiltered = false;
       for (let i = 0; i < names.length; i++) {
-        if (item.baseline.includes(names[i])) {
+        if (item.baseline.name.includes(names[i])) {
           baselineFiltered = true;
           break;
         }
       }
     }
     return baselineFiltered;
-  });
-};
-
-const filterByCandidate = (items: Iter8Experiment[], names: string[]): Iter8Experiment[] => {
-  return items.filter(item => {
-    let candidateFiltered = true;
-    if (names.length > 0) {
-      candidateFiltered = false;
-      for (let i = 0; i < names.length; i++) {
-        if (item.candidate.includes(names[i])) {
-          candidateFiltered = true;
-          break;
-        }
-      }
-    }
-    return candidateFiltered;
   });
 };
 
@@ -123,13 +107,6 @@ export const filterBy = (iter8Experiment: Iter8Experiment[], filters: ActiveFilt
   const baselineSelected = getFilterSelectedValues(baselineFilter, filters);
   if (baselineSelected.length > 0) {
     ret = filterByBaseline(ret, baselineSelected);
-  }
-
-  // We may have to perform a second round of filtering, using data fetched asynchronously (health)
-  // If not, exit fast
-  const candidateSelected = getFilterSelectedValues(candidateFilter, filters);
-  if (candidateSelected.length > 0) {
-    return filterByCandidate(ret, candidateSelected);
   }
 
   const phaseSelected = getFilterSelectedValues(phaseFilter, filters);

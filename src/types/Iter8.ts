@@ -7,22 +7,74 @@ export interface Iter8Info {
   analyticsImageVersion: string;
 }
 
+export interface Iter8CandidateStatus {
+  name: string;
+  version: string;
+  weight: number;
+  winProbability: number;
+  requestCount: number;
+  criterionAssessment?: CriterionAssessment[];
+}
+
+export interface LowerUpper {
+  lower: number;
+  upper: number;
+}
+
+export interface RatioStatitics {
+  improvement_over_baseline: LowerUpper;
+  probability_of_beating_baseline: number;
+  probability_of_being_best_version: number;
+  credible_interval: LowerUpper;
+}
+
+export interface Statistics {
+  value: number;
+  ratio_statitics: RatioStatitics;
+}
+
+export interface ThresholdAssessment {
+  threshold_breached: boolean;
+  probability_of_satisfying_threshold: number;
+}
+
+export interface CriterionAssessment {
+  id: string;
+  metric_id: string;
+  statistics: Statistics;
+  threshold_assessment: ThresholdAssessment;
+}
+
+export interface MetricProgressInfo {
+  name: string;
+  threshold: number;
+  thresholdType: string;
+  preferred_direction: string;
+  unit: string;
+  isReward: boolean;
+}
 export interface Iter8Experiment {
   name: string;
   phase: string;
   targetService: string;
+  targetServiceNamespace: string;
   status: string;
-  baseline: string;
-  baselinePercentage: number;
-  baselineVersion: string;
-  candidate: string;
-  candidatePercentage: number;
-  candidateVersion: string;
+  baseline: Iter8CandidateStatus;
+  candidates: Iter8CandidateStatus[];
   namespace: string;
-  createdAt: number;
-  startedAt: number;
-  endedAt: number;
+  initTime: string;
+  startTime: string;
+  endTime: string;
+  winner: Winner;
   kind: string;
+  experimentKind: string;
+}
+
+export interface Winner {
+  name: string;
+  winning_version_found: boolean;
+  current_best_version: string;
+  probability_of_winning_for_best_version: number;
 }
 
 export interface ExpId {
@@ -32,78 +84,129 @@ export interface ExpId {
 
 export interface TrafficControl {
   algorithm: string;
+  maxIncrement: number;
+  onTermination: string;
+}
+
+export interface Duration {
   interval: string;
+  intervalInSecond: number;
   maxIterations: number;
-  maxTrafficPercentage: number;
-  trafficStepSize: number;
 }
-
 export interface Iter8ExpDetailsInfo {
-  experimentItem: ExperimentItem;
-  criterias: SuccessCriteria[];
+  experimentItem: Iter8Experiment;
+  criterias: CriteriaInfoDetail[];
   trafficControl: TrafficControl;
-  hosts: Host[];
+  duration: Duration;
+  networking: {
+    id: string;
+    hosts: Host[];
+  };
   permissions: ResourcePermissions;
+  experimentType: string;
 }
 
-export interface ExperimentItem {
-  name: string;
-  namespace: string;
-  phase: string;
-  status: string;
-  createdAt: number;
-  startedAt: number;
-  endedAt: number;
-  baseline: string;
-  baselinePercentage: number;
-  baselineVersion: string;
-  candidate: string;
-  candidatePercentage: number;
-  candidateVersion: string;
-  targetService: string;
-  targetServiceNamespace: string;
-  assessmentConclusion: string[];
-  labels?: { [key: string]: string };
-  resourceVersion: string;
-  kind: string;
-}
-export interface SuccessCriteria {
-  name: string;
-  criteria: Criteria;
-  metric: Metric;
-  status: SuccessCriteriaStatus;
-}
-export interface Metric {
-  absent_value: string;
-  is_count: boolean;
-  query_template: string;
-  sample_size_template: string;
-}
+export const emptyExperimentItem: Iter8Experiment = {
+  name: '',
+  phase: '',
+  targetService: '',
+  targetServiceNamespace: '',
+  status: '',
+  baseline: {
+    name: '',
+    version: '',
+    weight: 0,
+    winProbability: 0,
+    requestCount: 0
+  },
+  candidates: [],
+  namespace: '',
+  initTime: '',
+  startTime: '',
+  endTime: '',
+  winner: {
+    name: '',
+    winning_version_found: false,
+    current_best_version: '',
+    probability_of_winning_for_best_version: 0
+  },
+  experimentKind: 'Canary',
+  kind: 'Deployment'
+};
 
-export interface SuccessCriteriaStatus {
-  conclusions: string[];
-  success_criterion_met: boolean;
-  abort_experiment: boolean;
-}
+export const emptyExperimentDetailsInfo: Iter8ExpDetailsInfo = {
+  experimentItem: emptyExperimentItem,
+  criterias: [],
+  trafficControl: {
+    algorithm: 'check_and_increment',
+    maxIncrement: 2,
+    onTermination: 'to_winner'
+  },
+  duration: {
+    interval: '30s',
+
+    intervalInSecond: 30,
+    maxIterations: 100
+  },
+  networking: {
+    id: '',
+    hosts: []
+  },
+  permissions: {
+    create: true,
+    update: true,
+    delete: true
+  },
+  experimentType: 'C'
+};
 
 export type NameValuePair = {
   name: string;
   value: any;
 };
 
+export interface CounterMetric {
+  name: string;
+  query_template: string;
+  preferred_direction: string;
+  unit: string;
+}
+
+export interface Iter8Metric {
+  name: string;
+  numerator: CounterMetric;
+  denominator: CounterMetric;
+  zero_to_one: boolean;
+  preferred_direction: string;
+}
+
+export interface CriteriaInfoDetail {
+  name: string;
+  criteria: Iter8Criteria;
+  metric: Iter8Metric;
+}
+export interface Iter8Criteria {
+  metric: string;
+  tolerance: number;
+  toleranceType: string;
+  isReward: boolean;
+  stopOnFailure: boolean;
+}
+
 export interface Criteria {
   metric: string;
   tolerance: number;
   toleranceType: string;
-  sampleSize: number;
   stopOnFailure: boolean;
+  isReward: boolean;
 }
-export const initCriteria = (): Criteria => ({
+
+export const initCriteria = (): Iter8Criteria => ({
   metric: '',
   tolerance: 200,
-  toleranceType: 'threshold',
+  toleranceType: 'absolute',
   stopOnFailure: false,
-  sampleSize: 5
+  isReward: false
 });
 
 export interface Host {
@@ -113,6 +216,7 @@ export interface Host {
 
 export interface ExperimentAction {
   action: string;
+  trafficSplit: [string, number][];
 }
 
 export interface ExperimentSpec {
@@ -121,10 +225,14 @@ export interface ExperimentSpec {
   service: string;
   apiversion: string;
   baseline: string;
-  candidate: string;
+  candidates: string[];
   // canaryVersion: string;
   trafficControl: TrafficControl;
-  criterias: Criteria[];
+  criterias: Iter8Criteria[];
+  duration: Duration;
+  hosts: Host[];
+  routerID: string;
+  experimentKind: string;
 }
 
 export const EmptyExperimentSpec = {
@@ -133,13 +241,17 @@ export const EmptyExperimentSpec = {
   apiversion: 'v1',
   service: '',
   baseline: '',
-  candidate: '',
+  candidate: [],
   trafficControl: {
-    algorithm: 'check_and_increment',
-    interval: '30s',
-    maxIterations: 100,
-    maxTrafficPercentage: 50,
-    trafficStepSize: 2
+    algorithm: 'progressive',
+    maxIncrement: 10
   },
-  criterias: []
+  duration: {
+    interval: '30s',
+    intervalInSecond: 30,
+    maxIterations: 10
+  },
+  criterias: [],
+  hosts: [],
+  experimentKind: 'Deployment'
 };

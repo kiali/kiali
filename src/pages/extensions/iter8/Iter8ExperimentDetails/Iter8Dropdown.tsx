@@ -5,47 +5,63 @@ import {
   DropdownItem,
   DropdownPosition,
   DropdownToggle,
+  Form,
+  FormGroup,
   Modal,
   Text,
   TextVariants,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
+import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
+
+export type ManualOverride = {
+  TrafficSplit: Map<string, number>;
+  totalTrafficSplitPercentage: number;
+};
 
 type Props = {
   experimentName: string;
+  manualOverride: ManualOverride;
   canDelete: boolean;
-  startedAt: number;
-  endedAt: number;
+  startTime: string;
+  endTime: string;
   phase: string;
   onDelete: () => void;
   onPause: () => void;
   onResume: () => void;
-  onSuccess: () => void;
-  onFailure: () => void;
+  onTerminate: () => void;
+  doTrafficSplit: (manualOverride: ManualOverride) => void;
 };
 
 type State = {
   showDeleteConfirmModal: boolean;
   showPauseConfirmModal: boolean;
   showResumeConfirmModal: boolean;
-  showSuccessConfirmModal: boolean;
-  showFailureConfirmModal: boolean;
+  showTerminateConfirmModal: boolean;
   dropdownOpen: boolean;
+  manualOverride: ManualOverride;
+  candidates: string[];
 };
 
-const ITER8_ACTIONS = ['Pause', 'Resume', 'Terminate with Failure', 'Terminate with Success'];
+const ITER8_ACTIONS = ['Pause', 'Resume', 'Terminate'];
 
 class Iter8Dropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
+    let candidates: string[] = [];
+    this.props.manualOverride.TrafficSplit.forEach((_, key: string) => {
+      candidates.push(key);
+    });
+
     this.state = {
       dropdownOpen: false,
       showDeleteConfirmModal: false,
       showPauseConfirmModal: false,
       showResumeConfirmModal: false,
-      showSuccessConfirmModal: false,
-      showFailureConfirmModal: false
+      showTerminateConfirmModal: false,
+      manualOverride: this.props.manualOverride,
+      candidates: candidates
     };
   }
 
@@ -72,11 +88,8 @@ class Iter8Dropdown extends React.Component<Props, State> {
       case 'Resume':
         this.setState({ showResumeConfirmModal: action });
         break;
-      case 'Terminate with Success':
-        this.setState({ showSuccessConfirmModal: action });
-        break;
-      case 'Terminate with Failure':
-        this.setState({ showFailureConfirmModal: action });
+      case 'Terminate':
+        this.setState({ showTerminateConfirmModal: action });
         break;
     }
   };
@@ -93,13 +106,56 @@ class Iter8Dropdown extends React.Component<Props, State> {
       case 'Resume':
         this.props.onResume();
         break;
-      case 'Terminate with Success':
-        this.props.onSuccess();
-        break;
-      case 'Terminate with Failure':
-        this.props.onFailure();
+      case 'Terminate':
+        this.props.onTerminate();
         break;
     }
+  };
+
+  setTrafficSplit(val, name) {
+    this.setState(
+      prevState => {
+        let total = 0;
+        prevState.manualOverride.TrafficSplit.set(name, val);
+        for (let entry of Array.from(prevState.manualOverride.TrafficSplit.entries())) {
+          total = total + Number(entry[1]);
+        }
+        prevState.manualOverride.totalTrafficSplitPercentage = total;
+
+        return {
+          manualOverride: prevState.manualOverride
+        };
+      },
+      () => this.props.doTrafficSplit(this.state.manualOverride)
+    );
+  }
+
+  trafficSplitRules = () => {
+    return (
+      <Form isHorizontal={true}>
+        {this.state.candidates.map(c => {
+          return (
+            <>
+              <FormGroup
+                fieldId={c}
+                label={c}
+                isRequired={true}
+                helperTextInvalid="Total Percentage must be equal to 100%"
+                isValid={this.state.manualOverride.totalTrafficSplitPercentage === 100}
+              >
+                <TextInput
+                  id={c}
+                  type="number"
+                  value={this.state.manualOverride[c]}
+                  placeholder="Traffic Split Percentage"
+                  onChange={value => this.setTrafficSplit(value, c)}
+                />
+              </FormGroup>
+            </>
+          );
+        })}
+      </Form>
+    );
   };
 
   GenConfirmModal = (action: string, extraMsg: string, isThisOpen: boolean) => {
@@ -123,6 +179,8 @@ class Iter8Dropdown extends React.Component<Props, State> {
           Are you sure you want to {action.toLowerCase().split(' ', 3)[0]} the Iter8 experiment "
           {this.props.experimentName}"{extraMsg}
         </Text>
+
+        {action === 'Terminate' ? <>{this.trafficSplitRules()}</> : ''}
       </Modal>
     );
   };
@@ -130,9 +188,9 @@ class Iter8Dropdown extends React.Component<Props, State> {
   canAction = (action: string, phase: string): boolean => {
     switch (action) {
       case 'Terminate':
-        return this.props.startedAt !== 0 && this.props.endedAt === 0;
+        return this.props.startTime !== '' && this.props.endTime === '';
     }
-    return this.props.startedAt !== 0 && this.props.phase === phase;
+    return this.props.startTime !== '' && this.props.phase === phase;
   };
 
   renderTooltip = (key, position, msg, child): any => {
@@ -149,9 +207,9 @@ class Iter8Dropdown extends React.Component<Props, State> {
     let checkPhase = actionString === 'Pause' ? 'Progressing' : 'Pause';
 
     let msgString =
-      this.props.startedAt === 0
+      this.props.startTime === ''
         ? '. Action "' + actionString + '" can only be done once experiment is started. '
-        : this.props.endedAt !== 0
+        : this.props.endTime !== ''
         ? '. Action "' + actionString + '" can only be done while experiment is running. '
         : '';
 
@@ -175,7 +233,7 @@ class Iter8Dropdown extends React.Component<Props, State> {
   };
 
   renderDropdownItems = (): any => {
-    var items: any[] = [];
+    let items: any[] = [];
     if (this.props.canDelete) {
       items = items.concat(
         <DropdownItem
@@ -215,14 +273,9 @@ class Iter8Dropdown extends React.Component<Props, State> {
           this.state.showPauseConfirmModal
         )}
         {this.GenConfirmModal(
-          'Terminate with Success',
-          ' indicating that the candidate succeeded?',
-          this.state.showSuccessConfirmModal
-        )}
-        {this.GenConfirmModal(
-          'Terminate with Failure',
-          ' indicating that the candidate failed?',
-          this.state.showFailureConfirmModal
+          'Terminate',
+          '? Please specify traffic split rule ',
+          this.state.showTerminateConfirmModal
         )}
       </>
     );

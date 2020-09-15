@@ -31,7 +31,7 @@ import { TLSStatus } from '../types/TLSStatus';
 import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
-import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info } from '../types/Iter8';
+import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info, ExperimentSpec } from '../types/Iter8';
 import { ComponentStatus } from '../types/IstioStatus';
 
 export const ANONYMOUS_USER = 'anonymous';
@@ -547,12 +547,16 @@ export const getExperiment = (namespace: string, name: string) => {
   return newRequest<Iter8ExpDetailsInfo>(HTTP_VERBS.GET, urls.iter8Experiment(namespace, name), {}, {});
 };
 
+export const getExperimentYAML = (namespace: string, name: string) => {
+  return newRequest<ExperimentSpec>(HTTP_VERBS.GET, urls.iter8ExperimentYAML(namespace, name), {}, {});
+};
+
 export const deleteExperiment = (namespace: string, name: string) => {
   return newRequest<Iter8Experiment>(HTTP_VERBS.DELETE, urls.iter8Experiment(namespace, name), {}, {});
 };
 
-export const createExperiment = (namespace: string, specBody: string) => {
-  return newRequest<string>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), {}, specBody);
+export const createExperiment = (namespace: string, specBody: string, params) => {
+  return newRequest<string>(HTTP_VERBS.POST, urls.iter8ExperimentsByNamespace(namespace), params, specBody);
 };
 
 export const updateExperiment = (namespace: string, name: string, specBody: string) => {

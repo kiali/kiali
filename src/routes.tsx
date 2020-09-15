@@ -16,6 +16,7 @@ import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/Exp
 import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
 import ExperimentDetailsPage from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentDetailsPage';
 import ThreeScaleNewPageContainer from './pages/extensions/threescale/ThreeScaleNew/ThreeScaleNewPage';
+import ExperimentCreateFromFileContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreateFromFile';
 
 /**
  * Return array of objects that describe vertical menu
@@ -194,6 +195,10 @@ const extensionsRoutes: Path[] = [
   {
     path: '/extensions/iter8/new',
     component: ExperimentCreatePageContainer
+  },
+  {
+    path: '/extensions/iter8/newFromFile',
+    component: ExperimentCreateFromFileContainer
   },
   {
     path: '/extensions/iter8',
