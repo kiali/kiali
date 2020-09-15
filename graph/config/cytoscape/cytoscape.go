@@ -88,11 +88,11 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	DestPrincipal 	string          `json:"destPrincipal,omitempty"`		// principal used for the edge destination
-	IsMTLS       	string          `json:"isMTLS,omitempty"`       		// set to the percentage of traffic using a mutual TLS connection
-	ResponseTime 	string          `json:"responseTime,omitempty"` 		// in millis
-	SourcePrincipal string       	`json:"sourcePrincipal,omitempty"`		// principal used for the edge source
-	Traffic      	ProtocolTraffic `json:"traffic,omitempty"`      		// traffic rates for the edge protocol
+	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
+	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
+	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
+	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
+	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
 }
 
 type NodeWrapper struct {
