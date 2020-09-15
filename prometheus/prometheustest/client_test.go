@@ -56,7 +56,7 @@ func TestGetServiceMetrics(t *testing.T) {
 
 	labels := `reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"`
 	mockWithRange(api, expectedRange, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 2.5)
-	mockWithRange(api, expectedRange, roundErrs("sum(rate(istio_requests_total{"+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,response_code=~"^[4-5]\\d\\d$"}[5m]))`), 4.5)
+	mockWithRange(api, expectedRange, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 4.5)
 	mockWithRange(api, expectedRange, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
 	mockWithRange(api, expectedRange, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
 	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 11)
@@ -111,7 +111,7 @@ func TestGetAppMetrics(t *testing.T) {
 	}
 	labels := `reporter="source",source_workload_namespace="bookinfo",source_app="productpage"`
 	mockRange(api, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 1.5)
-	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,response_code=~"^[4-5]\\d\\d$"}[5m]))`), 3.5)
+	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 3.5)
 	mockRange(api, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
 	mockRange(api, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
 	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)
@@ -256,7 +256,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	}
 	labels := `reporter="source",source_workload_namespace="bookinfo"`
 	mockRange(api, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 1.5)
-	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,response_code=~"^[4-5]\\d\\d$"}[5m]))`), 3.5)
+	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 3.5)
 	mockRange(api, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
 	mockRange(api, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
 	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)

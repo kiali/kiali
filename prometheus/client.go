@@ -84,35 +84,45 @@ func (in *Client) GetMetrics(query *IstioMetricsQuery) Metrics {
 }
 
 // GetAllRequestRates queries Prometheus to fetch request counter rates, over a time interval, for requests
-// into, internal to, or out of the namespace.
+// into, internal to, or out of the namespace. Note that it does not discriminate on "reporter", so rates can
+// be inflated due to duplication, and therefore should be used mainly for calculating ratios
+// (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetAllRequestRates(namespace string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return getAllRequestRates(in.api, namespace, queryTime, ratesInterval)
 }
 
 // GetNamespaceServicesRequestRates queries Prometheus to fetch request counter rates, over a time interval, limited to
-// requests for services in the namespace.
+// requests for services in the namespace. Note that it does not discriminate on "reporter", so rates can
+// be inflated due to duplication, and therefore should be used mainly for calculating ratios
+// (e.g total rates / error rates).
 // Returns (rates, error)
 func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return getNamespaceServicesRequestRates(in.api, namespace, queryTime, ratesInterval)
 }
 
 // GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for a given service (hence only inbound).
+// for a given service (hence only inbound). Note that it does not discriminate on "reporter", so rates can
+// be inflated due to duplication, and therefore should be used mainly for calculating ratios
+// (e.g total rates / error rates).
 // Returns (in, error)
 func (in *Client) GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	return getServiceRequestRates(in.api, namespace, service, queryTime, ratesInterval)
 }
 
 // GetAppRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for a given app, both in and out.
+// for a given app, both in and out. Note that it does not discriminate on "reporter", so rates can
+// be inflated due to duplication, and therefore should be used mainly for calculating ratios
+// (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return getItemRequestRates(in.api, namespace, app, "app", queryTime, ratesInterval)
 }
 
 // GetWorkloadRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for a given workload, both in and out.
+// for a given workload, both in and out. Note that it does not discriminate on "reporter", so rates can
+// be inflated due to duplication, and therefore should be used mainly for calculating ratios
+// (e.g total rates / error rates).
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return getItemRequestRates(in.api, namespace, workload, "workload", queryTime, ratesInterval)

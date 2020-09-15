@@ -91,12 +91,16 @@ func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
 }
 
 func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
-	responseCode := sample.Metric["response_code"]
+	code := string(sample.Metric["response_code"])
 	protocol := string(sample.Metric["request_protocol"])
-	if protocol == "grpc" {
-		responseCode = sample.Metric["grpc_response_status"]
+	if code == "0" {
+		code = "-" // no response regardless of protocol
+	} else if protocol == "grpc" {
+		// if grpc_response_status is unset, default to response_code
+		if grpcStatus, ok := sample.Metric["grpc_response_status"]; ok {
+			code = string(grpcStatus)
+		}
 	}
-	code := string(responseCode)
 	if _, ok := requests[protocol]; !ok {
 		requests[protocol] = make(map[string]float64)
 	}
