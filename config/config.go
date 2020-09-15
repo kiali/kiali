@@ -495,7 +495,6 @@ func (conf *Config) AddHealthDefault() {
 						Code:      "^5\\d\\d$",
 						Protocol:  "http",
 						Direction: ".*",
-						Degraded:  0.1,
 						Failure:   10,
 					},
 					{
@@ -509,7 +508,6 @@ func (conf *Config) AddHealthDefault() {
 						Code:      "^[1-9]$|^1[0-6]$",
 						Protocol:  "grpc",
 						Direction: ".*",
-						Degraded:  0.1,
 						Failure:   10,
 					},
 				},
