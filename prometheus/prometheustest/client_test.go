@@ -327,7 +327,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, queryTime, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m]) > 0`, queryTime, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -335,7 +335,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, queryTime, &vectorQ2)
+	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m]) > 0`, queryTime, &vectorQ2)
 
 	rates, _ := client.GetAllRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
@@ -359,7 +359,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, queryTime, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m]) > 0`, queryTime, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -367,7 +367,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, queryTime, &vectorQ2)
+	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m]) > 0`, queryTime, &vectorQ2)
 
 	rates, _ := client.GetAllRequestRates("istio-system", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
@@ -391,7 +391,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m])`, queryTime, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m]) > 0`, queryTime, &vectorQ1)
 
 	rates, _ := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
