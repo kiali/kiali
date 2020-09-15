@@ -75,7 +75,7 @@ func TestComponentNamespaces(t *testing.T) {
 
 	nss := getComponentNamespaces()
 
-	a.Contains(nss,"istio-system")
+	a.Contains(nss, "istio-system")
 	a.Contains(nss, "istio-admin")
 	a.Contains(nss, "prometheus-system")
 	a.Contains(nss, "grafana-system")
@@ -262,20 +262,20 @@ func confWithComponentNamespaces() *config.Config {
 	}
 
 	conf.ExternalServices.Grafana.ComponentStatus = config.ComponentStatus{
-		AppLabel: "grafana",
-		IsCore: false,
+		AppLabel:  "grafana",
+		IsCore:    false,
 		Namespace: "grafana-system",
 	}
 
 	conf.ExternalServices.Tracing.ComponentStatus = config.ComponentStatus{
-		AppLabel: "tracing",
-		IsCore: false,
+		AppLabel:  "tracing",
+		IsCore:    false,
 		Namespace: "tracing-system",
 	}
 
 	conf.ExternalServices.Prometheus.ComponentStatus = config.ComponentStatus{
-		AppLabel: "prometheus",
-		IsCore: true,
+		AppLabel:  "prometheus",
+		IsCore:    true,
 		Namespace: "prometheus-system",
 	}
 
