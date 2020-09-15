@@ -35,6 +35,7 @@ export interface HealthItemConfig {
 interface HealthSubItem {
   status: Status;
   text: string;
+  value?: number;
 }
 
 export interface WorkloadStatus {
@@ -219,7 +220,8 @@ export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfi
 export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix: string): HealthSubItem => {
   return {
     status: thresholdStatus.status,
-    text: prefix + ': ' + (thresholdStatus.status === NA ? 'No requests' : thresholdStatus.value.toFixed(2) + '%')
+    text: prefix + ': ' + (thresholdStatus.status === NA ? 'No requests' : thresholdStatus.value.toFixed(2) + '%'),
+    value: thresholdStatus.status === NA ? 0 : thresholdStatus.value
   };
 };
 
@@ -270,7 +272,8 @@ export class ServiceHealth extends Health {
         children: [
           {
             text: 'Inbound: ' + reqErrorsText,
-            status: reqError.errorRatio.global.status.status
+            status: reqError.errorRatio.global.status.status,
+            value: reqError.errorRatio.global.status.value
           }
         ]
       };

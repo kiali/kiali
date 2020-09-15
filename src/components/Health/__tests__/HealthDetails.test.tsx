@@ -19,7 +19,7 @@ describe('HealthDetails', () => {
       { rateInterval: 60, hasSidecar: true }
     );
 
-    const wrapper = shallow(<HealthDetails health={health} />);
+    const wrapper = shallow(<HealthDetails health={health} tooltip={true} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
@@ -31,7 +31,7 @@ describe('HealthDetails', () => {
       { rateInterval: 60, hasSidecar: true }
     );
 
-    const wrapper = shallow(<HealthDetails health={health} />);
+    const wrapper = shallow(<HealthDetails health={health} tooltip={true} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });
