@@ -621,11 +621,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       if (target && !isCore(target)) {
         target.selectify().select().unselectify();
       }
-
-      if (this.props.setTraceId && this.props.trace && this.cy.$('.span:selected').length === 0) {
-        // No selected node in trace => clear trace selection
-        this.props.setTraceId(undefined);
-      }
     }
   };
 

@@ -9,6 +9,8 @@ import { style } from 'typestyle';
 import { isErrorTag } from '../JaegerHelper';
 import { PfColors } from '../../Pf/PfColors';
 import { getFormattedTraceInfo } from './FormattedTraceInfo';
+import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
+import { GraphType, NodeType } from 'types/Graph';
 
 const labelStyle = style({
   margin: '5px'
@@ -16,8 +18,10 @@ const labelStyle = style({
 
 interface Props {
   trace: JaegerTrace;
-  focusElement: string;
   jaegerURL: string;
+  namespace: string;
+  target: string;
+  targetKind: 'app' | 'workload' | 'service';
 }
 
 interface State {
@@ -31,11 +35,11 @@ export class TraceDetails extends React.Component<Props, State> {
     this.state = { spansSelected: [], appSelected: '' };
   }
 
-  getClassButtonSpan = (app: string) => {
+  private getClassButtonSpan = (app: string) => {
     if (this.state.appSelected === app) {
       return 'primary';
     } else {
-      if (this.props.focusElement === app) {
+      if (this.props.target === app || this.props.target + '.' + this.props.namespace === app) {
         return 'tertiary';
       } else {
         return 'secondary';
@@ -43,11 +47,34 @@ export class TraceDetails extends React.Component<Props, State> {
     }
   };
 
-  onClickApp = (app: string) => {
+  private onClickApp = (app: string) => {
     this.setState({
       appSelected: app,
       spansSelected: this.props.trace.spans.filter(span => span.process.serviceName === app)
     });
+  };
+
+  private getGraphURL = () => {
+    let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(this.props.namespace);
+    let graphType: GraphType = GraphType.APP;
+
+    switch (this.props.targetKind) {
+      case 'app':
+        cytoscapeGraph = cytoscapeGraph.app(this.props.target).nodeType(NodeType.APP).isGroup(null);
+        break;
+      case 'service':
+        graphType = GraphType.SERVICE;
+        cytoscapeGraph = cytoscapeGraph.service(this.props.target);
+        break;
+      case 'workload':
+        graphType = GraphType.WORKLOAD;
+        cytoscapeGraph = cytoscapeGraph.workload(this.props.target);
+        break;
+    }
+
+    return `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${
+      this.props.namespace
+    }&traceId=${this.props.trace.traceID}&focusSelector=${encodeURI(cytoscapeGraph.build())}`;
   };
 
   render() {
@@ -59,6 +86,7 @@ export class TraceDetails extends React.Component<Props, State> {
           traceID={trace.traceID}
           formattedTrace={formattedTrace}
           onClickLink={jaegerURL !== '' ? `${jaegerURL}/trace/${trace.traceID}` : ''}
+          graphURL={this.getGraphURL()}
         />
         <CardBody>
           <Grid style={{ marginTop: '20px' }}>
