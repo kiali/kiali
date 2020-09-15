@@ -54,6 +54,7 @@ const (
 
 const (
 	IstioMultiClusterHostSuffix = "global"
+	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
 // Global configuration for the application.
@@ -270,6 +271,7 @@ type OpenIdConfig struct {
 	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
 	ClientId              string   `yaml:"client_id,omitempty"`
+	ClientSecret          string   `yaml:"client_secret,omitempty"`
 	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
 	Scopes                []string `yaml:"scopes,omitempty"`
@@ -357,6 +359,7 @@ func NewConfig() (c *Config) {
 				AuthenticationTimeout: 300,
 				AuthorizationEndpoint: "",
 				ClientId:              "",
+				ClientSecret:          "",
 				InsecureSkipVerifyTLS: false,
 				IssuerUri:             "",
 				Scopes:                []string{"openid", "profile", "email"},
@@ -544,6 +547,7 @@ func (conf Config) String() (str string) {
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
+	obf.Auth.OpenId.ClientSecret = "xxx"
 	str, err := Marshal(&obf)
 	if err != nil {
 		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
@@ -630,7 +634,23 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 		return nil, fmt.Errorf("failed to load config file [%v]. error=%v", filename, err)
 	}
 
-	return Unmarshal(string(fileContent))
+	conf, err = Unmarshal(string(fileContent))
+	if err != nil {
+		return
+	}
+
+	// Read OIDC secret, if present
+	if oidcSecret, oidcErr := ioutil.ReadFile(OidcClientSecretFile); oidcErr == nil {
+		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
+	} else {
+		if !os.IsNotExist(oidcErr) {
+			err = fmt.Errorf("failed to OIDC client secret file [%v]. error=%v", OidcClientSecretFile, oidcErr)
+		}
+
+		// ...else, if error indicates that secret does not exist, then ignore because the secret is optional
+	}
+
+	return
 }
 
 // SaveToFile converts the Config object and stores its YAML string into the given file, overwriting any data that is in the file.

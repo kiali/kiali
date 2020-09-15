@@ -63,7 +63,20 @@ func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams) *config.IanaClaims
 	}
 }
 
-func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params *OpenIdCallbackParams, err error) {
+func CallbackCleanup(w http.ResponseWriter) {
+	// Delete the nonce cookie since we no longer need it.
+	deleteNonceCookie := http.Cookie{
+		Name:     OpenIdNonceCookieName,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteNonceCookie)
+}
+
+func ExtractOpenIdCallbackParams(r *http.Request) (params *OpenIdCallbackParams, err error) {
 	params = &OpenIdCallbackParams{}
 
 	// Get the nonce code hash
@@ -86,17 +99,6 @@ func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params
 		params.IdToken = r.Form.Get("id_token")
 		params.State = r.Form.Get("state")
 	}
-
-	// Cleanup: Delete the nonce cookie since we no longer need it.
-	deleteNonceCookie := http.Cookie{
-		Name:     OpenIdNonceCookieName,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-		Value:    "",
-	}
-	http.SetCookie(w, &deleteNonceCookie)
 
 	return
 }
@@ -378,11 +380,24 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	// Exchange authorization code for a token
 	requestParams := url.Values{}
-	requestParams.Set("client_id", cfg.ClientId) // Can omit if not authenticated
 	requestParams.Set("code", openIdParams.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
-	response, err := httpClient.PostForm(openIdMetadata.TokenURL, requestParams)
+	if len(cfg.ClientSecret) == 0 {
+		requestParams.Set("client_id", cfg.ClientId)
+	}
+
+	tokenRequest, err := http.NewRequest(http.MethodPost, openIdMetadata.TokenURL, strings.NewReader(requestParams.Encode()))
+	if err != nil {
+		return fmt.Errorf("failure when creating the token request: %w", err)
+	}
+
+	if len(cfg.ClientSecret) > 0 {
+		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
+	}
+
+	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response, err := httpClient.Do(tokenRequest)
 	if err != nil {
 		return fmt.Errorf("failure when requesting token from IdP: %w", err)
 	}

@@ -289,6 +289,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  expiresOn,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
@@ -363,6 +364,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  timeExpire,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
@@ -630,21 +632,29 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie(config.TokenCookieName)
+	conf := config.Get()
 
-	if err != http.ErrNoCookie {
-		tokenCookie := http.Cookie{
-			Name:     config.TokenCookieName,
-			Value:    "",
-			Expires:  time.Unix(0, 0),
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+	cookiesToDrop := []string{
+		config.TokenCookieName,
+		config.TokenCookieName + "-aes",
+	}
+	for _, cookieName := range cookiesToDrop {
+		_, err := r.Cookie(cookieName)
+
+		if err != http.ErrNoCookie {
+			tokenCookie := http.Cookie{
+				Name:     cookieName,
+				Value:    "",
+				Expires:  time.Unix(0, 0),
+				HttpOnly: true,
+				Path:     conf.Server.WebRoot,
+				SameSite: http.SameSiteStrictMode,
+			}
+			http.SetCookie(w, &tokenCookie)
 		}
-		http.SetCookie(w, &tokenCookie)
 	}
 
 	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
-	conf := config.Get()
 	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
 		code, err := performOpenshiftLogout(r)
 		if err != nil {
@@ -740,7 +750,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 
 func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	// Read received HTTP params and check for data completeness
-	openIdParams, err := business.ExtractOpenIdCallbackParams(w, r)
+	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return true // Return true to mark request as handled (because an error is already being sent back)
@@ -752,6 +762,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Start handling the callback for OpenId authentication (code flow)
+	business.CallbackCleanup(w)
 
 	// CSRF mitigation
 	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
@@ -829,6 +840,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
 		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &authCookie)
