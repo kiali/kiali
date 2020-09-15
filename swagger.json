@@ -4041,6 +4041,11 @@
     "EdgeData": {
       "type": "object",
       "properties": {
+        "destPrincipal": {
+          "description": "App Fields (not required by Cytoscape)",
+          "type": "string",
+          "x-go-name": "DestPrincipal"
+        },
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
@@ -4057,6 +4062,10 @@
         "source": {
           "type": "string",
           "x-go-name": "Source"
+        },
+        "sourcePrincipal": {
+          "type": "string",
+          "x-go-name": "SourcePrincipal"
         },
         "target": {
           "type": "string",
