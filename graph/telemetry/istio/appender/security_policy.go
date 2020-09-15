@@ -86,34 +86,31 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)
-	a.populateSecurityPolicyMap(securityPolicyMap, &outVector)
-	a.populateSecurityPolicyMap(securityPolicyMap, &inVector)
-
-	applySecurityPolicy(trafficMap, securityPolicyMap)
-
 	principalMap := make(map[string]map[graph.MetadataKey]string)
-	a.populatePrincipalMap(principalMap, &outVector)
-	a.populatePrincipalMap(principalMap, &inVector)
+	a.populateSecurityPolicyMap(securityPolicyMap, principalMap, &outVector)
+	a.populateSecurityPolicyMap(securityPolicyMap, principalMap, &inVector)
 
-	applyPrincipal(trafficMap, principalMap)
+	applySecurityPolicy(trafficMap, securityPolicyMap, principalMap)
 }
 
-func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]PolicyRates, vector *model.Vector) {
+func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]PolicyRates, principalMap map[string]map[graph.MetadataKey]string, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
 		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
 		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
+		lSourcePrincipal, sourcePrincipalOk := m["source_principal"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
 		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
+		lDestPrincipal, destPrincipalOk := m["destination_principal"]
 		lCsp, cspOk := m["connection_security_policy"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk || !cspOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
@@ -122,12 +119,14 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		sourceWl := string(lSourceWl)
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
+		sourcePrincipal := string(lSourcePrincipal)
 		destSvcNs := string(lDestSvcNs)
 		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
+		destPrincipal := string(lDestPrincipal)
 		csp := string(lCsp)
 
 		val := float64(s.Value)
@@ -141,8 +140,11 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		if inject {
 			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "")
 			a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, "", "", "", "", destPrincipal)
+			a.addPrincipal(principalMap, destSvcNs, destSvcName, "", "", "", sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
 		} else {
 			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
 		}
 	}
 }
@@ -160,7 +162,7 @@ func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]P
 	policyRates[csp] = val
 }
 
-func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[string]PolicyRates) {
+func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[string]PolicyRates, principalMap map[string]map[graph.MetadataKey]string) {
 	for _, s := range trafficMap {
 		for _, e := range s.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
@@ -178,55 +180,10 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 					e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
 				}
 			}
-		}
-	}
-}
-
-func (a SecurityPolicyAppender) populatePrincipalMap(principalMap map[string]map[graph.MetadataKey]string, vector *model.Vector) {
-	for _, s := range *vector {
-		m := s.Metric
-		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
-		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
-		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
-		lSourcePrincipal, sourcePrincipalOk := m["source_principal"]
-		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvcName, destSvcNameOk := m["destination_service_name"]
-		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
-		lDestWl, destWlOk := m["destination_workload"]
-		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
-		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
-		lDestPrincipal, destPrincipalOk := m["destination_principal"]
-
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk {
-			log.Warningf("Skipping %v, missing expected labels", m.String())
-			continue
-		}
-
-		sourceWlNs := string(lSourceWlNs)
-		sourceWl := string(lSourceWl)
-		sourceApp := string(lSourceApp)
-		sourceVer := string(lSourceVer)
-		sourcePrincipal := string(lSourcePrincipal)
-		destSvcNs := string(lDestSvcNs)
-		destSvcName := string(lDestSvcName)
-		destWlNs := string(lDestWlNs)
-		destWl := string(lDestWl)
-		destApp := string(lDestApp)
-		destVer := string(lDestVer)
-		destPrincipal := string(lDestPrincipal)
-
-		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
-		inject := false
-		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
-			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
-			inject = (graph.NodeTypeService != destNodeType)
-		}
-		if inject {
-			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, "", "", "", "", destPrincipal)
-			a.addPrincipal(principalMap, destSvcNs, destSvcName, "", "", "", sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
-		} else {
-			a.addPrincipal(principalMap, sourceWlNs, "", sourceWl, sourceApp, sourceVer, sourcePrincipal, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, destPrincipal)
+			if kPrincipalMap, ok := principalMap[key]; ok {
+				e.Metadata[graph.SourcePrincipal] = kPrincipalMap[graph.SourcePrincipal]
+				e.Metadata[graph.DestPrincipal] = kPrincipalMap[graph.DestPrincipal]
+			}
 		}
 	}
 }
@@ -241,17 +198,5 @@ func (a SecurityPolicyAppender) addPrincipal(principalMap map[string]map[graph.M
 		kPrincipalMap[graph.SourcePrincipal] = sourcePrincipal
 		kPrincipalMap[graph.DestPrincipal] = destPrincipal
 		principalMap[key] = kPrincipalMap
-	}
-}
-
-func applyPrincipal(trafficMap graph.TrafficMap, principalMap map[string]map[graph.MetadataKey]string) {
-	for _, s := range trafficMap {
-		for _, e := range s.Edges {
-			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
-			if kPrincipalMap, ok := principalMap[key]; ok {
-				e.Metadata[graph.SourcePrincipal] = kPrincipalMap[graph.SourcePrincipal]
-				e.Metadata[graph.DestPrincipal] = kPrincipalMap[graph.DestPrincipal]
-			}
-		}
 	}
 }
