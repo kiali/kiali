@@ -67,6 +67,23 @@ func TestComponentRunning(t *testing.T) {
 	assert.Equal(Healthy, status)
 }
 
+func TestComponentNamespaces(t *testing.T) {
+	a := assert.New(t)
+
+	conf := confWithComponentNamespaces()
+	config.Set(conf)
+
+	nss := getComponentNamespaces()
+
+	a.Contains(nss,"istio-system")
+	a.Contains(nss, "istio-admin")
+	a.Contains(nss, "prometheus-system")
+	a.Contains(nss, "grafana-system")
+	a.Contains(nss, "ingress-egress")
+	a.Contains(nss, "tracing-system")
+	a.Len(nss, 7)
+}
+
 func TestGrafanaDisabled(t *testing.T) {
 	assert := assert.New(t)
 
@@ -227,9 +244,40 @@ func fakeDeploymentWithStatus(name string, labels map[string]string, status apps
 
 func confWithIstioComponents() *config.Config {
 	conf := config.NewConfig()
-	conf.IstioComponentNamespaces = config.IstioComponentNamespaces{
-		"grafana": "istio-system",
-		"istiod":  "istio-config",
+	conf.ExternalServices.Grafana.ComponentStatus.Namespace = "istio-config"
+
+	return conf
+}
+
+func confWithComponentNamespaces() *config.Config {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+		Enabled: true,
+		Components: []config.ComponentStatus{
+			{AppLabel: "pilot", IsCore: true},
+			{AppLabel: "ingress", IsCore: true, Namespace: "ingress-egress"},
+			{AppLabel: "egress", IsCore: false, Namespace: "ingress-egress"},
+			{AppLabel: "sds", IsCore: false, Namespace: "istio-admin"},
+		},
 	}
+
+	conf.ExternalServices.Grafana.ComponentStatus = config.ComponentStatus{
+		AppLabel: "grafana",
+		IsCore: false,
+		Namespace: "grafana-system",
+	}
+
+	conf.ExternalServices.Tracing.ComponentStatus = config.ComponentStatus{
+		AppLabel: "tracing",
+		IsCore: false,
+		Namespace: "tracing-system",
+	}
+
+	conf.ExternalServices.Prometheus.ComponentStatus = config.ComponentStatus{
+		AppLabel: "prometheus",
+		IsCore: true,
+		Namespace: "prometheus-system",
+	}
+
 	return conf
 }
