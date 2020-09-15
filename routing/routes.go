@@ -1414,6 +1414,25 @@ func NewRoutes() (r *Routes) {
 			handlers.Iter8Metrics,
 			true,
 		},
+		// swagger:route GET /api/iter8/namespaces/{namespace}/experiments/{name}/yaml
+		// ---
+		// Endpoint to get the analytics metrics
+		//
+		//              Produces:
+		//              - application/json
+		//
+		//              Schemes: http, https
+		//
+		// responses:
+		//              500: internalError
+		//              200: iter8StatusResponse
+		{
+			"Iter8ExperimentGetYaml",
+			"GET",
+			"/api/iter8/namespaces/{namespace}/experiments/{name}/yaml",
+			handlers.Iter8ExperimentGetYaml,
+			true,
+		},
 	}
 
 	return

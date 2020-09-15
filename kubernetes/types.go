@@ -211,7 +211,7 @@ var (
 	// We will add a new extesion API in a similar way as we added the Kubernetes + Istio APIs
 	Iter8GroupVersion = schema.GroupVersion{
 		Group:   "iter8.tools",
-		Version: "v1alpha1",
+		Version: "v1alpha2",
 	}
 	ApiIter8Version = Iter8GroupVersion.Group + "/" + Iter8GroupVersion.Version
 
