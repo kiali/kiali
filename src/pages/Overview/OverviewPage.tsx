@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Button,
   Card,
   CardActions,
   CardBody,
@@ -10,6 +11,7 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
+  Modal,
   Title,
   Tooltip,
   TooltipPosition
@@ -56,9 +58,14 @@ import VirtualList from '../../components/VirtualList/VirtualList';
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import history from '../../app/History';
-import { buildNamespaceInjectionPatch } from '../../components/IstioWizards/WizardActions';
+import {
+  buildGraphAuthorizationPolicy,
+  buildNamespaceInjectionPatch
+} from '../../components/IstioWizards/WizardActions';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
+import GraphDataSource from '../../services/GraphDataSource';
+import { AuthorizationPolicy } from '../../types/IstioObjects';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -126,6 +133,9 @@ type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
   displayMode: OverviewDisplayMode;
+  showConfirmModal: boolean;
+  nsTarget: string;
+  opTarget: string;
 };
 
 type ReduxProps = {
@@ -147,7 +157,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     this.state = {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
-      displayMode: OverviewDisplayMode.EXPAND
+      displayMode: OverviewDisplayMode.EXPAND,
+      showConfirmModal: false,
+      nsTarget: '',
+      opTarget: ''
     };
   }
 
@@ -202,10 +215,15 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           : OverviewDisplayMode.EXPAND;
         // Set state before actually fetching health
         this.setState(
-          {
-            type: type,
-            namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
-            displayMode: displayMode
+          prevState => {
+            return {
+              type: type,
+              namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
+              displayMode: displayMode,
+              showConfirmModal: prevState.showConfirmModal,
+              nsTarget: prevState.nsTarget,
+              opTarget: prevState.opTarget
+            };
           },
           () => {
             this.fetchHealth(isAscending, sortField, type);
@@ -376,12 +394,18 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   fetchValidationChunk(chunk: NamespaceInfo[]) {
     return Promise.all(
       chunk.map(nsInfo => {
-        return API.getNamespaceValidations(nsInfo.name).then(rs => ({ validations: rs.data, nsInfo: nsInfo }));
+        return Promise.all([
+          API.getNamespaceValidations(nsInfo.name),
+          API.getIstioConfig(nsInfo.name, ['authorizationpolicies'], false, '', '')
+        ]).then(results => {
+          return { validations: results[0].data, istioConfig: results[1].data, nsInfo: nsInfo };
+        });
       })
     )
       .then(results => {
         results.forEach(result => {
           result.nsInfo.validations = result.validations;
+          result.nsInfo.istioConfig = result.istioConfig;
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
@@ -507,6 +531,30 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         namespaceActions.push(enableAction);
       }
     }
+    namespaceActions.push({
+      isSeparator: true
+    });
+    const aps = nsInfo.istioConfig?.authorizationPolicies || [];
+    const addAuthorizationAction = {
+      isSeparator: false,
+      title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
+      action: (ns: string) => {
+        if (aps.length === 0) {
+          this.onCreateTrafficPolicies(ns);
+        } else {
+          this.onUpdateTrafficPolicies(ns);
+        }
+      }
+    };
+    const removeAuthorizationAction = {
+      isSeparator: false,
+      title: 'Delete Traffic Policies',
+      action: (ns: string) => this.onDeleteTrafficPolicies(ns)
+    };
+    namespaceActions.push(addAuthorizationAction);
+    if (aps.length > 0) {
+      namespaceActions.push(removeAuthorizationAction);
+    }
     return namespaceActions;
   };
 
@@ -522,6 +570,119 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       });
   };
 
+  onCreateTrafficPolicies = (ns: string) => {
+    this.onAddRemoveAuthorizationPolicy(ns, [], false);
+  };
+
+  onUpdateTrafficPolicies = (ns: string) => {
+    this.setState({
+      showConfirmModal: true,
+      nsTarget: ns,
+      opTarget: 'update'
+    });
+  };
+
+  onDeleteTrafficPolicies = (ns: string) => {
+    this.setState({
+      showConfirmModal: true,
+      nsTarget: ns,
+      opTarget: 'delete'
+    });
+  };
+
+  onAddRemoveAuthorizationPolicy = (
+    ns: string,
+    authorizationPolicies: AuthorizationPolicy[],
+    remove: boolean
+  ): void => {
+    if (authorizationPolicies.length > 0) {
+      this.promises
+        .registerAll(
+          'authorizationPoliciesDelete',
+          authorizationPolicies.map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name))
+        )
+        .then(_ => {
+          if (!remove) {
+            this.createAuthorizationPolicies(ns, this.load);
+          } else {
+            this.load();
+          }
+        })
+        .catch(errorDelete => {
+          if (!errorDelete.isCanceled) {
+            AlertUtils.addError('Could not delete AuthorizationPolicies.', errorDelete);
+          }
+        });
+    } else {
+      if (!remove) {
+        this.createAuthorizationPolicies(ns, this.load);
+      } else {
+        AlertUtils.addInfo('Namespace ' + ns + " doesn't have AuthorizationPolicy config.");
+      }
+    }
+  };
+
+  createAuthorizationPolicies = (ns: string, callback: () => void) => {
+    const graphDataSource = new GraphDataSource();
+    graphDataSource.on('fetchSuccess', () => {
+      const aps = buildGraphAuthorizationPolicy(ns, graphDataSource.graphDefinition);
+      this.promises
+        .registerAll(
+          'authorizationPoliciesCreate',
+          aps.map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap)))
+        )
+        .then(results => {
+          if (results.length > 0) {
+            AlertUtils.add('AuthorizationPolicies created for ' + ns + ' namespace.', 'default', MessageType.SUCCESS);
+          }
+          callback();
+        })
+        .catch(errorCreate => {
+          if (!errorCreate.isCanceled) {
+            AlertUtils.addError('Could not create AuthorizationPolicies.', errorCreate);
+          }
+        });
+    });
+    graphDataSource.on('fetchError', (errorMessage: string | null) => {
+      if (errorMessage !== '') {
+        errorMessage = 'Could not fetch traffic data: ' + errorMessage;
+      } else {
+        errorMessage = 'Could not fetch traffic data.';
+      }
+      AlertUtils.addError(errorMessage);
+    });
+    graphDataSource.fetchForNamespace(this.props.duration, ns);
+  };
+
+  hideConfirmModal = () => {
+    this.setState({
+      showConfirmModal: false,
+      nsTarget: '',
+      opTarget: ''
+    });
+  };
+
+  onConfirmModal = () => {
+    let aps: AuthorizationPolicy[] = [];
+    for (let i = 0; i < this.state.namespaces.length; i++) {
+      const nsInfo = this.state.namespaces[i];
+      if (this.state.namespaces[i].name === this.state.nsTarget) {
+        aps = nsInfo.istioConfig?.authorizationPolicies || [];
+        break;
+      }
+    }
+    const nsTarget = this.state.nsTarget;
+    const remove = this.state.opTarget === 'delete';
+    this.setState(
+      {
+        showConfirmModal: false,
+        nsTarget: '',
+        opTarget: ''
+      },
+      () => this.onAddRemoveAuthorizationPolicy(nsTarget, aps, remove)
+    );
+  };
+
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
@@ -530,6 +691,10 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;
     });
+    const modalAction =
+      this.state.opTarget.length > 0
+        ? this.state.opTarget.charAt(0).toLocaleUpperCase() + this.state.opTarget.slice(1)
+        : '';
     return (
       <>
         <div className={overviewHeader}>
@@ -605,6 +770,26 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             </EmptyState>
           </div>
         )}
+        <Modal
+          isSmall={true}
+          title={'Confirm ' + modalAction + ' Traffic Policies ?'}
+          isOpen={this.state.showConfirmModal}
+          onClose={this.hideConfirmModal}
+          actions={[
+            <Button key="cancel" variant="secondary" onClick={this.hideConfirmModal}>
+              Cancel
+            </Button>,
+            <Button key="confirm" variant="danger" onClick={this.onConfirmModal}>
+              {modalAction}
+            </Button>
+          ]}
+        >
+          {'Namespace ' +
+            this.state.nsTarget +
+            ' has existing AuthorizationPolicy objects. Do you want to ' +
+            this.state.opTarget +
+            ' them ?'}
+        </Modal>
       </>
     );
   }

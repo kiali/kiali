@@ -196,6 +196,8 @@ export interface GraphEdgeData {
   traffic?: ProtocolTraffic;
   responseTime?: number;
   isMTLS?: number;
+  sourcePrincipal?: string;
+  destPrincipal?: string;
 }
 
 export interface GraphNodeWrapper {

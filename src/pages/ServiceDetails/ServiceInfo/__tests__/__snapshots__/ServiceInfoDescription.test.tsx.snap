@@ -401,6 +401,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           "fetchDataForNamespaces": [Function],
           "fetchDataForNode": [Function],
           "fetchForApp": [Function],
+          "fetchForNamespace": [Function],
           "fetchForService": [Function],
           "fetchForWorkload": [Function],
           "fetchGraphData": [Function],

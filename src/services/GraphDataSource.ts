@@ -240,6 +240,13 @@ export default class GraphDataSource {
     this.fetchGraphData(params);
   };
 
+  public fetchForNamespace = (duration: DurationInSeconds, namespace: string) => {
+    const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.graphType = GraphType.WORKLOAD;
+    params.showSecurity = true;
+    this.fetchGraphData(params);
+  };
+
   // Private methods
 
   private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {

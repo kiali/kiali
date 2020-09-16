@@ -155,6 +155,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
           "fetchDataForNamespaces": [Function],
           "fetchDataForNode": [Function],
           "fetchForApp": [Function],
+          "fetchForNamespace": [Function],
           "fetchForService": [Function],
           "fetchForWorkload": [Function],
           "fetchGraphData": [Function],

@@ -45,5 +45,36 @@ exports[`Overview page renders initial layout 1`] = `
       </EmptyStateBody>
     </EmptyState>
   </div>
+  <Modal
+    actions={
+      Array [
+        <Unknown
+          onClick={[Function]}
+          variant="secondary"
+        >
+          Cancel
+        </Unknown>,
+        <Unknown
+          onClick={[Function]}
+          variant="danger"
+        >
+          
+        </Unknown>,
+      ]
+    }
+    appendTo={<body />}
+    ariaDescribedById=""
+    className=""
+    hideTitle={false}
+    isFooterLeftAligned={false}
+    isLarge={false}
+    isOpen={false}
+    isSmall={true}
+    onClose={[Function]}
+    showClose={true}
+    title="Confirm  Traffic Policies ?"
+  >
+    Namespace  has existing AuthorizationPolicy objects. Do you want to  them ?
+  </Modal>
 </Fragment>
 `;

@@ -53,6 +53,7 @@ const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
 mockAPIToPromise('getNamespaceMetrics', null, false);
 mockAPIToPromise('getNamespaceTls', null, false);
 mockAPIToPromise('getNamespaceValidations', null, false);
+mockAPIToPromise('getIstioConfig', null, false);
 
 let mounted: ReactWrapper<any, any> | null;
 

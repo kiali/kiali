@@ -44,6 +44,7 @@ import { Workload } from '../../types/Workload';
 import { ThreeScaleCredentialsState } from './ThreeScaleCredentials';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
+import { GraphDefinition, NodeType } from '../../types/Graph';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
@@ -986,6 +987,89 @@ export const buildAuthorizationPolicy = (
     ap.spec.action = state.action;
   }
   return ap;
+};
+
+export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDefinition): AuthorizationPolicy[] => {
+  const denyAll: AuthorizationPolicy = {
+    metadata: {
+      name: 'deny-all-' + namespace,
+      namespace: namespace,
+      labels: {
+        [KIALI_WIZARD_LABEL]: 'AuthorizationPolicy'
+      }
+    },
+    spec: {}
+  };
+  const aps: AuthorizationPolicy[] = [denyAll];
+
+  if (graph.elements.nodes) {
+    for (let i = 0; i < graph.elements.nodes.length; i++) {
+      const node = graph.elements.nodes[i];
+      if (
+        node.data.namespace === namespace &&
+        node.data.nodeType === NodeType.WORKLOAD &&
+        node.data.workload &&
+        node.data.app &&
+        node.data.version
+      ) {
+        const ap: AuthorizationPolicy = {
+          metadata: {
+            name: node.data.workload,
+            namespace: namespace,
+            labels: {
+              [KIALI_WIZARD_LABEL]: 'AuthorizationPolicy'
+            }
+          },
+          spec: {
+            selector: {
+              matchLabels: {
+                app: node.data.app,
+                version: node.data.version
+              }
+            },
+            rules: [
+              {
+                from: [
+                  {
+                    source: {
+                      principals: []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        };
+        let principalsLen = 0;
+        if (graph.elements.edges) {
+          for (let j = 0; j < graph.elements.edges.length; j++) {
+            const edge = graph.elements.edges[j];
+            if (node.data.id === edge.data.target) {
+              if (
+                ap.spec.rules &&
+                ap.spec.rules[0] &&
+                ap.spec.rules[0].from &&
+                ap.spec.rules[0].from[0] &&
+                ap.spec.rules[0].from[0].source &&
+                ap.spec.rules[0].from[0].source.principals &&
+                edge.data.sourcePrincipal
+              ) {
+                const principal = edge.data.sourcePrincipal.startsWith('spiffe://')
+                  ? edge.data.sourcePrincipal.substring(9)
+                  : edge.data.sourcePrincipal;
+                ap.spec.rules[0].from[0].source.principals.push(principal);
+                principalsLen++;
+              }
+            }
+          }
+        }
+        if (principalsLen > 0) {
+          aps.push(ap);
+        }
+      }
+    }
+  }
+  return aps;
 };
 
 export const buildGateway = (name: string, namespace: string, state: GatewayState): Gateway => {
