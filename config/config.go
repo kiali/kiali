@@ -515,7 +515,6 @@ func (conf *Config) AddHealthDefault() {
 						Code:      "^-$", // no response is indicated with a "-" code
 						Protocol:  "http|grpc",
 						Direction: ".*",
-						Degraded:  0,
 						Failure:   10,
 					},
 				},

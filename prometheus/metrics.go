@@ -14,6 +14,11 @@ import (
 	"github.com/kiali/kiali/status"
 )
 
+const (
+	regexGrpcResponseStatusErr = "^[1-9]$|^1[0-6]$"
+	regexResponseCodeErr       = "^0$|^[4-5]\\d\\d$"
+)
+
 func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
 	labels, labelsError := buildLabelStrings(q)
 	grouping := strings.Join(q.ByLabels, ",")
@@ -61,7 +66,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 
 	// both http and grpc requests can suffer from no response (response_code=0) or an http error
 	// (response_code=4xx,5xx), and so we always perform a query against response_code:
-	httpLabels := append(labels, `response_code=~"^0$|^[4-5]\\d\\d$"`)
+	httpLabels := append(labels, fmt.Sprintf(`response_code=~"%s"`, regexResponseCodeErr))
 	errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
 
 	// if necessary also look for grpc errors. note that the grpc test intentionally avoids
@@ -70,7 +75,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 	// non-existent label match everything, but positive tests match nothing. So, we stay positive.
 	// furthermore, make sure we only count grpc errors with successful http status.
 	if protocol != "http" {
-		grpcLabels := append(labels, `grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"`)
+		grpcLabels := append(labels, fmt.Sprintf(`grpc_response_status=~"%s",response_code!~"%s"`, regexGrpcResponseStatusErr, regexResponseCodeErr))
 		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
 	}
 
