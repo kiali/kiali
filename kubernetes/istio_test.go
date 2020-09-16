@@ -9,22 +9,6 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-func TestGetIstioConfigMap(t *testing.T) {
-	conf := config.NewConfig()
-
-	// When Revision is empty ("")
-	conf.ExternalServices.Istio.Revision = ""
-	config.Set(conf)
-
-	assert.Equal(t, "istio", GetIstioConfigMapName())
-
-	// When Revision is not empty
-	conf.ExternalServices.Istio.Revision = "canary"
-	config.Set(conf)
-
-	assert.Equal(t, "istio-canary", GetIstioConfigMapName())
-}
-
 func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
