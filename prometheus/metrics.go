@@ -16,7 +16,7 @@ import (
 
 const (
 	regexGrpcResponseStatusErr = "^[1-9]$|^1[0-6]$"
-	regexResponseCodeErr       = "^0$|^[4-5]\\d\\d$"
+	regexResponseCodeErr       = "^0$|^[4-5]\\\\d\\\\d$"
 )
 
 func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
