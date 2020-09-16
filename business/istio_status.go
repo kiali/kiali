@@ -65,11 +65,7 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 	nss := map[string]bool{}
 	deps := make([]apps_v1.Deployment, 0)
 
-	comNs := config.Get().IstioComponentNamespaces
-	// In case there isn't any namespace set up, check the control plane namespace
-	if comNs == nil || len(comNs) == 0 {
-		comNs = map[string]string{"istiod": config.Get().IstioNamespace}
-	}
+	comNs := getComponentNamespaces()
 
 	depsChan := make(chan []apps_v1.Deployment, len(comNs))
 	errChan := make(chan error, len(comNs))
@@ -115,6 +111,36 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 	}
 
 	return deps, nil
+}
+
+func getComponentNamespaces() []string {
+	nss := make([]string, 0)
+
+	// By default, add the istio control plane namespace
+	nss = append(nss, config.Get().IstioNamespace)
+
+	// Adding addons namespaces
+	externalServices := config.Get().ExternalServices
+	if externalServices.Prometheus.ComponentStatus.Namespace != "" {
+		nss = append(nss, externalServices.Prometheus.ComponentStatus.Namespace)
+	}
+
+	if externalServices.Grafana.ComponentStatus.Namespace != "" {
+		nss = append(nss, externalServices.Grafana.ComponentStatus.Namespace)
+	}
+
+	if externalServices.Tracing.ComponentStatus.Namespace != "" {
+		nss = append(nss, externalServices.Tracing.ComponentStatus.Namespace)
+	}
+
+	// Adding Istio Components namespaces
+	for _, cmp := range externalServices.Istio.ComponentStatuses.Components {
+		if cmp.Namespace != "" {
+			nss = append(nss, cmp.Namespace)
+		}
+	}
+
+	return nss
 }
 
 func istioCoreComponents() map[string]bool {

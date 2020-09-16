@@ -156,8 +156,9 @@ type ComponentStatuses struct {
 }
 
 type ComponentStatus struct {
-	AppLabel string `yaml:"app_label,omitempty"`
-	IsCore   bool   `yaml:"is_core,omitempty"`
+	AppLabel  string `yaml:"app_label,omitempty"`
+	IsCore    bool   `yaml:"is_core,omitempty"`
+	Namespace string `yaml:"namespace,omitempty"`
 }
 
 // ThreeScaleConfig describes configuration used for 3Scale adapter
