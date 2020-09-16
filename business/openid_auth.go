@@ -103,19 +103,19 @@ func ExtractOpenIdCallbackParams(r *http.Request) (params *OpenIdCallbackParams,
 	return
 }
 
-//func CheckOpenIdImplicitFlowParams(params *OpenIdCallbackParams) string {
-//	if params.NonceHash == nil {
-//		return "No nonce code present. Login window timed out."
-//	}
-//	if params.State == "" {
-//		return "State parameter is empty or invalid."
-//	}
-//	if params.IdToken == "" {
-//		return "Token is empty or invalid."
-//	}
-//
-//	return ""
-//}
+func CheckOpenIdImplicitFlowParams(params *OpenIdCallbackParams) string {
+	if params.NonceHash == nil {
+		return "No nonce code present. Login window timed out."
+	}
+	if params.State == "" {
+		return "State parameter is empty or invalid."
+	}
+	if params.IdToken == "" {
+		return "Token is empty or invalid."
+	}
+
+	return ""
+}
 
 func CheckOpenIdAuthorizationCodeFlowParams(params *OpenIdCallbackParams) string {
 	if params.NonceHash == nil {
@@ -166,8 +166,7 @@ func ParseOpenIdToken(openIdParams *OpenIdCallbackParams) error {
 		openIdParams.ExpiresOn = time.Unix(expiresInNumber, 0)
 	}
 
-	// Now that we know that the OpenId token is valid, parse/decode it to extract
-	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	// Extract the name of the user from the id_token. The "subject" is passed to the front-end to be displayed.
 	openIdParams.Subject = "OpenId User" // Set a default value
 	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
 		openIdParams.Subject = userClaim.(string)
@@ -409,6 +408,7 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 	}
 
 	if response.StatusCode != 200 {
+		log.Debugf("OpenId token request failed with response: %s", string(rawTokenResponse))
 		return fmt.Errorf("request failed (HTTP response status = %s)", response.Status)
 	}
 
