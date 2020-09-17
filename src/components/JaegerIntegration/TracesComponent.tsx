@@ -350,6 +350,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                         errorFetchTraces={this.state.jaegerErrors}
                         onClick={traceId => this.onClickScatter(traceId)}
                         errorTraces={true}
+                        selectedTrace={this.state.selectedTrace}
                       />
                     </GridItem>
                     <GridItem span={12}>

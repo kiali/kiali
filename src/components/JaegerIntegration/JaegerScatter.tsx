@@ -17,6 +17,7 @@ interface JaegerScatterProps {
   fixedTime: boolean;
   errorTraces?: boolean;
   errorFetchTraces?: JaegerError[];
+  selectedTrace?: JaegerTrace;
 }
 
 const ONE_MILLISECOND = 1000000;
@@ -41,8 +42,14 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
   render() {
     const tracesRaw: Datapoint[] = [];
     const tracesError: Datapoint[] = [];
+    let traces = this.props.traces;
+    // Add currently selected trace in list in case it wasn't
+    if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
+      traces.push(this.props.selectedTrace);
+    }
 
-    this.props.traces.forEach(trace => {
+    traces.forEach(trace => {
+      const isSelected = this.props.selectedTrace && trace.traceID === this.props.selectedTrace.traceID;
       const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
       const traceItem = {
         x: new Date(trace.startTime / 1000),
@@ -51,19 +58,19 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
           0,
           7
         )})`,
-        color: PfColors.Blue200,
+        color: isSelected ? PfColors.Blue500 : PfColors.Blue200,
         unit: 'seconds',
         id: trace.traceID,
         size: trace.spans.length + MINIMAL_SIZE
       };
       if (traceError) {
-        traceItem.color = PfColors.Red200;
+        traceItem.color = isSelected ? PfColors.Red500 : PfColors.Red200;
         tracesError.push(traceItem);
       } else {
         tracesRaw.push(traceItem);
       }
     });
-    const traces = {
+    const successTraces = {
       datapoints: tracesRaw,
       color: (({ datum }) => datum.color) as any,
       legendItem: makeLegend('Traces', PfColors.Blue200)
@@ -79,7 +86,7 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
       this.renderFetchEmtpy('Error fetching Traces in Tracing tool', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
       <ChartWithLegend<Datapoint, JaegerLineInfo>
-        data={[traces, errorTraces]}
+        data={[successTraces, errorTraces]}
         fill={true}
         unit="seconds"
         seriesComponent={<ChartScatter />}
