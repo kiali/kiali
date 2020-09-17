@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	regexpHTTPFailure, _ = regexp.Compile(`^[4|5]\d\d$`)
+	regexpHTTPFailure, _ = regexp.Compile(`^0$|^[4|5]\d\d$`) // include 0, Istio's flag for no response received
 )
 
 // ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime

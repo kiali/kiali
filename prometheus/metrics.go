@@ -14,6 +14,11 @@ import (
 	"github.com/kiali/kiali/status"
 )
 
+const (
+	regexGrpcResponseStatusErr = "^[1-9]$|^1[0-6]$"
+	regexResponseCodeErr       = "^0$|^[4-5]\\\\d\\\\d$"
+)
+
 func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
 	labels, labelsError := buildLabelStrings(q)
 	grouping := strings.Join(q.ByLabels, ",")
@@ -58,16 +63,20 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 
 	errors := []string{}
 	protocol := strings.ToLower(q.RequestProtocol)
-	if protocol == "" || protocol == "grpc" {
-		// this is intentionally not `grpc_response_status!="0"`. We need to be backward compatible and
-		// handle the case where grpc_response_status does not exist.  In Prometheus, negative tests on a
-		// non-existent label match everything, but positive tests match nothing. So, we stay positive.
-		grpcLabels := append(labels, `grpc_response_status=~"^[1-9]$|^1[0-6]$"`)
+
+	// both http and grpc requests can suffer from no response (response_code=0) or an http error
+	// (response_code=4xx,5xx), and so we always perform a query against response_code:
+	httpLabels := append(labels, fmt.Sprintf(`response_code=~"%s"`, regexResponseCodeErr))
+	errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
+
+	// if necessary also look for grpc errors. note that the grpc test intentionally avoids
+	// `grpc_response_status!="0"`. We need to be backward compatible and handle the case where
+	// grpc_response_status does not exist, or if it is simply unset. In Prometheus, negative tests on a
+	// non-existent label match everything, but positive tests match nothing. So, we stay positive.
+	// furthermore, make sure we only count grpc errors with successful http status.
+	if protocol != "http" {
+		grpcLabels := append(labels, fmt.Sprintf(`grpc_response_status=~"%s",response_code!~"%s"`, regexGrpcResponseStatusErr, regexResponseCodeErr))
 		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
-	}
-	if protocol == "" || protocol == "http" {
-		httpLabels := append(labels, `response_code=~"^[4-5]\\d\\d$"`)
-		errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
 	}
 
 	return full, errors
@@ -207,7 +216,8 @@ func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
 }
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.
-// Uses source telemetry unless working on the Istio namespace.
+// Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
+// should be used mainly for calculating ratios (e.g total rates / error rates)
 func getAllRequestRates(api prom_v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic originating outside the namespace to destinations inside the namespace
 	lbl := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s"`, namespace, namespace)
@@ -227,7 +237,8 @@ func getAllRequestRates(api prom_v1.API, namespace string, queryTime time.Time, 
 }
 
 // getNamespaceServicesRequestRates retrieves traffic rates for requests entering or internal to the namespace.
-// Uses source telemetry unless working on the Istio namespace.
+// Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
+// should be used mainly for calculating ratios (e.g total rates / error rates)
 func getNamespaceServicesRequestRates(api prom_v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic for the namespace services
 	lblNs := fmt.Sprintf(`destination_service_namespace="%s"`, namespace)
@@ -238,6 +249,9 @@ func getNamespaceServicesRequestRates(api prom_v1.API, namespace string, queryTi
 	return ns, nil
 }
 
+// getServiceRequestRates retrieves traffic rates for requests entering, or internal to the namespace, for a specific service name
+// Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
+// should be used mainly for calculating ratios (e.g total rates / error rates)
 func getServiceRequestRates(api prom_v1.API, namespace, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s"`, service, namespace)
 	in, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
@@ -247,6 +261,9 @@ func getServiceRequestRates(api prom_v1.API, namespace, service string, queryTim
 	return in, nil
 }
 
+// getItemRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace, for a specific destinatation_<itemLabelSuffix> value
+// Note that it does not discriminate on "reporter", so rates can be inflated due to duplication, and therefore
+// should be used mainly for calculating ratios (e.g total rates / error rates)
 func getItemRequestRates(api prom_v1.API, namespace, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
 	lblIn := fmt.Sprintf(`destination_workload_namespace="%s",destination_%s="%s"`, namespace, itemLabelSuffix, item)
 	lblOut := fmt.Sprintf(`source_workload_namespace="%s",source_%s="%s"`, namespace, itemLabelSuffix, item)
@@ -262,7 +279,7 @@ func getItemRequestRates(api prom_v1.API, namespace, item, itemLabelSuffix strin
 }
 
 func getRequestRatesForLabel(api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
-	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s])", labels, ratesInterval)
+	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, err := api.Query(context.Background(), query, time)
 	if err != nil {

@@ -1703,6 +1703,7 @@ func TestServiceNodeGraph(t *testing.T) {
 // - bad dest telemetry filtering
 // - bad source telemetry filtering
 // - workload -> egress -> service-entry traffic
+// - 0 response code (no response)
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
@@ -1863,6 +1864,36 @@ func TestComplexGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
+	q8m5 := model.Metric{ // no response http
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "unknown",
+		"destination_service":            "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_service_name":       "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "http",
+		"response_code":                  "0",
+		"response_flags":                 "DC"}
+	q8m6 := model.Metric{ // no response grpc
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "unknown",
+		"destination_service":            "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_service_name":       "istio-egressgateway.istio-system.svc.cluster.local",
+		"destination_workload_namespace": "unknown",
+		"destination_workload":           "unknown",
+		"destination_app":                "unknown",
+		"destination_version":            "unknown",
+		"request_protocol":               "grpc",
+		"response_code":                  "0", // note, grpc_response_status is not reported for grpc with no response
+		"response_flags":                 "DC"}
 	v8 := model.Vector{
 		&model.Sample{
 			Metric: q8m0,
@@ -1878,7 +1909,13 @@ func TestComplexGraph(t *testing.T) {
 			Value:  300},
 		&model.Sample{
 			Metric: q8m4,
-			Value:  400}}
+			Value:  400},
+		&model.Sample{
+			Metric: q8m5,
+			Value:  500},
+		&model.Sample{
+			Metric: q8m6,
+			Value:  600}}
 
 	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v9 := model.Vector{}

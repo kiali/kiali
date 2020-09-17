@@ -74,14 +74,24 @@ func handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName stri
 	return destSvcNs, destSvcName, false
 }
 
-// HandleResponseCode returns either the HTTP response code or the GRPC response status.  GRPC response
-// status was added upstream in Istio 1.5 and downstream OSSM 1.1.  We support it here in a backward compatible
-// way.  When protocol is not GRPC, or if the version running does not supply the GRPC status, just return the
-// HTTP code.  Also return the HTTP code In the rare case that protocol is GRPC but the HTTP transport fails. (I
-// have never seen this happen).  Otherwise, return the GRPC status.
-func HandleResponseCode(protocol, httpResponseCode string, grpcResponseStatusOk bool, grpcResponseStatus string) string {
-	if protocol != graph.GRPC.Name || graph.IsHTTPErr(httpResponseCode) || !grpcResponseStatusOk {
-		return httpResponseCode
+// HandleResponseCode determines the proper response code based on how istio has set the response_code and
+// grpc_response_status attributes. grpc_response_status was added upstream in Istio 1.5 and downstream
+// in OSSM 1.1.  We support it here in a backward compatible way.
+// return "-" for requests that did not receive a response, regardless of protocol
+// return HTTP response code when:
+//   - protocol is not GRPC
+//   - the version running does not supply the GRPC status
+//   - the protocol is GRPC but the HTTP transport fails (i.e. an HTTP error is reported, rare).
+// return the GRPC status, otherwise.
+func HandleResponseCode(protocol, responseCode string, grpcResponseStatusOk bool, grpcResponseStatus string) string {
+	// Istio sets response_code to 0 to indicate "no response" regardless of protocol.
+	if responseCode == "0" {
+		return "-"
+	}
+
+	// when not "0" responseCode holds the HTTP response status code for HTTP or GRPC requests
+	if protocol != graph.GRPC.Name || graph.IsHTTPErr(responseCode) || !grpcResponseStatusOk {
+		return responseCode
 	}
 
 	return grpcResponseStatus
