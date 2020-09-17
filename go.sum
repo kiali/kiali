@@ -85,6 +85,8 @@ github.com/kiali/k-charted v0.6.1-rc4 h1:Phi6LkupsgFCiXlqPVdIt9NlUTdcNNMRzWSx1y8
 github.com/kiali/k-charted v0.6.1-rc4/go.mod h1:I4r4ETMi0fyi6ljX2VCYy16g/a3Vpx5oET9xXkyXmbY=
 github.com/kiali/k-charted v0.6.1 h1:IDGwtnPDvUN6rHoxfhbA8XiHZdidFo+c5KZ8eLbl51s=
 github.com/kiali/k-charted v0.6.1/go.mod h1:I4r4ETMi0fyi6ljX2VCYy16g/a3Vpx5oET9xXkyXmbY=
+github.com/kiali/k-charted v0.6.2 h1:Suqtcml0qPXRxpzBZRNs7CFhilbgJrTiUU2yK+734aI=
+github.com/kiali/k-charted v0.6.2/go.mod h1:I4r4ETMi0fyi6ljX2VCYy16g/a3Vpx5oET9xXkyXmbY=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
