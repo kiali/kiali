@@ -28,7 +28,6 @@ import {
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TITLES,
-  WIZARD_UPDATE_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
   ServiceWizardProps,
   ServiceWizardState,
@@ -459,8 +458,8 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         title={
           this.props.type.length > 0
             ? this.props.update
-              ? WIZARD_UPDATE_TITLES[this.props.type]
-              : WIZARD_TITLES[this.props.type]
+              ? 'Update ' + WIZARD_TITLES[this.props.type]
+              : 'Create ' + WIZARD_TITLES[this.props.type]
             : ''
         }
         isOpen={this.state.showWizard}

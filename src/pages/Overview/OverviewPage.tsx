@@ -469,46 +469,62 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     // So we keep this wrapped in a showActions function.
     const namespaceActions: OverviewNamespaceAction[] = [
       {
+        isGroup: true,
         isSeparator: false,
-        title: 'Show Graph',
-        action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
-      },
-      {
-        isSeparator: false,
-        title: 'Show Applications',
-        action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
-      },
-      {
-        isSeparator: false,
-        title: 'Show Workloads',
-        action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
-      },
-      {
-        isSeparator: false,
-        title: 'Show Services',
-        action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
-      },
-      {
-        isSeparator: false,
-        title: 'Show Istio Config',
-        action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
+        title: 'Show',
+        children: [
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Graph',
+            action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Applications',
+            action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Workloads',
+            action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Services',
+            action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
+          },
+          {
+            isGroup: true,
+            isSeparator: false,
+            title: 'Istio Config',
+            action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
+          }
+        ]
       }
     ];
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
       namespaceActions.push({
+        isGroup: false,
         isSeparator: true
       });
       const enableAction = {
+        isGroup: false,
         isSeparator: false,
         title: 'Enable Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, true, false)
       };
       const disableAction = {
+        isGroup: false,
         isSeparator: false,
         title: 'Disable Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, false)
       };
       const removeAction = {
+        isGroup: false,
         isSeparator: false,
         title: 'Remove Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, true)
@@ -532,10 +548,12 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       }
     }
     namespaceActions.push({
+      isGroup: false,
       isSeparator: true
     });
     const aps = nsInfo.istioConfig?.authorizationPolicies || [];
     const addAuthorizationAction = {
+      isGroup: false,
       isSeparator: false,
       title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
       action: (ns: string) => {
@@ -547,6 +565,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       }
     };
     const removeAuthorizationAction = {
+      isGroup: false,
       isSeparator: false,
       title: 'Delete Traffic Policies',
       action: (ns: string) => this.onDeleteTrafficPolicies(ns)

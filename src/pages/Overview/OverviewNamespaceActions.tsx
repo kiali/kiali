@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownSeparator, KebabToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownSeparator, KebabToggle } from '@patternfly/react-core';
 
 export type OverviewNamespaceAction = {
+  isGroup: boolean;
   isSeparator: boolean;
   title?: string;
+  children?: OverviewNamespaceAction[];
   action?: (namespace: string) => void;
 };
 
@@ -42,6 +44,25 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
     const namespaceActions = this.props.actions.map((action, i) => {
       if (action.isSeparator) {
         return <DropdownSeparator key={'separator_' + i} />;
+      }
+      if (action.isGroup && action.children) {
+        return (
+          <DropdownGroup
+            key={'group_' + i}
+            label={action.title}
+            className="kiali-group-menu"
+            children={action.children.map((subaction, j) => {
+              return (
+                <DropdownItem
+                  key={'subaction_' + i + '_' + j}
+                  onClick={() => (subaction.action ? subaction.action(this.props.namespace) : undefined)}
+                >
+                  {subaction.title}
+                </DropdownItem>
+              );
+            })}
+          />
+        );
       } else if (action.title && action.action) {
         return (
           <DropdownItem

@@ -66,18 +66,11 @@ export const SERVICE_WIZARD_ACTIONS = [
 ];
 
 export const WIZARD_TITLES = {
-  [WIZARD_REQUEST_ROUTING]: 'Create Request Routing',
-  [WIZARD_FAULT_INJECTION]: 'Create Fault Injection',
-  [WIZARD_TRAFFIC_SHIFTING]: 'Create Traffic Shifting',
-  [WIZARD_REQUEST_TIMEOUTS]: 'Create Request Timeouts',
+  [WIZARD_REQUEST_ROUTING]: 'Request Routing',
+  [WIZARD_FAULT_INJECTION]: 'Fault Injection',
+  [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
+  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts',
   [WIZARD_THREESCALE_LINK]: 'Link a 3scale Account'
-};
-
-export const WIZARD_UPDATE_TITLES = {
-  [WIZARD_REQUEST_ROUTING]: 'Update Request Routing',
-  [WIZARD_FAULT_INJECTION]: 'Update Fault Injection',
-  [WIZARD_TRAFFIC_SHIFTING]: 'Update Traffic Shifting',
-  [WIZARD_REQUEST_TIMEOUTS]: 'Update Request Timeouts'
 };
 
 export type ServiceWizardProps = {

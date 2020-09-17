@@ -23,6 +23,15 @@ const graphContextMenuTitleStyle = style({
   borderBottom: '1px solid black'
 });
 
+const graphContextMenuSubTitleStyle = style({
+  textAlign: 'left',
+  fontSize: '14px',
+  color: '#737679',
+  fontWeight: 700,
+  paddingTop: 2,
+  paddingBottom: 4
+});
+
 const graphContextMenuItemStyle = style({
   textAlign: 'left',
   fontSize: '12px',
@@ -104,6 +113,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
         <div className={graphContextMenuTitleStyle}>
           <strong>{name}</strong>
         </div>
+        <div className={graphContextMenuSubTitleStyle}>Show</div>
         {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
       </div>
     );
@@ -143,22 +153,22 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
   const detailsPageUrl = makeDetailsPageUrl(namespace, type, name);
   const options: ContextMenuOption[] = [];
 
-  options.push({ text: 'Show Details', url: detailsPageUrl });
+  options.push({ text: 'Details', url: detailsPageUrl });
   if (type !== Paths.SERVICEENTRIES) {
-    options.push({ text: 'Show Traffic', url: `${detailsPageUrl}?tab=traffic` });
+    options.push({ text: 'Traffic', url: `${detailsPageUrl}?tab=traffic` });
     if (type === Paths.WORKLOADS) {
-      options.push({ text: 'Show Logs', url: `${detailsPageUrl}?tab=logs` });
+      options.push({ text: 'Logs', url: `${detailsPageUrl}?tab=logs` });
     }
     options.push({
-      text: 'Show Inbound Metrics',
+      text: 'Inbound Metrics',
       url: `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`
     });
     if (type !== Paths.SERVICES) {
-      options.push({ text: 'Show Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
+      options.push({ text: 'Outbound Metrics', url: `${detailsPageUrl}?tab=out_metrics` });
     }
     if (type === Paths.APPLICATIONS && jaegerInfo && jaegerInfo.enabled) {
       if (jaegerInfo.integration) {
-        options.push({ text: 'Show Traces', url: `${detailsPageUrl}?tab=traces` });
+        options.push({ text: 'Traces', url: `${detailsPageUrl}?tab=traces` });
       } else if (jaegerInfo.url) {
         options.push({
           text: 'Show Traces',

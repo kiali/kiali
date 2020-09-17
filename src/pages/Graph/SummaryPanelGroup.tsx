@@ -22,7 +22,7 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { Dropdown, DropdownPosition, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } from '@patternfly/react-core';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 
 type SummaryPanelGroupMetricsState = {
@@ -113,13 +113,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const serviceList = this.renderServiceList(group);
     const workloadList = this.renderWorkloadList(group);
 
-    const actions = getOptions(nodeData).map(o => {
-      return (
-        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text}
-        </DropdownItem>
-      );
-    });
+    const actions = [
+      <DropdownGroup
+        label="Show"
+        className="kiali-group-menu"
+        children={getOptions(nodeData).map(o => {
+          return (
+            <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
+              {o.text}
+            </DropdownItem>
+          );
+        })}
+      />
+    ];
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
@@ -134,6 +140,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               isOpen={this.state.isOpen}
               position={DropdownPosition.right}
               toggle={<KebabToggle id="summary-group-kebab" onToggle={this.onToggleActions} />}
+              isGrouped={true}
             />
           </div>
           <div>{renderHealth(this.state.health)}</div>

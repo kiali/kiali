@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   Button,
   Dropdown,
+  DropdownGroup,
   DropdownItem,
   DropdownPosition,
   DropdownSeparator,
@@ -24,7 +25,6 @@ import {
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TITLES,
-  WIZARD_UPDATE_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS
 } from './WizardActions';
@@ -282,7 +282,7 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
             isDisabled={!enabledItem}
             onClick={() => this.onAction(eventKey)}
           >
-            {updateLabel === eventKey ? WIZARD_UPDATE_TITLES[eventKey] : WIZARD_TITLES[eventKey]}
+            {WIZARD_TITLES[eventKey]}
           </DropdownItem>
         );
         return !enabledItem
@@ -321,7 +321,14 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
     var items: any[] = [];
     const updateLabel = this.getVSWizardLabel();
     if (this.canCreate() || this.canUpdate()) {
-      items = items.concat(SERVICE_WIZARD_ACTIONS.map(action => this.renderDropdownItem(action, updateLabel)));
+      items = [
+        <DropdownGroup
+          key={'group_create'}
+          label={updateLabel === '' ? 'Create' : 'Update'}
+          className="kiali-group-menu"
+          children={SERVICE_WIZARD_ACTIONS.map(action => this.renderDropdownItem(action, updateLabel))}
+        />
+      ];
     }
     items.push(<DropdownSeparator key="actions_separator" />);
     if (this.canDelete()) {

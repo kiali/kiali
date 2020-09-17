@@ -14,7 +14,7 @@ import { Health } from '../../types/Health';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { Dropdown, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, KebabToggle, Tab } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import SummaryPanelNodeTraces from './SummaryPanelNodeTraces';
@@ -81,13 +81,19 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       this.props.jaegerState.info.enabled &&
       this.props.jaegerState.info.integration;
 
-    const actions = getOptions(nodeData, this.props.jaegerState.info).map(o => {
-      return (
-        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text}
-        </DropdownItem>
-      );
-    });
+    const actions = [
+      <DropdownGroup
+        label="Show"
+        className="kiali-group-menu"
+        children={getOptions(nodeData).map(o => {
+          return (
+            <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
+              {o.text}
+            </DropdownItem>
+          );
+        })}
+      />
+    ];
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
