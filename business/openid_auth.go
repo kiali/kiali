@@ -63,7 +63,20 @@ func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams) *config.IanaClaims
 	}
 }
 
-func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params *OpenIdCallbackParams, err error) {
+func CallbackCleanup(w http.ResponseWriter) {
+	// Delete the nonce cookie since we no longer need it.
+	deleteNonceCookie := http.Cookie{
+		Name:     OpenIdNonceCookieName,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteNonceCookie)
+}
+
+func ExtractOpenIdCallbackParams(r *http.Request) (params *OpenIdCallbackParams, err error) {
 	params = &OpenIdCallbackParams{}
 
 	// Get the nonce code hash
@@ -87,33 +100,22 @@ func ExtractOpenIdCallbackParams(w http.ResponseWriter, r *http.Request) (params
 		params.State = r.Form.Get("state")
 	}
 
-	// Cleanup: Delete the nonce cookie since we no longer need it.
-	deleteNonceCookie := http.Cookie{
-		Name:     OpenIdNonceCookieName,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-		Value:    "",
-	}
-	http.SetCookie(w, &deleteNonceCookie)
-
 	return
 }
 
-//func CheckOpenIdImplicitFlowParams(params *OpenIdCallbackParams) string {
-//	if params.NonceHash == nil {
-//		return "No nonce code present. Login window timed out."
-//	}
-//	if params.State == "" {
-//		return "State parameter is empty or invalid."
-//	}
-//	if params.IdToken == "" {
-//		return "Token is empty or invalid."
-//	}
-//
-//	return ""
-//}
+func CheckOpenIdImplicitFlowParams(params *OpenIdCallbackParams) string {
+	if params.NonceHash == nil {
+		return "No nonce code present. Login window timed out."
+	}
+	if params.State == "" {
+		return "State parameter is empty or invalid."
+	}
+	if params.IdToken == "" {
+		return "Token is empty or invalid."
+	}
+
+	return ""
+}
 
 func CheckOpenIdAuthorizationCodeFlowParams(params *OpenIdCallbackParams) string {
 	if params.NonceHash == nil {
@@ -164,8 +166,7 @@ func ParseOpenIdToken(openIdParams *OpenIdCallbackParams) error {
 		openIdParams.ExpiresOn = time.Unix(expiresInNumber, 0)
 	}
 
-	// Now that we know that the OpenId token is valid, parse/decode it to extract
-	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	// Extract the name of the user from the id_token. The "subject" is passed to the front-end to be displayed.
 	openIdParams.Subject = "OpenId User" // Set a default value
 	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
 		openIdParams.Subject = userClaim.(string)
@@ -378,11 +379,24 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	// Exchange authorization code for a token
 	requestParams := url.Values{}
-	requestParams.Set("client_id", cfg.ClientId) // Can omit if not authenticated
 	requestParams.Set("code", openIdParams.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
-	response, err := httpClient.PostForm(openIdMetadata.TokenURL, requestParams)
+	if len(cfg.ClientSecret) == 0 {
+		requestParams.Set("client_id", cfg.ClientId)
+	}
+
+	tokenRequest, err := http.NewRequest(http.MethodPost, openIdMetadata.TokenURL, strings.NewReader(requestParams.Encode()))
+	if err != nil {
+		return fmt.Errorf("failure when creating the token request: %w", err)
+	}
+
+	if len(cfg.ClientSecret) > 0 {
+		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
+	}
+
+	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response, err := httpClient.Do(tokenRequest)
 	if err != nil {
 		return fmt.Errorf("failure when requesting token from IdP: %w", err)
 	}
@@ -394,6 +408,7 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 	}
 
 	if response.StatusCode != 200 {
+		log.Debugf("OpenId token request failed with response: %s", string(rawTokenResponse))
 		return fmt.Errorf("request failed (HTTP response status = %s)", response.Status)
 	}
 

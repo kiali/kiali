@@ -147,137 +147,49 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 }
 
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	// Check if the nonce cookie is present
-	nonceCookie, err := r.Cookie(business.OpenIdNonceCookieName)
+	// Read received HTTP params and check for data completeness
+	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "No nonce code present. Login window timed out.")
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return false
 	}
 
-	// Calculate the hash of the nonce code
-	nonceHash := sha256.Sum224([]byte(nonceCookie.Value))
+	business.CallbackCleanup(w)
 
-	// Delete the nonce cookie since we no longer need it.
-	deleteNonceCookie := http.Cookie{
-		Name:     business.OpenIdNonceCookieName,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
-		Value:    "",
-	}
-	http.SetCookie(w, &deleteNonceCookie)
-
-	// Parse/fetch received login parameters
-	err = r.ParseForm()
-
-	if err != nil {
-		RespondWithJSONIndent(w, http.StatusBadRequest, fmt.Errorf("error parsing form info: %+v", err))
-		return false
-	}
-
-	token := r.Form.Get("id_token")
-	state := r.Form.Get("state")
-
-	if token == "" {
-		RespondWithError(w, http.StatusBadRequest, "Token is empty or invalid.")
-		return false
-	}
-	if state == "" {
-		RespondWithError(w, http.StatusBadRequest, "State parameter is empty or invalid.")
+	if checkFailure := business.CheckOpenIdImplicitFlowParams(openIdParams); len(checkFailure) != 0 {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return false
 	}
 
 	// CSRF mitigation
-	separator := strings.LastIndexByte(state, '-')
-	if separator != -1 {
-		csrfToken, timestamp := state[:separator], state[separator+1:]
-		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCookie.Value, timestamp, config.GetSigningKey())))
-
-		if fmt.Sprintf("%x", csrfHash) != csrfToken {
-			RespondWithError(w, http.StatusForbidden, "Request rejected because of CSRF mitigation.")
-			return false
-		}
-	} else {
-		RespondWithError(w, http.StatusBadRequest, "State parameter is invalid.")
+	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Request rejected: %s", stateError))
 		return false
 	}
 
 	// Parse the received id_token from the IdP and check nonce code
-	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Cannot parse received id_token from the OpenId provider", err.Error())
+	if err := business.ParseOpenIdToken(openIdParams); err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return false
 	}
-	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
-	if nonceClaim, ok := idTokenClaims["nonce"]; !ok || fmt.Sprintf("%x", nonceHash) != nonceClaim.(string) {
-		RespondWithError(w, http.StatusUnauthorized, "Received token from the OpenID provider is invalid (nonce code mismatch)")
-		return false
-	}
-
-	// Set a default value for expiration date
-	expiresOn := time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-
-	// If the expiration date is present on the claim, we use that
-	expiresInNumber := int64(0)
-
-	// As it turns out, the response from the exp claim can be either a f64 and
-	// a json.Number. With this, we take care of it, converting to the int64
-	// that we need to use timestamps in go.
-	switch exp := idTokenClaims["exp"].(type) {
-	case float64:
-		// This can not fail
-		expiresInNumber = int64(exp)
-	case json.Number:
-		// This can fail, so we short-circuit if we get an invalid value.
-		expiresInNumber, err = exp.Int64()
-
-		if err != nil {
-			RespondWithDetailedError(w, http.StatusBadRequest, "Token exp claim is present, but invalid.", err.Error())
-			return false
-		}
-	}
-
-	if expiresInNumber != 0 {
-		expiresOn = time.Unix(expiresInNumber, 0)
-	}
-
-	// Create business layer using the received id_token
-	business, err := business.Get(token)
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
+		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
 		return false
 	}
 
-	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
-	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := business.Namespace.GetNamespaces()
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+	// Check if user trying to login has enough privileges to login
+	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
+	if detailedError != nil {
+		RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
+		return false
+	} else if httpStatus != http.StatusOK {
+		RespondWithError(w, httpStatus, errMsg)
 		return false
 	}
 
-	// If namespace list is empty, return unauthorized error
-	if len(nsList) == 0 {
-		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
-		return false
-	}
-
-	// Now that we know that the OpenId token is valid, parse/decode it to extract
-	// the name of the service account. The "subject" is passed to the front-end to be displayed.
-	tokenSubject := "OpenId User" // Set a default value
-	if userClaim, ok := idTokenClaims[config.Get().Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
-		tokenSubject = userClaim.(string)
-	}
-
-	tokenClaims := config.IanaClaims{
-		SessionId: token,
-		StandardClaims: jwt.StandardClaims{
-			Subject:   tokenSubject,
-			ExpiresAt: expiresOn.Unix(),
-			Issuer:    config.AuthStrategyOpenIdIssuer,
-		},
-	}
+	// Now that we know that the OpenId token is valid, build our session cookie
+	// and send it to the browser.
+	tokenClaims := business.BuildOpenIdJwtClaims(openIdParams)
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
 	if err != nil {
 		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
@@ -287,13 +199,14 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	tokenCookie := http.Cookie{
 		Name:     config.TokenCookieName,
 		Value:    tokenString,
-		Expires:  expiresOn,
+		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
 
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.Format(time.RFC1123Z), Username: tokenSubject})
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: openIdParams.ExpiresOn.Format(time.RFC1123Z), Username: openIdParams.Subject})
 	return true
 }
 
@@ -363,6 +276,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  timeExpire,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
@@ -630,21 +544,29 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie(config.TokenCookieName)
+	conf := config.Get()
 
-	if err != http.ErrNoCookie {
-		tokenCookie := http.Cookie{
-			Name:     config.TokenCookieName,
-			Value:    "",
-			Expires:  time.Unix(0, 0),
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+	cookiesToDrop := []string{
+		config.TokenCookieName,
+		config.TokenCookieName + "-aes",
+	}
+	for _, cookieName := range cookiesToDrop {
+		_, err := r.Cookie(cookieName)
+
+		if err != http.ErrNoCookie {
+			tokenCookie := http.Cookie{
+				Name:     cookieName,
+				Value:    "",
+				Expires:  time.Unix(0, 0),
+				HttpOnly: true,
+				Path:     conf.Server.WebRoot,
+				SameSite: http.SameSiteStrictMode,
+			}
+			http.SetCookie(w, &tokenCookie)
 		}
-		http.SetCookie(w, &tokenCookie)
 	}
 
 	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
-	conf := config.Get()
 	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
 		code, err := performOpenshiftLogout(r)
 		if err != nil {
@@ -740,7 +662,7 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 
 func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	// Read received HTTP params and check for data completeness
-	openIdParams, err := business.ExtractOpenIdCallbackParams(w, r)
+	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return true // Return true to mark request as handled (because an error is already being sent back)
@@ -752,6 +674,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Start handling the callback for OpenId authentication (code flow)
+	business.CallbackCleanup(w)
 
 	// CSRF mitigation
 	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
@@ -760,7 +683,6 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Exchange the received code for a token
-	// err := business.RequestOpenIdToken(code, httputil.GuessKialiURL(r))
 	if err := business.RequestOpenIdToken(openIdParams, httputil.GuessKialiURL(r)); err != nil {
 		RespondWithDetailedError(w, http.StatusForbidden, "failure when retrieving user identity", err.Error())
 		return true
@@ -829,6 +751,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
 		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &authCookie)
