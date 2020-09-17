@@ -1899,10 +1899,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@kiali/k-charted-pf4@0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@kiali/k-charted-pf4/-/k-charted-pf4-0.6.1.tgz#f5a50106c5e4b9e2ab24fd84ab2941475d4a9466"
-  integrity sha512-4s457qDXq+8qzWAPI0z/HSESupUEC8rpMqdiRORMeRJyGwGt2Wyn6gQxg8SnZ/93E4C5qTdOeYzegFsB+AW4EA==
+"@kiali/k-charted-pf4@0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@kiali/k-charted-pf4/-/k-charted-pf4-0.6.2.tgz#edf81580fd836e8da785623a7e619d327cee5c22"
+  integrity sha512-CRLr5wZzzKCAq9pYDZYkzHsEw0H1TyT6tQsZ4QcCHKraRemv+fDMbW/5uSqWXCQh4aOQDSXXi4gg0Z5y6nttVw==
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
