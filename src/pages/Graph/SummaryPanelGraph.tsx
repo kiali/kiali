@@ -157,7 +157,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <RateTableGrpc
                     title="GRPC Traffic (requests per second):"
                     rate={incomingRateGrpc.rate}
-                    rateErr={incomingRateGrpc.rateErr}
+                    rateGrpcErr={incomingRateGrpc.rateGrpcErr}
+                    rateNR={incomingRateGrpc.rateNoResponse}
                   />
                 )}
                 {incomingRateHttp.rate > 0 && (
@@ -167,6 +168,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                     rate3xx={incomingRateHttp.rate3xx}
                     rate4xx={incomingRateHttp.rate4xx}
                     rate5xx={incomingRateHttp.rate5xx}
+                    rateNR={incomingRateHttp.rateNoResponse}
                   />
                 )}
                 {
@@ -186,7 +188,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <RateTableGrpc
                     title="GRPC Traffic (requests per second):"
                     rate={outgoingRateGrpc.rate}
-                    rateErr={outgoingRateGrpc.rateErr}
+                    rateGrpcErr={outgoingRateGrpc.rateGrpcErr}
+                    rateNR={outgoingRateGrpc.rateNoResponse}
                   />
                 )}
                 {outgoingRateHttp.rate > 0 && (
@@ -196,6 +199,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                     rate3xx={outgoingRateHttp.rate3xx}
                     rate4xx={outgoingRateHttp.rate4xx}
                     rate5xx={outgoingRateHttp.rate5xx}
+                    rateNR={outgoingRateHttp.rateNoResponse}
                   />
                 )}
                 {
@@ -215,7 +219,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <RateTableGrpc
                     title="GRPC Traffic (requests per second):"
                     rate={totalRateGrpc.rate}
-                    rateErr={totalRateGrpc.rateErr}
+                    rateGrpcErr={totalRateGrpc.rateGrpcErr}
+                    rateNR={totalRateGrpc.rateNoResponse}
                   />
                 )}
                 {totalRateHttp.rate > 0 && (
@@ -225,6 +230,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                     rate3xx={totalRateHttp.rate3xx}
                     rate4xx={totalRateHttp.rate4xx}
                     rate5xx={totalRateHttp.rate5xx}
+                    rateNR={totalRateHttp.rateNoResponse}
                   />
                 )}
                 {this.shouldShowRPSChart() && (

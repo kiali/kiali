@@ -4,27 +4,32 @@ const safeRate = (rate: any) => (isNaN(rate) ? 0.0 : Number(rate));
 
 type TRAFFIC_GRPC = {
   RATE: string;
-  RATEERR: string;
+  RATEGRPCERR: string;
+  RATENORESPONSE: string;
 };
 
 const NODE_GRPC_IN: TRAFFIC_GRPC = {
   RATE: CyNode.grpcIn,
-  RATEERR: CyNode.grpcInErr
+  RATEGRPCERR: CyNode.grpcInErr,
+  RATENORESPONSE: CyNode.grpcInNoResponse
 };
 const EDGE_GRPC: TRAFFIC_GRPC = {
   RATE: CyEdge.grpc,
-  RATEERR: CyEdge.grpcErr
+  RATEGRPCERR: CyEdge.grpcErr,
+  RATENORESPONSE: CyEdge.grpcNoResponse
 };
 
 export interface TrafficRateGrpc {
   rate: number;
-  rateErr: number;
+  rateGrpcErr: number;
+  rateNoResponse: number;
 }
 
 export const getTrafficRateGrpc = (element: any, trafficType: TRAFFIC_GRPC = NODE_GRPC_IN): TrafficRateGrpc => {
   return {
     rate: safeRate(element.data(trafficType.RATE)),
-    rateErr: safeRate(element.data(trafficType.RATEERR))
+    rateGrpcErr: safeRate(element.data(trafficType.RATEGRPCERR)),
+    rateNoResponse: safeRate(element.data(trafficType.RATENORESPONSE))
   };
 };
 
@@ -33,10 +38,11 @@ export const getAccumulatedTrafficRateGrpc = (elements): TrafficRateGrpc => {
     (r: TrafficRateGrpc, element): TrafficRateGrpc => {
       const elementTrafficRate = getTrafficRateGrpc(element, EDGE_GRPC);
       r.rate += elementTrafficRate.rate;
-      r.rateErr += elementTrafficRate.rateErr;
+      r.rateGrpcErr += elementTrafficRate.rateGrpcErr;
+      r.rateNoResponse += elementTrafficRate.rateNoResponse;
       return r;
     },
-    { rate: 0, rateErr: 0 }
+    { rate: 0, rateGrpcErr: 0, rateNoResponse: 0 }
   );
 };
 
@@ -45,19 +51,22 @@ type TRAFFIC_HTTP = {
   RATE3XX: string;
   RATE4XX: string;
   RATE5XX: string;
+  RATENORESPONSE: string;
 };
 
 const NODE_HTTP_IN: TRAFFIC_HTTP = {
   RATE: CyNode.httpIn,
   RATE3XX: CyNode.httpIn3xx,
   RATE4XX: CyNode.httpIn4xx,
-  RATE5XX: CyNode.httpIn5xx
+  RATE5XX: CyNode.httpIn5xx,
+  RATENORESPONSE: CyNode.httpInNoResponse
 };
 const EDGE_HTTP: TRAFFIC_HTTP = {
   RATE: CyEdge.http,
   RATE3XX: CyEdge.http3xx,
   RATE4XX: CyEdge.http4xx,
-  RATE5XX: CyEdge.http5xx
+  RATE5XX: CyEdge.http5xx,
+  RATENORESPONSE: CyEdge.httpNoResponse
 };
 
 export interface TrafficRateHttp {
@@ -65,6 +74,7 @@ export interface TrafficRateHttp {
   rate3xx: number;
   rate4xx: number;
   rate5xx: number;
+  rateNoResponse: number;
 }
 
 export const getTrafficRateHttp = (element: any, trafficType: TRAFFIC_HTTP = NODE_HTTP_IN): TrafficRateHttp => {
@@ -72,7 +82,8 @@ export const getTrafficRateHttp = (element: any, trafficType: TRAFFIC_HTTP = NOD
     rate: safeRate(element.data(trafficType.RATE)),
     rate3xx: safeRate(element.data(trafficType.RATE3XX)),
     rate4xx: safeRate(element.data(trafficType.RATE4XX)),
-    rate5xx: safeRate(element.data(trafficType.RATE5XX))
+    rate5xx: safeRate(element.data(trafficType.RATE5XX)),
+    rateNoResponse: safeRate(element.data(trafficType.RATENORESPONSE))
   };
 };
 
@@ -84,8 +95,9 @@ export const getAccumulatedTrafficRateHttp = (elements): TrafficRateHttp => {
       r.rate3xx += elementTrafficRate.rate3xx;
       r.rate4xx += elementTrafficRate.rate4xx;
       r.rate5xx += elementTrafficRate.rate5xx;
+      r.rateNoResponse += elementTrafficRate.rateNoResponse;
       return r;
     },
-    { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 }
+    { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateNoResponse: 0 }
   );
 };

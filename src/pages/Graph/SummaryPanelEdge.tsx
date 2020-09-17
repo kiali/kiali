@@ -149,7 +149,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                       <RateTableGrpc
                         title="GRPC requests per second:"
                         rate={this.safeRate(edge.grpc)}
-                        rateErr={this.safeRate(edge.grpcPercentErr)}
+                        rateGrpcErr={this.safeRate(edge.grpcErr)}
+                        rateNR={this.safeRate(edge.grpcNoResponse)}
                       />
                     </>
                   )}
@@ -161,6 +162,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                         rate3xx={this.safeRate(edge.http3xx)}
                         rate4xx={this.safeRate(edge.http4xx)}
                         rate5xx={this.safeRate(edge.http5xx)}
+                        rateNR={this.safeRate(edge.httpNoResponse)}
                       />
                     </>
                   )}

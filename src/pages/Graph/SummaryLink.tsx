@@ -154,7 +154,7 @@ export const renderHealth = (health?: Health) => {
   return (
     <>
       <Badge style={{ fontWeight: 'normal', marginTop: '4px', marginBottom: '4px' }} isRead={true}>
-        <span style={{ margin: '3px 0 1px 0' }}>
+        <span style={{ margin: '3px 3px 1px 0' }}>
           {health ? (
             <HealthIndicator
               id="graph-health-indicator"
@@ -166,6 +166,7 @@ export const renderHealth = (health?: Health) => {
             'n/a'
           )}
         </span>
+        health
       </Badge>
     </>
   );

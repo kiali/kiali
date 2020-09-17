@@ -3,9 +3,16 @@ import { RateHealthConfig, ToleranceConfig } from '../ServerConfig';
 import { checkExpr, emptyRate, getRateHealthConfig, getErrorCodeRate } from './utils';
 import { ErrorRatio, Rate, RequestTolerance } from './types';
 
-// Sum the inbound and outbound request for calculate the global status
+// Sum the inbound and outbound request for calculating the global status
 export const sumRequests = (inbound: RequestType, outbound: RequestType): RequestType => {
-  let result: RequestType = inbound;
+  let result: RequestType = {};
+  // init result with a deep clone of inbound
+  for (let [protocol, req] of Object.entries(inbound)) {
+    result[protocol] = {};
+    for (let [code, rate] of Object.entries(req)) {
+      result[protocol][code] = rate;
+    }
+  }
   for (let [protocol, req] of Object.entries(outbound)) {
     if (!Object.keys(result).includes(protocol)) {
       result[protocol] = {};
@@ -84,7 +91,7 @@ export const calculateErrorRate = (
 };
 
 export const calculateStatus = (
-  requestsTolerances: RequestTolerance[]
+  requestTolerances: RequestTolerance[]
 ): { status: ThresholdStatus; protocol: string; toleranceConfig?: ToleranceConfig } => {
   let result: { status: ThresholdStatus; protocol: string; toleranceConfig?: ToleranceConfig } = {
     status: {
@@ -95,7 +102,7 @@ export const calculateStatus = (
     toleranceConfig: undefined
   };
 
-  for (let reqTol of Object.values(requestsTolerances)) {
+  for (let reqTol of Object.values(requestTolerances)) {
     for (let [protocol, rate] of Object.entries(reqTol.requests)) {
       const tolerance =
         reqTol.tolerance && checkExpr(reqTol!.tolerance!.protocol, protocol) ? reqTol.tolerance : undefined;

@@ -127,19 +127,26 @@ export class RateChart extends React.Component<Props, State> {
   }
 }
 
-export const renderRateChartHttp = (percent2xx: number, percent3xx: number, percent4xx: number, percent5xx: number) => {
+export const renderRateChartHttp = (
+  percent2xx: number,
+  percent3xx: number,
+  percent4xx: number,
+  percent5xx: number,
+  percentNR: number
+) => {
   const colorVals = getPFAlertColorVals();
   const vcLines: VCLines<RichDataPoint> = [
     { name: 'OK', x: 'rate', y: percent2xx, color: colorVals.Success },
     { name: '3xx', x: 'rate', y: percent3xx, color: colorVals.Info },
-    { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.ChartWarning }, // 4xx is also an error use close but distinct color
-    { name: '5xx', x: 'rate', y: percent5xx, color: colorVals.ChartDanger }
+    { name: '4xx', x: 'rate', y: percent4xx, color: colorVals.ChartWarning }, // 4xx client error, use close but distinct color
+    { name: '5xx', x: 'rate', y: percent5xx, color: colorVals.ChartDanger },
+    { name: 'No Response', x: 'rate', y: percentNR, color: colorVals.ChartOther } // No Response, just use black
   ].map(dp => {
     return {
       datapoints: [dp],
       color: dp.color,
       legendItem: {
-        name: dp.name,
+        name: dp.name === 'No Response' ? 'NR' : dp.name,
         symbol: { fill: dp.color }
       }
     };
@@ -170,10 +177,12 @@ export const renderInOutRateChartHttp = (
   percent3xxIn: number,
   percent4xxIn: number,
   percent5xxIn: number,
+  percentNRIn: number,
   percent2xxOut: number,
   percent3xxOut: number,
   percent4xxOut: number,
-  percent5xxOut: number
+  percent5xxOut: number,
+  percentNROut: number
 ) => {
   const colorVals = getPFAlertColorVals();
   const vcLines: VCLines<RichDataPoint> = [
@@ -200,7 +209,7 @@ export const renderInOutRateChartHttp = (
         { x: 'Out', y: percent4xxOut }
       ],
       color: colorVals.ChartWarning
-    }, // 4xx is also an error use close but distinct color
+    }, // 4xx client error, use close but distinct color
     {
       name: '5xx',
       dp: [
@@ -208,7 +217,15 @@ export const renderInOutRateChartHttp = (
         { x: 'Out', y: percent5xxOut }
       ],
       color: colorVals.ChartDanger
-    }
+    },
+    {
+      name: 'No Response',
+      dp: [
+        { x: 'In', y: percentNRIn },
+        { x: 'Out', y: percentNROut }
+      ],
+      color: colorVals.ChartOther
+    } // No Response error, just use black
   ].map(line => {
     return {
       datapoints: line.dp.map(dp => ({
@@ -218,7 +235,7 @@ export const renderInOutRateChartHttp = (
       })),
       color: line.color,
       legendItem: {
-        name: line.name,
+        name: line.name === 'No Response' ? 'NR' : line.name,
         symbol: { fill: line.color }
       }
     };

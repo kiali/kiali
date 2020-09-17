@@ -105,9 +105,10 @@ export type PFAlertColorVals = {
   SuccessBackground: PFColorVal;
   Warning: PFColorVal;
   WarningBackground: PFColorVal;
-  // special value for rates charts where 4xx is really Danger not Warning
-  ChartWarning: PFColorVal;
+  // special values for rates charts
   ChartDanger: PFColorVal;
+  ChartOther: PFColorVal;
+  ChartWarning: PFColorVal;
 };
 
 let PFAlertColorValsInstance: PFAlertColorVals | undefined;
@@ -127,8 +128,9 @@ export const getPFAlertColorVals = (): PFAlertColorVals => {
       Warning: getComputedStyle(root).getPropertyValue('--pf-global--warning-color--100'),
       WarningBackground: getComputedStyle(root).getPropertyValue('--pf-global--warning-color--200'),
       // special value for rates charts where 4xx is really Danger not Warning
-      ChartWarning: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--100'),
-      ChartDanger: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--300')
+      ChartDanger: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--300'),
+      ChartOther: PfColors.Black,
+      ChartWarning: getComputedStyle(root).getPropertyValue('--pf-global--danger-color--100')
     };
   }
   return PFAlertColorValsInstance;

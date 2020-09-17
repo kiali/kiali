@@ -4,16 +4,20 @@ import { renderInOutRateChartHttp, renderInOutRateChartGrpc } from './RateChart'
 type InOutRateTableGrpcPropType = {
   title: string;
   inRate: number;
-  inRateErr: number;
+  inRateGrpcErr: number;
+  inRateNR: number;
   outRate: number;
-  outRateErr: number;
+  outRateGrpcErr: number;
+  outRateNR: number;
 };
 
 export class InOutRateTableGrpc extends React.Component<InOutRateTableGrpcPropType, {}> {
   render() {
     // for the table and graph
-    const percentErrIn: number = this.props.inRate === 0 ? 0 : (this.props.inRateErr / this.props.inRate) * 100;
-    const percentErrOut: number = this.props.outRate === 0 ? 0 : (this.props.outRateErr / this.props.outRate) * 100;
+    const inErrRate = this.props.inRateGrpcErr + this.props.inRateNR;
+    const outErrRate = this.props.outRateGrpcErr + this.props.outRateNR;
+    const percentErrIn: number = this.props.inRate === 0 ? 0 : (inErrRate / this.props.inRate) * 100;
+    const percentErrOut: number = this.props.outRate === 0 ? 0 : (outErrRate / this.props.outRate) * 100;
     const percentOkIn: number = 100 - percentErrIn;
     const percentOkOut: number = 100 - percentErrOut;
 
@@ -56,17 +60,19 @@ type InOutRateTableHttpPropType = {
   inRate3xx: number;
   inRate4xx: number;
   inRate5xx: number;
+  inRateNR: number;
   outRate: number;
   outRate3xx: number;
   outRate4xx: number;
   outRate5xx: number;
+  outRateNR: number;
 };
 
 export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropType, {}> {
   render() {
     // for the table
-    const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx;
-    const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx;
+    const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx + this.props.inRateNR;
+    const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx + this.props.outRateNR;
     const percentInErr: number = this.props.inRate === 0 ? 0 : (inErrRate / this.props.inRate) * 100;
     const percentOutErr: number = this.props.outRate === 0 ? 0 : (outErrRate / this.props.outRate) * 100;
     const percentInSuccess: number = 100 - percentInErr;
@@ -76,19 +82,25 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
     const rate2xxIn: number =
       this.props.inRate === 0
         ? 0
-        : this.props.inRate - this.props.inRate3xx - this.props.inRate4xx - this.props.inRate5xx;
+        : this.props.inRate - this.props.inRate3xx - this.props.inRate4xx - this.props.inRate5xx - this.props.inRateNR;
     const rate2xxOut: number =
       this.props.outRate === 0
         ? 0
-        : this.props.outRate - this.props.outRate3xx - this.props.outRate4xx - this.props.outRate5xx;
+        : this.props.outRate -
+          this.props.outRate3xx -
+          this.props.outRate4xx -
+          this.props.outRate5xx -
+          this.props.outRateNR;
     const percent2xxIn: number = this.props.inRate === 0 ? 0 : (rate2xxIn / this.props.inRate) * 100;
     const percent3xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate3xx / this.props.inRate) * 100;
     const percent4xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate4xx / this.props.inRate) * 100;
     const percent5xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate5xx / this.props.inRate) * 100;
+    const percentNRIn: number = this.props.inRate === 0 ? 0 : (this.props.inRateNR / this.props.inRate) * 100;
     const percent2xxOut: number = this.props.outRate === 0 ? 0 : (rate2xxOut / this.props.outRate) * 100;
     const percent3xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate3xx / this.props.outRate) * 100;
     const percent4xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate4xx / this.props.outRate) * 100;
     const percent5xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate5xx / this.props.outRate) * 100;
+    const percentNROut: number = this.props.outRate === 0 ? 0 : (this.props.outRateNR / this.props.outRate) * 100;
 
     return (
       <div>
@@ -122,10 +134,12 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
           percent3xxIn,
           percent4xxIn,
           percent5xxIn,
+          percentNRIn,
           percent2xxOut,
           percent3xxOut,
           percent4xxOut,
-          percent5xxOut
+          percent5xxOut,
+          percentNROut
         )}
       </div>
     );

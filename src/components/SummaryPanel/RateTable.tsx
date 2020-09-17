@@ -4,13 +4,15 @@ import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
 type RateTableGrpcPropType = {
   title: string;
   rate: number;
-  rateErr: number;
+  rateGrpcErr: number;
+  rateNR: number;
 };
 
 export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
   render() {
     // for the table and graph
-    const percentErr: number = this.props.rate === 0 ? 0 : (this.props.rateErr / this.props.rate) * 100;
+    const errRate: number = this.props.rateGrpcErr + this.props.rateNR;
+    const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
     const percentOK: number = 100 - percentErr;
 
     return (
@@ -44,22 +46,26 @@ type RateTableHttpPropType = {
   rate3xx: number;
   rate4xx: number;
   rate5xx: number;
+  rateNR: number;
 };
 
 export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
   render() {
     // for the table
-    const errRate: number = this.props.rate4xx + this.props.rate5xx;
+    const errRate: number = this.props.rate4xx + this.props.rate5xx + this.props.rateNR;
     const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
     const successErr: number = 100 - percentErr;
 
     // for the graph
     const rate2xx: number =
-      this.props.rate === 0 ? 0 : this.props.rate - this.props.rate3xx - this.props.rate4xx - this.props.rate5xx;
+      this.props.rate === 0
+        ? 0
+        : this.props.rate - this.props.rate3xx - this.props.rate4xx - this.props.rate5xx - this.props.rateNR;
     const percent2xx: number = this.props.rate === 0 ? 0 : (rate2xx / this.props.rate) * 100;
     const percent3xx: number = this.props.rate === 0 ? 0 : (this.props.rate3xx / this.props.rate) * 100;
     const percent4xx: number = this.props.rate === 0 ? 0 : (this.props.rate4xx / this.props.rate) * 100;
     const percent5xx: number = this.props.rate === 0 ? 0 : (this.props.rate5xx / this.props.rate) * 100;
+    const percentNR: number = this.props.rate === 0 ? 0 : (this.props.rateNR / this.props.rate) * 100;
 
     return (
       <div>
@@ -80,7 +86,7 @@ export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
             </tr>
           </tbody>
         </table>
-        {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx)}
+        {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx, percentNR)}
       </div>
     );
   }

@@ -269,9 +269,11 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         <InOutRateTableGrpc
           title="GRPC Traffic (requests per second):"
           inRate={incoming.rate}
-          inRateErr={incoming.rateErr}
+          inRateGrpcErr={incoming.rateGrpcErr}
+          inRateNR={incoming.rateNoResponse}
           outRate={outgoing.rate}
-          outRateErr={outgoing.rateErr}
+          outRateGrpcErr={outgoing.rateGrpcErr}
+          outRateNR={outgoing.rateNoResponse}
         />
       </>
     );
@@ -293,10 +295,12 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           inRate3xx={incoming.rate3xx}
           inRate4xx={incoming.rate4xx}
           inRate5xx={incoming.rate5xx}
+          inRateNR={incoming.rateNoResponse}
           outRate={outgoing.rate}
           outRate3xx={outgoing.rate3xx}
           outRate4xx={outgoing.rate4xx}
           outRate5xx={outgoing.rate5xx}
+          outRateNR={outgoing.rateNoResponse}
         />
       </>
     );

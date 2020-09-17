@@ -224,11 +224,13 @@ export interface GraphDefinition {
 export interface DecoratedGraphNodeData extends GraphNodeData {
   grpcIn: number;
   grpcInErr: number;
+  grpcInNoResponse: number;
   grpcOut: number;
   httpIn: number;
   httpIn3xx: number;
   httpIn4xx: number;
   httpIn5xx: number;
+  httpInNoResponse: number;
   httpOut: number;
   tcpIn: number;
   tcpOut: number;
@@ -243,12 +245,14 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
 export interface DecoratedGraphEdgeData extends GraphEdgeData {
   grpc: number;
   grpcErr: number;
+  grpcNoResponse: number;
   grpcPercentErr: number;
   grpcPercentReq: number;
   http: number;
   http3xx: number;
   http4xx: number;
   http5xx: number;
+  httpNoResponse: number;
   httpPercentErr: number;
   httpPercentReq: number;
   responses: Responses;

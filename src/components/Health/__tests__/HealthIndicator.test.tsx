@@ -140,6 +140,6 @@ describe('HealthIndicator', () => {
     html = wrapper.html();
     expect(html).toContain(PFAlertColor.Danger);
     expect(html).toContain('Outbound: 16.67%');
-    expect(html).toContain('Inbound: 26.47%');
+    expect(html).toContain('Inbound: 50.00%');
   });
 });
