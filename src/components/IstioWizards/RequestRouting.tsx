@@ -123,37 +123,15 @@ class RequestRouting extends React.Component<Props, State> {
       } else {
         newMatch = prevState.category + ' [' + prevState.headerName + '] ' + REGEX + ' ' + ANYTHING;
       }
-      this.addNewMatch(prevState.matches, newMatch);
+      if (!prevState.matches.includes(newMatch)) {
+        prevState.matches.push(newMatch);
+      }
       return {
         matches: prevState.matches,
         headerName: '',
         matchValue: ''
       };
     });
-  };
-
-  addNewMatch = (matches: string[], newMatch: string) => {
-    // Non HEADERS matches can only appear once, so, newMatch will update the old one
-    let foundMatch: string | undefined = undefined;
-    let newMatchType = '';
-    if (newMatch.startsWith(HEADERS)) {
-      // We check the headers [<headerName>]
-      newMatchType = newMatch.substring(0, newMatch.indexOf(']') + 1);
-    } else {
-      newMatchType = newMatch.split(' ')[0];
-    }
-    for (let i = 0; i < matches.length; i++) {
-      const match = matches[i];
-      if (match.startsWith(newMatchType)) {
-        foundMatch = match;
-        break;
-      }
-    }
-    if (foundMatch) {
-      const index = matches.indexOf(foundMatch, 0);
-      matches.splice(index, 1);
-    }
-    matches.push(newMatch);
   };
 
   onAddRule = () => {
