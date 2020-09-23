@@ -141,6 +141,7 @@ func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (k
 	iter8ExperimentObject, gErr := in.k8s.GetIter8Experiment(namespace, name)
 	if gErr == nil {
 		Iter8ExperimentCRD.Spec = iter8ExperimentObject.GetSpec()
+		Iter8ExperimentCRD.Spec.ManualOverride = nil
 		objectMeta := iter8ExperimentObject.GetObjectMeta()
 		Iter8ExperimentCRD.ObjectMeta.Name = objectMeta.Name
 		Iter8ExperimentCRD.ObjectMeta.Labels = objectMeta.Labels
@@ -266,7 +267,6 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 }
 
 func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
-
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	err := json.Unmarshal(body, &newExperimentSpec)
 	if err != nil {
@@ -298,7 +298,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	object.Spec.TrafficControl.MaxIncrement = newExperimentSpec.TrafficControl.MaxIncrement
 	object.Spec.TrafficControl.OnTermination = newExperimentSpec.TrafficControl.OnTermination
 	object.Spec.TrafficControl.Percentage = newExperimentSpec.TrafficControl.Percentage
-	object.Spec.TrafficControl.Match = newExperimentSpec.TrafficControl.Match
+	object.Spec.TrafficControl.Match.HTTP = in.ParseMatchRule(newExperimentSpec.TrafficControl.Match.HTTP)
 
 	if newExperimentSpec.Hosts != nil || newExperimentSpec.RoutingID != "" {
 		hosts := make([]kubernetes.Iter8Host, len(newExperimentSpec.Hosts))
@@ -352,12 +352,73 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	if newExperimentSpec.Action != nil {
 		object.Spec.ManualOverride = newExperimentSpec.Action
 	}
-
 	b, err2 := json.Marshal(object)
 	if err2 != nil {
 		return "", err2
 	}
 	return string(b), nil
+}
+
+func (in *Iter8Service) buildStringMatch(mr models.HTTPMarchRule) *kubernetes.StringMatch {
+	uri := kubernetes.StringMatch{}
+	stringMatch := mr.StringMatch
+	switch mr.Match {
+	case "exact":
+		uri.Exact = &stringMatch
+	case "prefix":
+		uri.Prefix = &stringMatch
+	case "regex":
+		uri.Regex = &stringMatch
+	}
+	return &uri
+}
+
+func (in *Iter8Service) ParseMatchRule(http []models.HTTPMatchRequest) []*kubernetes.HTTPMatchRequest {
+
+	var ptr = make([]*kubernetes.HTTPMatchRequest, len(http))
+	// var ptr [numOfEntries]*kubernetes.HTTPMatchRequest;
+	for i, m := range http {
+		nm := kubernetes.HTTPMatchRequest{}
+
+		if (m.URI != models.HTTPMarchRule{}) {
+			/*uri := kubernetes.StringMatch{}
+			stringMatch := m.URI.StringMatch
+			switch(m.URI.Match) {
+			case "exact":
+				uri.Exact = &stringMatch
+				break
+			case "prefix":
+				uri.Prefix = &stringMatch
+				break
+			case "regex":
+				uri.Regex = &stringMatch
+			}*/
+			nm.URI = in.buildStringMatch(m.URI) // &uri
+		}
+
+		if len(m.Headers) > 0 {
+			nm.Headers = make(map[string]*kubernetes.StringMatch)
+			for _, h := range m.Headers {
+				// header := kubernetes.StringMatch{}
+				key := h.Key
+				/*stringMatch := h.StringMatch
+				switch(h.Match) {
+				case "exact":
+					header.Exact = &stringMatch
+					break
+				case "prefix":
+					header.Prefix = &stringMatch
+					break
+				case "regex":
+					header.Regex = &stringMatch
+				}*/
+				nm.Headers[key] = in.buildStringMatch(h) // &header
+			}
+		}
+
+		ptr[i] = &nm
+	}
+	return ptr
 }
 
 func (in *Iter8Service) DeleteIter8Experiment(namespace string, name string) (err error) {
