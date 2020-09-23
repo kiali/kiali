@@ -55,7 +55,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
                 <EmptyStateBody>No Pods in workload {this.props.workload}</EmptyStateBody>
               </EmptyState>
             ),
-            props: { colSpan: 5 }
+            props: { colSpan: 8 }
           }
         ]
       }

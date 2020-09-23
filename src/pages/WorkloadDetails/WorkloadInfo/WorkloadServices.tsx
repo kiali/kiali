@@ -78,7 +78,7 @@ class WorkloadServices extends React.Component<WorkloadServicesProps> {
                 <EmptyStateBody>No Services in workload {this.props.workload}</EmptyStateBody>
               </EmptyState>
             ),
-            props: { colSpan: 5 }
+            props: { colSpan: 7 }
           }
         ]
       }
