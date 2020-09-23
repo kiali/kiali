@@ -53,6 +53,10 @@ export class FilterSelected {
   static selectedFilters: ActiveFilter[] | undefined = undefined;
   static opSelected: LabelOperation;
 
+  static resetFilters = () => {
+    FilterSelected.selectedFilters = undefined;
+  };
+
   static setSelected = (activeFilters: ActiveFiltersInfo) => {
     FilterSelected.selectedFilters = activeFilters.filters;
     FilterSelected.opSelected = activeFilters.op;
