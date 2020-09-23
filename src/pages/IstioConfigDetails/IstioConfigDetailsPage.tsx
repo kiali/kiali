@@ -47,7 +47,7 @@ import ValidationReferences from './ValidationReferences';
 const rightToolbarStyle = style({
   position: 'absolute',
   right: '20px',
-  zIndex: 1,
+  zIndex: 500,
   marginTop: '8px',
   backgroundColor: PfColors.White
 });
