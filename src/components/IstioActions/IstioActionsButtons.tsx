@@ -18,6 +18,9 @@ type Props = ReduxProps & {
   onCancel: () => void;
   onUpdate: () => void;
   onRefresh: () => void;
+  showOverview: boolean;
+  overview: boolean;
+  onOverview: () => void;
 };
 
 type State = {
@@ -54,6 +57,15 @@ class IstioActionButtons extends React.Component<Props, State> {
             </Button>
           </span>
         </span>
+        {this.props.showOverview && (
+          <span style={{ float: 'right', padding: '10px' }}>
+            <span style={{ paddingLeft: '5px' }}>
+              <Button variant={ButtonVariant.link} onClick={this.props.onOverview}>
+                {this.props.overview ? 'Close Overview' : 'Show Overview'}
+              </Button>
+            </span>
+          </span>
+        )}
       </>
     );
   }

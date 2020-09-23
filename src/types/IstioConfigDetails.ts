@@ -1,5 +1,4 @@
 import Namespace from './Namespace';
-import { AceOptions } from 'react-ace';
 import { ResourcePermissions } from './Permissions';
 import {
   AuthorizationPolicy,
@@ -31,6 +30,7 @@ import {
   IstioHandler,
   IstioInstance
 } from './IstioObjects';
+import { AceOptions } from 'react-ace/types';
 
 export interface IstioConfigId {
   namespace: string;

@@ -22,9 +22,9 @@ export const addMessage = (msg: Message) => {
   );
 };
 
-export const addError = (message: string, error?: AxiosError, group?: string, type?: MessageType) => {
+export const addError = (message: string, error?: AxiosError, group?: string, type?: MessageType, detail?: string) => {
   if (!error) {
-    store.dispatch(MessageCenterActions.addMessage(message, '', group, MessageType.ERROR));
+    store.dispatch(MessageCenterActions.addMessage(message, detail ? detail : '', group, MessageType.ERROR));
     return;
   }
   const finalType: MessageType = type ? type : MessageType.ERROR;
@@ -61,6 +61,8 @@ export const addSuccess = (content: string, showNotification?: boolean, group?: 
   store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.SUCCESS, showNotification));
 };
 
-export const addWarning = (content: string, showNotification?: boolean, group?: string) => {
-  store.dispatch(MessageCenterActions.addMessage(content, '', group, MessageType.WARNING, showNotification));
+export const addWarning = (content: string, showNotification?: boolean, group?: string, detail?: string) => {
+  store.dispatch(
+    MessageCenterActions.addMessage(content, detail ? detail : '', group, MessageType.WARNING, showNotification)
+  );
 };

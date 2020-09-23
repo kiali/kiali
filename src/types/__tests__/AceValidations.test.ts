@@ -163,7 +163,7 @@ describe('#parseKialiValidations in DestinationRule', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(3);
-    expect(marker.endRow).toEqual(4);
+    expect(marker.endRow).toEqual(3);
     expect(marker.startCol).toEqual(0);
     expect(marker.endCol).toEqual(0);
 
@@ -190,7 +190,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(3);
-    expect(marker.endRow).toEqual(5);
+    expect(marker.endRow).toEqual(4);
     expect(marker.startCol).toEqual(0);
     expect(marker.endCol).toEqual(0);
 
@@ -220,7 +220,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toBe(12);
-    expect(marker.endRow).toBe(19);
+    expect(marker.endRow).toBe(18);
     expect(marker.startCol).toBe(4);
     expect(marker.endCol).toBe(0);
 
@@ -250,7 +250,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(22);
-    expect(marker.endRow).toEqual(29);
+    expect(marker.endRow).toEqual(28);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
@@ -280,7 +280,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(32);
-    expect(marker.endRow).toEqual(39);
+    expect(marker.endRow).toEqual(38);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
@@ -306,7 +306,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(26);
-    expect(marker.endRow).toEqual(29);
+    expect(marker.endRow).toEqual(28);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
@@ -332,7 +332,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(33);
-    expect(marker.endRow).toEqual(36);
+    expect(marker.endRow).toEqual(35);
     expect(marker.startCol).toEqual(6);
     expect(marker.endCol).toEqual(0);
 
@@ -358,7 +358,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(33);
-    expect(marker.endRow).toEqual(36);
+    expect(marker.endRow).toEqual(35);
     expect(marker.startCol).toEqual(8);
     expect(marker.endCol).toEqual(0);
 
@@ -384,7 +384,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(16);
-    expect(marker.endRow).toEqual(19);
+    expect(marker.endRow).toEqual(18);
     expect(marker.startCol).toEqual(8);
     expect(marker.endCol).toEqual(0);
 
@@ -408,7 +408,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(46);
-    expect(marker.endRow).toEqual(47);
+    expect(marker.endRow).toEqual(46);
     expect(marker.startCol).toEqual(16);
     expect(marker.endCol).toEqual(0);
 
@@ -432,7 +432,7 @@ describe('#parseKialiValidations in VirtualService', () => {
     const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(62);
-    expect(marker.endRow).toEqual(63);
+    expect(marker.endRow).toEqual(62);
     expect(marker.startCol).toEqual(16);
     expect(marker.endCol).toEqual(0);
 

@@ -18,10 +18,11 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
       const routeSum = routes.route && routes.route.length === 1 ? 100 : destinationWeight.weight || 0;
       weightSum += routeSum;
+      const dWeight = destinationWeight.weight ? destinationWeight.weight : 100;
 
       return {
         y: weightSum,
-        name: `${destinationWeight.weight}_${destRepresentation}`
+        name: `${dWeight}_${destRepresentation}`
       };
     });
   }
@@ -39,16 +40,17 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   renderWeights(route: any, i: number) {
     return (
       <>
-        {(route.route || []).length > 1 && (
+        {(route.route || []).length >= 1 && (
           <ChartBullet
             key={'bullet-chart-' + i}
             ariaDesc={'Routing percentage representation'}
             ariaTitle={'Traffic routing distribution'}
             maxDomain={{ y: 100 }}
+            height={80}
             qualitativeRangeData={[{ name: 'Range', y: 100 }]}
             primarySegmentedMeasureData={this.bulletChartValues(route)}
             labels={this.bulletChartLabels}
-            padding={'0 0 0 0'}
+            padding={'80 0 0 0'}
           />
         )}
       </>
@@ -56,9 +58,14 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   render() {
-    return (this.props.routes || []).map((route, i) => (
-      <div key={'bulletchart-wrapper-' + i}>{this.renderWeights(route, i)}</div>
-    ));
+    return (this.props.routes || []).map((route, i) => {
+      const marginTop = i === 0 ? -30 : 0;
+      return (
+        <div key={'bulletchart-wrapper-' + i} style={{ marginTop: marginTop }}>
+          {this.renderWeights(route, i)}
+        </div>
+      );
+    });
   }
 }
 

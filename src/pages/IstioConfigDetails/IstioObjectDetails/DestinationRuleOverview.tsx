@@ -2,9 +2,6 @@ import * as React from 'react';
 import { DestinationRule, ObjectValidation } from '../../../types/IstioObjects';
 import DetailObject from '../../../components/Details/DetailObject';
 import {
-  Card,
-  CardBody,
-  CardHeader,
   Stack,
   StackItem,
   Text,
@@ -27,7 +24,7 @@ interface DestinationRuleProps {
   validation?: ObjectValidation;
 }
 
-class DestinationRuleCard extends React.Component<DestinationRuleProps> {
+class DestinationRuleOverview extends React.Component<DestinationRuleProps> {
   globalStatus() {
     const validation = this.props.validation;
     if (validation && !validation.valid) {
@@ -103,32 +100,28 @@ class DestinationRuleCard extends React.Component<DestinationRuleProps> {
     const globalStatus = this.globalStatus();
     const isValid = !globalStatus;
     return (
-      <Card key={'virtualServiceConfig'}>
-        <CardHeader>
-          <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
-            Destination Rule Overview
-          </Title>
-        </CardHeader>
-        <CardBody>
-          <Stack>
-            <StackItem id={'subsets'}>
-              {destinationRule.spec.host && (
-                <>
-                  <Text component={TextVariants.h3}>Host</Text>
-                  <ServiceLink
-                    namespace={destinationRule.metadata.namespace || ''}
-                    host={destinationRule.spec.host}
-                    isValid={isValid}
-                  />
-                </>
-              )}
-              {this.generateSubsets()}
-            </StackItem>
-          </Stack>
-        </CardBody>
-      </Card>
+      <>
+        <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+          Destination Rule Overview
+        </Title>
+        <Stack>
+          <StackItem id={'subsets'}>
+            {destinationRule.spec.host && (
+              <>
+                <Text component={TextVariants.h3}>Host</Text>
+                <ServiceLink
+                  namespace={destinationRule.metadata.namespace || ''}
+                  host={destinationRule.spec.host}
+                  isValid={isValid}
+                />
+              </>
+            )}
+            {this.generateSubsets()}
+          </StackItem>
+        </Stack>
+      </>
     );
   }
 }
 
-export default DestinationRuleCard;
+export default DestinationRuleOverview;

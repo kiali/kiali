@@ -11,7 +11,7 @@ import { MessageCenterActions } from 'actions/MessageCenterActions';
 
 const notificationStyle = style({
   position: 'relative',
-  zIndex: 100
+  zIndex: 500
 });
 
 type ReduxProps = {

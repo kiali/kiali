@@ -1,15 +1,16 @@
-import { Annotation, Marker } from 'react-ace';
 import { ObjectCheck, ObjectValidation } from './IstioObjects';
+import { Annotation } from 'react-ace/types';
+import { IMarker } from 'react-ace';
 
 export const jsYaml = require('js-yaml');
 
 export interface AceValidations {
-  markers: Array<Marker>;
+  markers: Array<IMarker>;
   annotations: Array<Annotation>;
 }
 
 interface AceCheck {
-  marker: Marker;
+  marker: IMarker;
   annotation: Annotation;
 }
 
@@ -155,13 +156,13 @@ const parseMarker = (
 
 const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
   const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'info';
-  const marker = {
+  const marker: IMarker = {
     startRow: 0,
     startCol: 0,
     endRow: 0,
     endCol: 0,
     className: 'istio-validation-' + severity,
-    type: severity
+    type: 'fullLine'
   };
   const annotation = {
     row: 0,
@@ -208,10 +209,10 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
 
   marker.startRow = aceMarker.startRow;
   marker.startCol = aceMarker.startCol;
-  marker.endRow = aceMarker.endRow;
+  // React Ace editor has a flip in the marker indexes
+  marker.endRow = aceMarker.endRow > 0 ? aceMarker.endRow - 1 : 0;
   marker.endCol = aceMarker.endCol;
   annotation.row = marker.startRow;
-
   return { marker: marker, annotation: annotation };
 };
 
@@ -250,7 +251,7 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
       endRow: row + 1,
       endCol: 0,
       className: 'istio-validation-error',
-      type: 'error'
+      type: 'fullLine'
     });
     parsedValidations.annotations.push({
       row: row,

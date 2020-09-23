@@ -2,18 +2,7 @@ import * as React from 'react';
 import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
 import { Host, HTTPRoute, ObjectValidation, TCPRoute, TLSRoute, VirtualService } from '../../../types/IstioObjects';
 import VirtualServiceRoute from './VirtualServiceRoute';
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Stack,
-  StackItem,
-  Text,
-  TextVariants,
-  Title,
-  TitleLevel,
-  TitleSize
-} from '@patternfly/react-core';
+import { Stack, StackItem, Text, TextVariants, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import IstioObjectLink from '../../../components/Link/IstioObjectLink';
 import ServiceLink from './ServiceLink';
@@ -24,7 +13,7 @@ interface VirtualServiceProps {
   validation?: ObjectValidation;
 }
 
-class VirtualServiceCard extends React.Component<VirtualServiceProps> {
+class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
   validation(): ObjectValidation | undefined {
     return this.props.validation;
   }
@@ -128,42 +117,36 @@ class VirtualServiceCard extends React.Component<VirtualServiceProps> {
       { name: 'TLS', object: virtualService.spec.tls }
     ];
     return (
-      <Card key={'virtualServiceConfig'}>
-        <CardHeader>
-          <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
-            Virtual Service Overview
-          </Title>
-        </CardHeader>
-        <CardBody>
-          <Stack gutter={'md'} style={{ marginTop: '10px' }}>
-            <StackItem id={'gateways'}>
-              {virtualService.spec.gateways &&
-                virtualService.spec.gateways.length > 0 &&
-                this.generateGatewaysList(virtualService.spec.gateways, isValid)}
-            </StackItem>
-            {protocols.map((protocol, i) => {
-              const { name, object } = protocol;
-              if (object && object.length > 0) {
-                return (
-                  <StackItem id={protocol.name + '-routes-' + i}>
-                    {protocol.name + ' Routes'}
-                    <VirtualServiceRoute
-                      name={virtualService.metadata.name}
-                      namespace={virtualService.metadata.namespace || ''}
-                      kind={name}
-                      routes={object}
-                    />
-                    {this.generateServiceList(object, isValid)}
-                  </StackItem>
-                );
-              }
-              return undefined;
-            })}
-          </Stack>
-        </CardBody>
-      </Card>
+      <>
+        <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
+          Virtual Service Overview
+        </Title>
+        <Stack>
+          {virtualService.spec.gateways && virtualService.spec.gateways.length > 0 && (
+            <StackItem id={'gateways'}>{this.generateGatewaysList(virtualService.spec.gateways, isValid)}</StackItem>
+          )}
+          {protocols.map((protocol, i) => {
+            const { name, object } = protocol;
+            if (object && object.length > 0) {
+              return (
+                <StackItem id={protocol.name + '-routes-' + i} key={protocol.name + '-routes-' + i}>
+                  {protocol.name + ' Routes'}
+                  <VirtualServiceRoute
+                    name={virtualService.metadata.name}
+                    namespace={virtualService.metadata.namespace || ''}
+                    kind={name}
+                    routes={object}
+                  />
+                  <div style={{ marginTop: 30 }}>{this.generateServiceList(object, isValid)}</div>
+                </StackItem>
+              );
+            }
+            return undefined;
+          })}
+        </Stack>
+      </>
     );
   }
 }
 
-export default VirtualServiceCard;
+export default VirtualServiceOverview;
