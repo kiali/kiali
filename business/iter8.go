@@ -141,6 +141,7 @@ func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (k
 	iter8ExperimentObject, gErr := in.k8s.GetIter8Experiment(namespace, name)
 	if gErr == nil {
 		Iter8ExperimentCRD.Spec = iter8ExperimentObject.GetSpec()
+		Iter8ExperimentCRD.Spec.ManualOverride = nil
 		objectMeta := iter8ExperimentObject.GetObjectMeta()
 		Iter8ExperimentCRD.ObjectMeta.Name = objectMeta.Name
 		Iter8ExperimentCRD.ObjectMeta.Labels = objectMeta.Labels
