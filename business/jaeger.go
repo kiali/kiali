@@ -44,7 +44,7 @@ func (in *JaegerService) getFilteredSpans(ns, app string, query models.TracingQu
 	}
 
 	spans := tracesToSpans(app, r, filter)
-	if len(r.Data) == query.Limit {
+	if len(r.Data) == query.Limit && len(spans) > 0 {
 		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
 		log.Trace("Limit of traces was reached, trying to find more relevant spans...")
 		return findRelevantSpans(client, spans, ns, app, query, filter)
