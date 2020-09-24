@@ -3,9 +3,9 @@ import { CyNode } from './CytoscapeGraphUtils';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
 import {
   getWorkloadFromSpan,
-  searchParentWorkload,
+  getAppFromSpan,
   searchParentApp,
-  getAppFromSpan
+  searchParentWorkload
 } from 'components/JaegerIntegration/JaegerHelper';
 import { NodeType, DestService, GraphType } from 'types/Graph';
 
@@ -32,19 +32,25 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
       const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
-      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
+      const parent = cy.elements(selector);
+      if (!!parent && parent.length !== 0) {
+        lastSelection = parent;
+      }
     }
   } else {
     // Parent workload
     const sourceWlNs = searchParentWorkload(span);
     if (sourceWlNs) {
       const selector = `node[${CyNode.workload}="${sourceWlNs.workload}"][${CyNode.namespace}="${sourceWlNs.namespace}"]`;
-      lastSelection = nextHop(span, cy.elements(selector), lastSelection);
+      const parent = cy.elements(selector);
+      if (!!parent && parent.length !== 0) {
+        lastSelection = parent;
+      }
     }
   }
 
-  // Inbound service entry (experimental)
-  const seSelectionIncoming = getServiceEntrySelection(span, cy, 'from_addr');
+  // Inbound service entry
+  const seSelectionIncoming = getInboundServiceEntry(span, cy);
   lastSelection = nextHop(span, seSelectionIncoming, lastSelection);
 
   // Main service
@@ -69,8 +75,8 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     }
   }
 
-  // Outbound service entry (experimental)
-  const seSelection = getServiceEntrySelection(span, cy, 'to_addr');
+  // Outbound service entry
+  const seSelection = getOutboundServiceEntry(span, cy);
   nextHop(span, seSelection, lastSelection);
 };
 
@@ -111,22 +117,45 @@ export const hideTrace = (cy: Cy.Core) => {
   spanHits.data('spans', undefined);
 };
 
-const getServiceEntrySelection = (span: Span, cy: Cy.Core, key: string): Cy.NodeCollection | undefined => {
-  const addr = span.tags.find(tag => tag.key === key);
-  if (addr) {
-    const addrHost = addr.value.split(':')[0];
-    return cy.elements(`[${CyNode.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
-      const destServices: DestService[] | undefined = ele.data(CyNode.destServices);
-      if (destServices) {
-        // TODO: improve host matching, as "startsWith" allows false-positives
-        if (destServices.some(s => s.name.startsWith(addrHost))) {
-          return true;
-        }
-      }
-      return false;
-    });
+const getOutboundServiceEntry = (span: Span, cy: Cy.Core): Cy.NodeCollection | undefined => {
+  // see https://github.com/opentracing/specification/blob/master/semantic_conventions.md
+  if (span.tags.some(tag => tag.key === 'span.kind' && (tag.value === 'client' || tag.value === 'producer'))) {
+    return findServiceEntry(span, cy);
   }
   return undefined;
+};
+
+const getInboundServiceEntry = (span: Span, cy: Cy.Core): Cy.NodeCollection | undefined => {
+  // see https://github.com/opentracing/specification/blob/master/semantic_conventions.md
+  if (span.tags.some(tag => tag.key === 'span.kind' && (tag.value === 'server' || tag.value === 'consumer'))) {
+    return findServiceEntry(span, cy);
+  }
+  return undefined;
+};
+
+const findServiceEntry = (span: Span, cy: Cy.Core): Cy.NodeCollection | undefined => {
+  const hostname = span.tags.find(tag => tag.key === 'peer.hostname');
+  if (hostname && hostname.value !== '') {
+    return findSEHost(hostname.value, cy);
+  }
+  const addr = span.tags.find(tag => tag.key === 'peer.address');
+  if (addr && addr.value !== '') {
+    return findSEHost(addr.value.split(':')[0], cy);
+  }
+  return undefined;
+};
+
+const findSEHost = (hostname: string, cy: Cy.Core): Cy.NodeCollection | undefined => {
+  return cy.elements(`[${CyNode.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
+    const destServices: DestService[] | undefined = ele.data(CyNode.destServices);
+    if (destServices) {
+      // TODO: improve host matching, as "startsWith" allows false-positives
+      if (destServices.some(s => s.name.startsWith(hostname))) {
+        return true;
+      }
+    }
+    return false;
+  });
 };
 
 const nextHop = (

@@ -12,8 +12,13 @@ import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { getFormattedTraceInfo } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
-import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
-import { extractEnvoySpanInfo } from 'components/JaegerIntegration/JaegerHelper';
+import { PFAlertColor } from 'components/Pf/PfColors';
+import {
+  extractEnvoySpanInfo,
+  extractOpenTracingHTTPInfo,
+  extractOpenTracingTCPInfo,
+  getSpanType
+} from 'components/JaegerIntegration/JaegerHelper';
 import { formatDuration } from 'components/JaegerIntegration/JaegerResults/transform';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -56,10 +61,6 @@ const pStyle = style({
   paddingTop: 9
 });
 
-const secondaryStyle = style({
-  color: PfColors.Black600
-});
-
 const navButtonStyle = style({
   paddingTop: 5,
   paddingLeft: 0
@@ -95,16 +96,18 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 
   render() {
     const node = decoratedNodeData(this.props.node);
-    const tracesDetailsURL =
-      `/namespaces/${node.namespace}` +
-      (node.workload
-        ? `/workloads/${node.workload}`
-        : node.service
-        ? `/services/${node.service}`
-        : `/applications/${node.app!}`) +
-      `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`;
-    const jaegerTraceURL =
-      node.app && this.props.jaegerURL ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}` : undefined;
+    const tracesDetailsURL = node.namespace
+      ? `/namespaces/${node.namespace}` +
+        (node.workload
+          ? `/workloads/${node.workload}`
+          : node.service
+          ? `/services/${node.service}`
+          : `/applications/${node.app!}`) +
+        `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}`
+      : undefined;
+    const jaegerTraceURL = this.props.jaegerURL
+      ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}`
+      : undefined;
     const info = getFormattedTraceInfo(this.props.trace);
     const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
     const nodeName = node.workload || node.service || node.app!;
@@ -122,17 +125,32 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
         </span>
         <div>
           <Tooltip content={info.name}>
-            <Link to={tracesDetailsURL}>
+            {tracesDetailsURL ? (
+              <Link to={tracesDetailsURL}>
+                <span className={nameStyleToUse}>{traceName}</span>
+              </Link>
+            ) : (
               <span className={nameStyleToUse}>{traceName}</span>
-            </Link>
+            )}
           </Tooltip>
-          <div className={pStyle}>
-            <div className={secondaryStyle}>{'From: ' + info.fromNow}</div>
-            {!!info.duration && <div className={secondaryStyle}>{'Full duration: ' + info.duration}</div>}
+          <div>
+            <div>
+              <strong>Started: </strong>
+              {info.fromNow}
+            </div>
+            {info.duration && (
+              <div>
+                <strong>Full duration: </strong>
+                {info.duration}
+              </div>
+            )}
           </div>
           {spans && (
             <div className={pStyle}>
-              <div className={secondaryStyle}>{'Spans for node: ' + nodeName}</div>
+              <div>
+                <strong>Spans for node: </strong>
+                {nodeName}
+              </div>
               <div>
                 <Button
                   className={navButtonStyle}
@@ -163,7 +181,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
                 this.renderSpan(nodeName + '.' + node.namespace, spans[this.state.selectedSpan])}
             </div>
           )}
-          {tracesDetailsURL && jaegerTraceURL && (
+          {jaegerTraceURL && (
             <>
               <br />
               <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
@@ -177,73 +195,159 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
   }
 
   private renderSpan(nodeFullName: string, span: Span) {
-    const info = extractEnvoySpanInfo(span);
-    const reqDetails: string[] = [];
-    if (info) {
-      if (
-        nodeFullName !== span.process.serviceName &&
-        info.inbound &&
-        nodeFullName === info.inbound + '.' + info.otherNamespace
-      ) {
-        // Special case: this span was added to the inbound workload (this node) while originating from the outbound node.
-        // So we need to reverse the logic: it's not an inbound request that we show here, but an outbound request, switching point of view.
-        info.inbound = undefined;
-        const split = span.process.serviceName.split('.');
-        info.outbound = split[0];
-        if (split.length > 1) {
-          info.otherNamespace = split[1];
-        }
-      }
-      if (info.statusCode) {
-        reqDetails.push('code ' + info.statusCode);
-      }
-      if (info.responseFlags) {
-        reqDetails.push('flags ' + info.responseFlags);
-      }
-      if (span.duration) {
-        reqDetails.push(formatDuration(span.duration));
-      }
+    switch (getSpanType(span)) {
+      case 'envoy':
+        return this.renderEnvoySpan(nodeFullName, span);
+      case 'http':
+        return this.renderHTTPSpan(span);
+      case 'tcp':
+        return this.renderTCPSpan(span);
     }
+    // Unknown
+    return this.renderCommonSpan(span);
+  }
+
+  private renderCommonSpan(span: Span) {
     return (
       <>
-        {info?.inbound && (
+        <div>
+          <strong>Operation: </strong>
+          {span.operationName}
+        </div>
+        <div>
+          <strong>Started after: </strong>
+          {formatDuration(span.relativeStartTime)}
+        </div>
+        <div>
+          <strong>Duration: </strong>
+          {formatDuration(span.duration)}
+        </div>
+      </>
+    );
+  }
+
+  private renderEnvoySpan(nodeFullName: string, span: Span) {
+    const info = extractEnvoySpanInfo(span);
+    const rsDetails: string[] = [];
+    if (
+      nodeFullName !== span.process.serviceName &&
+      info.direction === 'inbound' &&
+      nodeFullName === info.peer + '.' + info.peerNamespace
+    ) {
+      // Special case: this span was added to the inbound workload (this node) while originating from the outbound node.
+      // So we need to reverse the logic: it's not an inbound request that we show here, but an outbound request, switching point of view.
+      info.direction = 'outbound';
+      const split = span.process.serviceName.split('.');
+      info.peer = split[0];
+      if (split.length > 1) {
+        info.peerNamespace = split[1];
+      }
+    }
+    if (info.statusCode) {
+      rsDetails.push('code ' + info.statusCode);
+    }
+    if (info.responseFlags) {
+      rsDetails.push('flags ' + info.responseFlags);
+    }
+    if (span.duration) {
+      rsDetails.push(formatDuration(span.duration));
+    }
+
+    return (
+      <>
+        {info.direction && info.peer && info.peerNamespace && (
           <>
-            <span className={secondaryStyle}>{'From: '}</span>
+            <span>
+              <strong>{info.direction === 'inbound' ? 'From: ' : 'To: '}</strong>
+            </span>
             <Button
               variant={ButtonVariant.link}
-              onClick={() => {
-                this.focusOnWorkload(info.otherNamespace!, info.inbound!);
-              }}
+              onClick={
+                info.direction === 'inbound'
+                  ? () => this.focusOnWorkload(info.peerNamespace!, info.peer!)
+                  : () => this.focusOnService(info.peerNamespace!, info.peer!)
+              }
               isInline
             >
-              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.inbound}</span>
+              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.peer}</span>
             </Button>
           </>
         )}
-        {info?.outbound && (
-          <>
-            <span className={secondaryStyle}>{'To: '}</span>
-            <Button
-              variant={ButtonVariant.link}
-              onClick={() => {
-                this.focusOnService(info.otherNamespace!, info.outbound!);
-              }}
-              isInline
-            >
-              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.outbound}</span>
-            </Button>
-          </>
+        <div>
+          <strong>Operation: </strong>
+          {span.operationName}
+        </div>
+        <div>
+          <strong>Started after: </strong>
+          {formatDuration(span.relativeStartTime)}
+        </div>
+        <div>
+          <strong>Request: </strong>
+          {info.method} {info.url}
+        </div>
+        <div>
+          <strong>Response: </strong>
+          {rsDetails.join(', ')}
+        </div>
+      </>
+    );
+  }
+
+  private renderHTTPSpan(span: Span) {
+    const info = extractOpenTracingHTTPInfo(span);
+    const rsDetails: string[] = [];
+    if (info.statusCode) {
+      rsDetails.push('code ' + info.statusCode);
+    }
+    if (span.duration) {
+      rsDetails.push(formatDuration(span.duration));
+    }
+    const rqLabel =
+      info.direction === 'inbound' ? 'Inbound request' : info.direction === 'outbound' ? 'Outbound request' : 'Request';
+    return (
+      <>
+        <div>
+          <strong>Operation: </strong>
+          {span.operationName}
+        </div>
+        <div>
+          <strong>Started after: </strong>
+          {formatDuration(span.relativeStartTime)}
+        </div>
+        <div>
+          <strong>{rqLabel}: </strong>
+          {info.method} {info.url}
+        </div>
+        <div>
+          <strong>Response: </strong>
+          {rsDetails.join(', ')}
+        </div>
+      </>
+    );
+  }
+
+  private renderTCPSpan(span: Span) {
+    const info = extractOpenTracingTCPInfo(span);
+    return (
+      <>
+        <div>
+          <strong>Operation: </strong>
+          {span.operationName}
+        </div>
+        <div>
+          <strong>Started after: </strong>
+          {formatDuration(span.relativeStartTime)}
+        </div>
+        {info.topic && (
+          <div>
+            <strong>Topic: </strong>
+            {info.topic}
+          </div>
         )}
-        <div className={secondaryStyle}>{`Operation: ${span.operationName}`}</div>
-        {info ? (
-          <>
-            <div className={secondaryStyle}>{`Request: ${info.method} ${info.url}`}</div>
-            <div className={secondaryStyle}>{`Response: [${reqDetails.join(', ')}]`}</div>
-          </>
-        ) : (
-          <div className={secondaryStyle}>{`Duration: ${formatDuration(span.duration)}`}</div>
-        )}
-        <div className={secondaryStyle}>{`Started after ${formatDuration(span.relativeStartTime)}`}</div>
+        <div>
+          <strong>Duration: </strong>
+          {formatDuration(span.duration)}
+        </div>
       </>
     );
   }

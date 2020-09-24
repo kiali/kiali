@@ -95,57 +95,112 @@ export const searchParentApp = (span: Span): AppAndNamespace | undefined => {
   return undefined;
 };
 
-type EnvoySpanInfo = {
-  responseFlags?: string;
+export const getSpanType = (span: Span): 'envoy' | 'http' | 'tcp' | 'unknown' => {
+  const component = span.tags.find(tag => tag.key === 'component');
+  if (component?.value === 'proxy') {
+    return 'envoy';
+  }
+  if (span.tags.some(t => t.key.startsWith('http.'))) {
+    return 'http';
+  }
+  if (span.tags.some(t => t.key.startsWith('peer.'))) {
+    return 'tcp';
+  }
+  return 'unknown';
+};
+
+type OpenTracingHTTPInfo = {
   statusCode?: number;
   url?: string;
   method?: string;
-  inbound?: string;
-  outbound?: string;
-  otherNamespace?: string;
+  direction?: 'inbound' | 'outbound';
 };
 
-export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo | undefined => {
-  const info: EnvoySpanInfo = {};
-  let hasAny = false;
+export const extractOpenTracingHTTPInfo = (span: Span): OpenTracingHTTPInfo => {
+  // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
+  const info: OpenTracingHTTPInfo = {};
+  span.tags.forEach(t => {
+    if (t.key === 'http.status_code') {
+      const val = parseInt(t.value, 10);
+      if (!isNaN(val) && val > 0) {
+        info.statusCode = val;
+      }
+    } else if (t.key === 'http.url') {
+      info.url = t.value;
+    } else if (t.key === 'http.method') {
+      info.method = t.value;
+    } else if (t.key === 'span.kind') {
+      if (t.value === 'client') {
+        info.direction = 'outbound';
+      } else if (t.value === 'server') {
+        info.direction = 'inbound';
+      }
+    }
+  });
+  return info;
+};
+
+type OpenTracingTCPInfo = {
+  topic?: string;
+  peerAddress?: string;
+  peerHostname?: string;
+  direction?: 'inbound' | 'outbound';
+};
+
+export const extractOpenTracingTCPInfo = (span: Span): OpenTracingTCPInfo => {
+  // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
+  const info: OpenTracingTCPInfo = {};
+  span.tags.forEach(t => {
+    if (t.key === 'message_bus.destination') {
+      info.topic = t.value;
+    } else if (t.key === 'peer.address') {
+      info.peerAddress = t.value;
+    } else if (t.key === 'peer.hostname') {
+      info.peerHostname = t.value;
+    } else if (t.key === 'span.kind') {
+      if (t.value === 'producer' || t.value === 'client') {
+        info.direction = 'outbound';
+      } else if (t.value === 'consumer' || t.value === 'server') {
+        info.direction = 'inbound';
+      }
+    }
+  });
+  return info;
+};
+
+type EnvoySpanInfo = OpenTracingHTTPInfo & {
+  responseFlags?: string;
+  peer?: string;
+  peerNamespace?: string;
+};
+
+export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo => {
+  const info: EnvoySpanInfo = extractOpenTracingHTTPInfo(span);
   span.tags.forEach(t => {
     if (t.key === 'response_flags') {
       if (t.value !== '-') {
         info.responseFlags = t.value;
-        hasAny = true;
       }
-    } else if (t.key === 'http.status_code') {
-      const val = parseInt(t.value, 10);
-      if (!isNaN(val) && val > 0) {
-        info.statusCode = val;
-        hasAny = true;
-      }
-    } else if (t.key === 'http.url') {
-      info.url = t.value;
-      hasAny = true;
-    } else if (t.key === 'http.method') {
-      info.method = t.value;
-      hasAny = true;
     } else if (t.key === 'upstream_cluster') {
       const parts = (t.value as string).split('|');
       if (parts.length === 4) {
         if (parts[0] === 'outbound') {
           const svcParts = parts[3].split('.');
           if (svcParts.length === 5) {
-            info.outbound = svcParts[0];
-            info.otherNamespace = svcParts[1];
-            hasAny = true;
+            info.direction = 'outbound';
+            info.peer = svcParts[0];
+            info.peerNamespace = svcParts[1];
           }
         } else if (parts[0] === 'inbound') {
           const wkdNs = searchParentWorkload(span);
           if (wkdNs) {
-            info.inbound = wkdNs.workload;
-            info.otherNamespace = wkdNs.namespace;
-            hasAny = true;
+            info.direction = 'inbound';
+            info.peer = wkdNs.workload;
+            info.peerNamespace = wkdNs.namespace;
           }
         }
       }
     }
   });
-  return hasAny ? info : undefined;
+  return info;
 };
