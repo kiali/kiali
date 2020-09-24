@@ -210,9 +210,8 @@ def test_service_health_endpoint(kiali_client):
 
     reqs = service_health.get('requests')
     assert reqs != None
-    assert 'errorRatio' in reqs
-    assert 'inboundErrorRatio' in reqs
-    assert 'outboundErrorRatio' in reqs
+    assert 'inbound' in reqs
+    assert 'outbound' in reqs
 
 def test_service_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
