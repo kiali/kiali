@@ -157,7 +157,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	business.CallbackCleanup(w)
 
 	if checkFailure := business.CheckOpenIdImplicitFlowParams(openIdParams); len(checkFailure) != 0 {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, checkFailure)
 		return false
 	}
 
