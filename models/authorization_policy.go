@@ -21,9 +21,9 @@ type AuthorizationPolicies []AuthorizationPolicy
 type AuthorizationPolicy struct {
 	IstioBase
 	Spec struct {
-		Selector interface{} `json:"selector"`
-		Rules    interface{} `json:"rules"`
-		Action   interface{} `json:"action"`
+		Selector interface{} `json:"selector,omitempty"`
+		Rules    interface{} `json:"rules,omitempty"`
+		Action   interface{} `json:"action,omitempty"`
 	} `json:"spec"`
 }
 
