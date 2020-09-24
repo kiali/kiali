@@ -36,7 +36,7 @@ import { GatewaySelectorState } from './GatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
 import { GatewayState } from '../../pages/IstioConfigNew/GatewayForm';
 import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
-import { AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
+import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
 import { RequestAuthenticationState } from '../../pages/IstioConfigNew/RequestAuthenticationForm';
 import { ThreeScaleState } from '../../pages/extensions/threescale/ThreeScaleNew/ThreeScaleNewPage';
@@ -906,10 +906,15 @@ export const buildAuthorizationPolicy = (
 
   // DENY_ALL and ALLOW_ALL are two specific cases
   if (state.policy === 'DENY_ALL') {
+    ap.spec.action = undefined;
+    ap.spec.selector = undefined;
+    ap.spec.rules = undefined;
     return ap;
   }
 
   if (state.policy === 'ALLOW_ALL') {
+    ap.spec.action = ALLOW;
+    ap.spec.selector = undefined;
     ap.spec.rules = [{}];
     return ap;
   }

@@ -9,12 +9,11 @@ type Props = {
 };
 
 export type AuthorizationPolicyState = {
-  policy: string;
   workloadSelector: string;
   action: string;
   rules: Rule[];
   // Used to identify DENY_ALL, ALLOW_ALL or RULES
-  rulesForm: string;
+  policy: string;
   addWorkloadSelector: boolean;
   workloadSelectorValid: boolean;
 };
@@ -37,11 +36,10 @@ const rulesFormValues = [DENY_ALL, ALLOW_ALL, RULES];
 const actions = [ALLOW, DENY];
 
 export const initAuthorizationPolicy = (): AuthorizationPolicyState => ({
-  policy: DENY,
+  policy: DENY_ALL,
   workloadSelector: '',
   action: ALLOW,
   rules: [],
-  rulesForm: DENY_ALL,
   addWorkloadSelector: false,
   workloadSelectorValid: false
 });
@@ -65,7 +63,6 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
       workloadSelector: this.props.authorizationPolicy.workloadSelector,
       action: this.props.authorizationPolicy.action,
       rules: [],
-      rulesForm: this.props.authorizationPolicy.rulesForm,
       addWorkloadSelector: this.props.authorizationPolicy.addWorkloadSelector,
       workloadSelectorValid: this.props.authorizationPolicy.workloadSelectorValid
     });
@@ -74,7 +71,7 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
   onRulesFormChange = (value, _) => {
     this.setState(
       {
-        rulesForm: value
+        policy: value
       },
       () => this.onAuthorizationChange()
     );
@@ -171,14 +168,14 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
   render() {
     return (
       <>
-        <FormGroup label="Policy" fieldId="rules-form" helperText={HELPER_TEXT[this.state.rulesForm]}>
-          <FormSelect value={this.state.rulesForm} onChange={this.onRulesFormChange} id="rules-form" name="rules-form">
+        <FormGroup label="Policy" fieldId="rules-form" helperText={HELPER_TEXT[this.state.policy]}>
+          <FormSelect value={this.state.policy} onChange={this.onRulesFormChange} id="rules-form" name="rules-form">
             {rulesFormValues.map((option, index) => (
               <FormSelectOption key={index} value={option} label={option} />
             ))}
           </FormSelect>
         </FormGroup>
-        {this.state.rulesForm === RULES && (
+        {this.state.policy === RULES && (
           <FormGroup label="Add Workload Selector" fieldId="workloadSelectorSwitch">
             <Switch
               id="workloadSelectorSwitch"
@@ -207,7 +204,7 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
             />
           </FormGroup>
         )}
-        {this.state.rulesForm === RULES && (
+        {this.state.policy === RULES && (
           <FormGroup label="Action" fieldId="action-form">
             <FormSelect value={this.state.action} onChange={this.onActionChange} id="action-form" name="action-form">
               {actions.map((option, index) => (
@@ -216,8 +213,8 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
             </FormSelect>
           </FormGroup>
         )}
-        {this.state.rulesForm === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
-        {this.state.rulesForm === RULES && (
+        {this.state.policy === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
+        {this.state.policy === RULES && (
           <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
         )}
       </>
