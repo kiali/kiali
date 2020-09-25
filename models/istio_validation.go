@@ -152,14 +152,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive mode needed",
 		Severity: ErrorSeverity,
 	},
-	"destinationrules.mtls.servicemeshpolicymissing": {
-		Message:  "KIA0209 ServiceMeshPolicy enabling mTLS is missing",
-		Severity: ErrorSeverity,
-	},
-	"destinationrules.mtls.servicemeshpolicymtlsenabled": {
-		Message:  "KIA0210 ServiceMeshPolicy enabling mTLS found, permissive policy is needed",
-		Severity: ErrorSeverity,
-	},
 	"gateways.multimatch": {
 		Message:  "KIA0301 More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
@@ -203,10 +195,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"service.deployment.port.mismatch": {
 		Message:  "KIA0701 Deployment exposing same port as Service not found",
 		Severity: WarningSeverity,
-	},
-	"servicemeshpolicies.mtls.destinationrulemissing": {
-		Message:  "KIA0801 Mesh-wide Destination Rule enabling mTLS is missing",
-		Severity: ErrorSeverity,
 	},
 	"servicerole.invalid.services": {
 		Message:  "KIA0901 Unable to find all the defined services",
