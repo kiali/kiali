@@ -7,7 +7,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/mtls"
 )
@@ -52,31 +51,12 @@ func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, er
 	var mps []kubernetes.IstioObject
 	var err error
 	controlPlaneNs := config.Get().IstioNamespace
-	if !in.k8s.IsMaistraApi() {
-		if IsResourceCached(controlPlaneNs, kubernetes.PeerAuthentications) {
-			mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
-		} else {
-			mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
-		}
-		if err != nil {
-			return mps, err
-		}
+	if IsResourceCached(controlPlaneNs, kubernetes.PeerAuthentications) {
+		mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 	} else {
-		// ServiceMeshPolicies are namespace scoped.
-		// And Maistra will only consider resources under control-plane namespace
-		// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
-		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
-		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
-		// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
-		if mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.ServiceMeshPolicies, ""); err != nil {
-			// This query can return false if user can't access to controlPlaneNs
-			// On this case we log internally the error but we return a false with nil
-			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, err)
-			return mps, err
-		}
+		mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 	}
-
-	return mps, nil
+	return mps, err
 }
 
 func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
