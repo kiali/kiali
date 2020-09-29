@@ -96,7 +96,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
   private fetchBackend = () => {
     if (this.props.workload) {
-      this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
+      this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name, true);
       this.setState({
         validations: this.workloadValidations(this.props.workload)
       });

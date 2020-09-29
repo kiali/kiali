@@ -670,7 +670,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       }
       AlertUtils.addError(errorMessage);
     });
-    graphDataSource.fetchForNamespace(this.props.duration, ns);
+    graphDataSource.fetchForNamespace(this.props.duration, ns, true);
   };
 
   hideConfirmModal = () => {

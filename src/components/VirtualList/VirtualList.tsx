@@ -14,6 +14,15 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 
+// ******************************
+// VirtualList and its associated classes are intended to be used for main list pages: Applications,
+// Workloads, Services and Istio Config. They share common style and filter integration. They have
+// have limitations in scenarios where different personalization is needed (columns style, or layout).
+// For a secondary list, rendered inside a detail page, it is recommended the imple be based on a
+// Table component, such as in WorkloadServices, WorkloadPods, ServiceInfoWorkload, IstioConfigSubList,
+// or TrafficListComponent.
+// ******************************
+
 type Direction = 'asc' | 'desc' | undefined;
 
 type VirtualListProps<R> = {

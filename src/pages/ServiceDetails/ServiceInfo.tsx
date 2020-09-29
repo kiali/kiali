@@ -129,7 +129,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
         AlertUtils.addError('Could not fetch PeerAuthentications.', error);
       });
 
-    this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service);
+    this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service, true);
   };
 
   static addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {

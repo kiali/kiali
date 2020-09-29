@@ -12,9 +12,9 @@ import { DurationInSeconds } from '../../types/Common';
 import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ServiceInfo from './ServiceInfo';
-import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
+import TrafficDetails from 'components/TrafficList/TrafficDetails';
 
 type ServiceDetailsState = {
   currentTab: string;
@@ -69,10 +69,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const trafficTab = (
       <Tab eventKey={1} title="Traffic" key={trafficTabName}>
         <TrafficDetails
+          duration={this.props.duration}
+          itemName={this.props.match.params.service}
           itemType={MetricsObjectTypes.SERVICE}
           namespace={this.props.match.params.namespace}
-          serviceName={this.props.match.params.service}
-          duration={this.props.duration}
         />
       </Tab>
     );

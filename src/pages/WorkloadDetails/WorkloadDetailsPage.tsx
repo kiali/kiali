@@ -12,7 +12,6 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
-import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -20,6 +19,7 @@ import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
+import TrafficDetails from 'components/TrafficList/TrafficDetails';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -93,14 +93,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
+          duration={this.props.duration}
+          itemName={this.props.match.params.workload}
           itemType={MetricsObjectTypes.WORKLOAD}
           namespace={this.props.match.params.namespace}
-          workloadName={this.props.match.params.workload}
-          duration={this.props.duration}
         />
       </Tab>
     );
-
     const logTab = (
       <Tab title="Logs" eventKey={2} key={'Logs'}>
         {hasPods ? (

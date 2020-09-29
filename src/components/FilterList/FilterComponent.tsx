@@ -43,23 +43,15 @@ export abstract class Component<P extends Props<R>, S extends State<R>, R> exten
     this.handleError(errMsg);
   }
 
-  updateSortField = (sortField: SortField<R>) => {
-    this.sortItemList(this.state.listItems, sortField, this.state.isSortAscending).then(sorted => {
+  updateSort = (sortField: SortField<R>, isSortAscending: boolean) => {
+    this.sortItemList(this.state.listItems, sortField, isSortAscending).then(sorted => {
       this.setState({
         currentSortField: sortField,
+        isSortAscending: isSortAscending,
         listItems: sorted
       });
       HistoryManager.setParam(URLParam.SORT, sortField.param);
-    });
-  };
-
-  updateSortDirection = () => {
-    this.sortItemList(this.state.listItems, this.state.currentSortField, !this.state.isSortAscending).then(sorted => {
-      this.setState({
-        isSortAscending: !this.state.isSortAscending,
-        listItems: sorted
-      });
-      HistoryManager.setParam(URLParam.DIRECTION, this.state.isSortAscending ? 'asc' : 'desc');
+      HistoryManager.setParam(URLParam.DIRECTION, isSortAscending ? 'asc' : 'desc');
     });
   };
 }

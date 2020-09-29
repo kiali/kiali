@@ -44,7 +44,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     if (!this.props.app) {
       return;
     }
-    this.graphDataSource.fetchForApp(this.props.duration, this.props.app.namespace.name, this.props.app.name);
+    this.graphDataSource.fetchForApp(this.props.duration, this.props.app.namespace.name, this.props.app.name, true);
     const hasSidecar = this.props.app.workloads.some(w => w.istioSidecar);
     API.getAppHealth(this.props.app.namespace.name, this.props.app.name, this.props.duration, hasSidecar)
       .then(health => this.setState({ health: health }))

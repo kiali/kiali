@@ -1,9 +1,9 @@
-import { TrafficItem } from '../../components/Details/DetailedTrafficList';
 import { Direction } from '../MetricsOptions';
 import { ThresholdStatus } from '../Health';
 import { ProtocolWithTraffic } from '../Graph';
 import { aggregate, checkExpr, getRateHealthConfig, transformEdgeResponses } from './utils';
 import { calculateStatusGraph } from './GraphEdgeStatus';
+import { TrafficItem } from 'components/TrafficList/TrafficDetails';
 
 /*
  Calculate Health for DetailsTraffic

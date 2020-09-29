@@ -216,32 +216,46 @@ export default class GraphDataSource {
 
   // Some helpers
 
-  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string) => {
+  public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string, injectServiceNodes?: boolean) => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.APP;
+    params.injectServiceNodes = !!injectServiceNodes;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
     this.fetchGraphData(params);
   };
 
-  public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string) => {
+  public fetchForWorkload = (
+    duration: DurationInSeconds,
+    namespace: string,
+    workload: string,
+    injectServiceNodes?: boolean
+  ) => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.WORKLOAD;
+    params.injectServiceNodes = !!injectServiceNodes;
     params.node!.nodeType = NodeType.WORKLOAD;
     params.node!.workload = workload;
     this.fetchGraphData(params);
   };
 
-  public fetchForService = (duration: DurationInSeconds, namespace: string, service: string) => {
+  public fetchForService = (
+    duration: DurationInSeconds,
+    namespace: string,
+    service: string,
+    injectServiceNodes?: boolean
+  ) => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.WORKLOAD;
+    params.injectServiceNodes = !!injectServiceNodes;
     params.node!.nodeType = NodeType.SERVICE;
     params.node!.service = service;
     this.fetchGraphData(params);
   };
 
-  public fetchForNamespace = (duration: DurationInSeconds, namespace: string) => {
+  public fetchForNamespace = (duration: DurationInSeconds, namespace: string, injectServiceNodes?: boolean) => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.injectServiceNodes = !!injectServiceNodes;
     params.graphType = GraphType.WORKLOAD;
     params.showSecurity = true;
     this.fetchGraphData(params);

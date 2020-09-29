@@ -379,7 +379,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(serviceNode => {
       const serviceNodeData = decoratedNodeData(serviceNode);
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
-      console.log(`service=[${serviceNodeData.service}]`);
       const aggregates = group.children(
         `node[nodeType = "${NodeType.AGGREGATE}"][service = "${serviceNodeData.service}"]`
       );

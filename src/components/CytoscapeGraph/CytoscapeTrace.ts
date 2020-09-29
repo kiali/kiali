@@ -63,7 +63,6 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     const destAppNs = getAppFromSpan(span);
     if (destAppNs) {
       const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${destAppNs.app}"][${CyNode.namespace}="${destAppNs.namespace}"]`;
-      console.log(cy.elements(selector));
       lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
   } else {

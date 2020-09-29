@@ -12,7 +12,6 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
-import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
@@ -20,6 +19,7 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { JaegerInfo } from '../../types/JaegerInfo';
 import { PfColors } from '../../components/Pf/PfColors';
 import TracesComponent from '../../components/JaegerIntegration/TracesComponent';
+import TrafficDetails from 'components/TrafficList/TrafficDetails';
 
 type AppDetailsState = {
   app?: App;
@@ -128,10 +128,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
+          duration={this.props.duration}
+          itemName={this.props.match.params.app}
           itemType={MetricsObjectTypes.APP}
           namespace={this.props.match.params.namespace}
-          appName={this.props.match.params.app}
-          duration={this.props.duration}
         />
       </Tab>
     );
