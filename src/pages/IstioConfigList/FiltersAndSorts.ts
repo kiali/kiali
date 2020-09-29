@@ -160,14 +160,6 @@ export const istioTypeFilter: FilterType = {
       title: 'ServiceEntry'
     },
     {
-      id: 'ServiceMeshPolicy',
-      title: 'ServiceMeshPolicy'
-    },
-    {
-      id: 'ServiceMeshRbacConfig',
-      title: 'ServiceMeshRbacConfig'
-    },
-    {
       id: 'ServiceRole',
       title: 'ServiceRole'
     },

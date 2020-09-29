@@ -58,16 +58,12 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.policy;
     } else if (istioObjectDetails.meshPolicy) {
       istioObject = istioObjectDetails.meshPolicy;
-    } else if (istioObjectDetails.serviceMeshPolicy) {
-      istioObject = istioObjectDetails.serviceMeshPolicy;
     } else if (istioObjectDetails.clusterRbacConfig) {
       istioObject = istioObjectDetails.clusterRbacConfig;
     } else if (istioObjectDetails.rbacConfig) {
       istioObject = istioObjectDetails.rbacConfig;
     } else if (istioObjectDetails.authorizationPolicy) {
       istioObject = istioObjectDetails.authorizationPolicy;
-    } else if (istioObjectDetails.serviceMeshRbacConfig) {
-      istioObject = istioObjectDetails.serviceMeshRbacConfig;
     } else if (istioObjectDetails.serviceRole) {
       istioObject = istioObjectDetails.serviceRole;
     } else if (istioObjectDetails.serviceRoleBinding) {

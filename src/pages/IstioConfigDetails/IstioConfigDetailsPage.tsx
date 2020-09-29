@@ -430,7 +430,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const istioStatusMsgs = this.getStatusMessages();
     const objectReferences = this.objectReferences();
     const refPresent = objectReferences.length > 0;
-    const showCards = refPresent || this.hasOverview() || istioStatusMsgs.length > 0;
+    const showCards = refPresent || this.hasOverview() || (!!istioStatusMsgs && istioStatusMsgs.length > 0);
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []

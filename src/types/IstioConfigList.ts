@@ -22,7 +22,6 @@ import {
   RbacConfig,
   RequestAuthentication,
   ServiceEntry,
-  ServiceMeshRbacConfig,
   ServiceRole,
   ServiceRoleBinding,
   Sidecar,
@@ -52,11 +51,9 @@ export interface IstioConfigItem {
   quotaSpecBinding?: QuotaSpecBinding;
   policy?: Policy;
   meshPolicy?: Policy;
-  serviceMeshPolicy?: Policy;
   clusterRbacConfig?: ClusterRbacConfig;
   rbacConfig?: RbacConfig;
   authorizationPolicy?: AuthorizationPolicy;
-  serviceMeshRbacConfig?: ServiceMeshRbacConfig;
   sidecar?: Sidecar;
   serviceRole?: ServiceRole;
   serviceRoleBinding?: ServiceRoleBinding;
@@ -90,11 +87,9 @@ export interface IstioConfigList {
   httpApiSpecBindings: HTTPAPISpecBinding[];
   policies: Policy[];
   meshPolicies: Policy[];
-  serviceMeshPolicies: Policy[];
   clusterRbacConfigs: ClusterRbacConfig[];
   rbacConfigs: RbacConfig[];
   authorizationPolicies: AuthorizationPolicy[];
-  serviceMeshRbacConfigs: ServiceMeshRbacConfig[];
   sidecars: Sidecar[];
   serviceRoles: ServiceRole[];
   serviceRoleBindings: ServiceRoleBinding[];
@@ -124,8 +119,6 @@ export const dicIstioType = {
   AuthorizationPolicy: 'authorizationpolicies',
   ServiceRole: 'serviceroles',
   ServiceRoleBinding: 'servicerolebindings',
-  ServiceMeshPolicy: 'servicemeshpolicies',
-  ServiceMeshRbacConfig: 'servicemeshrbacconfigs',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   WorkloadEntry: 'workloadentries',
@@ -152,8 +145,6 @@ export const dicIstioType = {
   sidecars: 'Sidecar',
   serviceroles: 'ServiceRole',
   servicerolebindings: 'ServiceRoleBinding',
-  servicemeshpolicies: 'ServiceMeshPolicy',
-  servicemeshrbacconfigs: 'ServiceMeshRbacConfig',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
   workloadentries: 'WorkloadEntry',
@@ -180,8 +171,6 @@ export const dicIstioType = {
   sidecar: 'Sidecar',
   servicerole: 'ServiceRole',
   servicerolebinding: 'ServiceRoleBinding',
-  servicemeshpolicy: 'ServiceMeshPolicy',
-  servicemeshrbacconfig: 'ServiceMeshRbacConfig',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   workloadentry: 'WorkloadEntry',
@@ -225,11 +214,9 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
     policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),
     meshPolicies: unfiltered.meshPolicies.filter(p => includeName(p.metadata.name, names)),
-    serviceMeshPolicies: unfiltered.serviceMeshPolicies.filter(p => includeName(p.metadata.name, names)),
     clusterRbacConfigs: unfiltered.clusterRbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     rbacConfigs: unfiltered.rbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includeName(rc.metadata.name, names)),
-    serviceMeshRbacConfigs: unfiltered.serviceMeshRbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
     serviceRoles: unfiltered.serviceRoles.filter(sr => includeName(sr.metadata.name, names)),
     serviceRoleBindings: unfiltered.serviceRoleBindings.filter(srb => includeName(srb.metadata.name, names)),

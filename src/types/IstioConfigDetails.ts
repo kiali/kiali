@@ -18,7 +18,6 @@ import {
   ServiceRoleBinding,
   ClusterRbacConfig,
   Sidecar,
-  ServiceMeshRbacConfig,
   IstioObject,
   PeerAuthentication,
   RequestAuthentication,
@@ -60,11 +59,9 @@ export interface IstioConfigDetails {
   httpApiSpecBinding: HTTPAPISpecBinding;
   policy: Policy;
   meshPolicy: Policy;
-  serviceMeshPolicy: Policy;
   clusterRbacConfig: ClusterRbacConfig;
   rbacConfig: RbacConfig;
   authorizationPolicy: AuthorizationPolicy;
-  serviceMeshRbacConfig: ServiceMeshRbacConfig;
   serviceRole: ServiceRole;
   serviceRoleBinding: ServiceRoleBinding;
   peerAuthentication: PeerAuthentication;
