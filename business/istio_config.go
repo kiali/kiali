@@ -37,10 +37,8 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings      bool
 	IncludePolicies               bool
 	IncludeMeshPolicies           bool
-	IncludeServiceMeshPolicies    bool
 	IncludeClusterRbacConfigs     bool
 	IncludeRbacConfigs            bool
-	IncludeServiceMeshRbacConfigs bool
 	IncludeServiceRoles           bool
 	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
@@ -1127,10 +1125,8 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeQuotaSpecBindings = defaultInclude
 	criteria.IncludePolicies = defaultInclude
 	criteria.IncludeMeshPolicies = defaultInclude
-	criteria.IncludeServiceMeshPolicies = defaultInclude
 	criteria.IncludeClusterRbacConfigs = defaultInclude
 	criteria.IncludeRbacConfigs = defaultInclude
-	criteria.IncludeServiceMeshRbacConfigs = defaultInclude
 	criteria.IncludeServiceRoles = defaultInclude
 	criteria.IncludeServiceRoleBindings = defaultInclude
 	criteria.IncludeSidecars = defaultInclude
