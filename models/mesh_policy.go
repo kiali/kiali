@@ -36,30 +36,3 @@ func (mp *MeshPolicy) Parse(meshPolicy kubernetes.IstioObject) {
 	mp.Spec.OriginIsOptional = meshPolicy.GetSpec()["originIsOptinal"]
 	mp.Spec.PrincipalBinding = meshPolicy.GetSpec()["principalBinding"]
 }
-
-// ServiceMeshPolicy is a clone of MeshPolicy used by Maistra for multitenancy scenarios
-// Used in the same file for easy maintenance
-
-type ServiceMeshPolicies []ServiceMeshPolicy
-type ServiceMeshPolicy struct {
-	IstioBase
-	Spec MeshPolicySpec `json:"spec"`
-}
-
-func (mps *ServiceMeshPolicies) Parse(smPolicies []kubernetes.IstioObject) {
-	for _, qs := range smPolicies {
-		smPolicy := ServiceMeshPolicy{}
-		smPolicy.Parse(qs)
-		*mps = append(*mps, smPolicy)
-	}
-}
-
-func (mp *ServiceMeshPolicy) Parse(smPolicy kubernetes.IstioObject) {
-	mp.IstioBase.Parse(smPolicy)
-	mp.Spec.Targets = smPolicy.GetSpec()["targets"]
-	mp.Spec.Peers = smPolicy.GetSpec()["peers"]
-	mp.Spec.PeerIsOptional = smPolicy.GetSpec()["peersIsOptional"]
-	mp.Spec.Origins = smPolicy.GetSpec()["origins"]
-	mp.Spec.OriginIsOptional = smPolicy.GetSpec()["originIsOptinal"]
-	mp.Spec.PrincipalBinding = smPolicy.GetSpec()["principalBinding"]
-}

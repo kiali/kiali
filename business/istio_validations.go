@@ -111,7 +111,6 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
-		checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
@@ -169,9 +168,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
-	case kubernetes.ServiceMeshPolicies:
-		smPoliciesChecker := checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{smPoliciesChecker}
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
@@ -195,8 +191,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecBindings are not yet in place
 	case kubernetes.ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
-	case kubernetes.ServiceMeshRbacConfigs:
-		// Validations on ServiceMeshRbacConfigs are not yet in place
 	case kubernetes.RbacConfigs:
 		// Validations on RbacConfigs are not yet in place
 	case kubernetes.Sidecars:
@@ -501,34 +495,18 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
-		if !in.k8s.IsMaistraApi() {
-			var meshpeerauths []kubernetes.IstioObject
-			var iErr error
-			if IsResourceCached(config.Get().IstioNamespace, kubernetes.PeerAuthentications) {
-				if meshpeerauths, iErr = kialiCache.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
-					details.MeshPeerAuthentications = meshpeerauths
-				} else {
-					errChan <- iErr
-				}
-			} else if meshpeerauths, iErr = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+		var meshpeerauths []kubernetes.IstioObject
+		var iErr error
+		if IsResourceCached(config.Get().IstioNamespace, kubernetes.PeerAuthentications) {
+			if meshpeerauths, iErr = kialiCache.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
 				details.MeshPeerAuthentications = meshpeerauths
-			} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
+			} else {
 				errChan <- iErr
 			}
-		} else {
-			// ServiceMeshPolicies are namespace scoped.
-			// And Maistra will only consider resources under control-plane namespace
-			// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
-			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
-			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
-			// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
-			controlPlaneNs := config.Get().IstioNamespace
-			if serviceMeshPolicies, iErr := in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.ServiceMeshPolicies, ""); iErr == nil {
-				details.ServiceMeshPolicies = serviceMeshPolicies
-			} else if !checkForbidden("GetServiceMeshPolicies", iErr, fmt.Sprintf("probably user can't access to %s namespace", controlPlaneNs)) {
-				errChan <- iErr
-			}
+		} else if meshpeerauths, iErr = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+			details.MeshPeerAuthentications = meshpeerauths
+		} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
+			errChan <- iErr
 		}
 	}(mtlsDetails)
 
@@ -636,20 +614,10 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 
 		go func(errChan chan error) {
 			defer wg.Done()
-			// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
-			// RBAC objects are deprecated and won't be used in the cache
-			if !in.k8s.IsMaistraApi() {
-				if crc, err := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, ""); err == nil {
-					authDetails.ClusterRbacConfigs = crc
-				} else {
-					errChan <- err
-				}
+			if crc, err := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, ""); err == nil {
+				authDetails.ClusterRbacConfigs = crc
 			} else {
-				if smrc, err := in.k8s.GetIstioObjects(namespace, kubernetes.ServiceMeshRbacConfigs, ""); err == nil {
-					authDetails.ServiceMeshRbacConfigs = smrc
-				} else {
-					errChan <- err
-				}
+				errChan <- err
 			}
 		}(innerErrChan)
 

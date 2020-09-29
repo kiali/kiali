@@ -37,10 +37,8 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings      bool
 	IncludePolicies               bool
 	IncludeMeshPolicies           bool
-	IncludeServiceMeshPolicies    bool
 	IncludeClusterRbacConfigs     bool
 	IncludeRbacConfigs            bool
-	IncludeServiceMeshRbacConfigs bool
 	IncludeServiceRoles           bool
 	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
@@ -86,14 +84,10 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludePolicies && !isWorkloadSelector
 	case kubernetes.MeshPolicies:
 		return icc.IncludeMeshPolicies && !isWorkloadSelector
-	case kubernetes.ServiceMeshPolicies:
-		return icc.IncludeServiceMeshPolicies && !isWorkloadSelector
 	case kubernetes.ClusterRbacConfigs:
 		return icc.IncludeClusterRbacConfigs && !isWorkloadSelector
 	case kubernetes.RbacConfigs:
 		return icc.IncludeRbacConfigs && !isWorkloadSelector
-	case kubernetes.ServiceMeshRbacConfigs:
-		return icc.IncludeServiceMeshRbacConfigs && !isWorkloadSelector
 	case kubernetes.ServiceRoles:
 		return icc.IncludeServiceRoles && !isWorkloadSelector
 	case kubernetes.Sidecars:
@@ -155,10 +149,8 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		QuotaSpecBindings:      models.QuotaSpecBindings{},
 		Policies:               models.Policies{},
 		MeshPolicies:           models.MeshPolicies{},
-		ServiceMeshPolicies:    models.ServiceMeshPolicies{},
 		ClusterRbacConfigs:     models.ClusterRbacConfigs{},
 		RbacConfigs:            models.RbacConfigs{},
-		ServiceMeshRbacConfigs: models.ServiceMeshRbacConfigs{},
 		Sidecars:               models.Sidecars{},
 		ServiceRoles:           models.ServiceRoles{},
 		ServiceRoleBindings:    models.ServiceRoleBindings{},
@@ -187,7 +179,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	errChan := make(chan error, 26)
 
 	var wg sync.WaitGroup
-	wg.Add(28)
+	wg.Add(26)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -484,30 +476,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		// This query is only executed if Maistra API is present, backend will ignore it in other environments
-		if criteria.Include(kubernetes.ServiceMeshPolicies) && in.k8s.IsMaistraApi() {
-			if smp, smpErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceMeshPolicies, criteria.LabelSelector); smpErr == nil {
-				(&istioConfigList.ServiceMeshPolicies).Parse(smp)
-			} else {
-				errChan <- smpErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		// This query is only executed if Maistra API is present, backend will ignore it in other environments
-		if criteria.Include(kubernetes.ServiceMeshRbacConfigs) && in.k8s.IsMaistraApi() {
-			if smrc, smrcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceMeshRbacConfigs, criteria.LabelSelector); smrcErr == nil {
-				(&istioConfigList.ServiceMeshRbacConfigs).Parse(smrc)
-			} else {
-				errChan <- smrcErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
 		if criteria.Include(kubernetes.WorkloadEntries) {
 			if we, weErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector); weErr == nil {
 				(&istioConfigList.WorkloadEntries).Parse(we)
@@ -734,13 +702,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 				err = iErr
 			}
 		}
-	case kubernetes.ServiceMeshPolicies:
-		if mp, iErr := in.k8s.GetIstioObject(namespace, kubernetes.ServiceMeshPolicies, object); iErr == nil {
-			istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
-			istioConfigDetail.ServiceMeshPolicy.Parse(mp)
-		} else {
-			err = iErr
-		}
 	case kubernetes.ClusterRbacConfigs:
 		// ClusterRbacConfigs are not namespaced. They will be only listed for an istio namespace.
 		// Only listed in non Maistra environments.
@@ -756,13 +717,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if rc, iErr := in.k8s.GetIstioObject(namespace, kubernetes.RbacConfigs, object); iErr == nil {
 			istioConfigDetail.RbacConfig = &models.RbacConfig{}
 			istioConfigDetail.RbacConfig.Parse(rc)
-		} else {
-			err = iErr
-		}
-	case kubernetes.ServiceMeshRbacConfigs:
-		if rc, iErr := in.k8s.GetIstioObject(namespace, kubernetes.ServiceMeshRbacConfigs, object); iErr == nil {
-			istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
-			istioConfigDetail.ServiceMeshRbacConfig.Parse(rc)
 		} else {
 			err = iErr
 		}
@@ -903,12 +857,6 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType string, body []byt
 	case kubernetes.MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
-	case kubernetes.ServiceMeshPolicies:
-		istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
-		err = json.Unmarshal(body, istioConfigDetail.ServiceMeshPolicy)
-	case kubernetes.ServiceMeshRbacConfigs:
-		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
-		err = json.Unmarshal(body, istioConfigDetail.ServiceMeshRbacConfig)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
@@ -1036,9 +984,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case kubernetes.MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		istioConfigDetail.MeshPolicy.Parse(result)
-	case kubernetes.ServiceMeshPolicies:
-		istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
-		istioConfigDetail.ServiceMeshPolicy.Parse(result)
 	case kubernetes.ClusterRbacConfigs:
 		istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 		istioConfigDetail.ClusterRbacConfig.Parse(result)
@@ -1048,9 +993,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
 		istioConfigDetail.AuthorizationPolicy.Parse(result)
-	case kubernetes.ServiceMeshRbacConfigs:
-		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
-		istioConfigDetail.ServiceMeshRbacConfig.Parse(result)
 	case kubernetes.ServiceRoles:
 		istioConfigDetail.ServiceRole = &models.ServiceRole{}
 		istioConfigDetail.ServiceRole.Parse(result)
@@ -1183,10 +1125,8 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeQuotaSpecBindings = defaultInclude
 	criteria.IncludePolicies = defaultInclude
 	criteria.IncludeMeshPolicies = defaultInclude
-	criteria.IncludeServiceMeshPolicies = defaultInclude
 	criteria.IncludeClusterRbacConfigs = defaultInclude
 	criteria.IncludeRbacConfigs = defaultInclude
-	criteria.IncludeServiceMeshRbacConfigs = defaultInclude
 	criteria.IncludeServiceRoles = defaultInclude
 	criteria.IncludeServiceRoleBindings = defaultInclude
 	criteria.IncludeSidecars = defaultInclude
@@ -1245,17 +1185,11 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	if checkType(types, kubernetes.MeshPolicies) {
 		criteria.IncludeMeshPolicies = true
 	}
-	if checkType(types, kubernetes.ServiceMeshPolicies) {
-		criteria.IncludeServiceMeshPolicies = true
-	}
 	if checkType(types, kubernetes.ClusterRbacConfigs) {
 		criteria.IncludeClusterRbacConfigs = true
 	}
 	if checkType(types, kubernetes.RbacConfigs) {
 		criteria.IncludeRbacConfigs = true
-	}
-	if checkType(types, kubernetes.ServiceMeshRbacConfigs) {
-		criteria.IncludeServiceMeshRbacConfigs = true
 	}
 	if checkType(types, kubernetes.ServiceRoles) {
 		criteria.IncludeServiceRoles = true

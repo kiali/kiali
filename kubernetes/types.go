@@ -74,12 +74,6 @@ const (
 	MeshPolicyType     = "MeshPolicy"
 	MeshPolicyTypeList = "MeshPolicyList"
 
-	// ServiceMeshPolicies
-
-	ServiceMeshPolicies       = "servicemeshpolicies"
-	ServiceMeshPolicyType     = "ServiceMeshPolicy"
-	ServiceMeshPolicyTypeList = "ServiceMeshPolicyList"
-
 	// Rbac
 	ClusterRbacConfigs        = "clusterrbacconfigs"
 	ClusterRbacConfigType     = "ClusterRbacConfig"
@@ -96,10 +90,6 @@ const (
 	ServiceRoleBindings        = "servicerolebindings"
 	ServiceRoleBindingType     = "ServiceRoleBinding"
 	ServiceRoleBindingTypeList = "ServiceRoleBindingList"
-
-	ServiceMeshRbacConfigs        = "servicemeshrbacconfigs"
-	ServiceMeshRbacConfigType     = "ServiceMeshRbacConfig"
-	ServiceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
@@ -294,16 +284,6 @@ var (
 		},
 	}
 
-	maistraAuthenticationTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     ServiceMeshPolicyType,
-			collectionKind: ServiceMeshPolicyTypeList,
-		},
-	}
-
 	securityTypes = []struct {
 		objectKind     string
 		collectionKind string
@@ -374,16 +354,6 @@ var (
 		},
 	}
 
-	maistraRbacTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     ServiceMeshRbacConfigType,
-			collectionKind: ServiceMeshRbacConfigTypeList,
-		},
-	}
-
 	iter8Types = []struct {
 		objectKind     string
 		collectionKind string
@@ -418,16 +388,14 @@ var (
 		Templates:           TemplateType,
 
 		// PeerAuthentications
-		Policies:            PolicyType,
-		MeshPolicies:        MeshPolicyType,
-		ServiceMeshPolicies: ServiceMeshPolicyType,
+		Policies:     PolicyType,
+		MeshPolicies: MeshPolicyType,
 
 		// Rbac
-		ClusterRbacConfigs:     ClusterRbacConfigType,
-		RbacConfigs:            RbacConfigType,
-		ServiceRoles:           ServiceRoleType,
-		ServiceRoleBindings:    ServiceRoleBindingType,
-		ServiceMeshRbacConfigs: ServiceMeshRbacConfigType,
+		ClusterRbacConfigs:  ClusterRbacConfigType,
+		RbacConfigs:         RbacConfigType,
+		ServiceRoles:        ServiceRoleType,
+		ServiceRoleBindings: ServiceRoleBindingType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -462,8 +430,6 @@ var (
 		RbacConfigs:            RbacGroupVersion.Group,
 		ServiceRoles:           RbacGroupVersion.Group,
 		ServiceRoleBindings:    RbacGroupVersion.Group,
-		ServiceMeshPolicies:    MaistraAuthenticationGroupVersion.Group,
-		ServiceMeshRbacConfigs: MaistraRbacGroupVersion.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
@@ -543,18 +509,16 @@ type IstioDetails struct {
 type MTLSDetails struct {
 	DestinationRules        []IstioObject `json:"destinationrules"`
 	MeshPeerAuthentications []IstioObject `json:"meshpeerauthentications"`
-	ServiceMeshPolicies     []IstioObject `json:"servicemeshpolicies"`
 	PeerAuthentications     []IstioObject `json:"peerauthentications"`
 	EnabledAutoMtls         bool          `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
 type RBACDetails struct {
-	ClusterRbacConfigs     []IstioObject `json:"clusterrbacconfigs"`
-	ServiceMeshRbacConfigs []IstioObject `json:"servicemeshrbacconfigs"`
-	ServiceRoles           []IstioObject `json:"serviceroles"`
-	ServiceRoleBindings    []IstioObject `json:"servicerolebindings"`
-	AuthorizationPolicies  []IstioObject `json:"authorizationpolicies"`
+	ClusterRbacConfigs    []IstioObject `json:"clusterrbacconfigs"`
+	ServiceRoles          []IstioObject `json:"serviceroles"`
+	ServiceRoleBindings   []IstioObject `json:"servicerolebindings"`
+	AuthorizationPolicies []IstioObject `json:"authorizationpolicies"`
 }
 
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.

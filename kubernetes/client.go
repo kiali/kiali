@@ -295,19 +295,11 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
 			}
-			for _, at := range maistraAuthenticationTypes {
-				scheme.AddKnownTypeWithName(MaistraAuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(MaistraAuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
-			}
 			// Register rbac types
 			for _, rt := range rbacTypes {
 				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
 
-			}
-			for _, rt := range maistraRbacTypes {
-				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
 			}
 			for _, rt := range securityTypes {
 				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
