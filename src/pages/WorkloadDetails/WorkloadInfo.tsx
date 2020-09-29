@@ -17,13 +17,12 @@ import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBounda
 import GraphDataSource from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
-import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { serverConfig } from '../../config';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
+import TimeControlsContainer from '../../components/Time/TimeControls';
 
 type WorkloadInfoProps = {
   namespace: string;
@@ -310,8 +309,12 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     return (
       <>
         <RightActionBar>
-          <DurationDropdownContainer id="workload-info-duration-dropdown" prefix="Last" />
-          <RefreshButtonContainer handleRefresh={this.props.refreshWorkload} />
+          <TimeControlsContainer
+            key={'DurationDropdown'}
+            id="worload-info-duration-dropdown"
+            handleRefresh={this.props.refreshWorkload}
+            disabled={false}
+          />
           {workload && (
             <WorkloadWizardDropdown
               namespace={this.props.namespace}

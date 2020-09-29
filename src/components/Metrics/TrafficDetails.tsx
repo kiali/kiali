@@ -5,11 +5,10 @@ import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../.
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import GraphDataSource from 'services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import TimeControlsContainer from '../Time/TimeControls';
 
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
@@ -115,8 +114,12 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     return (
       <>
         <RightActionBar>
-          <DurationDropdownContainer id="service-traffic-duration-dropdown" prefix="Last" />
-          <RefreshButtonContainer handleRefresh={this.fetchDataSource} />
+          <TimeControlsContainer
+            key={'DurationDropdown'}
+            id="app-info-duration-dropdown"
+            handleRefresh={this.fetchDataSource}
+            disabled={false}
+          />
         </RightActionBar>
         <RenderComponentScroll>
           <Grid style={{ padding: '10px' }}>

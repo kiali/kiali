@@ -7,11 +7,10 @@ import { App } from '../../types/App';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import './AppInfo.css';
 import { DurationInSeconds } from 'types/Common';
-import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import GraphDataSource from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import TimeControlsContainer from '../../components/Time/TimeControls';
 
 type AppInfoProps = {
   app?: App;
@@ -56,8 +55,12 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     return (
       <>
         <RightActionBar>
-          <DurationDropdownContainer id="app-info-duration-dropdown" prefix="Last" />
-          <RefreshButtonContainer handleRefresh={this.fetchBackend} />
+          <TimeControlsContainer
+            key={'DurationDropdown'}
+            id="app-info-duration-dropdown"
+            handleRefresh={this.fetchBackend}
+            disabled={false}
+          />
         </RightActionBar>
         <RenderComponentScroll>
           <Grid style={{ margin: '10px' }} gutter={'md'}>

@@ -16,13 +16,12 @@ import { PromisesRegistry } from 'utils/CancelablePromises';
 import Namespace from 'types/Namespace';
 import DestinationRuleValidator from './ServiceInfo/types/DestinationRuleValidator';
 import { DurationInSeconds } from 'types/Common';
-import { DurationDropdownContainer } from 'components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 import ServiceWizardDropdown from 'components/IstioWizards/ServiceWizardDropdown';
 import GraphDataSource from 'services/GraphDataSource';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
 import { drToIstioItems, vsToIstioItems } from '../../types/IstioConfigList';
+import TimeControlsContainer from '../../components/Time/TimeControls';
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
@@ -307,8 +306,12 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     const details = this.state.serviceDetails;
     return (
       <RightActionBar>
-        <DurationDropdownContainer id="service-info-duration-dropdown" prefix="Last" />
-        <RefreshButtonContainer handleRefresh={this.fetchBackend} />
+        <TimeControlsContainer
+          key={'DurationDropdown'}
+          id="service-info-duration-dropdown"
+          handleRefresh={this.fetchBackend}
+          disabled={false}
+        />
         {details && (
           <ServiceWizardDropdown
             namespace={this.props.namespace}
