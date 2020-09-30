@@ -6,6 +6,7 @@
 #
 
 .prepare-ocp-image-registry: .ensure-oc-exists
+	@if [ "$(shell ${OC} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.managementState}')" != "Managed" ]; then echo "Manually patching image registry operator to ensure it is managed"; ${OC} patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'; sleep 3; fi
 	@if [ "$(shell ${OC} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.defaultRoute}')" != "true" ]; then echo "Manually patching image registry operator to expose the cluster internal image registry"; ${OC} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; while [ "$${routehost}" == "<none>" -o "$${routehost}" == "" ]; do echo "Waiting for image registry route to start..."; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; done; fi
 
 .prepare-ocp: .ensure-oc-exists .prepare-ocp-image-registry
@@ -95,10 +96,10 @@ ifeq ($(CLUSTER_TYPE),openshift)
 	@echo "oc whoami -c: $(shell ${OC} whoami -c 2>/dev/null)"
 	@echo "================================================================="
 ifeq ($(DORP),docker)
-	@echo "Image Registry login: docker login -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"
+	@echo "Image Registry login: docker login -u $(shell ${OC} whoami | tr -d ':')" '-p $$(${OC} whoami -t)' "${CLUSTER_REPO}"
 	@echo "================================================================="
 else
-	@echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(oc whoami -t)' "${CLUSTER_REPO}"
+	@echo "Image Registry login: podman login --tls-verify=false -u $(shell ${OC} whoami | tr -d ':')" '-p $$(${OC} whoami -t)' "${CLUSTER_REPO}"
 	@echo "================================================================="
 endif
 endif
@@ -136,7 +137,7 @@ export HTPASSWD
 
 cluster-add-users: .ensure-oc-exists
 	@echo "Creating users 'kiali' and 'johndoe'"
-	@echo "$${HTPASSWD}" | oc apply -f -
+	@echo "$${HTPASSWD}" | ${OC} apply -f -
 	@admintoken="$$(${OC} whoami -t)" ;\
    for i in {1..100} ; do \
      echo "Waiting for kiali user to be created before attempting to assign it cluster-admin role..." ;\
