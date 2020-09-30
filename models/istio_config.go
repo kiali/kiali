@@ -28,10 +28,8 @@ type IstioConfigList struct {
 	HttpApiSpecBindings    HttpApiSpecBindings    `json:"httpApiSpecBindings"`
 	Policies               Policies               `json:"policies"`
 	MeshPolicies           MeshPolicies           `json:"meshPolicies"`
-	ServiceMeshPolicies    ServiceMeshPolicies    `json:"serviceMeshPolicies"`
 	ClusterRbacConfigs     ClusterRbacConfigs     `json:"clusterRbacConfigs"`
 	RbacConfigs            RbacConfigs            `json:"rbacConfigs"`
-	ServiceMeshRbacConfigs ServiceMeshRbacConfigs `json:"serviceMeshRbacConfigs"`
 	ServiceRoles           ServiceRoles           `json:"serviceRoles"`
 	ServiceRoleBindings    ServiceRoleBindings    `json:"serviceRoleBindings"`
 	Sidecars               Sidecars               `json:"sidecars"`
@@ -62,10 +60,8 @@ type IstioConfigDetails struct {
 	HttpApiSpecBinding    *HttpApiSpecBinding    `json:"httpApiSpecBinding"`
 	Policy                *Policy                `json:"policy"`
 	MeshPolicy            *MeshPolicy            `json:"meshPolicy"`
-	ServiceMeshPolicy     *ServiceMeshPolicy     `json:"serviceMeshPolicy"`
 	ClusterRbacConfig     *ClusterRbacConfig     `json:"clusterRbacConfig"`
 	RbacConfig            *RbacConfig            `json:"rbacConfig"`
-	ServiceMeshRbacConfig *ServiceMeshRbacConfig `json:"serviceMeshRbacConfig"`
 	ServiceRole           *ServiceRole           `json:"serviceRole"`
 	ServiceRoleBinding    *ServiceRoleBinding    `json:"serviceRoleBinding"`
 	Sidecar               *Sidecar               `json:"sidecar"`

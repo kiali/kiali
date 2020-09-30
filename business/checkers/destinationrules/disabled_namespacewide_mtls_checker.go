@@ -37,17 +37,9 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// In case any PeerAuthn enables mTLS, check among MeshPeerAuthentications for a rule enabling it
-	// ServiceMeshPolicies are a clone of MeshPeerAuthentications but used in Maistra scenarios
-	// MeshPeerAuthentications and ServiceMeshPolicies won't co-exist, only ony array will be populated
-	mPolicies := m.MTLSDetails.MeshPeerAuthentications
-	checkerId := "destinationrules.mtls.meshpolicymtlsenabled"
-	if m.MTLSDetails.ServiceMeshPolicies != nil {
-		mPolicies = m.MTLSDetails.ServiceMeshPolicies
-		checkerId = "destinationrules.mtls.servicemeshpolicymtlsenabled"
-	}
-	for _, mp := range mPolicies {
+	for _, mp := range m.MTLSDetails.MeshPeerAuthentications {
 		if strictMode := kubernetes.PeerAuthnHasStrictMTLS(mp); strictMode {
-			check := models.Build(checkerId, "spec/trafficPolicy/tls/mode")
+			check := models.Build("destinationrules.mtls.meshpolicymtlsenabled", "spec/trafficPolicy/tls/mode")
 			return append(validations, &check), false
 		}
 	}

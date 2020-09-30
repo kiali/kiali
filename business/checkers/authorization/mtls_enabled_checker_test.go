@@ -184,7 +184,6 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 		MtlsDetails: kubernetes.MTLSDetails{
 			DestinationRules:        loader.GetResources("DestinationRule"),
 			MeshPeerAuthentications: loader.GetResourcesIn("PeerAuthentication", "istio-system"),
-			ServiceMeshPolicies:     loader.GetResources("ServiceMeshPolicy"),
 			PeerAuthentications:     loader.GetResourcesNotIn("PeerAuthentication", "istio-system"),
 			EnabledAutoMtls:         autoMtls,
 		},
