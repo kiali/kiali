@@ -104,6 +104,8 @@ type Iter8TrafficControl struct {
 	Match         Iter8Match `json:"match,omitempty"`         // v1.0.0
 	Percentage    int32      `json:"percentage,omitempty"`    // v1.0.0
 	MaxIncrement  int32      `json:"maxIncrement,omitempty"`
+	VSName        string     `json:"vsName, omitempty"`
+	DRName        string     `json:"drName, omitempty"`
 }
 
 type Iter8Criteria struct {
@@ -120,7 +122,18 @@ type Iter8Metrics struct {
 
 // Match contains matching criteria for requests
 type Iter8Match struct {
-	HTTP []kubernetes.HTTPMatchRequest `json:"http,omitempty"`
+	HTTP []HTTPMatchRequest `json:"http,omitempty"`
+}
+
+type HTTPMatchRequest struct {
+	URI HTTPMarchRule `json:"uri,omitempty"`
+	Headers []HTTPMarchRule `json:"headers,omitempty"`
+}
+
+type HTTPMarchRule struct {
+	Key  string `json:"key,omitempty"`
+	Match string `json:"match,omitempty"`
+	StringMatch  string `json:"stringMatch,omitempty"`
 }
 
 type Iter8AnalyticsConfig struct {
