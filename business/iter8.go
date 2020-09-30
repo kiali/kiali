@@ -365,10 +365,8 @@ func (in *Iter8Service) buildStringMatch(mr models.HTTPMarchRule) *kubernetes.St
 	switch mr.Match {
 	case "exact":
 		uri.Exact = &stringMatch
-		break
 	case "prefix":
 		uri.Prefix = &stringMatch
-		break
 	case "regex":
 		uri.Regex = &stringMatch
 	}
