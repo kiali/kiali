@@ -376,7 +376,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   getStatusMessages = (): ValidationMessage[] => {
     const istioObject = getIstioObject(this.state.istioObjectDetails);
-    return istioObject && istioObject.status ? istioObject.status.validationMessages : [];
+    return istioObject && istioObject.status && istioObject.status.validationMessages
+      ? istioObject.status.validationMessages
+      : ([] as ValidationMessage[]);
   };
 
   // Not all Istio types have an overview card
@@ -414,15 +416,15 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   isExpanded = (istioConfigDetails?: IstioConfigDetails) => {
+    let isExpanded = false;
     if (istioConfigDetails) {
-      const istioObject = getIstioObject(this.state.istioObjectDetails);
-      const istioStatusMsgs = istioObject && istioObject.status ? istioObject.status.validationMessages : [];
-      const istioValidations: ObjectValidation = this.state.istioValidations || ({} as ObjectValidation);
-      const objectReferences = istioValidations.references || ([] as ObjectReference[]);
-      const refPresent = objectReferences.length > 0;
-      return refPresent || this.hasOverview() || !!istioStatusMsgs;
+      isExpanded = this.showCards(this.objectReferences().length > 0, this.getStatusMessages());
     }
-    return false;
+    return isExpanded;
+  };
+
+  showCards = (refPresent: boolean, istioStatusMsgs: ValidationMessage[]): boolean => {
+    return refPresent || this.hasOverview() || istioStatusMsgs.length > 0;
   };
 
   renderEditor = () => {
@@ -430,7 +432,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const istioStatusMsgs = this.getStatusMessages();
     const objectReferences = this.objectReferences();
     const refPresent = objectReferences.length > 0;
-    const showCards = refPresent || this.hasOverview() || (!!istioStatusMsgs && istioStatusMsgs.length > 0);
+    const showCards = this.showCards(refPresent, istioStatusMsgs);
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []

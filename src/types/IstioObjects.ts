@@ -46,7 +46,7 @@ export interface IstioObject {
 }
 
 export interface IstioStatus {
-  validationMessages: ValidationMessage[];
+  validationMessages?: ValidationMessage[];
   conditions?: any[];
 }
 
