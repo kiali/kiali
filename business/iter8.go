@@ -362,7 +362,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 func (in *Iter8Service) buildStringMatch(mr models.HTTPMarchRule) *kubernetes.StringMatch {
 	uri := kubernetes.StringMatch{}
 	stringMatch := mr.StringMatch
-	switch(mr.Match) {
+	switch mr.Match {
 	case "exact":
 		uri.Exact = &stringMatch
 		break
@@ -375,7 +375,7 @@ func (in *Iter8Service) buildStringMatch(mr models.HTTPMarchRule) *kubernetes.St
 	return &uri
 }
 
-func (in *Iter8Service) ParseMatchRule(http [] models.HTTPMatchRequest) ([]*kubernetes.HTTPMatchRequest){
+func (in *Iter8Service) ParseMatchRule(http []models.HTTPMatchRequest) []*kubernetes.HTTPMatchRequest {
 
 	var ptr = make([]*kubernetes.HTTPMatchRequest, len(http))
 	// var ptr [numOfEntries]*kubernetes.HTTPMatchRequest;
@@ -398,7 +398,7 @@ func (in *Iter8Service) ParseMatchRule(http [] models.HTTPMatchRequest) ([]*kube
 			nm.URI = in.buildStringMatch(m.URI) // &uri
 		}
 
-		if (len(m.Headers) > 0) {
+		if len(m.Headers) > 0 {
 			nm.Headers = make(map[string]*kubernetes.StringMatch)
 			for _, h := range m.Headers {
 				// header := kubernetes.StringMatch{}

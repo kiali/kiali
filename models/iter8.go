@@ -126,14 +126,14 @@ type Iter8Match struct {
 }
 
 type HTTPMatchRequest struct {
-	URI HTTPMarchRule `json:"uri,omitempty"`
+	URI     HTTPMarchRule   `json:"uri,omitempty"`
 	Headers []HTTPMarchRule `json:"headers,omitempty"`
 }
 
 type HTTPMarchRule struct {
-	Key  string `json:"key,omitempty"`
-	Match string `json:"match,omitempty"`
-	StringMatch  string `json:"stringMatch,omitempty"`
+	Key         string `json:"key,omitempty"`
+	Match       string `json:"match,omitempty"`
+	StringMatch string `json:"stringMatch,omitempty"`
 }
 
 type Iter8AnalyticsConfig struct {
