@@ -14,7 +14,8 @@ import {
   ToolbarGroup,
   ToolbarItem,
   ToolbarSection,
-  SelectOptionObject
+  SelectOptionObject,
+  Button
 } from '@patternfly/react-core';
 import {
   ActiveFilter,
@@ -393,8 +394,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 })}
               </ChipGroup>
             </div>
-            <a
-              href="#"
+            <Button
+              variant="link"
               onClick={e => {
                 e.preventDefault();
                 this.clearFilters();
@@ -402,7 +403,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
               style={{ marginLeft: '5px' }}
             >
               Clear All Filters
-            </a>
+            </Button>
           </ToolbarSection>
         )}
       </Toolbar>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Label from './Label';
+import { Button } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 const SHOW_MORE_TRESHOLD = 2;
@@ -14,7 +15,8 @@ interface State {
 
 const linkStyle = style({
   float: 'left',
-  margin: '7px 2px 2px 3px',
+  paddingLeft: '0px',
+  marginLeft: '2px',
   fontSize: '0.8rem'
 });
 
@@ -49,10 +51,9 @@ class Labels extends React.Component<Props, State> {
   renderMoreLabelsLink() {
     if (this.hasManyLabels() && !this.state.expanded) {
       return (
-        <a key="label_more" className={linkStyle} onClick={this.expandLabels}>
-          {' '}
+        <Button key="label_more" variant="link" className={linkStyle} onClick={this.expandLabels}>
           More labels...
-        </a>
+        </Button>
       );
     }
 

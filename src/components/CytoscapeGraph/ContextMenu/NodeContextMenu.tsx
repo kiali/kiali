@@ -93,7 +93,11 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 
     return (
       <div className={graphContextMenuItemStyle}>
-        {external ? <a href={href} {...commonLinkProps} /> : <Link to={href} {...commonLinkProps} />}
+        {
+          // Linter is not taking care that 'title' is passed as a property
+          // eslint-disable-next-line
+          external ? <a href={href} {...commonLinkProps} /> : <Link to={href} {...commonLinkProps} />
+        }
       </div>
     );
   }

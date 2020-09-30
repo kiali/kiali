@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Alert } from '@patternfly/react-core';
+import { Alert, Button } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
@@ -54,13 +54,6 @@ const centerVerticalHorizontalStyle = style({
 const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
 
-  const onClickHandler = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    if (errorDiv.current) {
-      errorDiv.current.setAttribute('class', expandedErrorStyle);
-    }
-  };
-
   if (document.documentElement) {
     document.documentElement.className = isKioskMode() ? 'kiosk' : '';
   }
@@ -74,9 +67,17 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
           {props.errorDetails ? (
             <>
               <p>
-                <a href="#" onClick={onClickHandler}>
+                <Button
+                  variant="link"
+                  onClick={e => {
+                    e.preventDefault();
+                    if (errorDiv.current) {
+                      errorDiv.current.setAttribute('class', expandedErrorStyle);
+                    }
+                  }}
+                >
                   Show details
-                </a>
+                </Button>
               </p>
               <textarea readOnly={true} rows={10}>
                 {props.errorDetails}
