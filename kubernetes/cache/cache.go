@@ -49,7 +49,7 @@ type (
 
 	podProxyStatus struct {
 		namespace   string
-		pod 		string
+		pod         string
 		proxyStatus *kubernetes.ProxyStatus
 	}
 

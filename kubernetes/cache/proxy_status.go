@@ -57,8 +57,8 @@ func (c *kialiCacheImpl) SetProxyStatus(proxyStatus []*kubernetes.ProxyStatus) {
 						c.proxyStatusNamespaces[ns] = make(map[string]podProxyStatus)
 					}
 					c.proxyStatusNamespaces[ns][pod] = podProxyStatus{
-						namespace: ns,
-						pod: pod,
+						namespace:   ns,
+						pod:         pod,
 						proxyStatus: ps,
 					}
 				}

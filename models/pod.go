@@ -24,6 +24,7 @@ type Pod struct {
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
+	ProxyStatus         ProxyStatus       `json:"proxyStatus"`
 }
 
 // Reference holds some information on the pod creator
@@ -136,4 +137,15 @@ func (pod Pod) HasIstioSidecar() bool {
 // GetAnnotations is needed by k-charted
 func (pod *Pod) GetAnnotations() map[string]string {
 	return pod.Annotations
+}
+
+// SyncedPodsCount returns the number of Pods with its proxy synced
+func (pods Pods) SyncedPodProxiesCount() int32 {
+	syncedProxies := int32(0)
+	for _, pod := range pods {
+		if pod.ProxyStatus.IsSynced() {
+			syncedProxies++
+		}
+	}
+	return syncedProxies
 }

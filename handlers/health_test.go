@@ -17,7 +17,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/util"
@@ -35,7 +34,6 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	k8s.MockServices("ns", []string{"reviews", "httpbin"})
 	k8s.On("GetPods", "ns", mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
-	k8s.On("GetProxyStatus").Return([]*kubernetes.ProxyStatus{}, nil)
 	k8s.MockEmptyWorkloads("ns")
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
@@ -53,7 +51,6 @@ func TestNamespaceAppHealth(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
-	k8s.AssertNumberOfCalls(t, "GetProxyStatus", 1)
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
 
@@ -89,7 +86,6 @@ func TestAppHealth(t *testing.T) {
 	url := ts.URL + "/api/namespaces/ns/apps/reviews/health"
 
 	k8s.On("GetPods", "ns", "app=reviews").Return(kubetest.FakePodList(), nil)
-	k8s.On("GetProxyStatus").Return([]*kubernetes.ProxyStatus{}, nil)
 	k8s.MockEmptyWorkloads("ns")
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.

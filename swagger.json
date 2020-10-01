@@ -5763,6 +5763,9 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "proxyStatus": {
+          "$ref": "#/definitions/ProxyStatus"
+        },
         "status": {
           "type": "string",
           "x-go-name": "Status"
@@ -5914,6 +5917,30 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
+    "ProxyStatus": {
+      "description": "In healthy scenarios all variables should be true.\nIf at least one variable is false, then the proxy isn't fully sync'ed with pilot.",
+      "type": "object",
+      "title": "ProxyStatus gives the sync status of the sidecar proxy.",
+      "properties": {
+        "CDS": {
+          "$ref": "#/definitions/ProxyStatuses"
+        },
+        "EDS": {
+          "$ref": "#/definitions/ProxyStatuses"
+        },
+        "LDS": {
+          "$ref": "#/definitions/ProxyStatuses"
+        },
+        "RDS": {
+          "$ref": "#/definitions/ProxyStatuses"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ProxyStatuses": {
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpec": {
       "type": "object",

@@ -1,10 +1,6 @@
 package business
 
 import (
-	"fmt"
-	"reflect"
-	"strings"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -13,72 +9,28 @@ type ProxyStatus struct {
 	k8s kubernetes.ClientInterface
 }
 
-// GetWorkloadProxyStatus returns the proxy status of the workload defined by the name and namespace
-func (in *ProxyStatus) GetWorkloadProxyStatus(workloadName, namespace string) (int32, error) {
-	proxyStatuses, err := in.k8s.GetProxyStatus()
-	if err != nil {
-		return int32(0), err
-	}
-
-	return hasWorkloadProxiesSynced(getProxyStatusByName(workloadName, namespace, proxyStatuses)), nil
-}
-
-// GetWorkloadsProxyStatus returns all the proxy statuses of each workload with name in the `workloadNames` array
-// The returning map uses as a key the name of the workload. Each value is its associated ProxyStatus.
-func (in *ProxyStatus) GetWorkloadsProxyStatus(namespace string, workloadNames []string) (map[string]int32, error) {
-	statuses := map[string]int32{}
-
-	proxyStatuses, err := in.k8s.GetProxyStatus()
-	if err != nil {
-		return map[string]int32{}, err
-	}
-
-	for _, ws := range workloadNames {
-		statuses[ws] = hasWorkloadProxiesSynced(getProxyStatusByName(ws, namespace, proxyStatuses))
-	}
-
-	return statuses, nil
-}
-
-// getProxyStatusByName returns selects the raw ProxyStatus of the workload specified by name and namespace
-func getProxyStatusByName(name, namespace string, proxyStatus []*kubernetes.ProxyStatus) map[string][]models.ProxyStatus {
-	workloadsStatus := map[string][]models.ProxyStatus{}
-
-	for _, ps := range proxyStatus {
-		if strings.HasPrefix(ps.ProxyID, name) && strings.HasSuffix(ps.ProxyID, namespace) {
-			workloadsStatus[ps.ProxyID] = castProxyStatus(*ps)
+func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
+	if kialiCache != nil {
+		if !kialiCache.CheckProxyStatus() {
+			if proxyStatus, err := in.k8s.GetProxyStatus(); err == nil {
+				kialiCache.SetProxyStatus(proxyStatus)
+			} else {
+				return &kubernetes.ProxyStatus{}, err
+			}
 		}
+		return kialiCache.GetPodProxyStatus(ns, pod), nil
 	}
 
-	return workloadsStatus
+	return &kubernetes.ProxyStatus{}, nil
 }
 
-func hasWorkloadProxiesSynced(proxyStatuses map[string][]models.ProxyStatus) int32 {
-	synced := int32(0)
-	for _, ps := range proxyStatuses {
-		if len(ps) == 0 {
-			synced = synced + 1
-		}
+func castProxyStatus(ps kubernetes.ProxyStatus) models.ProxyStatus {
+	return models.ProxyStatus{
+		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked),
+		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked),
+		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked),
+		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked),
 	}
-	return synced
-}
-
-func castProxyStatus(ps kubernetes.ProxyStatus) []models.ProxyStatus {
-	statuses := make([]models.ProxyStatus, 0, 4)
-
-	r := reflect.ValueOf(ps)
-	for component, key := range map[string]string{"Cluster": "CDS", "Endpoint": "EDS", "Listener": "LDS", "Route": "RDS"} {
-		cSent := reflect.Indirect(r).FieldByName(fmt.Sprintf("%s%s", component, "Sent")).String()
-		cAck := reflect.Indirect(r).FieldByName(fmt.Sprintf("%s%s", component, "Acked")).String()
-		if xdsStatus := xdsStatus(cSent, cAck); xdsStatus != models.Synced {
-			statuses = append(statuses, models.ProxyStatus{
-				Component: key,
-				Status:    xdsStatus,
-			})
-		}
-	}
-
-	return statuses
 }
 
 func xdsStatus(sent, acked string) models.ProxyStatuses {

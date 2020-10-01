@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -297,9 +296,6 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 		}
 		fullStatus = append(fullStatus, ss...)
 	}
-	sort.Slice(fullStatus, func(i, j int) bool {
-		return fullStatus[i].ProxyID < fullStatus[j].ProxyID
-	})
 	return fullStatus, nil
 }
 

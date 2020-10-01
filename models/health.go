@@ -86,8 +86,10 @@ const (
 // In healthy scenarios all variables should be true.
 // If at least one variable is false, then the proxy isn't fully sync'ed with pilot.
 type ProxyStatus struct {
-	Component string        `json:"component"`
-	Status    ProxyStatuses `json:"status"`
+	CDS ProxyStatuses `json:"CDS"`
+	EDS ProxyStatuses `json:"EDS"`
+	LDS ProxyStatuses `json:"LDS"`
+	RDS ProxyStatuses `json:"RDS"`
 }
 
 // RequestHealth holds several stats about recent request errors
@@ -129,16 +131,33 @@ func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 	}
 }
 
+// CastWorkloadStatus returns a WorkloadStatus out of a given Workload
+func (w Workload) CastWorkloadStatus() *WorkloadStatus {
+	return &WorkloadStatus{
+		Name:              w.Name,
+		DesiredReplicas:   w.DesiredReplicas,
+		CurrentReplicas:   w.CurrentReplicas,
+		AvailableReplicas: w.AvailableReplicas,
+		SyncedProxies:     w.Pods.SyncedPodProxiesCount(),
+	}
+}
+
+// CastWorkloadStatuses returns a WorkloadStatus array out of a given set of Workloads
 func (ws Workloads) CastWorkloadStatuses() []*WorkloadStatus {
 	statuses := make([]*WorkloadStatus, 0)
 	for _, w := range ws {
-		status := &WorkloadStatus{
-			Name:              w.Name,
-			DesiredReplicas:   w.DesiredReplicas,
-			CurrentReplicas:   w.CurrentReplicas,
-			AvailableReplicas: w.AvailableReplicas}
-		statuses = append(statuses, status)
-
+		statuses = append(statuses, w.CastWorkloadStatus())
 	}
 	return statuses
+}
+
+// IsSynced returns true when all the components are with SYNCED status
+func (ps ProxyStatus) IsSynced() bool {
+	return isComponentStatusSynced(ps.CDS) && isComponentStatusSynced(ps.EDS) &&
+		isComponentStatusSynced(ps.LDS) && isComponentStatusSynced(ps.RDS)
+}
+
+// isComponentStatusSynced returns true when componentStatus is Synced
+func isComponentStatusSynced(componentStatus ProxyStatuses) bool {
+	return componentStatus == Synced
 }
