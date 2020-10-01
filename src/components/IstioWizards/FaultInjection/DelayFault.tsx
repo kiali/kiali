@@ -51,16 +51,16 @@ class DelayFault extends React.Component<DelayFaultProps> {
         )}
         {this.props.delayed && (
           <FormGroup
-            label="Fixed Delayed"
-            fieldId="fixed-delayed"
+            label="Fixed Delay"
+            fieldId="fixed-delay"
             helperText={fixedDelayedMsg}
             helperTextInvalid={fixedDelayedMsg}
             isValid={this.props.isValid}
           >
             <TextInput
               value={this.props.delay.fixedDelay}
-              id="fixed-delayed"
-              name="fixed-delayed"
+              id="fixed-delay"
+              name="fixed-delay"
               isValid={this.props.isValid}
               onChange={value =>
                 this.props.onDelay(this.props.delayed, {
