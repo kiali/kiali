@@ -120,7 +120,18 @@ type Iter8Metrics struct {
 
 // Match contains matching criteria for requests
 type Iter8Match struct {
-	HTTP []kubernetes.HTTPMatchRequest `json:"http,omitempty"`
+	HTTP []HTTPMatchRequest `json:"http,omitempty"`
+}
+
+type HTTPMatchRequest struct {
+	URI     HTTPMarchRule   `json:"uri,omitempty"`
+	Headers []HTTPMarchRule `json:"headers,omitempty"`
+}
+
+type HTTPMarchRule struct {
+	Key         string `json:"key,omitempty"`
+	Match       string `json:"match,omitempty"`
+	StringMatch string `json:"stringMatch,omitempty"`
 }
 
 type Iter8AnalyticsConfig struct {

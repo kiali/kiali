@@ -36,7 +36,7 @@ type Iter8ExperimentSpec struct {
 		Strategy      string `json:"strategy,omitempty"`
 		OnTermination string `json:"onTermination,omitempty"`
 		Match         struct {
-			HTTP []HTTPMatchRequest `json:"http,omitempty"`
+			HTTP []*HTTPMatchRequest `json:"http,omitempty"`
 		} `json:"match,omitempty"`
 		Percentage   int32 `json:"percentage,omitempty"`
 		MaxIncrement int32 `json:"maxIncrement,omitempty"`
@@ -179,7 +179,7 @@ type HTTPMatchRequest struct {
 	Authority *StringMatch `json:"authority,omitempty"`
 
 	// Headers to match
-	Headers map[string]StringMatch `json:"headers,omitempty"`
+	Headers map[string]*StringMatch `json:"headers,omitempty"`
 
 	// Specifies the ports on the host that is being addressed.
 	Port uint32 `json:"port,omitempty"`
