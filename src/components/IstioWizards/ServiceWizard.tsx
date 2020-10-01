@@ -482,26 +482,34 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
           <RequestRouting
             serviceName={this.props.serviceName}
             workloads={this.props.workloads}
-            initRules={getInitRules(this.props.workloads, this.props.virtualServices)}
+            initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
             onChange={this.onRulesChange}
           />
         )}
         {this.props.type === WIZARD_FAULT_INJECTION && (
           <FaultInjection
-            initFaultInjectionRoute={getInitFaultInjectionRoute(this.props.workloads, this.props.virtualServices)}
+            initFaultInjectionRoute={getInitFaultInjectionRoute(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            )}
             onChange={this.onFaultInjectionRouteChange}
           />
         )}
         {this.props.type === WIZARD_TRAFFIC_SHIFTING && (
           <TrafficShifting
             workloads={this.props.workloads}
-            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
+            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
             onChange={this.onWeightsChange}
           />
         )}
         {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
           <RequestTimeouts
-            initTimeoutRetry={getInitTimeoutRetryRoute(this.props.workloads, this.props.virtualServices)}
+            initTimeoutRetry={getInitTimeoutRetryRoute(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            )}
             onChange={this.onTimeoutRetryRouteChange}
           />
         )}

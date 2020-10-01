@@ -245,10 +245,15 @@ export const buildIstioConfig = (
   const wkdNameVersion: { [key: string]: string } = {};
 
   // DestinationRule from the labels
+  let drName = wProps.serviceName;
+  // In some limited scenarios DR may be created externally to Kiali (i.e. extensions)
+  if (wProps.destinationRules.items.length === 1 && wProps.destinationRules.items[0].metadata.name !== drName) {
+    drName = wProps.destinationRules.items[0].metadata.name;
+  }
   const wizardDR: DestinationRule = {
     metadata: {
       namespace: wProps.namespace,
-      name: wProps.serviceName,
+      name: drName,
       labels: {
         [KIALI_WIZARD_LABEL]: wProps.type
       }
@@ -271,10 +276,15 @@ export const buildIstioConfig = (
     }
   };
 
+  // In some limited scenarios VS may be created externally to Kiali (i.e. extensions)
+  let vsName = wProps.serviceName;
+  if (wProps.virtualServices.items.length === 1 && wProps.virtualServices.items[0].metadata.name !== vsName) {
+    vsName = wProps.virtualServices.items[0].metadata.name;
+  }
   const wizardVS: VirtualService = {
     metadata: {
       namespace: wProps.namespace,
-      name: wProps.serviceName,
+      name: vsName,
       labels: {
         [KIALI_WIZARD_LABEL]: wProps.type
       }
@@ -550,21 +560,40 @@ export const buildIstioConfig = (
   }
 
   if (wState.gateway && wState.gateway.addGateway) {
-    wizardVS.spec.gateways = [wState.gateway.newGateway ? fullNewGatewayName : wState.gateway.selectedGateway];
-    if (wState.gateway.addMesh) {
+    wizardVS.spec.gateways = [];
+    if (wState.gateway.newGateway) {
+      wizardVS.spec.gateways.push(fullNewGatewayName);
+    } else if (wState.gateway.selectedGateway.length > 0) {
+      wizardVS.spec.gateways.push(wState.gateway.selectedGateway);
+    }
+    if (wState.gateway.addMesh && !wizardVS.spec.gateways.includes('mesh')) {
       wizardVS.spec.gateways.push('mesh');
+    }
+    // Don't leave empty gateways
+    if (wizardVS.spec.gateways.length === 0) {
+      wizardVS.spec.gateways = null;
     }
   } else {
     wizardVS.spec.gateways = null;
   }
-
   return [wizardDR, wizardVS, wizardGW, wizardPA];
 };
 
-const getWorkloadsByVersion = (workloads: WorkloadOverview[]): { [key: string]: string } => {
+const getWorkloadsByVersion = (
+  workloads: WorkloadOverview[],
+  destinationRules: DestinationRules
+): { [key: string]: string } => {
   const versionLabelName = serverConfig.istioLabels.versionLabelName;
   const wkdVersionName: { [key: string]: string } = {};
   workloads.forEach(workload => (wkdVersionName[workload.labels![versionLabelName]] = workload.name));
+  if (destinationRules.items.length > 0) {
+    destinationRules.items.forEach(dr => {
+      dr.spec.subsets?.forEach(ss => {
+        const version = ss.labels![versionLabelName];
+        wkdVersionName[ss.name] = wkdVersionName[version];
+      });
+    });
+  }
   return wkdVersionName;
 };
 
@@ -583,8 +612,12 @@ export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight
   return wkWeights;
 };
 
-export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: VirtualServices): WorkloadWeight[] => {
-  const wkdVersionName = getWorkloadsByVersion(workloads);
+export const getInitWeights = (
+  workloads: WorkloadOverview[],
+  virtualServices: VirtualServices,
+  destinationRules: DestinationRules
+): WorkloadWeight[] => {
+  const wkdVersionName = getWorkloadsByVersion(workloads, destinationRules);
   const wkdWeights: WorkloadWeight[] = [];
   if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
     // Populate WorkloadWeights from a VirtualService
@@ -626,8 +659,12 @@ export const getInitWeights = (workloads: WorkloadOverview[], virtualServices: V
   return wkdWeights;
 };
 
-export const getInitRules = (workloads: WorkloadOverview[], virtualServices: VirtualServices): Rule[] => {
-  const wkdVersionName = getWorkloadsByVersion(workloads);
+export const getInitRules = (
+  workloads: WorkloadOverview[],
+  virtualServices: VirtualServices,
+  destinationRules: DestinationRules
+): Rule[] => {
+  const wkdVersionName = getWorkloadsByVersion(workloads, destinationRules);
   const rules: Rule[] = [];
   if (virtualServices.items.length === 1) {
     virtualServices.items[0].spec.http!.forEach(httpRoute => {
@@ -679,10 +716,11 @@ export const getInitRules = (workloads: WorkloadOverview[], virtualServices: Vir
 
 export const getInitFaultInjectionRoute = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices
+  virtualServices: VirtualServices,
+  destinationRules: DestinationRules
 ): FaultInjectionRoute => {
   // Read potential predefined weights
-  let initWeights = getInitWeights(workloads, virtualServices);
+  let initWeights = getInitWeights(workloads, virtualServices, destinationRules);
   if (workloads.length > 0 && initWeights.length === 0) {
     initWeights = getDefaultWeights(workloads);
   }
@@ -729,10 +767,11 @@ export const getInitFaultInjectionRoute = (
 
 export const getInitTimeoutRetryRoute = (
   workloads: WorkloadOverview[],
-  virtualServices: VirtualServices
+  virtualServices: VirtualServices,
+  destinationRules: DestinationRules
 ): TimeoutRetryRoute => {
   // Read potential predefined weights
-  let initWeights = getInitWeights(workloads, virtualServices);
+  let initWeights = getInitWeights(workloads, virtualServices, destinationRules);
   if (workloads.length > 0 && initWeights.length === 0) {
     initWeights = getDefaultWeights(workloads);
   }
