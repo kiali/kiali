@@ -383,7 +383,7 @@ func (in *Iter8Service) ParseMatchRule(http []models.HTTPMatchRequest) []*kubern
 		if (m.URI != models.HTTPMarchRule{}) {
 			nm.URI = in.buildStringMatch(m.URI) // &uri
 		}
-        if len(m.Headers) > 0 {
+		if len(m.Headers) > 0 {
 			nm.Headers = make(map[string]*kubernetes.StringMatch)
 			for _, h := range m.Headers {
 				key := h.Key
