@@ -34,6 +34,7 @@ type (
 		KubernetesCache
 		IstioCache
 		NamespacesCache
+		ProxyStatusCache
 	}
 
 	// This map will store Informers per specific types
@@ -44,6 +45,12 @@ type (
 		created       time.Time
 		namespaces    []models.Namespace
 		nameNamespace map[string]models.Namespace
+	}
+
+	podProxyStatus struct {
+		namespace   string
+		pod 		string
+		proxyStatus *kubernetes.ProxyStatus
 	}
 
 	kialiCacheImpl struct {
@@ -60,6 +67,9 @@ type (
 		tokenLock              sync.RWMutex
 		tokenNamespaces        map[string]namespaceCache
 		tokenNamespaceDuration time.Duration
+		proxyStatusLock        sync.RWMutex
+		proxyStatusCreated     *time.Time
+		proxyStatusNamespaces  map[string]map[string]podProxyStatus
 	}
 )
 
@@ -119,6 +129,7 @@ func NewKialiCache() (KialiCache, error) {
 		nsCache:                make(map[string]typeCache),
 		tokenNamespaces:        make(map[string]namespaceCache),
 		tokenNamespaceDuration: tokenNamespaceDuration,
+		proxyStatusNamespaces:  make(map[string]map[string]podProxyStatus),
 	}
 
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
