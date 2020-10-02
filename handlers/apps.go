@@ -84,7 +84,11 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
 func CustomDashboard(w http.ResponseWriter, r *http.Request) {
-	cfg, log := business.DashboardsConfig()
+	cfg, log, enabled := business.DashboardsConfig()
+	if !enabled {
+		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
+		return
+	}
 	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg, log)
 }
 
