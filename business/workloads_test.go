@@ -442,7 +442,15 @@ func TestGetPodLogs(t *testing.T) {
 
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &core_v1.PodLogOptions{Container: "details"})
 
-	assert.Equal("Fake Log Entry 1\nFake Log Entry 2", podLogs.Logs)
+	assert.Equal("2018-01-02T03:34:28+0000 INFO Fake Log Entry 1\n2018-01-02T04:34:28+0000 WARN Fake Log Entry 2", podLogs.Logs)
+
+	assert.Equal(int64(1514864068), podLogs.Messages[0].Timestamp)
+	assert.Equal("Fake Log Entry 1", podLogs.Messages[0].Message)
+	assert.Equal("INFO", podLogs.Messages[0].Severity)
+
+	assert.Equal(int64(1514867668), podLogs.Messages[1].Timestamp)
+	assert.Equal("Fake Log Entry 2", podLogs.Messages[1].Message)
+	assert.Equal("WARN", podLogs.Messages[1].Severity)
 }
 
 func TestDuplicatedControllers(t *testing.T) {

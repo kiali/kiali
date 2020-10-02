@@ -1,7 +1,9 @@
 package business
 
 import (
+	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +29,18 @@ type WorkloadService struct {
 	prom          prometheus.ClientInterface
 	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
+}
+
+// Structures for workload log messages
+type PodLog struct {
+	Logs     string       `json:"logs,omitempty"`
+	Messages []LogMessage `json:"messages,omitempty"`
+}
+
+type LogMessage struct {
+	Message   string `json:"message,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
+	Severity  string `json:"severity,omitempty"`
 }
 
 var (
@@ -170,8 +184,63 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
-	return in.k8s.GetPodLogs(namespace, name, opts)
+func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+	podLog, err := in.k8s.GetPodLogs(namespace, name, opts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Matches an ISO8601 full date
+	timestampRegexp := regexp.MustCompile("^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d+)?(([+-]\\d\\d:\\d\\d)|Z)?(\\+\\d{4})?")
+	severityRegexp := regexp.MustCompile("(\\s+|^)(INFO|WARN|DEBUG|TRACE)\\s+")
+
+	lines := strings.Split(podLog.Logs, "\n")
+	messages := make([]LogMessage, 0)
+
+	for _, line := range lines {
+		message := LogMessage{
+			Message:   line,
+			Timestamp: 0,
+			Severity:  "",
+		}
+
+		timestamp := timestampRegexp.FindString(line)
+		if timestamp != "" {
+			parsed, _ := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
+
+			if err == nil {
+				message.Timestamp = parsed.Unix()
+			}
+		}
+
+		line = string(timestampRegexp.ReplaceAll([]byte(line), []byte("")))
+		message.Message = line
+
+		severity := severityRegexp.FindString(line)
+		if severity != "" {
+			message.Severity = strings.TrimSpace(severity)
+
+			line = string(severityRegexp.ReplaceAll([]byte(line), []byte("")))
+			line = strings.TrimSpace(line)
+		}
+
+		line = strings.TrimSpace(line)
+		message.Message = line
+
+		messages = append(messages, message)
+	}
+
+	message := PodLog{
+		Logs:     podLog.Logs,
+		Messages: messages,
+	}
+
+	return &message, err
+}
+
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+	return in.getParsedLogs(namespace, name, opts)
 }
 
 func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
