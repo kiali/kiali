@@ -103,8 +103,9 @@ type PrometheusConfig struct {
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	Prometheus     PrometheusConfig `yaml:"prometheus,omitempty"`
+	Enabled        bool             `yaml:"enabled,omitempty"`
 	NamespaceLabel string           `yaml:"namespace_label,omitempty"`
+	Prometheus     PrometheusConfig `yaml:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -388,6 +389,10 @@ func NewConfig() (c *Config) {
 			},
 		},
 		ExternalServices: ExternalServices{
+			CustomDashboards: CustomDashboardsConfig{
+				Enabled:        true,
+				NamespaceLabel: "kubernetes_namespace",
+			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,

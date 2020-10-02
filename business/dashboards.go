@@ -22,18 +22,25 @@ import (
 
 // DashboardsService deals with fetching dashboards from k8s client
 type DashboardsService struct {
-	delegate kbus.DashboardsService
+	delegate *kbus.DashboardsService
 	prom     prometheus.ClientInterface
 }
 
 // NewDashboardsService initializes this business service
 func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
-	delegate := kbus.NewDashboardsService(DashboardsConfig())
-	return DashboardsService{delegate: delegate, prom: prom}
+	cfg, lg, enabled := DashboardsConfig()
+	if !enabled {
+		return DashboardsService{delegate: nil, prom: prom}
+	}
+	delegate := kbus.NewDashboardsService(cfg, lg)
+	return DashboardsService{delegate: &delegate, prom: prom}
 }
 
-func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
+func DashboardsConfig() (kconf.Config, klog.LogAdapter, bool) {
 	cfg := config.Get()
+	if !cfg.ExternalServices.CustomDashboards.Enabled {
+		return kconf.Config{}, klog.LogAdapter{}, false
+	}
 	pURL := cfg.ExternalServices.Prometheus.URL
 	pauth := cfg.ExternalServices.Prometheus.Auth
 	if cfg.ExternalServices.CustomDashboards.Prometheus.URL != "" {
@@ -92,7 +99,7 @@ func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 			Warningf: log.Warningf,
 			Infof:    log.Infof,
 			Tracef:   log.Tracef,
-		}
+		}, true
 }
 
 type istioChart struct {
@@ -263,6 +270,11 @@ func fillMetric(chart *kmodel.Chart, from *prometheus.Metric, scale float64) {
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
 func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []kmodel.Runtime {
+	if in.delegate == nil {
+		// Custom dashboards are disabled
+		return []kmodel.Runtime{}
+	}
+
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "DashboardsService", "GetCustomDashboardRefs")
 	defer promtimer.ObserveNow(&err)
