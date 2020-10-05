@@ -33,11 +33,11 @@ type WorkloadService struct {
 
 // Structures for workload log messages
 type PodLog struct {
-	Logs     string       `json:"logs,omitempty"`
-	Messages []LogMessage `json:"messages,omitempty"`
+	Logs    string     `json:"logs,omitempty"`
+	Entries []LogEntry `json:"entries,omitempty"`
 }
 
-type LogMessage struct {
+type LogEntry struct {
 	Message   string `json:"message,omitempty"`
 	Timestamp int64  `json:"timestamp,omitempty"`
 	Severity  string `json:"severity,omitempty"`
@@ -196,10 +196,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 	severityRegexp := regexp.MustCompile("(\\s+|^)(INFO|WARN|DEBUG|TRACE)\\s+")
 
 	lines := strings.Split(podLog.Logs, "\n")
-	messages := make([]LogMessage, 0)
+	messages := make([]LogEntry, 0)
 
 	for _, line := range lines {
-		message := LogMessage{
+		message := LogEntry{
 			Message:   line,
 			Timestamp: 0,
 			Severity:  "",
@@ -232,8 +232,8 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 	}
 
 	message := PodLog{
-		Logs:     podLog.Logs,
-		Messages: messages,
+		Logs:    podLog.Logs,
+		Entries: messages,
 	}
 
 	return &message, err
