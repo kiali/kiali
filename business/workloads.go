@@ -39,12 +39,16 @@ type PodLog struct {
 
 type LogEntry struct {
 	Message   string `json:"message,omitempty"`
-	Timestamp int64  `json:"timestamp,omitempty"`
 	Severity  string `json:"severity,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
 }
 
 var (
 	excludedWorkloads map[string]bool
+
+	// Matches an ISO8601 full date
+	timestampRegexp = regexp.MustCompile(`^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(([+-]\d\d:\d\d)|Z)?(\+\d{4})?`)
+	severityRegexp  = regexp.MustCompile(`(\s+|^)(INFO|WARN|DEBUG|TRACE)\s+`)
 )
 
 func isWorkloadIncluded(workload string) bool {
@@ -190,10 +194,6 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 	if err != nil {
 		return nil, err
 	}
-
-	// Matches an ISO8601 full date
-	timestampRegexp := regexp.MustCompile("^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d+)?(([+-]\\d\\d:\\d\\d)|Z)?(\\+\\d{4})?")
-	severityRegexp := regexp.MustCompile("(\\s+|^)(INFO|WARN|DEBUG|TRACE)\\s+")
 
 	lines := strings.Split(podLog.Logs, "\n")
 	messages := make([]LogEntry, 0)
