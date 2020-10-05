@@ -26,7 +26,9 @@ class ValidationList extends React.Component<Props> {
         enableFlip={true}
         content={isValid ? 'Valid' : this.content()}
       >
-        <Validation severity={severity} />
+        <span>
+          <Validation severity={severity} />
+        </span>
       </Tooltip>
     );
     return tooltip;
