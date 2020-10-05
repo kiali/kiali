@@ -91,6 +91,22 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
+  componentDidUpdate(prev: Props) {
+    if (
+      this.props.namespace !== prev.namespace ||
+      this.props.app !== prev.app ||
+      this.props.workload !== prev.workload ||
+      this.props.version !== prev.version ||
+      this.props.template !== prev.template
+    ) {
+      const settings = MetricsHelper.retrieveMetricsSettings();
+      this.options = this.initOptions(settings);
+      this.spanOverlay.reset();
+      this.setState({ dashboard: undefined, spanOverlay: undefined });
+      this.refresh();
+    }
+  }
+
   private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {

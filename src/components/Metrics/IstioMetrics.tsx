@@ -88,6 +88,23 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
+  componentDidUpdate(prev: Props) {
+    if (
+      this.props.direction !== prev.direction ||
+      this.props.namespace !== prev.namespace ||
+      this.props.object !== prev.object ||
+      this.props.objectType !== prev.objectType
+    ) {
+      if (this.props.direction !== prev.direction) {
+        const settings = MetricsHelper.retrieveMetricsSettings();
+        this.options = this.initOptions(settings);
+      }
+      this.spanOverlay.reset();
+      this.setState({ dashboard: undefined, spanOverlay: undefined });
+      this.refresh();
+    }
+  }
+
   private refresh = () => {
     this.fetchMetrics();
     if (this.props.jaegerIntegration) {

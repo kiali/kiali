@@ -22,6 +22,10 @@ export class SpanOverlay {
 
   constructor(public onChange: (overlay?: Overlay<JaegerLineInfo>) => void) {}
 
+  reset() {
+    this.spans = [];
+  }
+
   fetch(opts: FetchOptions) {
     const boundsMillis = guardTimeRange(opts.range, durationToBounds, b => b);
     const q: TracingQuery = {
