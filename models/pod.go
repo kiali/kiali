@@ -140,12 +140,21 @@ func (pod *Pod) GetAnnotations() map[string]string {
 }
 
 // SyncedPodsCount returns the number of Pods with its proxy synced
+// If none of the pods have Istio Sidecar, then return -1
 func (pods Pods) SyncedPodProxiesCount() int32 {
 	syncedProxies := int32(0)
+	hasSidecar := false
+
 	for _, pod := range pods {
+		hasSidecar = hasSidecar || pod.HasIstioSidecar()
 		if pod.ProxyStatus.IsSynced() {
 			syncedProxies++
 		}
 	}
+
+	if !hasSidecar {
+		syncedProxies = -1
+	}
+
 	return syncedProxies
 }
