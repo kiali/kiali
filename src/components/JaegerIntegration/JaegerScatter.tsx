@@ -10,13 +10,18 @@ import jaegerIcon from '../../assets/img/jaeger-icon.svg';
 import * as MetricsHelper from '../Metrics/Helper';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { evalTimeRange } from 'types/Common';
+import { KialiAppState } from 'store/Store';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import { connect } from 'react-redux';
 
 interface JaegerScatterProps {
   traces: JaegerTrace[];
-  onClick: (traceId) => void;
   fixedTime: boolean;
   errorTraces?: boolean;
   errorFetchTraces?: JaegerError[];
+  setTraceId: (traceId?: string) => void;
   selectedTrace?: JaegerTrace;
 }
 
@@ -27,7 +32,7 @@ const MINIMAL_SIZE = 2;
 type JaegerLineInfo = LineInfo & { id: string };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
-export class JaegerScatter extends React.Component<JaegerScatterProps> {
+class JaegerScatter extends React.Component<JaegerScatterProps> {
   renderFetchEmtpy = (title, msg) => {
     return (
       <EmptyState variant={EmptyStateVariant.full}>
@@ -42,9 +47,16 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
   render() {
     const tracesRaw: Datapoint[] = [];
     const tracesError: Datapoint[] = [];
+    const timeWindow = evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration);
+
     let traces = this.props.traces;
     // Add currently selected trace in list in case it wasn't
-    if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
+    if (
+      this.props.selectedTrace &&
+      !traces.some(t => t.traceID === this.props.selectedTrace!.traceID) &&
+      this.props.selectedTrace.startTime >= 1000 * timeWindow[0].getTime() &&
+      this.props.selectedTrace.startTime <= 1000 * timeWindow[1].getTime()
+    ) {
       traces.push(this.props.selectedTrace);
     }
 
@@ -90,13 +102,22 @@ export class JaegerScatter extends React.Component<JaegerScatterProps> {
         fill={true}
         unit="seconds"
         seriesComponent={<ChartScatter />}
-        timeWindow={
-          this.props.fixedTime ? evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration) : undefined
-        }
-        onClick={dp => this.props.onClick(dp.id)}
+        timeWindow={this.props.fixedTime ? timeWindow : undefined}
+        onClick={dp => this.props.setTraceId(dp.id)}
       />
     ) : (
       this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  selectedTrace: state.jaegerState.selectedTrace
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId))
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(JaegerScatter);
+export default Container;

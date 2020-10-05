@@ -211,7 +211,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     const { serviceName } = span.process;
     svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
     if (!span.references || !span.references.length) {
-      traceName = `${serviceName}: ${span.operationName}`;
+      traceName = span.operationName;
     }
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
@@ -247,17 +247,14 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   };
 }
 
-export function formatDuration(duration: number, inputUnit: string = 'microseconds'): string {
-  let d = duration;
-  if (inputUnit === 'microseconds') {
-    d = duration / 1000;
-  }
-  let units = 'ms';
+export function formatDuration(micros: number): string {
+  let d = micros / 1000;
+  let unit = 'ms';
   if (d >= 1000) {
-    units = 's';
+    unit = 's';
     d /= 1000;
   }
-  return _round(d, 2) + units;
+  return _round(d, 2) + unit;
 }
 
 const TODAY = 'Today';

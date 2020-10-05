@@ -5,6 +5,8 @@ import {
   Checkbox,
   Grid,
   GridItem,
+  Tab,
+  Tabs,
   Text,
   TextVariants,
   Toolbar,
@@ -15,14 +17,12 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
-import * as API from '../../services/Api';
-import * as AlertUtils from '../../utils/AlertUtils';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { RenderComponentScroll, RenderHeader } from '../Nav/Page';
 import { KialiAppState } from '../../store/Store';
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
-import { TraceDetails } from './JaegerResults/TraceDetails';
-import { JaegerScatter } from './JaegerScatter';
+import TraceDetails from './JaegerResults/TraceDetails';
+import JaegerScatter from './JaegerScatter';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config } from '../../config';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
@@ -30,7 +30,7 @@ import RefreshContainer from 'components/Refresh/Refresh';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
-import transformTraceData from './JaegerResults/transform';
+import SpanDetails from './JaegerResults/SpanDetails';
 
 interface TracesProps {
   namespace: string;
@@ -40,29 +40,54 @@ interface TracesProps {
   namespaceSelector: boolean;
   showErrors: boolean;
   duration: number;
+  selectedTrace?: JaegerTrace;
 }
+
+type IntervalScale = 1 | 1000 | 1000000;
+type IntervalDuration = {
+  min: number;
+  max: number;
+  scale: IntervalScale;
+  key: string;
+  display: string;
+};
+const intervalToDisplay = (min: number, max: number, scale: IntervalScale) =>
+  `${min}-${max} ${scale === 1 ? 'µs' : scale === 1000 ? 'ms' : 's'}`;
+const intervalToKey = (min: number, max: number, scale: IntervalScale) => `${min}-${max}-${scale}`;
+const intervalFromKey = (key: string): IntervalDuration | undefined => {
+  const parts = key.split('-');
+  if (parts.length !== 3) {
+    return undefined;
+  }
+  const min = Number(parts[0]);
+  const max = Number(parts[1]);
+  const scale = Number(parts[2]) as IntervalScale;
+  return {
+    min: min,
+    max: max,
+    scale: scale,
+    key: key,
+    display: intervalToDisplay(min, max, scale)
+  };
+};
 
 interface TracesState {
   url: string;
   width: number;
   showErrors: boolean;
-  fixedTime: boolean;
-  traceIntervalDurations: { [key: string]: string };
-  selectedTraceIntervalDuration: string;
+  adjustTime: boolean;
+  intervalDurations: IntervalDuration[];
+  selectedIntervalDuration?: IntervalDuration;
   selectedStatusCode: string;
   selectedLimitSpans: string;
   traces: JaegerTrace[];
-  traceId?: string;
-  selectedTrace?: JaegerTrace;
   jaegerErrors: JaegerError[];
   targetApp?: string;
+  activeTab: number;
 }
 
-export const traceDurationUnits: { [key: string]: string } = {
-  us: 'us',
-  ms: 'ms',
-  s: 's'
-};
+const traceDetailsTab = 0;
+const spansDetailsTab = 1;
 
 class TracesComponent extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
@@ -80,10 +105,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       'none';
     const interval =
       HistoryManager.getParam(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
-      sessionStorage.getItem(URLParam.JAEGER_TRACE_INTERVAL_SELECTED) ||
-      'none';
+      sessionStorage.getItem(URLParam.JAEGER_TRACE_INTERVAL_SELECTED);
 
-    const traceId = HistoryManager.getParam(URLParam.JAEGER_TRACE_ID) || undefined;
     let targetApp: string | undefined = undefined;
     if (this.props.targetKind === 'app') {
       targetApp = this.props.namespaceSelector ? this.props.target + '.' + this.props.namespace : this.props.target;
@@ -91,56 +114,56 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     this.state = {
       url: '',
       width: 0,
-      fixedTime: true,
+      adjustTime: false,
       showErrors: this.props.showErrors,
-      traceIntervalDurations: { none: 'none' },
-      selectedTraceIntervalDuration: interval,
+      intervalDurations: [],
+      selectedIntervalDuration: interval ? intervalFromKey(interval) : undefined,
       selectedStatusCode: statusCode,
       selectedLimitSpans: limit,
       traces: [],
-      traceId: traceId,
       jaegerErrors: [],
-      targetApp: targetApp
+      targetApp: targetApp,
+      activeTab: traceDetailsTab
     };
     this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => this.setState({ jaegerErrors: errors }));
   }
 
   componentDidMount() {
     this.refresh();
-    if (this.state.traceId) {
-      this.fetchSingle(this.state.traceId);
+  }
+
+  componentDidUpdate(prevProps: TracesProps) {
+    // Selected trace (coming from redux) might have been reloaded and needs to be updated within the traces list
+    // Check reference of selected trace
+    if (this.props.selectedTrace && prevProps.selectedTrace !== this.props.selectedTrace) {
+      const traces = this.state.traces;
+      const trace = this.props.selectedTrace;
+      const index = traces.findIndex(t => t.traceID === trace.traceID);
+      if (index >= 0) {
+        traces[index] = this.props.selectedTrace;
+        this.setState({ traces: traces });
+      }
     }
   }
 
   private refresh = () => {
-    this.fetcher.fetch({
-      namespace: this.props.namespace,
-      target: this.props.target,
-      targetKind: this.props.targetKind,
-      spanLimit: Number(this.state.selectedLimitSpans),
-      intervalDuration: this.state.selectedTraceIntervalDuration,
-      tags: buildTags(this.state.showErrors, this.state.selectedStatusCode)
-    });
-  };
-
-  private fetchSingle = (traceId: string) => {
-    return API.getJaegerTrace(traceId)
-      .then(response => {
-        if (response.data.data) {
-          const trace = transformTraceData(response.data.data);
-          if (trace) {
-            this.setState({ selectedTrace: trace });
-          }
-        }
-      })
-      .catch(error => AlertUtils.addError('Could not fetch trace.', error));
+    this.fetcher.fetch(
+      {
+        namespace: this.props.namespace,
+        target: this.props.target,
+        targetKind: this.props.targetKind,
+        spanLimit: Number(this.state.selectedLimitSpans),
+        tags: buildTags(this.state.showErrors, this.state.selectedStatusCode)
+      },
+      this.state.traces
+    );
   };
 
   private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
-    const durations = this.getIntervalTraceDurations(traces);
+    const durations = this.extractIntervalDurations(traces);
     const newState: Partial<TracesState> = {
       traces: traces,
-      traceIntervalDurations: durations
+      intervalDurations: durations
     };
     if (this.state.targetApp === undefined && jaegerServiceName) {
       newState.targetApp = jaegerServiceName;
@@ -187,13 +210,13 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   };
 
   private handleIntervalDuration = (key: string) => {
-    if (key === 'none') {
-      this.removeValue(URLParam.JAEGER_TRACE_INTERVAL_SELECTED);
-    } else {
+    const interval = this.state.intervalDurations.find(i => i.key === key);
+    if (interval) {
       this.saveValue(URLParam.JAEGER_TRACE_INTERVAL_SELECTED, key);
+    } else {
+      this.removeValue(URLParam.JAEGER_TRACE_INTERVAL_SELECTED);
     }
-    const refiltered = this.fetcher.filterTraces(key);
-    this.setState({ selectedTraceIntervalDuration: key, traces: refiltered });
+    this.setState({ selectedIntervalDuration: interval });
   };
 
   private handleLimit = (value: string) => {
@@ -206,45 +229,52 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     this.setState({ selectedLimitSpans: value }, this.refresh);
   };
 
-  private getIntervalTraceDurations = (traces: JaegerTrace[]) => {
-    let maxDuration = Math.max.apply(
-      Math,
-      traces.map(trace => trace.duration)
-    );
-    let intervals: { [key: string]: string } = { none: 'none' };
-    let i = 0;
-    let unit = traceDurationUnits[Object.keys(traceDurationUnits)[i]];
-    while (maxDuration >= 1000 && Object.keys(traceDurationUnits).length > i) {
-      i += 1;
-      maxDuration /= 1000;
-      unit = traceDurationUnits[Object.keys(traceDurationUnits)[i]];
-    }
-    const divisions = [5, 10, 20];
-    i = 0;
-    while (~~(maxDuration / divisions[i]) >= 5 && divisions.length > i) {
-      i += 1;
-    }
-    for (let step = 0; step <= maxDuration; step += divisions[i]) {
-      let to = step + divisions[i] <= maxDuration ? step + divisions[i] - 1 : step + divisions[i];
-      if (!Number.isNaN(to)) {
-        intervals[step + '-' + to + '-' + unit] = `${step}-${to} ${unit}`;
-      }
+  private extractIntervalDurations = (traces: JaegerTrace[]): IntervalDuration[] => {
+    const maxDuration = Math.max(...traces.map(trace => trace.duration));
+    const scale = getScale(maxDuration);
+    const maxDurationScaled = maxDuration / scale;
+    const stepSize = Math.ceil(maxDurationScaled / 5);
+    const intervals: IntervalDuration[] = [];
+    for (let from = 0; from <= maxDurationScaled; from += stepSize) {
+      const to = from + stepSize;
+      intervals.push({
+        min: from,
+        max: to,
+        scale: scale,
+        key: intervalToKey(from, to, scale),
+        display: intervalToDisplay(from, to, scale)
+      });
     }
     return intervals;
   };
 
-  private onClickScatter = (traceId: string) => {
-    HistoryManager.setParam(URLParam.JAEGER_TRACE_ID, traceId);
-    this.fetchSingle(traceId);
+  private filterTraces = (): JaegerTrace[] => {
+    if (!this.state.selectedIntervalDuration) {
+      return this.state.traces;
+    }
+    const min = this.state.selectedIntervalDuration.min * this.state.selectedIntervalDuration.scale;
+    const max = this.state.selectedIntervalDuration.max * this.state.selectedIntervalDuration.scale;
+    return this.state.traces.filter(trace => trace.duration >= min && trace.duration <= max);
   };
 
   render() {
     const jaegerURL = this.getJaegerUrl();
+    const intervalDurationOptions: object = { none: 'none' };
+    this.state.intervalDurations.forEach(interval => {
+      intervalDurationOptions[interval.key] = interval.display;
+    });
+    // if the selected duration isn't valid anymore, add it back to the list to not loose user settings
+    if (this.state.selectedIntervalDuration && !intervalDurationOptions[this.state.selectedIntervalDuration.key]) {
+      intervalDurationOptions[this.state.selectedIntervalDuration.key] = this.state.selectedIntervalDuration.display;
+    }
+    const selectedIntervalValue = this.state.selectedIntervalDuration
+      ? intervalDurationOptions[this.state.selectedIntervalDuration.key]
+      : 'none';
     return (
       <>
         {this.renderActions()}
         <RenderComponentScroll>
-          <Grid style={{ padding: '10px' }}>
+          <Grid style={{ padding: '10px' }} gutter="md">
             <GridItem span={12}>
               <Card>
                 <CardBody>
@@ -259,8 +289,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                             Interval Trace
                           </Text>
                           <ToolbarDropdown
-                            options={this.state.traceIntervalDurations}
-                            value={this.state.traceIntervalDurations[this.state.selectedTraceIntervalDuration]}
+                            options={intervalDurationOptions}
+                            value={selectedIntervalValue}
                             handleSelect={key => this.handleIntervalDuration(key)}
                           />
                         </ToolbarItem>
@@ -314,9 +344,9 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                         <ToolbarItem>
                           <Checkbox
                             label="Adjust time"
-                            isChecked={this.state.fixedTime}
+                            isChecked={this.state.adjustTime}
                             onChange={checked => {
-                              this.setState({ fixedTime: checked });
+                              this.setState({ adjustTime: checked });
                             }}
                             aria-label="adjust-time-chart"
                             id="check-adjust-time"
@@ -342,31 +372,38 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                       )}
                     </Toolbar>
                   </RenderHeader>
-                  <Grid style={{ margin: '20px' }}>
-                    <GridItem span={12}>
-                      <JaegerScatter
-                        fixedTime={this.state.fixedTime}
-                        traces={this.state.traces}
-                        errorFetchTraces={this.state.jaegerErrors}
-                        onClick={traceId => this.onClickScatter(traceId)}
-                        errorTraces={true}
-                        selectedTrace={this.state.selectedTrace}
-                      />
-                    </GridItem>
-                    <GridItem span={12}>
-                      {this.state.selectedTrace && (
-                        <TraceDetails
-                          trace={this.state.selectedTrace}
-                          namespace={this.props.namespace}
-                          target={this.props.target}
-                          targetKind={this.props.targetKind}
-                          jaegerURL={this.props.urlJaeger}
-                        />
-                      )}
-                    </GridItem>
-                  </Grid>
+                  <JaegerScatter
+                    fixedTime={!this.state.adjustTime}
+                    traces={this.filterTraces()}
+                    errorFetchTraces={this.state.jaegerErrors}
+                    errorTraces={true}
+                  />
                 </CardBody>
               </Card>
+            </GridItem>
+            <GridItem span={12}>
+              <Tabs
+                id="trace-details"
+                activeKey={this.state.activeTab}
+                onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
+              >
+                <Tab eventKey={traceDetailsTab} title="Trace Details">
+                  <TraceDetails
+                    namespace={this.props.namespace}
+                    target={this.props.target}
+                    targetKind={this.props.targetKind}
+                    jaegerURL={this.props.urlJaeger}
+                    otherTraces={this.state.traces}
+                  />
+                </Tab>
+                <Tab eventKey={spansDetailsTab} title="Spans Details">
+                  <SpanDetails
+                    namespace={this.props.namespace}
+                    target={this.props.target}
+                    externalURL={this.props.urlJaeger}
+                  />
+                </Tab>
+              </Tabs>
             </GridItem>
           </Grid>
         </RenderComponentScroll>
@@ -387,8 +424,13 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
-    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true
+    namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
+    selectedTrace: state.jaegerState.selectedTrace
   };
+};
+
+const getScale = (n: number): IntervalScale => {
+  return Math.min(1000000, n >= 1000 ? 1000 * getScale(n / 1000) : 1) as IntervalScale;
 };
 
 export const TracesContainer = connect(mapStateToProps)(TracesComponent);

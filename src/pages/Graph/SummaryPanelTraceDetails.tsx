@@ -3,15 +3,20 @@ import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { style } from 'typestyle';
-import { Tooltip, Button, ButtonVariant } from '@patternfly/react-core';
-import { CloseIcon, AngleLeftIcon, AngleRightIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
+import {
+  CloseIcon,
+  AngleLeftIcon,
+  AngleRightIcon,
+  ExternalLinkAltIcon,
+  ExclamationCircleIcon
+} from '@patternfly/react-icons';
 
 import { URLParam } from '../../app/History';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
 import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import { getFormattedTraceInfo } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
 import { PFAlertColor } from 'components/Pf/PfColors';
 import {
   extractEnvoySpanInfo,
@@ -23,6 +28,7 @@ import { formatDuration } from 'components/JaegerIntegration/JaegerResults/trans
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import FocusAnimation from 'components/CytoscapeGraph/FocusAnimation';
+import { FormattedTraceInfo, shortIDStyle } from 'components/JaegerIntegration/JaegerResults/FormattedTraceInfo';
 
 type Props = {
   trace: JaegerTrace;
@@ -51,10 +57,6 @@ const nameStyle = style({
   textOverflow: 'ellipsis',
   overflow: 'hidden',
   whiteSpace: 'nowrap'
-});
-
-const errorStyle = style({
-  color: PFAlertColor.Danger
 });
 
 const pStyle = style({
@@ -108,11 +110,15 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     const jaegerTraceURL = this.props.jaegerURL
       ? `${this.props.jaegerURL}/trace/${this.props.trace.traceID}`
       : undefined;
-    const info = getFormattedTraceInfo(this.props.trace);
-    const nameStyleToUse = info.errors ? nameStyle + ' ' + errorStyle : nameStyle;
+    const info = new FormattedTraceInfo(this.props.trace);
+    const title = (
+      <span className={nameStyle}>
+        {info.name()}
+        <span className={shortIDStyle}>{info.shortID()}</span>
+      </span>
+    );
     const nodeName = node.workload || node.service || node.app!;
     const spans: Span[] | undefined = this.props.node.data('spans');
-    const traceName = `${info.name} (${this.props.trace.traceID.slice(0, 7)})`;
     return (
       <>
         <span className={textHeaderStyle}>Trace</span>
@@ -124,24 +130,28 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           </Tooltip>
         </span>
         <div>
-          <Tooltip content={info.name}>
-            {tracesDetailsURL ? (
-              <Link to={tracesDetailsURL}>
-                <span className={nameStyleToUse}>{traceName}</span>
-              </Link>
-            ) : (
-              <span className={nameStyleToUse}>{traceName}</span>
-            )}
-          </Tooltip>
+          {tracesDetailsURL ? (
+            <Tooltip content={'View trace details'}>
+              <Link to={tracesDetailsURL}>{title}</Link>
+            </Tooltip>
+          ) : (
+            title
+          )}
           <div>
+            {info.numErrors !== 0 && (
+              <>
+                <ExclamationCircleIcon color={PFAlertColor.Danger} />{' '}
+                <strong>This trace has {pluralize(info.numErrors, 'error')}.</strong>
+              </>
+            )}
             <div>
               <strong>Started: </strong>
-              {info.fromNow}
+              {info.fromNow()}
             </div>
-            {info.duration && (
+            {info.duration() && (
               <div>
                 <strong>Full duration: </strong>
-                {info.duration}
+                {info.duration()}
               </div>
             )}
           </div>

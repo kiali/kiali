@@ -55,3 +55,11 @@ describe('MathUtils.linearInterpolation', () => {
     expect(result.y).toBeCloseTo(1);
   });
 });
+
+describe('MathUtils.average', () => {
+  it('should compute average', () => {
+    const data = [{ x: 5 }, { x: 6 }, { x: 7 }, { x: 8 }];
+    expect(MathUtils.average(data, d => d.x)).toBe(6.5);
+    expect(MathUtils.average([] as any[], d => d.x)).toBeUndefined();
+  });
+});

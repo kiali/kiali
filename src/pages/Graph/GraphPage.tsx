@@ -265,7 +265,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       props.setNode(urlNode);
     }
     const urlTrace = getTraceId();
-    if (urlTrace !== props.trace) {
+    if (urlTrace !== props.trace?.traceID) {
       props.setTraceId(urlTrace);
     }
 

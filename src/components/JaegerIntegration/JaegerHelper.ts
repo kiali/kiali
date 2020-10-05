@@ -43,7 +43,7 @@ export const getTimeRangeMicros = () => {
 
 const workloadFromNodeRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+.([a-z0-9-]+)/;
 const workloadFromHostnameRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+/;
-type WorkloadAndNamespace = { workload: string; namespace: string };
+type WorkloadAndNamespace = { pod: string; workload: string; namespace: string };
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
   if (!nodeKV) {
@@ -54,7 +54,7 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
       if (result && result.length > 1) {
         // As the namespace is not provided here, assume same as service's
         const split = span.process.serviceName.split('.');
-        return { workload: result[1], namespace: split.length > 1 ? split[1] : '' };
+        return { pod: hostnameKV.value, workload: result[1], namespace: split.length > 1 ? split[1] : '' };
       }
     }
     return undefined;
@@ -66,7 +66,9 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
     return undefined;
   }
   const result = workloadFromNodeRegex.exec(parts[2]);
-  return result && result.length > 2 ? { workload: result[1], namespace: result[2] } : undefined;
+  return result && result.length > 2
+    ? { pod: parts[2].split('.')[0], workload: result[1], namespace: result[2] }
+    : undefined;
 };
 
 export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefined => {
@@ -109,16 +111,34 @@ export const getSpanType = (span: Span): 'envoy' | 'http' | 'tcp' | 'unknown' =>
   return 'unknown';
 };
 
-type OpenTracingHTTPInfo = {
+type OpenTracingBaseInfo = {
+  component?: string;
+  hasError: boolean;
+};
+
+type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
   statusCode?: number;
   url?: string;
   method?: string;
   direction?: 'inbound' | 'outbound';
 };
 
+export const extractOpenTracingBaseInfo = (span: Span): OpenTracingBaseInfo => {
+  const info: OpenTracingBaseInfo = { hasError: false };
+  span.tags.forEach(t => {
+    if (t.key === 'component') {
+      info.component = t.value;
+    }
+    if (isErrorTag(t)) {
+      info.hasError = true;
+    }
+  });
+  return info;
+};
+
 export const extractOpenTracingHTTPInfo = (span: Span): OpenTracingHTTPInfo => {
   // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-  const info: OpenTracingHTTPInfo = {};
+  const info: OpenTracingHTTPInfo = extractOpenTracingBaseInfo(span);
   span.tags.forEach(t => {
     if (t.key === 'http.status_code') {
       const val = parseInt(t.value, 10);
@@ -140,7 +160,7 @@ export const extractOpenTracingHTTPInfo = (span: Span): OpenTracingHTTPInfo => {
   return info;
 };
 
-type OpenTracingTCPInfo = {
+type OpenTracingTCPInfo = OpenTracingBaseInfo & {
   topic?: string;
   peerAddress?: string;
   peerHostname?: string;
@@ -149,7 +169,7 @@ type OpenTracingTCPInfo = {
 
 export const extractOpenTracingTCPInfo = (span: Span): OpenTracingTCPInfo => {
   // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-  const info: OpenTracingTCPInfo = {};
+  const info: OpenTracingTCPInfo = extractOpenTracingBaseInfo(span);
   span.tags.forEach(t => {
     if (t.key === 'message_bus.destination') {
       info.topic = t.value;

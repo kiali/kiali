@@ -76,3 +76,7 @@ export const normalize = (v1: Vector): Vector => {
 export const angleBetweenVectors = (v1: Vector, v2: Vector) => {
   return Math.atan2(v2.y, v2.x) - Math.atan2(v1.y, v1.x);
 };
+
+export const average = <U>(arr: U[], f: (u: U) => number): number | undefined => {
+  return arr.length > 0 ? arr.reduce((agg, cur) => agg + f(cur), 0) / arr.length : undefined;
+};

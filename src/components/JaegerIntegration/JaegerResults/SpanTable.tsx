@@ -1,231 +1,295 @@
 import * as React from 'react';
-import { JaegerInfo, Span } from '../../../types/JaegerInfo';
-import { Table, TableHeader, TableBody, IRow, expandable, RowWrapperProps } from '@patternfly/react-table';
-import { ExclamationCircleIcon } from '@patternfly/react-icons';
-import { List, ListItem, Tooltip } from '@patternfly/react-core';
-import { KialiAppState } from '../../../store/Store';
-import { connect } from 'react-redux';
-import { formatDuration } from './transform';
-import history from '../../../app/History';
 import { Link } from 'react-router-dom';
-import { serverConfig } from '../../../config';
-import { SpanTabsTags } from './SpanTabsTags';
-import { getWorkloadFromSpan, isErrorTag } from '../JaegerHelper';
-import { css } from '@patternfly/react-styles';
-import styles from '@patternfly/react-styles/css/components/Table/table';
-import { PfColors } from '../../Pf/PfColors';
+import { Dropdown, DropdownGroup, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { Table, TableHeader, TableBody, TableVariant, RowWrapper } from '@patternfly/react-table';
+import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
-interface SpanDetailProps {
+import history from 'app/History';
+import { Span } from 'types/JaegerInfo';
+import { formatDuration } from './transform';
+import {
+  extractEnvoySpanInfo,
+  extractOpenTracingBaseInfo,
+  extractOpenTracingHTTPInfo,
+  extractOpenTracingTCPInfo,
+  getSpanType,
+  getWorkloadFromSpan,
+  isErrorTag
+} from '../JaegerHelper';
+import { style } from 'typestyle';
+import { PFAlertColor } from 'components/Pf/PfColors';
+
+const dangerErrorStyle = style({
+  borderLeft: '3px solid var(--pf-global--danger-color--100)'
+});
+
+interface Props {
   spans: Span[];
-  jaegerInfo?: JaegerInfo;
+  namespace: string;
+  externalURL?: string;
 }
 
-interface SpanDetailState {
-  spanSelected?: Span;
-  columns: any;
-  rows: any;
+interface State {
+  toggled?: string;
 }
 
-export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState> {
-  constructor(props: SpanDetailProps) {
+const kebabDropwdownStyle = style({
+  whiteSpace: 'nowrap'
+});
+
+const linkStyle = style({
+  fontSize: 14
+});
+
+export class SpanTable extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = {
-      columns: [
-        {
-          title: 'Operation',
-          cellFormatters: [expandable]
-        },
-        'App',
-        { title: 'Duration' },
-        '',
-        ''
-      ],
-      rows: this.getRows()
-    };
+    this.state = {};
   }
 
-  componentDidUpdate(prevProps: Readonly<SpanDetailProps>): void {
-    if (prevProps.spans !== this.props.spans) {
-      this.setState({ rows: this.getRows() });
+  componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
+    if (prevState.toggled) {
+      this.setState({ toggled: undefined });
     }
   }
 
-  private goApp = (app: string = this.props.spans[0].process.serviceName, extra: string = '') => {
-    if (app) {
-      const ns = app.split('.')[1] || serverConfig.istioNamespace;
-      const appName = app.split('.')[0];
-      return '/namespaces/' + ns + '/applications/' + appName + extra;
-    } else {
-      return undefined;
-    }
-  };
-
-  private goLogsWorkloads = (workload: string, namespace: string) => {
-    return '/namespaces/' + namespace + '/workloads/' + workload + '?tab=logs';
-  };
-
-  private getNodeLog = (sp: Span) => {
-    const srv = sp.process.serviceName.split('.')[0];
-    let workloadNs = getWorkloadFromSpan(sp);
-    if (!workloadNs && this.props.jaegerInfo && this.props.jaegerInfo.whiteListIstioSystem.includes(srv)) {
-      // Special case (why?)
-      workloadNs = {
-        workload: srv === 'jaeger-query' ? 'jaeger' : srv,
-        namespace: serverConfig.istioNamespace
-      };
-    }
-    if (workloadNs) {
-      const path = this.goLogsWorkloads(workloadNs.workload, workloadNs.namespace);
-      return (
-        <Tooltip content={<>View logs of workload {workloadNs.workload}</>}>
-          <Link to={path} onClick={() => history.push(path)}>
-            View logs
-          </Link>
-        </Tooltip>
+  private renderLinks = (
+    key: string,
+    span: Span,
+    linkToApp: string,
+    linkToWorkload: string | undefined,
+    app: string,
+    workload: string | undefined
+  ) => {
+    const links = [
+      <DropdownGroup label={`Application (${app})`} className={kebabDropwdownStyle}>
+        <DropdownItem className={linkStyle} onClick={() => history.push(linkToApp + '?tab=in_metrics')}>
+          Inbound metrics
+        </DropdownItem>
+        <DropdownItem className={linkStyle} onClick={() => history.push(linkToApp + '?tab=out_metrics')}>
+          Outbound metrics
+        </DropdownItem>
+      </DropdownGroup>
+    ];
+    if (linkToWorkload) {
+      links.push(
+        <DropdownGroup label={`Workload (${workload})`} className={kebabDropwdownStyle}>
+          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=logs')}>
+            Logs
+          </DropdownItem>
+          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=in_metrics')}>
+            Inbound metrics
+          </DropdownItem>
+          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=out_metrics')}>
+            Outbound metrics
+          </DropdownItem>
+        </DropdownGroup>
       );
     }
-
-    return <>Logs not found</>;
-  };
-
-  private getRows = () => {
-    let rows: (IRow | string)[] = [];
-    this.props.spans.map(span => {
-      const app = span.process.serviceName === 'jaeger-query' ? span.process.serviceName : span.operationName;
-      const linkToApp = this.goApp(app);
-      const linkToInMetrics = this.goApp(app, '?tab=in_metrics');
-      const linkToOutMetrics = this.goApp(app, '?tab=out_metrics');
-      const appDefinition = (
-        <>
-          {span.operationName.split('.')[0] +
-            (span.operationName.split('.')[1] ? '(' + span.operationName.split('.')[1] + ')' : '')}
-          {span.tags.some(isErrorTag) && (
-            <ExclamationCircleIcon color={PfColors.Red200} style={{ marginLeft: '10px' }} />
-          )}
-        </>
+    if (this.props.externalURL) {
+      const spanLink = `${this.props.externalURL}/trace/${span.traceID}?uiFind=${span.spanID}`;
+      links.push(
+        <DropdownGroup label="Tracing" className={kebabDropwdownStyle}>
+          <DropdownItem className={linkStyle} onClick={() => window.open(spanLink, '_blank')}>
+            More span details <ExternalLinkAltIcon />
+          </DropdownItem>
+        </DropdownGroup>
       );
-      let number = rows.push({
-        isOpen: false,
-        cells: [
-          {
-            title: linkToApp ? (
-              <Tooltip content={<>Go to App {span.operationName.split('.')[0]}</>}>
-                <Link to={linkToApp} onClick={() => history.push(linkToApp)}>
-                  {appDefinition}
-                </Link>
-              </Tooltip>
-            ) : (
-              appDefinition
-            )
-          },
-          {
-            title: (
-              <Tooltip
-                content={
-                  <>
-                    {span.operationName}({span.process.serviceName})
-                  </>
-                }
-              >
-                <span>{span.operationName.slice(0, 40)}...</span>
-              </Tooltip>
-            )
-          },
-          { title: <>{formatDuration(span.duration)}</> },
-          {
-            title:
-              linkToInMetrics || linkToOutMetrics ? (
-                <List>
-                  {linkToInMetrics && (
-                    <ListItem>
-                      <Tooltip content={<>View Inbound metrics of {span.operationName.split('.')[0]}</>}>
-                        <Link to={linkToInMetrics} onClick={() => history.push(linkToInMetrics)}>
-                          View Inbound metrics
-                        </Link>
-                      </Tooltip>
-                    </ListItem>
-                  )}
-                  {linkToOutMetrics && (
-                    <ListItem>
-                      <Tooltip content={<>View Outbound metrics of {span.operationName.split('.')[0]}</>}>
-                        <Link to={linkToOutMetrics} onClick={() => history.push(linkToOutMetrics)}>
-                          View Outbound metrics
-                        </Link>
-                      </Tooltip>
-                    </ListItem>
-                  )}
-                </List>
-              ) : (
-                <></>
-              )
-          },
-          { title: this.getNodeLog(span) }
-        ]
-      });
-      rows.push({
-        parent: number - 1,
-        fullWidth: true,
-        cells: [{ title: <SpanTabsTags span={span} /> }]
-      });
-      return undefined;
-    });
-    return rows;
-  };
-
-  private customRowWrapper = ({ trRef, className, rowProps, row: { isExpanded, isHeightAuto }, ...props }) => {
-    const dangerErrorStyle = {
-      borderLeft: '3px solid var(--pf-global--danger-color--100)'
-    };
-
-    const span = this.props.spans[rowProps.rowIndex - Math.round(rowProps.rowIndex / 2)];
-    const hasError = span && span.tags.some(isErrorTag);
+    }
     return (
-      <tr
-        {...props}
-        ref={trRef}
-        className={css(
-          className,
-          'custom-static-class',
-          isExpanded !== undefined && styles.tableExpandableRow,
-          isExpanded && styles.modifiers.expanded,
-          isHeightAuto && styles.modifiers.heightAuto
-        )}
-        hidden={isExpanded !== undefined && !isExpanded}
-        style={hasError ? dangerErrorStyle : { borderLeft: '3px solid var(--pf-global--primary-color--100)' }}
+      <Dropdown
+        toggle={
+          <KebabToggle
+            onToggle={() => {
+              this.setState({ toggled: key });
+            }}
+          />
+        }
+        dropdownItems={links}
+        isPlain={true}
+        isOpen={this.state.toggled === key}
+        position={'right'}
       />
     );
   };
 
-  private onCollapse = (_, rowKey, isOpen) => {
-    const { rows } = this.state;
-    /**
-     * Please do not use rowKey as row index for more complex tables.
-     * Rather use some kind of identifier like ID passed with each row.
-     */
-    rows[rowKey].isOpen = isOpen;
-    this.setState({
-      rows
+  private renderSummary = (span: Span) => {
+    switch (getSpanType(span)) {
+      case 'envoy':
+        return this.renderEnvoySummary(span);
+      case 'http':
+        return this.renderHTTPSummary(span);
+      case 'tcp':
+        return this.renderTCPSummary(span);
+    }
+    // Unknown
+    return this.renderCommonSummary(span);
+  };
+
+  private renderCommonSummary(span: Span) {
+    const info = extractOpenTracingBaseInfo(span);
+    return (
+      <>
+        {info.hasError && (
+          <div>
+            <ExclamationCircleIcon color={PFAlertColor.Danger} /> <strong>This span reported an error</strong>
+          </div>
+        )}
+        <div>
+          <strong>Operation: </strong>
+          {span.operationName}
+        </div>
+        <div>
+          <strong>Component: </strong>
+          {info.component || 'unknown'}
+        </div>
+      </>
+    );
+  }
+
+  private renderEnvoySummary(span: Span) {
+    const info = extractEnvoySpanInfo(span);
+    let rqLabel = 'Request';
+    let peerLink: JSX.Element | undefined = undefined;
+    if (info.direction === 'inbound') {
+      rqLabel = 'Received request';
+      if (info.peer && info.peerNamespace) {
+        peerLink = (
+          <>
+            {' from '}
+            <Link to={'/namespaces/' + info.peerNamespace + '/workloads/' + info.peer}>{info.peer}</Link>
+          </>
+        );
+      }
+    } else if (info.direction === 'outbound') {
+      rqLabel = 'Sent request';
+      if (info.peer && info.peerNamespace) {
+        peerLink = (
+          <>
+            {' to '}
+            <Link to={'/namespaces/' + info.peerNamespace + '/services/' + info.peer}>{info.peer}</Link>
+          </>
+        );
+      }
+    }
+    const rsDetails: string[] = [];
+    if (info.statusCode) {
+      rsDetails.push(String(info.statusCode));
+    }
+    if (info.responseFlags) {
+      rsDetails.push(info.responseFlags);
+    }
+
+    return (
+      <>
+        {this.renderCommonSummary(span)}
+        <div>
+          <strong>
+            {rqLabel}
+            {peerLink}:{' '}
+          </strong>
+          {info.method} {info.url}
+        </div>
+        <div>
+          <strong>Response status: </strong>
+          {rsDetails.join(', ')}
+        </div>
+      </>
+    );
+  }
+
+  private renderHTTPSummary(span: Span) {
+    const info = extractOpenTracingHTTPInfo(span);
+    const rqLabel =
+      info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
+    return (
+      <>
+        {this.renderCommonSummary(span)}
+        <div>
+          <strong>{rqLabel}: </strong>
+          {info.method} {info.url}
+        </div>
+        {info.statusCode && (
+          <div>
+            <strong>Response status: </strong>
+            {info.statusCode}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  private renderTCPSummary(span: Span) {
+    const info = extractOpenTracingTCPInfo(span);
+    return (
+      <>
+        {this.renderCommonSummary(span)}
+        {info.topic && (
+          <div>
+            <strong>Topic: </strong>
+            {info.topic}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  private rows = () => {
+    return this.props.spans.map((span, idx) => {
+      const split = span.process.serviceName.split('.');
+      const app = split[0];
+      const ns = split.length > 1 ? split[1] : this.props.namespace;
+      const linkToApp = '/namespaces/' + ns + '/applications/' + app;
+      const workloadNs = getWorkloadFromSpan(span);
+      const linkToWorkload = workloadNs
+        ? '/namespaces/' + workloadNs.namespace + '/workloads/' + workloadNs.workload
+        : undefined;
+      return {
+        className: span.tags.some(isErrorTag) ? dangerErrorStyle : undefined,
+        isOpen: false,
+        cells: [
+          { title: <>{formatDuration(span.relativeStartTime)}</> },
+          {
+            title: (
+              <>
+                <strong>Application: </strong>
+                <Link to={linkToApp}>{app}</Link>
+                <br />
+                <strong>Workload: </strong>
+                {(linkToWorkload && <Link to={linkToWorkload}>{workloadNs!.workload}</Link>) || 'unknown'}
+                <br />
+                <strong>Pod: </strong>
+                {workloadNs ? workloadNs.pod : 'unknown'}
+                <br />
+              </>
+            )
+          },
+          { title: this.renderSummary(span) },
+          {
+            title: <>{formatDuration(span.duration)}</>
+          },
+          { title: this.renderLinks(String(idx), span, linkToApp, linkToWorkload, app, workloadNs?.workload) }
+        ]
+      };
     });
   };
 
   render() {
-    const { columns, rows } = this.state;
     return (
       <Table
-        aria-label="SpanTable"
-        className={'spanTracingTagsTable'}
-        onCollapse={this.onCollapse}
-        rows={rows}
-        cells={columns}
-        rowWrapper={(props: RowWrapperProps) =>
-          this.customRowWrapper({
-            trRef: props.trRef,
-            className: props.className,
-            rowProps: props.rowProps,
-            row: props.row as any,
-            ...props
-          })
-        }
+        variant={TableVariant.compact}
+        aria-label={'list_spans'}
+        cells={[
+          { title: 'Timeline' },
+          { title: 'App / Workload' },
+          { title: 'Summary' },
+          { title: 'Duration' },
+          { title: '' } // Links
+        ]}
+        rows={this.rows()}
+        // This style is declared on _overrides.scss
+        className="table"
+        rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
       >
         <TableHeader />
         <TableBody />
@@ -233,11 +297,3 @@ export class SpanTableC extends React.Component<SpanDetailProps, SpanDetailState
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    jaegerInfo: state.jaegerState.info
-  };
-};
-
-export const SpanTable = connect(mapStateToProps)(SpanTableC);

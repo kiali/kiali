@@ -45,6 +45,7 @@ body,
   height: 600px;
 }
 
-#service-tabs .pf-c-tabs__list {
+#service-tabs .pf-c-tabs__list,
+#trace-details .pf-c-tabs__list {
   background-color: white;
 }

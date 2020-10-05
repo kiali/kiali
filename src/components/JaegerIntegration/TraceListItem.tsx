@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Tooltip } from '@patternfly/react-core';
+import { pluralize, Tooltip } from '@patternfly/react-core';
 
 import { JaegerTrace } from '../../types/JaegerInfo';
-import { getFormattedTraceInfo } from './JaegerResults/FormattedTraceInfo';
 import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
+import { FormattedTraceInfo, shortIDStyle } from './JaegerResults/FormattedTraceInfo';
 
 interface Props {
   trace: JaegerTrace;
@@ -37,17 +37,23 @@ const secondaryRightStyle = style({
 });
 
 export const TraceListItem: React.FunctionComponent<Props> = props => {
-  const formattedTrace = getFormattedTraceInfo(props.trace);
-  const tooltipContent = `${formattedTrace.name} (${props.trace.traceID.slice(0, 7)})`;
-  const nameStyleToUse = formattedTrace.errors ? nameStyle + ' ' + errorStyle : nameStyle;
+  const formattedTrace = new FormattedTraceInfo(props.trace);
+  const nameStyleToUse = formattedTrace.hasErrors() ? nameStyle + ' ' + errorStyle : nameStyle;
   return (
-    <Tooltip content={tooltipContent}>
+    <Tooltip
+      content={
+        <>
+          {formattedTrace.name()}
+          <span className={shortIDStyle}>{formattedTrace.shortID()}</span>
+        </>
+      }
+    >
       <div className={parentDivStyle}>
-        <span className={nameStyleToUse}>{formattedTrace.name}</span>
-        {formattedTrace.duration ? <span className={secondaryRightStyle}>{formattedTrace.duration}</span> : ''}
+        <span className={nameStyleToUse}>{formattedTrace.name()}</span>
+        {formattedTrace.duration() ? <span className={secondaryRightStyle}>{formattedTrace.duration()}</span> : ''}
         <br />
-        <span className={secondaryLeftStyle}>{formattedTrace.spans}</span>
-        <span className={secondaryRightStyle}>{formattedTrace.fromNow}</span>
+        <span className={secondaryLeftStyle}>{pluralize(props.trace.spans.length, 'Span')}</span>
+        <span className={secondaryRightStyle}>{formattedTrace.fromNow()}</span>
       </div>
     </Tooltip>
   );
