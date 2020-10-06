@@ -73,23 +73,14 @@ type WorkloadStatus struct {
 	SyncedProxies     int32  `json:"syncedProxies"`
 }
 
-type ProxyStatuses string
-
-const (
-	Synced  ProxyStatuses = "Synced"
-	NotSent ProxyStatuses = "NOT_SENT"
-	Stale   ProxyStatuses = "Stale"
-	StaleNa ProxyStatuses = "Stale (Never Acknowledged)"
-)
-
 // ProxyStatus gives the sync status of the sidecar proxy.
 // In healthy scenarios all variables should be true.
 // If at least one variable is false, then the proxy isn't fully sync'ed with pilot.
 type ProxyStatus struct {
-	CDS ProxyStatuses `json:"CDS"`
-	EDS ProxyStatuses `json:"EDS"`
-	LDS ProxyStatuses `json:"LDS"`
-	RDS ProxyStatuses `json:"RDS"`
+	CDS string `json:"CDS"`
+	EDS string `json:"EDS"`
+	LDS string `json:"LDS"`
+	RDS string `json:"RDS"`
 }
 
 // RequestHealth holds several stats about recent request errors
@@ -158,6 +149,6 @@ func (ps ProxyStatus) IsSynced() bool {
 }
 
 // isComponentStatusSynced returns true when componentStatus is Synced
-func isComponentStatusSynced(componentStatus ProxyStatuses) bool {
-	return componentStatus == Synced
+func isComponentStatusSynced(componentStatus string) bool {
+	return componentStatus == "Synced"
 }

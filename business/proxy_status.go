@@ -33,17 +33,17 @@ func castProxyStatus(ps kubernetes.ProxyStatus) models.ProxyStatus {
 	}
 }
 
-func xdsStatus(sent, acked string) models.ProxyStatuses {
+func xdsStatus(sent, acked string) string {
 	if sent == "" {
-		return models.NotSent
+		return "NOT_SENT"
 	}
 	if sent == acked {
-		return models.Synced
+		return "Synced"
 	}
 	// acked will be empty string when there is never Acknowledged
 	if acked == "" {
-		return models.StaleNa
+		return "Stale (Never Acknowledged)"
 	}
 	// Since the Nonce changes to uuid, so there is no more any time diff info
-	return models.Stale
+	return "Stale"
 }
