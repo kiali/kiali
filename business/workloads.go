@@ -209,7 +209,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 
 		timestamp := timestampRegexp.FindString(line)
 		if timestamp != "" {
-			parsed, _ := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
+			parsed, err := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
 
 			if err == nil {
 				message.Timestamp = timestamp
