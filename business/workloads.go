@@ -38,9 +38,10 @@ type PodLog struct {
 }
 
 type LogEntry struct {
-	Message   string `json:"message,omitempty"`
-	Severity  string `json:"severity,omitempty"`
-	Timestamp int64  `json:"timestamp,omitempty"`
+	Message       string `json:"message,omitempty"`
+	Severity      string `json:"severity,omitempty"`
+	Timestamp     string `json:"timestamp,omitempty"`
+	TimestampUnix int64  `json:"timestampUnix,omitempty"`
 }
 
 var (
@@ -200,9 +201,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 
 	for _, line := range lines {
 		message := LogEntry{
-			Message:   line,
-			Timestamp: 0,
-			Severity:  "",
+			Message:       line,
+			Timestamp:     "",
+			TimestampUnix: 0,
+			Severity:      "",
 		}
 
 		timestamp := timestampRegexp.FindString(line)
@@ -210,7 +212,8 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 			parsed, _ := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
 
 			if err == nil {
-				message.Timestamp = parsed.Unix()
+				message.Timestamp = timestamp
+				message.TimestampUnix = parsed.Unix()
 			}
 		}
 

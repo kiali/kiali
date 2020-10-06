@@ -446,11 +446,13 @@ func TestGetPodLogs(t *testing.T) {
 
 	assert.Equal(len(podLogs.Entries), 2)
 
-	assert.Equal(int64(1514864068), podLogs.Entries[0].Timestamp)
+	assert.Equal("2018-01-02T03:34:28+0000", podLogs.Entries[0].Timestamp)
+	assert.Equal(int64(1514864068), podLogs.Entries[0].TimestampUnix)
 	assert.Equal("Fake Log Entry 1", podLogs.Entries[0].Message)
 	assert.Equal("INFO", podLogs.Entries[0].Severity)
 
-	assert.Equal(int64(1514867668), podLogs.Entries[1].Timestamp)
+	assert.Equal("2018-01-02T04:34:28+0000", podLogs.Entries[1].Timestamp)
+	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
 	assert.Equal("Fake Log Entry 2", podLogs.Entries[1].Message)
 	assert.Equal("WARN", podLogs.Entries[1].Severity)
 }
