@@ -218,7 +218,9 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 		line = strings.Join(splitted[1:], " ")
 
 		severity := severityRegexp.FindString(line)
-		if severity != "" {
+		if severity == "" {
+			message.Severity = "INFO"
+		} else {
 			message.Severity = strings.TrimSpace(severity)
 
 			line = string(severityRegexp.ReplaceAll([]byte(line), []byte("")))
