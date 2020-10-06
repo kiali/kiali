@@ -44,6 +44,7 @@ import { DestinationRule, PeerAuthentication, PeerAuthenticationMutualTLSMode } 
 import { style } from 'typestyle';
 import RequestTimeouts, { TimeoutRetryRoute } from './RequestTimeouts';
 import CircuitBreaker, { CircuitBreakerState } from './CircuitBreaker';
+import _ from 'lodash';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -252,7 +253,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
       return false;
     }
     for (let i = 0; i < prev.length; i++) {
-      if (!current.includes(prev[i])) {
+      if (!current.some(w => _.isEqual(w, prev[i]))) {
         return false;
       }
     }
@@ -347,6 +348,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onVsHosts = (valid: boolean, vsHosts: string[]) => {
     this.setState(prevState => {
       prevState.valid.vsHosts = valid;
+      // When adding a new Gateway, VirtualService host should be synced with Gateway host
+      if (prevState.gateway && prevState.gateway.addGateway && prevState.gateway.newGateway) {
+        prevState.gateway.gwHosts = vsHosts.join(',');
+      }
       return {
         valid: prevState.valid,
         vsHosts: vsHosts
@@ -385,9 +390,14 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
   onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
     this.setState(prevState => {
       prevState.valid.gateway = valid;
+      // When adding a new Gateway, VirtualService host should be synced with Gateway host
       return {
         valid: prevState.valid,
-        gateway: gateway
+        gateway: gateway,
+        vsHosts:
+          gateway.addGateway && gateway.newGateway && gateway.gwHosts.length > 0
+            ? gateway.gwHosts.split(',')
+            : prevState.vsHosts
       };
     });
   };

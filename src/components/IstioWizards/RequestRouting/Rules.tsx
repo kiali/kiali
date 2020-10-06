@@ -131,14 +131,18 @@ class Rules extends React.Component<Props> {
                   )}
                 </>,
                 <>
-                  {rule.workloadWeights.map((wk, i) => (
-                    <div key={'wk_' + i}>
-                      <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
-                        <Badge className={'virtualitem_badge_definition'}>WS</Badge>
-                      </Tooltip>
-                      {wk.name} ({wk.weight} %)
-                    </div>
-                  ))}
+                  <div key={'ww_' + order}>
+                    {rule.workloadWeights.map((wk, i) => {
+                      return (
+                        <div key={'wk_' + order + '_' + wk.name + '_' + i}>
+                          <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
+                            <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+                          </Tooltip>
+                          {wk.name} ({wk.weight} %)
+                        </div>
+                      );
+                    })}
+                  </div>
                   {rule.delay && (
                     <div key={'delay_' + order}>
                       <Tooltip position={TooltipPosition.top} content={<>Fault Injection: Delay</>}>
@@ -177,6 +181,7 @@ class Rules extends React.Component<Props> {
           })
         : [
             {
+              key: 'rowEmpty',
               cells: [
                 {
                   title: (
