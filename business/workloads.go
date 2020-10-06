@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -48,7 +49,7 @@ var (
 	excludedWorkloads map[string]bool
 
 	// Matches an ISO8601 full date
-	severityRegexp = regexp.MustCompile(`(\s+|^)(INFO|WARN|DEBUG|TRACE)\s+`)
+	severityRegexp = regexp.MustCompile(`ERROR|WARN|DEBUG|TRACE`)
 )
 
 func isWorkloadIncluded(workload string) bool {
@@ -199,38 +200,43 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 	messages := make([]LogEntry, 0)
 
 	for _, line := range lines {
-		message := LogEntry{
-			Message:       line,
+		entry := LogEntry{
+			Message:       "",
 			Timestamp:     "",
 			TimestampUnix: 0,
-			Severity:      "",
+			Severity:      "INFO",
 		}
 
-		splitted := strings.Split(line, " ")
-		timestamp := splitted[0]
-		parsed, err := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
+		splitted := strings.SplitN(line, " ", 2)
+		if len(splitted) != 2 {
+			log.Debugf("Skipping unexpected log line [%s]", line)
+			continue
+		}
 
+		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+		splittedTimestamp := strings.Split(splitted[0], ".")
+		if len(splittedTimestamp) == 1 {
+			entry.Timestamp = splittedTimestamp[0]
+		} else {
+			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
+		}
+
+		entry.Message = strings.TrimSpace(splitted[1])
+
+		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
 		if err == nil {
-			message.Timestamp = timestamp
-			message.TimestampUnix = parsed.Unix()
+			entry.TimestampUnix = parsed.Unix()
+		} else {
+			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+			continue
 		}
-
-		line = strings.Join(splitted[1:], " ")
 
 		severity := severityRegexp.FindString(line)
-		if severity == "" {
-			message.Severity = "INFO"
-		} else {
-			message.Severity = strings.TrimSpace(severity)
-
-			line = string(severityRegexp.ReplaceAll([]byte(line), []byte("")))
-			line = strings.TrimSpace(line)
+		if severity != "" {
+			entry.Severity = severity
 		}
 
-		line = strings.TrimSpace(line)
-		message.Message = line
-
-		messages = append(messages, message)
+		messages = append(messages, entry)
 	}
 
 	message := PodLog{
