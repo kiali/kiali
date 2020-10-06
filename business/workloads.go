@@ -48,8 +48,7 @@ var (
 	excludedWorkloads map[string]bool
 
 	// Matches an ISO8601 full date
-	timestampRegexp = regexp.MustCompile(`^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(([+-]\d\d:\d\d)|Z)?(\+\d{4})?`)
-	severityRegexp  = regexp.MustCompile(`(\s+|^)(INFO|WARN|DEBUG|TRACE)\s+`)
+	severityRegexp = regexp.MustCompile(`(\s+|^)(INFO|WARN|DEBUG|TRACE)\s+`)
 )
 
 func isWorkloadIncluded(workload string) bool {
@@ -207,18 +206,16 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 			Severity:      "",
 		}
 
-		timestamp := timestampRegexp.FindString(line)
-		if timestamp != "" {
-			parsed, err := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
+		splitted := strings.Split(line, " ")
+		timestamp := splitted[0]
+		parsed, err := time.Parse("2006-01-02T15:04:05+0000", string(timestamp))
 
-			if err == nil {
-				message.Timestamp = timestamp
-				message.TimestampUnix = parsed.Unix()
-			}
+		if err == nil {
+			message.Timestamp = timestamp
+			message.TimestampUnix = parsed.Unix()
 		}
 
-		line = string(timestampRegexp.ReplaceAll([]byte(line), []byte("")))
-		message.Message = line
+		line = strings.Join(splitted[1:], " ")
 
 		severity := severityRegexp.FindString(line)
 		if severity != "" {
