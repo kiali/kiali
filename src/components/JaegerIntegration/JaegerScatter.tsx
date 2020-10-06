@@ -26,8 +26,8 @@ interface JaegerScatterProps {
 }
 
 const ONE_MILLISECOND = 1000000;
-
 const MINIMAL_SIZE = 2;
+const MAXIMAL_SIZE = 30;
 
 type JaegerLineInfo = LineInfo & { id: string };
 type Datapoint = VCDataPoint & JaegerLineInfo;
@@ -73,7 +73,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
         color: isSelected ? PfColors.Blue500 : PfColors.Blue200,
         unit: 'seconds',
         id: trace.traceID,
-        size: trace.spans.length + MINIMAL_SIZE
+        size: Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
       };
       if (traceError) {
         traceItem.color = isSelected ? PfColors.Red500 : PfColors.Red200;
