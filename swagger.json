@@ -5924,22 +5924,18 @@
       "title": "ProxyStatus gives the sync status of the sidecar proxy.",
       "properties": {
         "CDS": {
-          "$ref": "#/definitions/ProxyStatuses"
+          "type": "string"
         },
         "EDS": {
-          "$ref": "#/definitions/ProxyStatuses"
+          "type": "string"
         },
         "LDS": {
-          "$ref": "#/definitions/ProxyStatuses"
+          "type": "string"
         },
         "RDS": {
-          "$ref": "#/definitions/ProxyStatuses"
+          "type": "string"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ProxyStatuses": {
-      "type": "string",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpec": {
