@@ -30,13 +30,13 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
 import { LabelFilters } from './LabelFilter';
-import { groupBy } from 'utils/Common';
+import { arrayEquals, groupBy } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
 
 var classNames = require('classnames');
 
 export interface StatefulFiltersProps {
-  onFilterChange: () => void;
+  onFilterChange: (active: ActiveFiltersInfo) => void;
   initialFilters: FilterType[];
   rightToolbar?: JSX.Element[];
   ref?: React.RefObject<StatefulFilters>;
@@ -53,6 +53,18 @@ export interface StatefulFiltersState {
 export class FilterSelected {
   static selectedFilters: ActiveFilter[] | undefined = undefined;
   static opSelected: LabelOperation;
+
+  static init = (filterTypes: FilterType[]) => {
+    let active = FilterSelected.getSelected();
+    if (!FilterSelected.isInitialized()) {
+      active = FilterHelper.getFiltersFromURL(filterTypes);
+      FilterSelected.setSelected(active);
+    } else if (!FilterHelper.filtersMatchURL(filterTypes, active)) {
+      active = FilterHelper.setFiltersToURL(filterTypes, active);
+      FilterSelected.setSelected(active);
+    }
+    return active;
+  };
 
   static resetFilters = () => {
     FilterSelected.selectedFilters = undefined;
@@ -84,26 +96,20 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   constructor(props: StatefulFiltersProps) {
     super(props);
-
-    let active = FilterSelected.getSelected();
-    if (!FilterSelected.isInitialized()) {
-      active = FilterHelper.getFiltersFromURL(this.props.initialFilters);
-      FilterSelected.setSelected(active);
-    } else if (!FilterHelper.filtersMatchURL(this.props.initialFilters, active)) {
-      active = FilterHelper.setFiltersToURL(this.props.initialFilters, active);
-      FilterSelected.setSelected(active);
-    }
-
     this.state = {
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
-      activeFilters: active,
+      activeFilters: FilterSelected.init(this.props.initialFilters),
       isExpanded: false,
       currentValue: ''
     };
   }
 
   componentDidMount() {
+    this.loadDynamicFilters();
+  }
+
+  private loadDynamicFilters() {
     // Call all loaders from FilterTypes and set results in state
     const filterTypePromises = this.props.initialFilters.map(ft => {
       if (ft.loader) {
@@ -126,8 +132,24 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.promises.registerAll('filterType', filterTypePromises).then(types => this.setState({ filterTypes: types }));
   }
 
-  componentDidUpdate(_prevProps: StatefulFiltersProps, _prevState: StatefulFiltersState, _snapshot: any) {
-    if (!FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+  componentDidUpdate(prev: StatefulFiltersProps) {
+    // If the props filters changed (e.g. different values), some state update is necessary
+    if (
+      this.props.initialFilters !== prev.initialFilters &&
+      !arrayEquals(this.props.initialFilters, prev.initialFilters, (t1, t2) => {
+        return t1.id === t2.id && arrayEquals(t1.filterValues, t2.filterValues, (v1, v2) => v1 === v2);
+      })
+    ) {
+      const current =
+        this.props.initialFilters.find(f => f.id === this.state.currentFilterType.id) || this.props.initialFilters[0];
+      const active = FilterHelper.setFiltersToURL(this.props.initialFilters, this.state.activeFilters);
+      this.setState({
+        currentFilterType: current,
+        filterTypes: this.props.initialFilters,
+        activeFilters: active
+      });
+      this.loadDynamicFilters();
+    } else if (!FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
       FilterHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
   }
@@ -140,7 +162,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const cleanFilters = FilterHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
     FilterSelected.setSelected(cleanFilters);
     this.setState({ activeFilters: cleanFilters, currentValue: '' });
-    this.props.onFilterChange();
+    this.props.onFilterChange(cleanFilters);
   }
 
   filterAdded = (field: FilterType, value: string) => {

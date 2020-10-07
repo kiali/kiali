@@ -1,36 +1,49 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Dropdown, DropdownGroup, DropdownItem, KebabToggle } from '@patternfly/react-core';
-import { Table, TableHeader, TableBody, TableVariant, RowWrapper } from '@patternfly/react-table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableVariant,
+  RowWrapper,
+  sortable,
+  SortByDirection,
+  ICell
+} from '@patternfly/react-table';
 import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
-import { Span } from 'types/JaegerInfo';
 import { formatDuration } from './transform';
 import {
   extractEnvoySpanInfo,
-  extractOpenTracingBaseInfo,
   extractOpenTracingHTTPInfo,
   extractOpenTracingTCPInfo,
-  getSpanType,
-  getWorkloadFromSpan,
   isErrorTag
 } from '../JaegerHelper';
 import { style } from 'typestyle';
 import { PFAlertColor } from 'components/Pf/PfColors';
+import { SpanTableItem } from './SpanTableItem';
+import { compareNullable } from 'components/FilterList/FilterHelper';
+
+type SortableCell<T> = ICell & {
+  compare?: (a: T, b: T) => number;
+};
 
 const dangerErrorStyle = style({
   borderLeft: '3px solid var(--pf-global--danger-color--100)'
 });
 
 interface Props {
-  spans: Span[];
+  spans: SpanTableItem[];
   namespace: string;
   externalURL?: string;
 }
 
 interface State {
   toggled?: string;
+  sortIndex: number;
+  sortDirection: SortByDirection;
 }
 
 const kebabDropwdownStyle = style({
@@ -44,7 +57,7 @@ const linkStyle = style({
 export class SpanTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc };
   }
 
   componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
@@ -53,41 +66,34 @@ export class SpanTable extends React.Component<Props, State> {
     }
   }
 
-  private renderLinks = (
-    key: string,
-    span: Span,
-    linkToApp: string,
-    linkToWorkload: string | undefined,
-    app: string,
-    workload: string | undefined
-  ) => {
+  private renderLinks = (key: string, item: SpanTableItem) => {
     const links = [
-      <DropdownGroup label={`Application (${app})`} className={kebabDropwdownStyle}>
-        <DropdownItem className={linkStyle} onClick={() => history.push(linkToApp + '?tab=in_metrics')}>
+      <DropdownGroup label={`Application (${item.app})`} className={kebabDropwdownStyle}>
+        <DropdownItem className={linkStyle} onClick={() => history.push(item.linkToApp + '?tab=in_metrics')}>
           Inbound metrics
         </DropdownItem>
-        <DropdownItem className={linkStyle} onClick={() => history.push(linkToApp + '?tab=out_metrics')}>
+        <DropdownItem className={linkStyle} onClick={() => history.push(item.linkToApp + '?tab=out_metrics')}>
           Outbound metrics
         </DropdownItem>
       </DropdownGroup>
     ];
-    if (linkToWorkload) {
+    if (item.linkToWorkload) {
       links.push(
-        <DropdownGroup label={`Workload (${workload})`} className={kebabDropwdownStyle}>
-          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=logs')}>
+        <DropdownGroup label={`Workload (${item.workload})`} className={kebabDropwdownStyle}>
+          <DropdownItem className={linkStyle} onClick={() => history.push(item.linkToWorkload + '?tab=logs')}>
             Logs
           </DropdownItem>
-          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=in_metrics')}>
+          <DropdownItem className={linkStyle} onClick={() => history.push(item.linkToWorkload + '?tab=in_metrics')}>
             Inbound metrics
           </DropdownItem>
-          <DropdownItem className={linkStyle} onClick={() => history.push(linkToWorkload + '?tab=out_metrics')}>
+          <DropdownItem className={linkStyle} onClick={() => history.push(item.linkToWorkload + '?tab=out_metrics')}>
             Outbound metrics
           </DropdownItem>
         </DropdownGroup>
       );
     }
     if (this.props.externalURL) {
-      const spanLink = `${this.props.externalURL}/trace/${span.traceID}?uiFind=${span.spanID}`;
+      const spanLink = `${this.props.externalURL}/trace/${item.traceID}?uiFind=${item.spanID}`;
       links.push(
         <DropdownGroup label="Tracing" className={kebabDropwdownStyle}>
           <DropdownItem className={linkStyle} onClick={() => window.open(spanLink, '_blank')}>
@@ -113,42 +119,41 @@ export class SpanTable extends React.Component<Props, State> {
     );
   };
 
-  private renderSummary = (span: Span) => {
-    switch (getSpanType(span)) {
+  private renderSummary = (item: SpanTableItem) => {
+    switch (item.type) {
       case 'envoy':
-        return this.renderEnvoySummary(span);
+        return this.renderEnvoySummary(item);
       case 'http':
-        return this.renderHTTPSummary(span);
+        return this.renderHTTPSummary(item);
       case 'tcp':
-        return this.renderTCPSummary(span);
+        return this.renderTCPSummary(item);
     }
     // Unknown
-    return this.renderCommonSummary(span);
+    return this.renderCommonSummary(item);
   };
 
-  private renderCommonSummary(span: Span) {
-    const info = extractOpenTracingBaseInfo(span);
+  private renderCommonSummary(item: SpanTableItem) {
     return (
       <>
-        {info.hasError && (
+        {item.hasError && (
           <div>
             <ExclamationCircleIcon color={PFAlertColor.Danger} /> <strong>This span reported an error</strong>
           </div>
         )}
         <div>
           <strong>Operation: </strong>
-          {span.operationName}
+          {item.operationName}
         </div>
         <div>
           <strong>Component: </strong>
-          {info.component || 'unknown'}
+          {item.component}
         </div>
       </>
     );
   }
 
-  private renderEnvoySummary(span: Span) {
-    const info = extractEnvoySpanInfo(span);
+  private renderEnvoySummary(item: SpanTableItem) {
+    const info = extractEnvoySpanInfo(item);
     let rqLabel = 'Request';
     let peerLink: JSX.Element | undefined = undefined;
     if (info.direction === 'inbound') {
@@ -182,7 +187,7 @@ export class SpanTable extends React.Component<Props, State> {
 
     return (
       <>
-        {this.renderCommonSummary(span)}
+        {this.renderCommonSummary(item)}
         <div>
           <strong>
             {rqLabel}
@@ -198,13 +203,13 @@ export class SpanTable extends React.Component<Props, State> {
     );
   }
 
-  private renderHTTPSummary(span: Span) {
-    const info = extractOpenTracingHTTPInfo(span);
+  private renderHTTPSummary(item: SpanTableItem) {
+    const info = extractOpenTracingHTTPInfo(item);
     const rqLabel =
       info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
     return (
       <>
-        {this.renderCommonSummary(span)}
+        {this.renderCommonSummary(item)}
         <div>
           <strong>{rqLabel}: </strong>
           {info.method} {info.url}
@@ -219,11 +224,11 @@ export class SpanTable extends React.Component<Props, State> {
     );
   }
 
-  private renderTCPSummary(span: Span) {
-    const info = extractOpenTracingTCPInfo(span);
+  private renderTCPSummary(item: SpanTableItem) {
+    const info = extractOpenTracingTCPInfo(item);
     return (
       <>
-        {this.renderCommonSummary(span)}
+        {this.renderCommonSummary(item)}
         {info.topic && (
           <div>
             <strong>Topic: </strong>
@@ -234,59 +239,74 @@ export class SpanTable extends React.Component<Props, State> {
     );
   }
 
-  private rows = () => {
-    return this.props.spans.map((span, idx) => {
-      const split = span.process.serviceName.split('.');
-      const app = split[0];
-      const ns = split.length > 1 ? split[1] : this.props.namespace;
-      const linkToApp = '/namespaces/' + ns + '/applications/' + app;
-      const workloadNs = getWorkloadFromSpan(span);
-      const linkToWorkload = workloadNs
-        ? '/namespaces/' + workloadNs.namespace + '/workloads/' + workloadNs.workload
-        : undefined;
+  private cells = (): SortableCell<SpanTableItem>[] => {
+    return [
+      {
+        title: 'Timeline',
+        transforms: [sortable],
+        compare: (a, b) => a.startTime - b.startTime
+      },
+      {
+        title: 'App / Workload',
+        transforms: [sortable],
+        compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
+      },
+      { title: 'Summary' },
+      {
+        title: 'Duration',
+        transforms: [sortable],
+        compare: (a, b) => a.duration - b.duration
+      },
+      { title: '' } // Links
+    ];
+  };
+
+  private rows = (cells: SortableCell<SpanTableItem>[]) => {
+    const compare = cells[this.state.sortIndex].compare;
+    const sorted = compare
+      ? this.props.spans.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
+      : this.props.spans;
+    return sorted.map((item, idx) => {
       return {
-        className: span.tags.some(isErrorTag) ? dangerErrorStyle : undefined,
+        className: item.tags.some(isErrorTag) ? dangerErrorStyle : undefined,
         isOpen: false,
         cells: [
-          { title: <>{formatDuration(span.relativeStartTime)}</> },
+          { title: <>{formatDuration(item.relativeStartTime)}</> },
           {
             title: (
               <>
                 <strong>Application: </strong>
-                <Link to={linkToApp}>{app}</Link>
+                <Link to={item.linkToApp}>{item.app}</Link>
                 <br />
                 <strong>Workload: </strong>
-                {(linkToWorkload && <Link to={linkToWorkload}>{workloadNs!.workload}</Link>) || 'unknown'}
+                {(item.linkToWorkload && <Link to={item.linkToWorkload}>{item.workload}</Link>) || 'unknown'}
                 <br />
                 <strong>Pod: </strong>
-                {workloadNs ? workloadNs.pod : 'unknown'}
+                {item.pod || 'unknown'}
                 <br />
               </>
             )
           },
-          { title: this.renderSummary(span) },
+          { title: this.renderSummary(item) },
           {
-            title: <>{formatDuration(span.duration)}</>
+            title: <>{formatDuration(item.duration)}</>
           },
-          { title: this.renderLinks(String(idx), span, linkToApp, linkToWorkload, app, workloadNs?.workload) }
+          { title: this.renderLinks(String(idx), item) }
         ]
       };
     });
   };
 
   render() {
+    const cells = this.cells();
     return (
       <Table
         variant={TableVariant.compact}
         aria-label={'list_spans'}
-        cells={[
-          { title: 'Timeline' },
-          { title: 'App / Workload' },
-          { title: 'Summary' },
-          { title: 'Duration' },
-          { title: '' } // Links
-        ]}
-        rows={this.rows()}
+        cells={cells}
+        rows={this.rows(cells)}
+        sortBy={{ index: this.state.sortIndex, direction: this.state.sortDirection }}
+        onSort={(_event, index, sortDirection) => this.setState({ sortIndex: index, sortDirection: sortDirection })}
         // This style is declared on _overrides.scss
         className="table"
         rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}

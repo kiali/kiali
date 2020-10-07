@@ -705,7 +705,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   render() {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
-    const filteredNamespaces = Filters.filterBy(this.state.namespaces, FilterSelected.getSelected());
+    const filteredNamespaces = FilterHelper.runFilters(
+      this.state.namespaces,
+      Filters.availableFilters,
+      FilterSelected.getSelected()
+    );
     const namespaceActions = filteredNamespaces.map((ns, i) => {
       const actions = this.getNamespaceActions(ns);
       return <OverviewNamespaceActions key={'namespaceAction_' + i} namespace={ns.name} actions={actions} />;

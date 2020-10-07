@@ -31,8 +31,8 @@ export interface FilterType {
   loader?: () => Promise<FilterValue[]>;
 }
 
-export interface FilterTypeWithFilter<T> extends FilterType {
-  filter: (items: T[], filters: ActiveFiltersInfo) => T[];
+export interface RunnableFilter<T> extends FilterType {
+  run: (item: T, filters: ActiveFiltersInfo) => boolean;
 }
 
 export const FILTER_ACTION_APPEND = 'append';
