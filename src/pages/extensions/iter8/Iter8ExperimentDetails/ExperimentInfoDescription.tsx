@@ -18,11 +18,13 @@ import {
   KebabToggle,
   List,
   ListItem,
+  PopoverPosition,
   Stack,
   StackItem,
   Text,
   TextVariants,
-  Title
+  Title,
+  Tooltip
 } from '@patternfly/react-core';
 
 import LocalTime from '../../../../components/Time/LocalTime';
@@ -34,6 +36,8 @@ import { GraphType } from '../../../../types/Graph';
 import history from '../../../../app/History';
 import jsyaml from 'js-yaml';
 import YAML from 'yaml';
+import { KialiIcon } from '../../../../config/KialiIcon';
+import { style } from 'typestyle';
 
 interface ExperimentInfoDescriptionProps {
   target: string;
@@ -47,6 +51,10 @@ interface ExperimentInfoDescriptionProps {
 type MiniGraphCardState = {
   isKebabOpen: boolean;
 };
+
+const infoStyle = style({
+  margin: '0px 16px 2px 4px'
+});
 
 class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps, MiniGraphCardState> {
   constructor(props) {
@@ -322,8 +330,17 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
                           <StackItem>
                             {this.props.experimentDetails.experimentItem.winner.winning_version_found ? (
                               <>
-                                <Text component={TextVariants.h3}> Winner Found: </Text>
+                                <Text component={TextVariants.h3}> Winner Found:</Text>
                                 {this.props.experimentDetails.experimentItem.winner.name}
+                                <Tooltip
+                                  key={'winnerTooltip'}
+                                  aria-label={'Winner Tooltip'}
+                                  position={PopoverPosition.auto}
+                                  className={'health_indicator'}
+                                  content={<>{'Winning version identified by iter8 analytics'}</>}
+                                >
+                                  <KialiIcon.Info className={infoStyle} />
+                                </Tooltip>
                               </>
                             ) : (
                               <Text component={TextVariants.h3}> Winner not Found </Text>

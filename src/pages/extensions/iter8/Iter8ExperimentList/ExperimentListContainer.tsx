@@ -11,6 +11,7 @@ import {
   PopoverPosition,
   Text,
   TextContent,
+  TextVariants,
   Title,
   Tooltip,
   TooltipPosition
@@ -41,7 +42,7 @@ import { PromisesRegistry } from '../../../../utils/CancelablePromises';
 import { namespaceEquals } from '../../../../utils/Common';
 
 import { KialiIcon } from '../../../../config/KialiIcon';
-import { OkIcon } from '@patternfly/react-icons';
+import { OkIcon, PowerOffIcon } from '@patternfly/react-icons';
 import * as Iter8ExperimentListFilters from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../../../components/Filters/StatefulFilters';
 import { PfColors } from 'components/Pf/PfColors';
@@ -317,7 +318,8 @@ class ExperimentListPage extends React.Component<Props, State> {
           <h2>{statusValue}</h2> {retStatus}
         </Text>
         <Text>
-          <h2>Winner Found:</h2> {winnerFound ? winnerName : 'False'}
+          <h2>Winner Found: {winnerFound ? winnerName : 'False'}</h2>
+          <Text component={TextVariants.p}>(Winning version as identified by iter8 analytics)</Text>
         </Text>
       </TextContent>
     );
@@ -327,9 +329,12 @@ class ExperimentListPage extends React.Component<Props, State> {
     let className = greenIconStyle;
 
     let statusString = this.getStatusTooltip(phase, status, winnerStatus.winning_version_found, winnerStatus.name);
-    if (!winnerStatus.winning_version_found) {
+    if (status.includes('Abort')) {
+      className = greenIconStyle;
+    } else if (!winnerStatus.winning_version_found) {
       className = redIconStyle;
     }
+
     switch (phase) {
       case 'Initializing':
         return (
@@ -368,6 +373,19 @@ class ExperimentListPage extends React.Component<Props, State> {
           </Tooltip>
         );
       case 'Completed':
+        if (status.includes('Abort')) {
+          return (
+            <Tooltip
+              key={'Completed_' + key}
+              aria-label={'Status Indicatorr'}
+              position={PopoverPosition.auto}
+              className={'health_indicator'}
+              content={<>{statusString}</>}
+            >
+              <PowerOffIcon className={className} />
+            </Tooltip>
+          );
+        }
         return (
           <Tooltip
             key={'Completed_' + key}

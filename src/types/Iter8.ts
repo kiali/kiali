@@ -86,8 +86,15 @@ export interface TrafficControl {
   algorithm: string;
   maxIncrement: number;
   onTermination: string;
+  match: {
+    http: HttpMatch[];
+  };
 }
 
+export interface HttpMatch {
+  headers: HeaderMatch[];
+  uri: URIMatch;
+}
 export interface Duration {
   interval: string;
   intervalInSecond: number;
@@ -140,7 +147,10 @@ export const emptyExperimentDetailsInfo: Iter8ExpDetailsInfo = {
   trafficControl: {
     algorithm: 'check_and_increment',
     maxIncrement: 2,
-    onTermination: 'to_winner'
+    onTermination: 'to_winner',
+    match: {
+      http: []
+    }
   },
   duration: {
     interval: '30s',
@@ -212,6 +222,17 @@ export const initCriteria = (): Iter8Criteria => ({
 export interface Host {
   name: string;
   gateway: string;
+}
+
+export interface HeaderMatch {
+  key: string;
+  match: string;
+  stringMatch: string;
+}
+
+export interface URIMatch {
+  match: string;
+  stringMatch: string;
 }
 
 export interface ExperimentAction {

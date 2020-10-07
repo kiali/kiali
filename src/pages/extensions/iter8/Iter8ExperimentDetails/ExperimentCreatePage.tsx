@@ -15,19 +15,22 @@ import {
   GridItem,
   Popover,
   Switch,
-  TextInputBase as TextInput
+  Text,
+  TextInputBase as TextInput,
+  TextVariants
 } from '@patternfly/react-core';
 import history from '../../../../app/History';
 import { RenderContent } from '../../../../components/Nav/Page';
 import Namespace from '../../../../types/Namespace';
 import ExperimentCriteriaForm from './ExperimentCriteriaForm';
 import ExperimentHostForm, { HostState, initHost } from './ExperimentHostForm';
+import ExperimentTrafficForm from './ExperimentTrafficForm';
 import { PromisesRegistry } from '../../../../utils/CancelablePromises';
 import { KialiAppState } from '../../../../store/Store';
 import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
 import { PfColors } from '../../../../components/Pf/PfColors';
-import HelpIcon from '@patternfly/react-icons/dist/js/icons/help-icon';
+import { InfoAltIcon } from '@patternfly/react-icons';
 
 interface Props {
   serviceName: string;
@@ -98,7 +101,10 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         trafficControl: {
           algorithm: 'progressive',
           maxIncrement: 10,
-          onTermination: 'to_winner'
+          onTermination: 'to_winner',
+          match: {
+            http: []
+          }
         },
         duration: {
           interval: '30s',
@@ -680,12 +686,14 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     );
   }
 
-  onAddToList = (newCriteria: Criteria, newHost: Host) => {
+  onAddToList = (newCriteria: Criteria, newHost: Host, newMatch: any) => {
     this.setState(prevState => {
       if (newHost != null && newHost.name !== '') {
         prevState.experiment.hosts.push(newHost);
-      } else if (newCriteria != null) {
+      } else if (newCriteria != null && newCriteria.metric !== '') {
         prevState.experiment.criterias.push(newCriteria);
+      } else if (newMatch != null) {
+        prevState.experiment.trafficControl.match.http.push(newMatch);
       }
       return {
         iter8Info: prevState.iter8Info,
@@ -810,6 +818,42 @@ class ExperimentCreatePage extends React.Component<Props, State> {
               />
             </FormGroup>
           </GridItem>
+          <GridItem span={12}>
+            <Text component={TextVariants.a}>
+              Number of Match Rules : {this.state.experiment.trafficControl.match.http.length}
+              <Popover
+                position={'right'}
+                hideOnOutsideClick={true}
+                maxWidth={'40rem'}
+                headerContent={<div>Match Rules</div>}
+                bodyContent={
+                  <div>
+                    <p>
+                      Specifies the portion of traffic which can be routed to candidates during the experiment. Traffic
+                      that does not match this clause will be sent to baseline and never to a candidate during an
+                      experiment. By default, if this field is left unspecified, all traffic is used for an experiment.
+                    </p>
+                    <p>
+                      Currently, only http trafic is controlled. For each match rule, please specify one or both of{' '}
+                      <b>uri</b> and one or multiple <b>headers</b>. Use <b>Add this Header</b> to add header to the
+                      rule, and use <b>Add Match Rule</b> to add match rule.
+                    </p>
+                  </div>
+                }
+              >
+                <Button variant="link">
+                  <InfoAltIcon noVerticalAlign />
+                </Button>
+              </Popover>
+            </Text>
+          </GridItem>
+          <GridItem span={12}>
+            <ExperimentTrafficForm
+              matches={this.state.experiment.trafficControl.match.http}
+              onRemove={this.onRemoveFromList}
+              onAdd={this.onAddToList}
+            />
+          </GridItem>
         </Grid>
       </>
     );
@@ -821,6 +865,8 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         prevState.experiment.criterias.splice(index, 1);
       } else if (type === 'Host') {
         prevState.experiment.hosts.splice(index, 1);
+      } else if (type === 'Match') {
+        prevState.experiment.trafficControl.match.http.splice(index, 1);
       }
 
       return {
@@ -970,7 +1016,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                           </tr>
                           <tr>
                             <td valign={'top'}>to_baseline:&nbsp;</td>
-                            <td>All traffic will flow to the baseline version, after the experiment terminates. </td>
+                            <td>All traffic will flow to the baseline version, after the experiment terminates.</td>
                           </tr>
                           <tr>
                             <td valign={'top'}>keep_last:&nbsp;</td>
@@ -984,7 +1030,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                     }
                   >
                     <Button variant="link">
-                      Traffic Control <HelpIcon noVerticalAlign />
+                      Traffic Control <InfoAltIcon noVerticalAlign />
                     </Button>
                   </Popover>
                 }

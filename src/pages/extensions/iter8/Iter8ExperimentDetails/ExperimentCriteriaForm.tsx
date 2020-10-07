@@ -68,7 +68,7 @@ type Props = {
   iter8Info: Iter8Info;
   criterias: Criteria[];
   metricNames: string[];
-  onAdd: (server: Criteria, host: Host) => void;
+  onAdd: (criteria: Criteria, host: Host, match: any) => void;
   onRemove: (type: string, index: number) => void;
 };
 
@@ -166,7 +166,8 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
   };
 
   onAddCriteria = () => {
-    this.props.onAdd(this.state.addCriteria, { name: '', gateway: '' });
+    var NULL = null;
+    this.props.onAdd(this.state.addCriteria, { name: '', gateway: '' }, NULL);
     this.setState({
       addCriteria: initCriteria()
     });
@@ -202,7 +203,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
                 </FormSelect>
               </>,
 
-              <FormGroup fieldId="addTolerancef" isValid={this.state.addCriteria.tolerance > 0}>
+              <FormGroup fieldId="addTolerance" isValid={this.state.addCriteria.tolerance > 0}>
                 <TextInput
                   id="addTolerance"
                   type="number"
@@ -212,7 +213,6 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
                   isValid={!isNaN(Number(this.state.addCriteria.tolerance))}
                 />
               </FormGroup>,
-
               <>
                 <FormSelect
                   value={this.state.addCriteria.toleranceType}

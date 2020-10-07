@@ -6,6 +6,7 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
+  PopoverPosition,
   Title,
   Tooltip
 } from '@patternfly/react-core';
@@ -59,6 +60,10 @@ type State = {
 
 const statusIconStyle = style({
   fontSize: '2.0em'
+});
+
+const infoStyle = style({
+  margin: '0px 16px 2px 4px'
 });
 
 class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescriptionProps, State> {
@@ -218,7 +223,18 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
               {this.props.experimentItem?.winner.winning_version_found &&
               this.props.experimentItem?.winner.name === assessment.name ? (
                 <Grid gutter="md">
-                  <GridItem span={6}>Winner</GridItem>
+                  <GridItem span={6}>
+                    Winner
+                    <Tooltip
+                      key={'winnerTooltip'}
+                      aria-label={'Winner Tooltip'}
+                      position={PopoverPosition.auto}
+                      className={'health_indicator'}
+                      content={<>{'Winning version identified by iter8 analytics'}</>}
+                    >
+                      <KialiIcon.Info className={infoStyle} />
+                    </Tooltip>
+                  </GridItem>
                   <GridItem span={6}>
                     {' '}
                     <KialiIcon.Ok className={statusIconStyle} />
