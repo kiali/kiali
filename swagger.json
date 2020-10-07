@@ -4241,71 +4241,39 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "HTTPMarchRule": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "match": {
+          "type": "string",
+          "x-go-name": "Match"
+        },
+        "stringMatch": {
+          "type": "string",
+          "x-go-name": "StringMatch"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "HTTPMatchRequest": {
       "type": "object",
       "properties": {
-        "authority": {
-          "$ref": "#/definitions/StringMatch"
-        },
-        "gateways": {
-          "description": "Gateways for matching",
+        "headers": {
           "type": "array",
           "items": {
-            "type": "string"
-          },
-          "x-go-name": "Gateways"
-        },
-        "headers": {
-          "description": "Headers to match",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/StringMatch"
+            "$ref": "#/definitions/HTTPMarchRule"
           },
           "x-go-name": "Headers"
         },
-        "ignore_uri_case": {
-          "description": "Flag to specify whether the URI matching should be case-insensitive.",
-          "type": "boolean",
-          "x-go-name": "IgnoreURICase"
-        },
-        "method": {
-          "$ref": "#/definitions/StringMatch"
-        },
-        "name": {
-          "description": "The name assigned to a match.",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "port": {
-          "description": "Specifies the ports on the host that is being addressed.",
-          "type": "integer",
-          "format": "uint32",
-          "x-go-name": "Port"
-        },
-        "query_params": {
-          "description": "Query parameters for matching.",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/StringMatch"
-          },
-          "x-go-name": "QueryParams"
-        },
-        "scheme": {
-          "$ref": "#/definitions/StringMatch"
-        },
-        "sourceLabels": {
-          "description": "SourceLabels for matching",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "SourceLabels"
-        },
         "uri": {
-          "$ref": "#/definitions/StringMatch"
+          "$ref": "#/definitions/HTTPMarchRule"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/kubernetes"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Initializer": {
       "type": "object",
@@ -6861,24 +6829,6 @@
       "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "StringMatch": {
-      "type": "object",
-      "properties": {
-        "exact": {
-          "type": "string",
-          "x-go-name": "Exact"
-        },
-        "prefix": {
-          "type": "string",
-          "x-go-name": "Prefix"
-        },
-        "regex": {
-          "type": "string",
-          "x-go-name": "Regex"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "Time": {
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
