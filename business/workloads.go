@@ -49,7 +49,7 @@ var (
 	excludedWorkloads map[string]bool
 
 	// Matches an ISO8601 full date
-	severityRegexp = regexp.MustCompile(`ERROR|WARN|DEBUG|TRACE`)
+	severityRegexp = regexp.MustCompile(`(?i)ERROR|WARN|DEBUG|TRACE`)
 )
 
 func isWorkloadIncluded(workload string) bool {
@@ -233,7 +233,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 
 		severity := severityRegexp.FindString(line)
 		if severity != "" {
-			entry.Severity = severity
+			entry.Severity = strings.ToUpper(severity)
 		}
 
 		messages = append(messages, entry)
