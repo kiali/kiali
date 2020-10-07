@@ -1,7 +1,10 @@
 package business
 
 import (
+	"fmt"
+	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,8 +32,24 @@ type WorkloadService struct {
 	businessLayer *Layer
 }
 
+// Structures for workload log messages
+type PodLog struct {
+	Logs    string     `json:"logs,omitempty"`
+	Entries []LogEntry `json:"entries,omitempty"`
+}
+
+type LogEntry struct {
+	Message       string `json:"message,omitempty"`
+	Severity      string `json:"severity,omitempty"`
+	Timestamp     string `json:"timestamp,omitempty"`
+	TimestampUnix int64  `json:"timestampUnix,omitempty"`
+}
+
 var (
 	excludedWorkloads map[string]bool
+
+	// Matches an ISO8601 full date
+	severityRegexp = regexp.MustCompile(`(?i)ERROR|WARN|DEBUG|TRACE`)
 )
 
 func isWorkloadIncluded(workload string) bool {
@@ -170,8 +189,66 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
-	return in.k8s.GetPodLogs(namespace, name, opts)
+func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+	podLog, err := in.k8s.GetPodLogs(namespace, name, opts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(podLog.Logs, "\n")
+	messages := make([]LogEntry, 0)
+
+	for _, line := range lines {
+		entry := LogEntry{
+			Message:       "",
+			Timestamp:     "",
+			TimestampUnix: 0,
+			Severity:      "INFO",
+		}
+
+		splitted := strings.SplitN(line, " ", 2)
+		if len(splitted) != 2 {
+			log.Debugf("Skipping unexpected log line [%s]", line)
+			continue
+		}
+
+		// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+		splittedTimestamp := strings.Split(splitted[0], ".")
+		if len(splittedTimestamp) == 1 {
+			entry.Timestamp = splittedTimestamp[0]
+		} else {
+			entry.Timestamp = fmt.Sprintf("%sZ", splittedTimestamp[0])
+		}
+
+		entry.Message = strings.TrimSpace(splitted[1])
+
+		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
+		if err == nil {
+			entry.TimestampUnix = parsed.Unix()
+		} else {
+			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+			continue
+		}
+
+		severity := severityRegexp.FindString(line)
+		if severity != "" {
+			entry.Severity = strings.ToUpper(severity)
+		}
+
+		messages = append(messages, entry)
+	}
+
+	message := PodLog{
+		Logs:    podLog.Logs,
+		Entries: messages,
+	}
+
+	return &message, err
+}
+
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+	return in.getParsedLogs(namespace, name, opts)
 }
 
 func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {

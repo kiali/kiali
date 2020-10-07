@@ -442,7 +442,29 @@ func TestGetPodLogs(t *testing.T) {
 
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &core_v1.PodLogOptions{Container: "details"})
 
-	assert.Equal("Fake Log Entry 1\nFake Log Entry 2", podLogs.Logs)
+	assert.Equal(FakePodLogsSyncedWithDeployments().Logs, podLogs.Logs)
+
+	assert.Equal(len(podLogs.Entries), 4)
+
+	assert.Equal("2018-01-02T03:34:28+00:00", podLogs.Entries[0].Timestamp)
+	assert.Equal(int64(1514864068), podLogs.Entries[0].TimestampUnix)
+	assert.Equal("INFO Fake Log Entry", podLogs.Entries[0].Message)
+	assert.Equal("INFO", podLogs.Entries[0].Severity)
+
+	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[1].Timestamp)
+	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
+	assert.Equal("WARN Fake Warning Entry", podLogs.Entries[1].Message)
+	assert.Equal("WARN", podLogs.Entries[1].Severity)
+
+	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[2].Timestamp)
+	assert.Equal(int64(1514867668), podLogs.Entries[2].TimestampUnix)
+	assert.Equal("Log Entry Without Severity", podLogs.Entries[2].Message)
+	assert.Equal("INFO", podLogs.Entries[2].Severity)
+
+	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[3].Timestamp)
+	assert.Equal(int64(1514867668), podLogs.Entries[3].TimestampUnix)
+	assert.Equal("error Log Entry With LowerCase Severity", podLogs.Entries[3].Message)
+	assert.Equal("ERROR", podLogs.Entries[3].Severity)
 }
 
 func TestDuplicatedControllers(t *testing.T) {
