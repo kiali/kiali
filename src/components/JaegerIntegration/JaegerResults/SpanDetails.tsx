@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, pluralize } from '@patternfly/react-core';
+import { Card, CardBody } from '@patternfly/react-core';
 
 import { JaegerTrace, Span } from 'types/JaegerInfo';
 import { SpanTable } from './SpanTable';
@@ -10,6 +10,7 @@ import { itemFromSpan, SpanTableItem } from './SpanTableItem';
 import { spanFilters } from './Filters';
 import { runFilters } from 'components/FilterList/FilterHelper';
 import { ActiveFiltersInfo } from 'types/Filters';
+import { TraceLabels } from './TraceLabels';
 
 interface Props {
   trace?: JaegerTrace;
@@ -48,10 +49,11 @@ class SpanDetails extends React.Component<Props, State> {
       <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
         <CardBody>
           <StatefulFilters initialFilters={filters} onFilterChange={active => this.setState({ activeFilters: active })}>
-            <div style={{ marginLeft: 5 }}>
-              {this.state.activeFilters.filters.length > 0 && `${filteredSpans.length} / `}
-              {pluralize(spans.length, 'Span')}
-            </div>
+            <TraceLabels
+              spans={spans}
+              filteredSpans={this.state.activeFilters.filters.length > 0 ? filteredSpans : undefined}
+              oneline={true}
+            />
           </StatefulFilters>
           <SpanTable spans={filteredSpans} namespace={this.props.namespace} externalURL={this.props.externalURL} />
         </CardBody>

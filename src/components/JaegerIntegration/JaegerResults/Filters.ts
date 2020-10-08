@@ -56,10 +56,10 @@ const byError: RunnableFilter<SpanTableItem> = {
   filterType: FilterTypes.select,
   action: FILTER_ACTION_UPDATE,
   filterValues: [
-    { id: 'yes', title: 'Yes' },
-    { id: 'no', title: 'No' }
+    { id: 'yes', title: 'With errors' },
+    { id: 'no', title: 'Without errors' }
   ],
-  run: (item, filters) => filters.filters.some(f => f.value === (item.hasError ? 'Yes' : 'No'))
+  run: (item, filters) => filters.filters.some(f => f.value === (item.hasError ? 'With errors' : 'Without errors'))
 };
 
 export const spanFilters = (spans: SpanTableItem[]): RunnableFilter<SpanTableItem>[] => {

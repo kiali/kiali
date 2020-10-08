@@ -1,17 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-  Button,
-  ButtonVariant,
-  Card,
-  CardBody,
-  Grid,
-  GridItem,
-  Label,
-  pluralize,
-  Tooltip
-} from '@patternfly/react-core';
+import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 
 import { JaegerTrace } from '../../../types/JaegerInfo';
 import { JaegerTraceTitle } from './JaegerTraceTitle';
@@ -26,6 +16,7 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
 import { averageSpanDuration, isSimilarTrace } from 'utils/TraceStats';
+import { TraceLabels } from './TraceLabels';
 
 interface Props {
   otherTraces: JaegerTrace[];
@@ -79,9 +70,6 @@ class TraceDetails extends React.Component<Props, State> {
     const formattedTrace = new FormattedTraceInfo(trace);
 
     // Compute a bunch of stats
-    const services = new Set();
-    trace.spans.forEach(s => services.add(s.process.serviceName));
-    const differentServices = services.size;
     const otherMeanDuration = average(otherTraces, trace => trace.duration);
     const avgSpanDuration = averageSpanDuration(trace);
     const otherSpanDurations = otherTraces.map(t => averageSpanDuration(t)).filter(d => d !== undefined) as number[];
@@ -113,17 +101,7 @@ class TraceDetails extends React.Component<Props, State> {
         <CardBody>
           <Grid style={{ marginTop: '20px' }}>
             <GridItem span={3}>
-              <Label style={{ margin: 10 }}>{pluralize(trace.spans.length, 'Span')}</Label>
-              <Label style={{ margin: 10 }}>{pluralize(differentServices, 'App')} involved</Label>
-              <br />
-              <Label
-                style={{
-                  margin: 10,
-                  backgroundColor: formattedTrace.hasErrors() ? PFAlertColor.Danger : PFAlertColor.Success
-                }}
-              >
-                {pluralize(formattedTrace.numErrors, 'Span')} with error
-              </Label>
+              <TraceLabels spans={trace.spans} oneline={false} />
             </GridItem>
             <GridItem span={3}>
               <Tooltip content={<>The full trace duration is (trace end time) - (trace start time).</>}>

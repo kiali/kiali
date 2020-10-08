@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Dropdown, DropdownGroup, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownGroup,
+  DropdownItem,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  KebabToggle,
+  Title
+} from '@patternfly/react-core';
 import {
   Table,
   TableHeader,
@@ -312,7 +321,22 @@ export class SpanTable extends React.Component<Props, State> {
         rowWrapper={p => <RowWrapper {...p} className={(p.row as any).className} />}
       >
         <TableHeader />
-        <TableBody />
+        {this.props.spans.length > 0 ? (
+          <TableBody />
+        ) : (
+          <tbody>
+            <tr>
+              <td colSpan={cells.length}>
+                <EmptyState variant={EmptyStateVariant.full}>
+                  <Title headingLevel="h5" size="lg">
+                    No spans found
+                  </Title>
+                  <EmptyStateBody>No spans match the current filters</EmptyStateBody>
+                </EmptyState>
+              </td>
+            </tr>
+          </tbody>
+        )}
       </Table>
     );
   }
