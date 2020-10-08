@@ -688,6 +688,9 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
+	// TODO: remove/re-locate
+	business.GetOpenIdJwks()
+
 	if err := business.ParseOpenIdToken(openIdParams); err != nil {
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return true

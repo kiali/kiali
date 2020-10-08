@@ -1,6 +1,7 @@
 package business
 
 import (
+	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"gopkg.in/square/go-jose.v2"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -243,6 +245,7 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 // rare to change, the retrieved metadata is cached on first call and subsequent calls return
 // the cached metadata.
 func GetOpenIdMetadata() (*OpenIdMetadata, error) {
+	// TODO: Add thread-safe fetching
 	if cachedOpenIdMetadata != nil {
 		return cachedOpenIdMetadata, nil
 	}
@@ -327,6 +330,65 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 	// Return parsed metadata
 	cachedOpenIdMetadata = &metadata
 	return cachedOpenIdMetadata, nil
+}
+
+func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
+	// TODO: Add thread-safe fetching
+	// TODO: Add caching
+	oidcMetadata, err := GetOpenIdMetadata()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create HTTP client
+	cfg := config.Get().Auth.OpenId
+	httpTransport := &http.Transport{}
+	if cfg.InsecureSkipVerifyTLS {
+		httpTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
+	}
+
+	// Fetch Keys document
+	response, err := httpClient.Get(oidcMetadata.JWKSURL)
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		return nil, fmt.Errorf("cannot fetch OpenId JWKS document (HTTP response status = %s)", response.Status)
+	}
+
+	// Parse the Keys document
+	var oidcKeys jose.JSONWebKeySet
+
+	rawMetadata, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OpenId JWKS document: %s", err.Error())
+	}
+
+	err = json.Unmarshal(rawMetadata, &oidcKeys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse OpenId JWKS document: %s", err.Error())
+	}
+
+	// TODO: Remove this loop. It's only for debugging
+	log.Debugf("OIDC has %i keys", len(oidcKeys.Keys))
+	for _, key := range oidcKeys.Keys {
+		thumbprint, e := key.Thumbprint(crypto.SHA256)
+		if e != nil {
+			thumbprint = []byte{0}
+		}
+		log.Debugf("OIDC Key: ID = %s, ALG = %s, Use = %s, Key thumbprint = %x", key.KeyID, key.Algorithm, key.Use, thumbprint)
+	}
+
+	return &oidcKeys, nil
 }
 
 func IsOpenIdCodeFlowPossible() bool {
