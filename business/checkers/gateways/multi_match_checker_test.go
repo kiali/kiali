@@ -87,6 +87,33 @@ func TestDashSubdomainMatching(t *testing.T) {
 	assert.Empty(validations)
 }
 
+// Two gateways can share port+host unless they use different ingress
+func TestSameHostPortConfigInDifferentIngress(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer([]string{"reviews"}, 80, "http", "http"),
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
+			"app": "istio-ingress-pub",
+		}))
+
+	// Another namespace
+	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"reviews"}, 80, "http", "http"),
+		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
+			"app": "istio-ingress-prv",
+		}))
+
+	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
+
+	validations := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.Equal(0, len(validations))
+}
+
 func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -100,8 +127,8 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
-		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
-			"app": "someother",
+		data.CreateEmptyGateway("stillvalid", "bookinfo", map[string]string{
+			"app": "real",
 		}))
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
@@ -112,7 +139,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "test", Name: "stillvalid"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Namespace: "bookinfo", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -133,19 +160,19 @@ func TestWildCardMatchingHost(t *testing.T) {
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
 		data.CreateEmptyGateway("validgateway", "test", map[string]string{
-			"app": "real",
+			"istio": "istio-ingress",
 		}))
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
 		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
-			"app": "someother",
+			"istio": "istio-ingress",
 		}))
 
 	// Another namespace
 	gwObject3 := data.AddServerToGateway(data.CreateServer([]string{"*.justhost.com"}, 80, "http", "http"),
 		data.CreateEmptyGateway("keepsvalid", "test", map[string]string{
-			"app": "someother",
+			"istio": "istio-ingress",
 		}))
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2, gwObject3}}
@@ -234,13 +261,13 @@ func TestTwoWildCardsMatching(t *testing.T) {
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
 		data.CreateEmptyGateway("validgateway", "test", map[string]string{
-			"app": "real",
+			"istio": "istio-ingress",
 		}))
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
 		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
-			"app": "someother",
+			"istio": "istio-ingress",
 		}))
 
 	gws := [][]kubernetes.IstioObject{{gwObject}, {gwObject2}}
