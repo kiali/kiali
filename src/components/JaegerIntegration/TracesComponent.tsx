@@ -381,30 +381,32 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                 </CardBody>
               </Card>
             </GridItem>
-            <GridItem span={12}>
-              <Tabs
-                id="trace-details"
-                activeKey={this.state.activeTab}
-                onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
-              >
-                <Tab eventKey={traceDetailsTab} title="Trace Details">
-                  <TraceDetails
-                    namespace={this.props.namespace}
-                    target={this.props.target}
-                    targetKind={this.props.targetKind}
-                    jaegerURL={this.props.urlJaeger}
-                    otherTraces={this.state.traces}
-                  />
-                </Tab>
-                <Tab eventKey={spansDetailsTab} title="Spans Details">
-                  <SpanDetails
-                    namespace={this.props.namespace}
-                    target={this.props.target}
-                    externalURL={this.props.urlJaeger}
-                  />
-                </Tab>
-              </Tabs>
-            </GridItem>
+            {this.props.selectedTrace && (
+              <GridItem span={12}>
+                <Tabs
+                  id="trace-details"
+                  activeKey={this.state.activeTab}
+                  onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
+                >
+                  <Tab eventKey={traceDetailsTab} title="Trace Details">
+                    <TraceDetails
+                      namespace={this.props.namespace}
+                      target={this.props.target}
+                      targetKind={this.props.targetKind}
+                      jaegerURL={this.props.urlJaeger}
+                      otherTraces={this.state.traces}
+                    />
+                  </Tab>
+                  <Tab eventKey={spansDetailsTab} title="Spans Details">
+                    <SpanDetails
+                      namespace={this.props.namespace}
+                      target={this.props.target}
+                      externalURL={this.props.urlJaeger}
+                    />
+                  </Tab>
+                </Tabs>
+              </GridItem>
+            )}
           </Grid>
         </RenderComponentScroll>
       </>

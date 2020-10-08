@@ -7,6 +7,7 @@ import { KialiAppAction } from './KialiAppAction';
 import { JaegerActions } from './JaegerActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import transformTraceData from 'components/JaegerIntegration/JaegerResults/transform';
+import { AxiosError } from 'axios';
 
 export const JaegerThunkActions = {
   setTraceId: (traceId?: string) => {
@@ -23,6 +24,9 @@ export const JaegerThunkActions = {
             }
           })
           .catch(error => {
+            if ((error as AxiosError).response?.status === 404) {
+              setURLTraceId(undefined);
+            }
             dispatch(JaegerActions.setTrace(undefined));
             AlertUtils.addMessage({
               ...AlertUtils.extractAxiosError('Could not fetch trace', error),
