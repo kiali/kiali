@@ -286,7 +286,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             <div>
               Show closed or open lock icons on edges with traffic that differs from the global mTLS policy. The
               percentage of mTLS traffic can be seen in the side-panel when selecting the edge. Note that the global
-              masthead will show a lock icon when global mTLS is enabled.
+              masthead will show a lock icon when global mTLS is enabled. The side-panel will also display source and
+              destination principals, if available.
             </div>
           </div>
         )

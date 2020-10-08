@@ -31,9 +31,10 @@ import { decoratedEdgeData, decoratedNodeData } from '../../components/Cytoscape
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Tooltip } from '@patternfly/react-core';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { Direction } from 'types/MetricsOptions';
+import { style } from 'typestyle';
 
 type SummaryPanelEdgeMetricsState = {
   reqRates: Datapoint[];
@@ -71,6 +72,14 @@ const defaultState: SummaryPanelEdgeState = {
   metricsLoadError: null,
   ...defaultMetricsState
 };
+
+const principalStyle = style({
+  display: 'inline-block',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  width: '100%',
+  whiteSpace: 'nowrap'
+});
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
   private metricsPromise?: CancelablePromise<Response<Metrics>>;
@@ -119,15 +128,30 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const edge = decoratedEdgeData(target);
     const mTLSPercentage = edge.isMTLS;
     const isMtls = mTLSPercentage && mTLSPercentage > 0;
+    const hasPrincipals = !!edge.sourcePrincipal || !!edge.destPrincipal;
+    const hasSecurity = isMtls || hasPrincipals;
     const protocol = edge.protocol;
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
 
-    const MTLSBlock = () => {
+    const SecurityBlock = () => {
       return (
         <div className="panel-heading" style={summaryHeader}>
-          {this.renderBadgeSummary(mTLSPercentage)}
+          {isMtls && this.renderMTLSSummary(mTLSPercentage)}
+          {hasPrincipals && (
+            <>
+              <div style={{ padding: '5px 0 2px 0' }}>
+                <strong>Principals:</strong>
+              </div>
+              <Tooltip key="tt_src_ppl" position="top" content={`Source principal: ${edge.sourcePrincipal}`}>
+                <span className={principalStyle}>{edge.sourcePrincipal || 'unknown'}</span>
+              </Tooltip>
+              <Tooltip key="tt_src_ppl" position="top" content={`Destination principal: ${edge.destPrincipal}`}>
+                <span className={principalStyle}>{edge.destPrincipal || 'unknown'}</span>
+              </Tooltip>
+            </>
+          )}
         </div>
       );
     };
@@ -138,7 +162,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           {renderBadgedLink(source, undefined, 'From:  ')}
           {renderBadgedLink(dest, undefined, 'To:        ')}
         </div>
-        {isMtls && <MTLSBlock />}
+        {hasSecurity && <SecurityBlock />}
         {(isGrpc || isHttp) && (
           <div className={summaryBodyTabs}>
             <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
@@ -598,7 +622,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
-  private renderBadgeSummary = (mTLSPercentage: number) => {
+  private renderMTLSSummary = (mTLSPercentage: number) => {
     let mtls = 'mTLS Enabled';
     const isMtls = mTLSPercentage > 0;
     if (isMtls && mTLSPercentage < 100.0) {

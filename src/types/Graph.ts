@@ -193,11 +193,11 @@ export interface GraphEdgeData {
   id: string;
   source: string;
   target: string;
-  traffic?: ProtocolTraffic;
-  responseTime?: number;
-  isMTLS?: number;
-  sourcePrincipal?: string;
   destPrincipal?: string;
+  responseTime?: number;
+  sourcePrincipal?: string;
+  traffic?: ProtocolTraffic;
+  isMTLS?: number;
 }
 
 export interface GraphNodeWrapper {

@@ -9,6 +9,7 @@ import { DagreGraph } from './graphs/DagreGraph';
 import * as Cy from 'cytoscape';
 
 export const CyEdge = {
+  destPrincipal: 'destPrincipal',
   grpc: 'grpc',
   grpcErr: 'grpcErr',
   grpcNoResponse: 'grpcNoResponse',
@@ -27,6 +28,7 @@ export const CyEdge = {
   protocol: 'protocol',
   responses: 'responses',
   responseTime: 'responseTime',
+  sourcePrincipal: 'sourcePrincipal',
   tcp: 'tcp'
 };
 

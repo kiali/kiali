@@ -20,6 +20,7 @@ import { isIstioNamespace } from '../../config/ServerConfig';
 export const decorateGraphData = (graphData: GraphElements): DecoratedGraphElements => {
   const elementsDefaults = {
     edges: {
+      destPrincipal: undefined,
       grpc: NaN,
       grpcErr: NaN,
       grpcPercentErr: NaN,
@@ -36,6 +37,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       protocol: undefined,
       responses: undefined,
       responseTime: NaN,
+      sourcePrincipal: undefined,
       tcp: NaN
     },
     nodes: {
