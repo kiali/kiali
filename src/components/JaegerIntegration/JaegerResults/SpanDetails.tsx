@@ -1,56 +1,40 @@
 import * as React from 'react';
-import { groupBy } from 'lodash';
-import { style } from 'typestyle';
-import { Button, Card, CardBody } from '@patternfly/react-core';
+import { Card, CardBody } from '@patternfly/react-core';
 
 import { JaegerTrace, Span } from 'types/JaegerInfo';
 import { SpanTable } from './SpanTable';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
+import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
+import { itemFromSpan, SpanTableItem } from './SpanTableItem';
+import { spanFilters } from './Filters';
+import { runFilters } from 'components/FilterList/FilterHelper';
+import { ActiveFiltersInfo } from 'types/Filters';
+import { TraceLabels } from './TraceLabels';
 
-const labelStyle = style({
-  margin: '5px'
-});
-
-interface SpanDetailsProps {
+interface Props {
   trace?: JaegerTrace;
   namespace: string;
   target: string;
   externalURL?: string;
 }
 
-interface SpanDetailsState {
-  selectedApps: string[];
+interface State {
   spanSelected?: Span;
-  isModalOpen: boolean;
+  activeFilters: ActiveFiltersInfo;
 }
 
-class SpanDetails extends React.Component<SpanDetailsProps, SpanDetailsState> {
-  constructor(props: SpanDetailsProps) {
+class SpanDetails extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = { isModalOpen: false, selectedApps: [] };
+    const filters = spanFilters(this.buildSpansItems());
+    this.state = {
+      activeFilters: FilterSelected.init(filters)
+    };
   }
 
-  private onClickApp = (app: string) => {
-    if (this.state.selectedApps.indexOf(app) >= 0) {
-      // Remove
-      this.setState({ selectedApps: this.state.selectedApps.filter(a => a !== app) });
-    } else {
-      // Add
-      this.setState({ selectedApps: this.state.selectedApps.concat([app]) });
-    }
-  };
-
-  private getClassButtonSpan = (app: string) => {
-    if (this.state.selectedApps.indexOf(app) >= 0) {
-      return 'primary';
-    } else {
-      if (this.props.target === app || this.props.target + '.' + this.props.namespace === app) {
-        return 'tertiary';
-      } else {
-        return 'secondary';
-      }
-    }
+  private buildSpansItems = (): SpanTableItem[] => {
+    return this.props.trace?.spans.map(s => itemFromSpan(s, this.props.namespace)) || [];
   };
 
   render() {
@@ -58,30 +42,20 @@ class SpanDetails extends React.Component<SpanDetailsProps, SpanDetailsState> {
       return null;
     }
 
-    const spans =
-      this.state.selectedApps.length === 0
-        ? this.props.trace.spans
-        : this.props.trace.spans.filter(span => this.state.selectedApps.indexOf(span.process.serviceName) >= 0);
-    const spansPerApp = groupBy(this.props.trace.spans, s => s.process.serviceName);
-    const apps = Object.keys(spansPerApp).sort();
+    const spans: SpanTableItem[] = this.props.trace.spans.map(s => itemFromSpan(s, this.props.namespace));
+    const filters = spanFilters(spans);
+    const filteredSpans = runFilters(spans, filters, this.state.activeFilters);
     return (
       <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
         <CardBody>
-          Filter by app{' '}
-          {apps.map(app => {
-            const spans = spansPerApp[app];
-            return (
-              <Button
-                variant={this.getClassButtonSpan(app)}
-                onClick={() => this.onClickApp(app)}
-                className={labelStyle}
-                key={`span_button_${app}`}
-              >
-                {app} ({spans.length})
-              </Button>
-            );
-          })}
-          <SpanTable spans={spans} namespace={this.props.namespace} externalURL={this.props.externalURL} />
+          <StatefulFilters initialFilters={filters} onFilterChange={active => this.setState({ activeFilters: active })}>
+            <TraceLabels
+              spans={spans}
+              filteredSpans={this.state.activeFilters.filters.length > 0 ? filteredSpans : undefined}
+              oneline={true}
+            />
+          </StatefulFilters>
+          <SpanTable spans={filteredSpans} namespace={this.props.namespace} externalURL={this.props.externalURL} />
         </CardBody>
       </Card>
     );

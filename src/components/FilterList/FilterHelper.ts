@@ -6,7 +6,8 @@ import {
   DEFAULT_LABEL_OPERATION,
   FilterType,
   ID_LABEL_OPERATION,
-  LabelOperation
+  LabelOperation,
+  RunnableFilter
 } from '../../types/Filters';
 import { SortField } from '../../types/SortFilters';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -115,4 +116,26 @@ export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> =>
       return sortField.param === queriedSortedField;
     }) || sortFields[0]
   );
+};
+
+export const compareNullable = <T>(a: T | undefined, b: T | undefined, safeComp: (a2: T, b2: T) => number): number => {
+  if (!a) {
+    return !b ? 0 : 1;
+  }
+  if (!b) {
+    return -1;
+  }
+  return safeComp(a, b);
+};
+
+export const runFilters = <T>(items: T[], filters: RunnableFilter<T>[], active: ActiveFiltersInfo) => {
+  return filters.reduce((i, f) => runOneFilter(i, f, active), items);
+};
+
+const runOneFilter = <T>(items: T[], filter: RunnableFilter<T>, active: ActiveFiltersInfo) => {
+  const relatedActive = { filters: active.filters.filter(af => af.id === filter.id), op: active.op };
+  if (relatedActive.filters.length) {
+    return items.filter(item => filter.run(item, relatedActive));
+  }
+  return items;
 };
