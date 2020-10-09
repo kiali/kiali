@@ -1,6 +1,7 @@
 import Namespace from './Namespace';
 import { ResourcePermissions } from './Permissions';
 import { ServicePort } from './ServiceInfo';
+import { ProxyStatus } from './Health';
 
 // Common types
 
@@ -121,6 +122,7 @@ export interface Pod {
   status: string;
   appLabel: boolean;
   versionLabel: boolean;
+  proxyStatus?: ProxyStatus;
 }
 
 export type Logs = string;

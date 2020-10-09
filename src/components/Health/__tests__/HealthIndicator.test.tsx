@@ -28,8 +28,8 @@ describe('HealthIndicator', () => {
       'bookinfo',
       'reviews',
       [
-        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1 },
-        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, syncedProxies: 1 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 600, hasSidecar: true }
@@ -52,8 +52,8 @@ describe('HealthIndicator', () => {
       'bookinfo',
       'reviews',
       [
-        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 10 },
-        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 10, syncedProxies: 1 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 600, hasSidecar: true }
@@ -76,8 +76,8 @@ describe('HealthIndicator', () => {
       'bookinfo',
       'reviews',
       [
-        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 },
-        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, syncedProxies: 0 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 600, hasSidecar: true }
@@ -100,8 +100,8 @@ describe('HealthIndicator', () => {
       'bookinfo',
       'reviews',
       [
-        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 },
-        { name: 'B', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 }
+        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, syncedProxies: 0 },
+        { name: 'B', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, syncedProxies: 0 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 600, hasSidecar: true }
@@ -122,7 +122,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       'bookinfo',
       'reviews',
-      [{ name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1 }],
+      [{ name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, syncedProxies: 1 }],
       {
         inbound: { http: { '200': 0.5, '500': 0.5 } },
         outbound: { http: { '500': 0.4, '200': 2 } }
@@ -141,5 +141,38 @@ describe('HealthIndicator', () => {
     expect(html).toContain(PFAlertColor.Danger);
     expect(html).toContain('Outbound: 16.67%');
     expect(html).toContain('Inbound: 50.00%');
+  });
+
+  describe('proxy status section', () => {
+    it('renders the degraded workloads', () => {
+      const health = new AppHealth(
+        'bookinfo',
+        'reviews',
+        [
+          {
+            name: 'A',
+            availableReplicas: 2,
+            currentReplicas: 2,
+            desiredReplicas: 2,
+            syncedProxies: 1
+          }
+        ],
+        { inbound: {}, outbound: {} },
+        { rateInterval: 600, hasSidecar: true }
+      );
+
+      // SMALL
+      let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+      let html = wrapper.html();
+      expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
+      expect(shallowToJson(wrapper)).toMatchSnapshot();
+
+      // LARGE
+      wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
+      html = wrapper.html();
+      expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
+      expect(html).toContain('A: 2 / 2 (1 proxy unsynced)');
+      expect(shallowToJson(wrapper)).toMatchSnapshot();
+    });
   });
 });

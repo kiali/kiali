@@ -12,11 +12,10 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Title,
-  TooltipPosition
+  Title
 } from '@patternfly/react-core';
 import { CogsIcon } from '@patternfly/react-icons';
-import ValidationList from '../../../components/Validations/ValidationList';
+import PodStatus from './PodStatus';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -76,9 +75,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
 
       rows.push({
         cells: [
-          {
-            title: <ValidationList tooltipPosition={TooltipPosition.auto} checks={validation.checks} />
-          },
+          { title: <PodStatus status={pod.proxyStatus} checks={validation.checks} /> },
           { title: <>{pod.name}</> },
           { title: <LocalTime time={pod.createdAt || ''} /> },
           {

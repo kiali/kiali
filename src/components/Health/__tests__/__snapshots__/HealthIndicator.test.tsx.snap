@@ -1,5 +1,254 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`HealthIndicator proxy status section renders the degraded workloads 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  aria-label="Health indicator"
+  boundary="window"
+  className="health_indicator"
+  content={
+    <TextContent
+      style={
+        Object {
+          "color": "#fff",
+        }
+      }
+    >
+      <Text
+        component="h2"
+      >
+        Degraded
+      </Text>
+      <HealthDetails
+        health={
+          AppHealth {
+            "health": Object {
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-degraded",
+                        "color": "var(--pf-global--warning-color--100)",
+                        "icon": [Function],
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "A: 2 / 2 (1 proxy unsynced)",
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-degraded",
+                    "color": "var(--pf-global--warning-color--100)",
+                    "icon": [Function],
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "title": "Pod Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "#6a6e73",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Inbound: No requests",
+                      "value": 0,
+                    },
+                    Object {
+                      "status": Object {
+                        "class": "icon-na",
+                        "color": "#6a6e73",
+                        "icon": [Function],
+                        "name": "No health information",
+                        "priority": 0,
+                      },
+                      "text": "Outbound: No requests",
+                      "value": 0,
+                    },
+                  ],
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#6a6e73",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "title": "Traffic Status (Last 10m)",
+                },
+              ],
+              "statusConfig": Object {
+                "status": Object {
+                  "class": "icon-na",
+                  "color": "#6a6e73",
+                  "icon": [Function],
+                  "name": "No health information",
+                  "priority": 0,
+                },
+                "threshold": undefined,
+                "title": "Traffic Status (Last 10m)",
+                "value": -1,
+              },
+            },
+            "requests": Object {
+              "inbound": Object {},
+              "outbound": Object {},
+            },
+          }
+        }
+        tooltip={true}
+      />
+    </TextContent>
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="18.75rem"
+  position="auto"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ExclamationTriangleIcon
+    className="icon-degraded"
+    color="var(--pf-global--warning-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`HealthIndicator proxy status section renders the degraded workloads 2`] = `
+<Fragment>
+  <ExclamationTriangleIcon
+    className="icon-degraded"
+    color="var(--pf-global--warning-color--100)"
+    noVerticalAlign={false}
+    size="lg"
+    title={null}
+  />
+  <span
+    style={
+      Object {
+        "color": "var(--pf-global--warning-color--100)",
+        "fontWeight": "bold",
+        "left": 10,
+        "position": "relative",
+        "top": -9,
+      }
+    }
+  >
+    Degraded
+  </span>
+  <br />
+  <br />
+  <HealthDetails
+    health={
+      AppHealth {
+        "health": Object {
+          "items": Array [
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "class": "icon-degraded",
+                    "color": "var(--pf-global--warning-color--100)",
+                    "icon": [Function],
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "text": "A: 2 / 2 (1 proxy unsynced)",
+                },
+              ],
+              "status": Object {
+                "class": "icon-degraded",
+                "color": "var(--pf-global--warning-color--100)",
+                "icon": [Function],
+                "name": "Degraded",
+                "priority": 2,
+              },
+              "title": "Pod Status",
+            },
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#6a6e73",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "text": "Inbound: No requests",
+                  "value": 0,
+                },
+                Object {
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#6a6e73",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "text": "Outbound: No requests",
+                  "value": 0,
+                },
+              ],
+              "status": Object {
+                "class": "icon-na",
+                "color": "#6a6e73",
+                "icon": [Function],
+                "name": "No health information",
+                "priority": 0,
+              },
+              "title": "Traffic Status (Last 10m)",
+            },
+          ],
+          "statusConfig": Object {
+            "status": Object {
+              "class": "icon-na",
+              "color": "#6a6e73",
+              "icon": [Function],
+              "name": "No health information",
+              "priority": 0,
+            },
+            "threshold": undefined,
+            "title": "Traffic Status (Last 10m)",
+            "value": -1,
+          },
+        },
+        "requests": Object {
+          "inbound": Object {},
+          "outbound": Object {},
+        },
+      }
+    }
+  />
+</Fragment>
+`;
+
 exports[`HealthIndicator renders healthy 1`] = `
 <CheckCircleIcon
   className="icon-healthy"

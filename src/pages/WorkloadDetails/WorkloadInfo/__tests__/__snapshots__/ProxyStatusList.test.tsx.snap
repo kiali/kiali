@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ProxyStatusList when status is synced match the snapshot 1`] = `""`;
+
+exports[`ProxyStatusList when there are components without value match the snapshot 1`] = `
+<Stack>
+  <StackItem
+    className="f9bjrk9"
+  >
+    Istio Proxy Status
+  </StackItem>
+  <StackItem
+    className="f1e63p1b"
+    key="proxy-status-0"
+  >
+    CDS: -
+  </StackItem>
+  <StackItem
+    className="f1e63p1b"
+    key="proxy-status-3"
+  >
+    RDS: -
+  </StackItem>
+</Stack>
+`;
+
+exports[`ProxyStatusList when there are unsyced components match the snapshot 1`] = `
+<Stack>
+  <StackItem
+    className="f9bjrk9"
+  >
+    Istio Proxy Status
+  </StackItem>
+  <StackItem
+    className="f1e63p1b"
+    key="proxy-status-0"
+  >
+    CDS: NOT_SENT
+  </StackItem>
+  <StackItem
+    className="f1e63p1b"
+    key="proxy-status-3"
+  >
+    RDS: STALE
+  </StackItem>
+</Stack>
+`;

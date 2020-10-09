@@ -1,4 +1,5 @@
 import * as H from '../Health';
+import { DEGRADED, HEALTHY } from '../Health';
 import { ToleranceConfig } from '../ServerConfig';
 import { setServerConfig } from '../../config/ServerConfig';
 import { healthConfig } from '../__testData__/HealthConfig';
@@ -14,20 +15,24 @@ describe('Health', () => {
     setServerConfig(healthConfig);
   });
   it('should check ratio with 0 valid', () => {
-    expect(H.ratioCheck(0, 3, 3)).toEqual(H.FAILURE);
+    expect(H.ratioCheck(0, 3, 3, 3)).toEqual(H.FAILURE);
   });
   it('should check ratio with some valid', () => {
-    expect(H.ratioCheck(1, 3, 3)).toEqual(H.DEGRADED);
+    expect(H.ratioCheck(1, 3, 3, 3)).toEqual(H.DEGRADED);
   });
   it('should check ratio with all valid', () => {
-    expect(H.ratioCheck(3, 3, 3)).toEqual(H.HEALTHY);
+    expect(H.ratioCheck(3, 3, 3, 3)).toEqual(H.HEALTHY);
   });
   it('should check ratio with no item', () => {
-    expect(H.ratioCheck(0, 0, 0)).toEqual(H.IDLE);
+    expect(H.ratioCheck(0, 0, 0, 0)).toEqual(H.IDLE);
   });
   it('should check ratio pending Pods', () => {
     // 3 Pods with problems
-    expect(H.ratioCheck(3, 6, 3)).toEqual(H.FAILURE);
+    expect(H.ratioCheck(3, 6, 3, 3)).toEqual(H.FAILURE);
+  });
+  it('should check ratio unsynced proxies', () => {
+    // 3 Pods with problems
+    expect(H.ratioCheck(3, 3, 3, 2)).toEqual(H.DEGRADED);
   });
   it('should merge status with correct priority', () => {
     let status = H.mergeStatus(H.NA, H.HEALTHY);
@@ -76,7 +81,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       'bookinfo',
       'reviews',
-      [{ availableReplicas: 0, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
+      [{ availableReplicas: 0, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: { http: { '500': 1 } }, outbound: { http: { '500': 1 } } },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -87,8 +92,8 @@ describe('Health', () => {
       'bookinfo',
       'reviews',
       [
-        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
-        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b' }
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 },
+        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 60, hasSidecar: true }
@@ -100,8 +105,8 @@ describe('Health', () => {
       'bookinfo',
       'reviews',
       [
-        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
-        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 2, name: 'b' }
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 },
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {} },
       { rateInterval: 60, hasSidecar: true }
@@ -113,8 +118,8 @@ describe('Health', () => {
       'bookinfo',
       'reviews',
       [
-        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
-        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b' }
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 },
+        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b', syncedProxies: 2 }
       ],
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } } },
       { rateInterval: 60, hasSidecar: true }
@@ -126,8 +131,8 @@ describe('Health', () => {
       'bookinfo',
       'reviews',
       [
-        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'a' },
-        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'b' }
+        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'a', syncedProxies: 1 },
+        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'b', syncedProxies: 2 }
       ],
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } } },
       { rateInterval: 60, hasSidecar: true }
@@ -138,7 +143,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       'bookinfo',
       'reviews',
-      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
+      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: {}, outbound: {} },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -148,10 +153,79 @@ describe('Health', () => {
     const health = new H.AppHealth(
       'bookinfo',
       'reviews',
-      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
+      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a', syncedProxies: 1 }],
       { inbound: {}, outbound: {} },
       { rateInterval: 60, hasSidecar: false }
     );
     expect(health.health.items).toHaveLength(1);
+  });
+
+  describe('the proxy status section', () => {
+    it('should successful proxy status section', () => {
+      const health = new H.AppHealth(
+        'bookinfo',
+        'reviews',
+        [
+          {
+            availableReplicas: 1,
+            currentReplicas: 1,
+            desiredReplicas: 1,
+            name: 'a',
+            syncedProxies: 1
+          }
+        ],
+        { inbound: {}, outbound: {} },
+        { rateInterval: 60, hasSidecar: true }
+      );
+      expect(health.health.items).toHaveLength(2);
+
+      const proxyStatus = health.health.items[0];
+      expect(proxyStatus.title).toEqual('Pod Status');
+      expect(proxyStatus.status).toEqual(HEALTHY);
+
+      expect(proxyStatus.children).toHaveLength(1);
+      if (proxyStatus.children) {
+        expect(proxyStatus.children[0].status).toEqual(HEALTHY);
+        expect(proxyStatus.children[0].text).toEqual('a: 1 / 1');
+      }
+    });
+
+    it('should aggregate the proxy status components', () => {
+      const health = new H.AppHealth(
+        'bookinfo',
+        'reviews',
+        [
+          {
+            availableReplicas: 1,
+            currentReplicas: 1,
+            desiredReplicas: 1,
+            name: 'a',
+            syncedProxies: 0
+          },
+          {
+            availableReplicas: 1,
+            currentReplicas: 1,
+            desiredReplicas: 1,
+            name: 'b',
+            syncedProxies: 0
+          }
+        ],
+        { inbound: {}, outbound: {} },
+        { rateInterval: 60, hasSidecar: true }
+      );
+      expect(health.health.items).toHaveLength(2);
+
+      const proxyStatus = health.health.items[0];
+      expect(proxyStatus.title).toEqual('Pod Status');
+      expect(proxyStatus.status).toEqual(DEGRADED);
+
+      expect(proxyStatus.children).toHaveLength(2);
+      if (proxyStatus.children) {
+        expect(proxyStatus.children[0].status).toEqual(DEGRADED);
+        expect(proxyStatus.children[0].text).toEqual('a: 1 / 1 (1 proxy unsynced)');
+        expect(proxyStatus.children[1].status).toEqual(DEGRADED);
+        expect(proxyStatus.children[1].text).toEqual('b: 1 / 1 (1 proxy unsynced)');
+      }
+    });
   });
 });

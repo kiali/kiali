@@ -43,6 +43,7 @@ export interface WorkloadStatus {
   desiredReplicas: number;
   currentReplicas: number;
   availableReplicas: number;
+  syncedProxies: number;
 }
 
 export const TRAFFICSTATUS = 'Traffic Status';
@@ -71,6 +72,13 @@ export interface Status {
   priority: number;
   icon: IconType;
   class: string;
+}
+
+export interface ProxyStatus {
+  CDS: string;
+  EDS: string;
+  LDS: string;
+  RDS: string;
 }
 
 export const IDLE: Status = {
@@ -127,7 +135,12 @@ const POD_STATUS = 'Pod Status';
 // Use -1 rather than NaN to allow straigthforward comparison
 export const RATIO_NA = -1;
 
-export const ratioCheck = (availableReplicas: number, currentReplicas: number, desiredReplicas: number): Status => {
+export const ratioCheck = (
+  availableReplicas: number,
+  currentReplicas: number,
+  desiredReplicas: number,
+  syncedProxies: number
+): Status => {
   /*
     IDLE STATE
  */
@@ -162,6 +175,11 @@ export const ratioCheck = (availableReplicas: number, currentReplicas: number, d
     return FAILURE;
   }
 
+  // When there are proxies that are not sync, degrade
+  if (syncedProxies >= 0 && syncedProxies < desiredReplicas) {
+    return DEGRADED;
+  }
+
   /*
      HEALTHY STATE
   */
@@ -175,6 +193,30 @@ export const ratioCheck = (availableReplicas: number, currentReplicas: number, d
 
   // Other combination could mean a degraded situation
   return DEGRADED;
+};
+
+export const proxyStatusMessage = (syncedProxies: number, desiredReplicas: number): string => {
+  let msg: string = '';
+  if (syncedProxies < desiredReplicas) {
+    const unsynced = desiredReplicas - syncedProxies;
+    msg = ' (' + unsynced;
+    msg += unsynced !== 1 ? ' proxies' : ' proxy';
+    msg += ' unsynced)';
+  }
+  return msg;
+};
+
+export const isProxyStatusSynced = (status: ProxyStatus): boolean => {
+  return (
+    isProxyStatusComponentSynced(status.CDS) &&
+    isProxyStatusComponentSynced(status.EDS) &&
+    isProxyStatusComponentSynced(status.LDS) &&
+    isProxyStatusComponentSynced(status.RDS)
+  );
+};
+
+export const isProxyStatusComponentSynced = (componentStatus: string): boolean => {
+  return componentStatus === 'Synced';
 };
 
 export const mergeStatus = (s1: Status, s2: Status): Status => {
@@ -315,9 +357,13 @@ export class AppHealth extends Health {
     {
       // Pods
       const children: HealthSubItem[] = workloadStatuses.map(d => {
-        const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas);
+        const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas, d.syncedProxies);
+        let proxyMessage = '';
+        if (d.syncedProxies >= 0) {
+          proxyMessage = proxyStatusMessage(d.syncedProxies, d.desiredReplicas);
+        }
         return {
-          text: d.name + ': ' + d.availableReplicas + ' / ' + d.desiredReplicas,
+          text: d.name + ': ' + d.availableReplicas + ' / ' + d.desiredReplicas + proxyMessage,
           status: status
         };
       });
@@ -329,6 +375,7 @@ export class AppHealth extends Health {
       };
       items.push(item);
     }
+
     // Request errors
     if (ctx.hasSidecar) {
       const reqError = calculateErrorRate(ns, app, 'app', requests);
@@ -380,7 +427,8 @@ export class WorkloadHealth extends Health {
       const podsStatus = ratioCheck(
         workloadStatus.availableReplicas,
         workloadStatus.currentReplicas,
-        workloadStatus.desiredReplicas
+        workloadStatus.desiredReplicas,
+        workloadStatus.syncedProxies
       );
       const item: HealthItem = {
         title: POD_STATUS,
@@ -414,6 +462,15 @@ export class WorkloadHealth extends Health {
             )
           }
         ];
+
+        if (workloadStatus.syncedProxies >= 0) {
+          item.children.push({
+            status: podsStatus,
+            text: String(
+              workloadStatus.syncedProxies + ' synced prox' + (workloadStatus.availableReplicas !== 1 ? 'ies' : 'y')
+            )
+          });
+        }
       }
       items.push(item);
     }

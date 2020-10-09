@@ -1,4 +1,4 @@
-import { ServiceHealth } from './Health';
+import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRules,
   ObjectCheck,
@@ -84,6 +84,18 @@ export const highestSeverity = (checks: ObjectCheck[]): ValidationTypes => {
   });
 
   return severity;
+};
+
+export const validationToHealth = (severity: ValidationTypes): Status => {
+  let status: Status = NA;
+  if (severity === ValidationTypes.Correct) {
+    status = HEALTHY;
+  } else if (severity === ValidationTypes.Warning) {
+    status = DEGRADED;
+  } else if (severity === ValidationTypes.Error) {
+    status = FAILURE;
+  }
+  return status;
 };
 
 const numberOfChecks = (type: ValidationTypes, object: ObjectValidation) =>
