@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
@@ -223,6 +225,78 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 	io := istioObject.DeepCopyIstioObject()
 	io.SetTypeMeta(typeMeta)
 	return io, nil
+}
+
+type ProxyStatus struct {
+	pilot string
+	SyncStatus
+}
+
+// SyncStatus is the synchronization status between Pilot and a given Envoy
+type SyncStatus struct {
+	ProxyID       string `json:"proxy,omitempty"`
+	ProxyVersion  string `json:"proxy_version,omitempty"`
+	IstioVersion  string `json:"istio_version,omitempty"`
+	ClusterSent   string `json:"cluster_sent,omitempty"`
+	ClusterAcked  string `json:"cluster_acked,omitempty"`
+	ListenerSent  string `json:"listener_sent,omitempty"`
+	ListenerAcked string `json:"listener_acked,omitempty"`
+	RouteSent     string `json:"route_sent,omitempty"`
+	RouteAcked    string `json:"route_acked,omitempty"`
+	EndpointSent  string `json:"endpoint_sent,omitempty"`
+	EndpointAcked string `json:"endpoint_acked,omitempty"`
+}
+
+func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
+	c := config.Get()
+	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
+		c.IstioLabels.AppLabelName: "istiod",
+	}).String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(istiods) == 0 {
+		return nil, errors.New("unable to find any Pilot instances")
+	}
+
+	result := map[string][]byte{}
+	for _, istiod := range istiods {
+		res, err := in.k8s.CoreV1().RESTClient().Get().
+			Namespace(istiod.Namespace).
+			Resource("pods").
+			SubResource("proxy").
+			Name(istiod.Name).
+			Suffix("/debug/syncz").
+			DoRaw()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(res) > 0 {
+			result[istiod.Name] = res
+		}
+	}
+
+	return getStatus(result)
+}
+
+func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
+	var fullStatus []*ProxyStatus
+	for pilot, status := range statuses {
+		var ss []*ProxyStatus
+		err := json.Unmarshal(status, &ss)
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range ss {
+			s.pilot = pilot
+		}
+		fullStatus = append(fullStatus, ss...)
+	}
+	return fullStatus, nil
 }
 
 func (in *K8SClient) hasNetworkingResource(resource string) bool {

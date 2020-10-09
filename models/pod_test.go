@@ -126,3 +126,59 @@ func TestPodParsingInvalidAnnotations(t *testing.T) {
 	assert.Len(pod.IstioContainers, 0)
 	assert.Len(pod.IstioInitContainers, 0)
 }
+
+func TestSyncedPodProxiesCount(t *testing.T) {
+	assert := assert.New(t)
+	config.Set(config.NewConfig())
+
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	k8sPod := core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "details-v1-3618568057-dnkjp",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{"apps": "details", "version": "v1"},
+			OwnerReferences: []meta_v1.OwnerReference{{
+				Kind: "ReplicaSet",
+				Name: "details-v1-3618568057",
+			}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "details", Image: "whatever"},
+				{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			},
+			InitContainers: []core_v1.Container{
+				{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				{Name: "enable-core-dump", Image: "alpine"},
+			},
+		}}
+
+	pods := make(Pods, 0, 2)
+	pod := &Pod{}
+	pod.Parse(&k8sPod)
+	pod.ProxyStatus = &ProxyStatus{
+		CDS: "Synced",
+		EDS: "Synced",
+		LDS: "Synced",
+		RDS: "Synced",
+	}
+	pods = append(pods, pod)
+	pods = append(pods, pod)
+
+	assert.Equal(int32(2), pods.SyncedPodProxiesCount())
+
+	k8sPod = core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "details-v1-3618568057-dnkjp",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{"apps": "details", "version": "v1"},
+			Annotations:       map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[{\"badkey\": \"Ooops! Not expected!\"}]}"}},
+	}
+
+	pods = make(Pods, 0, 2)
+	pod = &Pod{}
+	pod.Parse(&k8sPod)
+	pods = append(pods, pod)
+	pods = append(pods, pod)
+	assert.Equal(int32(-1), pods.SyncedPodProxiesCount())
+}

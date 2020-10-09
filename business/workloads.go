@@ -729,6 +729,19 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			w.SetPods(cPods)
 			w.ParsePods(cname, ctype, cPods)
 		}
+
+		// Add the Proxy Status to the workload
+		for _, pod := range w.Pods {
+			if pod.HasIstioSidecar() {
+				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
+				if err != nil || ps == nil {
+					pod.ProxyStatus = &models.ProxyStatus{}
+					continue
+				}
+				pod.ProxyStatus = castProxyStatus(*ps)
+			}
+		}
+
 		if cnFound {
 			ws = append(ws, w)
 		}
@@ -1189,6 +1202,19 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			w.SetPods(cPods)
 			w.ParsePods(workloadName, ctype, cPods)
 		}
+
+		// Add the Proxy Status to the workload
+		for _, pod := range w.Pods {
+			if pod.HasIstioSidecar() {
+				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
+				if err != nil || ps == nil {
+					pod.ProxyStatus = nil
+					continue
+				}
+				pod.ProxyStatus = castProxyStatus(*ps)
+			}
+		}
+
 		if cnFound {
 			return &w, nil
 		}

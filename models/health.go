@@ -20,8 +20,8 @@ type ServiceHealth struct {
 
 // AppHealth contains aggregated health from various sources, for a given app
 type AppHealth struct {
-	WorkloadStatuses []WorkloadStatus `json:"workloadStatuses"`
-	Requests         RequestHealth    `json:"requests"`
+	WorkloadStatuses []*WorkloadStatus `json:"workloadStatuses"`
+	Requests         RequestHealth     `json:"requests"`
 }
 
 func NewEmptyRequestHealth() RequestHealth {
@@ -31,7 +31,7 @@ func NewEmptyRequestHealth() RequestHealth {
 // EmptyAppHealth create an empty AppHealth
 func EmptyAppHealth() AppHealth {
 	return AppHealth{
-		WorkloadStatuses: []WorkloadStatus{},
+		WorkloadStatuses: []*WorkloadStatus{},
 		Requests:         NewEmptyRequestHealth(),
 	}
 }
@@ -52,8 +52,8 @@ func EmptyWorkloadHealth() *WorkloadHealth {
 
 // WorkloadHealth contains aggregated health from various sources, for a given workload
 type WorkloadHealth struct {
-	WorkloadStatus WorkloadStatus `json:"workloadStatus"`
-	Requests       RequestHealth  `json:"requests"`
+	WorkloadStatus *WorkloadStatus `json:"workloadStatus"`
+	Requests       RequestHealth   `json:"requests"`
 }
 
 // WorkloadStatus gives
@@ -70,6 +70,17 @@ type WorkloadStatus struct {
 	DesiredReplicas   int32  `json:"desiredReplicas"`
 	CurrentReplicas   int32  `json:"currentReplicas"`
 	AvailableReplicas int32  `json:"availableReplicas"`
+	SyncedProxies     int32  `json:"syncedProxies"`
+}
+
+// ProxyStatus gives the sync status of the sidecar proxy.
+// In healthy scenarios all variables should be true.
+// If at least one variable is false, then the proxy isn't fully sync'ed with pilot.
+type ProxyStatus struct {
+	CDS string `json:"CDS"`
+	EDS string `json:"EDS"`
+	LDS string `json:"LDS"`
+	RDS string `json:"RDS"`
 }
 
 // RequestHealth holds several stats about recent request errors
@@ -109,4 +120,40 @@ func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 	} else {
 		requests[protocol][code] = float64(sample.Value)
 	}
+}
+
+// CastWorkloadStatus returns a WorkloadStatus out of a given Workload
+func (w Workload) CastWorkloadStatus() *WorkloadStatus {
+	syncedProxies := int32(-1)
+	if w.HasIstioSidecar() {
+		syncedProxies = w.Pods.SyncedPodProxiesCount()
+	}
+
+	return &WorkloadStatus{
+		Name:              w.Name,
+		DesiredReplicas:   w.DesiredReplicas,
+		CurrentReplicas:   w.CurrentReplicas,
+		AvailableReplicas: w.AvailableReplicas,
+		SyncedProxies:     syncedProxies,
+	}
+}
+
+// CastWorkloadStatuses returns a WorkloadStatus array out of a given set of Workloads
+func (ws Workloads) CastWorkloadStatuses() []*WorkloadStatus {
+	statuses := make([]*WorkloadStatus, 0)
+	for _, w := range ws {
+		statuses = append(statuses, w.CastWorkloadStatus())
+	}
+	return statuses
+}
+
+// IsSynced returns true when all the components are with SYNCED status
+func (ps ProxyStatus) IsSynced() bool {
+	return isComponentStatusSynced(ps.CDS) && isComponentStatusSynced(ps.EDS) &&
+		isComponentStatusSynced(ps.LDS) && isComponentStatusSynced(ps.RDS)
+}
+
+// isComponentStatusSynced returns true when componentStatus is Synced
+func isComponentStatusSynced(componentStatus string) bool {
+	return componentStatus == "Synced"
 }
