@@ -19,7 +19,7 @@ import {
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
 import {
@@ -55,7 +55,6 @@ import { Link } from 'react-router-dom';
 import { Paths, serverConfig } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
-import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import history from '../../app/History';
 import {
@@ -70,7 +69,7 @@ import { AuthorizationPolicy } from '../../types/IstioObjects';
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
   paddingBottom: '20px',
-  marginTop: '20px'
+  marginTop: '0px'
 });
 
 const gridStyleList = style({
@@ -78,7 +77,7 @@ const gridStyleList = style({
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
-  marginTop: '20px'
+  marginTop: '0px'
 });
 
 const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '10px' });
@@ -733,6 +732,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
+            overview={
+              this.sFOverviewToolbar.current && this.sFOverviewToolbar.current.state.activeFilters.filters.length > 0
+                ? true
+                : false
+            }
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList
