@@ -156,7 +156,7 @@ func TestSyncedPodProxiesCount(t *testing.T) {
 	pods := make(Pods, 0, 2)
 	pod := &Pod{}
 	pod.Parse(&k8sPod)
-	pod.ProxyStatus = ProxyStatus{
+	pod.ProxyStatus = &ProxyStatus{
 		CDS: "Synced",
 		EDS: "Synced",
 		LDS: "Synced",

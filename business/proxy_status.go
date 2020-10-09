@@ -24,8 +24,8 @@ func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatu
 	return &kubernetes.ProxyStatus{}, nil
 }
 
-func castProxyStatus(ps kubernetes.ProxyStatus) models.ProxyStatus {
-	return models.ProxyStatus{
+func castProxyStatus(ps kubernetes.ProxyStatus) *models.ProxyStatus {
+	return &models.ProxyStatus{
 		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked),
 		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked),
 		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked),

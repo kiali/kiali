@@ -24,7 +24,7 @@ type Pod struct {
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
-	ProxyStatus         ProxyStatus       `json:"proxyStatus"`
+	ProxyStatus         *ProxyStatus      `json:"proxyStatus"`
 }
 
 // Reference holds some information on the pod creator
@@ -147,7 +147,7 @@ func (pods Pods) SyncedPodProxiesCount() int32 {
 
 	for _, pod := range pods {
 		hasSidecar = hasSidecar || pod.HasIstioSidecar()
-		if pod.ProxyStatus.IsSynced() {
+		if pod.ProxyStatus != nil && pod.ProxyStatus.IsSynced() {
 			syncedProxies++
 		}
 	}
