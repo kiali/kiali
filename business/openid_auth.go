@@ -21,6 +21,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const (
@@ -143,28 +144,15 @@ func ParseOpenIdToken(openIdParams *OpenIdCallbackParams) error {
 	idTokenClaims := parsedIdToken.Claims.(jwt.MapClaims)
 
 	// Set a default value for expiration date
-	openIdParams.ExpiresOn = time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-
-	// If the expiration date is present on the claim, we use that
-	expiresInNumber := int64(0)
-
-	// As it turns out, the response from the exp claim can be either a f64 and
-	// a json.Number. With this, we take care of it, converting to the int64
-	// that we need to use timestamps in go.
-	switch exp := idTokenClaims["exp"].(type) {
-	case float64:
-		// This can not fail
-		expiresInNumber = int64(exp)
-	case json.Number:
-		// This can fail, so we short-circuit if we get an invalid value.
-		expiresInNumber, err = exp.Int64()
-
+	if expClaim, ok := idTokenClaims["exp"]; !ok {
+		return errors.New("the received id_token from the OpenId provider has missing the required 'exp' claim")
+	} else {
+		// If the expiration date is present on the claim, we use that
+		expiresInNumber, err := parseTimeClaim(expClaim)
 		if err != nil {
 			return fmt.Errorf("token exp claim is present, but invalid: %w", err)
 		}
-	}
 
-	if expiresInNumber != 0 {
 		openIdParams.ExpiresOn = time.Unix(expiresInNumber, 0)
 	}
 
@@ -521,6 +509,145 @@ func ValidateOpenIdState(openIdParams *OpenIdCallbackParams) (validationFailure 
 	return
 }
 
+func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
+	oidCfg := config.Get().Auth.OpenId
+	oidMetadata, err := GetOpenIdMetadata()
+	if err != nil {
+		return err
+	}
+
+	log.Debugf("Raw token to validate: %s", openIdParams.IdToken)
+
+	idTokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
+
+	// Check iss claim matches fetched metadata at discovery
+	if issuerClaim, ok := idTokenClaims["iss"].(string); !ok || issuerClaim != oidMetadata.Issuer {
+		return fmt.Errorf("the OpenId token has unexpected issuer claim; got iss = '%s'", issuerClaim)
+	}
+
+	// Check the aud claim contains our client-id
+	checkAzpClaim := false
+	if audienceClaim, ok := idTokenClaims["aud"]; !ok {
+		return errors.New("the OpenId token has no aud claim")
+	} else {
+		switch ac := audienceClaim.(type) {
+		case string:
+			if oidCfg.ClientId != ac {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = '%s'", audienceClaim)
+			}
+		case []string:
+			audFound := false
+			for _, audItem := range ac {
+				if oidCfg.ClientId == audItem {
+					audFound = true
+				}
+			}
+			if !audFound {
+				return fmt.Errorf("the OpenId token is not targeted for Kiali; got aud = %v", audienceClaim)
+			}
+
+			// The OIDC Spec says that if the aud claim contains multiple audiences, we "SHOULD" check
+			// the azp claim is present. In Kiali, there is currently no known reason to omit this
+			// check, so we do it.
+			checkAzpClaim = true
+		default:
+			return fmt.Errorf("the OpenId token has an unexpected audience claim; got '%v'", audienceClaim)
+		}
+	}
+
+	if checkAzpClaim {
+		// Check that the azp claim is present and contains our client_id
+		if authorizedPartyClaim, ok := idTokenClaims["azp"].(string); !ok {
+			return fmt.Errorf("the OpenId token has an invalid 'azp' claim")
+		} else if oidCfg.ClientId != authorizedPartyClaim {
+			return fmt.Errorf("the OpenId token is not targeted for Kiali; got azp = %v", authorizedPartyClaim)
+		}
+	}
+
+	// Currently, we only support tokens with an RSA signature with SHA-256, which is the default in the OIDC spec
+	if algHeader, ok := openIdParams.ParsedIdToken.Header["alg"].(string); !ok || algHeader != "RS256" {
+		return fmt.Errorf("the OpenId token has unexpected alg header claim; got alg = '%s'", algHeader)
+	}
+
+	// Check iat (issued at) claim
+	if iatClaim, ok := idTokenClaims["iat"]; !ok {
+		return errors.New("the OpenId token has no iat claim or is invalid")
+	} else {
+		parsedIat, parseErr := parseTimeClaim(iatClaim)
+		if parseErr != nil {
+			return fmt.Errorf("the OpenId token has an invalid iat claim: %w", err)
+		}
+		if parsedIat == 0 {
+			// This is weird. This would mean an invalid type
+			return fmt.Errorf("the OpenId token has an invalid value in the iat claim; got '%v'", iatClaim)
+		}
+
+		// Let's do the minimal check to ensure that the token wasn't issued in the future
+		// we add a little offset to "now" to add one minute tolerance
+		iatTime := time.Unix(parsedIat, 0)
+		nowTime := util.Clock.Now().Add(60*time.Second)
+		if iatTime.After(nowTime) {
+			return fmt.Errorf("we don't like people living in the future - enjoy the present!; iat = '%d'", parsedIat)
+		}
+	}
+
+	// Check exp (expiration time) claim
+	// The OIDC spec says: "The current time MUST be before the time represented by the exp Claim"
+	// No tolerance for this check.
+	if !util.Clock.Now().Before(openIdParams.ExpiresOn) {
+		return fmt.Errorf("the OpenId token has expired; exp = '%s'", openIdParams.ExpiresOn.String())
+	}
+
+	// There are other claims that could be checked, but are not verified here:
+	//   - nonce: This should be verified regardless if RBAC is on/off. So, it's verified in
+	//       another part of the authentication flow.
+	//   - acr: we are not asking for this claim at authorization, so the IdP doesn't
+	//       need to provide it nor we need to verify it.
+	//   - auth_time: we are not asking for this claim at authorization, so the IdP doesn't
+	//	     need to provide it nor we need to verify it.
+
+
+	// If execution flow reached this point, all claims look valid, but that won't guarantee that
+	// the id_token hasn't been tampered. So, we check the signature to find if
+	// the token is genuine
+	oidcKeySet, err := GetOpenIdJwks()
+	if err != nil {
+		return err
+	}
+
+	if kidHeader, ok := openIdParams.ParsedIdToken.Header["kid"]; !ok {
+		return errors.New("the OpenId token is missing the kid header claim")
+	} else {
+		// Find the key in the fetched keyset
+		var matchingKey *jose.JSONWebKey;
+		for _, key := range oidcKeySet.Keys {
+			if key.KeyID == kidHeader.(string) {
+				matchingKey = &key
+				break
+			}
+		}
+
+		if matchingKey == nil {
+			return errors.New("the OpenId token is signed with an unknown key")
+		}
+
+		if jws, parseErr := jose.ParseSigned(openIdParams.IdToken); parseErr != nil {
+			return fmt.Errorf("error when parsing the OpenId token: %w", parseErr)
+		} else {
+			if len(jws.Signatures) == 0 {
+				return errors.New("an unsigned OpenId token is not acceptable")
+			}
+
+			_, signVerifyErr := jws.Verify(matchingKey)
+			if signVerifyErr != nil {
+				return fmt.Errorf("cannot verify signature of OpenId token: %w", signVerifyErr)
+			}
+		}
+	}
+
+	return nil
+}
+
 func VerifyOpenIdUserAccess(token string) (int, string, error) {
 	// Create business layer using the id_token
 	business, err := Get(token)
@@ -541,4 +668,29 @@ func VerifyOpenIdUserAccess(token string) (int, string, error) {
 	}
 
 	return http.StatusOK, "", nil
+}
+
+// As it turns out, the response from time claims can be either a f64 and
+// a json.Number. With this, we take care of it, converting to the int64
+// that we need to use timestamps in go.
+func parseTimeClaim(claimValue interface{}) (int64, error) {
+	var err error
+	parsedTime := int64(0)
+
+	switch exp := claimValue.(type) {
+	case float64:
+		// This can not fail
+		parsedTime = int64(exp)
+	case json.Number:
+		// This can fail, so we short-circuit if we get an invalid value.
+		parsedTime, err = exp.Int64()
+
+		if err != nil {
+			return 0, err
+		}
+	default:
+		return 0, errors.New("the 'exp' claim of the OpenId token has invalid type")
+	}
+
+	return parsedTime, nil
 }

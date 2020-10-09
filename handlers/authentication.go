@@ -688,9 +688,6 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	// TODO: remove/re-locate
-	business.GetOpenIdJwks()
-
 	if err := business.ParseOpenIdToken(openIdParams); err != nil {
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return true
@@ -701,6 +698,12 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
 		return true
 	}
+
+	// TODO: this should conditionally run if RBAC is off
+    err = business.ValidateOpenTokenInHouse(openIdParams)
+    if err != nil {
+	    RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token is invalid", err.Error())
+    }
 
 	// Check if user trying to login has enough privileges to login
 	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
