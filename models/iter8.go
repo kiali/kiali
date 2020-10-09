@@ -264,7 +264,7 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 	}
 	endTime := ""
 	if (status.EndTimestamp != meta_v1.Time{}) {
-		endTime = status.EndTimestamp.String()
+		endTime = formatTime(status.EndTimestamp.Time)
 	}
 	i.ExperimentItem = Iter8ExperimentItem{
 		Name:   iter8Object.GetObjectMeta().Name,
@@ -278,8 +278,8 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 			Request_Count:       status.Assestment.Baseline.RequestCount,
 		},
 		Candidates:             candidateStatus,
-		InitTime:               status.InitTimeStamp.String(),
-		StartTime:              status.StartTimeStamp.String(),
+		InitTime:               formatTime(status.InitTimeStamp.Time),
+		StartTime:              formatTime(status.StartTimeStamp.Time),
 		EndTime:                endTime,
 		TargetService:          spec.Service.Name,
 		TargetServiceNamespace: targetServiceNamespace,
@@ -303,8 +303,8 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 	i.Namespace = iter8Object.GetObjectMeta().Namespace
 	i.Phase = status.Phase
 	i.Status = status.Message
-	i.InitTime = status.InitTimeStamp.String()
-	i.StartTime = status.StartTimeStamp.String()
+	i.InitTime = formatTime(status.InitTimeStamp.Time)
+	i.StartTime = formatTime(status.StartTimeStamp.Time)
 	if (status.StartTimeStamp != meta_v1.Time{}) {
 		i.StartTime = status.StartTimeStamp.String()
 	}
