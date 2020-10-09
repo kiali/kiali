@@ -90,12 +90,8 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}
-	status := &models.WorkloadStatus{
-		Name:              w.Name,
-		DesiredReplicas:   w.DesiredReplicas,
-		CurrentReplicas:   w.CurrentReplicas,
-		AvailableReplicas: w.AvailableReplicas,
-	}
+
+	status := w.CastWorkloadStatus()
 
 	// Perf: do not bother fetching request rate if workload has no sidecar
 	if !w.IstioSidecar {
