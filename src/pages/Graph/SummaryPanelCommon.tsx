@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
-import { Health, healthNotAvailable } from '../../types/Health';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
@@ -55,23 +54,6 @@ export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: Su
     // Check if the target changed
     prevProps.data.summaryTarget !== nextProps.data.summaryTarget
   );
-};
-
-type HealthState = {
-  health?: Health;
-  healthLoading: boolean;
-};
-
-export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) => void) => {
-  const healthPromise = summaryTarget.data('healthPromise');
-  if (healthPromise) {
-    stateSetter({ healthLoading: true });
-    healthPromise
-      .then(h => stateSetter({ health: h, healthLoading: false }))
-      .catch(_err => stateSetter({ health: healthNotAvailable(), healthLoading: false }));
-  } else {
-    stateSetter({ health: undefined, healthLoading: false });
-  }
 };
 
 export const getNodeMetricType = (nodeData: DecoratedGraphNodeData): NodeMetricType => {

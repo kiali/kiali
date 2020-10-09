@@ -132,15 +132,38 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
 
   private fetchDataSource = () => {
     switch (this.props.itemType) {
-      case MetricsObjectTypes.SERVICE:
-        this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.itemName, true);
+      case MetricsObjectTypes.SERVICE: {
+        const params = this.graphDataSource.fetchForServiceParams(
+          this.props.duration,
+          this.props.namespace,
+          this.props.itemName
+        );
+        params.includeHealth = false;
+        this.graphDataSource.fetchGraphData(params);
         break;
-      case MetricsObjectTypes.WORKLOAD:
-        this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.itemName, false);
+      }
+      case MetricsObjectTypes.WORKLOAD: {
+        const params = this.graphDataSource.fetchForWorkloadParams(
+          this.props.duration,
+          this.props.namespace,
+          this.props.itemName
+        );
+        params.includeHealth = false;
+        params.injectServiceNodes = false;
+        this.graphDataSource.fetchGraphData(params);
         break;
-      case MetricsObjectTypes.APP:
-        this.graphDataSource.fetchForApp(this.props.duration, this.props.namespace, this.props.itemName, false);
+      }
+      case MetricsObjectTypes.APP: {
+        const params = this.graphDataSource.fetchForAppParams(
+          this.props.duration,
+          this.props.namespace,
+          this.props.itemName
+        );
+        params.includeHealth = false;
+        params.injectServiceNodes = false;
+        this.graphDataSource.fetchGraphData(params);
         break;
+      }
     }
   };
 

@@ -6,7 +6,6 @@ import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '..
 import { renderBadgedLink, renderHealth } from './SummaryLink';
 import {
   shouldRefreshData,
-  updateHealth,
   getFirstDatapoints,
   getNodeMetrics,
   getNodeMetricType,
@@ -15,7 +14,6 @@ import {
   hr,
   summaryPanel
 } from './SummaryPanelCommon';
-import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics, Datapoint } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
@@ -40,8 +38,6 @@ type SummaryPanelGroupState = SummaryPanelGroupMetricsState & {
   group: any;
   isOpen: boolean;
   loading: boolean;
-  healthLoading: boolean;
-  health?: Health;
   metricsLoadError: string | null;
 };
 
@@ -60,7 +56,6 @@ const defaultState: SummaryPanelGroupState = {
   group: null,
   isOpen: false,
   loading: false,
-  healthLoading: false,
   metricsLoadError: null,
   ...defaultMetricsState
 };
@@ -86,7 +81,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   componentDidMount() {
     this.updateRpsCharts(this.props);
-    updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
@@ -97,7 +91,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateRpsCharts(this.props);
-      updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
     }
   }
 
@@ -143,7 +136,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               isGrouped={true}
             />
           </div>
-          <div>{renderHealth(this.state.health)}</div>
+          <div>{renderHealth(nodeData.health)}</div>
           <div>
             {this.renderBadgeSummary(group)}
             {serviceList.length > 0 && <div>{serviceList}</div>}

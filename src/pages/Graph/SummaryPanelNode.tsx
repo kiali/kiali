@@ -2,15 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData, DestService } from '../../types/Graph';
-import {
-  shouldRefreshData,
-  updateHealth,
-  summaryHeader,
-  summaryPanel,
-  summaryBodyTabs,
-  summaryFont
-} from './SummaryPanelCommon';
-import { Health } from '../../types/Health';
+import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont } from './SummaryPanelCommon';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
@@ -22,13 +14,10 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { JaegerState } from 'reducers/JaegerState';
 
 type SummaryPanelNodeState = {
-  healthLoading: boolean;
-  health?: Health;
   isActionOpen: boolean;
 };
 
 const defaultState: SummaryPanelNodeState = {
-  healthLoading: false,
   isActionOpen: false
 };
 
@@ -48,18 +37,11 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  componentDidMount() {
-    updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
-  }
-
   componentDidUpdate(prevProps: SummaryPanelNodeProps) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       if (this.mainDivRef.current) {
         this.mainDivRef.current.scrollTop = 0;
       }
-    }
-    if (shouldRefreshData(prevProps, this.props)) {
-      updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
     }
   }
 
@@ -112,7 +94,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
               />
             )}
           </div>
-          <div>{renderHealth(this.state.health)}</div>
+          <div>{renderHealth(nodeData.health)}</div>
           <div>
             {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
             {shouldRenderDestsList && <div>{destsList}</div>}

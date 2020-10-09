@@ -17,6 +17,7 @@ const FETCH_PARAMS = {
   duration: 10,
   edgeLabelMode: EdgeLabelMode.NONE,
   graphType: GraphType.VERSIONED_APP,
+  includeHealth: false,
   injectServiceNodes: false,
   namespaces: [{ name: 'foo' }],
   queryTime: 0,

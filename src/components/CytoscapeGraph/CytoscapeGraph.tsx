@@ -8,7 +8,6 @@ import EmptyGraphLayout from './EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
-import * as API from '../../services/Api';
 import {
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
@@ -22,8 +21,6 @@ import {
   NodeType,
   UNKNOWN
 } from '../../types/Graph';
-import * as H from '../../types/Health';
-import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import FocusAnimation from './FocusAnimation';
 import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
@@ -197,9 +194,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       if (eles.length > 0) {
         this.selectTargetAndUpdateSummary(eles[0]);
       }
-    }
-    if (this.props.graphData.elements !== prevProps.graphData.elements) {
-      this.updateHealth(cy);
     }
 
     if (this.props.trace) {
@@ -680,11 +674,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     return needsRelayout;
   }
 
-  // Tests if the element is still in the current graph
-  private isElementValid(ele: Cy.NodeSingular | Cy.EdgeSingular) {
-    return ele.cy() === this.cy;
-  }
-
   static isCyNodeClickEvent(event: CytoscapeClickEvent): boolean {
     const targetType = event.summaryType;
     if (targetType !== 'node' && targetType !== 'group') {
@@ -729,95 +718,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       .map(e => e.id)
       .sort()
       .every((eId, index) => eId === aIds[index]);
-  }
-
-  private updateHealth(cy: Cy.Core) {
-    if (!cy) {
-      return;
-    }
-    const duration = this.props.graphData.fetchParams.duration;
-    // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
-    const appHealthPerNamespace = new Map<string, Promise<NamespaceAppHealth>>();
-    const serviceHealthPerNamespace = new Map<string, Promise<NamespaceServiceHealth>>();
-    const workloadHealthPerNamespace = new Map<string, Promise<NamespaceWorkloadHealth>>();
-    // Asynchronously fetch health
-    cy.nodes().forEach(ele => {
-      const inaccessible = ele.data(CyNode.isInaccessible);
-      if (inaccessible) {
-        return;
-      }
-      const namespace = ele.data(CyNode.namespace);
-      const namespaceOk = namespace && namespace !== '' && namespace !== UNKNOWN;
-      // incomplete telemetry can result in an unknown namespace, if so set nodeType UNKNOWN
-      const nodeType = namespaceOk ? ele.data(CyNode.nodeType) : NodeType.UNKNOWN;
-      const workload = ele.data(CyNode.workload);
-      const workloadOk = workload && workload !== '' && workload !== UNKNOWN;
-      // use workload health when workload is set and valid (workload nodes or versionApp nodes)
-      const useWorkloadHealth = nodeType === NodeType.WORKLOAD || (nodeType === NodeType.APP && workloadOk);
-
-      if (useWorkloadHealth) {
-        let promise = workloadHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceWorkloadHealth(namespace, duration);
-          workloadHealthPerNamespace.set(namespace, promise);
-        }
-        this.updateNodeHealth(ele, promise, workload);
-      } else if (nodeType === NodeType.APP) {
-        const app = ele.data(CyNode.app);
-        let promise = appHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceAppHealth(namespace, duration);
-          appHealthPerNamespace.set(namespace, promise);
-        }
-        this.updateNodeHealth(ele, promise, app);
-        // TODO: If we want to block health checks for service entries, uncomment this (see kiali-2029)
-        // } else if (nodeType === NodeType.SERVICE && !ele.data(CyNode.isServiceEntry)) {
-      } else if (nodeType === NodeType.SERVICE) {
-        const service = ele.data(CyNode.service);
-
-        let promise = serviceHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceServiceHealth(namespace, duration);
-          serviceHealthPerNamespace.set(namespace, promise);
-        }
-        this.updateNodeHealth(ele, promise, service);
-      }
-    });
-  }
-
-  private updateNodeHealth(
-    ele: Cy.NodeSingular,
-    promise: Promise<H.NamespaceAppHealth | H.NamespaceServiceHealth | H.NamespaceWorkloadHealth>,
-    key: string
-  ) {
-    ele.data(
-      'healthPromise',
-      promise.then(nsHealth => nsHealth[key])
-    );
-    promise
-      .then(nsHealth => {
-        // Discard if the element is no longer valid
-        if (this.isElementValid(ele)) {
-          const health = nsHealth[key];
-          if (health) {
-            const status = health.getGlobalStatus();
-            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-            if (status === H.DEGRADED || status === H.FAILURE) {
-              ele.addClass(status.name);
-            }
-          } else {
-            ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
-            console.debug(`No health found for [${ele.data(CyNode.nodeType)}] [${key}]`);
-          }
-        }
-      })
-      .catch(err => {
-        // Discard if the element is no longer valid
-        if (this.isElementValid(ele)) {
-          ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
-        }
-        console.error(`Could not fetch health for [${ele.data(CyNode.nodeType)}] [${key}]: ${API.getErrorString(err)}`);
-      });
   }
 
   private fixLoopOverlap(cy: Cy.Core) {

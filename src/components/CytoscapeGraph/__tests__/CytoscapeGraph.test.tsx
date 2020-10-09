@@ -31,6 +31,7 @@ describe('CytoscapeGraph component test', () => {
 
     const dataSource = new GraphDataSource();
     dataSource.fetchGraphData({
+      includeHealth: false,
       injectServiceNodes: true,
       graphType: GraphType.VERSIONED_APP,
       namespaces: [{ name: testNamespace }],
@@ -51,6 +52,7 @@ describe('CytoscapeGraph component test', () => {
             elements: dataSource.graphData,
             isLoading: false,
             fetchParams: {
+              includeHealth: false,
               injectServiceNodes: true,
               graphType: GraphType.VERSIONED_APP,
               namespaces: [{ name: testNamespace }],

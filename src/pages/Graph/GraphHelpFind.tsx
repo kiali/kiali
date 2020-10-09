@@ -196,6 +196,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['tcpout <op> <number>', 'unit: bytes per second'],
       ['workload <op> <workloadName>'],
       ['circuitbreaker'],
+      ['healthy', 'is not degraded or failing.'],
       ['outside', 'is outside of requested namespaces'],
       ['sidecar'],
       ['serviceentry'],
@@ -219,7 +220,8 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['Abbrevations: namespace|ns, service|svc, workload|wl operation|op'],
       ['Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'],
       ['Hiding nodes will automatically hide connected edges.'],
-      ['Hiding edges will automatically hide nodes left with no visible edges.']
+      ['Hiding edges will automatically hide nodes left with no visible edges.'],
+      ['Hiding "healthy"ss nodes may still leave valid, healthy edges in the graph.']
     ];
   };
 

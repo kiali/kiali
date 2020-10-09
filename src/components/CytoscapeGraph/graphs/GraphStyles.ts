@@ -18,7 +18,7 @@ import {
 import { icons } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
-import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
+import { decoratedEdgeData, decoratedNodeData, CyNode } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
 
@@ -430,13 +430,14 @@ export class GraphStyles {
     };
 
     const getNodeBorderColor = (ele: Cy.NodeSingular): string => {
-      if (ele.hasClass(DEGRADED.name)) {
-        return NodeColorBorderDegraded;
+      switch (ele.data(CyNode.healthStatus)) {
+        case DEGRADED.name:
+          return NodeColorBorderDegraded;
+        case FAILURE.name:
+          return NodeColorBorderFailure;
+        default:
+          return NodeColorBorder;
       }
-      if (ele.hasClass(FAILURE.name)) {
-        return NodeColorBorderFailure;
-      }
-      return NodeColorBorder;
     };
 
     const getNodeShape = (ele: Cy.NodeSingular): Cy.Css.NodeShape => {
@@ -460,13 +461,14 @@ export class GraphStyles {
 
     const nodeSelectedStyle = {
       'border-color': (ele: Cy.NodeSingular) => {
-        if (ele.hasClass(DEGRADED.name)) {
-          return NodeColorBorderDegraded;
+        switch (ele.data(CyNode.healthStatus)) {
+          case DEGRADED.name:
+            return NodeColorBorderDegraded;
+          case FAILURE.name:
+            return NodeColorBorderFailure;
+          default:
+            return NodeColorBorderSelected;
         }
-        if (ele.hasClass(FAILURE.name)) {
-          return NodeColorBorderFailure;
-        }
-        return NodeColorBorderSelected;
       },
       'border-width': NodeBorderWidthSelected
     };
@@ -527,22 +529,24 @@ export class GraphStyles {
         selector: 'node.mousehighlight[^isGroup]',
         style: {
           'background-color': (ele: Cy.NodeSingular) => {
-            if (ele.hasClass(DEGRADED.name)) {
-              return NodeColorFillHoverDegraded;
+            switch (ele.data(CyNode.healthStatus)) {
+              case DEGRADED.name:
+                return NodeColorFillHoverDegraded;
+              case FAILURE.name:
+                return NodeColorFillHoverFailure;
+              default:
+                return NodeColorFillHover;
             }
-            if (ele.hasClass(FAILURE.name)) {
-              return NodeColorFillHoverFailure;
-            }
-            return NodeColorFillHover;
           },
           'border-color': (ele: Cy.NodeSingular) => {
-            if (ele.hasClass(DEGRADED.name)) {
-              return NodeColorBorderDegraded;
+            switch (ele.data(CyNode.healthStatus)) {
+              case DEGRADED.name:
+                return NodeColorBorderDegraded;
+              case FAILURE.name:
+                return NodeColorBorderFailure;
+              default:
+                return NodeColorBorderHover;
             }
-            if (ele.hasClass(FAILURE.name)) {
-              return NodeColorBorderFailure;
-            }
-            return NodeColorBorderHover;
           }
         }
       },

@@ -51,6 +51,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       hasCB: undefined,
       hasMissingSC: undefined,
       hasVS: undefined,
+      health: undefined,
       httpIn: NaN,
       httpIn3xx: NaN,
       httpIn4xx: NaN,

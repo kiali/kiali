@@ -18,6 +18,7 @@ import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
 import { AutoComplete } from 'utils/AutoComplete';
+import { HEALTHY } from 'types/Health';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -75,6 +76,7 @@ const operands: string[] = [
   'grpcerr',
   'grpcin',
   'grpcout',
+  'healthy',
   'http',
   'httpin',
   'httpout',
@@ -721,6 +723,13 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         return { target: 'node', selector: isNegation ? `[^${CyNode.isDead}]` : `[?${CyNode.isDead}]` };
       case 'inaccessible':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isInaccessible}]` : `[?${CyNode.isInaccessible}]` };
+      case 'healthy':
+        return {
+          target: 'node',
+          selector: isNegation
+            ? `[${CyNode.healthStatus} != "${HEALTHY.name}"]`
+            : `[${CyNode.healthStatus} = "${HEALTHY.name}"]`
+        };
       case 'outside':
       case 'outsider':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isOutside}]` : `[?${CyNode.isOutside}]` };
