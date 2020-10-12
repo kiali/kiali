@@ -7,9 +7,9 @@ const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
 const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
 const history = process.env.TEST_RUNNER
   ? createMemoryHistory()
-  : historyMode === 'browser'
-  ? createBrowserHistory({ basename: baseName })
-  : createHashHistory();
+  : historyMode === 'hash'
+  ? createHashHistory()
+  : createBrowserHistory({ basename: baseName });
 
 export default history;
 
