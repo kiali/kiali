@@ -147,6 +147,8 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 }
 
 func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	conf := config.Get()
+
 	// Read received HTTP params and check for data completeness
 	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
@@ -177,14 +179,18 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	// Check if user trying to login has enough privileges to login
-	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
-	if detailedError != nil {
-		RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
-		return false
-	} else if httpStatus != http.StatusOK {
-		RespondWithError(w, httpStatus, errMsg)
-		return false
+	if !conf.Auth.OpenId.DisableRBAC {
+		// Check if user trying to login has enough privileges to login. This check is only done if
+		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
+		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
+		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
+		if detailedError != nil {
+			RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
+			return false
+		} else if httpStatus != http.StatusOK {
+			RespondWithError(w, httpStatus, errMsg)
+			return false
+		}
 	}
 
 	// Now that we know that the OpenId token is valid, build our session cookie
@@ -201,7 +207,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    tokenString,
 		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
+		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
@@ -452,6 +458,12 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			statusCode, token = checkOpenshiftSession(w, r)
 		case config.AuthStrategyOpenId:
 			statusCode, token = checkOpenIdSession(w, r)
+			if conf.Auth.OpenId.DisableRBAC {
+				// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
+				// Instead, we use the Kiali token an this has the side effect that all users will share the
+				// same privileges.
+				token = aHandler.saToken
+			}
 		case config.AuthStrategyToken:
 			statusCode, token = checkTokenSession(w, r)
 		case config.AuthStrategyAnonymous:
@@ -661,6 +673,8 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
+	conf := config.Get()
+
 	// Read received HTTP params and check for data completeness
 	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
@@ -699,20 +713,29 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	// TODO: this should conditionally run if RBAC is off
-    err = business.ValidateOpenTokenInHouse(openIdParams)
-    if err != nil {
-	    RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token is invalid", err.Error())
-    }
+	if conf.Auth.OpenId.DisableRBAC {
+		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
+		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
+		// Since the configuration indicates RBAC is off, we do the validations:
+		err = business.ValidateOpenTokenInHouse(openIdParams)
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
+			return true
+		}
+	}
 
-	// Check if user trying to login has enough privileges to login
-	httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
-	if detailedError != nil {
-		RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
-		return true
-	} else if httpStatus != http.StatusOK {
-		RespondWithError(w, httpStatus, errMsg)
-		return true
+	if !conf.Auth.OpenId.DisableRBAC {
+		// Check if user trying to login has enough privileges to login. This check is only done if
+		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
+		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
+		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
+		if detailedError != nil {
+			RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
+			return true
+		} else if httpStatus != http.StatusOK {
+			RespondWithError(w, httpStatus, errMsg)
+			return true
+		}
 	}
 
 	// Create Kiali's session cookie and set it in the response
@@ -757,13 +780,12 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
 		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
-		Path:     config.Get().Server.WebRoot,
+		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &authCookie)
 
 	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
-	conf := config.Get()
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 	http.Redirect(w, r, webRootWithSlash, http.StatusFound)

@@ -274,6 +274,7 @@ type OpenIdConfig struct {
 	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
 	ClientId              string   `yaml:"client_id,omitempty"`
 	ClientSecret          string   `yaml:"client_secret,omitempty"`
+	DisableRBAC           bool     `yaml:"disable_rbac,omitempty"`
 	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
 	Scopes                []string `yaml:"scopes,omitempty"`
@@ -362,6 +363,7 @@ func NewConfig() (c *Config) {
 				AuthorizationEndpoint: "",
 				ClientId:              "",
 				ClientSecret:          "",
+				DisableRBAC:           false,
 				InsecureSkipVerifyTLS: false,
 				IssuerUri:             "",
 				Scopes:                []string{"openid", "profile", "email"},
