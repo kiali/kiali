@@ -58,9 +58,10 @@ func (vService *VirtualService) IsValidHost(namespace string, serviceName string
 		return false
 	}
 
-	protocolNames := []string{"http", "tcp"}
+	protocolNames := []string{"http", "tls", "tcp"} // ordered by matching preference
 	protocols := map[string]interface{}{
 		"http": vService.Spec.Http,
+		"tls":  vService.Spec.Tls,
 		"tcp":  vService.Spec.Tcp,
 	}
 
