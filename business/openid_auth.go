@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/sync/singleflight"
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/kiali/kiali/config"
@@ -53,7 +54,9 @@ type OpenIdCallbackParams struct {
 	Subject       string
 }
 
+var cachedOpenIdKeySet *jose.JSONWebKeySet
 var cachedOpenIdMetadata *OpenIdMetadata
+var openIdFlightGroup singleflight.Group
 
 func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams) *config.IanaClaims {
 	return &config.IanaClaims{
@@ -186,6 +189,39 @@ func GetConfiguredOpenIdScopes() []string {
 	return scopes
 }
 
+func GetJwkFromKeySet(keyId string) (*jose.JSONWebKey, error) {
+	// Helper function to find a key with a certain key id in a key-set.
+	var findJwkFunc = func(kid string, jwks *jose.JSONWebKeySet) *jose.JSONWebKey {
+		for _, key := range jwks.Keys {
+			if key.KeyID == kid {
+				return &key
+			}
+		}
+		return nil
+	}
+
+	if cachedOpenIdKeySet != nil {
+		// If key-set is cached, try to find the key in the cached key-set
+		foundKey := findJwkFunc(keyId, cachedOpenIdKeySet)
+		if foundKey != nil {
+			return foundKey, nil
+		}
+	}
+
+	// If key-set is not cached, or if the requested key was not found in the
+	// cached key-set, then fetch/refresh the key-set from the OpenId provider
+	keySet, err := GetOpenIdJwks()
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to find the key in the fetched key-set
+	foundKey := findJwkFunc(keyId, keySet)
+
+	// "foundKey" can be nil. That's acceptable if the key-set does not contain the requested key id
+	return foundKey, nil
+}
+
 func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
 	if err != nil {
@@ -233,138 +269,144 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 // rare to change, the retrieved metadata is cached on first call and subsequent calls return
 // the cached metadata.
 func GetOpenIdMetadata() (*OpenIdMetadata, error) {
-	// TODO: Add thread-safe fetching
 	if cachedOpenIdMetadata != nil {
 		return cachedOpenIdMetadata, nil
 	}
 
-	cfg := config.Get().Auth.OpenId
+	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
+		cfg := config.Get().Auth.OpenId
 
-	// Remove trailing slash from issuer URI, if needed
-	trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
+		// Remove trailing slash from issuer URI, if needed
+		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
-	// Create HTTP client
-	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS {
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
+		// Create HTTP client
+		httpTransport := &http.Transport{}
+		if cfg.InsecureSkipVerifyTLS {
+			httpTransport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
 		}
-	}
 
-	httpClient := http.Client{
-		Timeout:   time.Second * 10,
-		Transport: httpTransport,
-	}
+		httpClient := http.Client{
+			Timeout:   time.Second * 10,
+			Transport: httpTransport,
+		}
 
-	// Fetch IdP metadata
-	response, err := httpClient.Get(trimmedIssuerUri + "/.well-known/openid-configuration")
-	if err != nil {
-		return nil, err
-	}
+		// Fetch IdP metadata
+		response, err := httpClient.Get(trimmedIssuerUri + "/.well-known/openid-configuration")
+		if err != nil {
+			return nil, err
+		}
 
-	defer response.Body.Close()
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("cannot fetch OpenId Metadata (HTTP response status = %s)", response.Status)
-	}
+		defer response.Body.Close()
+		if response.StatusCode != 200 {
+			return nil, fmt.Errorf("cannot fetch OpenId Metadata (HTTP response status = %s)", response.Status)
+		}
 
-	// Parse JSON document
-	var metadata OpenIdMetadata
+		// Parse JSON document
+		var metadata OpenIdMetadata
 
-	rawMetadata, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read OpenId Metadata: %s", err.Error())
-	}
+		rawMetadata, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read OpenId Metadata: %s", err.Error())
+		}
 
-	err = json.Unmarshal(rawMetadata, &metadata)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse OpenId Metadata: %s", err.Error())
-	}
+		err = json.Unmarshal(rawMetadata, &metadata)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse OpenId Metadata: %s", err.Error())
+		}
 
-	// Validate issuer == issuerUri
-	if metadata.Issuer != cfg.IssuerUri {
-		return nil, fmt.Errorf("mismatch between the configured issuer_uri (%s) and the exposed Issuer URI in OpenId provider metadata (%s)", cfg.IssuerUri, metadata.Issuer)
-	}
+		// Validate issuer == issuerUri
+		if metadata.Issuer != cfg.IssuerUri {
+			return nil, fmt.Errorf("mismatch between the configured issuer_uri (%s) and the exposed Issuer URI in OpenId provider metadata (%s)", cfg.IssuerUri, metadata.Issuer)
+		}
 
-	// Validate there is an authorization endpoint
-	if len(metadata.AuthURL) == 0 {
-		return nil, errors.New("the OpenID provider does not expose an authorization endpoint")
-	}
+		// Validate there is an authorization endpoint
+		if len(metadata.AuthURL) == 0 {
+			return nil, errors.New("the OpenID provider does not expose an authorization endpoint")
+		}
 
-	// Log warning if OpenId provider Metadata does not expose "id_token" in it's supported response types.
-	// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
-	responseTypes := strings.Join(metadata.ResponseTypesSupported, " ")
-	if !strings.Contains(responseTypes, "id_token") {
-		log.Warning("Configured OpenID provider informs response_type=id_token is unsupported. Users may not be able to login.")
-	}
+		// Log warning if OpenId provider Metadata does not expose "id_token" in it's supported response types.
+		// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
+		responseTypes := strings.Join(metadata.ResponseTypesSupported, " ")
+		if !strings.Contains(responseTypes, "id_token") {
+			log.Warning("Configured OpenID provider informs response_type=id_token is unsupported. Users may not be able to login.")
+		}
 
-	// Log warning if OpenId provider informs that some of the configured scopes are not supported
-	// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
-	scopes := GetConfiguredOpenIdScopes()
-	for _, scope := range scopes {
-		isScopeSupported := false
-		for _, supportedScope := range metadata.ScopesSupported {
-			if scope == supportedScope {
-				isScopeSupported = true
+		// Log warning if OpenId provider informs that some of the configured scopes are not supported
+		// It's possible to try authentication. If metadata is right, the error will be evident to the user when trying to login.
+		scopes := GetConfiguredOpenIdScopes()
+		for _, scope := range scopes {
+			isScopeSupported := false
+			for _, supportedScope := range metadata.ScopesSupported {
+				if scope == supportedScope {
+					isScopeSupported = true
+					break
+				}
+			}
+
+			if !isScopeSupported {
+				log.Warning("Configured OpenID provider informs some of the configured scopes are unsupported. Users may not be able to login.")
 				break
 			}
 		}
 
-		if !isScopeSupported {
-			log.Warning("Configured OpenID provider informs some of the configured scopes are unsupported. Users may not be able to login.")
-			break
-		}
+		// Return parsed metadata
+		cachedOpenIdMetadata = &metadata
+		return cachedOpenIdMetadata, nil
+	})
+
+	if fetchError != nil {
+		return nil, fetchError
 	}
 
-	// Return parsed metadata
-	cachedOpenIdMetadata = &metadata
-	return cachedOpenIdMetadata, nil
+	return fetchedMetadata.(*OpenIdMetadata), nil
 }
 
 func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
-	// TODO: Add thread-safe fetching
-	// TODO: Add caching
-	oidcMetadata, err := GetOpenIdMetadata()
-	if err != nil {
-		return nil, err
-	}
-
-	// Create HTTP client
-	cfg := config.Get().Auth.OpenId
-	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS {
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
+	fetchedKeySet, fetchError, _ := openIdFlightGroup.Do("jwks", func() (interface{}, error) {
+		oidcMetadata, err := GetOpenIdMetadata()
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	httpClient := http.Client{
-		Timeout:   time.Second * 10,
-		Transport: httpTransport,
-	}
+		// Create HTTP client
+		cfg := config.Get().Auth.OpenId
+		httpTransport := &http.Transport{}
+		if cfg.InsecureSkipVerifyTLS {
+			httpTransport.TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+		}
 
-	// Fetch Keys document
-	response, err := httpClient.Get(oidcMetadata.JWKSURL)
-	if err != nil {
-		return nil, err
-	}
+		httpClient := http.Client{
+			Timeout:   time.Second * 10,
+			Transport: httpTransport,
+		}
 
-	defer response.Body.Close()
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("cannot fetch OpenId JWKS document (HTTP response status = %s)", response.Status)
-	}
+		// Fetch Keys document
+		response, err := httpClient.Get(oidcMetadata.JWKSURL)
+		if err != nil {
+			return nil, err
+		}
 
-	// Parse the Keys document
-	var oidcKeys jose.JSONWebKeySet
+		defer response.Body.Close()
+		if response.StatusCode != 200 {
+			return nil, fmt.Errorf("cannot fetch OpenId JWKS document (HTTP response status = %s)", response.Status)
+		}
 
-	rawMetadata, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read OpenId JWKS document: %s", err.Error())
-	}
+		// Parse the Keys document
+		var oidcKeys jose.JSONWebKeySet
 
-	err = json.Unmarshal(rawMetadata, &oidcKeys)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse OpenId JWKS document: %s", err.Error())
-	}
+		rawMetadata, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read OpenId JWKS document: %s", err.Error())
+		}
+
+		err = json.Unmarshal(rawMetadata, &oidcKeys)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse OpenId JWKS document: %s", err.Error())
+		}
 
 	// TODO: Remove this loop. It's only for debugging
 	log.Debugf("OIDC has %i keys", len(oidcKeys.Keys))
@@ -376,7 +418,15 @@ func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
 		log.Debugf("OIDC Key: ID = %s, ALG = %s, Use = %s, Key thumbprint = %x", key.KeyID, key.Algorithm, key.Use, thumbprint)
 	}
 
-	return &oidcKeys, nil
+		cachedOpenIdKeySet = &oidcKeys // Store the keyset in a "cache"
+		return cachedOpenIdKeySet, nil
+	})
+
+	if fetchError != nil {
+		return nil, fetchError
+	}
+
+	return fetchedKeySet.(*jose.JSONWebKeySet), nil
 }
 
 func IsOpenIdCodeFlowPossible() bool {
@@ -575,7 +625,7 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 	} else {
 		parsedIat, parseErr := parseTimeClaim(iatClaim)
 		if parseErr != nil {
-			return fmt.Errorf("the OpenId token has an invalid iat claim: %w", err)
+			return fmt.Errorf("the OpenId token has an invalid iat claim: %w", parseErr)
 		}
 		if parsedIat == 0 {
 			// This is weird. This would mean an invalid type
@@ -610,27 +660,9 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 	// If execution flow reached this point, all claims look valid, but that won't guarantee that
 	// the id_token hasn't been tampered. So, we check the signature to find if
 	// the token is genuine
-	oidcKeySet, err := GetOpenIdJwks()
-	if err != nil {
-		return err
-	}
-
 	if kidHeader, ok := openIdParams.ParsedIdToken.Header["kid"]; !ok {
 		return errors.New("the OpenId token is missing the kid header claim")
 	} else {
-		// Find the key in the fetched keyset
-		var matchingKey *jose.JSONWebKey;
-		for _, key := range oidcKeySet.Keys {
-			if key.KeyID == kidHeader.(string) {
-				matchingKey = &key
-				break
-			}
-		}
-
-		if matchingKey == nil {
-			return errors.New("the OpenId token is signed with an unknown key")
-		}
-
 		if jws, parseErr := jose.ParseSigned(openIdParams.IdToken); parseErr != nil {
 			return fmt.Errorf("error when parsing the OpenId token: %w", parseErr)
 		} else {
@@ -638,9 +670,17 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 				return errors.New("an unsigned OpenId token is not acceptable")
 			}
 
+			matchingKey, findKeyErr := GetJwkFromKeySet(kidHeader.(string))
+			if findKeyErr != nil {
+				return fmt.Errorf("something went wrong when trying to find the key that signed the OpenId token: %w", findKeyErr)
+			}
+			if matchingKey == nil {
+				return errors.New("the OpenId token is signed with an unknown key")
+			}
+
 			_, signVerifyErr := jws.Verify(matchingKey)
 			if signVerifyErr != nil {
-				return fmt.Errorf("cannot verify signature of OpenId token: %w", signVerifyErr)
+				return fmt.Errorf("the signature of the OpenId token is invalid: %w", signVerifyErr)
 			}
 		}
 	}
