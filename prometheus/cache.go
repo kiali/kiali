@@ -102,7 +102,7 @@ func (c *promCacheImpl) GetAppRequestRates(namespace string, app string, ratesIn
 	if nsRates, okNs := c.cacheAppRequestRates[namespace]; okNs {
 		if appInterval, okApp := nsRates[app]; okApp {
 			if rtInterval, okRt := appInterval[ratesInterval]; okRt {
-				if queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 					log.Tracef("[Prom Cache] GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
@@ -138,7 +138,7 @@ func (c *promCacheImpl) GetNamespaceServicesRequestRates(namespace string, rates
 
 	if nsRates, okNs := c.cacheNsSvcRequestRates[namespace]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
-			if queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 				log.Tracef("[Prom Cache] GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}
@@ -169,7 +169,7 @@ func (c *promCacheImpl) GetServiceRequestRates(namespace string, service string,
 	if nsRates, okNs := c.cacheSvcRequestRates[namespace]; okNs {
 		if svcInterval, okSvc := nsRates[service]; okSvc {
 			if rtInterval, okRt := svcInterval[ratesInterval]; okRt {
-				if queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 					log.Tracef("[Prom Cache] GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult
 				}
@@ -205,7 +205,7 @@ func (c *promCacheImpl) GetWorkloadRequestRates(namespace string, workload strin
 	if nsRates, okNs := c.cacheWkRequestRates[namespace]; okNs {
 		if wkInterval, okWk := nsRates[workload]; okWk {
 			if rtInterval, okRt := wkInterval[ratesInterval]; okRt {
-				if queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 					log.Tracef("[Prom Cache] GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
 					return true, rtInterval.inResult, rtInterval.outResult
 				}
