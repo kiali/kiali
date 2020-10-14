@@ -1208,6 +1208,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			if pod.HasIstioSidecar() {
 				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
 				if err != nil || ps == nil {
+					if err != nil {
+						log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
+					}
 					pod.ProxyStatus = nil
 					continue
 				}
