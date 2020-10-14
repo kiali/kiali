@@ -15,7 +15,7 @@ func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatu
 		if !kialiCache.CheckProxyStatus() {
 			var proxyStatus []*kubernetes.ProxyStatus
 			var err error
-			proxyStatus, err = in.k8s.GetProxyStatus();
+			proxyStatus, err = in.k8s.GetProxyStatus()
 			if err != nil {
 				if errors.IsForbidden(err) {
 					if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
@@ -80,4 +80,3 @@ func xdsStatus(sent, acked string) string {
 	// Since the Nonce changes to uuid, so there is no more any time diff info
 	return "Stale"
 }
-
