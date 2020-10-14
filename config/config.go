@@ -435,7 +435,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CacheEnabled:  true,
+				CacheEnabled: true,
 				// 1/2 Prom Scrape Interval
 				CacheDuration: 7,
 				ComponentStatus: ComponentStatus{
