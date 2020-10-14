@@ -3,7 +3,6 @@ package business
 import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type ProxyStatus struct {
@@ -17,12 +16,7 @@ func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatu
 			var err error
 			proxyStatus, err = in.k8s.GetProxyStatus()
 			if err != nil {
-				if errors.IsForbidden(err) {
-					if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
-						return &kubernetes.ProxyStatus{}, err
-					}
-				} else {
-					// Unrelated error
+				if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
 					return &kubernetes.ProxyStatus{}, err
 				}
 			}
