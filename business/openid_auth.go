@@ -1,7 +1,6 @@
 package business
 
 import (
-	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
@@ -408,16 +407,6 @@ func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
 			return nil, fmt.Errorf("cannot parse OpenId JWKS document: %s", err.Error())
 		}
 
-	// TODO: Remove this loop. It's only for debugging
-	log.Debugf("OIDC has %i keys", len(oidcKeys.Keys))
-	for _, key := range oidcKeys.Keys {
-		thumbprint, e := key.Thumbprint(crypto.SHA256)
-		if e != nil {
-			thumbprint = []byte{0}
-		}
-		log.Debugf("OIDC Key: ID = %s, ALG = %s, Use = %s, Key thumbprint = %x", key.KeyID, key.Algorithm, key.Use, thumbprint)
-	}
-
 		cachedOpenIdKeySet = &oidcKeys // Store the keyset in a "cache"
 		return cachedOpenIdKeySet, nil
 	})
@@ -635,7 +624,7 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 		// Let's do the minimal check to ensure that the token wasn't issued in the future
 		// we add a little offset to "now" to add one minute tolerance
 		iatTime := time.Unix(parsedIat, 0)
-		nowTime := util.Clock.Now().Add(60*time.Second)
+		nowTime := util.Clock.Now().Add(60 * time.Second)
 		if iatTime.After(nowTime) {
 			return fmt.Errorf("we don't like people living in the future - enjoy the present!; iat = '%d'", parsedIat)
 		}
@@ -655,7 +644,6 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 	//       need to provide it nor we need to verify it.
 	//   - auth_time: we are not asking for this claim at authorization, so the IdP doesn't
 	//	     need to provide it nor we need to verify it.
-
 
 	// If execution flow reached this point, all claims look valid, but that won't guarantee that
 	// the id_token hasn't been tampered. So, we check the signature to find if
