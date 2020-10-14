@@ -71,7 +71,7 @@ func (c *promCacheImpl) GetAllRequestRates(namespace string, ratesInterval strin
 
 	if nsRates, okNs := c.cacheAllRequestRates[namespace]; okNs {
 		if rtInterval, okRt := nsRates[ratesInterval]; okRt {
-			if queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
+			if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 				log.Tracef("[Prom Cache] GetAllRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 				return true, rtInterval.inResult
 			}

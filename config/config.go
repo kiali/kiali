@@ -436,7 +436,8 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				CacheEnabled:  true,
-				CacheDuration: 10,
+				// 1/2 Prom Scrape Interval
+				CacheDuration: 7,
 				ComponentStatus: ComponentStatus{
 					AppLabel: "prometheus",
 					IsCore:   true,
