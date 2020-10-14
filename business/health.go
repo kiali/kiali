@@ -105,7 +105,7 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 	if w.Pods != nil || len(w.Pods) > 0 {
 		syncedProxies := int32(0)
 		for _, p := range w.Pods {
-			if p.ProxyStatus.IsSynced() {
+			if p.ProxyStatus != nil && p.ProxyStatus.IsSynced() {
 				syncedProxies++
 			}
 		}
