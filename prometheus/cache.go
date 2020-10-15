@@ -37,6 +37,7 @@ type (
 
 	promCacheImpl struct {
 		cacheDuration          time.Duration
+		cacheExpiration        time.Duration
 		cacheAllRequestRates   map[string]map[string]timeInResult
 		cacheAppRequestRates   map[string]map[string]map[string]timeInOutResult
 		cacheNsSvcRequestRates map[string]map[string]timeInResult
@@ -54,14 +55,19 @@ func NewPromCache() PromCache {
 	kConfig := kialiConfig.Get()
 
 	cacheDuration := time.Duration(kConfig.ExternalServices.Prometheus.CacheDuration) * time.Second
+	cacheExpiration := time.Duration(kConfig.ExternalServices.Prometheus.CacheExpiration) * time.Second
 	promCacheImpl := promCacheImpl{
 		cacheDuration:          cacheDuration,
+		cacheExpiration: 		cacheExpiration,
 		cacheAllRequestRates:   make(map[string]map[string]timeInResult),
 		cacheAppRequestRates:   make(map[string]map[string]map[string]timeInOutResult),
 		cacheNsSvcRequestRates: make(map[string]map[string]timeInResult),
 		cacheSvcRequestRates:   make(map[string]map[string]map[string]timeInResult),
 		cacheWkRequestRates:    make(map[string]map[string]map[string]timeInOutResult),
 	}
+
+	go promCacheImpl.watchExpiration()
+
 	return &promCacheImpl
 }
 
@@ -233,4 +239,32 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace string, workload strin
 		outResult: outResult,
 	}
 	log.Tracef("[Prom Cache] SetAppRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
+}
+
+// Expiration is done globally, this cache is designed as short term, so in the worst case it would populated the queries
+// Doing an expiration check per item is costly and it's not necessary in this particular context
+func (c *promCacheImpl) watchExpiration() {
+	for {
+		time.Sleep(c.cacheExpiration)
+		c.allRequestRatesLock.Lock()
+		c.cacheAllRequestRates = make(map[string]map[string]timeInResult)
+		c.allRequestRatesLock.Unlock()
+
+		c.appRequestRatesLock.Lock()
+		c.cacheAppRequestRates = make(map[string]map[string]map[string]timeInOutResult)
+		c.appRequestRatesLock.Unlock()
+
+		c.nsSvcRequestRatesLock.Lock()
+		c.cacheNsSvcRequestRates = make(map[string]map[string]timeInResult)
+		c.nsSvcRequestRatesLock.Unlock()
+
+		c.svcRequestRatesLock.Lock()
+		c.cacheSvcRequestRates = make(map[string]map[string]map[string]timeInResult)
+		c.svcRequestRatesLock.Unlock()
+
+		c.wkRequestRatesLock.Lock()
+		c.cacheWkRequestRates = make(map[string]map[string]map[string]timeInOutResult)
+		c.wkRequestRatesLock.Unlock()
+		log.Infof("[Prom Cache] Expired")
+	}
 }
