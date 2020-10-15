@@ -100,9 +100,9 @@ type PrometheusConfig struct {
 	// Cache duration per query expressed in seconds
 	CacheDuration int `yaml:"cache_duration,omitempty"`
 	// Enable cache for Prometheus queries
-	CacheEnabled    bool            `yaml:"cache_enabled,omitempty"`
+	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int 			`yaml:"cache_expiration:omitempty"`
+	CacheExpiration int             `yaml:"cache_expiration:omitempty"`
 	ComponentStatus ComponentStatus `yaml:"component_status,omitempty"`
 	URL             string          `yaml:"url,omitempty"`
 }

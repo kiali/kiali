@@ -58,7 +58,7 @@ func NewPromCache() PromCache {
 	cacheExpiration := time.Duration(kConfig.ExternalServices.Prometheus.CacheExpiration) * time.Second
 	promCacheImpl := promCacheImpl{
 		cacheDuration:          cacheDuration,
-		cacheExpiration: 		cacheExpiration,
+		cacheExpiration:        cacheExpiration,
 		cacheAllRequestRates:   make(map[string]map[string]timeInResult),
 		cacheAppRequestRates:   make(map[string]map[string]map[string]timeInOutResult),
 		cacheNsSvcRequestRates: make(map[string]map[string]timeInResult),
