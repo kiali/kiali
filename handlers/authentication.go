@@ -138,6 +138,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 		Value:    tokenString,
 		Expires:  expiresOn,
 		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(w, &tokenCookie)
@@ -559,6 +560,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 				Value:    "",
 				Expires:  time.Unix(0, 0),
 				HttpOnly: true,
+				MaxAge:   -1,
 				Path:     conf.Server.WebRoot,
 				SameSite: http.SameSiteStrictMode,
 			}
