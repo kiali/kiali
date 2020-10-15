@@ -41,34 +41,69 @@ export const getTimeRangeMicros = () => {
   };
 };
 
-const workloadFromNodeRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+.([a-z0-9-]+)/;
-const workloadFromHostnameRegex = /([a-z0-9-.]+)-[a-z0-9]+-[a-z0-9]+/;
 type WorkloadAndNamespace = { pod: string; workload: string; namespace: string };
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
-  if (!nodeKV) {
-    // Tag not found => try with 'hostname' in process' tags
-    const hostnameKV = span.process.tags.find(tag => tag.key === 'hostname');
-    if (hostnameKV) {
-      const result = workloadFromHostnameRegex.exec(hostnameKV.value);
-      if (result && result.length > 1) {
-        // As the namespace is not provided here, assume same as service's
-        const split = span.process.serviceName.split('.');
-        return { pod: hostnameKV.value, workload: result[1], namespace: split.length > 1 ? split[1] : '' };
-      }
+  if (nodeKV) {
+    // Example of node value:
+    // sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
+    const parts = nodeKV.value.split('~');
+    if (parts.length < 3) {
+      return undefined;
+    }
+    const podWithNamespace = parts[2];
+    const nsIdx = podWithNamespace.lastIndexOf('.');
+    if (nsIdx >= 0) {
+      return extractWorkloadFromPod(podWithNamespace.substring(0, nsIdx), podWithNamespace.substring(nsIdx + 1));
     }
     return undefined;
   }
-  // Example of node value:
-  // sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
-  const parts = nodeKV.value.split('~');
-  if (parts.length < 3) {
-    return undefined;
+  // Tag not found => try with 'hostname' in process' tags
+  const hostnameKV = span.process.tags.find(tag => tag.key === 'hostname');
+  if (hostnameKV) {
+    const svcNs = span.process.serviceName.split('.');
+    return extractWorkloadFromPod(hostnameKV.value, svcNs.length > 1 ? svcNs[1] : '');
   }
-  const result = workloadFromNodeRegex.exec(parts[2]);
-  return result && result.length > 2
-    ? { pod: parts[2].split('.')[0], workload: result[1], namespace: result[2] }
-    : undefined;
+  return undefined;
+};
+
+const replicasetFromPodRegex = /^([a-z0-9-.]+)-[a-z0-9]+$/;
+const extractWorkloadFromPod = (pod: string, ns: string): WorkloadAndNamespace | undefined => {
+  const result = replicasetFromPodRegex.exec(pod);
+  if (result && result.length === 2) {
+    return {
+      pod: pod,
+      workload: adjustWorkloadNameFromReplicaset(result[1]),
+      namespace: ns
+    };
+  }
+  return undefined;
+};
+
+// Pod template hash should be made of alphanum without vowels, '0', '1' and '3'
+// (see https://github.com/kubernetes/kubernetes/blob/release-1.17/staging/src/k8s.io/apimachinery/pkg/util/rand/rand.go#L83)
+const templateHashRegex = /^[bcdfghjklmnpqrstvwxz2456789]{6,16}$/;
+const adjustWorkloadNameFromReplicaset = (replicaset: string): string => {
+  // This is a best effort to try to disambiguate deployment-like workloads versus replicaset-like workloads
+  // Workloads can be:
+  // - foo-fg65h9p7qj (deployment)
+  // - bar-replicaset (replicaset)
+  // In the first case, we want to keep "foo", but in the second case we need the whole "bar-replicaset" string.
+  // This is not 100% guaranteed, there's still a small chance that a replica set is wrongly seen as a deployment-like workload.
+  // That happens when:
+  // - it contains at least one dash '-'
+  // - AND the part after the last dash is:
+  //   . between 6 and 16 characters long
+  //   . AND compound exclusively of alphanums characters except vowels, '0', '1' and '3'
+  const parts = replicaset.split('-');
+  if (parts.length < 2) {
+    return replicaset;
+  }
+  const templateHashCandidate = parts[parts.length - 1];
+  if (templateHashRegex.test(templateHashCandidate)) {
+    return replicaset.substring(0, replicaset.length - templateHashCandidate.length - 1);
+  }
+  return replicaset;
 };
 
 export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefined => {
