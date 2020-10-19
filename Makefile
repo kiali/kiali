@@ -7,7 +7,7 @@ OUTDIR=${ROOTDIR}/_output
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.24.1
+VERSION ?= v1.24.2
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
