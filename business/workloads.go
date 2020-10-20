@@ -45,6 +45,11 @@ type LogEntry struct {
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
 }
 
+type LogOptions struct {
+	Duration *time.Duration
+	core_v1.PodLogOptions
+}
+
 var (
 	excludedWorkloads map[string]bool
 
@@ -189,8 +194,9 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
-	podLog, err := in.k8s.GetPodLogs(namespace, name, opts)
+func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
+	k8sOpts := opts.PodLogOptions
+	podLog, err := in.k8s.GetPodLogs(namespace, name, &k8sOpts)
 
 	if err != nil {
 		return nil, err
@@ -198,8 +204,17 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 
 	lines := strings.Split(podLog.Logs, "\n")
 	messages := make([]LogEntry, 0)
+	lineCount := int64(0)
 
 	for _, line := range lines {
+		if k8sOpts.TailLines != nil {
+			if *k8sOpts.TailLines <= lineCount {
+				break
+			} else {
+				lineCount += 1
+			}
+		}
+
 		entry := LogEntry{
 			Message:       "",
 			Timestamp:     "",
@@ -247,7 +262,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 	return &message, err
 }
 
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	return in.getParsedLogs(namespace, name, opts)
 }
 

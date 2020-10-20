@@ -178,7 +178,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Pod Logs initialization error: "+err.Error())
 		return
@@ -187,13 +187,13 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	podLogOptions := core_v1.PodLogOptions{Timestamps: true}
+	k8sOpts := core_v1.PodLogOptions{Timestamps: true}
 	if container := queryParams.Get("container"); container != "" {
-		podLogOptions.Container = container
+		k8sOpts.Container = container
 	}
 	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
 		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
-			podLogOptions.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+			k8sOpts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
 			return
@@ -202,7 +202,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	if tailLines := queryParams.Get("tailLines"); tailLines != "" {
 		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
 			if numLines > 0 {
-				podLogOptions.TailLines = &numLines
+				k8sOpts.TailLines = &numLines
 			}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
@@ -210,8 +210,15 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	opts := business.LogOptions{PodLogOptions: k8sOpts}
+	if duration := queryParams.Get("duration"); duration != "" {
+		if parsed, err := time.ParseDuration(duration); err != nil {
+			opts.Duration = &parsed
+		}
+	}
+
 	// Fetch pod logs
-	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &podLogOptions)
+	podLogs, err := businessLayer.Workload.GetPodLogs(namespace, pod, &opts)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

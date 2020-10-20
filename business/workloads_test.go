@@ -440,7 +440,7 @@ func TestGetPodLogs(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &core_v1.PodLogOptions{Container: "details"})
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
 	assert.Equal(FakePodLogsSyncedWithDeployments().Logs, podLogs.Logs)
 
@@ -465,6 +465,34 @@ func TestGetPodLogs(t *testing.T) {
 	assert.Equal(int64(1514867668), podLogs.Entries[3].TimestampUnix)
 	assert.Equal("error Log Entry With LowerCase Severity", podLogs.Entries[3].Message)
 	assert.Equal("ERROR", podLogs.Entries[3].Severity)
+}
+
+func TestGetPodLogsTailLines(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	tailLines := int64(2)
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+
+	assert.Equal(2, len(podLogs.Entries))
+
+	assert.Equal("2018-01-02T03:34:28+00:00", podLogs.Entries[0].Timestamp)
+	assert.Equal(int64(1514864068), podLogs.Entries[0].TimestampUnix)
+	assert.Equal("INFO Fake Log Entry", podLogs.Entries[0].Message)
+	assert.Equal("INFO", podLogs.Entries[0].Severity)
+
+	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[1].Timestamp)
+	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
+	assert.Equal("WARN Fake Warning Entry", podLogs.Entries[1].Message)
+	assert.Equal("WARN", podLogs.Entries[1].Severity)
 }
 
 func TestDuplicatedControllers(t *testing.T) {
