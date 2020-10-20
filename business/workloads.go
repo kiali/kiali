@@ -206,9 +206,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	}
 
 	lines := strings.Split(podLog.Logs, "\n")
-	messages := make([]LogEntry, 0)
-
-	lineCount := int64(0)
+	entries := make([]LogEntry, 0)
 
 	var startTime *time.Time
 	if k8sOpts.SinceTime != nil {
@@ -216,14 +214,6 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	}
 
 	for _, line := range lines {
-		if tailLines != nil {
-			if *tailLines <= lineCount {
-				break
-			} else {
-				lineCount += 1
-			}
-		}
-
 		entry := LogEntry{
 			Message:       "",
 			Timestamp:     "",
@@ -268,12 +258,16 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 			entry.Severity = strings.ToUpper(severity)
 		}
 
-		messages = append(messages, entry)
+		entries = append(entries, entry)
+	}
+
+	if tailLines != nil && len(entries) > int(*tailLines) {
+		entries = entries[len(entries)-int(*tailLines):]
 	}
 
 	message := PodLog{
 		Logs:    podLog.Logs,
-		Entries: messages,
+		Entries: entries,
 	}
 
 	return &message, err
