@@ -187,13 +187,23 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	k8sOpts := core_v1.PodLogOptions{Timestamps: true}
+	opts := business.LogOptions{PodLogOptions: core_v1.PodLogOptions{Timestamps: true}}
 	if container := queryParams.Get("container"); container != "" {
-		k8sOpts.Container = container
+		opts.Container = container
+	}
+	if duration := queryParams.Get("duration"); duration != "" {
+		duration, err := time.ParseDuration(duration)
+
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid duration [%s]: %v", duration, err))
+			return
+		}
+
+		opts.Duration = &duration
 	}
 	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
 		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
-			k8sOpts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+			opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
 			return
@@ -202,7 +212,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	if tailLines := queryParams.Get("tailLines"); tailLines != "" {
 		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
 			if numLines > 0 {
-				k8sOpts.TailLines = &numLines
+				opts.TailLines = &numLines
 			}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
@@ -210,7 +220,6 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	opts := business.LogOptions{PodLogOptions: k8sOpts}
 	if duration := queryParams.Get("duration"); duration != "" {
 		if parsed, err := time.ParseDuration(duration); err != nil {
 			opts.Duration = &parsed
