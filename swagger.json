@@ -2263,6 +2263,13 @@
             "description": "The start time for fetching logs. UNIX time in seconds. Default is all logs.",
             "name": "sinceTime",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Query time-range duration (Golang string duration). Duration starts on\n`sinceTime` if set, or the time for the first log message if not set.",
+            "name": "duration",
+            "in": "query"
           }
         ],
         "responses": {
