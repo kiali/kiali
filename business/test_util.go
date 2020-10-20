@@ -617,8 +617,8 @@ func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
 	return &kubernetes.PodLogs{
 		Logs: `2018-01-02T03:34:28+00:00 INFO Fake Log Entry
 2018-01-02T04:34:28+00:00 WARN Fake Warning Entry
-2018-01-02T04:34:28+00:00 Log Entry Without Severity
-2018-01-02T04:34:28+00:00 error Log Entry With LowerCase Severity`,
+2018-01-02T05:34:28+00:00 Log Entry Without Severity
+2018-01-02T06:34:28+00:00 error Log Entry With LowerCase Severity`,
 	}
 }
 

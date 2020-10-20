@@ -206,6 +206,15 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	messages := make([]LogEntry, 0)
 	lineCount := int64(0)
 
+	var startTime *time.Time
+	if k8sOpts.SinceTime != nil {
+		time := k8sOpts.SinceTime
+
+		if time != nil {
+			startTime = &time.Time
+		}
+	}
+
 	for _, line := range lines {
 		if k8sOpts.TailLines != nil {
 			if *k8sOpts.TailLines <= lineCount {
@@ -240,6 +249,14 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 
 		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
 		if err == nil {
+			if startTime == nil {
+				startTime = &parsed
+			}
+
+			if opts.Duration != nil && parsed.After(startTime.Add(*opts.Duration)) {
+				break
+			}
+
 			entry.TimestampUnix = parsed.Unix()
 		} else {
 			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())

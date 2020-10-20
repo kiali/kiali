@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -456,13 +457,13 @@ func TestGetPodLogs(t *testing.T) {
 	assert.Equal("WARN Fake Warning Entry", podLogs.Entries[1].Message)
 	assert.Equal("WARN", podLogs.Entries[1].Severity)
 
-	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[2].Timestamp)
-	assert.Equal(int64(1514867668), podLogs.Entries[2].TimestampUnix)
+	assert.Equal("2018-01-02T05:34:28+00:00", podLogs.Entries[2].Timestamp)
+	assert.Equal(int64(1514871268), podLogs.Entries[2].TimestampUnix)
 	assert.Equal("Log Entry Without Severity", podLogs.Entries[2].Message)
 	assert.Equal("INFO", podLogs.Entries[2].Severity)
 
-	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[3].Timestamp)
-	assert.Equal(int64(1514867668), podLogs.Entries[3].TimestampUnix)
+	assert.Equal("2018-01-02T06:34:28+00:00", podLogs.Entries[3].Timestamp)
+	assert.Equal(int64(1514874868), podLogs.Entries[3].TimestampUnix)
 	assert.Equal("error Log Entry With LowerCase Severity", podLogs.Entries[3].Message)
 	assert.Equal("ERROR", podLogs.Entries[3].Severity)
 }
@@ -493,6 +494,60 @@ func TestGetPodLogsTailLines(t *testing.T) {
 	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
 	assert.Equal("WARN Fake Warning Entry", podLogs.Entries[1].Message)
 	assert.Equal("WARN", podLogs.Entries[1].Severity)
+}
+
+func TestGetPodLogsDuration(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	duration, _ := time.ParseDuration("59m")
+
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(1, len(podLogs.Entries))
+
+	duration, _ = time.ParseDuration("1h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(2, len(podLogs.Entries))
+
+	duration, _ = time.ParseDuration("2h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(3, len(podLogs.Entries))
+}
+
+// Test that tail lines actually have the priority over durations
+func TestGetPodLogsDurationAndTailLines(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	duration, _ := time.ParseDuration("2h")
+
+	tailLines := int64(99)
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}, Duration: &duration})
+	assert.Equal(3, len(podLogs.Entries))
+
+	tailLines = int64(1)
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}, Duration: &duration})
+	assert.Equal(1, len(podLogs.Entries))
+
+	tailLines = int64(2)
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}, Duration: &duration})
+	assert.Equal(2, len(podLogs.Entries))
 }
 
 func TestDuplicatedControllers(t *testing.T) {
