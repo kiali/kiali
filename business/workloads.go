@@ -196,6 +196,9 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
+	tailLines := k8sOpts.TailLines
+	k8sOpts.TailLines = nil
+
 	podLog, err := in.k8s.GetPodLogs(namespace, name, &k8sOpts)
 
 	if err != nil {
@@ -204,20 +207,17 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 
 	lines := strings.Split(podLog.Logs, "\n")
 	messages := make([]LogEntry, 0)
+
 	lineCount := int64(0)
 
 	var startTime *time.Time
 	if k8sOpts.SinceTime != nil {
-		time := k8sOpts.SinceTime
-
-		if time != nil {
-			startTime = &time.Time
-		}
+		startTime = &k8sOpts.SinceTime.Time
 	}
 
 	for _, line := range lines {
-		if k8sOpts.TailLines != nil {
-			if *k8sOpts.TailLines <= lineCount {
+		if tailLines != nil {
+			if *tailLines <= lineCount {
 				break
 			} else {
 				lineCount += 1
