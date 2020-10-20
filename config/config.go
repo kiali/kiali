@@ -73,6 +73,7 @@ type Server struct {
 	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
 	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
 	WebRoot                    string `yaml:"web_root,omitempty"`
+	WebHistoryMode             string `yaml:"web_history_mode,omitempty"`
 	WebSchema                  string `yaml:"web_schema,omitempty"`
 }
 
@@ -483,6 +484,7 @@ func NewConfig() (c *Config) {
 			StaticContentRootDirectory: "/opt/kiali/console",
 			WebFQDN:                    "",
 			WebRoot:                    "/",
+			WebHistoryMode:             "browser",
 			WebSchema:                  "",
 		},
 	}
