@@ -9,7 +9,6 @@ import (
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/status"
 )
 
@@ -591,7 +590,7 @@ type WorkloadDetailsResponse struct {
 // swagger:response metricsResponse
 type MetricsResponse struct {
 	// in:body
-	Body prometheus.Metrics
+	Body models.Metrics
 }
 
 // Dashboard response model

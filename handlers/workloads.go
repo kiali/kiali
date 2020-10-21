@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/prometheus"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -88,55 +87,27 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, workloadDetails)
 }
 
-// WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
-func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
-	getWorkloadMetrics(w, r, defaultPromClientSupplier)
-}
-
-// getWorkloadMetrics (mock-friendly version)
-func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	workload := vars["workload"]
-
-	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
-	if prom == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, Workload: workload}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics := prom.GetMetrics(&params)
-	RespondWithJSON(w, http.StatusOK, metrics)
-}
-
 // WorkloadDashboard is the API handler to fetch Istio dashboard, related to a single workload
 func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
 
-	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
-	if prom == nil {
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	params := business.IstioMetricsQuery{Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	svc := business.NewDashboardsService(prom)
-	dashboard, err := svc.GetIstioDashboard(params)
+	metrics := metricsService.GetMetrics(params)
+	dashboard, err := businesspkg.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

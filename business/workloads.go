@@ -111,8 +111,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 		conf := config.Get()
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		dash := NewDashboardsService(in.prom)
-		runtimes = dash.GetCustomDashboardRefs(namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService().GetCustomDashboardRefs(namespace, app, version, workload.Pods)
 	}()
 
 	if includeServices {

@@ -190,22 +190,17 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInter
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) *prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(*prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRateRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) *prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, q)
 	return args.Get(0).(*prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) prometheus.Histogram {
+func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
 	args := o.Called(metricName, labels, grouping, q)
 	return args.Get(0).(prometheus.Histogram)
-}
-
-func (o *PromClientMock) GetMetrics(query *prometheus.IstioMetricsQuery) prometheus.Metrics {
-	args := o.Called(query)
-	return args.Get(0).(prometheus.Metrics)
 }

@@ -10,11 +10,96 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
+
+// AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
+func AppMetrics(w http.ResponseWriter, r *http.Request) {
+	getAppMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getAppMetrics (mock-friendly version)
+func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	app := vars["app"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := business.IstioMetricsQuery{Namespace: namespace, App: app}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics := metricsService.GetMetrics(params)
+	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+// WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
+func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
+	getWorkloadMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getWorkloadMetrics (mock-friendly version)
+func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	workload := vars["workload"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := business.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics := metricsService.GetMetrics(params)
+	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+// ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
+func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
+	getServiceMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getServiceMetrics (mock-friendly version)
+func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	service := vars["service"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := business.IstioMetricsQuery{Namespace: namespace, Service: service}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics := metricsService.GetMetrics(params)
+	RespondWithJSON(w, http.StatusOK, metrics)
+}
 
 // AggregateMetrics is the API handler to fetch metrics to be displayed, related to a single aggregate
 func AggregateMetrics(w http.ResponseWriter, r *http.Request) {
@@ -28,13 +113,13 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	aggregate := vars["aggregate"]
 	aggregateValue := vars["aggregateValue"]
 
-	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
-	if prom == nil {
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
+	params := business.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -49,11 +134,39 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	metrics := prom.GetMetrics(&params)
+	metrics := metricsService.GetMetrics(params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
+// NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
+// services in the namespace
+func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
+	getNamespaceMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getServiceMetrics (mock-friendly version)
+func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, promSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := business.IstioMetricsQuery{Namespace: namespace}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics := metricsService.GetMetrics(params)
+	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+func extractIstioMetricsQueryParams(r *http.Request, q *business.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
@@ -78,10 +191,10 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 		}
 		q.Reporter = reporter
 	}
-	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
+	return extractBaseMetricsQueryParams(queryParams, &q.RangeQuery, namespaceInfo)
 }
 
-func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMetricsQuery, namespaceInfo *models.Namespace) error {
+func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {
 	if ri := queryParams.Get("rateInterval"); ri != "" {
 		q.RateInterval = ri
 	}

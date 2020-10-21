@@ -19,14 +19,13 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
-	FetchRange(metricName, labels, grouping, aggregator string, q *BaseMetricsQuery) *Metric
-	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
+	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
+	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) *Metric
+	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) *Metric
 	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
 	GetFlags() (prom_v1.FlagsResult, error)
-	GetMetrics(query *IstioMetricsQuery) Metrics
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
@@ -92,11 +91,6 @@ func NewClient() (*Client, error) {
 // Inject allows for replacing the API with a mock For testing
 func (in *Client) Inject(api prom_v1.API) {
 	in.api = api
-}
-
-// GetMetrics returns the Metrics related to the provided query options.
-func (in *Client) GetMetrics(query *IstioMetricsQuery) Metrics {
-	return getMetrics(in.api, query)
 }
 
 // GetAllRequestRates queries Prometheus to fetch request counter rates, over a time interval, for requests
@@ -210,7 +204,7 @@ func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval str
 }
 
 // FetchRange fetches a simple metric (gauge or counter) in given range
-func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q *BaseMetricsQuery) *Metric {
+func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) *Metric {
 	query := fmt.Sprintf("%s(%s%s)", aggregator, metricName, labels)
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
@@ -220,12 +214,12 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 }
 
 // FetchRateRange fetches a counter's rate in given range
-func (in *Client) FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
-	return fetchRateRange(in.api, metricName, []string{labels}, grouping, q)
+func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) *Metric {
+	return fetchRateRange(in.api, metricName, labels, grouping, q)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range
-func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram {
+func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
 	return fetchHistogramRange(in.api, metricName, labels, grouping, q)
 }
 

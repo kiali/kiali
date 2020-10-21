@@ -1,4 +1,4 @@
-package prometheus
+package business
 
 type istioMetric struct {
 	kialiName      string

@@ -7,28 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func TestGetIstioDashboard(t *testing.T) {
+func TestBuildIstioDashboard(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	service := NewDashboardsService(prom)
+	service := NewDashboardsService()
 
-	query := prometheus.IstioMetricsQuery{
-		Namespace: "my-namespace",
-		App:       "my-app",
-	}
-	query.FillDefaults()
-	query.Direction = "inbound"
-	prom.On("GetMetrics", &query).Return(fakeMetrics())
-
-	dashboard, err := service.GetIstioDashboard(query)
+	dashboard, err := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 
 	assert.Nil(err)
 	assert.Equal("Inbound Metrics", dashboard.Title)
@@ -65,8 +56,8 @@ func fakeHistogram(avg int) prometheus.Histogram {
 	}
 }
 
-func fakeMetrics() prometheus.Metrics {
-	return prometheus.Metrics{
+func fakeMetrics() models.Metrics {
+	return models.Metrics{
 		Metrics: map[string]*prometheus.Metric{
 			"request_count":       fakeCounter(10),
 			"request_error_count": fakeCounter(11),

@@ -22,17 +22,16 @@ import (
 // DashboardsService deals with fetching dashboards from k8s client
 type DashboardsService struct {
 	delegate *kbus.DashboardsService
-	prom     prometheus.ClientInterface
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
+func NewDashboardsService() *DashboardsService {
 	cfg, lg, enabled := DashboardsConfig()
 	if !enabled {
-		return DashboardsService{delegate: nil, prom: prom}
+		return &DashboardsService{delegate: nil}
 	}
 	delegate := kbus.NewDashboardsService(cfg, lg)
-	return DashboardsService{delegate: &delegate, prom: prom}
+	return &DashboardsService{delegate: &delegate}
 }
 
 func DashboardsConfig() (kconf.Config, klog.LogAdapter, bool) {
@@ -181,16 +180,15 @@ func getIstioCharts() []istioChart {
 }
 
 // GetIstioDashboard returns Istio dashboard (currently hard-coded) filled-in with metrics
-func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQuery) (*kmodel.MonitoringDashboard, error) {
+func (in *DashboardsService) BuildIstioDashboard(metrics models.Metrics, direction string) (*kmodel.MonitoringDashboard, error) {
 	var dashboard kmodel.MonitoringDashboard
 	// Copy dashboard
-	if params.Direction == "inbound" {
+	if direction == "inbound" {
 		dashboard = models.PrepareIstioDashboard("Inbound", "destination", "source")
 	} else {
 		dashboard = models.PrepareIstioDashboard("Outbound", "source", "destination")
 	}
 
-	metrics := in.prom.GetMetrics(&params)
 	istioCharts := getIstioCharts()
 
 	for _, chartTpl := range istioCharts {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
 
@@ -32,34 +31,6 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, serviceList)
-}
-
-// ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
-func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
-	getServiceMetrics(w, r, defaultPromClientSupplier)
-}
-
-// getServiceMetrics (mock-friendly version)
-func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	service := vars["service"]
-
-	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
-	if prom == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, Service: service}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics := prom.GetMetrics(&params)
-	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
 // ServiceDetails is the API handler to fetch full details of an specific service
@@ -126,21 +97,21 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
-	if prom == nil {
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, Service: service}
+	params := business.IstioMetricsQuery{Namespace: namespace, Service: service}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	svc := business.NewDashboardsService(prom)
-	dashboard, err := svc.GetIstioDashboard(params)
+	metrics := metricsService.GetMetrics(params)
+	dashboard, err := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
