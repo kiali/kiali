@@ -88,7 +88,8 @@ const rightToolbar = style({
   marginLeft: 'auto'
 });
 
-const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', paddingRight: '10px', display: 'inherit' });
+const filterWithChildrenStyle = style({ borderRight: '1px solid #d1d1d1;', paddingRight: '10px', display: 'inherit' });
+const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
@@ -357,7 +358,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
         <ToolbarSection aria-label="ToolbarSection">
           <ToolbarGroup style={{ marginRight: '0px' }}>
-            <ToolbarItem className={classNames(this.props.children ? dividerStyle : '', 'pf-u-mr-xl')}>
+            <ToolbarItem className={classNames(this.props.children ? filterWithChildrenStyle : '', 'pf-u-mr-xl')}>
               <FormSelect
                 value={currentFilterType.id}
                 aria-label={'filter_select_type'}
