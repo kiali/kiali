@@ -209,6 +209,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	entries := make([]LogEntry, 0)
 
 	var startTime *time.Time
+	var endTime *time.Time
 	if k8sOpts.SinceTime != nil {
 		startTime = &k8sOpts.SinceTime.Time
 	}
@@ -243,8 +244,15 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 				startTime = &parsed
 			}
 
-			if opts.Duration != nil && parsed.After(startTime.Add(*opts.Duration)) {
-				break
+			if opts.Duration != nil {
+				if endTime == nil {
+					end := parsed.Add(*opts.Duration)
+					endTime = &end
+				}
+
+				if parsed.After(*endTime) {
+					break
+				}
 			}
 
 			entry.TimestampUnix = parsed.Unix()
