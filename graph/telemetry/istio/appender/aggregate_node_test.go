@@ -13,22 +13,22 @@ import (
 func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
@@ -36,15 +36,15 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 	q1m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
@@ -131,22 +131,22 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",request_operation!="unknown"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
@@ -154,15 +154,15 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 	q1m1 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
@@ -243,19 +243,19 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 func TestNodeGraphWithServiceInjection(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top",destination_service_name="reviews"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top",destination_service_name="reviews"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",
@@ -323,19 +323,19 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 func TestNodeGraphNoServiceInjection(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",request_operation="Top"}[60s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,request_operation) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
-		"source_app":                     "productpage",
-		"source_version":                 "v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
 		"destination_service_namespace":  "bookinfo",
 		"destination_service":            "reviews.bookinfo.svc.cluster.local",
 		"destination_service_name":       "reviews",
 		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "reviews-v1",
-		"destination_app":                "reviews",
-		"destination_version":            "v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
 		"response_code":                  "200",
 		"response_flags":                 "",
 		"request_protocol":               "http",

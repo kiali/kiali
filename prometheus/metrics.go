@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/status"
 )
 
 const (
@@ -46,11 +45,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, []string) {
 		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, ref, q.Workload))
 	}
 	if q.App != "" {
-		if status.AreCanonicalMetricsAvailable() {
-			labels = append(labels, fmt.Sprintf(`%s_canonical_service="%s"`, ref, q.App))
-		} else {
-			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, ref, q.App))
-		}
+		labels = append(labels, fmt.Sprintf(`%s_canonical_service="%s"`, ref, q.App))
 	}
 	if q.RequestProtocol != "" {
 		labels = append(labels, fmt.Sprintf(`request_protocol="%s"`, q.RequestProtocol))
