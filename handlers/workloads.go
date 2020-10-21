@@ -11,7 +11,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/business"
+	businesspkg "github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -140,7 +140,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := business.NewDashboardsService(prom)
+	svc := businesspkg.NewDashboardsService(prom)
 	dashboard, err := svc.GetIstioDashboard(params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -178,7 +178,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 
 	// Get business layer
-	businessLayer, err := getBusiness(r)
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Pod Logs initialization error: "+err.Error())
 		return
@@ -187,7 +187,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	opts := business.LogOptions{PodLogOptions: core_v1.PodLogOptions{Timestamps: true}}
+	opts := businesspkg.LogOptions{PodLogOptions: core_v1.PodLogOptions{Timestamps: true}}
 	if container := queryParams.Get("container"); container != "" {
 		opts.Container = container
 	}
@@ -227,7 +227,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch pod logs
-	podLogs, err := businessLayer.Workload.GetPodLogs(namespace, pod, &opts)
+	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &opts)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
