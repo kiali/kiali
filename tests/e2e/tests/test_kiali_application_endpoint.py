@@ -58,6 +58,6 @@ def test_application_metrics_endpoint(kiali_client):
     assert 'tcp_sent' in metrics
 
     histograms = app_metrics.get('histograms')
-    assert 'request_duration' in histograms
+    assert 'request_duration_millis' in histograms
     assert 'request_size' in histograms
     assert 'response_size' in histograms

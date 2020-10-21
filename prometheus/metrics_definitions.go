@@ -20,11 +20,6 @@ var istioMetrics = []istioMetric{
 		useErrorLabels: true,
 	},
 	{
-		kialiName: "request_duration",
-		istioName: "istio_request_duration_seconds",
-		isHisto:   true,
-	},
-	{
 		kialiName: "request_duration_millis",
 		istioName: "istio_request_duration_milliseconds",
 		isHisto:   true,

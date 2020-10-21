@@ -2,7 +2,6 @@ package business
 
 import (
 	"fmt"
-	"math"
 	"sort"
 
 	kbus "github.com/kiali/k-charted/business"
@@ -108,7 +107,7 @@ type istioChart struct {
 	scale   float64
 }
 
-func getIstioCharts(durationMillis bool) []istioChart {
+func getIstioCharts() []istioChart {
 	istioCharts := []istioChart{
 		{
 			Chart: kmodel.Chart{
@@ -124,7 +123,8 @@ func getIstioCharts(durationMillis bool) []istioChart {
 				Unit:  "seconds",
 				Spans: 6,
 			},
-			refName: "request_duration",
+			refName: "request_duration_millis",
+			scale:   0.001,
 		},
 		{
 			Chart: kmodel.Chart{
@@ -177,36 +177,7 @@ func getIstioCharts(durationMillis bool) []istioChart {
 			refName: "tcp_sent",
 		},
 	}
-	// TODO: Istio is transitioning from duration in seconds to duration in ms (a new metric). When
-	//       complete we should reduce the next two entries to just one entry.
-	if durationMillis {
-		istioCharts[1].refName = "request_duration_millis"
-		istioCharts[1].scale = 0.001
-	}
 	return istioCharts
-}
-
-func checkDurationMillis(metrics prometheus.Metrics) bool {
-	// TODO: remove this hacky code when Istio finishes migrating to the millis duration metric,
-	//       until then use the one that has data, preferring millis in the corner case that
-	//       both have data for the time range.
-	_, secondsOK := metrics.Histograms["request_duration"]
-	durationMillisMetric, millisOK := metrics.Histograms["request_duration_millis"]
-	if secondsOK && millisOK {
-		for _, samples := range durationMillisMetric {
-			for _, sample := range samples.Matrix {
-				for _, pair := range sample.Values {
-					if !math.IsNaN(float64(pair.Value)) {
-						delete(metrics.Histograms, "request_duration")
-						return true
-					}
-				}
-			}
-		}
-		delete(metrics.Histograms, "request_duration_millis")
-		return false
-	}
-	return millisOK
 }
 
 // GetIstioDashboard returns Istio dashboard (currently hard-coded) filled-in with metrics
@@ -220,8 +191,7 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 	}
 
 	metrics := in.prom.GetMetrics(&params)
-	durationMillis := checkDurationMillis(metrics)
-	istioCharts := getIstioCharts(durationMillis)
+	istioCharts := getIstioCharts()
 
 	for _, chartTpl := range istioCharts {
 		newChart := chartTpl.Chart
