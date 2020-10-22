@@ -93,6 +93,7 @@
     "redux-persist-transform-filter": "0.0.18",
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
+    "screenfull": "5.0.2",
     "ssri": "6.0.1",
     "tippy.js": "3.4.1",
     "typesafe-actions": "3.2.1",
