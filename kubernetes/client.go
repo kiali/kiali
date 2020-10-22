@@ -98,23 +98,13 @@ type K8SClient struct {
 	ClientInterface
 	token                    string
 	k8s                      *kube.Clientset
-	istioConfigApi           *rest.RESTClient
 	istioNetworkingApi       *rest.RESTClient
-	istioAuthenticationApi   *rest.RESTClient
-	istioRbacApi             *rest.RESTClient
 	istioSecurityApi         *rest.RESTClient
-	maistraAuthenticationApi *rest.RESTClient
-	maistraRbacApi           *rest.RESTClient
 	iter8Api                 *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
-
-	// isMaistraApi private variable will check if specific Maistra APIs for authentication and rbac are present.
-	// It is represented as a pointer to include the initialization phase.
-	// See kubernetes_service.go#IsMaistraApi() for more details.
-	isMaistraApi *bool
 
 	// isIter8Api private variable will check if extension Iter8 API is present.
 	// It is represented as a pointer to include the initialization phase.
@@ -137,19 +127,9 @@ func (client *K8SClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
 }
 
-// GetIstioConfigApi returns the istio config rest client
-func (client *K8SClient) GetIstioConfigApi() *rest.RESTClient {
-	return client.istioConfigApi
-}
-
 // GetIstioNetworkingApi returns the istio config rest client
 func (client *K8SClient) GetIstioNetworkingApi() *rest.RESTClient {
 	return client.istioNetworkingApi
-}
-
-// GetIstioRbacApi returns the istio rbac rest client
-func (client *K8SClient) GetIstioRbacApi() *rest.RESTClient {
-	return client.istioRbacApi
 }
 
 // GetIstioSecurityApi returns the istio security rest client
