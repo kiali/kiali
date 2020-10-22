@@ -97,7 +97,13 @@ func (a *Auth) Obfuscate() {
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	Auth            Auth            `yaml:"auth,omitempty"`
+	Auth Auth `yaml:"auth,omitempty"`
+	// Cache duration per query expressed in seconds
+	CacheDuration int `yaml:"cache_duration,omitempty"`
+	// Enable cache for Prometheus queries
+	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
+	// Global cache expiration expressed in seconds
+	CacheExpiration int             `yaml:"cache_expiration:omitempty"`
 	ComponentStatus ComponentStatus `yaml:"component_status,omitempty"`
 	URL             string          `yaml:"url,omitempty"`
 }
@@ -432,6 +438,11 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				CacheEnabled: true,
+				// 1/2 Prom Scrape Interval
+				CacheDuration: 7,
+				// Prom Cache expires and it forces to repopulate cache
+				CacheExpiration: 300,
 				ComponentStatus: ComponentStatus{
 					AppLabel: "prometheus",
 					IsCore:   true,
