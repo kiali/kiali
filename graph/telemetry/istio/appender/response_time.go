@@ -70,8 +70,6 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	responseTimeMap := make(map[string]float64)
 
 	// query prometheus for the responseTime info in three queries:
-	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
-	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
 	groupBy := fmt.Sprintf("le,source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_code,grpc_response_status", appLabel, verLabel, appLabel, verLabel)
 	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s)) > 0`,

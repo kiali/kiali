@@ -69,7 +69,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -127,7 +127,7 @@ func TestGetAppMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -268,7 +268,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountOut := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountOut)
 	rqErrorCountOut := metrics.Metrics["request_error_count"]
