@@ -3909,60 +3909,6 @@
       },
       "x-go-package": "github.com/kiali/k-charted/model"
     },
-    "ClusterRbacConfig": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "$ref": "#/definitions/ClusterRbacConfigSpec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ClusterRbacConfigSpec": {
-      "type": "object",
-      "properties": {
-        "exclusion": {
-          "type": "object",
-          "x-go-name": "Exclusion"
-        },
-        "inclusion": {
-          "type": "object",
-          "x-go-name": "Inclusion"
-        },
-        "mode": {
-          "type": "object",
-          "x-go-name": "Mode"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ClusterRbacConfigs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ClusterRbacConfig"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "ComponentStatus": {
       "type": "object",
       "required": [
@@ -4348,17 +4294,8 @@
     "IstioConfigDetails": {
       "type": "object",
       "properties": {
-        "adapter": {
-          "$ref": "#/definitions/istioAdapter"
-        },
-        "attributeManifest": {
-          "$ref": "#/definitions/attributeManifest"
-        },
         "authorizationPolicy": {
           "$ref": "#/definitions/authorizationPolicy"
-        },
-        "clusterRbacConfig": {
-          "$ref": "#/definitions/ClusterRbacConfig"
         },
         "destinationRule": {
           "$ref": "#/definitions/destinationRule"
@@ -4368,21 +4305,6 @@
         },
         "gateway": {
           "$ref": "#/definitions/Gateway"
-        },
-        "handler": {
-          "$ref": "#/definitions/istioHandler"
-        },
-        "httpApiSpec": {
-          "$ref": "#/definitions/httpApiSpec"
-        },
-        "httpApiSpecBinding": {
-          "$ref": "#/definitions/httpApiSpecBinding"
-        },
-        "instance": {
-          "$ref": "#/definitions/istioInstance"
-        },
-        "meshPolicy": {
-          "$ref": "#/definitions/MeshPolicy"
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
@@ -4397,38 +4319,14 @@
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
-        "policy": {
-          "$ref": "#/definitions/Policy"
-        },
-        "quotaSpec": {
-          "$ref": "#/definitions/QuotaSpec"
-        },
-        "quotaSpecBinding": {
-          "$ref": "#/definitions/QuotaSpecBinding"
-        },
-        "rbacConfig": {
-          "$ref": "#/definitions/RbacConfig"
-        },
         "requestAuthentication": {
           "$ref": "#/definitions/requestAuthentication"
-        },
-        "rule": {
-          "$ref": "#/definitions/istioRule"
         },
         "serviceEntry": {
           "$ref": "#/definitions/ServiceEntry"
         },
-        "serviceRole": {
-          "$ref": "#/definitions/ServiceRole"
-        },
-        "serviceRoleBinding": {
-          "$ref": "#/definitions/ServiceRoleBinding"
-        },
         "sidecar": {
           "$ref": "#/definitions/Sidecar"
-        },
-        "template": {
-          "$ref": "#/definitions/istioTemplate"
         },
         "validation": {
           "$ref": "#/definitions/IstioValidation"
@@ -4450,17 +4348,8 @@
         "namespace"
       ],
       "properties": {
-        "adapters": {
-          "$ref": "#/definitions/istioAdapters"
-        },
-        "attributeManifests": {
-          "$ref": "#/definitions/attributeManifests"
-        },
         "authorizationPolicies": {
           "$ref": "#/definitions/authorizationPolicies"
-        },
-        "clusterRbacConfigs": {
-          "$ref": "#/definitions/ClusterRbacConfigs"
         },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
@@ -4471,59 +4360,20 @@
         "gateways": {
           "$ref": "#/definitions/Gateways"
         },
-        "handlers": {
-          "$ref": "#/definitions/istioHandlers"
-        },
-        "httpApiSpecBindings": {
-          "$ref": "#/definitions/httpApiSpecBindings"
-        },
-        "httpApiSpecs": {
-          "$ref": "#/definitions/httpApiSpecs"
-        },
-        "instances": {
-          "$ref": "#/definitions/istioInstances"
-        },
-        "meshPolicies": {
-          "$ref": "#/definitions/MeshPolicies"
-        },
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
         "peerAuthentications": {
           "$ref": "#/definitions/peerAuthentications"
         },
-        "policies": {
-          "$ref": "#/definitions/Policies"
-        },
-        "quotaSpecBindings": {
-          "$ref": "#/definitions/QuotaSpecBindings"
-        },
-        "quotaSpecs": {
-          "$ref": "#/definitions/QuotaSpecs"
-        },
-        "rbacConfigs": {
-          "$ref": "#/definitions/RbacConfigs"
-        },
         "requestAuthentications": {
           "$ref": "#/definitions/requestAuthentications"
-        },
-        "rules": {
-          "$ref": "#/definitions/istioRules"
         },
         "serviceEntries": {
           "$ref": "#/definitions/ServiceEntries"
         },
-        "serviceRoleBindings": {
-          "$ref": "#/definitions/ServiceRoleBindings"
-        },
-        "serviceRoles": {
-          "$ref": "#/definitions/ServiceRoles"
-        },
         "sidecars": {
           "$ref": "#/definitions/Sidecars"
-        },
-        "templates": {
-          "$ref": "#/definitions/istioTemplates"
         },
         "validations": {
           "$ref": "#/definitions/IstioValidations"
@@ -5267,72 +5117,6 @@
       },
       "x-go-package": "github.com/prometheus/common/model"
     },
-    "MeshPolicies": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/MeshPolicy"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "MeshPolicy": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "$ref": "#/definitions/MeshPolicySpec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "MeshPolicySpec": {
-      "type": "object",
-      "properties": {
-        "originIsOptional": {
-          "type": "object",
-          "x-go-name": "OriginIsOptional"
-        },
-        "origins": {
-          "type": "object",
-          "x-go-name": "Origins"
-        },
-        "peerIsOptional": {
-          "type": "object",
-          "x-go-name": "PeerIsOptional"
-        },
-        "peers": {
-          "type": "object",
-          "x-go-name": "Peers"
-        },
-        "principalBinding": {
-          "type": "object",
-          "x-go-name": "PrincipalBinding"
-        },
-        "targets": {
-          "type": "object",
-          "x-go-name": "Targets"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "Metric": {
       "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
       "type": "object",
@@ -5760,69 +5544,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "Policies": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Policy"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Policy": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "originIsOptional": {
-              "type": "object",
-              "x-go-name": "OriginIsOptional"
-            },
-            "origins": {
-              "type": "object",
-              "x-go-name": "Origins"
-            },
-            "peerIsOptional": {
-              "type": "object",
-              "x-go-name": "PeerIsOptional"
-            },
-            "peers": {
-              "type": "object",
-              "x-go-name": "Peers"
-            },
-            "principalBinding": {
-              "type": "object",
-              "x-go-name": "PrincipalBinding"
-            },
-            "targets": {
-              "type": "object",
-              "x-go-name": "Targets"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "Port": {
       "type": "object",
       "properties": {
@@ -5910,147 +5631,6 @@
         "RDS": {
           "type": "string"
         }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "QuotaSpec": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "rules": {
-              "type": "object",
-              "x-go-name": "Rules"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "QuotaSpecBinding": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "quotaSpecs": {
-              "type": "object",
-              "x-go-name": "QuotaSpecs"
-            },
-            "services": {
-              "type": "object",
-              "x-go-name": "Services"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "QuotaSpecBindings": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/QuotaSpecBinding"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "QuotaSpecs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/QuotaSpec"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "RbacConfig": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "exclusion": {
-              "type": "object",
-              "x-go-name": "Exclusion"
-            },
-            "inclusion": {
-              "type": "object",
-              "x-go-name": "Inclusion"
-            },
-            "mode": {
-              "type": "object",
-              "x-go-name": "Mode"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "RbacConfigs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/RbacConfig"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -6468,96 +6048,6 @@
           "x-go-name": "Name",
           "example": "reviews-v1"
         }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ServiceRole": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "rules": {
-              "type": "object",
-              "x-go-name": "Rules"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ServiceRoleBinding": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "roleRef": {
-              "type": "object",
-              "x-go-name": "RoleRef"
-            },
-            "subjects": {
-              "type": "object",
-              "x-go-name": "Subjects"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ServiceRoleBindings": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ServiceRoleBinding"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ServiceRoles": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/ServiceRole"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -7247,63 +6737,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "attributeManifest": {
-      "description": "This is used for returning an AttributeManifest",
-      "type": "object",
-      "title": "AttributeManifest attributeManifest",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "attributes": {
-              "type": "object",
-              "x-go-name": "Attributes"
-            },
-            "name": {
-              "type": "object",
-              "x-go-name": "Name"
-            },
-            "revision": {
-              "type": "object",
-              "x-go-name": "Revision"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "AttributeManifest",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "attributeManifests": {
-      "description": "This is used for returning an array of AttributeManifest",
-      "type": "array",
-      "title": "AttributeManifests attributeManifests",
-      "items": {
-        "$ref": "#/definitions/attributeManifest"
-      },
-      "x-go-name": "AttributeManifests",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "authorizationPolicies": {
       "description": "This is used for returning an array of AuthorizationPolicies",
       "type": "array",
@@ -7513,341 +6946,6 @@
       },
       "x-go-name": "ExternalServiceInfo",
       "x-go-package": "github.com/kiali/kiali/status"
-    },
-    "httpApiSpec": {
-      "description": "This is used for returning an HttpApiSpec",
-      "type": "object",
-      "title": "HttpApiSpec httpApiSpec",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "apiKeys": {
-              "type": "object",
-              "x-go-name": "ApiKeys"
-            },
-            "attributes": {
-              "type": "object",
-              "x-go-name": "Attributes"
-            },
-            "patterns": {
-              "type": "object",
-              "x-go-name": "Patterns"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "HttpApiSpec",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "httpApiSpecBinding": {
-      "description": "This is used for returning an HttpApiSpecBinding",
-      "type": "object",
-      "title": "HttpApiSpecBinding httpApiSpecBinding",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "apiSpecs": {
-              "type": "object",
-              "x-go-name": "ApiSpecs"
-            },
-            "services": {
-              "type": "object",
-              "x-go-name": "Services"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "HttpApiSpecBinding",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "httpApiSpecBindings": {
-      "description": "This is used for returning an array of HttpApiSpecBinding",
-      "type": "array",
-      "title": "HttpApiSpecBindings httpApiSpecBindings",
-      "items": {
-        "$ref": "#/definitions/httpApiSpecBinding"
-      },
-      "x-go-name": "HttpApiSpecBindings",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "httpApiSpecs": {
-      "description": "This is used for returning an array of HttpApiSpec",
-      "type": "array",
-      "title": "HttpApiSpecs httpApiSpecs",
-      "items": {
-        "$ref": "#/definitions/httpApiSpec"
-      },
-      "x-go-name": "HttpApiSpecs",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioAdapter": {
-      "description": "This type type is used for returning a IstioAdapter",
-      "type": "object",
-      "title": "IstioAdapter istioAdapter",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "IstioAdapter",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioAdapters": {
-      "description": "This type type is used for returning an array of IstioAdapters",
-      "type": "array",
-      "title": "IstioAdapters istioAdapters",
-      "items": {
-        "$ref": "#/definitions/istioAdapter"
-      },
-      "x-go-name": "IstioAdapters",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioHandler": {
-      "description": "This type type is used for returning a IstioHandler",
-      "type": "object",
-      "title": "IstioHandler istioHandler",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "IstioHandler",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioHandlers": {
-      "description": "This type type is used for returning an array of IstioHandlers",
-      "type": "array",
-      "title": "IstioHandlers istioHandlers",
-      "items": {
-        "$ref": "#/definitions/istioHandler"
-      },
-      "x-go-name": "IstioHandlers",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioInstance": {
-      "description": "This type type is used for returning a IstioInstance",
-      "type": "object",
-      "title": "IstioInstance istioInstance",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "IstioInstance",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioInstances": {
-      "description": "This type type is used for returning an array of IstioInstances",
-      "type": "array",
-      "title": "IstioInstances istioInstances",
-      "items": {
-        "$ref": "#/definitions/istioInstance"
-      },
-      "x-go-name": "IstioInstances",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioRule": {
-      "description": "This type type is used for returning a IstioRule",
-      "type": "object",
-      "title": "IstioRule istioRule",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "actions": {
-              "type": "object",
-              "x-go-name": "Actions"
-            },
-            "match": {
-              "type": "object",
-              "x-go-name": "Match"
-            }
-          },
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "IstioRule",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioRules": {
-      "description": "This type type is used for returning an array of IstioRules",
-      "type": "array",
-      "title": "IstioRules istioRules",
-      "items": {
-        "$ref": "#/definitions/istioRule"
-      },
-      "x-go-name": "IstioRules",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioTemplate": {
-      "description": "This type type is used for returning a IstioTemplate",
-      "type": "object",
-      "title": "IstioTemplate istioTemplate",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        },
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "IstioTemplate",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "istioTemplates": {
-      "description": "This type type is used for returning an array of IstioTemplates",
-      "type": "array",
-      "title": "IstioTemplates istioTemplates",
-      "items": {
-        "$ref": "#/definitions/istioTemplate"
-      },
-      "x-go-name": "IstioTemplates",
-      "x-go-package": "github.com/kiali/kiali/models"
     },
     "namespace": {
       "description": "A Namespace provide a scope for names\nThis type is used to describe a set of objects.",
