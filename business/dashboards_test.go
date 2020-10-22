@@ -74,9 +74,9 @@ func fakeMetrics() prometheus.Metrics {
 			"tcp_sent":            fakeCounter(13),
 		},
 		Histograms: map[string]prometheus.Histogram{
-			"request_duration": fakeHistogram(20),
-			"request_size":     fakeHistogram(21),
-			"response_size":    fakeHistogram(22),
+			"request_duration_millis": fakeHistogram(20000),
+			"request_size":            fakeHistogram(21),
+			"response_size":           fakeHistogram(22),
 		},
 	}
 }

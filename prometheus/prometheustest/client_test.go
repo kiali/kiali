@@ -62,7 +62,6 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 11)
 	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 13)
 	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.9)
 
@@ -70,7 +69,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -81,8 +80,6 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeIn := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeIn)
-	rqDurationIn := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationIn)
 	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
@@ -97,7 +94,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.Equal(t, 1000.0, float64(rqThroughput.Matrix[0].Values[0].Value))
 	assert.Equal(t, 1001.0, float64(rsThroughput.Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
@@ -117,7 +114,6 @@ func TestGetAppMetrics(t *testing.T) {
 	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)
 	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
 
@@ -131,7 +127,7 @@ func TestGetAppMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -142,8 +138,6 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeIn := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeIn)
-	rqDurationIn := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationIn)
 	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
@@ -161,7 +155,7 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.Equal(t, 0.2, float64(rqSizeIn["0.5"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.3, float64(rqSizeIn["0.95"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.4, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.6, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 12.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
@@ -262,7 +256,6 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)
 	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
 
@@ -275,7 +268,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountOut := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountOut)
 	rqErrorCountOut := metrics.Metrics["request_error_count"]
@@ -286,8 +279,6 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeOut := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeOut)
-	rqDurationOut := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationOut)
 	rqDurationMillisOut := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisOut)
 	rsSizeOut := metrics.Histograms["response_size"]
@@ -305,7 +296,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 0.2, float64(rqSizeOut["0.5"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.3, float64(rqSizeOut["0.95"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.4, float64(rqSizeOut["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationMillisOut["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.6, float64(rsSizeOut["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))

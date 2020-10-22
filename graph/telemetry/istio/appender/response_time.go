@@ -70,30 +70,21 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	responseTimeMap := make(map[string]float64)
 
 	// query prometheus for the responseTime info in three queries:
-	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
-	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
 	groupBy := fmt.Sprintf("le,source_workload_namespace,source_workload,source_%s,source_%s,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,response_code,grpc_response_status", appLabel, verLabel, appLabel, verLabel)
-	millisQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s))`,
+	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s)) > 0`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	secondsQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s))`,
-		quantile,
-		"istio_request_duration_seconds_bucket",
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	query := fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 
 	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
 	reporter := "source"
 	sourceWorkloadQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
-	millisQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v"}[%vs])) by (%s))`,
+	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v"}[%vs])) by (%s)) > 0`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
 		reporter,
@@ -101,32 +92,16 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	secondsQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v"}[%vs])) by (%s))`,
-		quantile,
-		"istio_request_duration_seconds_bucket",
-		reporter,
-		sourceWorkloadQuery,
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &outVector)
 
 	// 3) query for responseTime originating from a workload inside of the namespace
-	millisQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v"}[%vs])) by (%s))`,
+	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v"}[%vs])) by (%s)) > 0`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	secondsQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v"}[%vs])) by (%s))`,
-		quantile,
-		"istio_request_duration_seconds_bucket",
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &inVector)
 
