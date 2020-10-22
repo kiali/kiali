@@ -193,8 +193,8 @@ var (
 	}
 
 	ApiToVersion = map[string]string{
-		NetworkingGroupVersion.Group:            ApiNetworkingVersion,
-		SecurityGroupVersion.Group:              ApiSecurityVersion,
+		NetworkingGroupVersion.Group: ApiNetworkingVersion,
+		SecurityGroupVersion.Group:   ApiSecurityVersion,
 	}
 )
 

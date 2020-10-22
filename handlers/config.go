@@ -22,7 +22,7 @@ type Iter8Config struct {
 	Namespace string `json:"namespace"`
 }
 type Extensions struct {
-	Iter8      Iter8Config      `json:"iter8,omitempty"`
+	Iter8 Iter8Config `json:"iter8,omitempty"`
 }
 type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
