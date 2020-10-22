@@ -615,10 +615,10 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 
 func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
 	return &kubernetes.PodLogs{
-		Logs: `2018-01-02T03:34:28+00:00 INFO Fake Log Entry
-2018-01-02T04:34:28+00:00 WARN Fake Warning Entry
-2018-01-02T04:34:28+00:00 Log Entry Without Severity
-2018-01-02T04:34:28+00:00 error Log Entry With LowerCase Severity`,
+		Logs: `2018-01-02T03:34:28+00:00 INFO #1 Log Message
+2018-01-02T04:34:28+00:00 WARN #2 Log Message
+2018-01-02T05:34:28+00:00 #3 Log Message
+2018-01-02T06:34:28+00:00 #4 Log error Message`,
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/business"
+	businesspkg "github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -140,7 +140,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := business.NewDashboardsService(prom)
+	svc := businesspkg.NewDashboardsService(prom)
 	dashboard, err := svc.GetIstioDashboard(params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -187,13 +187,23 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	podLogOptions := core_v1.PodLogOptions{Timestamps: true}
+	opts := businesspkg.LogOptions{PodLogOptions: core_v1.PodLogOptions{Timestamps: true}}
 	if container := queryParams.Get("container"); container != "" {
-		podLogOptions.Container = container
+		opts.Container = container
+	}
+	if duration := queryParams.Get("duration"); duration != "" {
+		duration, err := time.ParseDuration(duration)
+
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid duration [%s]: %v", duration, err))
+			return
+		}
+
+		opts.Duration = &duration
 	}
 	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
 		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
-			podLogOptions.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+			opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
 			return
@@ -202,7 +212,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	if tailLines := queryParams.Get("tailLines"); tailLines != "" {
 		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
 			if numLines > 0 {
-				podLogOptions.TailLines = &numLines
+				opts.TailLines = &numLines
 			}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
@@ -210,8 +220,14 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if duration := queryParams.Get("duration"); duration != "" {
+		if parsed, err := time.ParseDuration(duration); err != nil {
+			opts.Duration = &parsed
+		}
+	}
+
 	// Fetch pod logs
-	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &podLogOptions)
+	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &opts)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

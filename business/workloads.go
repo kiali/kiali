@@ -45,6 +45,11 @@ type LogEntry struct {
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
 }
 
+type LogOptions struct {
+	Duration *time.Duration
+	core_v1.PodLogOptions
+}
+
 var (
 	excludedWorkloads map[string]bool
 
@@ -189,15 +194,25 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
-	podLog, err := in.k8s.GetPodLogs(namespace, name, opts)
+func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
+	k8sOpts := opts.PodLogOptions
+	tailLines := k8sOpts.TailLines
+	k8sOpts.TailLines = nil
+
+	podLog, err := in.k8s.GetPodLogs(namespace, name, &k8sOpts)
 
 	if err != nil {
 		return nil, err
 	}
 
 	lines := strings.Split(podLog.Logs, "\n")
-	messages := make([]LogEntry, 0)
+	entries := make([]LogEntry, 0)
+
+	var startTime *time.Time
+	var endTime *time.Time
+	if k8sOpts.SinceTime != nil {
+		startTime = &k8sOpts.SinceTime.Time
+	}
 
 	for _, line := range lines {
 		entry := LogEntry{
@@ -225,6 +240,21 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 
 		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
 		if err == nil {
+			if startTime == nil {
+				startTime = &parsed
+			}
+
+			if opts.Duration != nil {
+				if endTime == nil {
+					end := parsed.Add(*opts.Duration)
+					endTime = &end
+				}
+
+				if parsed.After(*endTime) {
+					break
+				}
+			}
+
 			entry.TimestampUnix = parsed.Unix()
 		} else {
 			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
@@ -236,18 +266,22 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *core_v1.P
 			entry.Severity = strings.ToUpper(severity)
 		}
 
-		messages = append(messages, entry)
+		entries = append(entries, entry)
+	}
+
+	if tailLines != nil && len(entries) > int(*tailLines) {
+		entries = entries[len(entries)-int(*tailLines):]
 	}
 
 	message := PodLog{
 		Logs:    podLog.Logs,
-		Entries: messages,
+		Entries: entries,
 	}
 
 	return &message, err
 }
 
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLog, error) {
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	return in.getParsedLogs(namespace, name, opts)
 }
 

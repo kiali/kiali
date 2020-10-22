@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -440,7 +441,7 @@ func TestGetPodLogs(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &core_v1.PodLogOptions{Container: "details"})
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
 	assert.Equal(FakePodLogsSyncedWithDeployments().Logs, podLogs.Logs)
 
@@ -448,23 +449,106 @@ func TestGetPodLogs(t *testing.T) {
 
 	assert.Equal("2018-01-02T03:34:28+00:00", podLogs.Entries[0].Timestamp)
 	assert.Equal(int64(1514864068), podLogs.Entries[0].TimestampUnix)
-	assert.Equal("INFO Fake Log Entry", podLogs.Entries[0].Message)
+	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("INFO", podLogs.Entries[0].Severity)
 
 	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[1].Timestamp)
 	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
-	assert.Equal("WARN Fake Warning Entry", podLogs.Entries[1].Message)
+	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
 	assert.Equal("WARN", podLogs.Entries[1].Severity)
 
-	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[2].Timestamp)
-	assert.Equal(int64(1514867668), podLogs.Entries[2].TimestampUnix)
-	assert.Equal("Log Entry Without Severity", podLogs.Entries[2].Message)
+	assert.Equal("2018-01-02T05:34:28+00:00", podLogs.Entries[2].Timestamp)
+	assert.Equal(int64(1514871268), podLogs.Entries[2].TimestampUnix)
+	assert.Equal("#3 Log Message", podLogs.Entries[2].Message)
 	assert.Equal("INFO", podLogs.Entries[2].Severity)
 
-	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[3].Timestamp)
-	assert.Equal(int64(1514867668), podLogs.Entries[3].TimestampUnix)
-	assert.Equal("error Log Entry With LowerCase Severity", podLogs.Entries[3].Message)
+	assert.Equal("2018-01-02T06:34:28+00:00", podLogs.Entries[3].Timestamp)
+	assert.Equal(int64(1514874868), podLogs.Entries[3].TimestampUnix)
+	assert.Equal("#4 Log error Message", podLogs.Entries[3].Message)
 	assert.Equal("ERROR", podLogs.Entries[3].Severity)
+}
+
+func TestGetPodLogsTailLines(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	tailLines := int64(2)
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+
+	assert.Equal(2, len(podLogs.Entries))
+	assert.Equal("#3 Log Message", podLogs.Entries[0].Message)
+	assert.Equal("#4 Log error Message", podLogs.Entries[1].Message)
+}
+
+func TestGetPodLogsDuration(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	duration, _ := time.ParseDuration("59m")
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(1, len(podLogs.Entries))
+	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
+
+	duration, _ = time.ParseDuration("1h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(2, len(podLogs.Entries))
+	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
+	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
+
+	duration, _ = time.ParseDuration("2h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	assert.Equal(3, len(podLogs.Entries))
+	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
+	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
+	assert.Equal("#3 Log Message", podLogs.Entries[2].Message)
+}
+
+func TestGetPodLogsTailLinesAndDurations(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	tailLines := int64(2)
+	duration, _ := time.ParseDuration("2h")
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+	assert.Equal(2, len(podLogs.Entries))
+	assert.Equal("WARN #2 Log Message", podLogs.Entries[0].Message)
+	assert.Equal("#3 Log Message", podLogs.Entries[1].Message)
+
+	tailLines = int64(1)
+	duration, _ = time.ParseDuration("2h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+	assert.Equal(1, len(podLogs.Entries))
+	assert.Equal("#3 Log Message", podLogs.Entries[0].Message)
+
+	tailLines = int64(1)
+	duration, _ = time.ParseDuration("3h")
+	podLogs, _ = svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+	assert.Equal(1, len(podLogs.Entries))
+	assert.Equal("#4 Log error Message", podLogs.Entries[0].Message)
 }
 
 func TestDuplicatedControllers(t *testing.T) {

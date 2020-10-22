@@ -127,6 +127,16 @@ type SinceTimeParam struct {
 	Name string `json:"sinceTime"`
 }
 
+// swagger:parameters podLogs
+type DurationLogParam struct {
+	// Query time-range duration (Golang string duration). Duration starts on
+	// `sinceTime` if set, or the time for the first log message if not set.
+	//
+	// in: query
+	// required: false
+	Name string `json:"duration"`
+}
+
 // swagger:parameters traceDetails
 type TraceIDParam struct {
 	// The trace ID.
