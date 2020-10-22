@@ -32,11 +32,34 @@ func fetchRateRange(api prom_v1.API, metricName string, labels []string, groupin
 }
 
 func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q *RangeQuery) Histogram {
-	histogram := make(Histogram)
-
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
-	if q.Avg {
+	queries := buildHistogramQueries(metricName, labels, grouping, q.RateInterval, q.Avg, q.Quantiles)
+	histogram := make(Histogram, len(queries))
+	for k, query := range queries {
+		histogram[k] = fetchRange(api, query, q.Range)
+	}
+	return histogram
+}
+
+func fetchHistogramValues(api prom_v1.API, metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
+	//	This is because we may not want to create too many threads in the lowest layer
+	queries := buildHistogramQueries(metricName, labels, grouping, rateInterval, avg, quantiles)
+	histogram := make(map[string]model.Vector, len(queries))
+	for k, query := range queries {
+		result, err := api.Query(context.Background(), query, queryTime)
+		if err != nil {
+			return nil, err
+		}
+		histogram[k] = result.(model.Vector)
+	}
+	return histogram, nil
+}
+
+func buildHistogramQueries(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string) map[string]string {
+	queries := make(map[string]string)
+	if avg {
 		groupingAvg := ""
 		if grouping != "" {
 			groupingAvg = fmt.Sprintf(" by (%s)", grouping)
@@ -44,24 +67,24 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 		// Average
 		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
 		query := fmt.Sprintf("sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s",
-			metricName, labels, q.RateInterval, groupingAvg, metricName, labels, q.RateInterval, groupingAvg)
+			metricName, labels, rateInterval, groupingAvg, metricName, labels, rateInterval, groupingAvg)
 		query = roundSignificant(query, 0.001)
-		histogram["avg"] = fetchRange(api, query, q.Range)
+		queries["avg"] = query
 	}
 
 	groupingQuantile := ""
 	if grouping != "" {
 		groupingQuantile = fmt.Sprintf(",%s", grouping)
 	}
-	for _, quantile := range q.Quantiles {
+	for _, quantile := range quantiles {
 		// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
 		query := fmt.Sprintf("histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s))",
-			quantile, metricName, labels, q.RateInterval, groupingQuantile)
+			quantile, metricName, labels, rateInterval, groupingQuantile)
 		query = roundSignificant(query, 0.001)
-		histogram[quantile] = fetchRange(api, query, q.Range)
+		queries[quantile] = query
 	}
 
-	return histogram
+	return queries
 }
 
 func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {

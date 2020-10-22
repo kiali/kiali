@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -26,22 +25,14 @@ func setupMocked() (*MetricsService, *prometheustest.PromAPIMock, error) {
 	return NewMetricsService(client), api, nil
 }
 
-func round(q string) string {
-	return fmt.Sprintf("round(%s, 0.001000) > 0.001000 or %s", q, q)
-}
-
-func roundErrs(q string) string {
-	return fmt.Sprintf("round((%s), 0.001000) > 0.001000 or (%s)", q, q)
-}
-
 func TestGetServiceMetrics(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	q := IstioMetricsQuery{
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		Service:   "productpage",
 	}
@@ -49,29 +40,24 @@ func TestGetServiceMetrics(t *testing.T) {
 	q.Direction = "inbound"
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.99"}
-	expectedRange := prom_v1.Range{
-		Start: q.Start,
-		End:   q.End,
-		Step:  q.Step,
-	}
 
 	labels := `reporter="source",destination_service_name="productpage",destination_service_namespace="bookinfo"`
-	mockWithRange(api, expectedRange, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 2.5)
-	mockWithRange(api, expectedRange, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 4.5)
-	mockWithRange(api, expectedRange, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
-	mockWithRange(api, expectedRange, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
-	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 11)
-	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 13)
-	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	api.MockRangeRounded("sum(rate(istio_requests_total{"+labels+"}[5m]))", 2.5)
+	api.MockRangeErrRounded("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`, 4.5)
+	api.MockRangeRounded("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))", 1000)
+	api.MockRangeRounded("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))", 1001)
+	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 11)
+	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 13)
+	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	api.MockHistoRange("istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.9)
 
 	// Test that range and rate interval are changed when needed (namespace bounds)
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -82,8 +68,6 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeIn := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeIn)
-	rqDurationIn := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationIn)
 	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
@@ -98,41 +82,41 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.Equal(t, 1000.0, float64(rqThroughput.Matrix[0].Values[0].Value))
 	assert.Equal(t, 1001.0, float64(rsThroughput.Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
 }
 
 func TestGetAppMetrics(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	labels := `reporter="source",source_workload_namespace="bookinfo",source_app="productpage"`
-	mockRange(api, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 1.5)
-	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 3.5)
-	mockRange(api, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
-	mockRange(api, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
-	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)
-	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 12)
-	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	labels := `reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"`
+	api.MockRangeRounded("sum(rate(istio_requests_total{"+labels+"}[5m]))", 1.5)
+	api.MockRangeErrRounded("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`, 3.5)
+	api.MockRangeRounded("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))", 1000)
+	api.MockRangeRounded("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))", 1001)
+	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 10)
+	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 12)
+	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	api.MockHistoRange("istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
 
-	q := IstioMetricsQuery{
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -143,8 +127,6 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeIn := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeIn)
-	rqDurationIn := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationIn)
 	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
@@ -162,28 +144,28 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.Equal(t, 0.2, float64(rqSizeIn["0.5"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.3, float64(rqSizeIn["0.95"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.4, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.6, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 12.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
 }
 
 func TestGetFilteredAppMetrics(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mockRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`), 1.5)
-	mockHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]`, 0.35, 0.2, 0.3, 0.4)
-	q := IstioMetricsQuery{
+	api.MockRangeRounded(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]))`, 1.5)
+	api.MockHistoRange("istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]`, 0.35, 0.2, 0.3, 0.4)
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Filters = []string{"request_count", "request_size"}
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
 	assert.Equal(t, 1, len(metrics.Histograms), "Should have 1 histogram")
@@ -194,20 +176,20 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 }
 
 func TestGetAppMetricsInstantRates(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mockRange(api, round(`sum(irate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[1m]))`), 1.5)
-	q := IstioMetricsQuery{
+	api.MockRangeRounded(`sum(irate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[1m]))`, 1.5)
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
 	q.FillDefaults()
 	q.RateFunc = "irate"
 	q.Filters = []string{"request_count"}
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
 	assert.Equal(t, 0, len(metrics.Histograms), "Should have no histogram")
@@ -216,15 +198,15 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 }
 
 func TestGetAppMetricsUnavailable(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`))
-	mockEmptyHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]`)
-	q := IstioMetricsQuery{
+	api.MockEmptyRangeRounded(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]))`)
+	api.MockEmptyHistoRange("istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]`)
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
@@ -232,7 +214,7 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	q.Filters = []string{"request_count", "request_size"}
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
 	assert.Equal(t, 1, len(metrics.Histograms), "Should have 1 histogram")
@@ -250,33 +232,33 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 }
 
 func TestGetNamespaceMetrics(t *testing.T) {
-	client, api, err := setupMocked()
+	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	labels := `reporter="source",source_workload_namespace="bookinfo"`
-	mockRange(api, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 1.5)
-	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 3.5)
-	mockRange(api, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
-	mockRange(api, round("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))"), 1001)
-	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))"), 10)
-	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))"), 12)
-	mockHistogram(api, "istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	api.MockRangeRounded("sum(rate(istio_requests_total{"+labels+"}[5m]))", 1.5)
+	api.MockRangeErrRounded("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`, 3.5)
+	api.MockRangeRounded("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))", 1000)
+	api.MockRangeRounded("sum(rate(istio_response_bytes_sum{"+labels+"}[5m]))", 1001)
+	api.MockRangeRounded("sum(rate(istio_tcp_received_bytes_total{"+labels+"}[5m]))", 10)
+	api.MockRangeRounded("sum(rate(istio_tcp_sent_bytes_total{"+labels+"}[5m]))", 12)
+	api.MockHistoRange("istio_request_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	api.MockHistoRange("istio_request_duration_seconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	api.MockHistoRange("istio_request_duration_milliseconds", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	api.MockHistoRange("istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.6)
 
-	q := IstioMetricsQuery{
+	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics := client.GetMetrics(q)
+	metrics := srv.GetMetrics(q)
 
 	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
 	rqCountOut := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountOut)
 	rqErrorCountOut := metrics.Metrics["request_error_count"]
@@ -287,8 +269,6 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.NotNil(t, rsThroughput)
 	rqSizeOut := metrics.Histograms["request_size"]
 	assert.NotNil(t, rqSizeOut)
-	rqDurationOut := metrics.Histograms["request_duration"]
-	assert.NotNil(t, rqDurationOut)
 	rqDurationMillisOut := metrics.Histograms["request_duration_millis"]
 	assert.NotNil(t, rqDurationMillisOut)
 	rsSizeOut := metrics.Histograms["response_size"]
@@ -306,88 +286,129 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 0.2, float64(rqSizeOut["0.5"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.3, float64(rqSizeOut["0.95"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.4, float64(rqSizeOut["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationMillisOut["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.6, float64(rsSizeOut["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
 }
 
-func mockQueryWithTime(api *prometheustest.PromAPIMock, query string, queryTime time.Time, ret *model.Vector) {
-	api.On(
-		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
-		query,
-		queryTime).
-		Return(*ret, nil)
+func TestCreateLabelsBuilder(t *testing.T) {
+	assert := assert.New(t)
+	q := models.IstioMetricsQuery{
+		Namespace: "bookinfo",
+		App:       "productpage",
+	}
+	q.FillDefaults()
+	q.Reporter = "source"
+	lb := createLabelsBuilder(&q)
+	assert.Equal(`{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}`, lb.Build())
 }
 
-func mockQueryRange(api *prometheustest.PromAPIMock, query string, ret *model.Matrix) {
-	api.On(
-		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
-		query,
-		mock.AnythingOfType(`v1.Range`)).
-		Return(*ret, nil)
+func TestCreateStatsLabelsBuilder(t *testing.T) {
+	assert := assert.New(t)
+	q := models.MetricsStatsQuery{
+		Target: models.Target{
+			Namespace: "ns3",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		Direction: "inbound",
+		Interval:  "3h",
+		Avg:       true,
+		Quantiles: []string{"0.90", "0.5"},
+		QueryTime: time.Now(),
+	}
+	lb := createStatsLabelsBuilder(&q)
+	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
-func mockRange(api *prometheustest.PromAPIMock, query string, ret model.SampleValue) {
-	metric := model.Metric{
-		"reporter": "destination",
-		"__name__": "whatever",
-		"instance": "whatever",
-		"job":      "whatever"}
-	matrix := model.Matrix{
-		&model.SampleStream{
-			Metric: metric,
-			Values: []model.SamplePair{{Timestamp: 0, Value: ret}}}}
-	mockQueryRange(api, query, &matrix)
+func TestCreateStatsLabelsBuilderWithPeer(t *testing.T) {
+	assert := assert.New(t)
+	q := models.MetricsStatsQuery{
+		Target: models.Target{
+			Namespace: "ns3",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		PeerTarget: &models.Target{
+			Namespace: "ns4",
+			Name:      "bar",
+			Kind:      "app",
+		},
+		Direction: "inbound",
+		Interval:  "3h",
+		Avg:       true,
+		Quantiles: []string{"0.90", "0.5"},
+		QueryTime: time.Now(),
+	}
+	lb := createStatsLabelsBuilder(&q)
+	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
 }
 
-func mockWithRange(api *prometheustest.PromAPIMock, qRange prom_v1.Range, query string, ret model.SampleValue) {
-	metric := model.Metric{
-		"reporter": "destination",
-		"__name__": "whatever",
-		"instance": "whatever",
-		"job":      "whatever"}
-	matrix := model.Matrix{
-		&model.SampleStream{
-			Metric: metric,
-			Values: []model.SamplePair{{Timestamp: 0, Value: ret}}}}
-	api.On(
-		"QueryRange",
-		mock.AnythingOfType("*context.emptyCtx"),
-		query,
-		qRange).
-		Return(matrix, nil)
+func TestGetMetricsStats(t *testing.T) {
+	assert := assert.New(t)
+	srv, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	queryTime := time.Now()
+	queries := []models.MetricsStatsQuery{{
+		Target: models.Target{
+			Namespace: "ns1",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		Direction:    "outbound",
+		Interval:     "30m",
+		RawInterval:  "30m",
+		Avg:          true,
+		Quantiles:    []string{"0.95"},
+		RawQueryTime: queryTime.Unix(),
+	}, {
+		Target: models.Target{
+			Namespace: "ns2",
+			Name:      "bar",
+			Kind:      "service",
+		},
+		PeerTarget: &models.Target{
+			Namespace: "ns3",
+			Name:      "w1",
+			Kind:      "workload",
+		},
+		Direction:    "inbound",
+		Interval:     "3h",
+		RawInterval:  "3h",
+		Avg:          false,
+		Quantiles:    []string{"0.5", "0.95"},
+		RawQueryTime: queryTime.Unix(),
+	}}
+
+	// Setup mocks
+	v0 := model.Vector{createSample(0)}
+	q1Avg := model.Vector{createSample(5)}
+	q1P95 := model.Vector{createSample(8)}
+	q2P50 := model.Vector{createSample(6.3)}
+	q2P95 := model.Vector{createSample(9.3)}
+	q1Labels := `reporter="source",source_workload_namespace="ns1",source_canonical_service="foo"`
+	q2Labels := `reporter="destination",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
+	api.MockHistoValue("istio_request_duration_milliseconds", "{"+q1Labels+"}[30m]", q1Avg, v0, q1P95, v0)
+	api.MockHistoValue("istio_request_duration_milliseconds", "{"+q2Labels+"}[3h]", v0, q2P50, q2P95, v0)
+
+	stats, err := srv.GetStats(queries)
+
+	assert.Nil(err)
+	assert.Len(stats, 2)
+	fmt.Printf("%v\n", stats)
+	assert.Equal([]models.Stat{{Name: "0.95", Value: 8.0}, {Name: "avg", Value: 5.0}}, stats["ns1:app:foo::outbound:30m"].ResponseTimes)
+	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h"].ResponseTimes)
 }
 
-func mockEmptyRange(api *prometheustest.PromAPIMock, query string) {
-	metric := model.Metric{
-		"reporter": "destination",
-		"__name__": "whatever",
-		"instance": "whatever",
-		"job":      "whatever"}
-	matrix := model.Matrix{
-		&model.SampleStream{
-			Metric: metric,
-			Values: []model.SamplePair{}}}
-	mockQueryRange(api, query, &matrix)
-}
-
-func mockHistogram(api *prometheustest.PromAPIMock, baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	mockRange(api, round("histogram_quantile(0.5, "+histMetric), retMed)
-	mockRange(api, round("histogram_quantile(0.95, "+histMetric), ret95)
-	mockRange(api, round("histogram_quantile(0.99, "+histMetric), ret99)
-	mockRange(api, round("histogram_quantile(0.999, "+histMetric), ret99)
-	mockRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"), retAvg)
-}
-
-func mockEmptyHistogram(api *prometheustest.PromAPIMock, baseName string, suffix string) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	mockEmptyRange(api, round("histogram_quantile(0.5, "+histMetric))
-	mockEmptyRange(api, round("histogram_quantile(0.95, "+histMetric))
-	mockEmptyRange(api, round("histogram_quantile(0.99, "+histMetric))
-	mockEmptyRange(api, round("histogram_quantile(0.999, "+histMetric))
-	mockEmptyRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"))
+func createSample(value float64) *model.Sample {
+	return &model.Sample{
+		Timestamp: model.Now(),
+		Value:     model.SampleValue(value),
+		Metric:    model.Metric{},
+	}
 }

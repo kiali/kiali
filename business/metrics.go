@@ -1,18 +1,13 @@
 package business
 
 import (
-	"fmt"
+	"math"
+	"sort"
 	"strings"
 	"sync"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/status"
-)
-
-const (
-	regexGrpcResponseStatusErr = "^[1-9]$|^1[0-6]$"
-	regexResponseCodeErr       = "^0$|^[4-5]\\\\d\\\\d$"
 )
 
 // MetricsService deals with fetching metrics from prometheus
@@ -25,69 +20,45 @@ func NewMetricsService(prom prometheus.ClientInterface) *MetricsService {
 	return &MetricsService{prom: prom}
 }
 
-func (in *MetricsService) GetMetrics(q IstioMetricsQuery) models.Metrics {
-	labels, labelsError := buildLabelStrings(q)
+func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery) models.Metrics {
+	lb := createLabelsBuilder(&q)
 	grouping := strings.Join(q.ByLabels, ",")
-	return in.fetchAllMetrics(q, labels, labelsError, grouping)
+	return in.fetchAllMetrics(q, lb, grouping)
 }
 
-func buildLabelStrings(q IstioMetricsQuery) (string, []string) {
-	labels := []string{fmt.Sprintf(`reporter="%s"`, q.Reporter)}
-	ref := "destination"
-	if q.Direction == "outbound" {
-		ref = "source"
-	}
+func createLabelsBuilder(q *models.IstioMetricsQuery) *LabelsBuilder {
+	lb := NewLabelsBuilder(q.Direction)
+	lb.Reporter(q.Reporter)
 
+	namespaceSet := false
 	if q.Service != "" {
-		// inbound only
-		labels = append(labels, fmt.Sprintf(`destination_service_name="%s"`, q.Service))
-		if q.Namespace != "" {
-			labels = append(labels, fmt.Sprintf(`destination_service_namespace="%s"`, q.Namespace))
-		}
-	} else if q.Namespace != "" {
-		labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, ref, q.Namespace))
+		lb.Service(q.Service, q.Namespace)
+		namespaceSet = true
 	}
 	if q.Workload != "" {
-		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, ref, q.Workload))
+		lb.Workload(q.Workload, q.Namespace)
+		namespaceSet = true
 	}
 	if q.App != "" {
-		if status.AreCanonicalMetricsAvailable() {
-			labels = append(labels, fmt.Sprintf(`%s_canonical_service="%s"`, ref, q.App))
-		} else {
-			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, ref, q.App))
-		}
+		lb.App(q.App, q.Namespace)
+		namespaceSet = true
+	}
+	if !namespaceSet && q.Namespace != "" {
+		lb.Namespace(q.Namespace)
 	}
 	if q.RequestProtocol != "" {
-		labels = append(labels, fmt.Sprintf(`request_protocol="%s"`, q.RequestProtocol))
+		lb.Protocol(q.RequestProtocol)
 	}
 	if q.Aggregate != "" {
-		labels = append(labels, fmt.Sprintf(`%s="%s"`, q.Aggregate, q.AggregateValue))
+		lb.Aggregate(q.Aggregate, q.AggregateValue)
 	}
-
-	full := "{" + strings.Join(labels, ",") + "}"
-
-	errors := []string{}
-	protocol := strings.ToLower(q.RequestProtocol)
-
-	// both http and grpc requests can suffer from no response (response_code=0) or an http error
-	// (response_code=4xx,5xx), and so we always perform a query against response_code:
-	httpLabels := append(labels, fmt.Sprintf(`response_code=~"%s"`, regexResponseCodeErr))
-	errors = append(errors, "{"+strings.Join(httpLabels, ",")+"}")
-
-	// if necessary also look for grpc errors. note that the grpc test intentionally avoids
-	// `grpc_response_status!="0"`. We need to be backward compatible and handle the case where
-	// grpc_response_status does not exist, or if it is simply unset. In Prometheus, negative tests on a
-	// non-existent label match everything, but positive tests match nothing. So, we stay positive.
-	// furthermore, make sure we only count grpc errors with successful http status.
-	if protocol != "http" {
-		grpcLabels := append(labels, fmt.Sprintf(`grpc_response_status=~"%s",response_code!~"%s"`, regexGrpcResponseStatusErr, regexResponseCodeErr))
-		errors = append(errors, ("{" + strings.Join(grpcLabels, ",") + "}"))
-	}
-
-	return full, errors
+	return lb
 }
 
-func (in *MetricsService) fetchAllMetrics(q IstioMetricsQuery, labels string, labelsError []string, grouping string) models.Metrics {
+func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *LabelsBuilder, grouping string) models.Metrics {
+	labels := lb.Build()
+	labelsError := lb.BuildForErrors()
+
 	var wg sync.WaitGroup
 	fetchRate := func(p8sFamilyName string, metric **prometheus.Metric, lbl []string) {
 		defer wg.Done()
@@ -153,4 +124,84 @@ func (in *MetricsService) fetchAllMetrics(q IstioMetricsQuery, labels string, la
 		Metrics:    metrics,
 		Histograms: histograms,
 	}
+}
+
+// GetStats computes metrics stats, currently response times, for a set of queries
+func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[string]models.MetricsStats, error) {
+	type statsChanResult struct {
+		key   string
+		stats *models.MetricsStats
+		err   error
+	}
+
+	statsChan := make(chan statsChanResult, len(queries))
+	var wg sync.WaitGroup
+
+	for _, q := range queries {
+		wg.Add(1)
+		go func(q models.MetricsStatsQuery) {
+			defer wg.Done()
+			stats, err := in.getSingleQueryStats(&q)
+			statsChan <- statsChanResult{key: q.GenKey(), stats: stats, err: err}
+		}(q)
+	}
+	wg.Wait()
+	// All stats are fetched, close channel
+	close(statsChan)
+	// Read channel
+	result := make(map[string]models.MetricsStats)
+	for r := range statsChan {
+		if r.err != nil {
+			return nil, r.err
+		}
+		if r.stats != nil {
+			result[r.key] = *r.stats
+		}
+	}
+	return result, nil
+}
+
+func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
+	lb := createStatsLabelsBuilder(q)
+	labels := lb.Build()
+	stats, err := in.prom.FetchHistogramValues("istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
+	if err != nil {
+		return nil, err
+	}
+	metricsStats := models.MetricsStats{}
+	for stat, vec := range stats {
+		for _, sample := range vec {
+			value := float64(sample.Value)
+			if math.IsNaN(value) {
+				continue
+			}
+			metricsStats.ResponseTimes = append(metricsStats.ResponseTimes, models.Stat{Name: stat, Value: value})
+		}
+	}
+	sort.Slice(metricsStats.ResponseTimes, func(i, j int) bool {
+		return metricsStats.ResponseTimes[i].Name < metricsStats.ResponseTimes[j].Name
+	})
+	return &metricsStats, nil
+}
+
+func createStatsLabelsBuilder(q *models.MetricsStatsQuery) *LabelsBuilder {
+	lb := NewLabelsBuilder(q.Direction)
+	lb.SelfReporter()
+	if q.Target.Kind == "app" {
+		lb.App(q.Target.Name, q.Target.Namespace)
+	} else if q.Target.Kind == "workload" {
+		lb.Workload(q.Target.Name, q.Target.Namespace)
+	} else if q.Target.Kind == "service" {
+		lb.Service(q.Target.Name, q.Target.Namespace)
+	}
+	if q.PeerTarget != nil {
+		if q.PeerTarget.Kind == "app" {
+			lb.PeerApp(q.PeerTarget.Name, q.PeerTarget.Namespace)
+		} else if q.PeerTarget.Kind == "workload" {
+			lb.PeerWorkload(q.PeerTarget.Name, q.PeerTarget.Namespace)
+		} else if q.PeerTarget.Kind == "service" {
+			lb.PeerService(q.PeerTarget.Name, q.PeerTarget.Namespace)
+		}
+	}
+	return lb
 }

@@ -3612,6 +3612,45 @@
         }
       }
     },
+    "/stats/metrics": {
+      "post": {
+        "description": "Produces metrics statistics",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "stats"
+        ],
+        "operationId": "metricsStats",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MetricsStatsQueries"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsStatsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
@@ -5128,7 +5167,7 @@
       "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "Metrics": {
-      "description": "Metrics contains all simple metrics and histograms data",
+      "description": "Metrics contains all simple metrics and histograms data for standard timeseries queries",
       "type": "object",
       "properties": {
         "histograms": {
@@ -5149,7 +5188,66 @@
           "x-go-name": "Metrics"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/prometheus"
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "MetricsStats": {
+      "description": "MetricsStats contains opinionated statistics on metrics on a single target. Currently limited to response times (avg/percentiles over interval)",
+      "type": "object",
+      "properties": {
+        "responseTimes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Stat"
+          },
+          "x-go-name": "ResponseTimes"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "MetricsStatsQueries": {
+      "type": "object",
+      "properties": {
+        "Queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MetricsStatsQuery"
+          }
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "MetricsStatsQuery": {
+      "type": "object",
+      "properties": {
+        "Avg": {
+          "type": "boolean"
+        },
+        "Direction": {
+          "type": "string"
+        },
+        "PeerTarget": {
+          "$ref": "#/definitions/Target"
+        },
+        "Quantiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Target": {
+          "$ref": "#/definitions/Target"
+        },
+        "interval": {
+          "type": "string",
+          "x-go-name": "RawInterval"
+        },
+        "queryTime": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "RawQueryTime"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "MonitoringDashboard": {
       "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource",
@@ -6203,6 +6301,22 @@
       "type": "string",
       "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
+    "Stat": {
+      "description": "Stat holds arbitrary stat name \u0026 value",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "value": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Status": {
       "type": "object",
       "title": "Status is a return value for calls that don't return other objects.",
@@ -6357,6 +6471,21 @@
       "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
       "type": "string",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "Target": {
+      "type": "object",
+      "properties": {
+        "Kind": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Namespace": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Time": {
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
@@ -7394,6 +7523,12 @@
       "description": "Metrics response model",
       "schema": {
         "$ref": "#/definitions/Metrics"
+      }
+    },
+    "metricsStatsResponse": {
+      "description": "Response of the metrics stats query",
+      "schema": {
+        "$ref": "#/definitions/MetricsStats"
       }
     },
     "namespaceAppHealthResponse": {

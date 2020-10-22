@@ -7,6 +7,7 @@ import (
 	khttp "github.com/kiali/k-charted/http"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 )
 
 // AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
@@ -75,7 +76,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

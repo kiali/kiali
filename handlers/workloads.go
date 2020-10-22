@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -99,7 +100,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -107,7 +108,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metrics := metricsService.GetMetrics(params)
-	dashboard, err := businesspkg.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	dashboard, err := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -20,6 +20,7 @@ import (
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
+	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
 	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) *Metric
 	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) *Metric
 	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
@@ -221,6 +222,11 @@ func (in *Client) FetchRateRange(metricName string, labels []string, grouping st
 // FetchHistogramRange fetches bucketed metric as histogram in given range
 func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
 	return fetchHistogramRange(in.api, metricName, labels, grouping, q)
+}
+
+// FetchHistogramValues fetches bucketed metric as histogram at a given specific time
+func (in *Client) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	return fetchHistogramValues(in.api, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

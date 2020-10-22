@@ -103,7 +103,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, Service: service}
+	params := models.IstioMetricsQuery{Namespace: namespace, Service: service}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

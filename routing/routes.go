@@ -1433,6 +1433,28 @@ func NewRoutes() (r *Routes) {
 			handlers.Iter8ExperimentGetYaml,
 			true,
 		},
+
+		// swagger:route POST /stats/metrics stats metricsStats
+		// ---
+		// Produces metrics statistics
+		//
+		// 		Produces:
+		//		- application/json
+		//
+		//		Schemes: http, https
+		//
+		// responses:
+		//    400: badRequestError
+		//    503: serviceUnavailableError
+		//		500: internalError
+		//		200: metricsStatsResponse
+		{
+			Name:          "MetricsStats",
+			Method:        "POST",
+			Pattern:       "/api/stats/metrics",
+			HandlerFunc:   handlers.MetricsStats,
+			Authenticated: true,
+		},
 	}
 
 	return

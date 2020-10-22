@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,7 +36,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -62,7 +64,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -90,7 +92,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, Service: service}
+	params := models.IstioMetricsQuery{Namespace: namespace, Service: service}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -119,7 +121,7 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
+	params := models.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -155,7 +157,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	params := business.IstioMetricsQuery{Namespace: namespace}
+	params := models.IstioMetricsQuery{Namespace: namespace}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -166,7 +168,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-func extractIstioMetricsQueryParams(r *http.Request, q *business.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
+func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
@@ -279,4 +281,86 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 	stepInSecs := int64(q.Step.Seconds())
 	q.Start = time.Unix((q.Start.Unix()/stepInSecs)*stepInSecs, 0)
 	return nil
+}
+
+// MetricsStats is the API handler to compute some stats based on metrics
+func MetricsStats(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var raw models.MetricsStatsQueries
+	err = json.Unmarshal(body, &raw)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	metricsService, queries, warns := prepareStatsQueries(w, r, raw.Queries, defaultPromClientSupplier)
+	if len(queries) == 0 && warns != nil {
+		// All queries failed to be adjusted => return an error
+		handleErrorResponse(w, warns)
+		return
+	}
+	stats, err := metricsService.GetStats(queries)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+	result := models.MetricsStatsResult{Stats: stats}
+	if warns != nil {
+		result.Warnings = warns.Strings()
+	}
+	RespondWithJSON(w, http.StatusOK, result)
+}
+
+func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.MetricsStatsQuery, promSupplier promClientSupplier) (*business.MetricsService, []models.MetricsStatsQuery, *util.Errors) {
+	// Get unique namespaces list
+	var namespaces []string
+	for _, q := range rawQ {
+		found := false
+		for _, ns := range namespaces {
+			if ns == q.Target.Namespace {
+				found = true
+				break
+			}
+		}
+		if !found {
+			namespaces = append(namespaces, q.Target.Namespace)
+		}
+	}
+
+	// Create the metrics service, along with namespaces information for adjustements
+	metricsService, nsInfos := createMetricsServiceForNamespaces(w, r, promSupplier, namespaces)
+
+	// Keep only valid queries (fill errors if needed) and adjust queryTime / interval
+	var errors util.Errors
+	var validQueries []models.MetricsStatsQuery
+	for _, q := range rawQ {
+		if valErr := q.Validate(); valErr != nil {
+			errors.Merge(valErr)
+			continue
+		}
+		if nsInfoErr, ok := nsInfos[q.Target.Namespace]; !ok {
+			errors.Add(fmt.Errorf("Missing info for namespace '%s'", q.Target.Namespace))
+			continue
+		} else if nsInfoErr.err != nil {
+			errors.Add(fmt.Errorf("Namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
+			continue
+		} else {
+			namespaceInfo := nsInfoErr.info
+			interval, err := util.AdjustRateInterval(namespaceInfo.CreationTimestamp, q.QueryTime, q.RawInterval)
+			if err != nil {
+				errors.Add(err)
+				continue
+			}
+			q.Interval = interval
+			if q.Interval != q.RawInterval {
+				log.Debugf("Rate interval for namespace %s was adjusted to %s (original = %s, query time = %v, namespace created = %v)",
+					q.Target.Namespace, q.Interval, q.RawInterval, q.QueryTime, namespaceInfo.CreationTimestamp)
+			}
+			validQueries = append(validQueries, q)
+		}
+	}
+	return metricsService, validQueries, errors.OrNil()
 }

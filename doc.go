@@ -709,3 +709,17 @@ type IstioStatusResponse struct {
 	// in: body
 	Body business.IstioComponentStatus
 }
+
+// Posted parameters for a metrics stats query
+// swagger:parameters metricsStats
+type MetricsStatsQueryBody struct {
+	// in: body
+	Body models.MetricsStatsQueries
+}
+
+// Response of the metrics stats query
+// swagger:response metricsStatsResponse
+type MetricsStatsResponse struct {
+	// in: body
+	Body models.MetricsStats
+}
