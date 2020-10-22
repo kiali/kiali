@@ -27,10 +27,6 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
-	assert.True(t, criteria.IncludeRules)
-	assert.True(t, criteria.IncludeQuotaSpecs)
-	assert.True(t, criteria.IncludeQuotaSpecBindings)
-	assert.True(t, criteria.IncludeMeshPolicies)
 
 	objects = "gateways"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -39,10 +35,6 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "virtualservices"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -51,10 +43,6 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -63,10 +51,6 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "serviceentries"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -75,58 +59,14 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 
-	objects = "rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
-
-	assert.False(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.True(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
-
-	objects = "quotaspecs"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
-
-	assert.False(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.True(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
-
-	objects = "quotaspecbindings"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
-
-	assert.False(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.True(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
-
-	objects = "virtualservices,rules"
+	objects = "virtualservices"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.True(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 
 	objects = "destinationrules,virtualservices"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -135,22 +75,6 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
-
-	objects = "meshpolicies"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
-
-	assert.True(t, criteria.IncludeMeshPolicies)
-	assert.False(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
 
 	objects = "notsupported"
 	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
@@ -159,22 +83,6 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
-
-	objects = "notsupported,rules"
-	criteria = ParseIstioConfigCriteria(namespace, objects, labelSelector, "")
-
-	assert.False(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.True(t, criteria.IncludeRules)
-	assert.False(t, criteria.IncludeQuotaSpecs)
-	assert.False(t, criteria.IncludeQuotaSpecBindings)
-	assert.False(t, criteria.IncludeMeshPolicies)
 }
 
 func TestGetIstioConfigList(t *testing.T) {
@@ -188,10 +96,6 @@ func TestGetIstioConfigList(t *testing.T) {
 		IncludeVirtualServices:  false,
 		IncludeDestinationRules: false,
 		IncludeServiceEntries:   false,
-		IncludeRules:            false,
-		IncludeAdapters:         false,
-		IncludeTemplates:        false,
-		IncludeQuotaSpecs:       false,
 	}
 
 	configService := mockGetIstioConfigList()
@@ -202,12 +106,6 @@ func TestGetIstioConfigList(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.VirtualServices.Items))
 	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
-	assert.Equal(0, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
 	assert.Nil(err)
 
 	criteria.IncludeGateways = true
@@ -218,12 +116,6 @@ func TestGetIstioConfigList(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.VirtualServices.Items))
 	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
-	assert.Equal(0, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
 	assert.Nil(err)
 
 	criteria.IncludeVirtualServices = true
@@ -234,12 +126,6 @@ func TestGetIstioConfigList(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
 	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
-	assert.Equal(0, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
 	assert.Nil(err)
 
 	criteria.IncludeDestinationRules = true
@@ -250,12 +136,6 @@ func TestGetIstioConfigList(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
 	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
-	assert.Equal(0, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
 	assert.Nil(err)
 
 	criteria.IncludeServiceEntries = true
@@ -266,108 +146,6 @@ func TestGetIstioConfigList(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
 	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(0, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludeRules = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(0, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludeAdapters = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(1, len(istioconfigList.Adapters))
-	assert.Equal(0, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludeTemplates = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(1, len(istioconfigList.Adapters))
-	assert.Equal(1, len(istioconfigList.Templates))
-	assert.Equal(0, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludeQuotaSpecs = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(1, len(istioconfigList.Adapters))
-	assert.Equal(1, len(istioconfigList.Templates))
-	assert.Equal(1, len(istioconfigList.QuotaSpecs))
-	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludeQuotaSpecBindings = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(1, len(istioconfigList.Adapters))
-	assert.Equal(1, len(istioconfigList.Templates))
-	assert.Equal(1, len(istioconfigList.QuotaSpecs))
-	assert.Equal(1, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(0, len(istioconfigList.Policies))
-	assert.Nil(err)
-
-	criteria.IncludePolicies = true
-
-	istioconfigList, err = configService.GetIstioConfigList(criteria)
-
-	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
-	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
-	assert.Equal(1, len(istioconfigList.ServiceEntries))
-	assert.Equal(1, len(istioconfigList.Rules))
-	assert.Equal(1, len(istioconfigList.Adapters))
-	assert.Equal(1, len(istioconfigList.Templates))
-	assert.Equal(1, len(istioconfigList.QuotaSpecs))
-	assert.Equal(1, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(1, len(istioconfigList.Policies))
 	assert.Nil(err)
 }
 
@@ -390,18 +168,6 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Metadata.Name)
-	assert.Nil(err)
-
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "checkfromcustomer")
-	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Metadata.Name)
-	assert.Nil(err)
-
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "adapters", "preferencewhitelist")
-	assert.Equal("preferencewhitelist", istioConfigDetails.Adapter.Metadata.Name)
-	assert.Nil(err)
-
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "templates", "preferencesource")
-	assert.Equal("preferencesource", istioConfigDetails.Template.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "googleapis")
@@ -908,12 +674,6 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Metadata.Name)
 	assert.Nil(err)
-
-	updatedTemplate, err := configService.UpdateIstioConfigDetail("config.istio.io", "test", "templates", "listchecker-to-update", "{}")
-	assert.Equal("test", updatedTemplate.Namespace.Name)
-	assert.Equal("templates", updatedTemplate.ObjectType)
-	assert.Equal("listchecker-to-update", updatedTemplate.Template.Metadata.Name)
-	assert.Nil(err)
 }
 
 func mockUpdateIstioConfigDetails() IstioConfigService {
@@ -967,12 +727,6 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", createVirtualService.VirtualService.Metadata.Name)
-	assert.Nil(err)
-
-	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", []byte("{}"))
-	assert.Equal("test", createTemplate.Namespace.Name)
-	assert.Equal("templates", createTemplate.ObjectType)
-	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)
 	assert.Nil(err)
 }
 

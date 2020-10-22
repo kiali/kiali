@@ -328,40 +328,6 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-// set this one time, it is very unlikely that mixer will be enabled/disabled without a kiali pod restart, or if it
-// did that that change will matter, and the kiali pod could be bounced as a workaround.
-var isMixerDisabled *bool
-
-// IsMixerDisabled returns true if Telemetry V2 is enabled (mixer is not collecting metrics)
-// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
-func IsMixerDisabled() bool {
-	if isMixerDisabled != nil {
-		return *isMixerDisabled
-	}
-
-	clientFactory, error := kubernetes.GetClientFactory()
-	if error != nil {
-		log.Warningf("IsMixerDisabled: Cannot connect to Kubernetes API")
-		return true
-	}
-
-	token, error := kubernetes.GetKialiToken()
-	if error != nil {
-		log.Warningf("IsMixerDisabled: Cannot get Kiali token")
-		return true
-	}
-
-	client, error := clientFactory.GetClient(token)
-	if error != nil {
-		log.Warningf("IsMixerDisabled: Cannot get Kubernetes Client")
-		return true
-	}
-
-	mixedDisabled := client.IsMixerDisabled()
-	isMixerDisabled = &mixedDisabled
-	return *isMixerDisabled
-}
-
 // set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
 // did that that version change will matter, and the kiali pod could be bounced as a workaround.
 var istioSupportsCanonical *bool
@@ -386,7 +352,7 @@ func AreCanonicalMetricsAvailable() bool { // AreCanonicalMetricsAvailable() boo
 
 	// Canonical metrics are present only if Istio version is 1.5 or later (aka canonical is supported)
 	// AND if mixer is disabled.
-	return *istioSupportsCanonical && IsMixerDisabled()
+	return *istioSupportsCanonical
 }
 
 // Check Iter8 Supported Version

@@ -9,7 +9,6 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -28,28 +27,12 @@ type IstioConfigCriteria struct {
 	IncludeVirtualServices        bool
 	IncludeDestinationRules       bool
 	IncludeServiceEntries         bool
-	IncludeRules                  bool
-	IncludeAdapters               bool
-	IncludeTemplates              bool
-	IncludeHandlers               bool
-	IncludeInstances              bool
-	IncludeQuotaSpecs             bool
-	IncludeQuotaSpecBindings      bool
-	IncludePolicies               bool
-	IncludeMeshPolicies           bool
-	IncludeClusterRbacConfigs     bool
-	IncludeRbacConfigs            bool
-	IncludeServiceRoles           bool
-	IncludeServiceRoleBindings    bool
 	IncludeSidecars               bool
 	IncludeAuthorizationPolicies  bool
 	IncludePeerAuthentications    bool
 	IncludeWorkloadEntries        bool
 	IncludeRequestAuthentications bool
 	IncludeEnvoyFilters           bool
-	IncludeAttributeManifests     bool
-	IncludeHttpApiSpecBindings    bool
-	IncludeHttpApiSpecs           bool
 	LabelSelector                 string
 	WorkloadSelector              string
 }
@@ -66,30 +49,6 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludeDestinationRules && !isWorkloadSelector
 	case kubernetes.ServiceEntries:
 		return icc.IncludeServiceEntries && !isWorkloadSelector
-	case kubernetes.Rules:
-		return icc.IncludeRules && !isWorkloadSelector
-	case kubernetes.Adapters:
-		return icc.IncludeAdapters && !isWorkloadSelector
-	case kubernetes.Templates:
-		return icc.IncludeTemplates && !isWorkloadSelector
-	case kubernetes.Handlers:
-		return icc.IncludeHandlers && !isWorkloadSelector
-	case kubernetes.Instances:
-		return icc.IncludeInstances && !isWorkloadSelector
-	case kubernetes.QuotaSpecs:
-		return icc.IncludeQuotaSpecs && !isWorkloadSelector
-	case kubernetes.QuotaSpecBindings:
-		return icc.IncludeQuotaSpecBindings && !isWorkloadSelector
-	case kubernetes.Policies:
-		return icc.IncludePolicies && !isWorkloadSelector
-	case kubernetes.MeshPolicies:
-		return icc.IncludeMeshPolicies && !isWorkloadSelector
-	case kubernetes.ClusterRbacConfigs:
-		return icc.IncludeClusterRbacConfigs && !isWorkloadSelector
-	case kubernetes.RbacConfigs:
-		return icc.IncludeRbacConfigs && !isWorkloadSelector
-	case kubernetes.ServiceRoles:
-		return icc.IncludeServiceRoles && !isWorkloadSelector
 	case kubernetes.Sidecars:
 		return icc.IncludeSidecars
 	case kubernetes.AuthorizationPolicies:
@@ -102,12 +61,6 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 		return icc.IncludeRequestAuthentications
 	case kubernetes.EnvoyFilters:
 		return icc.IncludeEnvoyFilters
-	case kubernetes.AttributeManifests:
-		return icc.IncludeAttributeManifests && !isWorkloadSelector
-	case kubernetes.HttpApiSpecBindings:
-		return icc.IncludeHttpApiSpecBindings && !isWorkloadSelector
-	case kubernetes.HttpApiSpecs:
-		return icc.IncludeHttpApiSpecs && !isWorkloadSelector
 	}
 	return false
 }
@@ -119,9 +72,6 @@ var newIstioConfigTypes = []string{
 	kubernetes.Gateways,
 	kubernetes.PeerAuthentications,
 	kubernetes.RequestAuthentications,
-	kubernetes.Handlers,
-	kubernetes.Rules,
-	kubernetes.Instances,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -140,28 +90,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		VirtualServices:        models.VirtualServices{Items: []models.VirtualService{}},
 		DestinationRules:       models.DestinationRules{Items: []models.DestinationRule{}},
 		ServiceEntries:         models.ServiceEntries{},
-		Rules:                  models.IstioRules{},
-		Adapters:               models.IstioAdapters{},
-		Templates:              models.IstioTemplates{},
-		Handlers:               models.IstioHandlers{},
-		Instances:              models.IstioInstances{},
-		QuotaSpecs:             models.QuotaSpecs{},
-		QuotaSpecBindings:      models.QuotaSpecBindings{},
-		Policies:               models.Policies{},
-		MeshPolicies:           models.MeshPolicies{},
-		ClusterRbacConfigs:     models.ClusterRbacConfigs{},
-		RbacConfigs:            models.RbacConfigs{},
 		Sidecars:               models.Sidecars{},
-		ServiceRoles:           models.ServiceRoles{},
-		ServiceRoleBindings:    models.ServiceRoleBindings{},
 		AuthorizationPolicies:  models.AuthorizationPolicies{},
 		PeerAuthentications:    models.PeerAuthentications{},
 		WorkloadEntries:        models.WorkloadEntries{},
 		RequestAuthentications: models.RequestAuthentications{},
 		EnvoyFilters:           models.EnvoyFilters{},
-		AttributeManifests:     models.AttributeManifests{},
-		HttpApiSpecBindings:    models.HttpApiSpecBindings{},
-		HttpApiSpecs:           models.HttpApiSpecs{},
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -176,10 +110,10 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		workloadSelector = criteria.WorkloadSelector
 	}
 
-	errChan := make(chan error, 26)
+	errChan := make(chan error, 10)
 
 	var wg sync.WaitGroup
-	wg.Add(26)
+	wg.Add(10)
 
 	go func(errChan chan error) {
 		defer wg.Done()
@@ -262,135 +196,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.Include(kubernetes.Rules) {
-			if mr, mrErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Rules, criteria.LabelSelector); mrErr == nil {
-				istioConfigList.Rules = models.CastIstioRulesCollection(mr)
-			} else {
-				errChan <- mrErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Adapters) {
-			if aa, aaErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Adapters, criteria.LabelSelector); aaErr == nil {
-				istioConfigList.Adapters = models.CastIstioAdaptersCollection(aa)
-			} else {
-				errChan <- aaErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Templates) {
-			if tt, ttErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Templates, criteria.LabelSelector); ttErr == nil {
-				istioConfigList.Templates = models.CastIstioTemplatesCollection(tt)
-			} else {
-				errChan <- ttErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Handlers) {
-			if hh, hhErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Handlers, criteria.LabelSelector); hhErr == nil {
-				istioConfigList.Handlers = models.CastIstioHandlersCollection(hh)
-			} else {
-				errChan <- hhErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Instances) {
-			if ii, iiErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Instances, criteria.LabelSelector); iiErr == nil {
-				istioConfigList.Instances = models.CastIstioInstancesCollection(ii)
-			} else {
-				errChan <- iiErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.QuotaSpecs) {
-			if qs, qsErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.QuotaSpecs, criteria.LabelSelector); qsErr == nil {
-				(&istioConfigList.QuotaSpecs).Parse(qs)
-			} else {
-				errChan <- qsErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.QuotaSpecBindings) {
-			if qb, qbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.QuotaSpecBindings, criteria.LabelSelector); qbErr == nil {
-				(&istioConfigList.QuotaSpecBindings).Parse(qb)
-			} else {
-				errChan <- qbErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.Policies) {
-			if pc, pcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.Policies, criteria.LabelSelector); pcErr == nil {
-				(&istioConfigList.Policies).Parse(pc)
-			} else {
-				errChan <- pcErr
-			}
-		}
-	}(errChan)
-
-	go func() {
-		defer wg.Done()
-		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
-		// Only listed in non Maistra environments.
-		if criteria.Include(kubernetes.MeshPolicies) && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
-			if mp, mpErr := in.k8s.GetIstioObjects("", kubernetes.MeshPolicies, criteria.LabelSelector); mpErr == nil {
-				(&istioConfigList.MeshPolicies).Parse(mp)
-			} else {
-				// This query can return false if user doesn't have cluster permissions
-				// On this case we log internally the error but we return an empty list
-				checkForbidden("GetMeshPolicies", mpErr, "probably Kiali doesn't have cluster permissions")
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		// ClusterRbacConfigs are not namespaced. They will be only listed for an Istio namespace.
-		// Only listed in non Maistra environments.
-		if criteria.Include(kubernetes.ClusterRbacConfigs) && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
-			if crc, crcErr := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, criteria.LabelSelector); crcErr == nil {
-				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
-			} else {
-				// This query can return false if user doesn't have cluster permissions
-				// On this case we log internally the error but we return an empty list
-				checkForbidden("GetClusterRbacConfigs", crcErr, "probably Kiali doesn't have cluster permissions")
-			}
-		}
-	}()
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.RbacConfigs) {
-			if rc, rcErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.RbacConfigs, criteria.LabelSelector); rcErr == nil {
-				(&istioConfigList.RbacConfigs).Parse(rc)
-			} else {
-				errChan <- rcErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
 		if criteria.Include(kubernetes.AuthorizationPolicies) {
 			var ap []kubernetes.IstioObject
 			var apErr error
@@ -454,28 +259,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.Include(kubernetes.ServiceRoles) {
-			if sr, srErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceRoles, criteria.LabelSelector); srErr == nil {
-				(&istioConfigList.ServiceRoles).Parse(sr)
-			} else {
-				errChan <- srErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.ServiceRoleBindings) {
-			if srb, srbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.ServiceRoleBindings, criteria.LabelSelector); srbErr == nil {
-				(&istioConfigList.ServiceRoleBindings).Parse(srb)
-			} else {
-				errChan <- srbErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
 		if criteria.Include(kubernetes.WorkloadEntries) {
 			if we, weErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.WorkloadEntries, criteria.LabelSelector); weErr == nil {
 				(&istioConfigList.WorkloadEntries).Parse(we)
@@ -516,39 +299,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 				(&istioConfigList.EnvoyFilters).Parse(ef)
 			} else {
 				errChan <- efErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.AttributeManifests) {
-			if am, amErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.AttributeManifests, criteria.LabelSelector); amErr == nil {
-				(&istioConfigList.AttributeManifests).Parse(am)
-			} else {
-				errChan <- amErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.HttpApiSpecBindings) {
-			if hb, hbErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.HttpApiSpecBindings, criteria.LabelSelector); hbErr == nil {
-				(&istioConfigList.HttpApiSpecBindings).Parse(hb)
-			} else {
-				errChan <- hbErr
-			}
-		}
-	}(errChan)
-
-	go func(errChan chan error) {
-		defer wg.Done()
-		if criteria.Include(kubernetes.HttpApiSpecs) {
-			if hs, hsErr := in.k8s.GetIstioObjects(criteria.Namespace, kubernetes.HttpApiSpecs, criteria.LabelSelector); hsErr == nil {
-				(&istioConfigList.HttpApiSpecs).Parse(hs)
-			} else {
-				errChan <- hsErr
 			}
 		}
 	}(errChan)
@@ -635,105 +385,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		} else {
 			err = iErr
 		}
-	case kubernetes.Rules:
-		if r, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Rules, object); iErr == nil {
-			istioRule := models.CastIstioRule(r)
-			istioConfigDetail.Rule = &istioRule
-		} else {
-			err = iErr
-		}
-	case kubernetes.Adapters:
-		if a, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Adapters, object); iErr == nil {
-			adapter := models.CastIstioAdapter(a)
-			istioConfigDetail.Adapter = &adapter
-		} else {
-			err = iErr
-		}
-	case kubernetes.Templates:
-		if t, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Templates, object); iErr == nil {
-			template := models.CastIstioTemplate(t)
-			istioConfigDetail.Template = &template
-		} else {
-			err = iErr
-		}
-	case kubernetes.Handlers:
-		if h, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Handlers, object); iErr == nil {
-			handler := models.CastIstioHandler(h)
-			istioConfigDetail.Handler = &handler
-		} else {
-			err = iErr
-		}
-	case kubernetes.Instances:
-		if i, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Instances, object); iErr == nil {
-			instance := models.CastIstioInstance(i)
-			istioConfigDetail.Instance = &instance
-		} else {
-			err = iErr
-		}
-	case kubernetes.QuotaSpecs:
-		if qs, iErr := in.k8s.GetIstioObject(namespace, kubernetes.QuotaSpecs, object); iErr == nil {
-			istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
-			istioConfigDetail.QuotaSpec.Parse(qs)
-		} else {
-			err = iErr
-		}
-	case kubernetes.QuotaSpecBindings:
-		if qb, iErr := in.k8s.GetIstioObject(namespace, kubernetes.QuotaSpecBindings, object); iErr == nil {
-			istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
-			istioConfigDetail.QuotaSpecBinding.Parse(qb)
-		} else {
-			err = iErr
-		}
-	case kubernetes.Policies:
-		if pc, iErr := in.k8s.GetIstioObject(namespace, kubernetes.Policies, object); iErr == nil {
-			istioConfigDetail.Policy = &models.Policy{}
-			istioConfigDetail.Policy.Parse(pc)
-		} else {
-			err = iErr
-		}
-	case kubernetes.MeshPolicies:
-		// MeshPeerAuthentications are not namespaced. They will be only listed for an Istio namespace.
-		// Only listed in non Maistra environments.
-		if config.IsIstioNamespace(namespace) {
-			if mp, iErr := in.k8s.GetIstioObject("", kubernetes.MeshPolicies, object); iErr == nil {
-				istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
-				istioConfigDetail.MeshPolicy.Parse(mp)
-			} else {
-				err = iErr
-			}
-		}
-	case kubernetes.ClusterRbacConfigs:
-		// ClusterRbacConfigs are not namespaced. They will be only listed for an istio namespace.
-		// Only listed in non Maistra environments.
-		if config.IsIstioNamespace(namespace) {
-			if crc, iErr := in.k8s.GetIstioObject("", kubernetes.ClusterRbacConfigs, object); iErr == nil {
-				istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
-				istioConfigDetail.ClusterRbacConfig.Parse(crc)
-			} else {
-				err = iErr
-			}
-		}
-	case kubernetes.RbacConfigs:
-		if rc, iErr := in.k8s.GetIstioObject(namespace, kubernetes.RbacConfigs, object); iErr == nil {
-			istioConfigDetail.RbacConfig = &models.RbacConfig{}
-			istioConfigDetail.RbacConfig.Parse(rc)
-		} else {
-			err = iErr
-		}
-	case kubernetes.ServiceRoles:
-		if sr, iErr := in.k8s.GetIstioObject(namespace, kubernetes.ServiceRoles, object); iErr == nil {
-			istioConfigDetail.ServiceRole = &models.ServiceRole{}
-			istioConfigDetail.ServiceRole.Parse(sr)
-		} else {
-			err = iErr
-		}
-	case kubernetes.ServiceRoleBindings:
-		if srb, iErr := in.k8s.GetIstioObject(namespace, kubernetes.ServiceRoleBindings, object); iErr == nil {
-			istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
-			istioConfigDetail.ServiceRoleBinding.Parse(srb)
-		} else {
-			err = iErr
-		}
 	case kubernetes.AuthorizationPolicies:
 		if ap, iErr := in.k8s.GetIstioObject(namespace, kubernetes.AuthorizationPolicies, object); iErr == nil {
 			istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
@@ -766,27 +417,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if ef, iErr := in.k8s.GetIstioObject(namespace, kubernetes.EnvoyFilters, object); iErr == nil {
 			istioConfigDetail.EnvoyFilter = &models.EnvoyFilter{}
 			istioConfigDetail.EnvoyFilter.Parse(ef)
-		} else {
-			err = iErr
-		}
-	case kubernetes.AttributeManifests:
-		if am, iErr := in.k8s.GetIstioObject(namespace, kubernetes.AttributeManifests, object); iErr == nil {
-			istioConfigDetail.AttributeManifest = &models.AttributeManifest{}
-			istioConfigDetail.AttributeManifest.Parse(am)
-		} else {
-			err = iErr
-		}
-	case kubernetes.HttpApiSpecBindings:
-		if hb, iErr := in.k8s.GetIstioObject(namespace, kubernetes.HttpApiSpecBindings, object); iErr == nil {
-			istioConfigDetail.HttpApiSpecBinding = &models.HttpApiSpecBinding{}
-			istioConfigDetail.HttpApiSpecBinding.Parse(hb)
-		} else {
-			err = iErr
-		}
-	case kubernetes.HttpApiSpecs:
-		if hs, iErr := in.k8s.GetIstioObject(namespace, kubernetes.HttpApiSpecs, object); iErr == nil {
-			istioConfigDetail.HttpApiSpec = &models.HttpApiSpec{}
-			istioConfigDetail.HttpApiSpec.Parse(hs)
 		} else {
 			err = iErr
 		}
@@ -830,33 +460,6 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType string, body []byt
 	case kubernetes.Sidecars:
 		istioConfigDetail.Sidecar = &models.Sidecar{}
 		err = json.Unmarshal(body, istioConfigDetail.Sidecar)
-	case kubernetes.Rules:
-		istioConfigDetail.Rule = &models.IstioRule{}
-		err = json.Unmarshal(body, istioConfigDetail.Rule)
-	case kubernetes.Adapters:
-		istioConfigDetail.Adapter = &models.IstioAdapter{}
-		err = json.Unmarshal(body, istioConfigDetail.Adapter)
-	case kubernetes.Templates:
-		istioConfigDetail.Template = &models.IstioTemplate{}
-		err = json.Unmarshal(body, istioConfigDetail.Template)
-	case kubernetes.Handlers:
-		istioConfigDetail.Handler = &models.IstioHandler{}
-		err = json.Unmarshal(body, istioConfigDetail.Handler)
-	case kubernetes.Instances:
-		istioConfigDetail.Instance = &models.IstioInstance{}
-		err = json.Unmarshal(body, istioConfigDetail.Instance)
-	case kubernetes.QuotaSpecs:
-		istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
-		err = json.Unmarshal(body, istioConfigDetail.QuotaSpec)
-	case kubernetes.QuotaSpecBindings:
-		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
-		err = json.Unmarshal(body, istioConfigDetail.QuotaSpecBinding)
-	case kubernetes.Policies:
-		istioConfigDetail.Policy = &models.Policy{}
-		err = json.Unmarshal(body, istioConfigDetail.Policy)
-	case kubernetes.MeshPolicies:
-		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
-		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.AuthorizationPolicy)
@@ -957,48 +560,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case kubernetes.Sidecars:
 		istioConfigDetail.Sidecar = &models.Sidecar{}
 		istioConfigDetail.Sidecar.Parse(result)
-	case kubernetes.Rules:
-		istioRule := models.CastIstioRule(result)
-		istioConfigDetail.Rule = &istioRule
-	case kubernetes.Adapters:
-		adapter := models.CastIstioAdapter(result)
-		istioConfigDetail.Adapter = &adapter
-	case kubernetes.Templates:
-		template := models.CastIstioTemplate(result)
-		istioConfigDetail.Template = &template
-	case kubernetes.Handlers:
-		handler := models.CastIstioHandler(result)
-		istioConfigDetail.Handler = &handler
-	case kubernetes.Instances:
-		instance := models.CastIstioInstance(result)
-		istioConfigDetail.Instance = &instance
-	case kubernetes.QuotaSpecs:
-		istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
-		istioConfigDetail.QuotaSpec.Parse(result)
-	case kubernetes.QuotaSpecBindings:
-		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
-		istioConfigDetail.QuotaSpecBinding.Parse(result)
-	case kubernetes.Policies:
-		istioConfigDetail.Policy = &models.Policy{}
-		istioConfigDetail.Policy.Parse(result)
-	case kubernetes.MeshPolicies:
-		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
-		istioConfigDetail.MeshPolicy.Parse(result)
-	case kubernetes.ClusterRbacConfigs:
-		istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
-		istioConfigDetail.ClusterRbacConfig.Parse(result)
-	case kubernetes.RbacConfigs:
-		istioConfigDetail.RbacConfig = &models.RbacConfig{}
-		istioConfigDetail.RbacConfig.Parse(result)
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy = &models.AuthorizationPolicy{}
 		istioConfigDetail.AuthorizationPolicy.Parse(result)
-	case kubernetes.ServiceRoles:
-		istioConfigDetail.ServiceRole = &models.ServiceRole{}
-		istioConfigDetail.ServiceRole.Parse(result)
-	case kubernetes.ServiceRoleBindings:
-		istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
-		istioConfigDetail.ServiceRoleBinding.Parse(result)
 	case kubernetes.PeerAuthentications:
 		istioConfigDetail.PeerAuthentication = &models.PeerAuthentication{}
 		istioConfigDetail.PeerAuthentication.Parse(result)
@@ -1011,15 +575,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case kubernetes.EnvoyFilters:
 		istioConfigDetail.EnvoyFilter = &models.EnvoyFilter{}
 		istioConfigDetail.EnvoyFilter.Parse(result)
-	case kubernetes.AttributeManifests:
-		istioConfigDetail.AttributeManifest = &models.AttributeManifest{}
-		istioConfigDetail.AttributeManifest.Parse(result)
-	case kubernetes.HttpApiSpecs:
-		istioConfigDetail.HttpApiSpec = &models.HttpApiSpec{}
-		istioConfigDetail.HttpApiSpec.Parse(result)
-	case kubernetes.HttpApiSpecBindings:
-		istioConfigDetail.HttpApiSpecBinding = &models.HttpApiSpecBinding{}
-		istioConfigDetail.HttpApiSpecBinding.Parse(result)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -1116,28 +671,12 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
-	criteria.IncludeRules = defaultInclude
-	criteria.IncludeAdapters = defaultInclude
-	criteria.IncludeTemplates = defaultInclude
-	criteria.IncludeHandlers = defaultInclude
-	criteria.IncludeInstances = defaultInclude
-	criteria.IncludeQuotaSpecs = defaultInclude
-	criteria.IncludeQuotaSpecBindings = defaultInclude
-	criteria.IncludePolicies = defaultInclude
-	criteria.IncludeMeshPolicies = defaultInclude
-	criteria.IncludeClusterRbacConfigs = defaultInclude
-	criteria.IncludeRbacConfigs = defaultInclude
-	criteria.IncludeServiceRoles = defaultInclude
-	criteria.IncludeServiceRoleBindings = defaultInclude
 	criteria.IncludeSidecars = defaultInclude
 	criteria.IncludeAuthorizationPolicies = defaultInclude
 	criteria.IncludePeerAuthentications = defaultInclude
 	criteria.IncludeWorkloadEntries = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
 	criteria.IncludeEnvoyFilters = defaultInclude
-	criteria.IncludeAttributeManifests = defaultInclude
-	criteria.IncludeHttpApiSpecBindings = defaultInclude
-	criteria.IncludeHttpApiSpecs = defaultInclude
 	criteria.LabelSelector = labelSelector
 	criteria.WorkloadSelector = workloadSelector
 
@@ -1158,45 +697,6 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	if checkType(types, kubernetes.ServiceEntries) {
 		criteria.IncludeServiceEntries = true
 	}
-	if checkType(types, kubernetes.Rules) {
-		criteria.IncludeRules = true
-	}
-	if checkType(types, kubernetes.Adapters) {
-		criteria.IncludeAdapters = true
-	}
-	if checkType(types, kubernetes.Templates) {
-		criteria.IncludeTemplates = true
-	}
-	if checkType(types, kubernetes.Handlers) {
-		criteria.IncludeHandlers = true
-	}
-	if checkType(types, kubernetes.Instances) {
-		criteria.IncludeInstances = true
-	}
-	if checkType(types, kubernetes.QuotaSpecs) {
-		criteria.IncludeQuotaSpecs = true
-	}
-	if checkType(types, kubernetes.QuotaSpecBindings) {
-		criteria.IncludeQuotaSpecBindings = true
-	}
-	if checkType(types, kubernetes.Policies) {
-		criteria.IncludePolicies = true
-	}
-	if checkType(types, kubernetes.MeshPolicies) {
-		criteria.IncludeMeshPolicies = true
-	}
-	if checkType(types, kubernetes.ClusterRbacConfigs) {
-		criteria.IncludeClusterRbacConfigs = true
-	}
-	if checkType(types, kubernetes.RbacConfigs) {
-		criteria.IncludeRbacConfigs = true
-	}
-	if checkType(types, kubernetes.ServiceRoles) {
-		criteria.IncludeServiceRoles = true
-	}
-	if checkType(types, kubernetes.ServiceRoleBindings) {
-		criteria.IncludeServiceRoleBindings = true
-	}
 	if checkType(types, kubernetes.Sidecars) {
 		criteria.IncludeSidecars = true
 	}
@@ -1214,15 +714,6 @@ func ParseIstioConfigCriteria(namespace, objects, labelSelector, workloadSelecto
 	}
 	if checkType(types, kubernetes.EnvoyFilters) {
 		criteria.IncludeEnvoyFilters = true
-	}
-	if checkType(types, kubernetes.AttributeManifests) {
-		criteria.IncludeAttributeManifests = true
-	}
-	if checkType(types, kubernetes.HttpApiSpecBindings) {
-		criteria.IncludeHttpApiSpecBindings = true
-	}
-	if checkType(types, kubernetes.HttpApiSpecs) {
-		criteria.IncludeHttpApiSpecs = true
 	}
 	return criteria
 }

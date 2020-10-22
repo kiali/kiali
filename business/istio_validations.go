@@ -113,7 +113,6 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
-		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioDetails.VirtualServices},
 		checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces, WorkloadList: workloads, Services: services, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioDetails.RequestAuthentications, WorkloadList: workloads},
@@ -171,28 +170,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
-	case kubernetes.Rules:
-		// Validations on Istio Rules are not yet in place
-	case kubernetes.Templates:
-		// Validations on Templates are not yet in place
-	case kubernetes.Adapters:
-		// Validations on Adapters are not yet in place
-	case kubernetes.Handlers:
-		// Validations on Templates are not yet in place
-	case kubernetes.Instances:
-		// Validations on Adapters are not yet in place
-	case kubernetes.Policies:
-		// Still supporting Policy Objects
-	case kubernetes.MeshPolicies:
-		// Still supporting MeshPolicies
-	case kubernetes.QuotaSpecs:
-		// Validations on QuotaSpecs are not yet in place
-	case kubernetes.QuotaSpecBindings:
-		// Validations on QuotaSpecBindings are not yet in place
-	case kubernetes.ClusterRbacConfigs:
-		// Validations on ClusterRbacConfigs are not yet in place
-	case kubernetes.RbacConfigs:
-		// Validations on RbacConfigs are not yet in place
 	case kubernetes.Sidecars:
 		sidecarsChecker := checkers.SidecarChecker{Sidecars: istioDetails.Sidecars, Namespaces: namespaces,
 			WorkloadList: workloads, Services: services, ServiceEntries: istioDetails.ServiceEntries}
@@ -202,11 +179,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries,
 			WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioDetails.VirtualServices}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
-	case kubernetes.ServiceRoles:
-		objectCheckers = []ObjectChecker{noServiceChecker}
-	case kubernetes.ServiceRoleBindings:
-		roleBindChecker := checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails}
-		objectCheckers = []ObjectChecker{roleBindChecker}
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads}
@@ -219,12 +191,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{requestAuthnChecker}
 	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
-	case kubernetes.AttributeManifests:
-		// Validation on AttributeManifests are not yet in place
-	case kubernetes.HttpApiSpecBindings:
-		// Validation on HttpApiSpecBindings are not yet in place
-	case kubernetes.HttpApiSpecs:
-		// Validation on HttpApiSpecs are not yet in place
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}
@@ -577,7 +543,7 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 
 		innerErrChan := make(chan error, 1)
 		var wg sync.WaitGroup
-		wg.Add(4)
+		wg.Add(1)
 
 		go func(errChan chan error) {
 			defer wg.Done()
@@ -588,35 +554,6 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 				authDetails.AuthorizationPolicies, err = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
 			}
 			if err != nil {
-				errChan <- err
-			}
-		}(innerErrChan)
-
-		go func(errChan chan error) {
-			defer wg.Done()
-			var err error
-			// RBAC objects are deprecated and won't be used in the cache
-			authDetails.ServiceRoleBindings, err = in.k8s.GetIstioObjects(namespace, kubernetes.ServiceRoleBindings, "")
-			if err != nil {
-				errChan <- err
-			}
-		}(innerErrChan)
-
-		go func(errChan chan error) {
-			defer wg.Done()
-			var err error
-			// RBAC objects are deprecated and won't be used in the cache
-			authDetails.ServiceRoles, err = in.k8s.GetIstioObjects(namespace, kubernetes.ServiceRoles, "")
-			if err != nil {
-				errChan <- err
-			}
-		}(innerErrChan)
-
-		go func(errChan chan error) {
-			defer wg.Done()
-			if crc, err := in.k8s.GetIstioObjects("", kubernetes.ClusterRbacConfigs, ""); err == nil {
-				authDetails.ClusterRbacConfigs = crc
-			} else {
 				errChan <- err
 			}
 		}(innerErrChan)

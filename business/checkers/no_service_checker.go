@@ -3,7 +3,6 @@ package checkers
 import (
 	core_v1 "k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
@@ -40,11 +39,6 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
 		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, in.Services, serviceHosts, in.Namespaces))
 	}
-
-	for _, serviceRole := range in.AuthorizationDetails.ServiceRoles {
-		validations.MergeValidations(runServiceRoleCheck(serviceRole, in.Services))
-	}
-
 	return validations
 }
 
@@ -90,20 +84,6 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 		DestinationRule: destinationRule,
 		Services:        services,
 		ServiceEntries:  serviceHosts,
-	}.Check()
-
-	validations.Valid = valid
-	validations.Checks = result
-
-	return models.IstioValidations{key: validations}
-}
-
-func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []core_v1.Service) models.IstioValidations {
-	key, validations := EmptyValidValidation(serviceRole.GetObjectMeta().Name, serviceRole.GetObjectMeta().Namespace, ServiceRoleCheckerType)
-
-	result, valid := authorization.ServiceChecker{
-		ServiceRole: serviceRole,
-		Services:    services,
 	}.Check()
 
 	validations.Valid = valid

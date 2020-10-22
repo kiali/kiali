@@ -26,18 +26,8 @@ var (
 
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
 func (in *K8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
-	if apiGroup == ConfigGroupVersion.Group {
-		return in.istioConfigApi, ApiConfigVersion
-	} else if apiGroup == NetworkingGroupVersion.Group {
+	if apiGroup == NetworkingGroupVersion.Group {
 		return in.istioNetworkingApi, ApiNetworkingVersion
-	} else if apiGroup == AuthenticationGroupVersion.Group {
-		return in.istioAuthenticationApi, ApiAuthenticationVersion
-	} else if apiGroup == RbacGroupVersion.Group {
-		return in.istioRbacApi, ApiRbacVersion
-	} else if apiGroup == MaistraAuthenticationGroupVersion.Group {
-		return in.maistraAuthenticationApi, ApiMaistraAuthenticationVersion
-	} else if apiGroup == MaistraRbacGroupVersion.Group {
-		return in.maistraRbacApi, ApiMaistraRbacVersion
 	} else if apiGroup == SecurityGroupVersion.Group {
 		return in.istioSecurityApi, ApiSecurityVersion
 	}
@@ -62,14 +52,7 @@ func (in *K8SClient) CreateIstioObject(api, namespace, resourceType, json string
 		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
-	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
-		result, err = apiClient.Post().Resource(resourceType).Body(byteJson).Do().Get()
-	} else {
-		result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-	}
+	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +73,7 @@ func (in *K8SClient) DeleteIstioObject(api, namespace, resourceType, name string
 	if apiClient == nil {
 		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
-	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
-		_, err = apiClient.Delete().Resource(resourceType).Name(name).Do().Get()
-	} else {
-		_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	}
+	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	return err
 }
 
@@ -118,14 +94,7 @@ func (in *K8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonP
 	if apiClient == nil {
 		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
-	// MeshPeerAuthentications and ClusterRbacConfigs are cluster scope objects
-	// Update: Removed the namespace filter as it doesn't work well in all platforms
-	// https://issues.jboss.org/browse/KIALI-3223
-	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
-		result, err = apiClient.Patch(types.MergePatchType).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	} else {
-		result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	}
+	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -151,29 +120,13 @@ func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector stri
 		return []IstioObject{}, nil
 	}
 
-	if apiGroup == ConfigGroupVersion.Group && !in.hasConfigResource(resourceType) {
-		return []IstioObject{}, nil
-	}
-
-	if apiGroup == AuthenticationGroupVersion.Group && !in.hasAuthenticationResource(resourceType) {
-		return []IstioObject{}, nil
-	}
-
-	if apiGroup == RbacGroupVersion.Group && !in.hasRbacResource(resourceType) {
-		return []IstioObject{}, nil
-	}
-
 	if apiGroup == SecurityGroupVersion.Group && !in.hasSecurityResource(resourceType) {
 		return []IstioObject{}, nil
 	}
 
 	var result runtime.Object
 	var err error
-	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
-		result, err = apiClient.Get().Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
-	} else {
-		result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
-	}
+	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -206,11 +159,7 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 
 	var result runtime.Object
 	var err error
-	if resourceType == MeshPolicies || resourceType == ClusterRbacConfigs {
-		result, err = apiClient.Get().Resource(resourceType).SubResource(name).Do().Get()
-	} else {
-		result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do().Get()
-	}
+	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -324,56 +273,6 @@ func (in *K8SClient) getNetworkingResources() map[string]bool {
 	return *in.networkingResources
 }
 
-func (in *K8SClient) hasConfigResource(resource string) bool {
-	return in.getConfigResources()[resource]
-}
-
-func (in *K8SClient) getConfigResources() map[string]bool {
-	if in.configResources != nil {
-		return *in.configResources
-	}
-
-	configResources := map[string]bool{}
-	path := fmt.Sprintf("/apis/%s", ApiConfigVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
-	if err == nil {
-		resourceList := meta_v1.APIResourceList{}
-		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
-			for _, resource := range resourceList.APIResources {
-				configResources[resource.Name] = true
-			}
-		}
-	}
-	in.configResources = &configResources
-
-	return *in.configResources
-}
-
-func (in *K8SClient) hasRbacResource(resource string) bool {
-	return in.getRbacResources()[resource]
-}
-
-func (in *K8SClient) getRbacResources() map[string]bool {
-	if in.rbacResources != nil {
-		return *in.rbacResources
-	}
-
-	rbacResources := map[string]bool{}
-	path := fmt.Sprintf("/apis/%s", ApiRbacVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
-	if err == nil {
-		resourceList := meta_v1.APIResourceList{}
-		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
-			for _, resource := range resourceList.APIResources {
-				rbacResources[resource.Name] = true
-			}
-		}
-	}
-	in.rbacResources = &rbacResources
-
-	return *in.rbacResources
-}
-
 func (in *K8SClient) hasSecurityResource(resource string) bool {
 	return in.getSecurityResources()[resource]
 }
@@ -397,31 +296,6 @@ func (in *K8SClient) getSecurityResources() map[string]bool {
 	in.securityResources = &securityResources
 
 	return *in.securityResources
-}
-
-func (in *K8SClient) hasAuthenticationResource(resource string) bool {
-	return in.getAuthenticationResources()[resource]
-}
-
-func (in *K8SClient) getAuthenticationResources() map[string]bool {
-	if in.authenticationResources != nil {
-		return *in.authenticationResources
-	}
-
-	authenticationResources := map[string]bool{}
-	path := fmt.Sprintf("/apis/%s", ApiAuthenticationVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
-	if err == nil {
-		resourceList := meta_v1.APIResourceList{}
-		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
-			for _, resource := range resourceList.APIResources {
-				authenticationResources[resource.Name] = true
-			}
-		}
-	}
-	in.authenticationResources = &authenticationResources
-
-	return *in.authenticationResources
 }
 
 func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error) {
@@ -448,33 +322,6 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 	}
 
 	return meshConfig, nil
-}
-
-func (in *K8SClient) IsMixerDisabled() bool {
-	if in.isMixerDisabled != nil {
-		return *in.isMixerDisabled
-	}
-
-	cfg := config.Get()
-	istioConfig, err := in.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
-	if err != nil {
-		log.Warningf("GetIstioConfigMap: Cannot retrieve Istio ConfigMap.")
-		return false
-	}
-	meshConfig, err := GetIstioConfigMap(istioConfig)
-	if err != nil {
-		log.Warningf("IsMixerDisabled: Cannot read Istio mesh configuration.")
-		return true
-	}
-
-	log.Debugf("IsMixerDisabled: %t", meshConfig.DisableMixerHttpReports)
-
-	// References:
-	//   * https://github.com/istio/api/pull/1112
-	//   * https://github.com/istio/istio/pull/17695
-	//   * https://github.com/istio/istio/issues/15935
-	in.isMixerDisabled = &meshConfig.DisableMixerHttpReports
-	return *in.isMixerDisabled
 }
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
