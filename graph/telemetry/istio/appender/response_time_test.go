@@ -242,6 +242,7 @@ func responseTimeTestTraffic() graph.TrafficMap {
 	ratingsService := graph.NewNode("bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
 	ratings := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
+
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpageService.ID] = &productpageService
 	trafficMap[productpage.ID] = &productpage
