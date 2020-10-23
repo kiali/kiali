@@ -25,19 +25,19 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-// Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
+// WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
 	prom          prometheus.ClientInterface
 	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
-// Structures for workload log messages
+// PodLog reports log entries
 type PodLog struct {
-	Logs    string     `json:"logs,omitempty"`
 	Entries []LogEntry `json:"entries,omitempty"`
 }
 
+// LogEntry holds a single log entry
 type LogEntry struct {
 	Message       string `json:"message,omitempty"`
 	Severity      string `json:"severity,omitempty"`
@@ -45,6 +45,7 @@ type LogEntry struct {
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
 }
 
+// LogOptions holds query parameter values
 type LogOptions struct {
 	Duration *time.Duration
 	core_v1.PodLogOptions
@@ -237,6 +238,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		}
 
 		entry.Message = strings.TrimSpace(splitted[1])
+		if entry.Message == "" {
+			log.Debugf("Skipping empty log line [%s]", line)
+			continue
+		}
 
 		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
 		if err == nil {
@@ -274,13 +279,13 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 	}
 
 	message := PodLog{
-		Logs:    podLog.Logs,
 		Entries: entries,
 	}
 
 	return &message, err
 }
 
+// GetPodLogs returns pod logs given the provided options
 func (in *WorkloadService) GetPodLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	return in.getParsedLogs(namespace, name, opts)
 }
