@@ -34,40 +34,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.workloadEntry;
     } else if (istioObjectDetails.envoyFilter) {
       istioObject = istioObjectDetails.envoyFilter;
-    } else if (istioObjectDetails.rule) {
-      istioObject = istioObjectDetails.rule;
-    } else if (istioObjectDetails.adapter) {
-      istioObject = istioObjectDetails.adapter;
-    } else if (istioObjectDetails.template) {
-      istioObject = istioObjectDetails.template;
-    } else if (istioObjectDetails.handler) {
-      istioObject = istioObjectDetails.handler;
-    } else if (istioObjectDetails.instance) {
-      istioObject = istioObjectDetails.instance;
-    } else if (istioObjectDetails.quotaSpec) {
-      istioObject = istioObjectDetails.quotaSpec;
-    } else if (istioObjectDetails.quotaSpecBinding) {
-      istioObject = istioObjectDetails.quotaSpecBinding;
-    } else if (istioObjectDetails.attributeManifest) {
-      istioObject = istioObjectDetails.attributeManifest;
-    } else if (istioObjectDetails.httpApiSpec) {
-      istioObject = istioObjectDetails.httpApiSpec;
-    } else if (istioObjectDetails.httpApiSpecBinding) {
-      istioObject = istioObjectDetails.httpApiSpecBinding;
-    } else if (istioObjectDetails.policy) {
-      istioObject = istioObjectDetails.policy;
-    } else if (istioObjectDetails.meshPolicy) {
-      istioObject = istioObjectDetails.meshPolicy;
-    } else if (istioObjectDetails.clusterRbacConfig) {
-      istioObject = istioObjectDetails.clusterRbacConfig;
-    } else if (istioObjectDetails.rbacConfig) {
-      istioObject = istioObjectDetails.rbacConfig;
     } else if (istioObjectDetails.authorizationPolicy) {
       istioObject = istioObjectDetails.authorizationPolicy;
-    } else if (istioObjectDetails.serviceRole) {
-      istioObject = istioObjectDetails.serviceRole;
-    } else if (istioObjectDetails.serviceRoleBinding) {
-      istioObject = istioObjectDetails.serviceRoleBinding;
     } else if (istioObjectDetails.peerAuthentication) {
       istioObject = istioObjectDetails.peerAuthentication;
     } else if (istioObjectDetails.requestAuthentication) {

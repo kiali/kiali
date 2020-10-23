@@ -1,20 +1,14 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownPosition, DropdownSeparator, DropdownToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
 import { CaretDownIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
 import { Workload } from '../../types/Workload';
 import {
   buildWorkloadInjectionPatch,
-  buildWorkloadThreeScalePatch,
-  isThreeScaleLinked,
   WIZARD_DISABLE_AUTO_INJECTION,
   WIZARD_ENABLE_AUTO_INJECTION,
-  WIZARD_REMOVE_AUTO_INJECTION,
-  WIZARD_THREESCALE_LINK,
-  WIZARD_THREESCALE_UNLINK
+  WIZARD_REMOVE_AUTO_INJECTION
 } from './WizardActions';
-import WorkloadWizard from './WorkloadWizard';
-import { IstioRule } from '../../types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
@@ -22,7 +16,6 @@ import { MessageType } from '../../types/MessageCenter';
 interface Props {
   namespace: string;
   workload: Workload;
-  rules: IstioRule[];
   onChange: () => void;
 }
 
@@ -63,39 +56,6 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         const enable = key === WIZARD_ENABLE_AUTO_INJECTION;
         const jsonInjectionPatch = buildWorkloadInjectionPatch(this.props.workload.type, enable, remove);
         API.updateWorkload(this.props.namespace, this.props.workload.name, this.props.workload.type, jsonInjectionPatch)
-          .then(_ => {
-            AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
-            this.setState(
-              {
-                showWizard: false
-              },
-              () => this.props.onChange()
-            );
-          })
-          .catch(error => {
-            AlertUtils.addError('Could not update workload ' + this.props.workload.name, error);
-            this.setState(
-              {
-                showWizard: false
-              },
-              () => this.props.onChange()
-            );
-          });
-        break;
-      case WIZARD_THREESCALE_LINK:
-        this.setState({
-          showWizard: true,
-          type: WIZARD_THREESCALE_LINK
-        });
-        break;
-      case WIZARD_THREESCALE_UNLINK:
-        const jsonThreescalePatch = buildWorkloadThreeScalePatch(false, this.props.workload.type, '', '');
-        API.updateWorkload(
-          this.props.namespace,
-          this.props.workload.name,
-          this.props.workload.type,
-          jsonThreescalePatch
-        )
           .then(_ => {
             AlertUtils.add('Workload ' + this.props.workload.name + ' updated', 'default', MessageType.SUCCESS);
             this.setState(
@@ -171,30 +131,6 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         items.push(this.props.workload.istioSidecar ? disableAction : enableAction);
       }
     }
-    if (serverConfig.extensions?.threescale.enabled && this.props.workload) {
-      items.push(<DropdownSeparator key={'separator_injection'} />);
-      if (isThreeScaleLinked(this.props.workload)) {
-        items.push(
-          <DropdownItem
-            key={WIZARD_THREESCALE_UNLINK}
-            component="button"
-            onClick={() => this.onAction(WIZARD_THREESCALE_UNLINK)}
-          >
-            Unlink 3scale Authorization
-          </DropdownItem>
-        );
-      } else {
-        items.push(
-          <DropdownItem
-            key={WIZARD_THREESCALE_LINK}
-            component="button"
-            onClick={() => this.onAction(WIZARD_THREESCALE_LINK)}
-          >
-            Link 3scale Authorization
-          </DropdownItem>
-        );
-      }
-    }
     return items;
   };
 
@@ -216,19 +152,8 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         style={{ pointerEvents: validActions ? 'auto' : 'none' }}
       />
     );
-    return (
-      <>
-        {dropdown}
-        <WorkloadWizard
-          show={this.state.showWizard}
-          type={this.state.type}
-          namespace={this.props.namespace}
-          workload={this.props.workload}
-          rules={this.props.rules}
-          onClose={this.onClose}
-        />
-      </>
-    );
+    // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
+    return <>{dropdown}</>;
   }
 }
 

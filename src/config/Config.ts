@@ -158,12 +158,6 @@ const conf = {
       serviceDashboard: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/dashboard`,
       status: 'api/status',
-      threeScale: 'api/threescale',
-      threeScaleHandler: (handlerName: string) => `api/threescale/handlers/${handlerName}`,
-      threeScaleHandlers: 'api/threescale/handlers',
-      threeScaleServiceRule: (namespace: string, service: string) =>
-        `api/threescale/namespaces/${namespace}/services/${service}`,
-      threeScaleServiceRules: (namespace: string) => `api/threescale/namespaces/${namespace}/services`,
       workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,
       workload: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}`,
       workloadGraphElements: (namespace: string, workload: string) =>

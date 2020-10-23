@@ -1,29 +1,14 @@
 import Namespace from './Namespace';
 import {
-  AttributeManifest,
   AuthorizationPolicy,
-  ClusterRbacConfig,
   DestinationRule,
   DestinationRules,
   EnvoyFilter,
   Gateway,
-  HTTPAPISpec,
-  HTTPAPISpecBinding,
-  IstioAdapter,
-  IstioHandler,
-  IstioInstance,
-  IstioRule,
-  IstioTemplate,
   ObjectValidation,
   PeerAuthentication,
-  Policy,
-  QuotaSpec,
-  QuotaSpecBinding,
-  RbacConfig,
   RequestAuthentication,
   ServiceEntry,
-  ServiceRole,
-  ServiceRoleBinding,
   Sidecar,
   Validations,
   VirtualService,
@@ -42,28 +27,12 @@ export interface IstioConfigItem {
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
   serviceEntry?: ServiceEntry;
-  rule?: IstioRule;
-  adapter?: IstioAdapter;
-  template?: IstioTemplate;
-  handler?: IstioHandler;
-  instance?: IstioInstance;
-  quotaSpec?: QuotaSpec;
-  quotaSpecBinding?: QuotaSpecBinding;
-  policy?: Policy;
-  meshPolicy?: Policy;
-  clusterRbacConfig?: ClusterRbacConfig;
-  rbacConfig?: RbacConfig;
   authorizationPolicy?: AuthorizationPolicy;
   sidecar?: Sidecar;
-  serviceRole?: ServiceRole;
-  serviceRoleBinding?: ServiceRoleBinding;
   peerAuthentication?: PeerAuthentication;
   requestAuthentication?: RequestAuthentication;
   workloadEntry?: WorkloadEntry;
   envoyFilter?: EnvoyFilter;
-  attributeManifest?: AttributeManifest;
-  httpApiSpec?: HTTPAPISpec;
-  httpApiSpecBinding?: HTTPAPISpecBinding;
   validation?: ObjectValidation;
 }
 
@@ -75,24 +44,8 @@ export interface IstioConfigList {
   serviceEntries: ServiceEntry[];
   workloadEntries: WorkloadEntry[];
   envoyFilters: EnvoyFilter[];
-  rules: IstioRule[];
-  adapters: IstioAdapter[];
-  templates: IstioTemplate[];
-  instances: IstioInstance[];
-  handlers: IstioHandler[];
-  quotaSpecs: QuotaSpec[];
-  quotaSpecBindings: QuotaSpecBinding[];
-  attributeManifests: AttributeManifest[];
-  httpApiSpecs: HTTPAPISpec[];
-  httpApiSpecBindings: HTTPAPISpecBinding[];
-  policies: Policy[];
-  meshPolicies: Policy[];
-  clusterRbacConfigs: ClusterRbacConfig[];
-  rbacConfigs: RbacConfig[];
   authorizationPolicies: AuthorizationPolicy[];
   sidecars: Sidecar[];
-  serviceRoles: ServiceRole[];
-  serviceRoleBindings: ServiceRoleBinding[];
   peerAuthentications: PeerAuthentication[];
   requestAuthentications: RequestAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
@@ -105,79 +58,33 @@ export const dicIstioType = {
   VirtualService: 'virtualservices',
   DestinationRule: 'destinationrules',
   ServiceEntry: 'serviceentries',
-  Rule: 'rules',
-  Adapter: 'adapters',
-  Template: 'templates',
-  Handler: 'handlers',
-  Instance: 'instances',
-  QuotaSpec: 'quotaspecs',
-  QuotaSpecBinding: 'quotaspecbindings',
-  Policy: 'policies',
-  MeshPolicy: 'meshpolicies',
-  ClusterRbacConfig: 'clusterrbacconfigs',
-  RbacConfig: 'rbacconfigs',
   AuthorizationPolicy: 'authorizationpolicies',
-  ServiceRole: 'serviceroles',
-  ServiceRoleBinding: 'servicerolebindings',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   WorkloadEntry: 'workloadentries',
   EnvoyFilter: 'envoyfilters',
-  AttributeManifest: 'attributemanifests',
-  HTTPAPISpec: 'httpapispecs',
-  HTTPAPISpecBinding: 'httpapispecbindings',
+
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
   serviceentries: 'ServiceEntry',
-  rules: 'Rule',
-  adapters: 'Adapter',
-  templates: 'Template',
-  quotaspecs: 'QuotaSpec',
-  quotaspecbindings: 'QuotaSpecBinding',
-  instances: 'Instance',
-  handlers: 'Handler',
-  policies: 'Policy',
-  meshpolicies: 'MeshPolicy',
-  clusterrbacconfigs: 'ClusterRbacConfig',
-  rbacconfigs: 'RbacConfig',
   authorizationpolicies: 'AuthorizationPolicy',
   sidecars: 'Sidecar',
-  serviceroles: 'ServiceRole',
-  servicerolebindings: 'ServiceRoleBinding',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
   workloadentries: 'WorkloadEntry',
   envoyfilters: 'EnvoyFilter',
-  attributemanifests: 'AttributeManifest',
-  httpapispecs: 'HTTPAPISpec',
-  httpapispecbindings: 'HTTPAPISpecBinding',
+
   gateway: 'Gateway',
   virtualservice: 'VirtualService',
   destinationrule: 'DestinationRule',
   serviceentry: 'ServiceEntry',
-  rule: 'Rule',
-  adapter: 'Adapter',
-  template: 'Template',
-  quotaspec: 'QuotaSpec',
-  quotaspecbinding: 'QuotaSpecBinding',
-  instance: 'Instance',
-  handler: 'Handler',
-  policy: 'Policy',
-  meshpolicy: 'MeshPolicy',
-  clusterrbacconfig: 'ClusterRbacConfig',
-  rbacconfig: 'RbacConfig',
   authorizationpolicy: 'AuthorizationPolicy',
   sidecar: 'Sidecar',
-  servicerole: 'ServiceRole',
-  servicerolebinding: 'ServiceRoleBinding',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   workloadentry: 'WorkloadEntry',
-  envoyfilter: 'EnvoyFilter',
-  attributemanifest: 'AttributeManifest',
-  httpapispec: 'HTTPAPISpec',
-  httpapispecbinding: 'HTTPAPISpecBinding'
+  envoyfilter: 'EnvoyFilter'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -205,28 +112,12 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
       items: unfiltered.destinationRules.items.filter(dr => includeName(dr.metadata.name, names))
     },
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),
-    rules: unfiltered.rules.filter(r => includeName(r.metadata.name, names)),
-    adapters: unfiltered.adapters.filter(r => includeName(r.metadata.name, names)),
-    templates: unfiltered.templates.filter(r => includeName(r.metadata.name, names)),
-    handlers: unfiltered.handlers.filter(r => includeName(r.metadata.name, names)),
-    instances: unfiltered.instances.filter(r => includeName(r.metadata.name, names)),
-    quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.metadata.name, names)),
-    quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
-    policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),
-    meshPolicies: unfiltered.meshPolicies.filter(p => includeName(p.metadata.name, names)),
-    clusterRbacConfigs: unfiltered.clusterRbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
-    rbacConfigs: unfiltered.rbacConfigs.filter(rc => includeName(rc.metadata.name, names)),
     authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includeName(rc.metadata.name, names)),
     sidecars: unfiltered.sidecars.filter(sc => includeName(sc.metadata.name, names)),
-    serviceRoles: unfiltered.serviceRoles.filter(sr => includeName(sr.metadata.name, names)),
-    serviceRoleBindings: unfiltered.serviceRoleBindings.filter(srb => includeName(srb.metadata.name, names)),
     peerAuthentications: unfiltered.peerAuthentications.filter(pa => includeName(pa.metadata.name, names)),
     requestAuthentications: unfiltered.requestAuthentications.filter(ra => includeName(ra.metadata.name, names)),
     workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
     envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
-    attributeManifests: unfiltered.attributeManifests.filter(am => includeName(am.metadata.name, names)),
-    httpApiSpecs: unfiltered.httpApiSpecs.filter(ha => includeName(ha.metadata.name, names)),
-    httpApiSpecBindings: unfiltered.httpApiSpecBindings.filter(hb => includeName(hb.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };

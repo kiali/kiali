@@ -14,9 +14,6 @@ import {
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
-  IstioHandler,
-  IstioInstance,
-  IstioRule,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -39,9 +36,7 @@ import { SidecarState } from '../../pages/IstioConfigNew/SidecarForm';
 import { ALLOW, AuthorizationPolicyState } from '../../pages/IstioConfigNew/AuthorizationPolicyForm';
 import { PeerAuthenticationState } from '../../pages/IstioConfigNew/PeerAuthenticationForm';
 import { RequestAuthenticationState } from '../../pages/IstioConfigNew/RequestAuthenticationForm';
-import { ThreeScaleState } from '../../pages/extensions/threescale/ThreeScaleNew/ThreeScaleNewPage';
 import { Workload } from '../../types/Workload';
-import { ThreeScaleCredentialsState } from './ThreeScaleCredentials';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
 import { GraphDefinition, NodeType } from '../../types/Graph';
@@ -50,9 +45,6 @@ export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
 export const WIZARD_FAULT_INJECTION = 'fault_injection';
 export const WIZARD_REQUEST_TIMEOUTS = 'request_timeouts';
-
-export const WIZARD_THREESCALE_LINK = '3scale_link';
-export const WIZARD_THREESCALE_UNLINK = '3scale_unlink';
 
 export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
@@ -69,8 +61,7 @@ export const WIZARD_TITLES = {
   [WIZARD_REQUEST_ROUTING]: 'Request Routing',
   [WIZARD_FAULT_INJECTION]: 'Fault Injection',
   [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
-  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts',
-  [WIZARD_THREESCALE_LINK]: 'Link a 3scale Account'
+  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts'
 };
 
 export type ServiceWizardProps = {
@@ -113,23 +104,19 @@ export type ServiceWizardState = {
   gateway?: GatewaySelectorState;
 };
 
-export type WorkloadWizardValid = {
-  threescale: boolean;
-};
+export type WorkloadWizardValid = {};
 
 export type WorkloadWizardProps = {
   show: boolean;
   type: string;
   namespace: string;
   workload: Workload;
-  rules: IstioRule[];
   onClose: (changed: boolean) => void;
 };
 
 export type WorkloadWizardState = {
   showWizard: boolean;
   valid: WorkloadWizardValid;
-  threeScale: ThreeScaleCredentialsState;
 };
 
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
@@ -1256,130 +1243,6 @@ export const buildSidecar = (name: string, namespace: string, state: SidecarStat
       });
   }
   return sc;
-};
-
-export const buildThreeScaleHandler = (name: string, namespace: string, state: ThreeScaleState): IstioHandler => {
-  const threeScaleHandler: IstioHandler = {
-    metadata: {
-      name: name,
-      namespace: namespace,
-      labels: {
-        [KIALI_WIZARD_LABEL]: 'threescale'
-      }
-    },
-    spec: {
-      adapter: serverConfig.extensions?.threescale.adapterName,
-      connection: {
-        address:
-          'dns:///' +
-          serverConfig.extensions?.threescale.adapterService +
-          ':' +
-          serverConfig.extensions?.threescale.adapterPort
-      },
-      params: {
-        access_token: state.token,
-        system_url: state.url
-      }
-    }
-  };
-  return threeScaleHandler;
-};
-
-export const buildThreeScaleInstance = (name: string, namespace: string): IstioInstance => {
-  const threeScaleInstance: IstioInstance = {
-    metadata: {
-      name: name,
-      namespace: namespace,
-      labels: {
-        [KIALI_WIZARD_LABEL]: 'threescale'
-      }
-    },
-    spec: {
-      params: {
-        action: {
-          method: 'request.method | "get"',
-          path: 'request.url_path',
-          service: 'destination.labels["service-mesh.3scale.net/service-id"] | ""'
-        },
-        subject: {
-          properties: {
-            app_id: 'request.query_params["app_id"] | request.headers["app-id"] | ""',
-            app_key: 'request.query_params["app_key"] | request.headers["app-key"] | ""',
-            client_id: 'request.auth.claims["azp"] | ""'
-          },
-          user: 'request.query_params["user_key"] | request.headers["x-user-key"] | ""'
-        }
-      },
-      template: serverConfig.extensions?.threescale.templateName
-    }
-  };
-  return threeScaleInstance;
-};
-
-export const buildThreeScaleRule = (name: string, namespace: string, state: ThreeScaleState): IstioRule => {
-  const threeScaleRule: IstioRule = {
-    metadata: {
-      name: name,
-      namespace: namespace,
-      labels: {
-        [KIALI_WIZARD_LABEL]: 'threescale'
-      }
-    },
-    spec: {
-      actions: [
-        {
-          handler: state.handler + '.handler.' + namespace,
-          instances: [name + '.instance.' + namespace]
-        }
-      ],
-      match:
-        'context.reporter.kind == "inbound" && destination.labels["service-mesh.3scale.net/credentials"] == "' +
-        name +
-        '" && destination.labels["service-mesh.3scale.net/authentication-method"] == ""'
-    }
-  };
-  return threeScaleRule;
-};
-
-// Not reading these constants from serverConfig as they are part of the 3scale templates that are coded on WizardActions.ts
-// Probably any change on these labels will require modifications both in backend/frontend
-export const THREESCALE_LABEL_SERVICE_ID = 'service-mesh.3scale.net/service-id';
-export const THREESCALE_LABEL_CREDENTIALS = 'service-mesh.3scale.net/credentials';
-export const THREESCALE_LABEL_AUTHENTICATION = 'service-mesh.3scale.net/authentication-method';
-
-export const isThreeScaleLinked = (workload: Workload): boolean => {
-  return (
-    THREESCALE_LABEL_SERVICE_ID in workload.labels &&
-    workload.labels[THREESCALE_LABEL_SERVICE_ID] !== '' &&
-    THREESCALE_LABEL_CREDENTIALS in workload.labels &&
-    workload.labels[THREESCALE_LABEL_CREDENTIALS] !== ''
-  );
-};
-
-export const buildWorkloadThreeScalePatch = (
-  enable: boolean,
-  workloadType: string,
-  serviceId: string,
-  credentials: string
-): string => {
-  // Raw Pods as workloads are rare but we need to support them
-  const patch = {};
-  const labels = {};
-  labels[THREESCALE_LABEL_SERVICE_ID] = enable ? serviceId : null;
-  labels[THREESCALE_LABEL_CREDENTIALS] = enable ? credentials : null;
-  labels[THREESCALE_LABEL_AUTHENTICATION] = enable ? '' : null;
-  if (workloadType === 'Pod') {
-    patch['labels'] = labels;
-  } else {
-    patch['spec'] = {
-      template: {
-        metadata: {
-          labels: labels
-        }
-      }
-    };
-  }
-  return JSON.stringify(patch);
 };
 
 export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean): string => {

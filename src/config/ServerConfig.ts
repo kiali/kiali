@@ -72,8 +72,7 @@ let serverConfig: ComputedServerConfig = {
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
   },
-  durations: {},
-  istioTelemetryV2: true
+  durations: {}
 };
 computeValidDurations(serverConfig);
 export { serverConfig };

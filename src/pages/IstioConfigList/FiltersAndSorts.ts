@@ -80,20 +80,8 @@ export const istioTypeFilter: FilterType = {
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
-      id: 'Adapter',
-      title: 'Adapter'
-    },
-    {
-      id: 'AttributeManifest',
-      title: 'AttributeManifest'
-    },
-    {
       id: 'AuthorizationPolicy',
       title: 'AuthorizationPolicy'
-    },
-    {
-      id: 'ClusterRbacConfig',
-      title: 'ClusterRbacConfig'
     },
     {
       id: 'DestinationRule',
@@ -108,72 +96,20 @@ export const istioTypeFilter: FilterType = {
       title: 'Gateway'
     },
     {
-      id: 'Handler',
-      title: 'Handler'
-    },
-    {
-      id: 'HTTPAPISpec',
-      title: 'HTTPAPISpec'
-    },
-    {
-      id: 'HTTPAPISpecBinding',
-      title: 'HTTPAPISpecBinding'
-    },
-    {
-      id: 'Instance',
-      title: 'Instance'
-    },
-    {
-      id: 'MeshPolicy',
-      title: 'MeshPolicy'
-    },
-    {
       id: 'PeerAuthentication',
       title: 'PeerAuthentication'
-    },
-    {
-      id: 'Policy',
-      title: 'Policy'
-    },
-    {
-      id: 'QuotaSpec',
-      title: 'QuotaSpec'
-    },
-    {
-      id: 'QuotaSpecBinding',
-      title: 'QuotaSpecBinding'
-    },
-    {
-      id: 'RbacConfig',
-      title: 'RbacConfig'
     },
     {
       id: 'RequestAuthentication',
       title: 'RequestAuthentication'
     },
     {
-      id: 'Rule',
-      title: 'Rule'
-    },
-    {
       id: 'ServiceEntry',
       title: 'ServiceEntry'
     },
     {
-      id: 'ServiceRole',
-      title: 'ServiceRole'
-    },
-    {
-      id: 'ServiceRoleBinding',
-      title: 'ServiceRoleBinding'
-    },
-    {
       id: 'Sidecar',
       title: 'Sidecar'
-    },
-    {
-      id: 'Template',
-      title: 'Template'
     },
     {
       id: 'VirtualService',

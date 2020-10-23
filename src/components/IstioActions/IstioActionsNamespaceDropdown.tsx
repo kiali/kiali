@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
 import history from '../../app/History';
-import { serverConfig } from '../../config';
 
 type Props = {};
 
@@ -33,24 +32,12 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
     history.push('/istio/new');
   };
 
-  onClickThreeScale = () => {
-    history.push('/extensions/threescale/new?namespaces=' + serverConfig.istioNamespace);
-  };
-
   render() {
     const dropdownItems = [
       <DropdownItem key="createIstioConfig" onClick={this.onClickCreate}>
         Create New Istio Config
       </DropdownItem>
     ];
-    // 3scale actions are now located under Istio Config actions
-    if (serverConfig.extensions!.threescale!.enabled) {
-      dropdownItems.push(
-        <DropdownItem key="createThreeScaleConfig" onClick={this.onClickThreeScale}>
-          Create New 3scale Config
-        </DropdownItem>
-      );
-    }
     return (
       <Dropdown
         id="actions"

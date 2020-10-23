@@ -2,7 +2,7 @@ import * as React from 'react';
 import { style } from 'typestyle';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { IstioRule, ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
+import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
@@ -18,7 +18,6 @@ import GraphDataSource from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
-import { serverConfig } from '../../config';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
@@ -39,7 +38,6 @@ type WorkloadInfoState = {
   validations?: Validations;
   currentTab: string;
   health?: WorkloadHealth;
-  threescaleRules: IstioRule[];
   workloadIstioConfig?: IstioConfigList;
 };
 
@@ -70,8 +68,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   constructor(props: WorkloadInfoProps) {
     super(props);
     this.state = {
-      currentTab: activeTab(tabName, defaultTab),
-      threescaleRules: []
+      currentTab: activeTab(tabName, defaultTab)
     };
   }
 
@@ -120,18 +117,6 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
         .then(response => this.setState({ workloadIstioConfig: response.data }))
         .catch(error => AlertUtils.addError('Could not fetch Istio Config.', error));
-    }
-    if (serverConfig.extensions?.threescale.enabled) {
-      // 3scale info should be placed under control plane namespace
-      API.getIstioConfig(serverConfig.istioNamespace, ['rules'], false, 'kiali_wizard=threescale', '')
-        .then(response => {
-          this.setState({
-            threescaleRules: response.data.rules
-          });
-        })
-        .catch(error => {
-          AlertUtils.addError('Could not fetch 3scale Rules.', error);
-        });
     }
   };
 
@@ -319,7 +304,6 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             <WorkloadWizardDropdown
               namespace={this.props.namespace}
               workload={workload}
-              rules={this.state.threescaleRules}
               onChange={this.props.refreshWorkload}
             />
           )}
