@@ -85,9 +85,7 @@ type OSClientInterface interface {
 type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
-	IsMaistraApi() bool
 	IsOpenShift() bool
-	IsMixerDisabled() bool
 	K8SClientInterface
 	IstioClientInterface
 	Iter8ClientInterface
@@ -98,25 +96,15 @@ type ClientInterface interface {
 // It hides the way it queries each API
 type K8SClient struct {
 	ClientInterface
-	token                    string
-	k8s                      *kube.Clientset
-	istioConfigApi           *rest.RESTClient
-	istioNetworkingApi       *rest.RESTClient
-	istioAuthenticationApi   *rest.RESTClient
-	istioRbacApi             *rest.RESTClient
-	istioSecurityApi         *rest.RESTClient
-	maistraAuthenticationApi *rest.RESTClient
-	maistraRbacApi           *rest.RESTClient
-	iter8Api                 *rest.RESTClient
+	token              string
+	k8s                *kube.Clientset
+	istioNetworkingApi *rest.RESTClient
+	istioSecurityApi   *rest.RESTClient
+	iter8Api           *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
-
-	// isMaistraApi private variable will check if specific Maistra APIs for authentication and rbac are present.
-	// It is represented as a pointer to include the initialization phase.
-	// See kubernetes_service.go#IsMaistraApi() for more details.
-	isMaistraApi *bool
 
 	// isIter8Api private variable will check if extension Iter8 API is present.
 	// It is represented as a pointer to include the initialization phase.
@@ -128,29 +116,10 @@ type K8SClient struct {
 	// See istio_details_service.go#hasNetworkingResource() for more details.
 	networkingResources *map[string]bool
 
-	// configResources private variable will check which resources kiali has access to from config.istio.io group
-	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#hasConfigResource() for more details.
-	configResources *map[string]bool
-
-	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
-	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#hasRbacResource() for more details.
-	rbacResources *map[string]bool
-
 	// securityResources private variable will check which resources kiali has access to from security.istio.io group
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#hasSecurityResource() for more details.
 	securityResources *map[string]bool
-
-	// authenticationResources private variable will check which resources kiali has access to from authentication.istio.io group
-	// It is represented as a pointer to include the initialization phase.
-	// See istio_details_service.go#hasAuthenticationResource() for more details.
-	authenticationResources *map[string]bool
-
-	// isMixedDisabled private variable will check if mixer is enabled in the current istio deployment.
-	// It is represented with a pointer to a bool. True if mixer is disabled, false instead
-	isMixerDisabled *bool
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -158,19 +127,9 @@ func (client *K8SClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
 }
 
-// GetIstioConfigApi returns the istio config rest client
-func (client *K8SClient) GetIstioConfigApi() *rest.RESTClient {
-	return client.istioConfigApi
-}
-
 // GetIstioNetworkingApi returns the istio config rest client
 func (client *K8SClient) GetIstioNetworkingApi() *rest.RESTClient {
 	return client.istioNetworkingApi
-}
-
-// GetIstioRbacApi returns the istio rbac rest client
-func (client *K8SClient) GetIstioRbacApi() *rest.RESTClient {
-	return client.istioRbacApi
 }
 
 // GetIstioSecurityApi returns the istio security rest client
@@ -276,32 +235,6 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
 			}
-			// Register config types
-			for _, cf := range configTypes {
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(cf.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(cf.collectionKind), &GenericIstioObjectList{})
-			}
-			// Register adapter types
-			for _, ad := range adapterTypes {
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(ad.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(ad.collectionKind), &GenericIstioObjectList{})
-			}
-			// Register template types
-			for _, tp := range templateTypes {
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(tp.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(tp.collectionKind), &GenericIstioObjectList{})
-			}
-			// Register authentication types
-			for _, at := range authenticationTypes {
-				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
-			}
-			// Register rbac types
-			for _, rt := range rbacTypes {
-				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
-
-			}
 			for _, rt := range securityTypes {
 				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
@@ -314,12 +247,7 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.collectionKind), &Iter8ExperimentObjectList{})
 			}
 
-			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, AuthenticationGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, RbacGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, MaistraAuthenticationGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, MaistraRbacGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, SecurityGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, Iter8GroupVersion)
 			return nil
@@ -330,23 +258,7 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 
-	// Istio needs another type as it queries a different K8S API.
-	istioConfigAPI, err := newClientForAPI(config, ConfigGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
 	istioNetworkingAPI, err := newClientForAPI(config, NetworkingGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
-	istioAuthenticationAPI, err := newClientForAPI(config, AuthenticationGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
-	istioRbacApi, err := newClientForAPI(config, RbacGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
@@ -356,28 +268,13 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 
-	maistraAuthenticationAPI, err := newClientForAPI(config, MaistraAuthenticationGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
-	maistraRbacApi, err := newClientForAPI(config, MaistraRbacGroupVersion, types)
-	if err != nil {
-		return nil, err
-	}
-
 	iter8Api, err := newClientForAPI(config, Iter8GroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
-	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
-	client.istioAuthenticationApi = istioAuthenticationAPI
-	client.istioRbacApi = istioRbacApi
 	client.istioSecurityApi = istioSecurityApi
-	client.maistraAuthenticationApi = maistraAuthenticationAPI
-	client.maistraRbacApi = maistraRbacApi
 	client.iter8Api = iter8Api
 	return &client, nil
 }

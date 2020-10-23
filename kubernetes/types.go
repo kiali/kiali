@@ -52,45 +52,6 @@ const (
 	WorkloadEntryType     = "WorkloadEntry"
 	WorkloadEntryTypeList = "WorkloadEntryList"
 
-	// Quotas
-
-	QuotaSpecs        = "quotaspecs"
-	QuotaSpecType     = "QuotaSpec"
-	QuotaSpecTypeList = "QuotaSpecList"
-
-	QuotaSpecBindings        = "quotaspecbindings"
-	QuotaSpecBindingType     = "QuotaSpecBinding"
-	QuotaSpecBindingTypeList = "QuotaSpecBindingList"
-
-	// PeerAuthentications
-
-	Policies       = "policies"
-	PolicyType     = "Policy"
-	PolicyTypeList = "PolicyList"
-
-	//MeshPeerAuthentications
-
-	MeshPolicies       = "meshpolicies"
-	MeshPolicyType     = "MeshPolicy"
-	MeshPolicyTypeList = "MeshPolicyList"
-
-	// Rbac
-	ClusterRbacConfigs        = "clusterrbacconfigs"
-	ClusterRbacConfigType     = "ClusterRbacConfig"
-	ClusterRbacConfigTypeList = "ClusterRbacConfigList"
-
-	RbacConfigs        = "rbacconfigs"
-	RbacConfigType     = "RbacConfig"
-	RbacConfigTypeList = "RbacConfigList"
-
-	ServiceRoles        = "serviceroles"
-	ServiceRoleType     = "ServiceRole"
-	ServiceRoleTypeList = "ServiceRoleList"
-
-	ServiceRoleBindings        = "servicerolebindings"
-	ServiceRoleBindingType     = "ServiceRoleBinding"
-	ServiceRoleBindingTypeList = "ServiceRoleBindingList"
-
 	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
 	AuthorizationPoliciesType     = "AuthorizationPolicy"
@@ -106,47 +67,6 @@ const (
 	RequestAuthenticationsType     = "RequestAuthentication"
 	RequestAuthenticationsTypeList = "RequestAuthenticationList"
 
-	// AttributeManifest
-	AttributeManifests        = "attributemanifests"
-	AttributeManifestType     = "attributemanifest"
-	AttributeManifestTypeList = "attributemanifestList"
-
-	// HttpApiSpecBinding
-	HttpApiSpecBindings        = "httpapispecbindings"
-	HttpApiSpecBindingType     = "HTTPAPISpecBinding"
-	HttpApiSpecBindingTypeList = "HTTPAPISpecBindingList"
-
-	// HttpApiSpec
-	HttpApiSpecs        = "httpapispecs"
-	HttpApiSpecType     = "HTTPAPISpec"
-	HttpApiSpecTypeList = "HTTPAPISpecList"
-
-	// Config - Rules
-
-	Rules        = "rules"
-	RuleType     = "rule"
-	RuleTypeList = "ruleList"
-
-	// Config - Adapters
-
-	Adapters        = "adapters"
-	AdapterType     = "adapter"
-	AdapterTypeList = "adapterList"
-
-	Handlers        = "handlers"
-	HandlerType     = "handler"
-	HandlerTypeList = "handlerList"
-
-	// Config - Templates
-
-	Instances        = "instances"
-	InstanceType     = "instance"
-	InstanceTypeList = "instanceList"
-
-	Templates        = "templates"
-	TemplateType     = "template"
-	TemplateTypeList = "templateList"
-
 	// Iter8 types
 
 	Iter8Experiments        = "experiments"
@@ -156,41 +76,11 @@ const (
 )
 
 var (
-	ConfigGroupVersion = schema.GroupVersion{
-		Group:   "config.istio.io",
-		Version: "v1alpha2",
-	}
-	ApiConfigVersion = ConfigGroupVersion.Group + "/" + ConfigGroupVersion.Version
-
 	NetworkingGroupVersion = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
 	ApiNetworkingVersion = NetworkingGroupVersion.Group + "/" + NetworkingGroupVersion.Version
-
-	AuthenticationGroupVersion = schema.GroupVersion{
-		Group:   "authentication.istio.io",
-		Version: "v1alpha1",
-	}
-	ApiAuthenticationVersion = AuthenticationGroupVersion.Group + "/" + AuthenticationGroupVersion.Version
-
-	RbacGroupVersion = schema.GroupVersion{
-		Group:   "rbac.istio.io",
-		Version: "v1alpha1",
-	}
-	ApiRbacVersion = RbacGroupVersion.Group + "/" + RbacGroupVersion.Version
-
-	MaistraAuthenticationGroupVersion = schema.GroupVersion{
-		Group:   "authentication.maistra.io",
-		Version: "v1",
-	}
-	ApiMaistraAuthenticationVersion = MaistraAuthenticationGroupVersion.Group + "/" + MaistraAuthenticationGroupVersion.Version
-
-	MaistraRbacGroupVersion = schema.GroupVersion{
-		Group:   "rbac.maistra.io",
-		Version: "v1",
-	}
-	ApiMaistraRbacVersion = MaistraRbacGroupVersion.Group + "/" + MaistraRbacGroupVersion.Version
 
 	SecurityGroupVersion = schema.GroupVersion{
 		Group:   "security.istio.io",
@@ -239,51 +129,6 @@ var (
 		},
 	}
 
-	configTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     RuleType,
-			collectionKind: RuleTypeList,
-		},
-		// Quota specs depends on Quota template but are not a "template" object itselft
-		{
-			objectKind:     QuotaSpecType,
-			collectionKind: QuotaSpecTypeList,
-		},
-		{
-			objectKind:     QuotaSpecBindingType,
-			collectionKind: QuotaSpecBindingTypeList,
-		},
-		{
-			objectKind:     AttributeManifestType,
-			collectionKind: AttributeManifestTypeList,
-		},
-		{
-			objectKind:     HttpApiSpecBindingType,
-			collectionKind: HttpApiSpecBindingTypeList,
-		},
-		{
-			objectKind:     HttpApiSpecType,
-			collectionKind: HttpApiSpecTypeList,
-		},
-	}
-
-	authenticationTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     PolicyType,
-			collectionKind: PolicyTypeList,
-		},
-		{
-			objectKind:     MeshPolicyType,
-			collectionKind: MeshPolicyTypeList,
-		},
-	}
-
 	securityTypes = []struct {
 		objectKind     string
 		collectionKind string
@@ -299,58 +144,6 @@ var (
 		{
 			objectKind:     RequestAuthenticationsType,
 			collectionKind: RequestAuthenticationsTypeList,
-		},
-	}
-
-	// TODO Adapters and Templates can be loaded from external config for easy maintenance
-
-	adapterTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     AdapterType,
-			collectionKind: AdapterTypeList,
-		},
-		{
-			objectKind:     HandlerType,
-			collectionKind: HandlerTypeList,
-		},
-	}
-
-	templateTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     InstanceType,
-			collectionKind: InstanceTypeList,
-		},
-		{
-			objectKind:     TemplateType,
-			collectionKind: TemplateTypeList,
-		},
-	}
-
-	rbacTypes = []struct {
-		objectKind     string
-		collectionKind string
-	}{
-		{
-			objectKind:     ClusterRbacConfigType,
-			collectionKind: ClusterRbacConfigTypeList,
-		},
-		{
-			objectKind:     RbacConfigType,
-			collectionKind: RbacConfigTypeList,
-		},
-		{
-			objectKind:     ServiceRoleType,
-			collectionKind: ServiceRoleTypeList,
-		},
-		{
-			objectKind:     ServiceRoleBindingType,
-			collectionKind: ServiceRoleBindingTypeList,
 		},
 	}
 
@@ -375,28 +168,6 @@ var (
 		WorkloadEntries:  WorkloadEntryType,
 		EnvoyFilters:     EnvoyFilterType,
 
-		// Main Config files
-		Rules:               RuleType,
-		QuotaSpecs:          QuotaSpecType,
-		QuotaSpecBindings:   QuotaSpecBindingType,
-		AttributeManifests:  AttributeManifestType,
-		HttpApiSpecBindings: HttpApiSpecBindingType,
-		HttpApiSpecs:        HttpApiSpecType,
-		Adapters:            AdapterType,
-		Handlers:            HandlerType,
-		Instances:           InstanceType,
-		Templates:           TemplateType,
-
-		// PeerAuthentications
-		Policies:     PolicyType,
-		MeshPolicies: MeshPolicyType,
-
-		// Rbac
-		ClusterRbacConfigs:  ClusterRbacConfigType,
-		RbacConfigs:         RbacConfigType,
-		ServiceRoles:        ServiceRoleType,
-		ServiceRoleBindings: ServiceRoleBindingType,
-
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
 		PeerAuthentications:    PeerAuthenticationsType,
@@ -414,22 +185,6 @@ var (
 		Sidecars:               NetworkingGroupVersion.Group,
 		WorkloadEntries:        NetworkingGroupVersion.Group,
 		EnvoyFilters:           NetworkingGroupVersion.Group,
-		Adapters:               ConfigGroupVersion.Group,
-		Templates:              ConfigGroupVersion.Group,
-		Rules:                  ConfigGroupVersion.Group,
-		Handlers:               ConfigGroupVersion.Group,
-		Instances:              ConfigGroupVersion.Group,
-		QuotaSpecs:             ConfigGroupVersion.Group,
-		QuotaSpecBindings:      ConfigGroupVersion.Group,
-		AttributeManifests:     ConfigGroupVersion.Group,
-		HttpApiSpecBindings:    ConfigGroupVersion.Group,
-		HttpApiSpecs:           ConfigGroupVersion.Group,
-		Policies:               AuthenticationGroupVersion.Group,
-		MeshPolicies:           AuthenticationGroupVersion.Group,
-		ClusterRbacConfigs:     RbacGroupVersion.Group,
-		RbacConfigs:            RbacGroupVersion.Group,
-		ServiceRoles:           RbacGroupVersion.Group,
-		ServiceRoleBindings:    RbacGroupVersion.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
 		RequestAuthentications: SecurityGroupVersion.Group,
@@ -438,13 +193,8 @@ var (
 	}
 
 	ApiToVersion = map[string]string{
-		NetworkingGroupVersion.Group:            ApiNetworkingVersion,
-		ConfigGroupVersion.Group:                ApiConfigVersion,
-		AuthenticationGroupVersion.Group:        ApiAuthenticationVersion,
-		RbacGroupVersion.Group:                  ApiRbacVersion,
-		MaistraAuthenticationGroupVersion.Group: ApiMaistraAuthenticationVersion,
-		MaistraRbacGroupVersion.Group:           ApiMaistraRbacVersion,
-		SecurityGroupVersion.Group:              ApiSecurityVersion,
+		NetworkingGroupVersion.Group: ApiNetworkingVersion,
+		SecurityGroupVersion.Group:   ApiSecurityVersion,
 	}
 )
 
@@ -515,9 +265,6 @@ type MTLSDetails struct {
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
 type RBACDetails struct {
-	ClusterRbacConfigs    []IstioObject `json:"clusterrbacconfigs"`
-	ServiceRoles          []IstioObject `json:"serviceroles"`
-	ServiceRoleBindings   []IstioObject `json:"servicerolebindings"`
 	AuthorizationPolicies []IstioObject `json:"authorizationpolicies"`
 }
 

@@ -11,27 +11,18 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/status"
 )
 
 const (
 	defaultPrometheusGlobalScrapeInterval = 15 // seconds
 )
 
-type ThreeScaleConfig struct {
-	AdapterName    string `json:"adapterName"`
-	AdapterPort    string `json:"adapterPort"`
-	AdapterService string `json:"adapterService"`
-	Enabled        bool   `json:"enabled"`
-	TemplateName   string `json:"templateName"`
-}
 type Iter8Config struct {
 	Enabled   bool   `json:"enabled"`
 	Namespace string `json:"namespace"`
 }
 type Extensions struct {
-	ThreeScale ThreeScaleConfig `json:"threescale,omitempty"`
-	Iter8      Iter8Config      `json:"iter8,omitempty"`
+	Iter8 Iter8Config `json:"iter8,omitempty"`
 }
 type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
@@ -56,7 +47,6 @@ type PublicConfig struct {
 	IstioNamespace           string                          `json:"istioNamespace,omitempty"`
 	IstioComponentNamespaces config.IstioComponentNamespaces `json:"istioComponentNamespaces,omitempty"`
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
-	IstioTelemetryV2         bool                            `json:"istioTelemetryV2"`
 	IstioConfigMap           string                          `json:"istioConfigMap"`
 	KialiFeatureFlags        config.KialiFeatureFlags        `json:"kialiFeatureFlags,omitempty"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
@@ -72,13 +62,6 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	config := config.Get()
 	publicConfig := PublicConfig{
 		Extensions: Extensions{
-			ThreeScale: ThreeScaleConfig{
-				AdapterName:    config.Extensions.ThreeScale.AdapterName,
-				AdapterPort:    config.Extensions.ThreeScale.AdapterPort,
-				AdapterService: config.Extensions.ThreeScale.AdapterService,
-				Enabled:        config.Extensions.ThreeScale.Enabled,
-				TemplateName:   config.Extensions.ThreeScale.TemplateName,
-			},
 			Iter8: Iter8Config{
 				Enabled:   config.Extensions.Iter8.Enabled,
 				Namespace: config.Extensions.Iter8.Namespace,
@@ -100,7 +83,6 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
 		},
-		IstioTelemetryV2: status.IsMixerDisabled(),
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)

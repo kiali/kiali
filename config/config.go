@@ -170,15 +170,6 @@ type ComponentStatus struct {
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
-// ThreeScaleConfig describes configuration used for 3Scale adapter
-type ThreeScaleConfig struct {
-	AdapterName    string `yaml:"adapter_name"`
-	AdapterPort    string `yaml:"adapter_port"`
-	AdapterService string `yaml:"adapter_service"`
-	Enabled        bool   `yaml:"enabled"`
-	TemplateName   string `yaml:"template_name"`
-}
-
 type Iter8Config struct {
 	Enabled bool `yaml:"enabled"`
 	// Defein which namespace Iter8 is installed on, default to iter8
@@ -188,8 +179,7 @@ type Iter8Config struct {
 // Extensions struct describes configuration for Kiali add-ons (extensions)
 // New add-on/extension configuration should create a specif config and be located under this
 type Extensions struct {
-	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
-	Iter8      Iter8Config      `yaml:"iter_8,omitempty"`
+	Iter8 Iter8Config `yaml:"iter_8,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -383,13 +373,6 @@ func NewConfig() (c *Config) {
 			Namespace:            "istio-system",
 		},
 		Extensions: Extensions{
-			ThreeScale: ThreeScaleConfig{
-				AdapterName:    "threescale",
-				AdapterPort:    "3333",
-				AdapterService: "threescale-istio-adapter",
-				Enabled:        false,
-				TemplateName:   "threescale-authorization",
-			},
 			Iter8: Iter8Config{
 				Enabled:   false,
 				Namespace: "iter8",

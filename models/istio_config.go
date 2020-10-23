@@ -16,22 +16,6 @@ type IstioConfigList struct {
 	ServiceEntries         ServiceEntries         `json:"serviceEntries"`
 	WorkloadEntries        WorkloadEntries        `json:"workloadEntries"`
 	EnvoyFilters           EnvoyFilters           `json:"envoyFilters"`
-	Rules                  IstioRules             `json:"rules"`
-	Adapters               IstioAdapters          `json:"adapters"`
-	Templates              IstioTemplates         `json:"templates"`
-	Handlers               IstioHandlers          `json:"handlers"`
-	Instances              IstioInstances         `json:"instances"`
-	QuotaSpecs             QuotaSpecs             `json:"quotaSpecs"`
-	QuotaSpecBindings      QuotaSpecBindings      `json:"quotaSpecBindings"`
-	AttributeManifests     AttributeManifests     `json:"attributeManifests"`
-	HttpApiSpecs           HttpApiSpecs           `json:"httpApiSpecs"`
-	HttpApiSpecBindings    HttpApiSpecBindings    `json:"httpApiSpecBindings"`
-	Policies               Policies               `json:"policies"`
-	MeshPolicies           MeshPolicies           `json:"meshPolicies"`
-	ClusterRbacConfigs     ClusterRbacConfigs     `json:"clusterRbacConfigs"`
-	RbacConfigs            RbacConfigs            `json:"rbacConfigs"`
-	ServiceRoles           ServiceRoles           `json:"serviceRoles"`
-	ServiceRoleBindings    ServiceRoleBindings    `json:"serviceRoleBindings"`
 	Sidecars               Sidecars               `json:"sidecars"`
 	AuthorizationPolicies  AuthorizationPolicies  `json:"authorizationPolicies"`
 	PeerAuthentications    PeerAuthentications    `json:"peerAuthentications"`
@@ -48,22 +32,6 @@ type IstioConfigDetails struct {
 	ServiceEntry          *ServiceEntry          `json:"serviceEntry"`
 	WorkloadEntry         *WorkloadEntry         `json:"workloadEntry"`
 	EnvoyFilter           *EnvoyFilter           `json:"envoyFilter"`
-	Rule                  *IstioRule             `json:"rule"`
-	Adapter               *IstioAdapter          `json:"adapter"`
-	Template              *IstioTemplate         `json:"template"`
-	Handler               *IstioHandler          `json:"handler"`
-	Instance              *IstioInstance         `json:"instance"`
-	QuotaSpec             *QuotaSpec             `json:"quotaSpec"`
-	QuotaSpecBinding      *QuotaSpecBinding      `json:"quotaSpecBinding"`
-	AttributeManifest     *AttributeManifest     `json:"attributeManifest"`
-	HttpApiSpec           *HttpApiSpec           `json:"httpApiSpec"`
-	HttpApiSpecBinding    *HttpApiSpecBinding    `json:"httpApiSpecBinding"`
-	Policy                *Policy                `json:"policy"`
-	MeshPolicy            *MeshPolicy            `json:"meshPolicy"`
-	ClusterRbacConfig     *ClusterRbacConfig     `json:"clusterRbacConfig"`
-	RbacConfig            *RbacConfig            `json:"rbacConfig"`
-	ServiceRole           *ServiceRole           `json:"serviceRole"`
-	ServiceRoleBinding    *ServiceRoleBinding    `json:"serviceRoleBinding"`
 	Sidecar               *Sidecar               `json:"sidecar"`
 	AuthorizationPolicy   *AuthorizationPolicy   `json:"authorizationPolicy"`
 	PeerAuthentication    *PeerAuthentication    `json:"peerAuthentication"`
