@@ -106,7 +106,7 @@ func TestGetAppMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	labels := `reporter="source",source_workload_namespace="bookinfo",source_app="productpage"`
+	labels := `reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"`
 	mockRange(api, round("sum(rate(istio_requests_total{"+labels+"}[5m]))"), 1.5)
 	mockRange(api, roundErrs("sum(rate(istio_requests_total{"+labels+`,response_code=~"^0$|^[4-5]\\d\\d$"}[5m])) OR sum(rate(istio_requests_total{`+labels+`,grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}[5m]))`), 3.5)
 	mockRange(api, round("sum(rate(istio_request_bytes_sum{"+labels+"}[5m]))"), 1000)
@@ -167,8 +167,8 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`), 1.5)
-	mockHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]`, 0.35, 0.2, 0.3, 0.4)
+	mockRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]))`), 1.5)
+	mockHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]`, 0.35, 0.2, 0.3, 0.4)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
@@ -192,7 +192,7 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, round(`sum(irate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[1m]))`), 1.5)
+	mockRange(api, round(`sum(irate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[1m]))`), 1.5)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
@@ -215,8 +215,8 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]))`))
-	mockEmptyHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"}[5m]`)
+	mockEmptyRange(api, round(`sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]))`))
+	mockEmptyHistogram(api, "istio_request_bytes", `{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}[5m]`)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",

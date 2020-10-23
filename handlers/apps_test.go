@@ -42,7 +42,7 @@ func TestAppMetricsDefault(t *testing.T) {
 		query := args[1].(string)
 		assert.IsType(t, prom_v1.Range{}, args[2])
 		r := args[2].(prom_v1.Range)
-		assert.Contains(t, query, "_app=\"my_app\"")
+		assert.Contains(t, query, "_canonical_service=\"my_app\"")
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		assert.NotContains(t, query, "histogram_quantile")

@@ -328,33 +328,6 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-// set this one time, it is very unlikely that the istio version will change without a kiali pod restart, or if it
-// did that that version change will matter, and the kiali pod could be bounced as a workaround.
-var istioSupportsCanonical *bool
-
-// AreCanonicalMetricsAvailable returns true if canonical labels are present in Istio Telemetry.
-// TODO: This test can be removed when Kiali stops supporting Istio versions with Mixer Telemetry
-func AreCanonicalMetricsAvailable() bool { // AreCanonicalMetricsAvailable() bool {
-	if istioSupportsCanonical == nil {
-		// First, check Istio version because canonical labels were first introduced in Istio v1.5. Prior
-		// Istio versions won't have canonical labels in metrics regardless of active Telemetry version.
-		istioVersion, err := istioVersion()
-		if err != nil {
-			return false
-		}
-
-		valid := validateVersion(">= 1.5", istioVersion.Version)
-
-		// Result is cached; we now know whether Istio supports canonical labels in Telemetry.
-		log.Infof("IstioSupportsCanonical: %t", valid)
-		istioSupportsCanonical = &valid
-	}
-
-	// Canonical metrics are present only if Istio version is 1.5 or later (aka canonical is supported)
-	// AND if mixer is disabled.
-	return *istioSupportsCanonical
-}
-
 // Check Iter8 Supported Version
 func IsIter8Supported(analyticsImgVersion string) bool {
 	return validateVersion(config.Iter8VersionSupported, analyticsImgVersion)

@@ -57,7 +57,7 @@
             }
           ],
           "isInaccessible": true,
-          "isMisconfigured": "labels=[version]",
+          "isMisconfigured": "labels=[canonical_revision]",
           "isOutside": true,
           "isRoot": true
         }

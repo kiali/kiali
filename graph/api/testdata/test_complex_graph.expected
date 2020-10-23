@@ -57,7 +57,7 @@
           "namespace": "istio-system",
           "workload": "istio-egressgateway",
           "app": "istio-egressgateway",
-          "version": "unknown",
+          "version": "latest",
           "traffic": [
             {
               "protocol": "http",

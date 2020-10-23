@@ -54,7 +54,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
 	// 1) query for requests originating from a workload outside the namespace.
-	groupBy := fmt.Sprintf("source_workload_namespace,source_workload,source_%s,source_%s,source_principal,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_%s,destination_%s,destination_principal,connection_security_policy", appLabel, verLabel, appLabel, verLabel)
+	groupBy := "source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy"
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
@@ -98,15 +98,15 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
-		lSourceApp, sourceAppOk := m[model.LabelName("source_"+appLabel)]
-		lSourceVer, sourceVerOk := m[model.LabelName("source_"+verLabel)]
+		lSourceApp, sourceAppOk := m["source_canonical_service"]
+		lSourceVer, sourceVerOk := m["source_canonical_revision"]
 		lSourcePrincipal, sourcePrincipalOk := m["source_principal"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
-		lDestApp, destAppOk := m[model.LabelName("destination_"+appLabel)]
-		lDestVer, destVerOk := m[model.LabelName("destination_"+verLabel)]
+		lDestApp, destAppOk := m["destination_canonical_service"]
+		lDestVer, destVerOk := m["destination_canonical_revision"]
 		lDestPrincipal, destPrincipalOk := m["destination_principal"]
 		lCsp, cspOk := m["connection_security_policy"]
 
