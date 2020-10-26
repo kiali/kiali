@@ -295,7 +295,13 @@ class ExperimentListPage extends React.Component<Props, State> {
     );
   };
 
-  getStatusTooltip = (phase: string, status: string, winnerFound: boolean, winnerName: string) => {
+  getStatusTooltip = (
+    phase: string,
+    status: string,
+    winnerFound: boolean,
+    winnerName: string,
+    baselineName: string
+  ) => {
     let statusValue = 'Status: In Progress';
     let retStatus = status;
     if (status.length > 0) {
@@ -307,6 +313,9 @@ class ExperimentListPage extends React.Component<Props, State> {
         statusValue = 'Status: Failed';
       } else if (status.includes('Completed')) {
         statusValue = 'Status: Completed';
+        if (winnerName === baselineName) {
+          retStatus = 'Traffic to Baseline';
+        }
       }
     }
     return (
@@ -325,16 +334,26 @@ class ExperimentListPage extends React.Component<Props, State> {
     );
   };
 
-  experimentStatusIcon = (key: string, phase: string, winnerStatus: Winner, status: string) => {
+  experimentStatusIcon = (key: string, phase: string, winnerStatus: Winner, status: string, baselineName: string) => {
     let className = greenIconStyle;
-
-    let statusString = this.getStatusTooltip(phase, status, winnerStatus.winning_version_found, winnerStatus.name);
+    let toBaseline = false;
+    let statusString = this.getStatusTooltip(
+      phase,
+      status,
+      winnerStatus.winning_version_found,
+      winnerStatus.name,
+      baselineName
+    );
     if (status.includes('Abort')) {
       className = greenIconStyle;
     } else if (!winnerStatus.winning_version_found) {
       className = redIconStyle;
     }
 
+    if (winnerStatus.name === baselineName) {
+      toBaseline = true;
+      className = redIconStyle;
+    }
     switch (phase) {
       case 'Initializing':
         return (
@@ -383,6 +402,18 @@ class ExperimentListPage extends React.Component<Props, State> {
               content={<>{statusString}</>}
             >
               <PowerOffIcon className={className} />
+            </Tooltip>
+          );
+        } else if (toBaseline) {
+          return (
+            <Tooltip
+              key={'Completed_' + key}
+              aria-label={'Status Indicatorr'}
+              position={PopoverPosition.auto}
+              className={'health_indicator'}
+              content={<>{statusString}</>}
+            >
+              <OkIcon className={className} />
             </Tooltip>
           );
         }
@@ -477,7 +508,7 @@ class ExperimentListPage extends React.Component<Props, State> {
               ? this.redirectLink(h.namespace, h.targetService, 'Service')
               : this.redirectLink(h.namespace, '', h.kind)}
           </>,
-          <>{this.experimentStatusIcon(h.name + '_' + h.namespace, h.phase, h.winner, h.status)}</>,
+          <>{this.experimentStatusIcon(h.name + '_' + h.namespace, h.phase, h.winner, h.status, h.baseline.name)}</>,
 
           <>
             {this.redirectLink(h.namespace, h.baseline.name, h.kind)}
