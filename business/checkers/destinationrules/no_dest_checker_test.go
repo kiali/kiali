@@ -326,7 +326,7 @@ func TestNoLabelsInSubset(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.WarningSeverity, validations[0].Severity)
 	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetnolabels"), validations[0].Message)
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 

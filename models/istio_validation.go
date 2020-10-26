@@ -154,7 +154,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"destinationrules.nodest.subsetnolabels": {
 		Message:  "KIA0209 This subset has not labels",
-		Severity: ErrorSeverity,
+		Severity: WarningSeverity,
 	},
 	"gateways.multimatch": {
 		Message:  "KIA0301 More than one Gateway for the same host port combination",
