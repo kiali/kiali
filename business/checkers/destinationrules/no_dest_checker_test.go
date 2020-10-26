@@ -324,7 +324,7 @@ func TestNoLabelsInSubset(t *testing.T) {
 		DestinationRule: data.CreateNoLabelsDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
-	assert.False(valid)
+	assert.True(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.WarningSeverity, validations[0].Severity)
 	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetnolabels"), validations[0].Message)
