@@ -197,8 +197,14 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
+	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
+	// 1) discard the logs after sinceTime+duration
+	// 2) manually apply tailLines to the remaining logs
+	isBounded := opts.Duration != nil
 	tailLines := k8sOpts.TailLines
-	k8sOpts.TailLines = nil
+	if isBounded {
+		k8sOpts.TailLines = nil
+	}
 
 	podLog, err := in.k8s.GetPodLogs(namespace, name, &k8sOpts)
 
@@ -249,7 +255,7 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 				startTime = &parsed
 			}
 
-			if opts.Duration != nil {
+			if isBounded {
 				if endTime == nil {
 					end := parsed.Add(*opts.Duration)
 					endTime = &end
@@ -272,10 +278,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		}
 
 		entries = append(entries, entry)
-	}
 
-	if tailLines != nil && len(entries) > int(*tailLines) {
-		entries = entries[len(entries)-int(*tailLines):]
+		if isBounded && tailLines != nil && len(entries) >= int(*tailLines) {
+			break
+		}
 	}
 
 	message := PodLog{
