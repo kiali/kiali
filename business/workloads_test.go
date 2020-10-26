@@ -479,7 +479,7 @@ func TestGetPodLogsTailLines(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	tailLines := int64(2)
-	duration, _ := time.ParseDuration("6h")
+	duration, _ := time.ParseDuration("6h") // still need a duration to force manual tailLines handling
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}, Duration: &duration})
 
 	assert.Equal(2, len(podLogs.Entries))
