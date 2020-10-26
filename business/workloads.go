@@ -278,10 +278,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		}
 
 		entries = append(entries, entry)
+	}
 
-		if isBounded && tailLines != nil && len(entries) >= int(*tailLines) {
-			break
-		}
+	if isBounded && tailLines != nil && len(entries) > int(*tailLines) {
+		entries = entries[len(entries)-int(*tailLines):]
 	}
 
 	message := PodLog{
