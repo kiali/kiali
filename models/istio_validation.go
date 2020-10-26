@@ -152,6 +152,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0208 PeerAuthentication enabling mTLS found, permissive mode needed",
 		Severity: ErrorSeverity,
 	},
+	"destinationrules.nodest.subsetnolabels": {
+		Message:  "KIA0209 This subset has not labels",
+		Severity: ErrorSeverity,
+	},
 	"gateways.multimatch": {
 		Message:  "KIA0301 More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,

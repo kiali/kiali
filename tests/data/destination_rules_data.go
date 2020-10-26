@@ -26,12 +26,24 @@ func CreateTestDestinationRule(namespace string, name string, host string) kuber
 	return destinationRule
 }
 
+func CreateNoLabelsDestinationRule(namespace string, name string, host string) kubernetes.IstioObject {
+	destinationRule := AddSubsetToDestinationRule(CreateSubset("v1", "v1"),
+		AddSubsetToDestinationRule(CreateNoLabelsSubset("v2"), CreateEmptyDestinationRule(namespace, name, host)))
+	return destinationRule
+}
+
 func CreateSubset(name string, versionLabel string) map[string]interface{} {
 	return map[string]interface{}{
 		"name": name,
 		"labels": map[string]interface{}{
 			"version": versionLabel,
 		},
+	}
+}
+
+func CreateNoLabelsSubset(name string) map[string]interface{} {
+	return map[string]interface{}{
+		"name": name,
 	}
 }
 
