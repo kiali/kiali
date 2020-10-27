@@ -443,8 +443,6 @@ func TestGetPodLogs(t *testing.T) {
 
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
-	assert.Equal(FakePodLogsSyncedWithDeployments().Logs, podLogs.Logs)
-
 	assert.Equal(len(podLogs.Entries), 4)
 
 	assert.Equal("2018-01-02T03:34:28+00:00", podLogs.Entries[0].Timestamp)
@@ -481,7 +479,8 @@ func TestGetPodLogsTailLines(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	tailLines := int64(2)
-	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+	duration, _ := time.ParseDuration("6h") // still need a duration to force manual tailLines handling
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}, Duration: &duration})
 
 	assert.Equal(2, len(podLogs.Entries))
 	assert.Equal("#3 Log Message", podLogs.Entries[0].Message)
