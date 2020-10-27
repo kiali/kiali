@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	businesspkg "github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -139,7 +139,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := businesspkg.NewDashboardsService(prom)
+	svc := business.NewDashboardsService(prom)
 	dashboard, err := svc.GetIstioDashboard(params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
