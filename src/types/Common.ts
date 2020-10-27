@@ -37,8 +37,6 @@ export type BoundsInMilliseconds = {
   to?: TimeInMilliseconds;
 };
 
-export type LogLines = string[];
-
 export type TimeRange = DurationInSeconds | BoundsInMilliseconds;
 
 // Type-guarding TimeRange: executes first callback when range is a duration, or second callback when it's a bounded range, mapping to a value

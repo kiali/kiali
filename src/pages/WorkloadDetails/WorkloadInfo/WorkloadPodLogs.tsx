@@ -14,24 +14,25 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { Pod, PodLogs } from '../../../types/IstioObjects';
+import { Pod, PodLogs, LogEntry } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
-import { DurationInSeconds, LogLines } from '../../../types/Common';
+import { TimeRange, evalTimeRange } from '../../../types/Common';
 import { RenderComponentScroll } from '../../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import Splitter from 'm-react-splitters';
 import { KialiIcon, defaultIconStyle } from '../../../config/KialiIcon';
-import { DurationDropdownContainer } from '../../../components/DurationDropdown/DurationDropdown';
 import RefreshContainer from '../../../components/Refresh/Refresh';
 import { RightActionBar } from '../../../components/RightActionBar/RightActionBar';
 import screenfull, { Screenfull } from 'screenfull';
+import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
+import * as MetricsHelper from '../../../components/Metrics/Helper';
+import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
   pods: Pod[];
-  duration: DurationInSeconds;
 }
 
 interface ContainerInfo {
@@ -43,8 +44,8 @@ type TextAreaPosition = 'left' | 'right' | 'top' | 'bottom';
 
 interface WorkloadPodLogsState {
   containerInfo?: ContainerInfo;
-  filteredAppLogs?: LogLines;
-  filteredProxyLogs?: LogLines;
+  filteredAppLogs: LogEntry[];
+  filteredProxyLogs: LogEntry[];
   hideError?: string;
   hideLogValue: string;
   loadingAppLogs: boolean;
@@ -53,14 +54,16 @@ interface WorkloadPodLogsState {
   loadingProxyLogsError?: string;
   logWindowSelections: any[];
   podValue?: number;
-  rawAppLogs?: LogLines;
-  rawProxyLogs?: LogLines;
+  rawAppLogs: LogEntry[];
+  rawProxyLogs: LogEntry[];
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
   showError?: string;
   showLogValue: string;
+  showTimestamps: boolean;
   sideBySideOrientation: boolean;
   tailLines: number;
+  timeRange: TimeRange;
   useRegex: boolean;
 }
 
@@ -68,7 +71,7 @@ const RETURN_KEY_CODE = 13;
 const NoAppLogsFoundMessage = 'No application container logs found for the time period.';
 const NoProxyLogsFoundMessage = 'No istio-proxy for the pod, or proxy logs for the time period.';
 
-const TailLinesDefault = 500;
+const TailLinesDefault = 100;
 const TailLinesOptions = {
   '-1': 'All lines',
   '10': 'Last 10 lines',
@@ -157,30 +160,36 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   private podOptions: string[] = [];
   private readonly appLogsRef: React.RefObject<any>;
   private readonly proxyLogsRef: React.RefObject<any>;
-  // private readonly appFullScreenLogModalRef: React.RefObject<FullScreenLogModal>;
-  // private readonly proxyFullScreenLogModalRef: React.RefObject<FullScreenLogModal>;
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
     this.appLogsRef = React.createRef();
     this.proxyLogsRef = React.createRef();
-    // this.appFullScreenLogModalRef = React.createRef();
-    // this.proxyFullScreenLogModalRef = React.createRef();
 
+    const timeRange = retrieveTimeRange() || MetricsHelper.defaultMetricsDuration; // align with metrics for default
+    const defaultState = {
+      filteredAppLogs: [],
+      filteredProxyLogs: [],
+      hideLogValue: '',
+      loadingAppLogs: false,
+      loadingProxyLogs: false,
+      logWindowSelections: [],
+      rawAppLogs: [],
+      rawProxyLogs: [],
+      showClearHideLogButton: false,
+      showClearShowLogButton: false,
+      showLogValue: '',
+      showTimestamps: false,
+      sideBySideOrientation: false,
+      tailLines: TailLinesDefault,
+      timeRange: timeRange,
+      useRegex: false
+    };
     if (this.props.pods.length < 1) {
       this.state = {
-        hideLogValue: '',
-        loadingAppLogs: false,
+        ...defaultState,
         loadingAppLogsError: 'There are no logs to display because no pods are available.',
-        loadingProxyLogs: false,
-        loadingProxyLogsError: 'There are no logs to display because no container logs are available.',
-        logWindowSelections: [],
-        sideBySideOrientation: false,
-        showClearHideLogButton: false,
-        showClearShowLogButton: false,
-        showLogValue: '',
-        tailLines: TailLinesDefault,
-        useRegex: false
+        loadingProxyLogsError: 'There are no logs to display because no container logs are available.'
       };
       return;
     }
@@ -196,18 +205,9 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const containerInfo = this.getContainerInfo(pod);
 
     this.state = {
+      ...defaultState,
       containerInfo: containerInfo,
-      hideLogValue: '',
-      loadingAppLogs: false,
-      loadingProxyLogs: false,
-      logWindowSelections: [],
-      podValue: podValue,
-      showClearHideLogButton: false,
-      showClearShowLogButton: false,
-      showLogValue: '',
-      sideBySideOrientation: false,
-      tailLines: TailLinesDefault,
-      useRegex: false
+      podValue: podValue
     };
   }
 
@@ -219,21 +219,21 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         pod.name,
         this.state.containerInfo.container,
         this.state.tailLines,
-        this.props.duration
+        this.state.timeRange
       );
     }
   }
 
-  componentDidUpdate(prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
+  componentDidUpdate(_prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
     const prevContainer = prevState.containerInfo ? prevState.containerInfo.container : undefined;
     const newContainer = this.state.containerInfo ? this.state.containerInfo.container : undefined;
     const updateContainerInfo = this.state.containerInfo && this.state.containerInfo !== prevState.containerInfo;
     const updateContainer = newContainer && newContainer !== prevContainer;
-    const updateDuration = this.props.duration && this.props.duration !== prevProps.duration;
+    const updateTimeRange = this.state.timeRange && this.state.timeRange !== prevState.timeRange;
     const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
-    if (updateContainerInfo || updateContainer || updateDuration || updateTailLines) {
+    if (updateContainerInfo || updateContainer || updateTimeRange || updateTailLines) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.props.duration);
+      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.state.timeRange);
     }
     this.proxyLogsRef.current.scrollTop = this.proxyLogsRef.current.scrollHeight;
     this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
@@ -251,7 +251,12 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     return (
       <>
         <RightActionBar>
-          <DurationDropdownContainer id="workload-pod-logging-duration-dropdown" prefix="Last" />
+          <TimeRangeComponent
+            range={this.state.timeRange}
+            onChanged={this.handleTimeRangeChange}
+            tooltip={'Time range'}
+            allowCustom={true}
+          />
           <RefreshContainer id="workload-pod-logging-refresh" handleRefresh={this.handleRefresh} hideLabel={true} />
         </RightActionBar>
         <RenderComponentScroll key={this.state.sideBySideOrientation ? 'vertical' : 'horizontal'}>
@@ -307,6 +312,14 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                             label="Side by Side"
                             isChecked={this.state.sideBySideOrientation}
                             onChange={this.handleOrientationChange}
+                          />
+                        </ToolbarItem>
+                        <ToolbarItem className={toolbarSpace}>
+                          <Switch
+                            id="timestamps-switch"
+                            label="Timestamps"
+                            isChecked={this.state.showTimestamps}
+                            onChange={this.handleTimestampsChange}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -422,8 +435,9 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   private getAppDiv = () => {
-    const appLogsEnabled = !!this.state.filteredAppLogs;
-    const appLogs = appLogsEnabled ? WorkloadPodLogs.linesToString(this.state.filteredAppLogs) : NoAppLogsFoundMessage;
+    const appLogs = this.hasEntries(this.state.filteredAppLogs)
+      ? this.entryToString(this.state.filteredAppLogs)
+      : NoAppLogsFoundMessage;
     return (
       <div id="appLogDiv" className={this.state.sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
         <Toolbar className={toolbarTitle()}>
@@ -433,10 +447,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
           <ToolbarGroup className={toolbarRight}>
             <ToolbarItem>
               <Tooltip key="copy_app_logs" position="top" content="Copy app logs to clipboard">
-                <CopyToClipboard
-                  onCopy={this.copyAppLogCallback}
-                  text={WorkloadPodLogs.linesToString(this.state.filteredAppLogs)}
-                >
+                <CopyToClipboard onCopy={this.copyAppLogCallback} text={this.entryToString(this.state.filteredAppLogs)}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy className={defaultIconStyle} />
                   </Button>
@@ -448,7 +459,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                 <Button
                   variant={ButtonVariant.link}
                   onClick={this.openAppFullScreenLog}
-                  isDisabled={!this.state.filteredAppLogs}
+                  isDisabled={!this.hasEntries(this.state.filteredAppLogs)}
                   isInline
                 >
                   <KialiIcon.Expand className={defaultIconStyle} />
@@ -460,7 +471,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
         <textarea
           id="appLogTextArea"
-          className={logsTextarea(!!this.state.filteredAppLogs, this.state.sideBySideOrientation ? 'left' : 'top')}
+          className={logsTextarea(
+            this.hasEntries(this.state.filteredAppLogs),
+            this.state.sideBySideOrientation ? 'left' : 'top'
+          )}
           ref={this.appLogsRef}
           readOnly={true}
           value={appLogs}
@@ -470,8 +484,8 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   private getProxyDiv = () => {
-    const proxyLogs = !!this.state.filteredProxyLogs
-      ? WorkloadPodLogs.linesToString(this.state.filteredProxyLogs)
+    const proxyLogs = this.hasEntries(this.state.filteredProxyLogs)
+      ? this.entryToString(this.state.filteredProxyLogs)
       : NoProxyLogsFoundMessage;
     return (
       <div id="proxyLogDiv" className={proxyLogsDiv}>
@@ -482,7 +496,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
               <Tooltip key="copy_proxy_logs" position="top" content="Copy Istio proxy logs to clipboard">
                 <CopyToClipboard
                   onCopy={this.copyProxyLogCallback}
-                  text={WorkloadPodLogs.linesToString(this.state.filteredProxyLogs)}
+                  text={this.entryToString(this.state.filteredProxyLogs)}
                 >
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy className={defaultIconStyle} />
@@ -496,7 +510,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                   variant={ButtonVariant.link}
                   onClick={this.openProxyFullScreenLog}
                   isInline
-                  isDisabled={!this.state.filteredProxyLogs}
+                  isDisabled={!this.hasEntries(this.state.filteredProxyLogs)}
                 >
                   <KialiIcon.Expand className={defaultIconStyle} />
                 </Button>
@@ -507,7 +521,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         <textarea
           id="proxyLogTextArea"
           className={logsTextarea(
-            !!this.state.filteredProxyLogs,
+            this.hasEntries(this.state.filteredProxyLogs),
             this.state.sideBySideOrientation ? 'right' : 'bottom'
           )}
           ref={this.proxyLogsRef}
@@ -538,10 +552,18 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     this.setState({ sideBySideOrientation: isChecked });
   };
 
+  private handleTimestampsChange = (isChecked: boolean) => {
+    this.setState({ showTimestamps: isChecked });
+  };
+
   private handleRegexChange = () => {
     this.setState({
       useRegex: !this.state.useRegex
     });
+  };
+
+  private handleTimeRangeChange = (range: TimeRange) => {
+    this.setState({ timeRange: range });
   };
 
   private handleRefresh = () => {
@@ -551,15 +573,17 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       pod.name,
       this.state.containerInfo!.container,
       this.state.tailLines,
-      this.props.duration
+      this.state.timeRange
     );
   };
 
   private doShowAndHide = () => {
-    const rawAppLogs = !!this.state.rawAppLogs ? this.state.rawAppLogs : ([] as LogLines);
-    const rawProxyLogs = !!this.state.rawProxyLogs ? this.state.rawProxyLogs : ([] as LogLines);
-    const filteredAppLogs = this.filterLogs(rawAppLogs, this.state.showLogValue, this.state.hideLogValue);
-    const filteredProxyLogs = this.filterLogs(rawProxyLogs, this.state.showLogValue, this.state.hideLogValue);
+    const filteredAppLogs = this.filterLogs(this.state.rawAppLogs, this.state.showLogValue, this.state.hideLogValue);
+    const filteredProxyLogs = this.filterLogs(
+      this.state.rawProxyLogs,
+      this.state.showLogValue,
+      this.state.hideLogValue
+    );
     this.setState({
       filteredAppLogs: filteredAppLogs,
       filteredProxyLogs: filteredProxyLogs,
@@ -584,14 +608,14 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     }
   };
 
-  private filterLogs = (rawLogs: LogLines, showValue: string, hideValue: string): LogLines => {
+  private filterLogs = (rawLogs: LogEntry[], showValue: string, hideValue: string): LogEntry[] => {
     let filteredLogs = rawLogs;
 
     if (!!showValue) {
       if (this.state.useRegex) {
         try {
           const regexp = RegExp(showValue);
-          filteredLogs = filteredLogs.filter(l => regexp.test(l));
+          filteredLogs = filteredLogs.filter(le => regexp.test(le.message));
           if (!!this.state.showError) {
             this.setState({ showError: undefined });
           }
@@ -599,14 +623,14 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
           this.setState({ showError: `Show: ${e.message}` });
         }
       } else {
-        filteredLogs = filteredLogs.filter(l => l.includes(showValue));
+        filteredLogs = filteredLogs.filter(le => le.message.includes(showValue));
       }
     }
     if (!!hideValue) {
       if (this.state.useRegex) {
         try {
           const regexp = RegExp(hideValue);
-          filteredLogs = filteredLogs.filter(l => !regexp.test(l));
+          filteredLogs = filteredLogs.filter(le => !regexp.test(le.message));
           if (!!this.state.hideError) {
             this.setState({ hideError: undefined });
           }
@@ -614,7 +638,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
           this.setState({ hideError: `Hide: ${e.message}` });
         }
       } else {
-        filteredLogs = filteredLogs.filter(l => !l.includes(hideValue));
+        filteredLogs = filteredLogs.filter(le => !le.message.includes(hideValue));
       }
     }
     return filteredLogs;
@@ -628,14 +652,12 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       htmlInputElement.value = '';
     }
 
-    const rawAppLogs = this.state.rawAppLogs ? this.state.rawAppLogs : ([] as LogLines);
-    const rawProxyLogs = this.state.rawProxyLogs ? this.state.rawProxyLogs : ([] as LogLines);
     this.setState({
       showError: undefined,
       showLogValue: '',
       showClearShowLogButton: false,
-      filteredAppLogs: this.filterLogs(rawAppLogs, '', this.state.hideLogValue),
-      filteredProxyLogs: this.filterLogs(rawProxyLogs, '', this.state.hideLogValue)
+      filteredAppLogs: this.filterLogs(this.state.rawAppLogs, '', this.state.hideLogValue),
+      filteredProxyLogs: this.filterLogs(this.state.rawProxyLogs, '', this.state.hideLogValue)
     });
   };
 
@@ -663,14 +685,12 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       htmlInputElement.value = '';
     }
 
-    const rawAppLogs = this.state.rawAppLogs ? this.state.rawAppLogs : ([] as LogLines);
-    const rawProxyLogs = this.state.rawProxyLogs ? this.state.rawProxyLogs : ([] as LogLines);
     this.setState({
       hideError: undefined,
       hideLogValue: '',
       showClearHideLogButton: false,
-      filteredAppLogs: this.filterLogs(rawAppLogs, this.state.showLogValue, ''),
-      filteredProxyLogs: this.filterLogs(rawProxyLogs, this.state.showLogValue, '')
+      filteredAppLogs: this.filterLogs(this.state.rawAppLogs, this.state.showLogValue, ''),
+      filteredProxyLogs: this.filterLogs(this.state.rawProxyLogs, this.state.showLogValue, '')
     });
   };
 
@@ -738,23 +758,39 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     podName: string,
     container: string,
     tailLines: number,
-    duration: DurationInSeconds
+    timeRange: TimeRange
   ) => {
-    const sinceTime = Math.floor(Date.now() / 1000) - duration;
-    const appPromise: Promise<Response<PodLogs>> = getPodLogs(namespace, podName, container, tailLines, sinceTime);
+    const now = Date.now();
+    const timeRangeDates = evalTimeRange(timeRange);
+    const sinceTime = Math.floor(timeRangeDates[0].getTime() / 1000);
+    const endTime = timeRangeDates[1].getTime();
+    // to save work on the server-side, only supply duration when time range is in the past
+    let duration = 0;
+    if (endTime < now) {
+      duration = Math.floor(timeRangeDates[1].getTime() / 1000) - sinceTime;
+    }
+    const appPromise: Promise<Response<PodLogs>> = getPodLogs(
+      namespace,
+      podName,
+      container,
+      tailLines,
+      sinceTime,
+      duration
+    );
     const proxyPromise: Promise<Response<PodLogs>> = getPodLogs(
       namespace,
       podName,
       'istio-proxy',
       tailLines,
-      sinceTime
+      sinceTime,
+      duration
     );
     this.loadAppLogsPromise = makeCancelablePromise(Promise.all([appPromise]));
     this.loadProxyLogsPromise = makeCancelablePromise(Promise.all([proxyPromise]));
 
     this.loadAppLogsPromise.promise
       .then(response => {
-        const rawAppLogs = WorkloadPodLogs.stringToLines(response[0].data.logs as string, tailLines);
+        const rawAppLogs = response[0].data.entries;
         const filteredAppLogs = this.filterLogs(rawAppLogs, this.state.showLogValue, this.state.hideLogValue);
 
         this.setState({
@@ -774,13 +810,20 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
           loadingAppLogs: false,
-          rawAppLogs: [`Failed to fetch app logs: ${errorMsg}`]
+          rawAppLogs: [
+            {
+              severity: 'Error',
+              timestamp: Date.toString(),
+              timestampUnix: Date.now(),
+              message: `Failed to fetch app logs: ${errorMsg}`
+            }
+          ]
         });
       });
 
     this.loadProxyLogsPromise.promise
       .then(response => {
-        const rawProxyLogs = WorkloadPodLogs.stringToLines(response[0].data.logs as string, tailLines);
+        const rawProxyLogs = response[0].data.entries;
         const filteredProxyLogs = this.filterLogs(rawProxyLogs, this.state.showLogValue, this.state.hideLogValue);
 
         this.setState({
@@ -800,26 +843,28 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
           loadingProxyLogs: false,
-          rawProxyLogs: [`Failed to fetch proxy logs: ${errorMsg}`]
+          rawProxyLogs: [
+            {
+              severity: 'Error',
+              timestamp: Date.toString(),
+              timestampUnix: Date.now(),
+              message: `Failed to fetch proxy logs: ${errorMsg}`
+            }
+          ]
         });
       });
 
     this.setState({
       loadingAppLogs: true,
       loadingProxyLogs: true,
-      rawAppLogs: undefined,
-      rawProxyLogs: undefined
+      rawAppLogs: [],
+      rawProxyLogs: []
     });
   };
 
-  private static stringToLines = (logs: string, maxLines: number): LogLines => {
-    let logLines = logs.split('\n');
-    const rawLines = logLines.length;
-    logLines = logLines.filter((_l, i) => rawLines - i <= maxLines);
-    return logLines;
+  private entryToString = (entries: LogEntry[]): string => {
+    return entries.map(le => (this.state.showTimestamps ? `${le.timestamp} ${le.message}` : le.message)).join('\n');
   };
 
-  private static linesToString = (logLines?: LogLines): string => {
-    return !logLines?.length ? '' : logLines.join('\n');
-  };
+  private hasEntries = (entries: LogEntry[]): boolean => entries.length > 0;
 }

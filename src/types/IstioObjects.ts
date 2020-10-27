@@ -2,6 +2,7 @@ import Namespace from './Namespace';
 import { ResourcePermissions } from './Permissions';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
+import { TimeInSeconds } from './Common';
 
 // Common types
 
@@ -125,10 +126,15 @@ export interface Pod {
   proxyStatus?: ProxyStatus;
 }
 
-export type Logs = string;
+export type LogEntry = {
+  message: string;
+  severity: string;
+  timestamp: string;
+  timestampUnix: TimeInSeconds;
+};
 
 export interface PodLogs {
-  logs?: Logs;
+  entries: LogEntry[];
 }
 
 export interface Service {

@@ -471,7 +471,8 @@ export const getPodLogs = (
   name: string,
   container?: string,
   tailLines?: number,
-  sinceTime?: number
+  sinceTime?: number,
+  duration?: DurationInSeconds
 ) => {
   const params: any = {};
   if (container) {
@@ -482,6 +483,9 @@ export const getPodLogs = (
   }
   if (tailLines && tailLines > 0) {
     params.tailLines = tailLines;
+  }
+  if (duration && duration > 0) {
+    params.duration = `${duration}s`;
   }
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };
