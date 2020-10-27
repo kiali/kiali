@@ -29,6 +29,7 @@
 	  echo; echo "ERROR! You specified an invalid helm-charts repo: ${HELM_CHARTS_REPO}"; echo; \
 	  exit 1; \
 	fi
+	@cd ${HELM_CHARTS_REPO}; git pull > /dev/null
 
 .ensure-operator-helm-chart-exists: .ensure-helm-charts-repo-exists
 	@echo "Git repo for the helm charts is found here: ${HELM_CHARTS_REPO}"
