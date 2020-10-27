@@ -310,3 +310,24 @@ func TestWildcardServiceEntry(t *testing.T) {
 	assert.True(valid)
 	assert.Empty(validations)
 }
+
+func TestNoLabelsInSubset(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: data.CreateNoLabelsDestinationRule("test-namespace", "name", "reviews"),
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.WarningSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetnolabels"), validations[0].Message)
+	assert.Equal("spec/subsets[0]", validations[0].Path)
+
+}

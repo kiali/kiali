@@ -59,6 +59,11 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 										valid = false
 									}
 								}
+							} else {
+								validation := models.Build("destinationrules.nodest.subsetnolabels",
+									"spec/subsets["+strconv.Itoa(i)+"]")
+								validations = append(validations, &validation)
+								// Not changing valid value, if other subset is on error, a valid = false has priority
 							}
 						}
 					}
