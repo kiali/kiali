@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	businesspkg "github.com/kiali/kiali/business"
@@ -187,7 +186,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	opts := businesspkg.LogOptions{PodLogOptions: core_v1.PodLogOptions{Timestamps: true}}
+	opts := business.Workload.BuildLogOptionsCriteria()
 	if container := queryParams.Get("container"); container != "" {
 		opts.Container = container
 	}
@@ -227,7 +226,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch pod logs
-	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &opts)
+	podLogs, err := business.Workload.GetPodLogs(namespace, pod, opts)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

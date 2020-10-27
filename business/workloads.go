@@ -194,6 +194,13 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
+func (in *WorkloadService) BuildLogOptionsCriteria() *LogOptions {
+	opts := &LogOptions{}
+	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
+
+	return opts
+}
+
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
 	k8sOpts := opts.PodLogOptions
 	tailLines := k8sOpts.TailLines
