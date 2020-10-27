@@ -14,7 +14,6 @@ import Validation from '../../components/Validations/Validation';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import Namespace from 'types/Namespace';
-import DestinationRuleValidator from './ServiceInfo/types/DestinationRuleValidator';
 import { DurationInSeconds } from 'types/Common';
 import ServiceWizardDropdown from 'components/IstioWizards/ServiceWizardDropdown';
 import GraphDataSource from 'services/GraphDataSource';
@@ -112,7 +111,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       .then(results => {
         this.setState({
           serviceDetails: results,
-          validations: ServiceInfo.addFormatValidation(results, results.validations)
+          validations: results.validations
         });
       })
       .catch(error => {
@@ -131,26 +130,6 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
     this.graphDataSource.fetchForService(this.props.duration, this.props.namespace, this.props.service);
   };
-
-  static addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
-    details.destinationRules.items.forEach(destinationRule => {
-      const dr = new DestinationRuleValidator(destinationRule);
-      const formatValidation = dr.formatValidation();
-
-      if (validations.destinationrule) {
-        const objectValidations = validations.destinationrule[destinationRule.metadata.name];
-        if (
-          formatValidation !== null &&
-          objectValidations.checks &&
-          !objectValidations.checks.some(check => check.message === formatValidation.message)
-        ) {
-          objectValidations.checks.push(formatValidation);
-          objectValidations.valid = false;
-        }
-      }
-    });
-    return validations ? validations : {};
-  }
 
   private validationChecks(): ValidationChecks {
     const validationChecks = {
