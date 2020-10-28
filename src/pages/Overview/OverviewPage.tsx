@@ -65,6 +65,8 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import GraphDataSource from '../../services/GraphDataSource';
 import { AuthorizationPolicy } from '../../types/IstioObjects';
+import { IstioPermissions } from '../../types/IstioConfigDetails';
+import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -132,6 +134,7 @@ type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
   displayMode: OverviewDisplayMode;
+  permissions: IstioPermissions;
   showConfirmModal: boolean;
   nsTarget: string;
   opTarget: string;
@@ -157,6 +160,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
       displayMode: OverviewDisplayMode.EXPAND,
+      permissions: {},
       showConfirmModal: false,
       nsTarget: '',
       opTarget: ''
@@ -228,6 +232,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
+            this.fetchPermissions();
             if (displayMode === OverviewDisplayMode.EXPAND) {
               this.fetchMetrics();
             }
@@ -410,6 +415,16 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .catch(err => this.handleAxiosError('Could not fetch validations status', err));
   }
 
+  fetchPermissions() {
+    this.promises
+      .register('namespacepermissions', API.getIstioPermissions(this.state.namespaces.map(ns => ns.name)))
+      .then(result => {
+        this.setState({
+          permissions: result.data
+        });
+      });
+  }
+
   handleAxiosError(message: string, error: AxiosError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
@@ -470,61 +485,84 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       {
         isGroup: true,
         isSeparator: false,
+        isDisabled: false,
         title: 'Show',
         children: [
           {
             isGroup: true,
             isSeparator: false,
+            isDisabled: false,
             title: 'Graph',
             action: (ns: string) => this.show(Show.GRAPH, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
+            isDisabled: false,
             title: 'Applications',
             action: (ns: string) => this.show(Show.APPLICATIONS, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
+            isDisabled: false,
             title: 'Workloads',
             action: (ns: string) => this.show(Show.WORKLOADS, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
+            isDisabled: false,
             title: 'Services',
             action: (ns: string) => this.show(Show.SERVICES, ns, this.state.type)
           },
           {
             isGroup: true,
             isSeparator: false,
+            isDisabled: false,
             title: 'Istio Config',
             action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, this.state.type)
           }
         ]
       }
     ];
+    // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
+    // then it can use the Istio Injection Actions.
+    // RBAC allow more fine granularity but Kiali won't check that in detail.
+    let canWrite = false;
+    if (
+      this.state.permissions &&
+      this.state.permissions[nsInfo.name] &&
+      this.state.permissions[nsInfo.name][AUTHORIZATION_POLICIES]
+    ) {
+      const resourcePermission = this.state.permissions[nsInfo.name][AUTHORIZATION_POLICIES];
+      canWrite = resourcePermission.create && resourcePermission.update && resourcePermission.delete;
+    }
+
     if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
       namespaceActions.push({
         isGroup: false,
-        isSeparator: true
+        isSeparator: true,
+        isDisabled: false
       });
       const enableAction = {
         isGroup: false,
         isSeparator: false,
+        isDisabled: !canWrite,
         title: 'Enable Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, true, false)
       };
       const disableAction = {
         isGroup: false,
         isSeparator: false,
+        isDisabled: !canWrite,
         title: 'Disable Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, false)
       };
       const removeAction = {
         isGroup: false,
         isSeparator: false,
+        isDisabled: !canWrite,
         title: 'Remove Auto Injection',
         action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, true)
       };
@@ -548,12 +586,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     }
     namespaceActions.push({
       isGroup: false,
-      isSeparator: true
+      isSeparator: true,
+      isDisabled: false
     });
     const aps = nsInfo.istioConfig?.authorizationPolicies || [];
     const addAuthorizationAction = {
       isGroup: false,
       isSeparator: false,
+      isDisabled: !canWrite,
       title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
       action: (ns: string) => {
         if (aps.length === 0) {
@@ -566,6 +606,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     const removeAuthorizationAction = {
       isGroup: false,
       isSeparator: false,
+      isDisabled: !canWrite,
       title: 'Delete Traffic Policies',
       action: (ns: string) => this.onDeleteTrafficPolicies(ns)
     };

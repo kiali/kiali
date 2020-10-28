@@ -123,8 +123,6 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(sorted).toBeDefined();
       expect(sorted.length).toBe(15);
 
-      console.log(sorted);
-
       const first = sorted[0];
       expect(first.authorizationPolicy).toBeDefined();
       expect(first.authorizationPolicy!.metadata.name).toBe('blue0');

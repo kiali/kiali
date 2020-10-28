@@ -1,9 +1,18 @@
 import * as React from 'react';
-import { Dropdown, DropdownGroup, DropdownItem, DropdownSeparator, KebabToggle } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownGroup,
+  DropdownItem,
+  DropdownSeparator,
+  KebabToggle,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 
 export type OverviewNamespaceAction = {
   isGroup: boolean;
   isSeparator: boolean;
+  isDisabled: boolean;
   title?: string;
   children?: OverviewNamespaceAction[];
   action?: (namespace: string) => void;
@@ -32,6 +41,14 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
     });
   };
 
+  renderTooltip = (key, position, msg, child): any => {
+    return (
+      <Tooltip key={'tooltip_' + key} position={position} content={<>{msg}</>}>
+        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{child}</div>
+      </Tooltip>
+    );
+  };
+
   componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
     if (prevState.isKebabOpen) {
       this.setState({
@@ -52,26 +69,45 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
             label={action.title}
             className="kiali-group-menu"
             children={action.children.map((subaction, j) => {
-              return (
+              const itemKey = 'subaction_' + i + '_' + j;
+              const item = (
                 <DropdownItem
-                  key={'subaction_' + i + '_' + j}
+                  key={itemKey}
+                  isDisabled={subaction.isDisabled}
                   onClick={() => (subaction.action ? subaction.action(this.props.namespace) : undefined)}
                 >
                   {subaction.title}
                 </DropdownItem>
               );
+              return subaction.isDisabled
+                ? this.renderTooltip(
+                    'tooltip_' + itemKey,
+                    TooltipPosition.left,
+                    'User has not enough permissions for this action',
+                    item
+                  )
+                : item;
             })}
           />
         );
       } else if (action.title && action.action) {
-        return (
+        const item = (
           <DropdownItem
             key={'action_' + i}
+            isDisabled={action.isDisabled}
             onClick={() => (action.action ? action.action(this.props.namespace) : undefined)}
           >
             {action.title}
           </DropdownItem>
         );
+        return action.isDisabled
+          ? this.renderTooltip(
+              'tooltip_action_' + i,
+              TooltipPosition.left,
+              'User has not enough permissions for this action',
+              item
+            )
+          : item;
       }
       return undefined;
     });
