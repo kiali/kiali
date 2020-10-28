@@ -3,7 +3,7 @@
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
   <div
-    className="f10utphz"
+    className="fkgsrw4"
   >
     <Connect(OverviewToolbar)
       displayMode={1}

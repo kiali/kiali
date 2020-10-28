@@ -119,7 +119,7 @@ const cardNamespaceNameLongStyle = style({
 // with their own style.
 const overviewHeader = style({
   backgroundColor: PfColors.White,
-  padding: '10px 20px 10px 10px'
+  padding: '10px 20px 10px 20px'
 });
 
 enum Show {
