@@ -127,7 +127,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             </div>
           </Tab>
           <Tab style={summaryFont} title="Traces" eventKey={1}>
-            <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime} />
+            <SummaryPanelNodeTraces nodeData={nodeData} queryTime={this.props.queryTime - this.props.duration} />
           </Tab>
         </SimpleTabs>
       </div>
