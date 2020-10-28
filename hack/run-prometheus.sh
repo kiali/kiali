@@ -53,14 +53,6 @@ else
   _ABORT="true"
 fi
 
-KIALI_OPERATOR_CR_ROUTE=$(${CLIENT_EXE} get route kiali-operator-metrics-cr -n ${OPERATOR_NAMESPACE} -o jsonpath='{.spec.host}')
-if [ "$?" == "0" ]; then
-  echo "Kiali operator CR metrics route endpoint is found here: http://${KIALI_OPERATOR_CR_ROUTE}/metrics"
-else
-  _CMD3="$CLIENT_EXE expose service kiali-operator-metrics -n ${OPERATOR_NAMESPACE} --name=kiali-operator-metrics-cr --port=cr-metrics"
-  _ABORT="true"
-fi
-
 if [ ! -z "${_ABORT}" ]; then
   echo "You are missing some routes to the Kiali metric endpoints."
   echo "These are needed for the local Prometheus to be able to collect Kiali metrics."
@@ -68,7 +60,6 @@ if [ ! -z "${_ABORT}" ]; then
   echo "====="
   if [ ! -z "$_CMD1" ]; then echo ${_CMD1}; fi
   if [ ! -z "$_CMD2" ]; then echo ${_CMD2}; fi
-  if [ ! -z "$_CMD3" ]; then echo ${_CMD3}; fi
   echo "====="
   exit 1
 fi
@@ -84,16 +75,15 @@ scrape_configs:
   tls_config:
     insecure_skip_verify: true
   static_configs:
-  - targets: ['${KIALI_ROUTE}', '${KIALI_OPERATOR_HTTP_ROUTE}', '${KIALI_OPERATOR_CR_ROUTE}']
+  - targets: ['${KIALI_ROUTE}', '${KIALI_OPERATOR_HTTP_ROUTE}']
 EOF
 
 # Run Prometheus
 
 KIALI_HOST_ENT="${KIALI_ROUTE}:$(getent hosts ${KIALI_ROUTE} | head -n1 | awk '{print $1}')"
 KIALI_OPERATOR_HTTP_HOST_ENT="${KIALI_OPERATOR_HTTP_ROUTE}:$(getent hosts ${KIALI_OPERATOR_HTTP_ROUTE} | head -n1 | awk '{print $1}')"
-KIALI_OPERATOR_CR_HOST_ENT="${KIALI_OPERATOR_CR_ROUTE}:$(getent hosts ${KIALI_OPERATOR_CR_ROUTE} | head -n1 | awk '{print $1}')"
 
-docker run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HTTP_HOST_ENT}" --add-host="${KIALI_OPERATOR_CR_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml prom/prometheus &
+docker run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HTTP_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml prom/prometheus &
 DOCKER_PID=$!
 
 echo "Docker started (pid: ${DOCKER_PID})"

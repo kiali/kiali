@@ -10,22 +10,6 @@
 	@cp -r deploy/docker/* ${OUTDIR}/docker
 	@cp ${GOPATH}/bin/kiali* ${OUTDIR}/docker
 
-.download-operator-sdk-if-needed:
-	@if [ "$(shell which operator-sdk 2>/dev/null || echo -n "")" == "" ]; then \
-	  mkdir -p "${OUTDIR}/operator-sdk-install" ;\
-	  if [ -x "${OUTDIR}/operator-sdk-install/operator-sdk" ]; then \
-	    echo "You do not have operator-sdk installed in your PATH. Will use the one found here: ${OUTDIR}/operator-sdk-install/operator-sdk" ;\
-	  else \
-	    echo "You do not have operator-sdk installed in your PATH. The binary will be downloaded to ${OUTDIR}/operator-sdk-install/operator-sdk" ;\
-	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.16.0/operator-sdk-v0.16.0-x86_64-linux-gnu > "${OUTDIR}/operator-sdk-install/operator-sdk" ;\
-	    chmod +x "${OUTDIR}/operator-sdk-install/operator-sdk" ;\
-	  fi ;\
-	fi
-
-.ensure-operator-sdk-exists: .download-operator-sdk-if-needed
-	@$(eval OP_SDK ?= $(shell which operator-sdk 2>/dev/null || echo "${OUTDIR}/operator-sdk-install/operator-sdk"))
-	@"${OP_SDK}" version
-
 ## container-build-kiali: Build Kiali container image.
 container-build-kiali: .prepare-kiali-image-files
 ifeq ($(DORP),docker)
@@ -37,9 +21,9 @@ else
 endif
 
 ## container-build-operator: Build Kiali operator container image.
-container-build-operator: .ensure-operator-repo-exists .ensure-operator-sdk-exists
-	@echo Building container image for Kiali operator using operator-sdk
-	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${OPERATOR_QUAY_TAG}"
+container-build-operator: .ensure-operator-repo-exists
+	@echo Building container image for Kiali operator
+	$(MAKE) -C "${ROOTDIR}/operator" build
 
 ## container-build: Build Kiali and Kiali operator container images
 # On x86_64 machine, build both kiali and operator images.
