@@ -124,7 +124,7 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:              []jaegerModels.Trace{trace1, trace2},
 		JaegerServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, svcSpanFilter("default", "reviews"))
+	spans := tracesToSpans("reviews", &r, operationSpanFilter("default", "reviews"))
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -133,7 +133,7 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:              []jaegerModels.Trace{trace1, trace2},
 		JaegerServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, svcSpanFilter("default", "rating"))
+	spans = tracesToSpans("rating", &r, operationSpanFilter("default", "rating"))
 	assert.Len(spans, 1)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 }

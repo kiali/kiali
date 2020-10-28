@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -36,6 +37,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
+	log.Debugf("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
