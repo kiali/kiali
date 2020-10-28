@@ -62,14 +62,20 @@ func (in *JaegerService) GetServiceSpans(ns, service string, query models.Tracin
 	if err != nil {
 		return nil, err
 	}
-	return in.getFilteredSpans(ns, app, query, svcSpanFilter(ns, service))
+	var postFilter SpanFilter
+	// Run post-filter only for service != app
+	if app != service {
+		postFilter = operationSpanFilter(ns, service)
+	}
+	return in.getFilteredSpans(ns, app, query, postFilter)
 }
 
-func svcSpanFilter(ns, service string) SpanFilter {
+func operationSpanFilter(ns, service string) SpanFilter {
+	fqService := service + "." + ns
 	// Filter out app spans based on operation name.
 	// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
 	return func(span *jaegerModels.Span) bool {
-		return strings.HasPrefix(span.OperationName, service+"."+ns)
+		return strings.HasPrefix(span.OperationName, fqService)
 	}
 }
 
@@ -101,14 +107,19 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	if err != nil {
 		return nil, err
 	}
+	if app == service {
+		// No post-filtering
+		return in.GetAppTraces(ns, app, query)
+	}
+	// Now we're in context where app != service, so we need to perform post-filtering based on operation names
 	// Artificial increase of limit (see explanation in GetWorkloadTraces)
 	reqLimit := query.Limit
 	query.Limit *= 2
 	r, err := in.GetAppTraces(ns, app, query)
-	// Filter out app traces based on operation name.
-	// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
-	filter := svcSpanFilter(ns, service)
 	if r != nil && err == nil {
+		// Filter out app traces based on operation name.
+		// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
+		filter := operationSpanFilter(ns, service)
 		traces := []jaegerModels.Trace{}
 		for _, trace := range r.Data {
 			for _, span := range trace.Spans {
