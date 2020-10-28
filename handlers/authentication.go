@@ -722,9 +722,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
 			return true
 		}
-	}
-
-	if !conf.Auth.OpenId.DisableRBAC {
+	} else {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
 		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
