@@ -19,7 +19,7 @@ func validateURL(serviceURL string) (*url.URL, error) {
 	return url.ParseRequestURI(serviceURL)
 }
 
-func checkNamespaceAccess(w http.ResponseWriter, r *http.Request, prom prometheus.ClientInterface, namespace string) *models.Namespace {
+func checkNamespaceAccess(w http.ResponseWriter, r *http.Request, namespace string) *models.Namespace {
 	layer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -42,7 +42,7 @@ func initClientsForMetrics(w http.ResponseWriter, r *http.Request, promSupplier 
 		return nil, nil
 	}
 
-	nsInfo := checkNamespaceAccess(w, r, prom, namespace)
+	nsInfo := checkNamespaceAccess(w, r, namespace)
 	if nsInfo == nil {
 		return nil, nil
 	}
