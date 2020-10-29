@@ -64,6 +64,37 @@ func TestValidNamespaceSelector(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestValidIstioNamespaceSelector(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gw := data.CreateEmptyGateway("gwone", "test", map[string]string{"app": "proxy"})
+
+	validations, valid := SelectorChecker{
+		Gateway: gw,
+		ControlPlaneWorkloadList: data.CreateWorkloadList(conf.IstioNamespace,
+			data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+
+	validations, valid = SelectorChecker{
+		Gateway: gw,
+		ControlPlaneWorkloadList: models.WorkloadList{
+			Namespace: models.Namespace{
+				Name: "test",
+			},
+			Workloads: []models.WorkloadListItem{},
+		},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+}
+
 func TestMissingSelectorTarget(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

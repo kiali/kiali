@@ -8,8 +8,9 @@ import (
 )
 
 type SelectorChecker struct {
-	WorkloadList models.WorkloadList
-	Gateway      kubernetes.IstioObject
+	ControlPlaneWorkloadList models.WorkloadList
+	WorkloadList             models.WorkloadList
+	Gateway                  kubernetes.IstioObject
 }
 
 var (
@@ -40,17 +41,19 @@ func (s SelectorChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (s SelectorChecker) hasMatchingWorkload(labelSelector map[string]string) bool {
-	selector := labels.SelectorFromSet(labels.Set(labelSelector))
+	selector := labels.SelectorFromSet(labelSelector)
 
 	// Special case for Istio's internal deployments which do not conform to Istio documentation/specs at this point
 	if selector.Matches(IstioIngressGatewayLabels) || selector.Matches(IstioEgressGatewayLabels) {
 		return true
 	}
 
-	for _, wl := range s.WorkloadList.Workloads {
-		wlLabelSet := labels.Set(wl.Labels)
-		if selector.Matches(wlLabelSet) {
-			return true
+	for _, wls := range []models.WorkloadList{s.WorkloadList, s.ControlPlaneWorkloadList} {
+		for _, wl := range wls.Workloads {
+			wlLabelSet := labels.Set(wl.Labels)
+			if selector.Matches(wlLabelSet) {
+				return true
+			}
 		}
 	}
 	return false
