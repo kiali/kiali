@@ -41,7 +41,7 @@ type ContainerInfo struct {
 	Image string `json:"image"`
 }
 
-// ParseDeployment extracts desired information from k8s []Pod info
+// Parse extracts desired information from k8s []Pod info
 func (pods *Pods) Parse(list []core_v1.Pod) {
 	if list == nil {
 		return
