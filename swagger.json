@@ -5529,6 +5529,14 @@
           "type": "string",
           "x-go-name": "Status"
         },
+        "statusMessage": {
+          "type": "string",
+          "x-go-name": "StatusMessage"
+        },
+        "statusReason": {
+          "type": "string",
+          "x-go-name": "StatusReason"
+        },
         "versionLabel": {
           "type": "boolean",
           "x-go-name": "VersionLabel"
