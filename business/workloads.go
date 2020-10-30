@@ -1,7 +1,6 @@
 package business
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -16,7 +15,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -209,7 +208,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration st
 		duration, err := time.ParseDuration(duration)
 
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Invalid duration [%s]: %v", duration, err))
+			return nil, fmt.Errorf("Invalid duration [%s]: %v", duration, err)
 		}
 
 		opts.Duration = &duration
@@ -219,7 +218,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration st
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
 
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
+			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
 		}
 
 		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
@@ -231,7 +230,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration st
 				opts.TailLines = &numLines
 			}
 		} else {
-			return nil, errors.New(fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
+			return nil, fmt.Errorf("Invalid tailLines [%s]: %v", tailLines, err)
 		}
 	}
 
@@ -884,7 +883,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
 		}
 		if err != nil {
-			if k8s_errors.IsNotFound(err) {
+			if errors.IsNotFound(err) {
 				dep = nil
 			} else {
 				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", namespace, workloadName, err)
@@ -1348,7 +1347,7 @@ func updateWorkload(layer *Layer, namespace string, workloadName string, workloa
 				err = layer.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
 			}
 			if err != nil {
-				if !k8s_errors.IsNotFound(err) {
+				if !errors.IsNotFound(err) {
 					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkType, namespace, workloadName, err)
 					errChan <- err
 				}
