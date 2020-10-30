@@ -128,6 +128,8 @@ func GuessKialiURL(r *http.Request) string {
 	// take priority.
 	if fwdPort, ok := r.Header["X-Forwarded-Port"]; ok && len(fwdPort) == 1 {
 		port = fwdPort[0]
+	} else if len(cfg.Server.WebPort) > 0 {
+		port = cfg.Server.WebPort
 	} else if len(r.URL.Host) != 0 {
 		if len(r.URL.Port()) != 0 {
 			port = r.URL.Port()
