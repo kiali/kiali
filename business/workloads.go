@@ -1,9 +1,11 @@
 package business
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +16,8 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -194,11 +197,45 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria() *LogOptions {
+func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration string, sinceTime string, tailLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
-	return opts
+	if container != "" {
+		opts.Container = container
+	}
+
+	if duration != "" {
+		duration, err := time.ParseDuration(duration)
+
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("Invalid duration [%s]: %v", duration, err))
+		}
+
+		opts.Duration = &duration
+	}
+
+	if sinceTime != "" {
+		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
+
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
+		}
+
+		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+	}
+
+	if tailLines != "" {
+		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
+			if numLines > 0 {
+				opts.TailLines = &numLines
+			}
+		} else {
+			return nil, errors.New(fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
+		}
+	}
+
+	return opts, nil
 }
 
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
@@ -847,7 +884,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
 		}
 		if err != nil {
-			if errors.IsNotFound(err) {
+			if k8s_errors.IsNotFound(err) {
 				dep = nil
 			} else {
 				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", namespace, workloadName, err)
@@ -1311,7 +1348,7 @@ func updateWorkload(layer *Layer, namespace string, workloadName string, workloa
 				err = layer.k8s.UpdateWorkload(namespace, workloadName, wkType, jsonPatch)
 			}
 			if err != nil {
-				if !errors.IsNotFound(err) {
+				if !k8s_errors.IsNotFound(err) {
 					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkType, namespace, workloadName, err)
 					errChan <- err
 				}

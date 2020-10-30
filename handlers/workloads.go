@@ -1,14 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
@@ -186,43 +182,15 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	opts := business.Workload.BuildLogOptionsCriteria()
-	if container := queryParams.Get("container"); container != "" {
-		opts.Container = container
-	}
-	if duration := queryParams.Get("duration"); duration != "" {
-		duration, err := time.ParseDuration(duration)
+	opts, err := business.Workload.BuildLogOptionsCriteria(
+		queryParams.Get("container"),
+		queryParams.Get("duration"),
+		queryParams.Get("sinceTime"),
+		queryParams.Get("tailLines"))
 
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid duration [%s]: %v", duration, err))
-			return
-		}
-
-		opts.Duration = &duration
-	}
-	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
-		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
-			opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
-			return
-		}
-	}
-	if tailLines := queryParams.Get("tailLines"); tailLines != "" {
-		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
-			if numLines > 0 {
-				opts.TailLines = &numLines
-			}
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
-			return
-		}
-	}
-
-	if duration := queryParams.Get("duration"); duration != "" {
-		if parsed, err := time.ParseDuration(duration); err != nil {
-			opts.Duration = &parsed
-		}
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
 	}
 
 	// Fetch pod logs
