@@ -25,8 +25,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/glog"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -53,7 +51,8 @@ func init() {
 }
 
 func main() {
-	defer glog.Flush()
+
+	log.InitializeLogger()
 	util.Clock = util.RealClock{}
 
 	// process command line
@@ -68,7 +67,7 @@ func main() {
 	if *argConfigFile != "" {
 		c, err := config.LoadFromFile(*argConfigFile)
 		if err != nil {
-			glog.Fatal(err)
+			log.Fatal(err)
 		}
 		config.Set(c)
 	} else {
@@ -78,7 +77,7 @@ func main() {
 	log.Tracef("Kiali Configuration:\n%s", config.Get())
 
 	if err := validateConfig(); err != nil {
-		glog.Fatal(err)
+		log.Fatal(err)
 	}
 
 	consoleVersion := determineConsoleVersion()
