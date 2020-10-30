@@ -25,6 +25,8 @@ import * as Cy from 'cytoscape';
 import { getEdgeHealth } from '../../../types/ErrorRate';
 
 export const DimClass = 'mousedim';
+export const HighlightClass = 'mousehighlight';
+export const HoveredClass = 'mousehover';
 
 let EdgeColor: PFColorVal;
 const EdgeColorDead = PfColors.Black500;
@@ -145,7 +147,7 @@ export class GraphStyles {
 
     const isGroup = data.isGroup;
 
-    if (ele.hasClass('mousehighlight')) {
+    if (ele.hasClass(HighlightClass)) {
       labelRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
     }
 
@@ -191,7 +193,7 @@ export class GraphStyles {
         contentRawStyle += `background-color: ${NodeVersionParentBackgroundColor};`;
         contentRawStyle += `color: ${NodeVersionParentTextColor};`;
       }
-      if (ele.hasClass('mousehighlight')) {
+      if (ele.hasClass(HighlightClass)) {
         contentRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
       }
 
@@ -519,14 +521,14 @@ export class GraphStyles {
       },
       // Node is highlighted (see GraphHighlighter.ts)
       {
-        selector: 'node.mousehighlight',
+        selector: `node.${HighlightClass}`,
         style: {
           'font-size': NodeTextFontSizeHover
         }
       },
       // Node other than App Box is highlighted (see GraphHighlighter.ts)
       {
-        selector: 'node.mousehighlight[^isGroup]',
+        selector: `node.${HighlightClass}[^isGroup]`,
         style: {
           'background-color': (ele: Cy.NodeSingular) => {
             switch (ele.data(CyNode.healthStatus)) {
@@ -596,13 +598,13 @@ export class GraphStyles {
         }
       },
       {
-        selector: 'edge.mousehighlight',
+        selector: `edge.${HighlightClass}`,
         style: {
           'font-size': EdgeTextFontSizeHover
         }
       },
       {
-        selector: 'edge.mousehover',
+        selector: `edge.${HoveredClass}`,
         style: {
           label: (ele: Cy.EdgeSingular) => {
             return getEdgeLabel(ele, true);

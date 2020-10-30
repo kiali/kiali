@@ -1,9 +1,5 @@
 import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../../../types/Graph';
-import { DimClass } from './GraphStyles';
-
-const DIM_CLASS: string = DimClass;
-const HIGHLIGHT_CLASS: string = 'mousehighlight';
-const HOVERED_CLASS: string = 'mousehover';
+import { DimClass, HoveredClass, HighlightClass } from './GraphStyles';
 
 // When a node or edge is selected we highlight the end-to-end paths (nodes and edges) for which the
 // element participates.  Other nodes and edges are dimmed.
@@ -47,7 +43,7 @@ export class GraphHighlighter {
 
   clearHover = () => {
     if (this.hovered) {
-      this.hovered.summaryTarget.removeClass(HOVERED_CLASS);
+      this.hovered.summaryTarget.removeClass(HoveredClass);
       this.hovered = undefined;
     }
   };
@@ -57,7 +53,7 @@ export class GraphHighlighter {
     // selected element highlighted
     if (this.selected.summaryType === 'graph' && ['node', 'edge', 'group'].indexOf(event.summaryType) !== -1) {
       this.hovered = event;
-      this.hovered.summaryTarget.addClass(HOVERED_CLASS);
+      this.hovered.summaryTarget.addClass(HoveredClass);
       this.refresh();
     }
   };
@@ -70,8 +66,8 @@ export class GraphHighlighter {
   };
 
   unhighlight = () => {
-    this.cy.elements('.' + DIM_CLASS).removeClass(DIM_CLASS);
-    this.cy.elements('.' + HIGHLIGHT_CLASS).removeClass(HIGHLIGHT_CLASS);
+    this.cy.elements(`.${DimClass}`).removeClass(DimClass);
+    this.cy.elements(`.${HighlightClass}`).removeClass(HighlightClass);
   };
 
   refresh = () => {
@@ -80,9 +76,9 @@ export class GraphHighlighter {
       return;
     }
 
-    toHighlight.addClass(HIGHLIGHT_CLASS);
+    toHighlight.addClass(HighlightClass);
 
-    this.cy.elements().difference(toHighlight).addClass(DIM_CLASS);
+    this.cy.elements().difference(toHighlight).addClass(DimClass);
   };
 
   // Returns the nodes to highlight. Highlighting for a hovered element
