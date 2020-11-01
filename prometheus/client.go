@@ -35,7 +35,6 @@ type ClientInterface interface {
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
-	ClientInterface
 	p8s api.Client
 	api prom_v1.API
 }
