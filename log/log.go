@@ -1,9 +1,10 @@
 package log
 
 import (
+	"os"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 // Configures the global log level and log format.
@@ -40,12 +41,10 @@ func Errorf(format string, args ...interface{}) {
 	log.Error().Msgf(format, args...)
 }
 
-// Debug will log a message at verbose level 4 and will ensure the caller's stack frame is used
 func Debug(args ...interface{}) {
 	log.Debug().Msgf("%s", args...)
 }
 
-// Debugf will log a message at verbose level 4 and will ensure the caller's stack frame is used
 func Debugf(format string, args ...interface{}) {
 	log.Debug().Msgf(format, args...)
 }
@@ -54,12 +53,10 @@ func IsDebug() bool {
 	return zerolog.GlobalLevel() == zerolog.DebugLevel
 }
 
-// Trace will log a message at verbose level 5 and will ensure the caller's stack frame is used
 func Trace(args ...interface{}) {
 	log.Trace().Msgf("%s", args...)
 }
 
-// Tracef will log a message at verbose level 5 and will ensure the caller's stack frame is used
 func Tracef(format string, args ...interface{}) {
 	log.Trace().Msgf(format, args...)
 }
@@ -86,13 +83,13 @@ func resolveLogLevelFromEnv() zerolog.Level {
 
 	switch logLevel {
 	case "0":
-		return zerolog.InfoLevel
-	case "1":
-		return zerolog.WarnLevel
-	case "2":
-		return zerolog.ErrorLevel
-	case "3":
 		return zerolog.FatalLevel
+	case "1":
+		return zerolog.ErrorLevel
+	case "2":
+		return zerolog.WarnLevel
+	case "3":
+		return zerolog.InfoLevel
 	case "4":
 		return zerolog.DebugLevel
 	case "5":
