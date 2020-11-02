@@ -7,7 +7,7 @@ clean:
 	@echo Cleaning...
 	@rm -f kiali
 	@rm -rf ${GOPATH}/bin/kiali
-	@[ -d ${GOPATH}/pkg/* ] && chmod -R +rw ${GOPATH}/pkg/* || true
+	@[ -d ${GOPATH}/pkg ] && chmod -R +rw ${GOPATH}/pkg/* || true
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf ${OUTDIR}/docker
 
