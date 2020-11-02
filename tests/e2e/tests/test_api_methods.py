@@ -19,7 +19,7 @@ def before_all_tests(kiali_client):
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
                           'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
-                          'meshTls', 'namespaceValidations', 'appSpans', 'appTraces']
+                          'meshTls', 'namespaceValidations', 'appSpans', 'appTraces', 'serviceTraces', 'workloadSpans']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -293,6 +293,15 @@ def test_namespace_traces_list(kiali_client):
         pytest.skip()
 
     evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo'})
+
+def test_service_traces_list(kiali_client):
+
+    evaluate_response(kiali_client, method_name='serviceTraces', path={'namespace': 'bookinfo', 'service':'details'})
+
+
+def test_service_workload_spans(kiali_client):
+
+    evaluate_response(kiali_client, method_name='workloadSpans', path={'namespace': 'istio-system', 'workload':'kiali'})
 
 def test_negative_400(kiali_client):
 
