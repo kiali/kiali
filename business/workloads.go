@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -193,6 +195,47 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	pod := models.Pod{}
 	pod.Parse(p)
 	return &pod, nil
+}
+
+func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration string, sinceTime string, tailLines string) (*LogOptions, error) {
+	opts := &LogOptions{}
+	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
+
+	if container != "" {
+		opts.Container = container
+	}
+
+	if duration != "" {
+		duration, err := time.ParseDuration(duration)
+
+		if err != nil {
+			return nil, fmt.Errorf("Invalid duration [%s]: %v", duration, err)
+		}
+
+		opts.Duration = &duration
+	}
+
+	if sinceTime != "" {
+		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
+
+		if err != nil {
+			return nil, fmt.Errorf("Invalid sinceTime [%s]: %v", sinceTime, err)
+		}
+
+		opts.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
+	}
+
+	if tailLines != "" {
+		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
+			if numLines > 0 {
+				opts.TailLines = &numLines
+			}
+		} else {
+			return nil, fmt.Errorf("Invalid tailLines [%s]: %v", tailLines, err)
+		}
+	}
+
+	return opts, nil
 }
 
 func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOptions) (*PodLog, error) {
