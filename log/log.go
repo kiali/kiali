@@ -100,7 +100,7 @@ func resolveLogLevelFromEnv() zerolog.Level {
 	default:
 		logLevelFromString, err := zerolog.ParseLevel(logLevel)
 		if err != nil {
-			log.Warn().Msgf("Provided LOG_LEVEL %s is invalid. Fallback to info.",os.Getenv("LOG_LEVEL"))
+			log.Warn().Msgf("Provided LOG_LEVEL %s is invalid. Fallback to info.", os.Getenv("LOG_LEVEL"))
 			return zerolog.InfoLevel
 		}
 		return logLevelFromString
