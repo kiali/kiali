@@ -61,7 +61,7 @@ def evaluate_response(kiali_client, method_name, path=None, params=None, data=No
         pytest.fail(response.content)
     return response
 
-def test_swagger_coverage():
+def __test_swagger_coverage():
     difference_set = set(swagger_method_list) - set(tested_method_list)
     if len(difference_set) > 0:
         pytest.fail('Missing {0} Api Methods to Validate:'.format(str(len(difference_set))) + str(difference_set))
