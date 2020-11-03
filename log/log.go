@@ -1,10 +1,12 @@
 package log
 
 import (
+	"os"
+	"strings"
+	"time"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
-	"time"
 )
 
 // Configures the global log level and log format.
@@ -104,7 +106,7 @@ func resolveLogLevelFromEnv() zerolog.Level {
 	case "5":
 		return zerolog.TraceLevel
 	default:
-		logLevelFromString, err := zerolog.ParseLevel(logLevel)
+		logLevelFromString, err := zerolog.ParseLevel(strings.ToLower(logLevel))
 		if err != nil {
 			log.Warn().Msgf("Provided LOG_LEVEL %s is invalid. Fallback to info.", os.Getenv("LOG_LEVEL"))
 			return zerolog.InfoLevel
