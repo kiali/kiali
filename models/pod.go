@@ -21,6 +21,8 @@ type Pod struct {
 	IstioContainers     []*ContainerInfo  `json:"istioContainers"`
 	IstioInitContainers []*ContainerInfo  `json:"istioInitContainers"`
 	Status              string            `json:"status"`
+	StatusMessage       string            `json:"statusMessage"`
+	StatusReason        string            `json:"statusReason"`
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
@@ -39,7 +41,7 @@ type ContainerInfo struct {
 	Image string `json:"image"`
 }
 
-// ParseDeployment extracts desired information from k8s []Pod info
+// Parse extracts desired information from k8s []Pod info
 func (pods *Pods) Parse(list []core_v1.Pod) {
 	if list == nil {
 		return
@@ -104,6 +106,8 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		pod.Containers = append(pod.Containers, &container)
 	}
 	pod.Status = string(p.Status.Phase)
+	pod.StatusMessage = string(p.Status.Message)
+	pod.StatusReason = string(p.Status.Reason)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
 }
