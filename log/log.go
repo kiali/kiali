@@ -1,16 +1,25 @@
 package log
 
 import (
-	"os"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"os"
+	"time"
 )
 
 // Configures the global log level and log format.
 func InitializeLogger() {
+
+	logTimeFieldFormat, isDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
+
+	if !isDefined {
+		logTimeFieldFormat = time.RFC3339
+	}
+
 	if os.Getenv("LOG_FORMAT") != "json" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: logTimeFieldFormat})
+	} else {
+		zerolog.TimeFieldFormat = logTimeFieldFormat
 	}
 
 	logLevel := resolveLogLevelFromEnv()
