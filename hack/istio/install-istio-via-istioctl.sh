@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a|--addons)
-      ADDONS="prometheus $2"
+      ADDONS="$2"
       shift;shift
       ;;
     -c|--client-exe)
@@ -94,7 +94,6 @@ Valid command line arguments:
        The names of the addons you want to install along with the core Istio components.
        Make sure this value is space-separated. Valid addon names can be found in your Istio
        distribution directory samples/addons.
-       Note that "prometheus" will always be added to the list of addons, so you do not have to specify it.
        Default: prometheus grafana jaeger
   -c|--client-exe <name>:
        Cluster client executable name - valid values are "kubectl" or "oc".
@@ -127,8 +126,6 @@ Valid command line arguments:
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
-       --set components.telemetry.k8s.resources.requests.memory=100Mi
-       --set components.telemetry.k8s.resources.requests.cpu=50m
   -h|--help:
        this message
 HELPMSG
@@ -184,22 +181,14 @@ echo "istioctl is found here: ${ISTIOCTL}"
 
 # If OpenShift, install CNI
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-  # Istio 1.4 had different option names than 1.5+
-  if ${ISTIOCTL} --remote=false version | grep -q "1\.4" ; then
-    CNI_OPTIONS="--set cni.enabled=true --set cni.components.cni.enabled=true --set cni.components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/var/run/multus/cni/net.d"
-    TELEMETRY_OPTIONS="--set telemetry.components.telemetry.k8s.resources.requests.memory=100Mi --set telemetry.components.telemetry.k8s.resources.requests.cpu=50m"
-  else
-    CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
-    TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
+  CNI_OPTIONS="--set components.cni.enabled=true --set components.cni.namespace=kube-system --set values.cni.cniBinDir=/var/lib/cni/bin --set values.cni.cniConfDir=/etc/cni/multus/net.d --set values.cni.chained=false --set values.cni.cniConfFileName=istio-cni.conf --set values.sidecarInjectorWebhook.injectedAnnotations.k8s\.v1\.cni\.cncf\.io/networks=istio-cni"
 
-    # Istio 1.5 used global.mtls.auto, 1.6 renamed it
-    if ${ISTIOCTL} --remote=false version | grep -q "1\.5" ; then
-      MTLS_OPTIONS="--set values.global.mtls.auto=${MTLS}"
-    else
-      MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
-    fi
-    MTLS_OPTIONS="${MTLS_OPTIONS} --set values.global.controlPlaneSecurityEnabled=${MTLS}"
+  # Istio 1.8 removed mixer - so components.telemetry settings are only valid from 1.7 and earlier.
+  if ${ISTIOCTL} --remote=false version | grep -q "1\.6\|1\.7" ; then
+    TELEMETRY_OPTIONS="--set components.telemetry.k8s.resources.requests.memory=100Mi --set components.telemetry.k8s.resources.requests.cpu=50m"
   fi
+
+  MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 fi
 
 # When installing Istio (i.e. not deleting it) perform some preparation steps
@@ -252,7 +241,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   fi
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest install --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
+  ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
     exit 1
