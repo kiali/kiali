@@ -359,7 +359,7 @@ func (in *Iter8Service) ParseJsonForCreate(body []byte) (string, error) {
 	return string(b), nil
 }
 
-func (in *Iter8Service) buildStringMatch(mr models.HTTPMarchRule) *kubernetes.StringMatch {
+func (in *Iter8Service) buildStringMatch(mr models.HTTPMatchRule) *kubernetes.StringMatch {
 	uri := kubernetes.StringMatch{}
 	stringMatch := mr.StringMatch
 	switch mr.Match {
@@ -380,7 +380,7 @@ func (in *Iter8Service) ParseMatchRule(http []models.HTTPMatchRequest) []*kubern
 	for i, m := range http {
 		nm := kubernetes.HTTPMatchRequest{}
 
-		if (m.URI != models.HTTPMarchRule{}) {
+		if (m.URI != models.HTTPMatchRule{}) {
 			nm.URI = in.buildStringMatch(m.URI) // &uri
 		}
 		if len(m.Headers) > 0 {

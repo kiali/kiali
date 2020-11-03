@@ -124,11 +124,11 @@ type Iter8Match struct {
 }
 
 type HTTPMatchRequest struct {
-	URI     HTTPMarchRule   `json:"uri,omitempty"`
-	Headers []HTTPMarchRule `json:"headers,omitempty"`
+	URI     HTTPMatchRule   `json:"uri,omitempty"`
+	Headers []HTTPMatchRule `json:"headers,omitempty"`
 }
 
-type HTTPMarchRule struct {
+type HTTPMatchRule struct {
 	Key         string `json:"key,omitempty"`
 	Match       string `json:"match,omitempty"`
 	StringMatch string `json:"stringMatch,omitempty"`
@@ -240,6 +240,15 @@ func (i *Iter8ExperimentDetail) Parse(iter8Object kubernetes.Iter8Experiment) {
 		Percentage:    spec.TrafficControl.Percentage,
 		OnTermination: spec.TrafficControl.OnTermination,
 	}
+	if spec.TrafficControl.Match.HTTP != nil {
+		ptr := make([]HTTPMatchRequest, len(spec.TrafficControl.Match.HTTP))
+		for i, m := range spec.TrafficControl.Match.HTTP {
+			nm := HTTPMatchRequest{}
+			nm.parse(m)
+			ptr[i] = nm
+		}
+		trafficControl.Match.HTTP = ptr
+	}
 
 	targetServiceNamespace := spec.Service.Namespace
 	if targetServiceNamespace == "" {
@@ -337,12 +346,40 @@ func (i *Iter8ExperimentItem) Parse(iter8Object kubernetes.Iter8Experiment) {
 		i.Kind = "Deployment"
 	}
 	i.ExperimentType = status.ExperimentType
-	// successCrideriaStatus := Iter8SuccessCrideriaStatus{}
-	// successCrideriaStatus = Iter8SuccessCrideriaStatus{
-	// 	status.Assestment.Winner.Name,
-	// 	status.Assestment.Winner.WinnerFound,
-	// 	status.Assestment.Winner.Winner,
-	// 	status.Assestment.Winner.Probability,
-	// }
 	i.Winner = status.Assestment.Winner
+}
+
+func (iter8URI *HTTPMatchRule) parse(uri *kubernetes.StringMatch) {
+
+	if uri.Exact != nil {
+		iter8URI.Match = "exact"
+		iter8URI.StringMatch = *uri.Exact
+	} else if uri.Prefix != nil {
+		iter8URI.Match = "prefix"
+		iter8URI.StringMatch = *uri.Prefix
+	} else if uri.Regex != nil {
+		iter8URI.Match = "regex"
+		iter8URI.StringMatch = *uri.Regex
+	}
+}
+
+func (hm *HTTPMatchRequest) parse(m *kubernetes.HTTPMatchRequest) {
+	if m.URI != nil {
+		header := HTTPMatchRule{}
+		header.parse(m.URI)
+		hm.URI = header
+	}
+	if len(m.Headers) > 0 {
+		hm.Headers = make([]HTTPMatchRule, len(m.Headers))
+		index := 0
+		for ii, h := range m.Headers {
+			if h != nil {
+				header := HTTPMatchRule{}
+				header.parse(h)
+				header.Key = ii
+				hm.Headers[index] = header
+				index++
+			}
+		}
+	}
 }

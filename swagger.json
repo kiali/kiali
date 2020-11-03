@@ -4194,7 +4194,23 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "HTTPMarchRule": {
+    "HTTPMatchRequest": {
+      "type": "object",
+      "properties": {
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HTTPMatchRule"
+          },
+          "x-go-name": "Headers"
+        },
+        "uri": {
+          "$ref": "#/definitions/HTTPMatchRule"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "HTTPMatchRule": {
       "type": "object",
       "properties": {
         "key": {
@@ -4208,22 +4224,6 @@
         "stringMatch": {
           "type": "string",
           "x-go-name": "StringMatch"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "HTTPMatchRequest": {
-      "type": "object",
-      "properties": {
-        "headers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/HTTPMarchRule"
-          },
-          "x-go-name": "Headers"
-        },
-        "uri": {
-          "$ref": "#/definitions/HTTPMarchRule"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
