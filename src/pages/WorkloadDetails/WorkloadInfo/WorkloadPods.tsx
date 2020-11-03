@@ -12,7 +12,8 @@ import {
   EmptyStateVariant,
   Grid,
   GridItem,
-  Title
+  Title,
+  Tooltip
 } from '@patternfly/react-core';
 import { CogsIcon } from '@patternfly/react-icons';
 import PodStatus from './PodStatus';
@@ -61,6 +62,27 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
     ];
   }
 
+  phase(pod: Pod): React.ReactFragment {
+    const phase = !!pod.statusReason ? pod.statusReason : pod.status;
+    const tooltipPhase = !!pod.statusReason ? `${pod.status}: ${pod.statusReason}` : pod.status;
+    const tooltip = !!pod.statusMessage ? (
+      <>
+        {tooltipPhase}
+        <br></br>
+        {pod.statusMessage}
+      </>
+    ) : (
+      tooltipPhase
+    );
+    return (
+      <>
+        <Tooltip content={<>{tooltip}</>}>
+          <span style={{ whiteSpace: 'nowrap' }}>{phase}</span>
+        </Tooltip>
+      </>
+    );
+  }
+
   rows(): IRow[] {
     if ((this.props.pods || []).length === 0) {
       return this.noPods();
@@ -87,7 +109,9 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
           { title: <Labels key={'labels' + podIdx} labels={pod.labels} /> },
           { title: pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : '' },
           { title: pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : '' },
-          { title: <span style={{ whiteSpace: 'nowrap' }}>{pod.status}</span> }
+          {
+            title: this.phase(pod)
+          }
         ]
       });
       return rows;

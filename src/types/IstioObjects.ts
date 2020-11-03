@@ -121,6 +121,8 @@ export interface Pod {
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
   status: string;
+  statusMessage?: string;
+  statusReason?: string;
   appLabel: boolean;
   versionLabel: boolean;
   proxyStatus?: ProxyStatus;
