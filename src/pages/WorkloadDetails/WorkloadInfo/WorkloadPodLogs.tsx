@@ -29,15 +29,18 @@ import screenfull, { Screenfull } from 'screenfull';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import * as MetricsHelper from '../../../components/Metrics/Helper';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
+import { serverConfig } from 'config';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
   pods: Pod[];
 }
 
+const NoAppContainer = 'n/a';
+
 interface ContainerInfo {
   container: string;
-  containerOptions: string[];
+  containerOptions: { [key: string]: string };
 }
 
 type TextAreaPosition = 'left' | 'right' | 'top' | 'bottom';
@@ -436,18 +439,17 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
   private getAppDiv = () => {
     const appLogs = this.hasEntries(this.state.filteredAppLogs)
-      ? this.entryToString(this.state.filteredAppLogs)
+      ? this.entriesToString(this.state.filteredAppLogs)
       : NoAppLogsFoundMessage;
+    const title = this.state.containerInfo!.containerOptions[this.state.containerInfo!.container];
     return (
       <div id="appLogDiv" className={this.state.sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
         <Toolbar className={toolbarTitle()}>
-          <ToolbarItem className={logsTitle(this.isFullscreen())}>
-            {this.state.containerInfo!.containerOptions[this.state.containerInfo!.container]}
-          </ToolbarItem>
+          <ToolbarItem className={logsTitle(this.isFullscreen())}>{title}</ToolbarItem>
           <ToolbarGroup className={toolbarRight}>
             <ToolbarItem>
               <Tooltip key="copy_app_logs" position="top" content="Copy app logs to clipboard">
-                <CopyToClipboard onCopy={this.copyAppLogCallback} text={this.entryToString(this.state.filteredAppLogs)}>
+                <CopyToClipboard onCopy={this.copyAppLogCallback} text={appLogs}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy className={defaultIconStyle} />
                   </Button>
@@ -485,7 +487,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
   private getProxyDiv = () => {
     const proxyLogs = this.hasEntries(this.state.filteredProxyLogs)
-      ? this.entryToString(this.state.filteredProxyLogs)
+      ? this.entriesToString(this.state.filteredProxyLogs)
       : NoProxyLogsFoundMessage;
     return (
       <div id="proxyLogDiv" className={proxyLogsDiv}>
@@ -494,10 +496,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
           <ToolbarGroup className={toolbarRight}>
             <ToolbarItem>
               <Tooltip key="copy_proxy_logs" position="top" content="Copy Istio proxy logs to clipboard">
-                <CopyToClipboard
-                  onCopy={this.copyProxyLogCallback}
-                  text={this.entryToString(this.state.filteredProxyLogs)}
-                >
+                <CopyToClipboard onCopy={this.copyProxyLogCallback} text={proxyLogs}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy className={defaultIconStyle} />
                   </Button>
@@ -735,21 +734,22 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   };
 
   private getContainerInfo = (pod: Pod): ContainerInfo => {
-    const containers = pod.containers ? pod.containers : [];
+    let containers = pod.containers ? pod.containers : [];
     containers.push(...(pod.istioContainers ? pod.istioContainers : []));
-    const containerNames: string[] = containers.map(c => c.name);
-    const options: string[] = [];
+    containers = containers.filter(c => c.name !== 'istio-proxy');
+    const options: { [key: string]: string } = {};
 
-    containerNames.forEach(c => {
-      // ignore the proxy
-      if (c !== 'istio-proxy') {
-        if (pod.appLabel && pod.labels) {
-          options[c] = c + '-' + pod.labels['version'];
-        } else {
-          options[c] = c;
-        }
-      }
+    if (containers.length === 0) {
+      options[NoAppContainer] = NoAppContainer;
+      return { container: NoAppContainer, containerOptions: options };
+    }
+
+    const containerNames = containers.map(c => c.name);
+    containerNames.forEach(n => {
+      const version = pod.appLabel && pod.labels ? pod.labels[serverConfig.istioLabels.versionLabelName] : undefined;
+      options[n] = !!version ? `${n}-${version}` : n;
     });
+
     return { container: containerNames[0], containerOptions: options };
   };
 
@@ -769,14 +769,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     if (endTime < now) {
       duration = Math.floor(timeRangeDates[1].getTime() / 1000) - sinceTime;
     }
-    const appPromise: Promise<Response<PodLogs>> = getPodLogs(
-      namespace,
-      podName,
-      container,
-      tailLines,
-      sinceTime,
-      duration
-    );
+    const appPromise: Promise<Response<PodLogs>> =
+      container !== NoAppContainer
+        ? getPodLogs(namespace, podName, container, tailLines, sinceTime, duration)
+        : Promise.resolve({ data: { entries: [] } });
     const proxyPromise: Promise<Response<PodLogs>> = getPodLogs(
       namespace,
       podName,
@@ -785,6 +781,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
       sinceTime,
       duration
     );
+
     this.loadAppLogsPromise = makeCancelablePromise(Promise.all([appPromise]));
     this.loadProxyLogsPromise = makeCancelablePromise(Promise.all([proxyPromise]));
 
@@ -862,9 +859,9 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     });
   };
 
-  private entryToString = (entries: LogEntry[]): string => {
+  private entriesToString = (entries: LogEntry[]): string => {
     return entries.map(le => (this.state.showTimestamps ? `${le.timestamp} ${le.message}` : le.message)).join('\n');
   };
 
-  private hasEntries = (entries: LogEntry[]): boolean => entries.length > 0;
+  private hasEntries = (entries: LogEntry[]): boolean => !!entries && entries.length > 0;
 }
