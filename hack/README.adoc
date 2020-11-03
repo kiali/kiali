@@ -25,7 +25,7 @@ Runs the Kiali molecule tests with the latest version of the Kiali quay.io image
 
 * `link:ci-openshift-molecule-tests.sh[]`
 
-Runs the Kiali molecule tests with the latest version of the Kiali quay.io images on an OpenShift AWS cluster. This utilizes the `aws-openshift-istio.sh` script to start and stop an OpenShift cluster on AWS installed with either Service Mesh or upstream Istio. Also utilizes the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests on minikube.
+Runs the Kiali molecule tests with the latest version of the Kiali quay.io images on an existing OpenShift cluster. Utilizes the `run-molecule-tests.sh` script to run the molecule tests. Use this in a cron job to periodically run the molecule tests.
 
 * `link:crc-openshift.sh[]`
 
@@ -53,46 +53,22 @@ Runs a local Prometheus in docker and scrapes the Kiali server and operator that
 
 == Running Molecule Tests Periodically
 
-If you have a cluster running (in this example, one that was installed locally via link:https://github.com/kxr/ocp4_setup_upi_kvm[ocp4_setup_upi_kvm]), you can use a script like this for a cron job in order to periodically run the Molecule tests:
+=== Testing on Minikube
+
+You can do this for a cron job in order to periodically run the Molecule tests on Minikube. If Minikube is not yet started, this script will start one for you (using `k8s-minikube.sh`) with Dex installed so the OIDC tests can run:
 
 ```
-#!/bin/bash
-
-# abort on any error
-set -e
-
-ID="/root/ocp4_setup_ocp4/install_dir"
-OC="/root/ocp4_setup_ocp4/oc"
-SRC="/tmp/KIALI-GIT"
-DORP="podman"
-
-# If you want to test code from different forks and/or branches, set them here
-KIALI_FORK="kiali"
-KIALI_BRANCH="master"
-KIALI_OPERATOR_FORK="kiali"
-KIALI_OPERATOR_BRANCH="master"
-
-echo "Create a clean github repo location"
-rm -rf /tmp/KIALI-GIT
-mkdir -p $SRC
-
-echo "Make sure everything exists"
-test -d $ID || (echo "$ID is missing"; exit 1)
-test -x $OC || (echo "$OC is missing"; exit 1)
-test -d $SRC || (echo "$SRC is missing"; exit 1)
-which $DORP > /dev/null || (echo "$DORP is not in the PATH"; exit 1)
-
-echo "Clone github repos to make sure we have the latest tests and scripts"
-cd $SRC
-git clone --single-branch --branch ${KIALI_BRANCH} git@github.com:${KIALI_FORK}/kiali
-git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} git@github.com:${KIALI_OPERATOR_FORK}/kiali-operator kiali/operator
-cd kiali
-
-echo "Log into the cluster"
-$OC login -u kubeadmin -p $(cat $ID/auth/kubeadmin-password) https://api.ocp4.local:6443
-
-echo "Run the tests"
-hack/run-molecule-tests.sh --client-exe "$OC"
+hack/ci-minikube-molecule-tests.sh
 ```
 
-Note that if you do not have a cluster readily available, you could tweek that script to use `ci-openshift-molecule-tests.sh` or `ci-minikube-molecule-tests.sh` to do everything (install the cluster and then run the molecule tests).
+There are several options you can pass to that script - pass in `--help` to see what is applicable for you.
+
+=== Testing on OpenShift
+
+If you have a cluster running - one that was installed locally via link:https://github.com/kxr/ocp4_setup_upi_kvm[ocp4_setup_upi_kvm] - you can do this for a cron job in order to periodically run the Molecule tests:
+
+```
+hack/ci-openshift-molecule-tests.sh
+```
+
+There are several options you can pass to that script - pass in `--help` to see what is applicable for you.
