@@ -359,7 +359,7 @@ class ExperimentListPage extends React.Component<Props, State> {
         return (
           <Tooltip
             key={'Initializing_' + key}
-            aria-label={'Status Indicatorr'}
+            aria-label={'Status indicator'}
             position={PopoverPosition.auto}
             className={'health_indicator'}
             content={<>{statusString}</>}
@@ -371,7 +371,7 @@ class ExperimentListPage extends React.Component<Props, State> {
         return (
           <Tooltip
             key={'Progressing_' + key}
-            aria-label={'Status Indicatorr'}
+            aria-label={'Status indicator'}
             position={PopoverPosition.auto}
             className={'health_indicator'}
             content={<>{statusString}</>}
@@ -383,7 +383,7 @@ class ExperimentListPage extends React.Component<Props, State> {
         return (
           <Tooltip
             key={'Pause_' + key}
-            aria-label={'Status Indicatorr'}
+            aria-label={'Status indicator'}
             position={PopoverPosition.auto}
             className={'health_indicator'}
             content={<>{statusString}</>}
@@ -396,7 +396,7 @@ class ExperimentListPage extends React.Component<Props, State> {
           return (
             <Tooltip
               key={'Completed_' + key}
-              aria-label={'Status Indicatorr'}
+              aria-label={'Status indicator'}
               position={PopoverPosition.auto}
               className={'health_indicator'}
               content={<>{statusString}</>}
@@ -408,7 +408,7 @@ class ExperimentListPage extends React.Component<Props, State> {
           return (
             <Tooltip
               key={'Completed_' + key}
-              aria-label={'Status Indicatorr'}
+              aria-label={'Status indicator'}
               position={PopoverPosition.auto}
               className={'health_indicator'}
               content={<>{statusString}</>}
@@ -420,7 +420,7 @@ class ExperimentListPage extends React.Component<Props, State> {
         return (
           <Tooltip
             key={'Completed_' + key}
-            aria-label={'Status Indicatorr'}
+            aria-label={'Status indicator'}
             position={PopoverPosition.auto}
             className={'health_indicator'}
             content={<>{statusString}</>}
@@ -432,7 +432,7 @@ class ExperimentListPage extends React.Component<Props, State> {
         return (
           <Tooltip
             key={'default_' + key}
-            aria-label={'Status Indicatorr'}
+            aria-label={'Status indicator'}
             position={PopoverPosition.auto}
             className={'health_indicator'}
             content={<>{statusString}</>}

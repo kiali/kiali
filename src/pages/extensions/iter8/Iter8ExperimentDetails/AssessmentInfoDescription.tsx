@@ -12,16 +12,16 @@ import {
 } from '@patternfly/react-core';
 import { ChartBullet, ChartThemeColor } from '@patternfly/react-charts';
 
-import { Iter8Info, Iter8Experiment, MetricProgressInfo, emptyExperimentItem } from '../../../../types/Iter8';
+import { emptyExperimentItem, Iter8Experiment, Iter8Info, MetricProgressInfo } from '../../../../types/Iter8';
 import {
-  Table,
-  TableBody,
-  TableHeader,
-  IRow,
-  ICell,
   cellWidth,
   expandable,
-  RowWrapperProps
+  ICell,
+  IRow,
+  RowWrapperProps,
+  Table,
+  TableBody,
+  TableHeader
 } from '@patternfly/react-table';
 import { KialiIcon } from '../../../../config/KialiIcon';
 import { style } from 'typestyle';
@@ -89,7 +89,7 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
 
   componentDidUpdate(prevProps: AssesmentInfoDescriptionProps) {
     if (this.props.experimentItem !== prevProps.experimentItem || prevProps.duration !== this.props.duration) {
-      this.rederRows();
+      this.renderRows();
     }
   }
 
@@ -108,7 +108,7 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
       });
   };
 
-  rederRows() {
+  renderRows() {
     this.setState({
       experimentItem: this.props.experimentItem,
       rows: this.getRows()
@@ -131,18 +131,7 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
     let valueString = value.toFixed(2);
     let tInfo = this.props.metricInfo.get(name);
     if (tInfo === undefined) return <></>;
-    if (tInfo.isReward && tInfo.threshold === 0) {
-      return (
-        <>
-          {idx === 0 ? '' : <Divider />}
-          <Grid gutter="md">
-            <GridItem span={4}>{name}:</GridItem>
-            <GridItem span={2}>{valueString}</GridItem>
-            <GridItem span={6}></GridItem>
-          </Grid>
-        </>
-      );
-    }
+
     let baseLineValue = 1;
     if (tInfo.thresholdType === 'relative') {
       this.props.experimentItem.baseline.criterionAssessment?.map((ca, _) => {
@@ -150,22 +139,27 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
       });
     }
 
-    let maxDomain = Number((tInfo.threshold * baseLineValue).toFixed(2)) * 1.5;
+    let basethreshold = Number((tInfo.threshold * baseLineValue).toFixed(2));
+    let maxDomain = basethreshold * 1.5;
+    if (tInfo.threshold === 0) {
+      maxDomain = Number((Number((this.getMaxThreshold(name) * baseLineValue).toFixed(2)) * 1.1).toFixed(0));
+    }
+
     maxDomain = value > maxDomain ? value.toFixed(2) : maxDomain.toFixed(2);
 
     let color;
     let range1 = 0;
-    let range2 = Number((baseLineValue * tInfo.threshold).toFixed(2));
-    if (tInfo.preferred_direction === 'lower') {
-      if (value >= baseLineValue * tInfo.threshold) {
+    let range2 = basethreshold;
+    if (tInfo.preferred_direction !== undefined && tInfo.preferred_direction === 'lower') {
+      if (value >= basethreshold) {
         color = ChartThemeColor.orange;
       } else {
         color = ChartThemeColor.blue;
       }
     } else {
-      range1 = baseLineValue * tInfo.threshold;
+      range1 = basethreshold;
       range2 = maxDomain;
-      if (value >= baseLineValue * tInfo.threshold) {
+      if (value >= basethreshold) {
         color = ChartThemeColor.blue;
       } else {
         color = ChartThemeColor.orange;
@@ -175,9 +169,10 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
     let range2Name = 'Range';
     if (range1 === 0) {
       range1Name = '';
-      range2Name = 'Upper Limit';
+      if (tInfo.threshold !== 0) {
+        range2Name = 'Upper Limit';
+      }
     }
-
     return (
       <>
         {idx === 0 ? '' : <Divider />}
@@ -290,6 +285,27 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
       return rows;
     });
     return rows;
+  };
+
+  getMaxThreshold = (name): number => {
+    let threshold = 0;
+    this.props.experimentItem.baseline.criterionAssessment?.map((c, _) => {
+      if (c.metric_id === name) {
+        threshold = c.statistics.value;
+      }
+    });
+    this.props.experimentItem.candidates.map(assessment => {
+      if (assessment.criterionAssessment !== undefined) {
+        assessment.criterionAssessment.map((c, _) => {
+          if (c.metric_id === name && c.statistics.value > threshold) {
+            threshold = c.statistics.value;
+          }
+          return threshold;
+        });
+      }
+      return threshold;
+    });
+    return threshold;
   };
 
   columns = (): ICell[] => {
