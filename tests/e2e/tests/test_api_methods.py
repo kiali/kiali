@@ -331,7 +331,7 @@ def test_negative_403(kiali_client):
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'invalid', 'workload': 'details-v1'}
 
     evaluate_response(kiali_client, method_name='appDetails', path=INVALID_PARAMS_APPDETAILS, status_code_expected=403)
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=403)
+    #evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=403)
     evaluate_response(kiali_client, method_name='workloadDetails', path=INVALID_PARAMS_WORKLOADDETAILS, status_code_expected=403)
     evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=403)
     evaluate_response(kiali_client, method_name='appHealth', path=INVALID_PARAMS_APPHEALTH, status_code_expected=403)
