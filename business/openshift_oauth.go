@@ -57,6 +57,8 @@ type OAuthRouteTLSSpec struct {
 
 const serverPrefix = "https://kubernetes.default.svc/"
 
+var defaultRequestTimeout, _ = time.ParseDuration("10s")
+
 var kialiNamespace string
 
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
@@ -212,8 +214,7 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 }
 
 func request(method string, url string, auth *string) ([]byte, error) {
-	timeout, _ := time.ParseDuration("5s")
-	return requestWithTimeout(method, url, auth, time.Duration(timeout))
+	return requestWithTimeout(method, url, auth, time.Duration(defaultRequestTimeout))
 }
 
 func requestWithTimeout(method string, url string, auth *string, timeout time.Duration) ([]byte, error) {
