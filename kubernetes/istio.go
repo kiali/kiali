@@ -1,9 +1,12 @@
 package kubernetes
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -17,6 +20,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/forwarder"
 )
 
 var (
@@ -246,6 +250,51 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 		fullStatus = append(fullStatus, ss...)
 	}
 	return fullStatus, nil
+}
+
+func (in *K8SClient) GetConfigDump(namespace, podName string) ([]byte, error) {
+	return in.EnvoyForward(namespace, podName, "/config_dump")
+}
+
+func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
+	writer := new(bytes.Buffer)
+
+	clientConfig, err := ConfigClient()
+	if err != nil {
+		log.Errorf("Error getting Kubernetes Client config: %v", err)
+		return nil, err
+	}
+
+	// First try whether the pod exist or not
+	_, err = in.GetPod(namespace, podName)
+	if err != nil {
+		log.Errorf("Couldn't fetch the Pod: %v", err)
+		return nil, err
+	}
+
+	// Create a Port Forwarder
+	f, err := forwarder.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig, namespace, podName, "localhost", "15000", writer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start the forwarding
+	if err := f.Start(); err != nil {
+		return nil, err
+	}
+
+	// Defering the finish of the port-forwarding
+	defer f.Stop()
+
+	// Ready to create a request
+	// req, err := http.NewRequest("GET", path, nil)
+	resp, err := http.Get(fmt.Sprintf("http://localhost:15000%s", path))
+	if err != nil {
+		log.Errorf("Error creating a request to forward: %v", err)
+	}
+	defer resp.Body.Close()
+
+	return ioutil.ReadAll(resp.Body)
 }
 
 func (in *K8SClient) hasNetworkingResource(resource string) bool {

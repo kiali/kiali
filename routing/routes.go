@@ -1279,6 +1279,27 @@ func NewRoutes() (r *Routes) {
 			handlers.PodLogs,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump pods podLogs
+		// ---
+		// Endpoint to get pod logs
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      200: configDump
+		//
+		{
+			"PodConfigDump",
+			"GET",
+			"/api/namespaces/{namespace}/pods/{pod}/config_dump",
+			handlers.ConfigDump,
+			true,
+		},
 		// swagger:route GET /iter8
 		// ---
 		// Endpoint to check if iter8 adapter is present in the cluster and if user can write adapter config

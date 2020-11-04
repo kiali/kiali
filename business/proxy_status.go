@@ -3,6 +3,7 @@ package business
 import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type ProxyStatus struct {
@@ -73,4 +74,13 @@ func xdsStatus(sent, acked string) string {
 	}
 	// Since the Nonce changes to uuid, so there is no more any time diff info
 	return "Stale"
+}
+
+func (in *ProxyStatus) GetConfigDump(pod, namespace string) ([]byte, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
+	defer promtimer.ObserveNow(&err)
+
+	dump, err := in.k8s.GetConfigDump(namespace, pod)
+	return dump, err
 }
