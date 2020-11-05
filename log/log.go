@@ -2,6 +2,7 @@ package log
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,22 +11,34 @@ import (
 )
 
 // Configures the global log level and log format.
-func InitializeLogger() {
+func InitializeLogger()  zerolog.Logger  {
+	logTimeFieldFormat, isTimeFieldFormatDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
 
-	logTimeFieldFormat, isDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
-
-	if !isDefined {
+	if !isTimeFieldFormatDefined {
 		logTimeFieldFormat = time.RFC3339
+	}
+	zerolog.TimeFieldFormat = logTimeFieldFormat
+
+	logSamplerRateAsString, isSamplerRateDefined := os.LookupEnv("LOG_SAMPLER_RATE")
+	if isSamplerRateDefined {
+		logSamplerRate, err := strconv.Atoi(logSamplerRateAsString)
+		if err != nil {
+			log.Warn().Msgf("Provided sampling rate %s cannot be parsed to int32. " +
+				"No sampling rate will be set. Error: %v", logSamplerRateAsString, err)
+		} else {
+			log.Debug().Msgf("Setting log sample rate to every %dth event", logSamplerRate)
+			log.Logger = log.Sample(&zerolog.BasicSampler{N: uint32(logSamplerRate)})
+		}
 	}
 
 	if os.Getenv("LOG_FORMAT") != "json" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: logTimeFieldFormat})
-	} else {
-		zerolog.TimeFieldFormat = logTimeFieldFormat
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat})
 	}
 
 	logLevel := resolveLogLevelFromEnv()
 	zerolog.SetGlobalLevel(logLevel)
+
+	return log.Logger
 }
 
 func Info(args ...interface{}) {
