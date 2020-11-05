@@ -11,7 +11,7 @@ import (
 )
 
 // Configures the global log level and log format.
-func InitializeLogger()  zerolog.Logger  {
+func InitializeLogger() zerolog.Logger {
 	logTimeFieldFormat, isTimeFieldFormatDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
 
 	if !isTimeFieldFormatDefined {
@@ -23,7 +23,7 @@ func InitializeLogger()  zerolog.Logger  {
 	if isSamplerRateDefined {
 		logSamplerRate, err := strconv.Atoi(logSamplerRateAsString)
 		if err != nil {
-			log.Warn().Msgf("Provided sampling rate %s cannot be parsed to int32. " +
+			log.Warn().Msgf("Provided sampling rate %s cannot be parsed to int32. "+
 				"No sampling rate will be set. Error: %v", logSamplerRateAsString, err)
 		} else {
 			log.Debug().Msgf("Setting log sample rate to every %dth event", logSamplerRate)

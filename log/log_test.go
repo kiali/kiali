@@ -94,13 +94,13 @@ func TestEnvVarLogLevel(t *testing.T) {
 func TestLogRegression(t *testing.T) {
 
 	type loggedMessageAsJsonStruct struct {
-		Level string
-		Time string
+		Level   string
+		Time    string
 		Message string
 	}
 
 	type logOutputTestStruct struct {
-		envSettings map[string]string
+		envSettings        map[string]string
 		expectedLogMessage string
 	}
 
@@ -113,16 +113,16 @@ func TestLogRegression(t *testing.T) {
 		},
 		{
 			envSettings: map[string]string{
-				"LOG_FORMAT": "text",
-				"LOG_LEVEL": "debug",
+				"LOG_FORMAT":            "text",
+				"LOG_LEVEL":             "debug",
 				"LOG_TIME_FIELD_FORMAT": time.RFC1123Z,
 			},
 			expectedLogMessage: "INF Kiali logging test 1: map[LOG_FORMAT:text LOG_LEVEL:debug LOG_TIME_FIELD_FORMAT:Mon, 02 Jan 2006 15:04:05 -0700]",
 		},
 		{
 			envSettings: map[string]string{
-				"LOG_FORMAT": "json",
-				"LOG_LEVEL": "debug",
+				"LOG_FORMAT":            "json",
+				"LOG_LEVEL":             "debug",
 				"LOG_TIME_FIELD_FORMAT": time.RFC1123Z,
 			},
 			expectedLogMessage: "Kiali logging test 2: map[LOG_FORMAT:json LOG_LEVEL:debug LOG_TIME_FIELD_FORMAT:Mon, 02 Jan 2006 15:04:05 -0700]",
@@ -159,7 +159,7 @@ func TestLogRegression(t *testing.T) {
 
 			if isJSON(loggedMessage) {
 				var loggedMessageAsJson loggedMessageAsJsonStruct
-				json.Unmarshal([]byte(loggedMessage), &loggedMessageAsJson)
+				_ = json.Unmarshal([]byte(loggedMessage), &loggedMessageAsJson)
 				timestampAsString = loggedMessageAsJson.Time
 				loggedMessage = loggedMessageAsJson.Message
 				isRightLogFormat = isJsonLogFormat()
@@ -200,11 +200,10 @@ func TestEnvVarLogSampler(t *testing.T) {
 	numberOfLogMessages := 0
 	numberOfLogMessages = bytes.Count(buf.Bytes(), []byte{'\n'})
 
-	t.Logf("Logged messages: %d - %s",numberOfLogMessages, buf.String())
+	t.Logf("Logged messages: %d - %s", numberOfLogMessages, buf.String())
 
 	assert.Equal(t, 1, numberOfLogMessages)
 }
-
 
 func isJSON(s string) bool {
 	var js map[string]interface{}
