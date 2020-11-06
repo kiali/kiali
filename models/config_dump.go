@@ -3,6 +3,7 @@ package models
 import (
 	adminapi "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/kiali/kiali/log"
@@ -12,23 +13,29 @@ import (
 type ConfigDump struct {
 	configDump *config_dump.ConfigDump
 
-	Clusters  ClusterDump `json:"clusters"`
-	Endpoints interface{} `json:"endpoints"`
-	Listeners interface{} `json:"listeners"`
-	Routes    interface{} `json:"routes"`
-	Secrets   interface{} `json:"secrets"`
+	Clusters  ClustersDump  `json:"clusters"`
+	Endpoints interface{}   `json:"endpoints"`
+	Listeners ListenersDump `json:"listeners"`
+	Routes    interface{}   `json:"routes"`
+	Secrets   interface{}   `json:"secrets"`
 }
 
-type ClusterDump struct {
-	VersionInfo           string      `json:"version_info"`
-	StaticClusters        interface{} `json:"static_clusters"`
-	DynamicActiveClusters interface{} `json:"dynamic_active_clusters"`
+type ClustersDump struct {
+	VersionInfo           string     `json:"version_info"`
+	StaticClusters        []*Cluster `json:"static_clusters"`
+	DynamicActiveClusters []*Cluster `json:"dynamic_active_clusters"`
 }
 
 type Cluster struct {
 	Cluster     *cluster.Cluster `json:"cluster"`
 	LastUpdated string           `json:"last_updated"`
 	VersionInfo string           `json:"version_info,omitempty"`
+}
+
+type ListenersDump struct {
+	VersionInfo      string               `json:"version_info"`
+	StaticListeners  []*listener.Listener `json:"static_listeners"`
+	DynamicListeners []*listener.Listener `json:"dynamic_active_listeners"`
 }
 
 func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
@@ -47,7 +54,7 @@ func (cd *ConfigDump) UnmarshallAll() {
 
 func (cd *ConfigDump) UnmarshallClusters() {
 	clusterDump := &adminapi.ClustersConfigDump{}
-	clusterStruct := ClusterDump{}
+	clusterStruct := ClustersDump{}
 
 	clusterAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.ClustersConfigDump")
 	if clusterAny == nil {
@@ -62,7 +69,7 @@ func (cd *ConfigDump) UnmarshallClusters() {
 
 	clusterStruct.VersionInfo = clusterDump.VersionInfo
 
-	clusters := make([]Cluster, 0)
+	clusters := make([]*Cluster, 0)
 	for _, c := range clusterDump.DynamicActiveClusters {
 		if c.Cluster != nil {
 			dcd := &cluster.Cluster{}
@@ -70,7 +77,7 @@ func (cd *ConfigDump) UnmarshallClusters() {
 			if err != nil {
 				continue
 			}
-			clusters = append(clusters, Cluster{
+			clusters = append(clusters, &Cluster{
 				Cluster:     dcd,
 				LastUpdated: ptypes.TimestampString(c.LastUpdated),
 				VersionInfo: c.VersionInfo,
@@ -79,7 +86,7 @@ func (cd *ConfigDump) UnmarshallClusters() {
 	}
 	clusterStruct.DynamicActiveClusters = clusters
 
-	clusters = make([]Cluster, 0)
+	clusters = make([]*Cluster, 0)
 	for _, c := range clusterDump.StaticClusters {
 		if c.Cluster != nil {
 			dcd := &cluster.Cluster{}
@@ -87,7 +94,10 @@ func (cd *ConfigDump) UnmarshallClusters() {
 			if err != nil {
 				continue
 			}
-			clusters = append(clusters, Cluster{Cluster: dcd, LastUpdated: ptypes.TimestampString(c.LastUpdated)})
+			clusters = append(clusters, &Cluster{
+				Cluster:     dcd,
+				LastUpdated: ptypes.TimestampString(c.LastUpdated),
+			})
 		}
 	}
 	clusterStruct.StaticClusters = clusters
@@ -95,11 +105,49 @@ func (cd *ConfigDump) UnmarshallClusters() {
 	cd.Clusters = clusterStruct
 }
 
-func (cd *ConfigDump) UnmarshallEndpoints() {
+func (cd *ConfigDump) UnmarshallListeners() {
+	cd.Listeners = ListenersDump{}
+	listenerAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.ListenersConfigDump")
+	if listenerAny == nil {
+		return
+	}
 
+	listenerDump := &adminapi.ListenersConfigDump{}
+	err := ptypes.UnmarshalAny(listenerAny, listenerDump)
+	if err != nil {
+		return
+	}
+
+	cd.Listeners.VersionInfo = listenerDump.VersionInfo
+
+	listeners := make([]*listener.Listener, 0)
+	for _, l := range listenerDump.DynamicListeners {
+		if l.ActiveState != nil && l.ActiveState.Listener != nil {
+			lcd := &listener.Listener{}
+			err = ptypes.UnmarshalAny(l.ActiveState.Listener, lcd)
+			if err != nil {
+				continue
+			}
+			listeners = append(listeners, lcd)
+		}
+	}
+	cd.Listeners.DynamicListeners = listeners
+
+	listeners = make([]*listener.Listener, 0)
+	for _, l := range listenerDump.StaticListeners {
+		if l.Listener != nil {
+			lcd := &listener.Listener{}
+			err = ptypes.UnmarshalAny(l.Listener, lcd)
+			if err != nil {
+				continue
+			}
+			listeners = append(listeners, lcd)
+		}
+	}
+	cd.Listeners.StaticListeners = listeners
 }
 
-func (cd *ConfigDump) UnmarshallListeners() {
+func (cd *ConfigDump) UnmarshallEndpoints() {
 
 }
 
