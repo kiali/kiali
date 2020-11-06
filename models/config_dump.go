@@ -4,6 +4,7 @@ import (
 	adminapi "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/kiali/kiali/log"
@@ -14,9 +15,8 @@ type ConfigDump struct {
 	configDump *config_dump.ConfigDump
 
 	Clusters  ClustersDump  `json:"clusters"`
-	Endpoints interface{}   `json:"endpoints"`
 	Listeners ListenersDump `json:"listeners"`
-	Routes    interface{}   `json:"routes"`
+	Routes    RoutesDump    `json:"routes"`
 	Secrets   interface{}   `json:"secrets"`
 }
 
@@ -38,6 +38,17 @@ type ListenersDump struct {
 	DynamicListeners []*listener.Listener `json:"dynamic_active_listeners"`
 }
 
+type RoutesDump struct {
+	StaticRouteConfigs  []*RouteConfig `json:"static_route_configs"`
+	DynamicRouteConfigs []*RouteConfig `json:"dynamic_route_configs"`
+}
+
+type RouteConfig struct {
+	Route       *route.RouteConfiguration `json:"route"`
+	LastUpdated string                    `json:"last_updated"`
+	VersionInfo string                    `json:"version_info,omitempty"`
+}
+
 func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
 	cd := &ConfigDump{}
 	cd.configDump = dump
@@ -46,7 +57,6 @@ func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
 
 func (cd *ConfigDump) UnmarshallAll() {
 	cd.UnmarshallClusters()
-	cd.UnmarshallEndpoints()
 	cd.UnmarshallListeners()
 	cd.UnmarshallRoutes()
 	cd.UnmarshallSecrets()
@@ -147,12 +157,51 @@ func (cd *ConfigDump) UnmarshallListeners() {
 	cd.Listeners.StaticListeners = listeners
 }
 
-func (cd *ConfigDump) UnmarshallEndpoints() {
-
-}
-
 func (cd *ConfigDump) UnmarshallRoutes() {
+	cd.Routes = RoutesDump{}
+	routesAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.RoutesConfigDump")
+	if routesAny == nil {
+		return
+	}
 
+	routesDump := &adminapi.RoutesConfigDump{}
+	err := ptypes.UnmarshalAny(routesAny, routesDump)
+	if err != nil {
+		return
+	}
+
+	routes := make([]*RouteConfig, 0)
+	for _, routeConf := range routesDump.DynamicRouteConfigs {
+		if routeConf.RouteConfig != nil {
+			rcd := &route.RouteConfiguration{}
+			err = ptypes.UnmarshalAny(routeConf.RouteConfig, rcd)
+			if err != nil {
+				continue
+			}
+			routes = append(routes, &RouteConfig{
+				Route:       rcd,
+				LastUpdated: ptypes.TimestampString(routeConf.LastUpdated),
+				VersionInfo: routeConf.VersionInfo,
+			})
+		}
+	}
+	cd.Routes.DynamicRouteConfigs = routes
+
+	routes = make([]*RouteConfig, 0)
+	for _, routeConf := range routesDump.StaticRouteConfigs {
+		if routeConf.RouteConfig != nil {
+			rcd := &route.RouteConfiguration{}
+			err = ptypes.UnmarshalAny(routeConf.RouteConfig, rcd)
+			if err != nil {
+				continue
+			}
+			routes = append(routes, &RouteConfig{
+				Route:       rcd,
+				LastUpdated: ptypes.TimestampString(routeConf.LastUpdated),
+			})
+		}
+	}
+	cd.Routes.StaticRouteConfigs = routes
 }
 
 func (cd *ConfigDump) UnmarshallSecrets() {

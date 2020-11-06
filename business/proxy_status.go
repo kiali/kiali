@@ -99,8 +99,6 @@ func buildConfigDump(configDump *config_dump.ConfigDump, filter string) (*models
 		cd.UnmarshallAll()
 	case "clusters":
 		cd.UnmarshallClusters()
-	case "endpoints":
-		cd.UnmarshallEndpoints()
 	case "listeners":
 		cd.UnmarshallListeners()
 	case "routes":
