@@ -87,7 +87,6 @@ export class FilterSelected {
 const rightToolbar = style({
   marginLeft: 'auto'
 });
-
 const filterWithChildrenStyle = style({ borderRight: '1px solid #d1d1d1;', paddingRight: '10px', display: 'inherit' });
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
@@ -407,7 +406,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                       {items.map(item => (
                         <Chip
                           key={'filter_' + category + '_' + item.value}
-                          onClick={() => this.removeFilter(category, item.value)}
+                          onClick={() => this.removeFilter(item.id, item.value)}
                         >
                           {item.value}
                         </Chip>

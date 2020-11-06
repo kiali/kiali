@@ -246,7 +246,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               onClick={() =>
                 statefulFilter
                   ? labelAct
-                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.title, label)
+                    ? isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.id, label)
                     : statefulFilter.current!.filterAdded(labelFilt, label)
                   : {}
               }
