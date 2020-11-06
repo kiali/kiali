@@ -80,8 +80,15 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
 
   handleLogout = () => {
     if (authenticationConfig.logoutEndpoint) {
-      API.logout();
-      (document.getElementById('openshiftlogout') as HTMLFormElement).submit();
+      API.logout()
+        .then(_ => {
+          (document.getElementById('openshiftlogout') as HTMLFormElement).submit();
+        })
+        .catch(error => {
+          const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+          console.error(`Logout failed. "kiali-token" cookie may need to be cleared manually: ${errorMsg}`);
+          (document.getElementById('openshiftlogout') as HTMLFormElement).submit();
+        });
     } else {
       this.props.logout();
     }
