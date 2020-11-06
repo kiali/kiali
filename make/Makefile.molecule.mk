@@ -68,12 +68,19 @@ MOLECULE_WAIT_RETRIES ?= 360
 endif
 MOLECULE_WAIT_RETRIES_ARG ?= --env MOLECULE_WAIT_RETRIES=${MOLECULE_WAIT_RETRIES}
 
-## molecule-build: Builds an image to run Molecule without requiring the host to have python/pip installed
-molecule-build: .ensure-operator-repo-exists
+.prepare-force-molecule-build:
 ifeq ($(DORP),docker)
-	docker build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker
+	@$(eval FORCE_MOLECULE_BUILD ?= $(shell docker inspect kiali-molecule:latest > /dev/null 2>&1 || echo "true"))
 else
-	podman build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker
+	@$(eval FORCE_MOLECULE_BUILD ?= $(shell podman inspect kiali-molecule:latest > /dev/null 2>&1 || echo "true"))
+endif
+
+## molecule-build: Builds an image to run Molecule without requiring the host to have python/pip installed. If it already exists, and you want to build it again, set env var FORCE_MOLECULE_BUILD to "true".
+molecule-build: .ensure-operator-repo-exists .prepare-force-molecule-build
+ifeq ($(DORP),docker)
+	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then docker build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
+else
+	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then podman build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
 endif
 
 ifndef MOLECULE_ADD_HOST_ARGS
@@ -87,7 +94,7 @@ else
 endif
 
 ## molecule-test: Runs Molecule tests using the Molecule docker image
-molecule-test: .ensure-operator-repo-exists .ensure-helm-charts-repo-exists .prepare-add-host-args
+molecule-test: .ensure-operator-repo-exists .ensure-helm-charts-repo-exists .prepare-add-host-args molecule-build
 ifeq ($(DORP),docker)
 	for msn in ${MOLECULE_SCENARIO}; do docker run --rm ${MOLECULE_DOCKER_TERM_ARGS} --env MOLECULE_HELM_CHARTS_REPO=/tmp/helm-charts-repo -v "${HELM_CHARTS_REPO}":/tmp/helm-charts-repo:ro -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} ${MOLECULE_DUMP_LOGS_ON_ERROR_ENV_VAR} ${MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS} ${MOLECULE_WAIT_RETRIES_ARG} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 else
@@ -95,7 +102,7 @@ else
 endif
 
 ## molecule-test-all: Runs all Molecule tests using the Molecule docker image
-molecule-test-all: .ensure-operator-repo-exists .ensure-helm-charts-repo-exists .prepare-add-host-args
+molecule-test-all: .ensure-operator-repo-exists .ensure-helm-charts-repo-exists .prepare-add-host-args molecule-build
 ifeq ($(DORP),docker)
 	docker run --rm ${MOLECULE_DOCKER_TERM_ARGS} --env MOLECULE_HELM_CHARTS_REPO=/tmp/helm-charts-repo -v "${HELM_CHARTS_REPO}":/tmp/helm-charts-repo:ro -v "${ROOTDIR}/operator":/tmp/$(basename "${ROOTDIR}/operator"):ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/$(basename "${ROOTDIR}/operator") --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} ${MOLECULE_DUMP_LOGS_ON_ERROR_ENV_VAR} ${MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS} ${MOLECULE_WAIT_RETRIES_ARG} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --all
 else
