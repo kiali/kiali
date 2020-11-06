@@ -26,6 +26,7 @@ import (
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/config_dump"
 )
 
 const RemoteSecretData = "/kiali-remote-secret/kiali"
@@ -46,7 +47,7 @@ type IstioClientInterface interface {
 	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 	GetProxyStatus() ([]*ProxyStatus, error)
-	GetConfigDump(namespace, podName string) ([]byte, error)
+	GetConfigDump(namespace, podName string) (*config_dump.ConfigDump, error)
 }
 
 type K8SClientInterface interface {

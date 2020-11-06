@@ -4,6 +4,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util/config_dump"
 )
 
 type ProxyStatus struct {
@@ -76,11 +77,37 @@ func xdsStatus(sent, acked string) string {
 	return "Stale"
 }
 
-func (in *ProxyStatus) GetConfigDump(pod, namespace string) ([]byte, error) {
+func (in *ProxyStatus) GetConfigDump(pod, namespace string) (interface{}, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
 	defer promtimer.ObserveNow(&err)
 
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
-	return dump, err
+	if err != nil {
+		return nil, err
+	}
+
+	filter := "all"
+	// Fetch clusters, listeners, whatsoever
+	return buildConfigDump(dump, filter)
+}
+
+func buildConfigDump(configDump *config_dump.ConfigDump, filter string) (*models.ConfigDump, error) {
+	cd := models.NewConfigDump(configDump)
+	switch filter {
+	case "all":
+		cd.UnmarshallAll()
+	case "clusters":
+		cd.UnmarshallClusters()
+	case "endpoints":
+		cd.UnmarshallEndpoints()
+	case "listeners":
+		cd.UnmarshallListeners()
+	case "routes":
+		cd.UnmarshallRoutes()
+	case "secrets":
+		cd.UnmarshallSecrets()
+	}
+
+	return cd, nil
 }

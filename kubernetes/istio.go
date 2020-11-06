@@ -20,7 +20,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/util/forwarder"
+	"github.com/kiali/kiali/util/config_dump"
 )
 
 var (
@@ -252,8 +252,22 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 	return fullStatus, nil
 }
 
-func (in *K8SClient) GetConfigDump(namespace, podName string) ([]byte, error) {
-	return in.EnvoyForward(namespace, podName, "/config_dump")
+func (in *K8SClient) GetConfigDump(namespace, podName string) (*config_dump.ConfigDump, error) {
+	// Fetching the config_dump data, raw.
+	resp, err := in.EnvoyForward(namespace, podName, "/config_dump")
+	if err != nil {
+		log.Errorf("Error fetching config_map: %v", err)
+		return nil, err
+	}
+
+	// Converting Raw data to Json
+	cdw := &config_dump.ConfigDump{}
+	err = json.Unmarshal(resp, cdw)
+	if err != nil {
+		log.Errorf("Error Unmarshalling the config_dump: %v", err)
+	}
+
+	return cdw, err
 }
 
 func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
@@ -273,7 +287,7 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	}
 
 	// Create a Port Forwarder
-	f, err := forwarder.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig, namespace, podName, "localhost", "15000", writer)
+	f, err := config_dump.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig, namespace, podName, "localhost", "15000", writer)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +301,6 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	defer f.Stop()
 
 	// Ready to create a request
-	// req, err := http.NewRequest("GET", path, nil)
 	resp, err := http.Get(fmt.Sprintf("http://localhost:15000%s", path))
 	if err != nil {
 		log.Errorf("Error creating a request to forward: %v", err)
