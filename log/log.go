@@ -53,7 +53,7 @@ func InitializeLogger() zerolog.Logger {
 
 	logFormat := resolveLogFormatFromEnv()
 	if logFormat != "json" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat})
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat, NoColor: true})
 	}
 
 	logLevel := resolveLogLevelFromEnv()
