@@ -110,7 +110,6 @@ AUTH_STRATEGY ?= openshift
 endif
 KIALI_IMAGE_PULL_POLICY ?= Always
 SERVICE_TYPE ?= ClusterIP
-VERBOSE_MODE ?= 3
 KIALI_CR_SPEC_VERSION ?= default
 
 # Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.

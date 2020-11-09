@@ -69,7 +69,6 @@ ISTIO_NAMESPACE="${ISTIO_NAMESPACE}" \
 NAMESPACE="${NAMESPACE}" \
 ROUTER_HOSTNAME="$(shell ${OC} get $(shell (${OC} get routes -n ${NAMESPACE} -o name 2>/dev/null || echo 'noroute') | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}' 2>/dev/null)" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
-VERBOSE_MODE="${VERBOSE_MODE}" \
 KIALI_CR_SPEC_VERSION="${KIALI_CR_SPEC_VERSION}" \
 envsubst | ${OC} apply -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -f -
 

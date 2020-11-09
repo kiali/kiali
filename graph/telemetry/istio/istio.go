@@ -33,13 +33,13 @@ import (
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
-	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
+	log.Tracef("Build [%s] graph for [%d] namespaces [%v]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
 	for _, namespace := range o.Namespaces {
-		log.Tracef("Build traffic map for namespace [%s]", namespace)
+		log.Tracef("Build traffic map for namespace [%v]", namespace)
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
 		namespaceInfo := graph.NewAppenderNamespaceInfo(namespace.Name)
 		for _, a := range appenders {
