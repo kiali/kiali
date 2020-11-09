@@ -93,6 +93,15 @@ func TestEnvVarLogLevel(t *testing.T) {
 
 func TestLogRegression(t *testing.T) {
 
+	originalEnv := os.Environ()
+	defer func() {
+		for _, kvp := range originalEnv {
+			kvpArray := strings.Split(kvp, "=")
+			os.Setenv(kvpArray[0], kvpArray[1])
+		}
+		return
+	}()
+
 	type loggedMessageAsJsonStruct struct {
 		Level   string
 		Time    string
@@ -181,6 +190,16 @@ func TestLogRegression(t *testing.T) {
 }
 
 func TestEnvVarLogSampler(t *testing.T) {
+
+	originalEnv := os.Environ()
+	defer func() {
+		for _, kvp := range originalEnv {
+			kvpArray := strings.Split(kvp, "=")
+			os.Setenv(kvpArray[0], kvpArray[1])
+		}
+		return
+	}()
+
 	os.Clearenv()
 	t.Logf("Cleaned env vars")
 	os.Setenv("LOG_SAMPLER_RATE", "10")
