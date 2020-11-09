@@ -97,14 +97,17 @@ do
   fi
 done
 
-delete_namespace_resources "app=kiali"
-delete_cluster_resources "app=kiali"
-
-delete_namespace_resources "app=kiali-operator"
-delete_cluster_resources "app=kiali-operator"
-
+# purge using the k8s labels
+delete_namespace_resources "app.kubernetes.io/name=kiali"
+delete_cluster_resources "app.kubernetes.io/name=kiali"
 delete_namespace_resources "app.kubernetes.io/name=kiali-operator"
 delete_cluster_resources "app.kubernetes.io/name=kiali-operator"
+
+# purge anything using the old labels
+delete_namespace_resources "app=kiali"
+delete_cluster_resources "app=kiali"
+delete_namespace_resources "app=kiali-operator"
+delete_cluster_resources "app=kiali-operator"
 
 msg "Deleting Kiali CRDs..."
 for c in $(${CLIENT_EXE} get crds --ignore-not-found=true monitoringdashboards.monitoring.kiali.io kialis.kiali.io -o custom-columns=N:.metadata.name --no-headers)

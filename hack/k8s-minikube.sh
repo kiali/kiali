@@ -486,7 +486,7 @@ elif [ "$_CMD" = "port-forward" ]; then
   ensure_minikube_is_running
   echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
   echo 'To access Kiali, point your browser to https://localhost:20001/kiali/console'
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward $(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward $(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then
   ensure_minikube_is_running

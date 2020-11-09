@@ -22,7 +22,7 @@ CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
-# "app: kiali" and "version: ${VERSION_LABEL}"
+# "app.kubernetes.io/name: kiali" and "app.kubernetes.io/version: ${VERSION_LABEL}"
 # The default is the VERSION itself.
 VERSION_LABEL ?= ${VERSION}
 
