@@ -52,7 +52,8 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	var services []core_v1.Service
 	var namespaces models.Namespaces
 	var pods []core_v1.Pod
-	var workloads, controlPlaneWorkloads models.WorkloadList
+	var workloads models.WorkloadList
+	var workloadsPerNamespace map[string]models.WorkloadList
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
@@ -71,7 +72,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchNamespaces(&namespaces, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
-	go in.fetchWorkloads(&controlPlaneWorkloads, config.Get().IstioNamespace, errChan, &wg)
+	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
@@ -85,7 +86,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 		}
 	}
 
-	objectCheckers := in.getAllObjectCheckers(namespace, istioDetails, services, controlPlaneWorkloads, workloads, gatewaysPerNamespace, mtlsDetails, rbacDetails, namespaces)
+	objectCheckers := in.getAllObjectCheckers(namespace, istioDetails, services, workloadsPerNamespace, workloads, gatewaysPerNamespace, mtlsDetails, rbacDetails, namespaces)
 
 	if service != "" {
 		objectCheckers = append(objectCheckers, in.getServiceCheckers(namespace, services, deployments, pods)...)
@@ -106,12 +107,12 @@ func (in *IstioValidationsService) getServiceCheckers(namespace string, services
 	}
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, controlPlaneWorkloads, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, workloadsPerNamespace map[string]models.WorkloadList, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespace: namespace, Namespaces: namespaces, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails},
 		checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.DestinationRulesChecker{Namespaces: namespaces, DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
-		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads, ControlPlaneWorkloadList: controlPlaneWorkloads},
+		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadList: workloads},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, Services: services, ServiceEntries: istioDetails.ServiceEntries, WorkloadList: workloads, MtlsDetails: mtlsDetails, VirtualServices: istioDetails.VirtualServices},
@@ -128,7 +129,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	var istioDetails kubernetes.IstioDetails
 	var namespaces models.Namespaces
 	var services []core_v1.Service
-	var workloads, controlPlaneWorkloads models.WorkloadList
+	var workloads models.WorkloadList
+	var workloadsPerNamespace map[string]models.WorkloadList
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
@@ -150,7 +152,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchServices(&services, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
-	go in.fetchWorkloads(&controlPlaneWorkloads, config.Get().IstioNamespace, errChan, &wg)
+	go in.fetchAllWorkloads(&workloadsPerNamespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
@@ -161,7 +163,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	switch objectType {
 	case kubernetes.Gateways:
 		objectCheckers = []ObjectChecker{
-			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads, ControlPlaneWorkloadList: controlPlaneWorkloads},
+			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		}
 	case kubernetes.VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
@@ -369,6 +371,31 @@ func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, n
 		} else {
 			*rValue = workloadList
 		}
+	}
+}
+
+func (in *IstioValidationsService) fetchAllWorkloads(rValue *map[string]models.WorkloadList, errChan chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if len(errChan) == 0 {
+		nss, err := in.businessLayer.Namespace.GetNamespaces()
+		if err != nil {
+			errChan <- err
+			return
+
+		}
+		allWorkloads := map[string]models.WorkloadList{}
+		for _, ns := range nss {
+			workloadList, err := in.businessLayer.Workload.GetWorkloadList(ns.Name)
+			if err != nil {
+				select {
+				case errChan <- err:
+				default:
+				}
+			} else {
+				allWorkloads[ns.Name] = workloadList
+			}
+		}
+		*rValue = allWorkloads
 	}
 }
 

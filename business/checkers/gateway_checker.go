@@ -9,10 +9,9 @@ import (
 const GatewayCheckerType = "gateway"
 
 type GatewayChecker struct {
-	GatewaysPerNamespace     [][]kubernetes.IstioObject
-	Namespace                string
-	WorkloadList             models.WorkloadList
-	ControlPlaneWorkloadList models.WorkloadList
+	GatewaysPerNamespace  [][]kubernetes.IstioObject
+	Namespace             string
+	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -39,9 +38,8 @@ func (g GatewayChecker) runSingleChecks(gw kubernetes.IstioObject) models.IstioV
 
 	enabledCheckers := []Checker{
 		gateways.SelectorChecker{
-			ControlPlaneWorkloadList: g.ControlPlaneWorkloadList,
-			WorkloadList:             g.WorkloadList,
-			Gateway:                  gw,
+			Gateway:               gw,
+			WorkloadsPerNamespace: g.WorkloadsPerNamespace,
 		},
 	}
 

@@ -8,17 +8,9 @@ import (
 )
 
 type SelectorChecker struct {
-	ControlPlaneWorkloadList models.WorkloadList
-	WorkloadList             models.WorkloadList
-	Gateway                  kubernetes.IstioObject
+	WorkloadsPerNamespace map[string]models.WorkloadList
+	Gateway               kubernetes.IstioObject
 }
-
-var (
-	// IstioIngressGatewayLabels matching labels for Istio's internal ingressgateway
-	IstioIngressGatewayLabels = labels.Set(map[string]string{"istio": "ingressgateway"})
-	// IstioEgressGatewayLabels matching labels for Istio's internal egressgateway
-	IstioEgressGatewayLabels = labels.Set(map[string]string{"istio": "egressgateway"})
-)
 
 // Check verifies that the Gateway's selector's labels do match a known service inside the same namespace as recommended/required by the docs
 func (s SelectorChecker) Check() ([]*models.IstioCheck, bool) {
@@ -43,12 +35,7 @@ func (s SelectorChecker) Check() ([]*models.IstioCheck, bool) {
 func (s SelectorChecker) hasMatchingWorkload(labelSelector map[string]string) bool {
 	selector := labels.SelectorFromSet(labelSelector)
 
-	// Special case for Istio's internal deployments which do not conform to Istio documentation/specs at this point
-	if selector.Matches(IstioIngressGatewayLabels) || selector.Matches(IstioEgressGatewayLabels) {
-		return true
-	}
-
-	for _, wls := range []models.WorkloadList{s.WorkloadList, s.ControlPlaneWorkloadList} {
+	for _, wls := range s.WorkloadsPerNamespace {
 		for _, wl := range wls.Workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {
