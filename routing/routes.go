@@ -1455,6 +1455,14 @@ func NewRoutes() (r *Routes) {
 			HandlerFunc:   handlers.MetricsStats,
 			Authenticated: true,
 		},
+		// TODO: Swagger
+		{
+			"GetMeshClusters",
+			"GET",
+			"/api/mesh_clusters",
+			handlers.GetMeshClusters,
+			true,
+		},
 	}
 
 	return
