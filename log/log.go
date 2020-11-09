@@ -10,12 +10,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type Format string
+
+const (
+	FALLBACK_LOG_FORMAT = "text"
+	FALLBACK_TIMESTAMP  = time.RFC3339
+)
+
 // Configures the global log level and log format.
 func InitializeLogger() zerolog.Logger {
 	logTimeFieldFormat, isTimeFieldFormatDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
 
 	if !isTimeFieldFormatDefined {
-		logTimeFieldFormat = time.RFC3339
+		logTimeFieldFormat = FALLBACK_TIMESTAMP
 	}
 	zerolog.TimeFieldFormat = logTimeFieldFormat
 
@@ -31,7 +38,8 @@ func InitializeLogger() zerolog.Logger {
 		}
 	}
 
-	if os.Getenv("LOG_FORMAT") != "json" {
+	logFormat := resolveLogFormatFromEnv()
+	if logFormat != "json" {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat})
 	}
 
@@ -125,5 +133,21 @@ func resolveLogLevelFromEnv() zerolog.Level {
 			return zerolog.InfoLevel
 		}
 		return logLevelFromString
+	}
+}
+
+func resolveLogFormatFromEnv() string {
+	logFormatEnv, isDefined := os.LookupEnv("LOG_FORMAT")
+
+	if !isDefined {
+		return FALLBACK_LOG_FORMAT
+	}
+
+	switch logFormatEnv {
+	case "text", "json":
+		return logFormatEnv
+	default:
+		Warningf("Provided LOG_FORMAT %s is invalid. Fallback to text.", logFormatEnv)
+		return FALLBACK_LOG_FORMAT
 	}
 }
