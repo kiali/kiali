@@ -396,16 +396,18 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		return http.StatusUnauthorized, ""
 	}
 
-	_, err = business.Namespace.GetNamespaces()
-	if err == nil {
-		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", claims.Subject)
-		return http.StatusOK, claims.SessionId
+	if !config.Get().Auth.OpenId.DisableRBAC {
+		// If RBAC is ENABLED, check that the user has privilges on the cluster.
+		_, err = business.Namespace.GetNamespaces()
+		if err != nil {
+			log.Warning("Token error: ", err)
+			return http.StatusUnauthorized, ""
+		}
 	}
 
-	log.Warning("Token error: ", err)
-
-	return http.StatusUnauthorized, ""
+	// Internal header used to propagate the subject of the request for audit purposes
+	r.Header.Add("Kiali-User", claims.Subject)
+	return http.StatusOK, claims.SessionId
 }
 
 func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
