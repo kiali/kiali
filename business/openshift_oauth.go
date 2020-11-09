@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -54,6 +55,8 @@ type OAuthRouteTLSSpec struct {
 }
 
 const serverPrefix = "https://kubernetes.default.svc/"
+
+const defaultRequestTimeout = 10 * time.Second
 
 var kialiNamespace string
 
@@ -103,7 +106,7 @@ func getOAuthAuthorizationServer() (*OAuthAuthorizationServer, error) {
 
 	if err != nil {
 		log.Error(err)
-		message := fmt.Errorf("could not send request to the Openshift OAuth API: %v", err)
+		message := fmt.Errorf("could not get OAuthAuthorizationServer: %v", err)
 		return nil, message
 	}
 
@@ -111,7 +114,7 @@ func getOAuthAuthorizationServer() (*OAuthAuthorizationServer, error) {
 
 	if err != nil {
 		log.Error(err)
-		message := fmt.Errorf("could not parse data from the Openshift API: %v", err)
+		message := fmt.Errorf("could not parse OAuthAuthorizationServer: %v", err)
 		return nil, message
 	}
 
@@ -162,7 +165,7 @@ func getKialiRoutePath() (*string, error) {
 	conf, err := kubernetes.ConfigClient()
 	if err != nil {
 		log.Error(err)
-		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+		return nil, fmt.Errorf("could not get openshift config client: %v", err)
 	}
 
 	response, err := request("GET", fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/kiali", namespace), &conf.BearerToken)
@@ -207,6 +210,10 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 }
 
 func request(method string, url string, auth *string) ([]byte, error) {
+	return requestWithTimeout(method, url, auth, time.Duration(defaultRequestTimeout))
+}
+
+func requestWithTimeout(method string, url string, auth *string, timeout time.Duration) ([]byte, error) {
 	certPool := x509.NewCertPool()
 	cert, err := ioutil.ReadFile("/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
@@ -219,9 +226,12 @@ func request(method string, url string, auth *string) ([]byte, error) {
 	tlsConfig := &tls.Config{RootCAs: certPool}
 
 	client := &http.Client{
+		Timeout: timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		}}
+
+	defer client.CloseIdleConnections()
 
 	request, err := http.NewRequest(method, strings.Join([]string{serverPrefix, url}, ""), nil)
 
