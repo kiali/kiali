@@ -13,18 +13,31 @@ import (
 type Format string
 
 const (
-	FALLBACK_LOG_FORMAT = "text"
-	FALLBACK_TIMESTAMP  = time.RFC3339
+	FallbackLogFormat       = "text"
+	FallbackTimeFieldFormat = time.RFC3339
 )
+
+var supportedTimeFormats = [...]string{
+	time.ANSIC,
+	time.UnixDate,
+	time.RubyDate,
+	time.RFC822,
+	time.RFC822Z,
+	time.RFC850,
+	time.RFC1123,
+	time.RFC1123Z,
+	time.RFC3339,
+	time.RFC3339Nano,
+	time.Kitchen,
+	time.Stamp,
+	time.StampMilli,
+	time.StampMicro,
+	time.StampNano,
+}
 
 // Configures the global log level and log format.
 func InitializeLogger() zerolog.Logger {
-	logTimeFieldFormat, isTimeFieldFormatDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
-
-	if !isTimeFieldFormatDefined {
-		logTimeFieldFormat = FALLBACK_TIMESTAMP
-	}
-	zerolog.TimeFieldFormat = logTimeFieldFormat
+	zerolog.TimeFieldFormat = resolveTimeFormatFromEnv()
 
 	logSamplerRateAsString, isSamplerRateDefined := os.LookupEnv("LOG_SAMPLER_RATE")
 	if isSamplerRateDefined {
@@ -32,7 +45,7 @@ func InitializeLogger() zerolog.Logger {
 		if err != nil {
 			log.Warn().Msgf("Provided sampling rate %s cannot be parsed to int32. "+
 				"No sampling rate will be set. Error: %v", logSamplerRateAsString, err)
-		} else {
+		} else if logSamplerRate != 1 {
 			log.Debug().Msgf("Setting log sample rate to every %dth event", logSamplerRate)
 			log.Logger = log.Sample(&zerolog.BasicSampler{N: uint32(logSamplerRate)})
 		}
@@ -136,11 +149,12 @@ func resolveLogLevelFromEnv() zerolog.Level {
 	}
 }
 
+// Resolves and validates the log format. FallbackLogFormat is used as a default.
 func resolveLogFormatFromEnv() string {
 	logFormatEnv, isDefined := os.LookupEnv("LOG_FORMAT")
 
 	if !isDefined {
-		return FALLBACK_LOG_FORMAT
+		return FallbackLogFormat
 	}
 
 	switch logFormatEnv {
@@ -148,6 +162,24 @@ func resolveLogFormatFromEnv() string {
 		return logFormatEnv
 	default:
 		Warningf("Provided LOG_FORMAT %s is invalid. Fallback to text.", logFormatEnv)
-		return FALLBACK_LOG_FORMAT
+		return FallbackLogFormat
 	}
+}
+
+// Resolves and validates the provided log time format. FallbackTimeFieldFormat is used as a fallback.
+func resolveTimeFormatFromEnv() string {
+	logTimeFieldFormat, isDefined := os.LookupEnv("LOG_TIME_FIELD_FORMAT")
+
+	if !isDefined {
+		return FallbackTimeFieldFormat
+	}
+
+	for _, supportedTimeFormat := range supportedTimeFormats {
+		if logTimeFieldFormat == supportedTimeFormat {
+			return logTimeFieldFormat
+		}
+	}
+
+	Warningf("Provided LOG_TIME_FIELD_FORMAT %s is not supported. Fallback to %s", logTimeFieldFormat, FallbackTimeFieldFormat)
+	return FallbackTimeFieldFormat
 }

@@ -99,7 +99,6 @@ func TestLogRegression(t *testing.T) {
 			kvpArray := strings.Split(kvp, "=")
 			os.Setenv(kvpArray[0], kvpArray[1])
 		}
-		return
 	}()
 
 	type loggedMessageAsJsonStruct struct {
@@ -197,7 +196,6 @@ func TestEnvVarLogSampler(t *testing.T) {
 			kvpArray := strings.Split(kvp, "=")
 			os.Setenv(kvpArray[0], kvpArray[1])
 		}
-		return
 	}()
 
 	os.Clearenv()
@@ -222,6 +220,36 @@ func TestEnvVarLogSampler(t *testing.T) {
 	t.Logf("Logged messages: %d - %s", numberOfLogMessages, buf.String())
 
 	assert.Equal(t, 1, numberOfLogMessages)
+}
+
+func TestSupportedTimeFormats(t *testing.T) {
+	defer os.Unsetenv("LOG_TIME_FIELD_FORMAT")
+
+	type formatsToTestStruct struct {
+		format     string
+		testResult string
+	}
+
+	formatsToTest := []formatsToTestStruct{
+		{
+			format:     time.RFC1123Z,
+			testResult: time.RFC1123Z,
+		},
+		{
+			format:     "some-imaginary-format",
+			testResult: time.RFC3339,
+		},
+		{
+			format:     "1990-07-06T15:07:05Z09:00",
+			testResult: time.RFC3339,
+		},
+	}
+
+	for _, formatToTest := range formatsToTest {
+		os.Setenv("LOG_TIME_FIELD_FORMAT", formatToTest.format)
+		assert.Equal(t, formatToTest.testResult, resolveTimeFormatFromEnv(), fmt.Sprintf("LOG_TIME_FIELD_FORMAT=%v,formatToTest=%+v", os.Getenv("LOG_TIME_FIELD_FORMAT"), formatToTest))
+	}
+
 }
 
 func isJSON(s string) bool {
