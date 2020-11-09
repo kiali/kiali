@@ -25,6 +25,14 @@ build: go-check
 	${GO_BUILD_ENVVARS} ${GO} build \
 		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
+## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
+build-linux-multi-arch:
+	@for arch in ${TARGET_ARCHS}; do \
+		echo "Building for architecture [$${arch}]"; \
+		${GO_BUILD_ENVVARS} GOOS=linux GOARCH=$${arch} ${GO} build \
+			-o ${GOPATH}/bin/kiali-$${arch} -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"; \
+	done
+
 ## install: Install missing dependencies. Runs `go install` internally
 install:
 	@echo Installing...

@@ -5,6 +5,9 @@ SHELL=/bin/bash
 ROOTDIR=$(CURDIR)
 OUTDIR=${ROOTDIR}/_output
 
+# list for multi-arch image publishing
+TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
+
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
 VERSION ?= v1.27.0-SNAPSHOT
@@ -40,7 +43,7 @@ CONTAINER_VERSION ?= dev
 
 # These two vars allow Jenkins to override values.
 QUAY_NAME ?= quay.io/${CONTAINER_NAME}
-QUAY_TAG = ${QUAY_NAME}:${CONTAINER_VERSION}
+QUAY_TAG ?= ${QUAY_NAME}:${CONTAINER_VERSION}
 
 # Identifies the Kiali operator container images that will be built
 OPERATOR_CONTAINER_NAME ?= ${IMAGE_ORG}/kiali-operator
