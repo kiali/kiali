@@ -3,7 +3,7 @@
 #
 
 .ensure-operator-is-running: .ensure-oc-exists
-	@${OC} get pods -l app=kiali-operator -n kiali-operator 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null ;\
+	@${OC} get pods -l app.kubernetes.io/name=kiali-operator -n kiali-operator 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null ;\
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
 	  echo "The Operator is not running. Cannot continue."; exit 1; \
@@ -82,17 +82,17 @@ kiali-delete: .ensure-oc-exists
 kiali-purge: .ensure-oc-exists
 	@echo Purge Kiali resources
 	${OC} patch kiali kiali -n "${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
-	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses --selector="app=kiali" -n "${NAMESPACE}"
-	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app=kiali"
+	${OC} delete --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses --selector="app.kubernetes.io/name=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true clusterroles,clusterrolebindings --selector="app.kubernetes.io/name=kiali"
 ifeq ($(CLUSTER_TYPE),openshift)
-	${OC} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}" ; true
-	${OC} delete --ignore-not-found=true consolelinks.console.openshift.io,oauthclients.oauth.openshift.io --selector="app=kiali" ; true
+	${OC} delete --ignore-not-found=true routes --selector="app.kubernetes.io/name=kiali" -n "${NAMESPACE}" ; true
+	${OC} delete --ignore-not-found=true consolelinks.console.openshift.io,oauthclients.oauth.openshift.io --selector="app.kubernetes.io/name=kiali" ; true
 endif
 
 ## kiali-reload-image: Refreshing the Kiali pod by deleting it which forces a redeployment
 kiali-reload-image: .ensure-oc-exists
 	@echo Refreshing Kiali pod within namespace ${NAMESPACE}
-	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
+	${OC} delete pod --selector=app.kubernetes.io/name=kiali -n ${NAMESPACE}
 
 ## run-operator-playbook: Run the operator dev playbook to run the operator ansible script locally.
 run-operator-playbook: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
