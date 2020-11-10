@@ -199,7 +199,7 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 }
 
 func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
-	result, err := api.QueryRange(context.Background(), query, bounds)
+	result, _, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
 		return &Metric{Err: err}
 	}
@@ -276,7 +276,7 @@ func getItemRequestRates(api prom_v1.API, namespace, item, itemLabelSuffix strin
 func getRequestRatesForLabel(api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
-	result, err := api.Query(context.Background(), query, time)
+	result, _, err := api.Query(context.Background(), query, time)
 	if err != nil {
 		return model.Vector{}, err
 	}
