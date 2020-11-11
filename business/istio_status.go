@@ -1,6 +1,7 @@
 package business
 
 import (
+	"net/http"
 	"sync"
 
 	apps_v1 "k8s.io/api/apps/v1"
@@ -39,10 +40,16 @@ type ComponentStatus struct {
 
 type IstioComponentStatus []ComponentStatus
 
+func (ics *IstioComponentStatus) merge(cs IstioComponentStatus) IstioComponentStatus {
+	*ics = append(*ics, cs...)
+	return *ics
+}
+
 const (
-	Healthy   string = "Healthy"
-	Unhealthy string = "Unhealthy"
-	NotFound  string = "NotFound"
+	Healthy     string = "Healthy"
+	Unhealthy   string = "Unhealthy"
+	NotFound    string = "NotFound"
+	Unreachable string = "Unreachable"
 )
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
@@ -50,6 +57,15 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 		return IstioComponentStatus{}, nil
 	}
 
+	ics, err := iss.getIstioComponentStatus()
+	if err != nil {
+		return nil, err
+	}
+
+	return ics.merge(iss.getAddonComponentStatus()), nil
+}
+
+func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
 	ds, error := iss.getComponentNamespacesWorkloads()
 	if error != nil {
@@ -119,21 +135,8 @@ func getComponentNamespaces() []string {
 	// By default, add the istio control plane namespace
 	nss = append(nss, config.Get().IstioNamespace)
 
-	// Adding addons namespaces
-	externalServices := config.Get().ExternalServices
-	if externalServices.Prometheus.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Prometheus.ComponentStatus.Namespace)
-	}
-
-	if externalServices.Grafana.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Grafana.ComponentStatus.Namespace)
-	}
-
-	if externalServices.Tracing.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Tracing.ComponentStatus.Namespace)
-	}
-
 	// Adding Istio Components namespaces
+	externalServices := config.Get().ExternalServices
 	for _, cmp := range externalServices.Istio.ComponentStatuses.Components {
 		if cmp.Namespace != "" {
 			nss = append(nss, cmp.Namespace)
@@ -152,25 +155,8 @@ func istioCoreComponents() map[string]bool {
 	return components
 }
 
-func addAddOnComponents(components map[string]bool) map[string]bool {
-	confExtSvcs := config.Get().ExternalServices
-
-	components[confExtSvcs.Prometheus.ComponentStatus.AppLabel] = confExtSvcs.Prometheus.ComponentStatus.IsCore
-
-	if confExtSvcs.Grafana.Enabled {
-		components[confExtSvcs.Grafana.ComponentStatus.AppLabel] = confExtSvcs.Grafana.ComponentStatus.IsCore
-	}
-
-	if confExtSvcs.Tracing.Enabled {
-		components[confExtSvcs.Tracing.ComponentStatus.AppLabel] = confExtSvcs.Tracing.ComponentStatus.IsCore
-	}
-
-	return components
-}
-
 func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioComponentStatus, error) {
 	statusComponents := istioCoreComponents()
-	statusComponents = addAddOnComponents(statusComponents)
 	isc := IstioComponentStatus{}
 	cf := map[string]bool{}
 
@@ -222,4 +208,40 @@ func GetDeploymentStatus(d apps_v1.Deployment) string {
 		status = Healthy
 	}
 	return status
+}
+
+func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
+	extServices := config.Get().ExternalServices
+	ics := IstioComponentStatus{}
+
+	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, true))
+	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, false))
+	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, false))
+
+	return ics
+}
+
+func getAddonStatus(name string, enabled bool, url string, isCore bool) IstioComponentStatus {
+	ics := make([]ComponentStatus, 0)
+
+	// When the addOn is disabled, don't perform any check
+	if !enabled {
+		return ics
+	}
+
+	// Call the addOn service endpoint to find out whether is reachable or not
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode > 399 {
+		ics = append(ics, ComponentStatus{
+			Name:   name,
+			Status: Unreachable,
+			IsCore: isCore,
+		})
+	}
+
+	if err == nil {
+		resp.Body.Close()
+	}
+
+	return ics
 }
