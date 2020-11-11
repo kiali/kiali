@@ -368,9 +368,11 @@ func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
 
 func addonAddMockUrls(baseUrl string, conf *config.Config) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
+	conf.ExternalServices.Grafana.CoreComponent = false
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
 
 	conf.ExternalServices.Tracing.Enabled = true
+	conf.ExternalServices.Tracing.CoreComponent = false
 	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"

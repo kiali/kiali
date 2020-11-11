@@ -103,9 +103,8 @@ type PrometheusConfig struct {
 	// Enable cache for Prometheus queries
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int             `yaml:"cache_expiration:omitempty"`
-	ComponentStatus ComponentStatus `yaml:"component_status,omitempty"`
-	URL             string          `yaml:"url,omitempty"`
+	CacheExpiration int    `yaml:"cache_expiration:omitempty"`
+	URL             string `yaml:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -117,12 +116,12 @@ type CustomDashboardsConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth            Auth                     `yaml:"auth"`
-	ComponentStatus ComponentStatus          `yaml:"component_status,omitempty"`
-	Dashboards      []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled         bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	InClusterURL    string                   `yaml:"in_cluster_url"`
-	URL             string                   `yaml:"url"`
+	Auth          Auth                     `yaml:"auth"`
+	CoreComponent bool                     `yaml:"core_component"`
+	Dashboards    []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled       bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	InClusterURL  string                   `yaml:"in_cluster_url"`
+	URL           string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -140,13 +139,13 @@ type GrafanaVariablesConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                 Auth            `yaml:"auth"`
-	ComponentStatus      ComponentStatus `yaml:"component_status,omitempty"`
-	Enabled              bool            `yaml:"enabled"` // Enable Jaeger in Kiali
-	InClusterURL         string          `yaml:"in_cluster_url"`
-	NamespaceSelector    bool            `yaml:"namespace_selector"`
-	URL                  string          `yaml:"url"`
-	WhiteListIstioSystem []string        `yaml:"whitelist_istio_system"`
+	Auth                 Auth     `yaml:"auth"`
+	CoreComponent        bool     `yaml:"core_component"`
+	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
+	InClusterURL         string   `yaml:"in_cluster_url"`
+	NamespaceSelector    bool     `yaml:"namespace_selector"`
+	URL                  string   `yaml:"url"`
+	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -389,11 +388,8 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled: true,
-				ComponentStatus: ComponentStatus{
-					AppLabel: "grafana",
-					IsCore:   false,
-				},
+				CoreComponent: false,
+				Enabled:       true,
 			},
 			Istio: IstioConfig{
 				IstioIdentityDomain:      "svc.cluster.local",
@@ -428,20 +424,13 @@ func NewConfig() (c *Config) {
 				CacheDuration: 7,
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
-				ComponentStatus: ComponentStatus{
-					AppLabel: "prometheus",
-					IsCore:   true,
-				},
-				URL: "http://prometheus.istio-system:9090",
+				URL:             "http://prometheus.istio-system:9090",
 			},
 			Tracing: TracingConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				ComponentStatus: ComponentStatus{
-					AppLabel: "jaeger",
-					IsCore:   false,
-				},
+				CoreComponent:        false,
 				Enabled:              true,
 				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system/jaeger",

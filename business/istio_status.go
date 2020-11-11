@@ -215,8 +215,8 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	ics := IstioComponentStatus{}
 
 	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, true))
-	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, false))
-	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, false))
+	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, extServices.Grafana.CoreComponent))
+	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, extServices.Tracing.CoreComponent))
 
 	return ics
 }
