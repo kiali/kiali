@@ -540,6 +540,9 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
   ${OC} delete -n openshift-operators daemonset/istio-node
   debug "Clean up some more clusterroles/bindings"
   ${OC} delete clusterrole/istio-admin clusterrole/istio-cni clusterrolebinding/istio-cni
+  debug "Clean up some security related things from the operator"
+  ${OC} delete -n openshift-operators configmap/maistra-operator-cabundle
+  ${OC} delete -n openshift-operators secret/maistra-operator-serving-cert
   debug "Delete the CRDs"
   ${OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${OC} delete
   ${OC} get crds -o name | grep '.*\.maistra\.io' | xargs -r -n 1 ${OC} delete
