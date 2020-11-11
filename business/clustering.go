@@ -13,13 +13,61 @@ type ClusteringService struct {
 }
 
 type MeshCluster struct {
-	ApiEndpoint string `json:"api_endpoint"`
-	Name        string `json:"name"`
-	SecretName  string `json:"secret_name"`
+	ApiEndpoint   string `json:"apiEndpoint"`
+	IsHomeCluster bool   `json:"isHomeCluster"`
+	Name          string `json:"name"`
+	SecretName    string `json:"secretName"`
 }
 
 func (in *ClusteringService) GetMeshClusters() ([]MeshCluster, error) {
-	return in.resolveRemoteClustersFromSecrets()
+	var err error
+
+	remoteClusters, err := in.resolveRemoteClustersFromSecrets()
+	if err != nil {
+		return nil, err
+	}
+
+	myCluster, err := in.resolveMyControlPlaneCluster()
+	if err != nil {
+		return nil, err
+	}
+
+	allClusters := append(remoteClusters, *myCluster)
+
+	return allClusters, nil
+}
+
+func (in *ClusteringService) resolveMyControlPlaneCluster() (*MeshCluster, error) {
+	conf := config.Get()
+
+	istioDeployment, err := in.k8s.GetDeployment(conf.IstioNamespace, "istiod")
+	if err != nil {
+		return nil, err
+	}
+
+	myClusterName := ""
+	// TODO: Safety checks
+	for _, v := range istioDeployment.Spec.Template.Spec.Containers[0].Env {
+		if v.Name == "CLUSTER_ID" {
+			myClusterName = v.Value
+		}
+	}
+
+	if len(myClusterName) == 0 {
+		return nil, nil
+	}
+
+	restConfig, err := kubernetes.ConfigClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return &MeshCluster{
+		ApiEndpoint: restConfig.Host,
+		IsHomeCluster: true,
+		Name:        myClusterName,
+		SecretName:  "",
+	}, nil
 }
 
 func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, error) {
