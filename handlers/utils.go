@@ -19,22 +19,37 @@ func validateURL(serviceURL string) (*url.URL, error) {
 	return url.ParseRequestURI(serviceURL)
 }
 
-func checkNamespaceAccess(w http.ResponseWriter, r *http.Request, namespace string) *models.Namespace {
-	layer, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return nil
-	}
-
-	if nsInfo, err := layer.Namespace.GetNamespace(namespace); err != nil {
-		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
-		return nil
+func checkNamespaceAccess(nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
+	if nsInfo, err := nsServ.GetNamespace(namespace); err != nil {
+		return nil, err
 	} else {
-		return nsInfo
+		return nsInfo, nil
 	}
 }
 
-func initClientsForMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*prometheus.Client, *models.Namespace) {
+func createMetricsServiceForNamespace(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*business.MetricsService, *models.Namespace) {
+	metrics, infoMap := createMetricsServiceForNamespaces(w, r, promSupplier, []string{namespace})
+	if result, ok := infoMap[namespace]; ok {
+		if result.err != nil {
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+result.err.Error())
+			return nil, nil
+		}
+		return metrics, result.info
+	}
+	return nil, nil
+}
+
+type nsInfoError struct {
+	info *models.Namespace
+	err  error
+}
+
+func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespaces []string) (*business.MetricsService, map[string]nsInfoError) {
+	layer, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil, nil
+	}
 	prom, err := promSupplier()
 	if err != nil {
 		log.Error(err)
@@ -42,11 +57,13 @@ func initClientsForMetrics(w http.ResponseWriter, r *http.Request, promSupplier 
 		return nil, nil
 	}
 
-	nsInfo := checkNamespaceAccess(w, r, namespace)
-	if nsInfo == nil {
-		return nil, nil
+	nsInfos := make(map[string]nsInfoError)
+	for _, ns := range namespaces {
+		info, err := checkNamespaceAccess(layer.Namespace, ns)
+		nsInfos[ns] = nsInfoError{info: info, err: err}
 	}
-	return prom, nsInfo
+	metrics := business.NewMetricsService(prom)
+	return metrics, nsInfos
 }
 
 // getToken retrieves the token from the request's context

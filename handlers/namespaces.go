@@ -8,7 +8,6 @@ import (
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
@@ -28,34 +27,6 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, namespaces)
-}
-
-// NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
-// services in the namespace
-func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
-	getNamespaceMetrics(w, r, defaultPromClientSupplier)
-}
-
-// getServiceMetrics (mock-friendly version)
-func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-
-	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
-	if prom == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	params := prometheus.IstioMetricsQuery{Namespace: namespace}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics := prom.GetMetrics(&params)
-	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
 // NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.

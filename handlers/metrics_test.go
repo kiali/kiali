@@ -16,6 +16,8 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -44,7 +46,7 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("requestProtocol", "http")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +80,7 @@ func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
@@ -103,7 +105,7 @@ func TestExtractMetricsQueryIntervalBoundary(t *testing.T) {
 	q.Add("rateInterval", "35m")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC)))
 	if err != nil {
 		t.Fatal(err)
@@ -125,7 +127,7 @@ func TestExtractMetricsQueryStartTimeBoundary(t *testing.T) {
 	q.Add("rateInterval", "1m")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
 	namespaceTimestamp := time.Date(2018, 4, 10, 12, 30, 0, 0, time.UTC)
 
 	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", namespaceTimestamp))
@@ -335,4 +337,144 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	business.SetWithBackends(mockClientFactory, prom)
 
 	return ts, api, k8s
+}
+
+func TestPrepareStatsQueriesPartialError(t *testing.T) {
+	assert := assert.New(t)
+	prom, _, _ := utilSetupMocks(t)
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	w := httptest.NewRecorder()
+	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
+
+	rawQ := []models.MetricsStatsQuery{
+		{
+			Target: models.Target{
+				Namespace: "ns1",
+				Name:      "foo",
+				Kind:      "app",
+			},
+			Direction:    "inbound",
+			RawInterval:  "3h",
+			Avg:          true,
+			Quantiles:    []string{"0.90", "0.5"},
+			RawQueryTime: queryTime,
+		},
+		{
+			Target: models.Target{
+				Namespace: "ns1",
+				Name:      "foo",
+				Kind:      "app",
+			},
+			Direction:    "inbound",
+			RawInterval:  "30m",
+			Avg:          true,
+			Quantiles:    []string{"0.90", "0.5"},
+			RawQueryTime: queryTime,
+		},
+		{
+			Target: models.Target{
+				Namespace: "ns2",
+				Name:      "bar",
+				Kind:      "app",
+			},
+			Direction:    "outbound",
+			RawInterval:  "30m",
+			Avg:          true,
+			Quantiles:    []string{"0.90", "0.5"},
+			RawQueryTime: queryTime,
+		},
+		{
+			Target: models.Target{
+				Namespace: "nsNil",
+				Name:      "baz",
+				Kind:      "app",
+			},
+			Direction:    "inbound",
+			RawInterval:  "30m",
+			Avg:          true,
+			Quantiles:    []string{"0.90", "0.5"},
+			RawQueryTime: queryTime,
+		},
+	}
+
+	srv, queries, errs := prepareStatsQueries(w, req, rawQ, prom)
+
+	assert.NotNil(errs)
+	errsStr := errs.Strings()
+	assert.Len(errsStr, 1)
+	assert.Equal("Namespace 'nsNil': no privileges", errsStr[0])
+	assert.NotNil(srv)
+	assert.Len(queries, 3)
+	assert.Equal("ns1", queries[0].Target.Namespace)
+	assert.Equal("3h", queries[0].Interval)
+	assert.Equal("ns1", queries[1].Target.Namespace)
+	assert.Equal("30m", queries[1].Interval)
+	assert.Equal("ns2", queries[2].Target.Namespace)
+	assert.Equal("30m", queries[2].Interval)
+	assert.Equal(http.StatusOK, w.Code)
+}
+
+func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
+	assert := assert.New(t)
+	prom, _, k8s := utilSetupMocks(t)
+	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
+	creation := meta_v1.NewTime(queryTime.Add(-1 * time.Hour))
+	k8s.On("GetNamespace", "ns3").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: creation}}, nil)
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	w := httptest.NewRecorder()
+
+	rawQ := []models.MetricsStatsQuery{{
+		Target: models.Target{
+			Namespace: "ns3",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		Direction:    "inbound",
+		RawInterval:  "3h",
+		Avg:          true,
+		Quantiles:    []string{"0.90", "0.5"},
+		RawQueryTime: queryTime.Unix(),
+	}}
+
+	srv, queries, errs := prepareStatsQueries(w, req, rawQ, prom)
+
+	assert.Nil(errs)
+	assert.NotNil(srv)
+	assert.Len(queries, 1)
+	assert.Equal("ns3", queries[0].Target.Namespace)
+	assert.Equal("3600s", queries[0].Interval) // 3h adjusted to 1h (3600s) due to namespace creation date
+	assert.Equal(http.StatusOK, w.Code)
+}
+
+func TestValidateBadRequest(t *testing.T) {
+	assert := assert.New(t)
+	prom, _, _ := utilSetupMocks(t)
+	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
+
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	w := httptest.NewRecorder()
+
+	rawQ := []models.MetricsStatsQuery{{
+		Target: models.Target{
+			Namespace: "ns1",
+			Name:      "foo",
+			Kind:      "x",
+		},
+		Direction:    "x",
+		RawInterval:  "30m",
+		Avg:          true,
+		Quantiles:    []string{"0.90", "0.5"},
+		RawQueryTime: queryTime.Unix(),
+	}}
+
+	_, _, errs := prepareStatsQueries(w, req, rawQ, prom)
+
+	assert.NotNil(errs)
+	assert.Contains(errs.Error(), "bad request")
+	assert.Len(errs.Strings(), 2)
 }

@@ -7,7 +7,7 @@ import (
 	khttp "github.com/kiali/k-charted/http"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/models"
 )
 
 // AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
@@ -54,34 +54,6 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, appDetails)
 }
 
-// AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
-func AppMetrics(w http.ResponseWriter, r *http.Request) {
-	getAppMetrics(w, r, defaultPromClientSupplier)
-}
-
-// getAppMetrics (mock-friendly version)
-func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	app := vars["app"]
-
-	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
-	if prom == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, App: app}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics := prom.GetMetrics(&params)
-	RespondWithJSON(w, http.StatusOK, metrics)
-}
-
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
 func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	cfg, log, enabled := business.DashboardsConfig()
@@ -98,21 +70,21 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	app := vars["app"]
 
-	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
-	if prom == nil {
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	if metricsService == nil {
 		// any returned value nil means error & response already written
 		return
 	}
 
-	params := prometheus.IstioMetricsQuery{Namespace: namespace, App: app}
+	params := models.IstioMetricsQuery{Namespace: namespace, App: app}
 	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	svc := business.NewDashboardsService(prom)
-	dashboard, err := svc.GetIstioDashboard(params)
+	metrics := metricsService.GetMetrics(params)
+	dashboard, err := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -12,16 +12,16 @@ func TestAdditionalDetails(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "my-annotation-1",
 			Title:      "Title 1",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation:     "my-annotation-2",
 			Title:          "Title 2",
 			IconAnnotation: "my-icon-annotation-2",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation:     "my-annotation-3",
 			Title:          "Title 3",
 			IconAnnotation: "my-icon-annotation-3",
@@ -60,16 +60,16 @@ func TestEmptyAdditionalDetails(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	conf.AdditionalDisplayDetails = []config.AdditionalDisplayItem{
-		config.AdditionalDisplayItem{
+		{
 			Annotation: "my-annotation-1",
 			Title:      "Title 1",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation:     "my-annotation-2",
 			Title:          "Title 2",
 			IconAnnotation: "my-icon-annotation-2",
 		},
-		config.AdditionalDisplayItem{
+		{
 			Annotation:     "my-annotation-3",
 			Title:          "Title 3",
 			IconAnnotation: "my-icon-annotation-3",

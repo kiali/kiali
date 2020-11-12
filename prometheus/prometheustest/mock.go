@@ -2,6 +2,7 @@ package prometheustest
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -85,6 +86,96 @@ func (o *PromAPIMock) Targets(ctx context.Context) (prom_v1.TargetsResult, api.E
 func (o *PromAPIMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]prom_v1.MetricMetadata, api.Error) {
 	args := o.Called(ctx)
 	return args.Get(0).([]prom_v1.MetricMetadata), nil
+}
+
+func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) {
+	if t == nil {
+		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("time.Time")).Return(ret, nil)
+	} else {
+		o.On("Query", mock.AnythingOfType("*context.emptyCtx"), query, *t).Return(ret, nil)
+	}
+}
+
+func (o *PromAPIMock) MockTimeRounded(query string, ret model.Vector) {
+	o.OnQueryTime(round(query), nil, ret)
+}
+
+func (o *PromAPIMock) OnQueryRange(query string, r *prom_v1.Range, ret model.Matrix) {
+	if r == nil {
+		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, mock.AnythingOfType("v1.Range")).Return(ret, nil)
+	} else {
+		o.On("QueryRange", mock.AnythingOfType("*context.emptyCtx"), query, *r).Return(ret, nil)
+	}
+}
+
+func singleValueMatrix(ret model.SampleValue) model.Matrix {
+	return model.Matrix{
+		&model.SampleStream{
+			Metric: model.Metric{
+				"reporter": "destination",
+				"__name__": "whatever",
+				"instance": "whatever",
+				"job":      "whatever"},
+			Values: []model.SamplePair{{Timestamp: 0, Value: ret}}}}
+}
+
+func emptyMatrix() model.Matrix {
+	return model.Matrix{
+		&model.SampleStream{
+			Metric: model.Metric{
+				"reporter": "destination",
+				"__name__": "whatever",
+				"instance": "whatever",
+				"job":      "whatever"},
+			Values: []model.SamplePair{}}}
+}
+
+func (o *PromAPIMock) MockRangeErrRounded(query string, ret model.SampleValue) {
+	o.OnQueryRange(roundErrs(query), nil, singleValueMatrix(ret))
+}
+
+func (o *PromAPIMock) MockRangeRounded(query string, ret model.SampleValue) {
+	o.OnQueryRange(round(query), nil, singleValueMatrix(ret))
+}
+
+func (o *PromAPIMock) MockEmptyRangeRounded(query string) {
+	o.OnQueryRange(round(query), nil, emptyMatrix())
+}
+
+func (o *PromAPIMock) MockHistoValue(baseName, suffix string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
+	o.MockTimeRounded("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockTimeRounded("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockTimeRounded("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockTimeRounded("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockTimeRounded("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
+}
+
+func (o *PromAPIMock) MockHistoValueGroupedBy(baseName, labels, groups string, retAvg model.Vector, retMed model.Vector, ret95 model.Vector, ret99 model.Vector) {
+	histMetric := "sum(rate(" + baseName + "_bucket" + labels + ")) by (le," + groups + "))"
+	o.MockTimeRounded("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockTimeRounded("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockTimeRounded("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockTimeRounded("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockTimeRounded("sum(rate("+baseName+"_sum"+labels+")) by ("+groups+") / sum(rate("+baseName+"_count"+labels+")) by ("+groups+")", retAvg)
+}
+
+func (o *PromAPIMock) MockHistoRange(baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
+	o.MockRangeRounded("histogram_quantile(0.5, "+histMetric, retMed)
+	o.MockRangeRounded("histogram_quantile(0.95, "+histMetric, ret95)
+	o.MockRangeRounded("histogram_quantile(0.99, "+histMetric, ret99)
+	o.MockRangeRounded("histogram_quantile(0.999, "+histMetric, ret99)
+	o.MockRangeRounded("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
+}
+
+func (o *PromAPIMock) MockEmptyHistoRange(baseName string, suffix string) {
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
+	o.MockEmptyRangeRounded("histogram_quantile(0.5, " + histMetric)
+	o.MockEmptyRangeRounded("histogram_quantile(0.95, " + histMetric)
+	o.MockEmptyRangeRounded("histogram_quantile(0.99, " + histMetric)
+	o.MockEmptyRangeRounded("histogram_quantile(0.999, " + histMetric)
+	o.MockEmptyRangeRounded("sum(rate(" + baseName + "_sum" + suffix + ")) / sum(rate(" + baseName + "_count" + suffix + "))")
 }
 
 // AlwaysReturnEmpty mocks all possible queries to return empty result
@@ -190,22 +281,30 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInter
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) *prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(*prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRateRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) *prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, q)
 	return args.Get(0).(*prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) prometheus.Histogram {
+func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
 	args := o.Called(metricName, labels, grouping, q)
 	return args.Get(0).(prometheus.Histogram)
 }
 
-func (o *PromClientMock) GetMetrics(query *prometheus.IstioMetricsQuery) prometheus.Metrics {
-	args := o.Called(query)
-	return args.Get(0).(prometheus.Metrics)
+func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
+	args := o.Called(metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
+	return args.Get(0).(map[string]model.Vector), args.Error((1))
+}
+
+func round(q string) string {
+	return fmt.Sprintf("round(%s, 0.001000) > 0.001000 or %s", q, q)
+}
+
+func roundErrs(q string) string {
+	return fmt.Sprintf("round((%s), 0.001000) > 0.001000 or (%s)", q, q)
 }

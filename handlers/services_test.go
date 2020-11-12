@@ -29,7 +29,13 @@ func TestServiceMetricsDefault(t *testing.T) {
 	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
-	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("direction", "inbound")
+	req.URL.RawQuery = q.Encode()
 	now := time.Now()
 	delta := 15 * time.Second
 	var gaugeSentinel uint32
@@ -48,7 +54,8 @@ func TestServiceMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
-	resp, err := http.Get(url)
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,6 +76,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		t.Fatal(err)
 	}
 	q := req.URL.Query()
+	q.Add("direction", "inbound")
 	q.Add("rateInterval", "5h")
 	q.Add("rateFunc", "rate")
 	q.Add("step", "2")
