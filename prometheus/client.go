@@ -21,8 +21,8 @@ import (
 type ClientInterface interface {
 	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
-	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) *Metric
-	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) *Metric
+	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
+	FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric
 	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetConfiguration() (prom_v1.ConfigResult, error)
@@ -30,6 +30,7 @@ type ClientInterface interface {
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetMetricsForLabels(labels []string) ([]string, error)
 }
 
 // Client for Prometheus API.
@@ -55,7 +56,12 @@ func initPromCache() {
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
-	cfg := config.Get().ExternalServices.Prometheus
+	return NewClientForConfig(config.Get().ExternalServices.Prometheus)
+}
+
+// NewClient creates a new client to the Prometheus API.
+// It returns an error on any problem.
+func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	clientConfig := api.Config{Address: cfg.URL}
 
 	// Prom Cache will be initialized once at first use of Prometheus Client
@@ -205,7 +211,7 @@ func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval str
 }
 
 // FetchRange fetches a simple metric (gauge or counter) in given range
-func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) *Metric {
+func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric {
 	query := fmt.Sprintf("%s(%s%s)", aggregator, metricName, labels)
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
@@ -215,7 +221,7 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 }
 
 // FetchRateRange fetches a counter's rate in given range
-func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) *Metric {
+func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
 	return fetchRateRange(in.api, metricName, labels, grouping, q)
 }
 
@@ -253,4 +259,22 @@ func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
 		return nil, err
 	}
 	return flags, nil
+}
+
+// GetMetricsForLabels returns a list of metrics existing for the provided labels set
+func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
+	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
+	end := time.Now()
+	start := end.Add(-time.Hour)
+	results, err := in.api.Series(context.Background(), labels, start, end)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, labelSet := range results {
+		if name, ok := labelSet["__name__"]; ok {
+			names = append(names, string(name))
+		}
+	}
+	return names, nil
 }

@@ -281,14 +281,14 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInter
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
-	return args.Get(0).(*prometheus.Metric)
+	return args.Get(0).(prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, q)
-	return args.Get(0).(*prometheus.Metric)
+	return args.Get(0).(prometheus.Metric)
 }
 
 func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
@@ -299,6 +299,11 @@ func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string
 func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
 	args := o.Called(metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
 	return args.Get(0).(map[string]model.Vector), args.Error((1))
+}
+
+func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
+	args := o.Called(labels)
+	return args.Get(0).([]string), args.Error(1)
 }
 
 func round(q string) string {

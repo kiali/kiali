@@ -2,7 +2,6 @@ package main
 
 import (
 	jaegerModels "github.com/jaegertracing/jaeger/model/json"
-	"github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph/config/cytoscape"
@@ -597,7 +596,7 @@ type MetricsResponse struct {
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// in:body
-	Body model.MonitoringDashboard
+	Body models.MonitoringDashboard
 }
 
 // IstioConfig details of an specific Istio Object

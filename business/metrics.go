@@ -60,7 +60,7 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 	labelsError := lb.BuildForErrors()
 
 	var wg sync.WaitGroup
-	fetchRate := func(p8sFamilyName string, metric **prometheus.Metric, lbl []string) {
+	fetchRate := func(p8sFamilyName string, metric *prometheus.Metric, lbl []string) {
 		defer wg.Done()
 		m := in.prom.FetchRateRange(p8sFamilyName, lbl, grouping, &q.RangeQuery)
 		*metric = m
@@ -73,7 +73,7 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 	}
 
 	type resultHolder struct {
-		metric     *prometheus.Metric
+		metric     prometheus.Metric
 		histo      prometheus.Histogram
 		definition istioMetric
 	}
@@ -109,7 +109,7 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 	wg.Wait()
 
 	// Return results as two maps per reporter
-	metrics := make(map[string]*prometheus.Metric)
+	metrics := make(map[string]prometheus.Metric)
 	histograms := make(map[string]prometheus.Histogram)
 	for _, result := range results {
 		if result != nil {

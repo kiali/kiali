@@ -27,6 +27,12 @@ func (q *RangeQuery) FillDefaults() {
 	q.Avg = true
 }
 
+// Metrics contains all simple metrics and histograms data
+type Metrics struct {
+	Metrics    map[string]*Metric   `json:"metrics"`
+	Histograms map[string]Histogram `json:"histograms"`
+}
+
 // Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)
 type Metric struct {
 	Matrix model.Matrix `json:"matrix"`
@@ -34,4 +40,4 @@ type Metric struct {
 }
 
 // Histogram contains Metric objects for several histogram-kind statistics
-type Histogram = map[string]*Metric
+type Histogram = map[string]Metric

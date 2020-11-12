@@ -3774,7 +3774,7 @@
           "x-go-name": "SingleSelection"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "App": {
       "type": "object",
@@ -3946,7 +3946,7 @@
           "x-go-name": "XAxis"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ComponentStatus": {
       "type": "object",
@@ -4050,7 +4050,7 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "EdgeData": {
       "type": "object",
@@ -4155,7 +4155,7 @@
           "$ref": "#/definitions/MonitoringDashboardExternalLinkVariables"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Fields": {
       "description": "To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff",
@@ -5279,7 +5279,7 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
@@ -5305,7 +5305,7 @@
           "x-go-name": "Workload"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/kubernetes/v1alpha1"
+      "x-go-package": "github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
@@ -5872,7 +5872,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "SamplePair": {
       "type": "object",
@@ -5886,7 +5886,7 @@
           "format": "double"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "SampleStream": {
       "type": "object",
@@ -5906,7 +5906,7 @@
           "x-go-name": "Values"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Service": {
       "type": "object",

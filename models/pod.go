@@ -138,11 +138,6 @@ func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
 }
 
-// GetAnnotations is needed by k-charted
-func (pod *Pod) GetAnnotations() map[string]string {
-	return pod.Annotations
-}
-
 // SyncedPodsCount returns the number of Pods with its proxy synced
 // If none of the pods have Istio Sidecar, then return -1
 func (pods Pods) SyncedPodProxiesCount() int32 {

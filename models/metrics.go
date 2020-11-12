@@ -111,7 +111,7 @@ func (t *Target) GenKey() string {
 
 // Metrics contains all simple metrics and histograms data for standard timeseries queries
 type Metrics struct {
-	Metrics    map[string]*prometheus.Metric   `json:"metrics"`
+	Metrics    map[string]prometheus.Metric    `json:"metrics"`
 	Histograms map[string]prometheus.Histogram `json:"histograms"`
 }
 
