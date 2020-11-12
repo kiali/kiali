@@ -292,7 +292,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
 }
 
-func TestCreateLabelsBuilder(t *testing.T) {
+func TestCreateMetricsLabelsBuilder(t *testing.T) {
 	assert := assert.New(t)
 	q := models.IstioMetricsQuery{
 		Namespace: "bookinfo",
@@ -300,11 +300,11 @@ func TestCreateLabelsBuilder(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.Reporter = "source"
-	lb := createLabelsBuilder(&q)
+	lb := createMetricsLabelsBuilder(&q)
 	assert.Equal(`{reporter="source",source_workload_namespace="bookinfo",source_canonical_service="productpage"}`, lb.Build())
 }
 
-func TestCreateStatsLabelsBuilder(t *testing.T) {
+func TestCreateStatsMetricsLabelsBuilder(t *testing.T) {
 	assert := assert.New(t)
 	q := models.MetricsStatsQuery{
 		Target: models.Target{
@@ -318,11 +318,11 @@ func TestCreateStatsLabelsBuilder(t *testing.T) {
 		Quantiles: []string{"0.90", "0.5"},
 		QueryTime: time.Now(),
 	}
-	lb := createStatsLabelsBuilder(&q)
+	lb := createStatsMetricsLabelsBuilder(&q)
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
-func TestCreateStatsLabelsBuilderWithPeer(t *testing.T) {
+func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
 	assert := assert.New(t)
 	q := models.MetricsStatsQuery{
 		Target: models.Target{
@@ -341,7 +341,7 @@ func TestCreateStatsLabelsBuilderWithPeer(t *testing.T) {
 		Quantiles: []string{"0.90", "0.5"},
 		QueryTime: time.Now(),
 	}
-	lb := createStatsLabelsBuilder(&q)
+	lb := createStatsMetricsLabelsBuilder(&q)
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
 }
 

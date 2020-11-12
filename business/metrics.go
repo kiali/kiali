@@ -21,13 +21,13 @@ func NewMetricsService(prom prometheus.ClientInterface) *MetricsService {
 }
 
 func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery) models.Metrics {
-	lb := createLabelsBuilder(&q)
+	lb := createMetricsLabelsBuilder(&q)
 	grouping := strings.Join(q.ByLabels, ",")
 	return in.fetchAllMetrics(q, lb, grouping)
 }
 
-func createLabelsBuilder(q *models.IstioMetricsQuery) *LabelsBuilder {
-	lb := NewLabelsBuilder(q.Direction)
+func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction)
 	lb.Reporter(q.Reporter)
 
 	namespaceSet := false
@@ -55,7 +55,7 @@ func createLabelsBuilder(q *models.IstioMetricsQuery) *LabelsBuilder {
 	return lb
 }
 
-func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *LabelsBuilder, grouping string) models.Metrics {
+func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *MetricsLabelsBuilder, grouping string) models.Metrics {
 	labels := lb.Build()
 	labelsError := lb.BuildForErrors()
 
@@ -162,7 +162,7 @@ func (in *MetricsService) GetStats(queries []models.MetricsStatsQuery) (map[stri
 }
 
 func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*models.MetricsStats, error) {
-	lb := createStatsLabelsBuilder(q)
+	lb := createStatsMetricsLabelsBuilder(q)
 	labels := lb.Build()
 	stats, err := in.prom.FetchHistogramValues("istio_request_duration_milliseconds", labels, "", q.Interval, q.Avg, q.Quantiles, q.QueryTime)
 	if err != nil {
@@ -184,8 +184,8 @@ func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*mod
 	return &metricsStats, nil
 }
 
-func createStatsLabelsBuilder(q *models.MetricsStatsQuery) *LabelsBuilder {
-	lb := NewLabelsBuilder(q.Direction)
+func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery) *MetricsLabelsBuilder {
+	lb := NewMetricsLabelsBuilder(q.Direction)
 	lb.SelfReporter()
 	if q.Target.Kind == "app" {
 		lb.App(q.Target.Name, q.Target.Namespace)

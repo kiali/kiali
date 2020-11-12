@@ -12,45 +12,45 @@ const (
 	regexResponseCodeErr       = "^0$|^[4-5]\\\\d\\\\d$"
 )
 
-type LabelsBuilder struct {
+type MetricsLabelsBuilder struct {
 	side     string
 	peerSide string
 	protocol string
 	labelsKV []string
 }
 
-func NewLabelsBuilder(direction string) *LabelsBuilder {
+func NewMetricsLabelsBuilder(direction string) *MetricsLabelsBuilder {
 	side := destination
 	peerSide := source
 	if direction == "outbound" {
 		side = source
 		peerSide = destination
 	}
-	return &LabelsBuilder{
+	return &MetricsLabelsBuilder{
 		side:     side,
 		peerSide: peerSide,
 	}
 }
 
-func (lb *LabelsBuilder) Add(key, value string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Add(key, value string) *MetricsLabelsBuilder {
 	lb.labelsKV = append(lb.labelsKV, fmt.Sprintf(`%s="%s"`, key, value))
 	return lb
 }
 
-func (lb *LabelsBuilder) addSided(partialKey, value, side string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) addSided(partialKey, value, side string) *MetricsLabelsBuilder {
 	lb.labelsKV = append(lb.labelsKV, fmt.Sprintf(`%s_%s="%s"`, side, partialKey, value))
 	return lb
 }
 
-func (lb *LabelsBuilder) Reporter(name string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Reporter(name string) *MetricsLabelsBuilder {
 	return lb.Add("reporter", name)
 }
 
-func (lb *LabelsBuilder) SelfReporter() *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) SelfReporter() *MetricsLabelsBuilder {
 	return lb.Add("reporter", lb.side)
 }
 
-func (lb *LabelsBuilder) Service(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Service(name, namespace string) *MetricsLabelsBuilder {
 	if lb.side == destination {
 		lb.Add("destination_service_name", name)
 		if namespace != "" {
@@ -60,18 +60,18 @@ func (lb *LabelsBuilder) Service(name, namespace string) *LabelsBuilder {
 	return lb
 }
 
-func (lb *LabelsBuilder) Namespace(namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Namespace(namespace string) *MetricsLabelsBuilder {
 	return lb.addSided("workload_namespace", namespace, lb.side)
 }
 
-func (lb *LabelsBuilder) Workload(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Workload(name, namespace string) *MetricsLabelsBuilder {
 	if namespace != "" {
 		lb.addSided("workload_namespace", namespace, lb.side)
 	}
 	return lb.addSided("workload", name, lb.side)
 }
 
-func (lb *LabelsBuilder) App(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) App(name, namespace string) *MetricsLabelsBuilder {
 	if namespace != "" {
 		// workload_namespace works for app as well
 		lb.addSided("workload_namespace", namespace, lb.side)
@@ -79,7 +79,7 @@ func (lb *LabelsBuilder) App(name, namespace string) *LabelsBuilder {
 	return lb.addSided("canonical_service", name, lb.side)
 }
 
-func (lb *LabelsBuilder) PeerService(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) PeerService(name, namespace string) *MetricsLabelsBuilder {
 	if lb.peerSide == destination {
 		lb.Add("destination_service_name", name)
 		if namespace != "" {
@@ -89,18 +89,18 @@ func (lb *LabelsBuilder) PeerService(name, namespace string) *LabelsBuilder {
 	return lb
 }
 
-func (lb *LabelsBuilder) PeerNamespace(namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) PeerNamespace(namespace string) *MetricsLabelsBuilder {
 	return lb.addSided("workload_namespace", namespace, lb.peerSide)
 }
 
-func (lb *LabelsBuilder) PeerWorkload(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) PeerWorkload(name, namespace string) *MetricsLabelsBuilder {
 	if namespace != "" {
 		lb.addSided("workload_namespace", namespace, lb.peerSide)
 	}
 	return lb.addSided("workload", name, lb.peerSide)
 }
 
-func (lb *LabelsBuilder) PeerApp(name, namespace string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) PeerApp(name, namespace string) *MetricsLabelsBuilder {
 	if namespace != "" {
 		// workload_namespace works for app as well
 		lb.addSided("workload_namespace", namespace, lb.peerSide)
@@ -108,20 +108,20 @@ func (lb *LabelsBuilder) PeerApp(name, namespace string) *LabelsBuilder {
 	return lb.addSided("canonical_service", name, lb.peerSide)
 }
 
-func (lb *LabelsBuilder) Protocol(name string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Protocol(name string) *MetricsLabelsBuilder {
 	lb.protocol = strings.ToLower(name)
 	return lb.Add("request_protocol", name)
 }
 
-func (lb *LabelsBuilder) Aggregate(key, value string) *LabelsBuilder {
+func (lb *MetricsLabelsBuilder) Aggregate(key, value string) *MetricsLabelsBuilder {
 	return lb.Add(key, value)
 }
 
-func (lb *LabelsBuilder) Build() string {
+func (lb *MetricsLabelsBuilder) Build() string {
 	return "{" + strings.Join(lb.labelsKV, ",") + "}"
 }
 
-func (lb *LabelsBuilder) BuildForErrors() []string {
+func (lb *MetricsLabelsBuilder) BuildForErrors() []string {
 	errors := []string{}
 
 	// both http and grpc requests can suffer from no response (response_code=0) or an http error
