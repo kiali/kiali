@@ -292,7 +292,7 @@ def test_namespace_traces_list(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
-    evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo', 'app': 'details})
+    evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo', 'app': 'details'})
                                                                    
 def test_service_traces_list(kiali_client):
     
