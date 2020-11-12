@@ -137,6 +137,7 @@ const conf = {
       jaegerErrorTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/errortraces`,
       jaegerTrace: (idTrace: string) => `api/traces/${idTrace}`,
       logout: 'api/logout',
+      metricsStats: 'api/stats/metrics',
       namespaces: 'api/namespaces',
       namespace: (namespace: string) => `api/namespaces/${namespace}`,
       namespacesGraphElements: `api/namespaces/graph`,

@@ -12,6 +12,8 @@ export enum HTTP_VERBS {
   PUT = 'put'
 }
 
+export type TargetKind = 'app' | 'service' | 'workload';
+
 export const MILLISECONDS = 1000;
 
 export const UNIT_TIME = {

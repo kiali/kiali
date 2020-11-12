@@ -2,8 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { DashboardModel, DashboardQuery } from '@kiali/k-charted-pf4';
 
 import Namespace from '../types/Namespace';
-import { IstioMetricsOptions } from '../types/MetricsOptions';
-import { Metrics } from '../types/Metrics';
+import { IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import { Metrics, MetricsStatsResult } from '../types/Metrics';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
@@ -565,4 +565,8 @@ export const createExperiment = (namespace: string, specBody: string, params) =>
 
 export const updateExperiment = (namespace: string, name: string, specBody: string) => {
   return newRequest<Iter8Experiment>(HTTP_VERBS.PATCH, urls.iter8Experiment(namespace, name), {}, specBody);
+};
+
+export const getMetricsStats = (queries: MetricsStatsQuery[]) => {
+  return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, {}, { queries: queries });
 };

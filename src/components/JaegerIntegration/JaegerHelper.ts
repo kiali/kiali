@@ -2,6 +2,7 @@ import logfmtParser from 'logfmt/lib/logfmt_parser';
 import { KeyValuePair, Span } from '../../types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { guardTimeRange, durationToBounds } from 'types/Common';
+import { Target } from 'types/MetricsOptions';
 
 export const buildTags = (showErrors: boolean, statusCode: string): string => {
   let tags = '';
@@ -146,12 +147,12 @@ export const getSpanType = (span: Span): 'envoy' | 'http' | 'tcp' | 'unknown' =>
   return 'unknown';
 };
 
-type OpenTracingBaseInfo = {
+export type OpenTracingBaseInfo = {
   component?: string;
   hasError: boolean;
 };
 
-type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
+export type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
   statusCode?: number;
   url?: string;
   method?: string;
@@ -195,7 +196,7 @@ export const extractOpenTracingHTTPInfo = (span: Span): OpenTracingHTTPInfo => {
   return info;
 };
 
-type OpenTracingTCPInfo = OpenTracingBaseInfo & {
+export type OpenTracingTCPInfo = OpenTracingBaseInfo & {
   topic?: string;
   peerAddress?: string;
   peerHostname?: string;
@@ -223,10 +224,9 @@ export const extractOpenTracingTCPInfo = (span: Span): OpenTracingTCPInfo => {
   return info;
 };
 
-type EnvoySpanInfo = OpenTracingHTTPInfo & {
+export type EnvoySpanInfo = OpenTracingHTTPInfo & {
   responseFlags?: string;
-  peer?: string;
-  peerNamespace?: string;
+  peer?: Target;
 };
 
 export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo => {
@@ -243,19 +243,38 @@ export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo => {
           const svcParts = parts[3].split('.');
           if (svcParts.length === 5) {
             info.direction = 'outbound';
-            info.peer = svcParts[0];
-            info.peerNamespace = svcParts[1];
+            info.peer = {
+              name: svcParts[0],
+              namespace: svcParts[1],
+              kind: 'service'
+            };
           }
         } else if (parts[0] === 'inbound') {
           const wkdNs = searchParentWorkload(span);
           if (wkdNs) {
             info.direction = 'inbound';
-            info.peer = wkdNs.workload;
-            info.peerNamespace = wkdNs.namespace;
+            info.peer = {
+              name: wkdNs.workload,
+              namespace: wkdNs.namespace,
+              kind: 'workload'
+            };
           }
         }
       }
     }
   });
   return info;
+};
+
+export const extractSpanInfo = (span: Span) => {
+  const type = getSpanType(span);
+  const info =
+    type === 'envoy'
+      ? extractEnvoySpanInfo(span)
+      : type === 'http'
+      ? extractOpenTracingHTTPInfo(span)
+      : type === 'tcp'
+      ? extractOpenTracingTCPInfo(span)
+      : extractOpenTracingBaseInfo(span);
+  return { type: type, info: info };
 };

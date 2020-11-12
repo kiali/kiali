@@ -31,11 +31,12 @@ import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 import SpanDetails from './JaegerResults/SpanDetails';
+import { TargetKind } from 'types/Common';
 
 interface TracesProps {
   namespace: string;
   target: string;
-  targetKind: 'app' | 'workload' | 'service';
+  targetKind: TargetKind;
   urlJaeger: string;
   namespaceSelector: boolean;
   showErrors: boolean;

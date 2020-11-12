@@ -240,17 +240,18 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     const info = extractEnvoySpanInfo(span);
     const rsDetails: string[] = [];
     if (
+      info.peer &&
       nodeFullName !== span.process.serviceName &&
       info.direction === 'inbound' &&
-      nodeFullName === info.peer + '.' + info.peerNamespace
+      nodeFullName === info.peer.name + '.' + info.peer.namespace
     ) {
       // Special case: this span was added to the inbound workload (this node) while originating from the outbound node.
       // So we need to reverse the logic: it's not an inbound request that we show here, but an outbound request, switching point of view.
       info.direction = 'outbound';
       const split = span.process.serviceName.split('.');
-      info.peer = split[0];
+      info.peer.name = split[0];
       if (split.length > 1) {
-        info.peerNamespace = split[1];
+        info.peer.namespace = split[1];
       }
     }
     if (info.statusCode) {
@@ -265,7 +266,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
 
     return (
       <>
-        {info.direction && info.peer && info.peerNamespace && (
+        {info.direction && info.peer && (
           <>
             <span>
               <strong>{info.direction === 'inbound' ? 'From: ' : 'To: '}</strong>
@@ -274,12 +275,12 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
               variant={ButtonVariant.link}
               onClick={
                 info.direction === 'inbound'
-                  ? () => this.focusOnWorkload(info.peerNamespace!, info.peer!)
-                  : () => this.focusOnService(info.peerNamespace!, info.peer!)
+                  ? () => this.focusOnWorkload(info.peer!.namespace, info.peer!.name)
+                  : () => this.focusOnService(info.peer!.namespace, info.peer!.name)
               }
               isInline
             >
-              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.peer}</span>
+              <span style={{ fontSize: 'var(--graph-side-panel--font-size)' }}>{info.peer.name}</span>
             </Button>
           </>
         )}

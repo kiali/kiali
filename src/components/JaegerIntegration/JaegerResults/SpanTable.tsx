@@ -22,18 +22,16 @@ import {
 } from '@patternfly/react-table';
 import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
+import { addError, addInfo } from 'utils/AlertUtils';
 import history from 'app/History';
 import { formatDuration } from './transform';
-import {
-  extractEnvoySpanInfo,
-  extractOpenTracingHTTPInfo,
-  extractOpenTracingTCPInfo,
-  isErrorTag
-} from '../JaegerHelper';
+import { EnvoySpanInfo, isErrorTag, OpenTracingHTTPInfo, OpenTracingTCPInfo } from '../JaegerHelper';
 import { style } from 'typestyle';
 import { PFAlertColor } from 'components/Pf/PfColors';
 import { SpanTableItem } from './SpanTableItem';
 import { compareNullable } from 'components/FilterList/FilterHelper';
+import { MetricsStats } from 'types/Metrics';
+import { fetchStats, renderMetricsComparison } from './StatsComparison';
 
 type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;
@@ -53,6 +51,7 @@ interface State {
   toggled?: string;
   sortIndex: number;
   sortDirection: SortByDirection;
+  metricsStats: { [key: string]: MetricsStats };
 }
 
 const kebabDropwdownStyle = style({
@@ -66,13 +65,38 @@ const linkStyle = style({
 export class SpanTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc };
+    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, metricsStats: {} };
   }
 
-  componentDidUpdate(_: Readonly<Props>, prevState: Readonly<State>) {
+  componentDidMount() {
+    // Load stats for first 10 spans, to avoid heavy loading. More stats can be loaded individually.
+    this.fetchComparisonMetrics(this.props.spans.filter(s => s.type === 'envoy').slice(0, 10));
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>) {
     if (prevState.toggled) {
       this.setState({ toggled: undefined });
     }
+    if (this.props.spans !== prevProps.spans) {
+      this.setState({ metricsStats: {} });
+      // Load stats for first 10 spans, to avoid heavy loading. More stats can be loaded individually.
+      this.fetchComparisonMetrics(this.props.spans.filter(s => s.type === 'envoy').slice(0, 10));
+    }
+  }
+
+  private fetchComparisonMetrics(spans: SpanTableItem[]) {
+    fetchStats(spans)
+      .then(res => {
+        // Merge stats
+        const merged = { ...this.state.metricsStats, ...res.data.stats };
+        this.setState({ metricsStats: merged });
+        if (res.data.warnings && res.data.warnings.length > 0) {
+          addInfo(res.data.warnings.join('; '), false);
+        }
+      })
+      .catch(err => {
+        addError('Could not fetch metrics stats.', err);
+      });
   }
 
   private renderLinks = (key: string, item: SpanTableItem) => {
@@ -162,26 +186,26 @@ export class SpanTable extends React.Component<Props, State> {
   }
 
   private renderEnvoySummary(item: SpanTableItem) {
-    const info = extractEnvoySpanInfo(item);
+    const info = item.info as EnvoySpanInfo;
     let rqLabel = 'Request';
     let peerLink: JSX.Element | undefined = undefined;
     if (info.direction === 'inbound') {
       rqLabel = 'Received request';
-      if (info.peer && info.peerNamespace) {
+      if (info.peer) {
         peerLink = (
           <>
             {' from '}
-            <Link to={'/namespaces/' + info.peerNamespace + '/workloads/' + info.peer}>{info.peer}</Link>
+            <Link to={'/namespaces/' + info.peer.namespace + '/workloads/' + info.peer.name}>{info.peer.name}</Link>
           </>
         );
       }
     } else if (info.direction === 'outbound') {
       rqLabel = 'Sent request';
-      if (info.peer && info.peerNamespace) {
+      if (info.peer) {
         peerLink = (
           <>
             {' to '}
-            <Link to={'/namespaces/' + info.peerNamespace + '/services/' + info.peer}>{info.peer}</Link>
+            <Link to={'/namespaces/' + info.peer.namespace + '/services/' + info.peer.name}>{info.peer.name}</Link>
           </>
         );
       }
@@ -213,7 +237,7 @@ export class SpanTable extends React.Component<Props, State> {
   }
 
   private renderHTTPSummary(item: SpanTableItem) {
-    const info = extractOpenTracingHTTPInfo(item);
+    const info = item.info as OpenTracingHTTPInfo;
     const rqLabel =
       info.direction === 'inbound' ? 'Received request' : info.direction === 'outbound' ? 'Sent request' : 'Request';
     return (
@@ -234,7 +258,7 @@ export class SpanTable extends React.Component<Props, State> {
   }
 
   private renderTCPSummary(item: SpanTableItem) {
-    const info = extractOpenTracingTCPInfo(item);
+    const info = item.info as OpenTracingTCPInfo;
     return (
       <>
         {this.renderCommonSummary(item)}
@@ -244,6 +268,19 @@ export class SpanTable extends React.Component<Props, State> {
             {info.topic}
           </div>
         )}
+      </>
+    );
+  }
+
+  private renderStats(item: SpanTableItem) {
+    return (
+      <>
+        <div>
+          <strong>Duration: </strong>
+          {formatDuration(item.duration)}
+        </div>
+        {item.type === 'envoy' &&
+          renderMetricsComparison(item, this.state.metricsStats, () => this.fetchComparisonMetrics([item]))}
       </>
     );
   }
@@ -262,7 +299,7 @@ export class SpanTable extends React.Component<Props, State> {
       },
       { title: 'Summary' },
       {
-        title: 'Duration',
+        title: 'Statistics',
         transforms: [sortable],
         compare: (a, b) => a.duration - b.duration
       },
@@ -297,9 +334,7 @@ export class SpanTable extends React.Component<Props, State> {
             )
           },
           { title: this.renderSummary(item) },
-          {
-            title: <>{formatDuration(item.duration)}</>
-          },
+          { title: this.renderStats(item) },
           { title: this.renderLinks(String(idx), item) }
         ]
       };

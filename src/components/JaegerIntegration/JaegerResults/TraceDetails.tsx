@@ -17,13 +17,14 @@ import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
 import { averageSpanDuration, isSimilarTrace } from 'utils/TraceStats';
 import { TraceLabels } from './TraceLabels';
+import { TargetKind } from 'types/Common';
 
 interface Props {
   otherTraces: JaegerTrace[];
   jaegerURL: string;
   namespace: string;
   target: string;
-  targetKind: 'app' | 'workload' | 'service';
+  targetKind: TargetKind;
   setTraceId: (traceId?: string) => void;
   trace?: JaegerTrace;
 }
@@ -195,7 +196,7 @@ class TraceDetails extends React.Component<Props, State> {
   }
 }
 
-const comparedDurations = (
+export const comparedDurations = (
   d1: number | undefined,
   d2: number | undefined,
   d1Desc: string,

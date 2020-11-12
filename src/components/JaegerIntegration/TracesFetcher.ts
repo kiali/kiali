@@ -4,11 +4,12 @@ import { JaegerTrace, JaegerError } from 'types/JaegerInfo';
 import { TracingQuery } from 'types/Tracing';
 import { getTimeRangeMicros } from './JaegerHelper';
 import transformTraceData from './JaegerResults/transform';
+import { TargetKind } from 'types/Common';
 
 type FetchOptions = {
   namespace: string;
   target: string;
-  targetKind: 'app' | 'workload' | 'service';
+  targetKind: TargetKind;
   spanLimit: number;
   tags: string;
 };
