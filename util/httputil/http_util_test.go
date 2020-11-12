@@ -123,8 +123,9 @@ func TestGuessKialiURLPrioritizesConfig(t *testing.T) {
 	request := setupAndCreateRequest()
 
 	conf := config.NewConfig()
-	conf.Server.WebRoot = "/foo/bar"
 	conf.Server.WebFQDN = "subdomain.domain.dev"
+	conf.Server.WebPort = "4321"
+	conf.Server.WebRoot = "/foo/bar"
 	conf.Server.WebSchema = "http"
 	conf.Server.Port = 700
 	config.Set(conf)
@@ -133,5 +134,5 @@ func TestGuessKialiURLPrioritizesConfig(t *testing.T) {
 	request.Header.Add("X-Forwarded-Proto", "https")
 	guessedUrl := GuessKialiURL(request)
 
-	assert.Equal(t, "http://subdomain.domain.dev:443/foo/bar", guessedUrl)
+	assert.Equal(t, "http://subdomain.domain.dev:4321/foo/bar", guessedUrl)
 }
