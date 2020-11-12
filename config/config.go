@@ -72,6 +72,7 @@ type Server struct {
 	Port                       int    `yaml:",omitempty"`
 	StaticContentRootDirectory string `yaml:"static_content_root_directory,omitempty"`
 	WebFQDN                    string `yaml:"web_fqdn,omitempty"`
+	WebPort                    string `yaml:"web_port,omitempty"`
 	WebRoot                    string `yaml:"web_root,omitempty"`
 	WebHistoryMode             string `yaml:"web_history_mode,omitempty"`
 	WebSchema                  string `yaml:"web_schema,omitempty"`
