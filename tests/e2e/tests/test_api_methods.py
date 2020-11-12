@@ -19,7 +19,7 @@ def before_all_tests(kiali_client):
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
                           'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
-                          'meshTls', 'namespaceValidations', 'appSpans', 'appTraces', 'serviceTraces', 'workloadSpans']
+                          'meshTls', 'namespaceValidations', 'appSpans', 'appTraces', 'serviceTraces', 'workloadSpans', 'workloadTraces', 'serviceSpans']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -286,22 +286,30 @@ def test_namespace_spans_list(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
-    evaluate_response(kiali_client, method_name='appSpans', path={'namespace': 'bookinfo'})
+    evaluate_response(kiali_client, method_name='appSpans', path={'namespace': 'bookinfo', 'app': 'details'})
 
 def test_namespace_traces_list(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
         pytest.skip()
 
-    evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo'})
-
+    evaluate_response(kiali_client, method_name='appTraces', path={'namespace': 'bookinfo', 'app': 'details'})
+                                                                   
 def test_service_traces_list(kiali_client):
-
+    
     evaluate_response(kiali_client, method_name='serviceTraces', path={'namespace': 'bookinfo', 'service':'details'})
 
+def test_service_spans_list(kiali_client):
+    
+    evaluate_response(kiali_client, method_name='serviceSpans', path={'namespace': 'bookinfo', 'service':'details'})
 
-def test_service_workload_spans(kiali_client):
+def test_workload_traces_list(kiali_client):
+    
+    evaluate_response(kiali_client, method_name='workloadTraces', path={'namespace': 'bookinfo', 'workload':'details-v1'})
 
-    evaluate_response(kiali_client, method_name='workloadSpans', path={'namespace': 'istio-system', 'workload':'kiali'})
+def test_workload_spans_list(kiali_client):
+
+    evaluate_response(kiali_client, method_name='workloadSpans', path={'namespace': 'bookinfo', 'workload':'details-v1'})
+
 
 def test_negative_400(kiali_client):
 
