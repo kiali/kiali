@@ -239,6 +239,9 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
     echo "  oc -n <target-namespace> delete network-attachment-definition istio-cni"
     echo "===== IMPORTANT ====="
   fi
+
+  echo "Deleting the istio namespace [${NAMESPACE}]"
+  ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
   ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}

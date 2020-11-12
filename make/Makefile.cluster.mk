@@ -63,8 +63,11 @@ else
 	@exit 1
 endif
 
+.get-cluster-istio-version:
+	@$(eval CLUSTER_ISTIO_VERSION ?= $(shell ${OC} exec $$(${OC} get pods -n ${ISTIO_NAMESPACE} -l app=istiod -o name 2>/dev/null) -n ${ISTIO_NAMESPACE} -- curl -s http://localhost:15014/version 2>/dev/null | grep . || echo "N/A"))
+
 ## cluster-status: Outputs details of the client and server for the cluster
-cluster-status: .prepare-cluster
+cluster-status: .prepare-cluster .get-cluster-istio-version
 	@echo "================================================================="
 	@echo "CLUSTER DETAILS"
 	@echo "================================================================="
@@ -87,6 +90,8 @@ else ifeq ($(CLUSTER_TYPE),minikube)
 	@echo "Console URL: Run 'minikube dashboard' to access the UI console"
 	@echo "================================================================="
 endif
+	@echo "Istio Version (if installed): ${CLUSTER_ISTIO_VERSION}"
+	@echo "================================================================="
 	@echo "Kiali image as seen from inside the cluster:       ${CLUSTER_KIALI_INTERNAL_NAME}"
 	@echo "Kiali image that will be pushed to the cluster:    ${CLUSTER_KIALI_TAG}"
 	@echo "Operator image as seen from inside the cluster:    ${CLUSTER_OPERATOR_INTERNAL_NAME}"
