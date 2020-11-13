@@ -2,7 +2,10 @@ package handlers
 
 import "net/http"
 
-// GetMeshClusters ...
+// GetMeshClusters writes to the HTTP response a JSON document with the
+// list of clusters that are part of the mesh when multi-cluster is enabled. If
+// multi-cluster is not enabled in the control plane, this handler may provide
+// erroneous data.
 func GetMeshClusters(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {

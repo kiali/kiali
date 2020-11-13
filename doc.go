@@ -723,3 +723,10 @@ type MetricsStatsResponse struct {
 	// in: body
 	Body models.MetricsStats
 }
+
+// Return a list of Mesh Cluster items
+// swagger:response meshClustersResponse
+type MeshClustersResponse struct {
+	// in: body
+	Body []business.MeshCluster
+}

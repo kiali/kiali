@@ -48,9 +48,9 @@ func GetRemoteSecret(path string) (*RemoteSecret, error) {
 	return ParseRemoteSecretBytes(secretFile)
 }
 
-// GetSecret returns a list of secrets for a given namespace.
-// If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
-// It returns an error on any problem.
+// GetSecrets returns a list of secrets for a given namespace.
+// If selectorLabels is defined, the list will only contain services matching
+// the specified label selector.
 func (in *K8SClient) GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error) {
 	listOptions := emptyListOptions
 	if len(labelSelector) > 0 {
@@ -64,6 +64,8 @@ func (in *K8SClient) GetSecrets(namespace string, labelSelector string) ([]core_
 	}
 }
 
+// ParseRemoteSecretBytes parses a raw file containing a <Kubeconfig file> and returns
+// the parsed file in a RemoteSecret structure.
 func ParseRemoteSecretBytes(secretBytes []byte) (*RemoteSecret, error) {
 	secret := &RemoteSecret{}
 	err := yaml.Unmarshal(secretBytes, &secret)
