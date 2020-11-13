@@ -16,16 +16,16 @@ type ClusteringService struct {
 // part of the mesh.
 type MeshCluster struct {
 	// ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted
-	ApiEndpoint   string `json:"apiEndpoint"`
+	ApiEndpoint string `json:"apiEndpoint"`
 
 	// IsHomeCluster specifies if this cluster is hosting Kiali (and the observed Mesh Control Plane)
-	IsHomeCluster bool   `json:"isHomeCluster"`
+	IsHomeCluster bool `json:"isHomeCluster"`
 
 	// Name specifies the CLUSTER_ID as known by the Control Plane
-	Name          string `json:"name"`
+	Name string `json:"name"`
 
 	// SecretName is the name of the kubernetes "remote secret" where data of this cluster was resolved
-	SecretName    string `json:"secretName"`
+	SecretName string `json:"secretName"`
 }
 
 // GetMeshClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
@@ -69,7 +69,7 @@ func (in *ClusteringService) resolveMyControlPlaneCluster() (*MeshCluster, error
 	for _, v := range istioDeployment.Spec.Template.Spec.Containers[0].Env {
 		if v.Name == "CLUSTER_ID" {
 			myClusterName = v.Value
-			break;
+			break
 		}
 	}
 
@@ -87,10 +87,10 @@ func (in *ClusteringService) resolveMyControlPlaneCluster() (*MeshCluster, error
 	}
 
 	return &MeshCluster{
-		ApiEndpoint: restConfig.Host,
+		ApiEndpoint:   restConfig.Host,
 		IsHomeCluster: true,
-		Name:        myClusterName,
-		SecretName:  "",
+		Name:          myClusterName,
+		SecretName:    "",
 	}, nil
 }
 
@@ -109,7 +109,6 @@ func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, 
 	// which is resolved in resolveMyControlPlaneCluster func).
 	// Strictly speaking, this list may be incomplete: it's list of visible clusters for a control plane.
 	// But, for now, let's use it as the absolute "list of clusters in the mesh (excluding home cluster)".
-
 
 	// "Remote secrets" are created using the command `istioctl x create-remote-secret` which
 	// labels the secrets with istio/multiCluster=true. Let's use that label to fetch the secrets of interest.
@@ -157,5 +156,5 @@ func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, 
 		clusters = append(clusters, meshCluster)
 	}
 
-	return clusters, nil;
+	return clusters, nil
 }

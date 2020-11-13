@@ -54,7 +54,7 @@ func GetRemoteSecret(path string) (*RemoteSecret, error) {
 func (in *K8SClient) GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error) {
 	listOptions := emptyListOptions
 	if len(labelSelector) > 0 {
-	 listOptions = meta_v1.ListOptions{LabelSelector: labelSelector}
+		listOptions = meta_v1.ListOptions{LabelSelector: labelSelector}
 	}
 
 	if secretsList, err := in.k8s.CoreV1().Secrets(namespace).List(listOptions); err == nil {
