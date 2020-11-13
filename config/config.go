@@ -117,12 +117,12 @@ type CustomDashboardsConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth          Auth                     `yaml:"auth"`
-	CoreComponent bool                     `yaml:"core_component"`
-	Dashboards    []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled       bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	InClusterURL  string                   `yaml:"in_cluster_url"`
-	URL           string                   `yaml:"url"`
+	Auth            Auth                     `yaml:"auth"`
+	Dashboards      []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled         bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	InClusterURL    string                   `yaml:"in_cluster_url"`
+	IsCoreComponent bool                     `yaml:"is_core_component"`
+	URL             string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -141,9 +141,9 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth     `yaml:"auth"`
-	CoreComponent        bool     `yaml:"core_component"`
 	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
 	InClusterURL         string   `yaml:"in_cluster_url"`
+	IsCoreComponent      bool     `yaml:"is_core_component"`
 	NamespaceSelector    bool     `yaml:"namespace_selector"`
 	URL                  string   `yaml:"url"`
 	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
@@ -389,8 +389,8 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CoreComponent: false,
-				Enabled:       true,
+				Enabled:         true,
+				IsCoreComponent: false,
 			},
 			Istio: IstioConfig{
 				IstioIdentityDomain:      "svc.cluster.local",
@@ -431,7 +431,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CoreComponent:        false,
+				IsCoreComponent:      false,
 				Enabled:              true,
 				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system/jaeger",

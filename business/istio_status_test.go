@@ -142,6 +142,9 @@ func TestGrafanaDisabled(t *testing.T) {
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
+	// Only the Istio components are missing
+	assert.Equal(3, len(icsl))
+
 	// No request performed to Grafana endpoint
 	assert.Zero(*grafanaCalls)
 
@@ -152,6 +155,7 @@ func TestGrafanaDisabled(t *testing.T) {
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
 func TestGrafanaNotWorking(t *testing.T) {
@@ -175,6 +179,9 @@ func TestGrafanaNotWorking(t *testing.T) {
 	iss := IstioStatusService{k8s: k8s}
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
+
+	// Grafana and Istio comps missing
+	assert.Equal(4, len(icsl))
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, grafanaCalls)
@@ -327,7 +334,9 @@ func mockServer(mr *mux.Router) *httptest.Server {
 
 func addAddOnRoute(mr *mux.Router, url string, statusCode int, callNum *int) {
 	mr.HandleFunc(url, func(w http.ResponseWriter, r *http.Request) {
-		*callNum = *callNum + 1
+		if callNum != nil {
+			*callNum = *callNum + 1
+		}
 		if statusCode > 299 {
 			http.Error(w, "Not a success", statusCode)
 		} else {
@@ -363,18 +372,27 @@ func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
 			StatusCode: 200,
 			CallCount:  grafana,
 		},
+		"custom dashboards": {
+			Url:        "/prometheus-dashboards/mock",
+			StatusCode: 200,
+			CallCount:  nil,
+		},
 	}
 }
 
 func addonAddMockUrls(baseUrl string, conf *config.Config) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.CoreComponent = false
+	conf.ExternalServices.Grafana.IsCoreComponent = false
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.CoreComponent = false
+	conf.ExternalServices.Tracing.IsCoreComponent = false
 	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
+
+	conf.ExternalServices.CustomDashboards.Enabled = true
+	conf.ExternalServices.CustomDashboards.IsCoreComponent = false
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus-dashboards/mock"
 	return conf
 }
