@@ -212,19 +212,36 @@ func GetDeploymentStatus(d apps_v1.Deployment) string {
 }
 
 func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
+	var wg sync.WaitGroup
+	wg.Add(4)
+
+	staChan := make(chan IstioComponentStatus, 4)
 	extServices := config.Get().ExternalServices
 	ics := IstioComponentStatus{}
 
-	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true))
-	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.IsCoreComponent))
-	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.IsCoreComponent))
-	ics.merge(getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.Prometheus.URL, &extServices.CustomDashboards.Prometheus.Auth, extServices.CustomDashboards.IsCoreComponent))
+	go getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true, staChan, &wg)
+	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.IsCoreComponent, staChan, &wg)
+	go getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.IsCoreComponent, staChan, &wg)
+
+	// Custom dashboards may use the main Prometheus config
+	customProm := extServices.CustomDashboards.Prometheus
+	if customProm.URL == "" {
+		customProm = extServices.Prometheus
+	}
+	go getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, customProm.URL, &customProm.Auth, extServices.CustomDashboards.IsCoreComponent, staChan, &wg)
+
+	wg.Wait()
+
+	close(staChan)
+	for stat := range staChan {
+		ics.merge(stat)
+	}
 
 	return ics
 }
 
-func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool) IstioComponentStatus {
-	ics := make([]ComponentStatus, 0)
+func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	addonAuth := auth
 	if addonAuth.UseKialiToken {
@@ -237,18 +254,18 @@ func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, is
 
 	// When the addOn is disabled, don't perform any check
 	if !enabled {
-		return ics
+		return
 	}
 
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
 	if err != nil || statusCode > 399 {
-		ics = append(ics, ComponentStatus{
-			Name:   name,
-			Status: Unreachable,
-			IsCore: isCore,
-		})
+		staChan <- IstioComponentStatus{
+			ComponentStatus{
+				Name:   name,
+				Status: Unreachable,
+				IsCore: isCore,
+			},
+		}
 	}
-
-	return ics
 }

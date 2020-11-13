@@ -125,6 +125,7 @@ func TestGrafanaWorking(t *testing.T) {
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
 func TestGrafanaDisabled(t *testing.T) {
@@ -191,6 +192,33 @@ func TestGrafanaNotWorking(t *testing.T) {
 	assertComponent(assert, icsl, "grafana", Unreachable, false)
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "custom dashboards")
+}
+
+func TestCustomDashboardsMainPrometheus(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls([]apps_v1.Deployment{})
+	defer httpServ.Close()
+
+	// Custom Dashboard prom URL forced to be empty
+	conf := config.Get()
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = ""
+	config.Set(conf)
+
+	iss := IstioStatusService{k8s: k8s}
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
+	assert.Equal(1, *jaegerCalls)
+	assert.Equal(2, *promCalls)
+
+	assertNotPresent(assert, icsl, "grafana")
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "custom dashboards")
 }
 
 func TestDefaults(t *testing.T) {
