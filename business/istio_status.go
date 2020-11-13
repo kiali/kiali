@@ -1,8 +1,8 @@
 package business
 
 import (
-	"net/http"
 	"sync"
+	"time"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -214,15 +215,24 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	extServices := config.Get().ExternalServices
 	ics := IstioComponentStatus{}
 
-	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, true))
-	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, extServices.Grafana.CoreComponent))
-	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, extServices.Tracing.CoreComponent))
+	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true))
+	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.CoreComponent))
+	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.CoreComponent))
 
 	return ics
 }
 
-func getAddonStatus(name string, enabled bool, url string, isCore bool) IstioComponentStatus {
+func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool) IstioComponentStatus {
 	ics := make([]ComponentStatus, 0)
+
+	addonAuth := auth
+	if addonAuth.UseKialiToken {
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+		}
+		auth.Token = token
+	}
 
 	// When the addOn is disabled, don't perform any check
 	if !enabled {
@@ -230,17 +240,13 @@ func getAddonStatus(name string, enabled bool, url string, isCore bool) IstioCom
 	}
 
 	// Call the addOn service endpoint to find out whether is reachable or not
-	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode > 399 {
+	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
+	if err != nil || statusCode > 399 {
 		ics = append(ics, ComponentStatus{
 			Name:   name,
 			Status: Unreachable,
 			IsCore: isCore,
 		})
-	}
-
-	if err == nil {
-		resp.Body.Close()
 	}
 
 	return ics
