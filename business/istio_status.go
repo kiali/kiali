@@ -218,6 +218,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	ics.merge(getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true))
 	ics.merge(getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.CoreComponent))
 	ics.merge(getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.CoreComponent))
+	ics.merge(getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, extServices.CustomDashboards.Prometheus.URL, &extServices.CustomDashboards.Prometheus.Auth, extServices.CustomDashboards.IsCoreComponent))
 
 	return ics
 }

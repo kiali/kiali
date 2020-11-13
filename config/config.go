@@ -109,9 +109,10 @@ type PrometheusConfig struct {
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	Enabled        bool             `yaml:"enabled,omitempty"`
-	NamespaceLabel string           `yaml:"namespace_label,omitempty"`
-	Prometheus     PrometheusConfig `yaml:"prometheus,omitempty"`
+	Enabled         bool             `yaml:"enabled,omitempty"`
+	IsCoreComponent bool             `yaml:"is_core_component,omitempty"`
+	NamespaceLabel  string           `yaml:"namespace_label,omitempty"`
+	Prometheus      PrometheusConfig `yaml:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
