@@ -68,28 +68,41 @@ container-push: container-push-kiali-quay
 	@if docker buildx version > /dev/null 2>&1 || DOCKER_CLI_EXPERIMENTAL="${DOCKER_CLI_EXPERIMENTAL}" docker buildx version > /dev/null 2>&1 ; then \
 	  echo "'docker buildx' is available and enabled."; \
 	else \
-	  echo "installing docker buildx"; \
-	  mkdir -p ~/.docker/cli-plugins; \
-	  curl -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.$$(go env GOOS)-$$(go env GOARCH); \
-	  chmod a+x ~/.docker/cli-plugins/docker-buildx; \
-	  docker buildx version; \
-	  echo "'docker buildx' is available and enabled. Set DOCKER_CLI_EXPERIMENTAL=enabled if you want to use it."; \
+	  if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version > /dev/null 2>&1 ; then \
+	    echo "You do not have 'docker buildx' installed. Will now download and install it to [${HOME}/.docker/cli-plugins]."; \
+	    mkdir -p ${HOME}/.docker/cli-plugins; \
+	    curl -L --output ${HOME}/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.${GOOS}-${GOARCH}; \
+	    chmod a+x ${HOME}/.docker/cli-plugins/docker-buildx; \
+	    DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version; \
+	    if docker buildx version > /dev/null 2>&1 || DOCKER_CLI_EXPERIMENTAL="${DOCKER_CLI_EXPERIMENTAL}" docker buildx version > /dev/null 2>&1 ; then \
+	      echo "'docker buildx' has been installed and is enabled."; \
+	    else \
+	      echo "'docker buildx' has been installed but is not enabled by default. Set DOCKER_CLI_EXPERIMENTAL=enabled if you want to use it."; \
+	      exit 1; \
+	    fi \
+	  else \
+	    echo "'docker buildx' is available but not enabled. Set DOCKER_CLI_EXPERIMENTAL=enabled if you want to use it."; \
+	    exit 1; \
+	  fi \
 	fi
 
 # Ensure a local builder for multi-arch build. For more details, see: https://github.com/docker/buildx/blob/master/README.md#building-multi-platform-images
-.ensure-buildx-builder:
-	@if [[  ! -f ~/.docker/buildx/instances/kiali-builder ]]; then \
-  		echo "builder 'kiali-builder' not exists. creating 'kiali-builder'"; \
-  		DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx create --name=kiali-builder; \
-  	fi; \
-	if [[ $$(uname -s) == "Linux" ]]; then \
-	  	echo "setup qemu for Linux"; \
-		docker run --privileged --rm tonistiigi/binfmt --install all; \
+.ensure-buildx-builder: .ensure-docker-buildx
+	@if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx inspect kiali-builder > /dev/null 2>&1; then \
+	  echo "The buildx builder instance named 'kiali-builder' does not exist. Creating one now."; \
+	  if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx create --name=kiali-builder; then \
+	    echo "Failed to create the buildx builder 'kiali-builder'"; \
+	    exit 1; \
+	  fi \
 	fi; \
-	echo "buildx use 'kiali-builder'"; \
-	DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx use kiali-builder
+	if [[ $$(uname -s) == "Linux" ]]; then \
+	  echo "Ensuring QEMU is set up for this Linux host"; \
+	  if ! docker run --privileged --rm tonistiigi/binfmt --install all; then \
+	    echo "Failed to ensure QEMU is set up. This build will be allowed to continue, but it may fail at a later step."; \
+	  fi \
+	fi; \
 
 ## container-multi-arch-push-kiali-quay: Pushes the Kiali multi-arch image to quay.
-container-multi-arch-push-kiali-quay: .ensure-docker-buildx .ensure-buildx-builder .prepare-kiali-image-files
+container-multi-arch-push-kiali-quay: .ensure-buildx-builder .prepare-kiali-image-files
 	@echo Pushing Kiali multi-arch image to ${QUAY_TAG} using docker buildx
-	DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx build --push $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
+	DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx build --push --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
