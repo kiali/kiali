@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -12,7 +11,6 @@ import (
 	kmock "github.com/kiali/kiali/kubernetes/monitoringdashboards/mock"
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
 	pmock "github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -47,8 +45,8 @@ func TestGetDashboard(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1_1", []string{expectedLabels}, "", &query.RangeQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.RangeQuery).Return(fakeHistogram(11, 11))
+	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -61,12 +59,10 @@ func TestGetDashboard(t *testing.T) {
 	assert.Equal("My chart 1_2", dashboard.Charts[1].Name)
 	assert.Len(dashboard.Charts[0].Metrics, 1)
 	// Note: fake dashboard has scale=10 for every chart
-	assert.Equal(float64(100), dashboard.Charts[0].Metrics[0].Values[0].Value)
+	assert.Equal(float64(100), dashboard.Charts[0].Metrics[0].Datapoints[0].Value)
 	assert.Len(dashboard.Charts[1].Metrics, 2)
-	assert.Equal(float64(110), dashboard.Charts[1].Metrics[0].Values[0].Value)
-	assert.Equal(float64(110), dashboard.Charts[1].Metrics[1].Values[0].Value)
-	assert.Equal("0.99", dashboard.Charts[1].Metrics[0].LabelSet["__stat__"])
-	assert.Equal("avg", dashboard.Charts[1].Metrics[1].LabelSet["__stat__"])
+	assertHisto(assert, dashboard.Charts[1].Metrics, "avg", 110)
+	assertHisto(assert, dashboard.Charts[1].Metrics, "0.99", 120)
 }
 
 func TestGetDashboardFromKialiNamespace(t *testing.T) {
@@ -85,8 +81,8 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1_1", []string{expectedLabels}, "", &query.RangeQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.RangeQuery).Return(fakeHistogram(11, 12))
+	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -241,9 +237,8 @@ func TestBuildIstioDashboard(t *testing.T) {
 	config.Set(conf)
 	service := NewDashboardsService()
 
-	dashboard, err := service.BuildIstioDashboard(fakeMetrics(), "inbound")
+	dashboard := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 
-	assert.Nil(err)
 	assert.Equal("Inbound Metrics", dashboard.Title)
 	assert.Len(dashboard.Aggregations, 6)
 	assert.Equal("Local version", dashboard.Aggregations[0].DisplayName)
@@ -256,41 +251,40 @@ func TestBuildIstioDashboard(t *testing.T) {
 	assert.Equal("Request duration", dashboard.Charts[1].Name)
 	assert.Len(dashboard.Charts[1].Metrics, 2)
 	assert.Equal("TCP sent", dashboard.Charts[7].Name)
-	assert.Equal(float64(10), dashboard.Charts[0].Metrics[0].Values[0].Value)
-	assert.Equal(float64(20), dashboard.Charts[1].Metrics[0].Values[0].Value)
-	assert.Equal(float64(13), dashboard.Charts[7].Metrics[0].Values[0].Value)
+	assert.Equal(float64(10), dashboard.Charts[0].Metrics[0].Datapoints[0].Value) // Request volume (request_count)
+	assert.Equal(float64(20), dashboard.Charts[1].Metrics[0].Datapoints[0].Value) // Request duration (request_duration_millis)
+	assert.Equal(float64(13), dashboard.Charts[7].Metrics[0].Datapoints[0].Value) // TCP sent (tcp_sent)
+	// Absent metrics are not nil
+	assert.Equal("Request throughput", dashboard.Charts[2].Name)
+	assert.NotNil(dashboard.Charts[2].Metrics)
+	assert.Len(dashboard.Charts[2].Metrics, 0)
 }
 
-func fakeCounter(value int) prometheus.Metric {
-	return prometheus.Metric{
-		Matrix: model.Matrix{
-			&model.SampleStream{
-				Metric: model.Metric{},
-				Values: []model.SamplePair{{Timestamp: 0, Value: model.SampleValue(value)}},
-			},
-		},
-	}
+func fakeCounter(value float64) []models.Metric {
+	return []models.Metric{{
+		Labels:     map[string]string{},
+		Datapoints: []models.Datapoint{{Timestamp: 0, Value: value}},
+	}}
 }
 
-func fakeHistogram(avg, p99 int) prometheus.Histogram {
-	return prometheus.Histogram{
-		"0.99": fakeCounter(p99),
-		"avg":  fakeCounter(avg),
-	}
+func fakeHistogram(avg, p99 float64) []models.Metric {
+	return []models.Metric{{
+		Stat:       "0.99",
+		Datapoints: []models.Datapoint{{Timestamp: 0, Value: p99}},
+	}, {
+		Stat:       "avg",
+		Datapoints: []models.Datapoint{{Timestamp: 0, Value: avg}},
+	}}
 }
 
-func fakeMetrics() models.Metrics {
-	return models.Metrics{
-		Metrics: map[string]prometheus.Metric{
-			"request_count":       fakeCounter(10),
-			"request_error_count": fakeCounter(11),
-			"tcp_received":        fakeCounter(12),
-			"tcp_sent":            fakeCounter(13),
-		},
-		Histograms: map[string]prometheus.Histogram{
-			"request_duration_millis": fakeHistogram(20000, 20000),
-			"request_size":            fakeHistogram(21, 21),
-			"response_size":           fakeHistogram(22, 22),
-		},
+func fakeMetrics() models.MetricsMap {
+	return models.MetricsMap{
+		"request_count":           fakeCounter(10),
+		"request_error_count":     fakeCounter(11),
+		"tcp_received":            fakeCounter(12),
+		"tcp_sent":                fakeCounter(13),
+		"request_duration_millis": fakeHistogram(20, 20),
+		"request_size":            fakeHistogram(21, 21),
+		"response_size":           fakeHistogram(22, 22),
 	}
 }

@@ -231,19 +231,28 @@ func (in *DashboardsService) GetDashboard(params models.DashboardQuery, template
 			filledCharts[idx] = models.ConvertChart(chart)
 			metrics := chart.GetMetrics()
 			for _, ref := range metrics {
+				var converted []models.Metric
+				var err error
 				if chart.DataType == v1alpha1.Raw {
 					aggregator := params.RawDataAggregator
 					if chart.Aggregator != "" {
 						aggregator = chart.Aggregator
 					}
 					metric := promClient.FetchRange(ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
-					filledCharts[idx].FillMetric(ref.MetricName, ref.DisplayName, metric, conversionParams)
+					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				} else if chart.DataType == v1alpha1.Rate {
 					metric := promClient.FetchRateRange(ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
-					filledCharts[idx].FillMetric(ref.MetricName, ref.DisplayName, metric, conversionParams)
+					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				} else {
 					histo := promClient.FetchHistogramRange(ref.MetricName, filters, grouping, &params.RangeQuery)
-					filledCharts[idx].FillHistogram(ref.MetricName, ref.DisplayName, histo, conversionParams)
+					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
+				}
+
+				// Fill in chart
+				if err != nil {
+					filledCharts[idx].Error = err.Error()
+				} else {
+					filledCharts[idx].Metrics = append(filledCharts[idx].Metrics, converted...)
 				}
 			}
 		}(i, item.Chart)
@@ -429,76 +438,68 @@ func getIstioCharts() []istioChart {
 	istioCharts := []istioChart{
 		{
 			Chart: models.Chart{
-				Name:    "Request volume",
-				Unit:    "ops",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Request volume",
+				Unit:  "ops",
+				Spans: 6,
 			},
 			refName: "request_count",
 		},
 		{
 			Chart: models.Chart{
-				Name:    "Request duration",
-				Unit:    "seconds",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Request duration",
+				Unit:  "seconds",
+				Spans: 6,
 			},
 			refName: "request_duration_millis",
 			scale:   0.001,
 		},
 		{
 			Chart: models.Chart{
-				Name:    "Request throughput",
-				Unit:    "bitrate",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Request throughput",
+				Unit:  "bitrate",
+				Spans: 6,
 			},
 			refName: "request_throughput",
 			scale:   8, // Bps to bps
 		},
 		{
 			Chart: models.Chart{
-				Name:    "Request size",
-				Unit:    "bytes",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Request size",
+				Unit:  "bytes",
+				Spans: 6,
 			},
 			refName: "request_size",
 		},
 		{
 			Chart: models.Chart{
-				Name:    "Response throughput",
-				Unit:    "bitrate",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Response throughput",
+				Unit:  "bitrate",
+				Spans: 6,
 			},
 			refName: "response_throughput",
 			scale:   8, // Bps to bps
 		},
 		{
 			Chart: models.Chart{
-				Name:    "Response size",
-				Unit:    "bytes",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "Response size",
+				Unit:  "bytes",
+				Spans: 6,
 			},
 			refName: "response_size",
 		},
 		{
 			Chart: models.Chart{
-				Name:    "TCP received",
-				Unit:    "bitrate",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "TCP received",
+				Unit:  "bitrate",
+				Spans: 6,
 			},
 			refName: "tcp_received",
 		},
 		{
 			Chart: models.Chart{
-				Name:    "TCP sent",
-				Unit:    "bitrate",
-				Spans:   6,
-				Metrics: []*models.SampleStream{},
+				Name:  "TCP sent",
+				Unit:  "bitrate",
+				Spans: 6,
 			},
 			refName: "tcp_sent",
 		},
@@ -506,8 +507,20 @@ func getIstioCharts() []istioChart {
 	return istioCharts
 }
 
+func GetIstioScaler() func(name string) float64 {
+	charts := getIstioCharts()
+	return func(name string) float64 {
+		for _, c := range charts {
+			if c.refName == name {
+				return c.scale
+			}
+		}
+		return 1.0
+	}
+}
+
 // GetIstioDashboard returns Istio dashboard (currently hard-coded) filled-in with metrics
-func (in *DashboardsService) BuildIstioDashboard(metrics models.Metrics, direction string) (*models.MonitoringDashboard, error) {
+func (in *DashboardsService) BuildIstioDashboard(metrics models.MetricsMap, direction string) *models.MonitoringDashboard {
 	var dashboard models.MonitoringDashboard
 	// Copy dashboard
 	if direction == "inbound" {
@@ -524,15 +537,14 @@ func (in *DashboardsService) BuildIstioDashboard(metrics models.Metrics, directi
 		if chartTpl.scale != 0.0 {
 			conversionParams.Scale = chartTpl.scale
 		}
-		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
-			newChart.FillMetric(newChart.Name, newChart.Name, metric, conversionParams)
-		}
-		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
-			newChart.FillHistogram(newChart.Name, newChart.Name, histo, conversionParams)
+		if metrics := metrics[chartTpl.refName]; metrics != nil {
+			newChart.Metrics = metrics
+		} else {
+			newChart.Metrics = []models.Metric{}
 		}
 		dashboard.Charts = append(dashboard.Charts, newChart)
 	}
-	return &dashboard, nil
+	return &dashboard
 }
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model

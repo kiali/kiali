@@ -589,7 +589,7 @@ type WorkloadDetailsResponse struct {
 // swagger:response metricsResponse
 type MetricsResponse struct {
 	// in:body
-	Body models.Metrics
+	Body models.MetricsMap
 }
 
 // Dashboard response model

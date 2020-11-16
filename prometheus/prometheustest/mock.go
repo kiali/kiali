@@ -313,3 +313,29 @@ func round(q string) string {
 func roundErrs(q string) string {
 	return fmt.Sprintf("round((%s), 0.001000) > 0.001000 or (%s)", q, q)
 }
+
+func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {
+	o.On("FetchRateRange", name, []string{labels}, "", q).Return(fakeMetric(value))
+}
+
+func (o *PromClientMock) MockHistogram(name string, labels string, q *prometheus.RangeQuery, avg, p99 float64) {
+	o.On("FetchHistogramRange", name, labels, "", q).Return(fakeHistogram(avg, p99))
+}
+
+func fakeMetric(value float64) prometheus.Metric {
+	return prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{},
+				Values: []model.SamplePair{{Timestamp: 0, Value: model.SampleValue(value)}},
+			},
+		},
+	}
+}
+
+func fakeHistogram(avg, p99 float64) prometheus.Histogram {
+	return prometheus.Histogram{
+		"0.99": fakeMetric(p99),
+		"avg":  fakeMetric(avg),
+	}
+}

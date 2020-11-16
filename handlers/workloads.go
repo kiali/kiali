@@ -5,9 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/models"
 )
 
 // WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -86,34 +83,6 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	audit(r, "UPDATE on Namespace: "+namespace+" Workload name: "+workload+" Type: "+workloadType+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, workloadDetails)
-}
-
-// WorkloadDashboard is the API handler to fetch Istio dashboard, related to a single workload
-func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	workload := vars["workload"]
-
-	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
-	if metricsService == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
-	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics := metricsService.GetMetrics(params)
-	dashboard, err := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, dashboard)
 }
 
 // PodDetails is the API handler to fetch all details to be displayed, related to a single pod

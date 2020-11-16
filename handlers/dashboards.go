@@ -108,11 +108,67 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
-	dashboard, err := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	RespondWithJSON(w, http.StatusOK, dashboard)
+}
+
+// ServiceDashboard is the API handler to fetch Istio dashboard, related to a single service
+func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	service := vars["service"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := models.IstioMetricsQuery{Namespace: namespace, Service: service}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	RespondWithJSON(w, http.StatusOK, dashboard)
+}
+
+// WorkloadDashboard is the API handler to fetch Istio dashboard, related to a single workload
+func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	workload := vars["workload"]
+
+	metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, namespace)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := models.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }

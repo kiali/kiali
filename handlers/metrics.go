@@ -43,7 +43,11 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
+	metrics, err := metricsService.GetMetrics(params, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
@@ -71,7 +75,11 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
+	metrics, err := metricsService.GetMetrics(params, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
@@ -99,7 +107,11 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
+	metrics, err := metricsService.GetMetrics(params, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
@@ -136,7 +148,11 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
+	metrics, err := metricsService.GetMetrics(params, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
@@ -164,7 +180,11 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	metrics := metricsService.GetMetrics(params)
+	metrics, err := metricsService.GetMetrics(params, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
