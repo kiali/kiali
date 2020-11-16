@@ -21,11 +21,9 @@ func TestValidInternalSelector(t *testing.T) {
 
 	validations, valid := SelectorChecker{
 		Gateway: ingress,
-		WorkloadList: models.WorkloadList{
-			Namespace: models.Namespace{
-				Name: "test",
-			},
-			Workloads: []models.WorkloadListItem{},
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("istio-system",
+				data.CreateWorkloadListItem("istio-ingressgateway", map[string]string{"istio": "ingressgateway"})),
 		},
 	}.Check()
 
@@ -34,11 +32,9 @@ func TestValidInternalSelector(t *testing.T) {
 
 	validations, valid = SelectorChecker{
 		Gateway: egress,
-		WorkloadList: models.WorkloadList{
-			Namespace: models.Namespace{
-				Name: "test",
-			},
-			Workloads: []models.WorkloadListItem{},
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("istio-system",
+				data.CreateWorkloadListItem("istio-egressgateway", map[string]string{"istio": "egressgateway"})),
 		},
 	}.Check()
 
@@ -56,12 +52,49 @@ func TestValidNamespaceSelector(t *testing.T) {
 
 	validations, valid := SelectorChecker{
 		Gateway: gw,
-		WorkloadList: data.CreateWorkloadList("test",
-			data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
+}
+
+func TestValidIstioNamespaceSelector(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gw := data.CreateEmptyGateway("gwone", "test", map[string]string{"app": "proxy"})
+
+	validations, valid := SelectorChecker{
+		Gateway: gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"testproxy": data.CreateWorkloadList(conf.IstioNamespace,
+				data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+
+	validations, valid = SelectorChecker{
+		Gateway: gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": {
+				Namespace: models.Namespace{
+					Name: "test",
+				},
+				Workloads: []models.WorkloadListItem{},
+			},
+		},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
 }
 
 func TestMissingSelectorTarget(t *testing.T) {
@@ -73,9 +106,10 @@ func TestMissingSelectorTarget(t *testing.T) {
 	gw := data.CreateEmptyGateway("gwone", "test", map[string]string{"app": "proxy"})
 
 	validations, valid := SelectorChecker{
-		Gateway:      gw,
-		WorkloadList: data.CreateWorkloadList("test"),
-		// data.CreateWorkloadListItem("testproxy", map[string]string{"app": "proxy"})),
+		Gateway: gw,
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"test": data.CreateWorkloadList("test"),
+		},
 	}.Check()
 
 	assert.False(valid)
