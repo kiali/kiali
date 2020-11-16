@@ -243,8 +243,7 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	addonAuth := auth
-	if addonAuth.UseKialiToken {
+	if auth.UseKialiToken {
 		token, err := kubernetes.GetKialiToken()
 		if err != nil {
 			log.Errorf("Could not read the Kiali Service Account token: %v", err)
