@@ -39,7 +39,8 @@ const validToIcon: { [valid: string]: ComponentIcon } = {
 
 const statusMsg = {
   [Status.NotFound]: 'Not found',
-  [Status.Unhealthy]: 'Not healthy'
+  [Status.Unhealthy]: 'Not healthy',
+  [Status.Unreachable]: 'Unreachable'
 };
 
 class IstioComponentStatus extends React.Component<Props> {

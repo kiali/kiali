@@ -1,6 +1,7 @@
 export enum Status {
   Healthy = 'Healthy',
   Unhealthy = 'Unhealthy',
+  Unreachable = 'Unreachable',
   NotFound = 'NotFound'
 }
 
