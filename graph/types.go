@@ -14,6 +14,7 @@ const (
 	GraphTypeWorkload     string = "workload"
 	NodeTypeAggregate     string = "aggregate" // The special "aggregate" traffic node
 	NodeTypeApp           string = "app"
+	NodeTypeBox           string = "box" // The special "box" node. isBox will be set to "app" | "cluster" | "namespace"
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
@@ -27,6 +28,7 @@ const (
 type Node struct {
 	ID        string   // unique identifier for the node
 	NodeType  string   // Node type
+	Cluster   string   // Cluster
 	Namespace string   // Namespace
 	Workload  string   // Workload (deployment) name
 	App       string   // Workload app label value
@@ -55,12 +57,13 @@ func NewNamespaceInfoMap() NamespaceInfoMap {
 }
 
 type ServiceName struct {
+	Cluster   string `json:"cluster"`
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 }
 
 func (s *ServiceName) Key() string {
-	return fmt.Sprintf("%s %s", s.Namespace, s.Name)
+	return fmt.Sprintf("%s %s %s", s.Cluster, s.Namespace, s.Name)
 }
 
 // TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
@@ -71,32 +74,22 @@ func (s *ServiceName) Key() string {
 type TrafficMap map[string]*Node
 
 // NewNode constructor
-func NewNode(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
-	id, nodeType := Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
+func NewNode(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
+	id, nodeType := Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
 	namespace := workloadNamespace
 	if !IsOK(namespace) {
 		namespace = serviceNamespace
 	}
 
-	return NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType)
+	return NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType)
 }
 
 // NewNodeExplicit constructor assigns the specified ID
-func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType string) Node {
+func NewNodeExplicit(id, cluster, namespace, workload, app, version, service, nodeType, graphType string) Node {
 	metadata := make(Metadata)
 
 	// trim unnecessary fields
 	switch nodeType {
-	case NodeTypeWorkload:
-		// maintain the app+version labeling if it is set, it can be useful
-		// for identifying destination rules, providing links, and grouping
-		if app == Unknown {
-			app = ""
-		}
-		if version == Unknown {
-			version = ""
-		}
-		service = ""
 	case NodeTypeApp:
 		// note: we keep workload for a versioned app node because app+version labeling
 		// should be backed by a single workload and it can be useful to use the workload
@@ -114,11 +107,22 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 		if service == passthroughCluster || service == blackHoleCluster {
 			metadata[IsEgressCluster] = true
 		}
+	case NodeTypeWorkload:
+		// maintain the app+version labeling if it is set, it can be useful
+		// for identifying destination rules, providing links, and grouping
+		if app == Unknown {
+			app = ""
+		}
+		if version == Unknown {
+			version = ""
+		}
+		service = ""
 	}
 
 	return Node{
 		ID:        id,
 		NodeType:  nodeType,
+		Cluster:   cluster,
 		Namespace: namespace,
 		Workload:  workload,
 		App:       app,
@@ -151,7 +155,7 @@ func NewTrafficMap() TrafficMap {
 }
 
 // Id returns the unique node ID
-func Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string) {
+func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string) {
 	// prefer the workload namespace
 	namespace := workloadNamespace
 	if !IsOK(namespace) {
@@ -160,7 +164,7 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 
 	// first, check for the special-case "unknown" source node
 	if Unknown == namespace && Unknown == workload && Unknown == app && service == "" {
-		return fmt.Sprintf("unknown_source"), NodeTypeUnknown
+		return fmt.Sprintf("%s_unknown_source", cluster), NodeTypeUnknown
 	}
 
 	// It is possible that a request is made for an unknown destination. For example, an Ingress
@@ -168,7 +172,7 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 	// Every other field is unknown. Allow one unknown service per namespace to help reflect these
 	// bad destinations in the graph,  it may help diagnose a problem.
 	if Unknown == workload && Unknown == app && Unknown == service {
-		return fmt.Sprintf("svc_%s_unknown", namespace), NodeTypeService
+		return fmt.Sprintf("svc_%s_%s_unknown", cluster, namespace), NodeTypeService
 	}
 
 	workloadOk := IsOK(workload)
@@ -176,19 +180,19 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 	serviceOk := IsOK(service)
 
 	if !workloadOk && !appOk && !serviceOk {
-		panic(fmt.Sprintf("Failed ID gen1: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+		panic(fmt.Sprintf("Failed ID gen1: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType))
 	}
 
 	// handle workload graph nodes (service graphs are initially processed as workload graphs)
 	if graphType == GraphTypeWorkload || graphType == GraphTypeService {
 		// workload graph nodes are type workload or service
 		if !workloadOk && !serviceOk {
-			panic(fmt.Sprintf("Failed ID gen2: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+			panic(fmt.Sprintf("Failed ID gen2: cluster=[%s] namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", cluster, namespace, workload, app, version, service, graphType))
 		}
 		if !workloadOk {
-			return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+			return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
 		}
-		return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
+		return fmt.Sprintf("wl_%s_%s_%v", cluster, namespace, workload), NodeTypeWorkload
 	}
 
 	// handle app and versionedApp graphs
@@ -202,34 +206,34 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 		// For a [versionless] App graph use the app label to aggregate versions/workloads into one node
 		if graphType == GraphTypeVersionedApp {
 			if workloadOk {
-				return fmt.Sprintf("vapp_%v_%v", namespace, workload), NodeTypeApp
+				return fmt.Sprintf("vapp_%s_%s_%s", cluster, namespace, workload), NodeTypeApp
 			}
 			if versionOk {
-				return fmt.Sprintf("vapp_%v_%v_%v", namespace, app, version), NodeTypeApp
+				return fmt.Sprintf("vapp_%s_%s_%s_%s", cluster, namespace, app, version), NodeTypeApp
 			}
 		}
-		return fmt.Sprintf("app_%v_%v", namespace, app), NodeTypeApp
+		return fmt.Sprintf("app_%s_%s_%s", cluster, namespace, app), NodeTypeApp
 	}
 
 	// fall back to workload if applicable
 	if workloadOk {
-		return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
+		return fmt.Sprintf("wl_%s_%s_%s", cluster, namespace, workload), NodeTypeWorkload
 	}
 
 	// fall back to service as a last resort in the app graph
-	return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+	return fmt.Sprintf("svc_%s_%s_%s", cluster, namespace, service), NodeTypeService
 }
 
 // NewAggregateNode constructor, set svcName and app to "" when not service-specific aggregate
-func NewAggregateNode(namespace, aggregate, aggregateValue, svcName, app string) Node {
-	id := AggregateID(namespace, aggregate, aggregateValue, svcName)
+func NewAggregateNode(cluster, namespace, aggregate, aggregateValue, svcName, app string) Node {
+	id := AggregateID(cluster, namespace, aggregate, aggregateValue, svcName)
 
-	return NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName, app)
+	return NewAggregateNodeExplicit(id, cluster, namespace, aggregate, aggregateValue, svcName, app)
 }
 
 // NewAggregateNodeExplicit constructor assigns the specified ID, , set svcName and app to ""
 // when not service-specific aggregate
-func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName, app string) Node {
+func NewAggregateNodeExplicit(id, cluster, namespace, aggregate, aggregateValue, svcName, app string) Node {
 	metadata := make(Metadata)
 	metadata[Aggregate] = aggregate
 	metadata[AggregateValue] = aggregateValue
@@ -237,6 +241,7 @@ func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName,
 	return Node{
 		ID:        id,
 		NodeType:  NodeTypeAggregate,
+		Cluster:   cluster,
 		Namespace: namespace,
 		Workload:  "",
 		App:       app,
@@ -248,9 +253,9 @@ func NewAggregateNodeExplicit(id, namespace, aggregate, aggregateValue, svcName,
 }
 
 // AggregateID returns the unique node ID
-func AggregateID(namespace, aggregate, aggregateVal, svcName string) (id string) {
+func AggregateID(cluster, namespace, aggregate, aggregateVal, svcName string) (id string) {
 	if svcName == "" {
-		return fmt.Sprintf("agg_%s_%s_%s", namespace, aggregate, aggregateVal)
+		return fmt.Sprintf("agg_%s_%s_%s_%s", cluster, namespace, aggregate, aggregateVal)
 	}
-	return fmt.Sprintf("agg_%s_%s_%s_%s", namespace, aggregate, aggregateVal, svcName)
+	return fmt.Sprintf("agg_%s_%s_%s_%s_%s", cluster, namespace, aggregate, aggregateVal, svcName)
 }

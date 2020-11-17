@@ -599,8 +599,8 @@
             "type": "string",
             "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -714,6 +714,13 @@
             "name": "aggregateValue",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
           },
           {
             "type": "string",
@@ -930,6 +937,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -983,6 +997,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -1016,8 +1037,8 @@
             "type": "string",
             "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1084,6 +1105,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -1117,8 +1145,8 @@
             "type": "string",
             "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -2613,6 +2641,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -2654,8 +2689,8 @@
             "type": "string",
             "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -3331,6 +3366,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The cluster name. If not supplied queries/results will not be constrained by cluster.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -3372,8 +3414,8 @@
             "type": "string",
             "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -4272,7 +4314,7 @@
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "isMTLS": {
           "type": "string",
@@ -5572,6 +5614,10 @@
           "type": "string",
           "x-go-name": "App"
         },
+        "cluster": {
+          "type": "string",
+          "x-go-name": "Cluster"
+        },
         "destServices": {
           "type": "array",
           "items": {
@@ -5594,15 +5640,15 @@
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
+        },
+        "isBox": {
+          "type": "string",
+          "x-go-name": "IsBox"
         },
         "isDead": {
           "type": "boolean",
           "x-go-name": "IsDead"
-        },
-        "isGroup": {
-          "type": "string",
-          "x-go-name": "IsGroup"
         },
         "isInaccessible": {
           "type": "boolean",
@@ -6347,6 +6393,10 @@
     "ServiceName": {
       "type": "object",
       "properties": {
+        "cluster": {
+          "type": "string",
+          "x-go-name": "Cluster"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"

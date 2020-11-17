@@ -116,7 +116,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
 	for se, seServiceNodes := range seMap {
-		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		serviceEntryNode := graph.NewNode(graph.Unknown, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
 		for _, doomedSeServiceNode := range seServiceNodes {

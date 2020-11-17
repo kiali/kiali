@@ -9,7 +9,7 @@
 //
 // Algorithm: Process the graph structure adding nodes and edges, decorating each
 //            with information provided.  An optional second pass generates compound
-//            nodes for version grouping.
+//            nodes for requested boxing.
 //
 // The package provides the Cytoscape implementation of graph/ConfigVendor.
 package cytoscape
@@ -18,6 +18,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kiali/kiali/graph"
 )
@@ -55,11 +56,12 @@ type ProtocolTraffic struct {
 
 type NodeData struct {
 	// Cytoscape Fields
-	Id     string `json:"id"`               // unique internal node ID (n0, n1...)
+	ID     string `json:"id"`               // unique internal node ID (n0, n1...)
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
 	NodeType        string              `json:"nodeType"`
+	Cluster         string              `json:"cluster"`
 	Namespace       string              `json:"namespace"`
 	Workload        string              `json:"workload,omitempty"`
 	App             string              `json:"app,omitempty"`
@@ -71,8 +73,8 @@ type NodeData struct {
 	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
 	HasMissingSC    bool                `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
+	IsBox           string              `json:"isBox,omitempty"`           // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead          bool                `json:"isDead,omitempty"`          // true (has no pods) | false
-	IsGroup         string              `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
 	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
@@ -83,7 +85,7 @@ type NodeData struct {
 
 type EdgeData struct {
 	// Cytoscape Fields
-	Id     string `json:"id"`     // unique internal edge ID (e0, e1...)
+	ID     string `json:"id"`     // unique internal edge ID (e0, e1...)
 	Source string `json:"source"` // parent node ID
 	Target string `json:"target"` // child node ID
 
@@ -130,28 +132,39 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 
 	buildConfig(trafficMap, &nodes, &edges, o)
 
-	// Add compound nodes as needed
-	switch o.GroupBy {
-	case graph.GroupByApp:
-		if o.GraphType != graph.GraphTypeService {
-			groupByApp(&nodes)
-		}
-	case graph.GroupByVersion:
-		if o.GraphType == graph.GraphTypeVersionedApp {
-			groupByVersion(&nodes)
-		}
-	default:
-		// no grouping
+	// Add compound nodes as needed, inner boxes first
+	if strings.Contains(o.BoxBy, graph.BoxByApp) && o.GraphType != graph.GraphTypeService {
+		boxByApp(&nodes)
+	}
+	if strings.Contains(o.BoxBy, graph.BoxByNamespace) {
+		boxByNamespace(&nodes)
+	}
+	if strings.Contains(o.BoxBy, graph.BoxByCluster) {
+		boxByCluster(&nodes)
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
-	// kiali-1258 compound/isGroup/parent nodes must come before the child references
+	// kiali-1258 parent nodes must come before the child references
 	sort.Slice(nodes, func(i, j int) bool {
 		switch {
+		case nodes[i].Data.IsBox != nodes[j].Data.IsBox:
+			rank := func(boxBy string) int {
+				switch boxBy {
+				case graph.BoxByCluster:
+					return 0
+				case graph.BoxByNamespace:
+					return 1
+				case graph.BoxByApp:
+					return 2
+				default:
+					return 3
+				}
+			}
+			return rank(nodes[i].Data.IsBox) < rank(nodes[j].Data.IsBox)
+		case nodes[i].Data.Cluster != nodes[j].Data.Cluster:
+			return nodes[i].Data.Cluster < nodes[j].Data.Cluster
 		case nodes[i].Data.Namespace != nodes[j].Data.Namespace:
 			return nodes[i].Data.Namespace < nodes[j].Data.Namespace
-		case nodes[i].Data.IsGroup != nodes[j].Data.IsGroup:
-			return nodes[i].Data.IsGroup > nodes[j].Data.IsGroup
 		case nodes[i].Data.App != nodes[j].Data.App:
 			return nodes[i].Data.App < nodes[j].Data.App
 		case nodes[i].Data.Version != nodes[j].Data.Version:
@@ -185,11 +198,12 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 
 func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o graph.ConfigOptions) {
 	for id, n := range trafficMap {
-		nodeId := nodeHash(id)
+		nodeID := nodeHash(id)
 
 		nd := &NodeData{
-			Id:        nodeId,
+			ID:        nodeID,
 			NodeType:  n.NodeType,
+			Cluster:   n.Cluster,
 			Namespace: n.Namespace,
 			Workload:  n.Workload,
 			App:       n.App,
@@ -269,17 +283,17 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		*nodes = append(*nodes, &nw)
 
 		for _, e := range n.Edges {
-			sourceIdHash := nodeHash(n.ID)
-			destIdHash := nodeHash(e.Dest.ID)
+			sourceIDHash := nodeHash(n.ID)
+			destIDHash := nodeHash(e.Dest.ID)
 			protocol := ""
 			if e.Metadata[graph.ProtocolKey] != nil {
 				protocol = e.Metadata[graph.ProtocolKey].(string)
 			}
-			edgeId := edgeHash(sourceIdHash, destIdHash, protocol)
+			edgeID := edgeHash(sourceIDHash, destIDHash, protocol)
 			ed := EdgeData{
-				Id:     edgeId,
-				Source: sourceIdHash,
-				Target: destIdHash,
+				ID:     edgeID,
+				Source: sourceIDHash,
+				Target: destIDHash,
 				Traffic: ProtocolTraffic{
 					Protocol: protocol,
 				},
@@ -411,46 +425,70 @@ func getRate(md graph.Metadata, k graph.MetadataKey) float64 {
 	return 0.0
 }
 
-// groupByVersion adds compound nodes to group multiple versions of the same app
-func groupByVersion(nodes *[]*NodeWrapper) {
-	appBox := make(map[string][]*NodeData)
-
-	for _, nw := range *nodes {
-		if nw.Data.NodeType == graph.NodeTypeApp {
-			k := fmt.Sprintf("box_%s_%s", nw.Data.Namespace, nw.Data.App)
-			appBox[k] = append(appBox[k], nw.Data)
-		}
-	}
-
-	generateGroupCompoundNodes(appBox, nodes, graph.GroupByVersion)
-}
-
-// groupByApp adds compound nodes to group all nodes for the same app
-func groupByApp(nodes *[]*NodeWrapper) {
-	appBox := make(map[string][]*NodeData)
+// boxByApp adds compound nodes to box nodes for the same app
+func boxByApp(nodes *[]*NodeWrapper) {
+	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
 		if nw.Data.App != "unknown" && nw.Data.App != "" {
-			k := fmt.Sprintf("box_%s_%s", nw.Data.Namespace, nw.Data.App)
-			appBox[k] = append(appBox[k], nw.Data)
+			k := fmt.Sprintf("box_%s_%s_%s", nw.Data.Cluster, nw.Data.Namespace, nw.Data.App)
+			box[k] = append(box[k], nw.Data)
 		}
 	}
 
-	generateGroupCompoundNodes(appBox, nodes, graph.GroupByApp)
+	generateBoxCompoundNodes(box, nodes, graph.BoxByApp)
 }
 
-func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWrapper, groupBy string) {
-	for k, members := range appBox {
-		if len(members) > 1 {
+// boxByNamespace adds compound nodes to box nodes in the same namespace
+func boxByNamespace(nodes *[]*NodeWrapper) {
+	box := make(map[string][]*NodeData)
+
+	for _, nw := range *nodes {
+		if nw.Data.Parent == "" {
+			k := fmt.Sprintf("box_%s_%s", nw.Data.Cluster, nw.Data.Namespace)
+			box[k] = append(box[k], nw.Data)
+		}
+	}
+
+	generateBoxCompoundNodes(box, nodes, graph.BoxByNamespace)
+}
+
+// boxByCluster adds compound nodes to box nodes in the same cluster
+func boxByCluster(nodes *[]*NodeWrapper) {
+	box := make(map[string][]*NodeData)
+
+	for _, nw := range *nodes {
+		if nw.Data.Parent == "" {
+			k := fmt.Sprintf("box_%s", nw.Data.Cluster)
+			box[k] = append(box[k], nw.Data)
+		}
+	}
+
+	generateBoxCompoundNodes(box, nodes, graph.BoxByCluster)
+}
+
+func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
+	for k, members := range box {
+		if boxBy != graph.BoxByApp || len(members) > 1 {
 			// create the compound (parent) node for the member nodes
-			nodeId := nodeHash(k)
+			nodeID := nodeHash(k)
+			namespace := ""
+			app := ""
+			switch boxBy {
+			case graph.BoxByNamespace:
+				namespace = members[0].Namespace
+			case graph.BoxByApp:
+				namespace = members[0].Namespace
+				app = members[0].App
+			}
 			nd := NodeData{
-				Id:        nodeId,
-				NodeType:  graph.NodeTypeApp,
-				Namespace: members[0].Namespace,
-				App:       members[0].App,
+				ID:        nodeID,
+				NodeType:  graph.NodeTypeBox,
+				Cluster:   members[0].Cluster,
+				Namespace: namespace,
+				App:       app,
 				Version:   "",
-				IsGroup:   groupBy,
+				IsBox:     boxBy,
 			}
 
 			nw := NodeWrapper{
@@ -463,12 +501,14 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 			nd.IsOutside = false
 
 			for _, n := range members {
-				n.Parent = nodeId
+				n.Parent = nodeID
 
-				// copy some member attributes to to the compound node (aka app box)
-				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
-				nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
-				nd.IsOutside = nd.IsOutside || n.IsOutside
+				// For logical boxing (app), copy some member attributes to to the box node
+				if boxBy == graph.BoxByApp {
+					nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
+					nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
+					nd.IsOutside = nd.IsOutside || n.IsOutside
+				}
 			}
 
 			// add the compound node to the list of nodes

@@ -71,7 +71,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 
 	// query prometheus for the responseTime info in three queries:
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
-	groupBy := "le,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_code,grpc_response_status"
+	groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_code,grpc_response_status"
 	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v"}[%vs])) by (%s)) > 0`,
 		quantile,
 		"istio_request_duration_milliseconds_bucket",
@@ -122,10 +122,12 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
+		lSourceCluster, sourceClusterOk := m["source_cluster"]
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
 		lSourceApp, sourceAppOk := m["source_canonical_service"]
 		lSourceVer, sourceVerOk := m["source_canonical_revision"]
+		lDestCluster, destClusterOk := m["destination_cluster"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
@@ -148,9 +150,12 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destSvc := string(lDestSvc)
 		responseCode := string(lResponseCode)
 
-		if util.IsBadSourceTelemetry(sourceWlNs, sourceWl, sourceApp) {
+		if util.IsBadSourceTelemetry(lSourceCluster, sourceClusterOk, sourceWlNs, sourceWl, sourceApp) {
 			continue
 		}
+
+		// handle clusters
+		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
 
 		// This was added in istio 1.5, handle in a backward compatible way
 		grpcReponseStatus := "0"
@@ -169,7 +174,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// handle unusual destinations
 		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
-		if util.IsBadDestTelemetry(destSvc, destSvcName, destWl) {
+		if util.IsBadDestTelemetry(lDestCluster, destClusterOk, destSvc, destSvcName, destWl) {
 			continue
 		}
 
@@ -181,21 +186,21 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
-			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			_, destNodeType := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		if inject {
 			// Do not set response time on the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
-			a.addResponseTime(responseTimeMap, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addResponseTime(responseTimeMap, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addResponseTime(responseTimeMap, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
 
-func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
-	sourceID, _ := graph.Id(sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destID, _ := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+	sourceID, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	key := fmt.Sprintf("%s %s", sourceID, destID)
 
 	responseTimeMap[key] = val

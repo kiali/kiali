@@ -14,15 +14,18 @@
 
 # ISTIO_DIR is where the Istio download is installed and thus where the istioctl binary is found.
 # CLIENT_EXE_NAME must be either "oc" or "kubectl"
+ADDONS="prometheus grafana jaeger"
+CLIENT_EXE_NAME="oc"
+CLUSTER_NAME="cluster-default"
+CONFIG_PROFILE="demo" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
+DELETE_ISTIO="false"
 ISTIOCTL=
 ISTIO_DIR=
-CLIENT_EXE_NAME="oc"
-NAMESPACE="istio-system"
-MTLS="true"
-DELETE_ISTIO="false"
 ISTIO_EGRESSGATEWAY_ENABLED="true"
-CONFIG_PROFILE="demo" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
-ADDONS="prometheus grafana jaeger"
+MESH_ID="mesh-default"
+MTLS="true"
+NAMESPACE="istio-system"
+NETWORK="network-default"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -38,6 +41,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -cep|--client-exe-path)
       CLIENT_EXE="$2"
+      shift;shift
+      ;;
+    -cn|--cluster-name)
+      CLUSTER_NAME="$2"
       shift;shift
       ;;
     -cp|--config-profile)
@@ -70,6 +77,10 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -mid|--mesh-id)
+      MESH_ID="$2"
+      shift;shift
+      ;;
     -m|--mtls)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         MTLS="$2"
@@ -81,6 +92,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -n|--namespace)
       NAMESPACE="$2"
+      shift;shift
+      ;;
+    -net|--network)
+      NETWORK="$2"
       shift;shift
       ;;
     -s|--set)
@@ -101,6 +116,9 @@ Valid command line arguments:
   -cep|--client-exe-path <full path to client exec>:
        Cluster client executable path - e.g. "/bin/kubectl" or "minikube kubectl --"
        This value overrides any other value set with --client-exe
+  -cn|--cluster-name <cluster name>:
+       Installs istio as part of cluster with the given name.
+       Default: cluster-default
   -cp|--config-profile <profile name>:
        Installs Istio with the given profile.
        Run "istioctl profile list" to see the valid list of configuration profiles available.
@@ -120,9 +138,15 @@ Valid command line arguments:
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: false
+  -mid|--mesh-id <mesh ID>:
+       Installs istio as part of mesh with the given name.
+       Default: mesh-default
   -n|--namespace <name>:
        Install Istio in this namespace.
        Default: istio-system
+  -net|--network <network>:
+       Installs istio as part of network with the given name.
+       Default: network-default
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
@@ -210,6 +234,9 @@ fi
 for s in \
    "${MTLS_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
+   "--set values.global.meshID=${MESH_ID}" \
+   "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
+   "--set values.global.network=${NETWORK}" \
    "${CNI_OPTIONS}" \
    "${TELEMETRY_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
