@@ -5,21 +5,21 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-// ClusteringService is a support service for retrieving data about the mesh environment
+// MeshService is a support service for retrieving data about the mesh environment
 // when Istio is installed with multi-cluster enabled.
-type ClusteringService struct {
+type MeshService struct {
 	k8s           kubernetes.ClientInterface
 	businessLayer *Layer
 }
 
-// MeshCluster holds some metadata about a cluster that is
+// Cluster holds some metadata about a cluster that is
 // part of the mesh.
-type MeshCluster struct {
+type Cluster struct {
 	// ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted
 	ApiEndpoint string `json:"apiEndpoint"`
 
-	// IsHomeCluster specifies if this cluster is hosting Kiali (and the observed Mesh Control Plane)
-	IsHomeCluster bool `json:"isHomeCluster"`
+	// IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)
+	IsKialiHome bool `json:"isKialiHome"`
 
 	// Name specifies the CLUSTER_ID as known by the Control Plane
 	Name string `json:"name"`
@@ -28,9 +28,9 @@ type MeshCluster struct {
 	SecretName string `json:"secretName"`
 }
 
-// GetMeshClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
+// GetClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
 // is done as best-effort using the resources that are present in the cluster.
-func (in *ClusteringService) GetMeshClusters() ([]MeshCluster, error) {
+func (in *MeshService) GetClusters() ([]Cluster, error) {
 	var err error
 
 	remoteClusters, err := in.resolveRemoteClustersFromSecrets()
@@ -38,7 +38,7 @@ func (in *ClusteringService) GetMeshClusters() ([]MeshCluster, error) {
 		return nil, err
 	}
 
-	myCluster, err := in.resolveMyControlPlaneCluster()
+	myCluster, err := in.resolveKialiControlPlaneCluster()
 	if err != nil {
 		return nil, err
 	}
@@ -48,10 +48,10 @@ func (in *ClusteringService) GetMeshClusters() ([]MeshCluster, error) {
 	return allClusters, nil
 }
 
-// resolveMyControlPlaneCluster tries to resolve the metadata about the cluster where
+// resolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
 // Kiali is installed. This assumes that the mesh Control Plane is installed in the
 // same cluster as Kiali.
-func (in *ClusteringService) resolveMyControlPlaneCluster() (*MeshCluster, error) {
+func (in *MeshService) resolveKialiControlPlaneCluster() (*Cluster, error) {
 	conf := config.Get()
 
 	// The "cluster_id" is set in an environment variable of
@@ -86,18 +86,18 @@ func (in *ClusteringService) resolveMyControlPlaneCluster() (*MeshCluster, error
 		return nil, err
 	}
 
-	return &MeshCluster{
-		ApiEndpoint:   restConfig.Host,
-		IsHomeCluster: true,
-		Name:          myClusterName,
-		SecretName:    "",
+	return &Cluster{
+		ApiEndpoint: restConfig.Host,
+		IsKialiHome: true,
+		Name:        myClusterName,
+		SecretName:  "",
 	}, nil
 }
 
 // resolveRemoteClustersFromSecrets resolves the metadata about "other" clusters that are
 // visible to the adjacent mesh control plane. This assumes that the mesh Control Plane is
 // installed in the same cluster as Kiali.
-func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, error) {
+func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 	conf := config.Get()
 
 	// For the ControlPlane to be able to "see" remote clusters, some "remote secrets" need to be in
@@ -106,7 +106,7 @@ func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, 
 	// to the other clusters.
 
 	// So, we use these "remote clusters" as the list of clusters in the mesh (excluding the "home cluster" ,
-	// which is resolved in resolveMyControlPlaneCluster func).
+	// which is resolved in resolveKialiControlPlaneCluster func).
 	// Strictly speaking, this list may be incomplete: it's list of visible clusters for a control plane.
 	// But, for now, let's use it as the absolute "list of clusters in the mesh (excluding home cluster)".
 
@@ -114,14 +114,14 @@ func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, 
 	// labels the secrets with istio/multiCluster=true. Let's use that label to fetch the secrets of interest.
 	secrets, err := in.k8s.GetSecrets(conf.IstioNamespace, "istio/multiCluster=true")
 	if err != nil {
-		return []MeshCluster{}, err
+		return []Cluster{}, err
 	}
 
 	if len(secrets) == 0 {
-		return []MeshCluster{}, nil
+		return []Cluster{}, nil
 	}
 
-	clusters := make([]MeshCluster, 0, len(secrets))
+	clusters := make([]Cluster, 0, len(secrets))
 
 	// Inspect the secret to extract the cluster_id and api_endpoint of each remote cluster.
 	for _, secret := range secrets {
@@ -147,7 +147,7 @@ func (in *ClusteringService) resolveRemoteClustersFromSecrets() ([]MeshCluster, 
 			continue
 		}
 
-		meshCluster := MeshCluster{
+		meshCluster := Cluster{
 			Name:        clusterName,
 			SecretName:  secret.Name,
 			ApiEndpoint: parsedSecret.Clusters[0].Cluster.Server,

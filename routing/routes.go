@@ -1455,7 +1455,7 @@ func NewRoutes() (r *Routes) {
 			HandlerFunc:   handlers.MetricsStats,
 			Authenticated: true,
 		},
-		// swagger:route GET /api/mesh_clusters
+		// swagger:route GET /api/clusters
 		// ---
 		// Endpoint to get the list of the clusters that are hosting the service mesh.
 		//              Produces:
@@ -1465,12 +1465,12 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//              500: internalError
-		//              200: meshClustersResponse
+		//              200: clustersResponse
 		{
-			"GetMeshClusters",
+			"GetClusters",
 			"GET",
-			"/api/mesh_clusters",
-			handlers.GetMeshClusters,
+			"/api/clusters",
+			handlers.GetClusters,
 			true,
 		},
 	}

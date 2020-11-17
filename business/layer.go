@@ -14,13 +14,13 @@ import (
 // Layer is a container for fast access to inner services
 type Layer struct {
 	App            AppService
-	Clustering     ClusteringService
 	Health         HealthService
 	IstioConfig    IstioConfigService
 	IstioStatus    IstioStatusService
 	Iter8          Iter8Service
 	Jaeger         JaegerService
 	k8s            kubernetes.ClientInterface
+	Mesh           MeshService
 	Namespace      NamespaceService
 	OpenshiftOAuth OpenshiftOAuthService
 	ProxyStatus    ProxyStatus
@@ -113,13 +113,13 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Clustering = ClusteringService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
 	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
+	temporaryLayer.Mesh = MeshService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatus{k8s: k8s}
