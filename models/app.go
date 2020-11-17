@@ -1,9 +1,5 @@
 package models
 
-import (
-	kmodel "github.com/kiali/k-charted/model"
-)
-
 type AppList struct {
 	// Namespace where the apps live in
 	// required: true
@@ -63,5 +59,5 @@ type App struct {
 	ServiceNames []string `json:"serviceNames"`
 
 	// Runtimes and associated dashboards
-	Runtimes []kmodel.Runtime `json:"runtimes"`
+	Runtimes []Runtime `json:"runtimes"`
 }

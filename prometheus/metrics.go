@@ -11,7 +11,7 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-func fetchRateRange(api prom_v1.API, metricName string, labels []string, grouping string, q *RangeQuery) *Metric {
+func fetchRateRange(api prom_v1.API, metricName string, labels []string, grouping string, q *RangeQuery) Metric {
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	for i, labelsInstance := range labels {
@@ -87,16 +87,16 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 	return queries
 }
 
-func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
+func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) Metric {
 	result, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
-		return &Metric{Err: err}
+		return Metric{Err: err}
 	}
 	switch result.Type() {
 	case model.ValMatrix:
-		return &Metric{Matrix: result.(model.Matrix)}
+		return Metric{Matrix: result.(model.Matrix)}
 	}
-	return &Metric{Err: fmt.Errorf("invalid query, matrix expected: %s", query)}
+	return Metric{Err: fmt.Errorf("invalid query, matrix expected: %s", query)}
 }
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.

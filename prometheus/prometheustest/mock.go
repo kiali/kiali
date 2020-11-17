@@ -281,14 +281,14 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInter
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
-	return args.Get(0).(*prometheus.Metric)
+	return args.Get(0).(prometheus.Metric)
 }
 
-func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) *prometheus.Metric {
+func (o *PromClientMock) FetchRateRange(metricName string, labels []string, grouping string, q *prometheus.RangeQuery) prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, q)
-	return args.Get(0).(*prometheus.Metric)
+	return args.Get(0).(prometheus.Metric)
 }
 
 func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.RangeQuery) prometheus.Histogram {
@@ -301,10 +301,41 @@ func (o *PromClientMock) FetchHistogramValues(metricName, labels, grouping, rate
 	return args.Get(0).(map[string]model.Vector), args.Error((1))
 }
 
+func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
+	args := o.Called(labels)
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func round(q string) string {
 	return fmt.Sprintf("round(%s, 0.001000) > 0.001000 or %s", q, q)
 }
 
 func roundErrs(q string) string {
 	return fmt.Sprintf("round((%s), 0.001000) > 0.001000 or (%s)", q, q)
+}
+
+func (o *PromClientMock) MockMetric(name string, labels string, q *prometheus.RangeQuery, value float64) {
+	o.On("FetchRateRange", name, []string{labels}, "", q).Return(fakeMetric(value))
+}
+
+func (o *PromClientMock) MockHistogram(name string, labels string, q *prometheus.RangeQuery, avg, p99 float64) {
+	o.On("FetchHistogramRange", name, labels, "", q).Return(fakeHistogram(avg, p99))
+}
+
+func fakeMetric(value float64) prometheus.Metric {
+	return prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{},
+				Values: []model.SamplePair{{Timestamp: 0, Value: model.SampleValue(value)}},
+			},
+		},
+	}
+}
+
+func fakeHistogram(avg, p99 float64) prometheus.Histogram {
+	return prometheus.Histogram{
+		"0.99": fakeMetric(p99),
+		"avg":  fakeMetric(avg),
+	}
 }

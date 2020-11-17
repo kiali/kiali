@@ -3774,7 +3774,7 @@
           "x-go-name": "SingleSelection"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "App": {
       "type": "object",
@@ -3915,7 +3915,7 @@
         "metrics": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/SampleStream"
+            "$ref": "#/definitions/Metric"
           },
           "x-go-name": "Metrics"
         },
@@ -3946,7 +3946,7 @@
           "x-go-name": "XAxis"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ComponentStatus": {
       "type": "object",
@@ -4050,7 +4050,21 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Datapoint": {
+      "type": "object",
+      "properties": {
+        "Timestamp": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Value": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "EdgeData": {
       "type": "object",
@@ -4155,7 +4169,7 @@
           "$ref": "#/definitions/MonitoringDashboardExternalLinkVariables"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Fields": {
       "description": "To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff",
@@ -5148,44 +5162,30 @@
       "title": "ManagedFieldsOperationType is the type of operation which lead to a ManagedFieldsEntry being created.",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
-    "Matrix": {
-      "type": "array",
-      "title": "Matrix is a list of time series.",
-      "items": {
-        "$ref": "#/definitions/SampleStream"
-      },
-      "x-go-package": "github.com/prometheus/common/model"
-    },
     "Metric": {
-      "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
       "type": "object",
       "properties": {
-        "matrix": {
-          "$ref": "#/definitions/Matrix"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/prometheus"
-    },
-    "Metrics": {
-      "description": "Metrics contains all simple metrics and histograms data for standard timeseries queries",
-      "type": "object",
-      "properties": {
-        "histograms": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/definitions/Metric"
-            }
+        "datapoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Datapoint"
           },
-          "x-go-name": "Histograms"
+          "x-go-name": "Datapoints"
         },
-        "metrics": {
+        "labels": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/Metric"
+            "type": "string"
           },
-          "x-go-name": "Metrics"
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "stat": {
+          "type": "string",
+          "x-go-name": "Stat"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5279,7 +5279,7 @@
           "x-go-name": "Title"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
@@ -5305,7 +5305,7 @@
           "x-go-name": "Workload"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/kubernetes/v1alpha1"
+      "x-go-package": "github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
@@ -5872,41 +5872,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/k-charted/model"
-    },
-    "SamplePair": {
-      "type": "object",
-      "properties": {
-        "Timestamp": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Value": {
-          "type": "number",
-          "format": "double"
-        }
-      },
-      "x-go-package": "github.com/kiali/k-charted/model"
-    },
-    "SampleStream": {
-      "type": "object",
-      "properties": {
-        "labelSet": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "LabelSet"
-        },
-        "values": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SamplePair"
-          },
-          "x-go-name": "Values"
-        }
-      },
-      "x-go-package": "github.com/kiali/k-charted/model"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Service": {
       "type": "object",
@@ -7522,7 +7488,13 @@
     "metricsResponse": {
       "description": "Metrics response model",
       "schema": {
-        "$ref": "#/definitions/Metrics"
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Metric"
+          }
+        }
       }
     },
     "metricsStatsResponse": {

@@ -26,6 +26,7 @@ func setupMocked() (*MetricsService, *prometheustest.PromAPIMock, error) {
 }
 
 func TestGetServiceMetrics(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -54,41 +55,62 @@ func TestGetServiceMetrics(t *testing.T) {
 	api.MockHistoRange("istio_response_bytes", "{"+labels+"}[5m]", 0.35, 0.2, 0.3, 0.9)
 
 	// Test that range and rate interval are changed when needed (namespace bounds)
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
-	rqCountIn := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountIn)
-	rqErrorCountIn := metrics.Metrics["request_error_count"]
-	assert.NotNil(t, rqErrorCountIn)
-	rqThroughput := metrics.Metrics["request_throughput"]
-	assert.NotNil(t, rqThroughput)
-	rsThroughput := metrics.Metrics["response_throughput"]
-	assert.NotNil(t, rsThroughput)
-	rqSizeIn := metrics.Histograms["request_size"]
-	assert.NotNil(t, rqSizeIn)
-	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
-	assert.NotNil(t, rqDurationMillisIn)
-	rsSizeIn := metrics.Histograms["response_size"]
-	assert.NotNil(t, rsSizeIn)
-	tcpRecIn := metrics.Metrics["tcp_received"]
-	assert.NotNil(t, tcpRecIn)
-	tcpSentIn := metrics.Metrics["tcp_sent"]
-	assert.NotNil(t, tcpSentIn)
+	assert.Nil(err)
+	assert.Equal(9, len(metrics))
+	rqCountIn := metrics["request_count"]
+	assert.NotNil(rqCountIn)
+	rqErrorCountIn := metrics["request_error_count"]
+	assert.NotNil(rqErrorCountIn)
+	rqThroughput := metrics["request_throughput"]
+	assert.NotNil(rqThroughput)
+	rsThroughput := metrics["response_throughput"]
+	assert.NotNil(rsThroughput)
+	rqSizeIn := metrics["request_size"]
+	assert.NotNil(rqSizeIn)
+	rqDurationMillisIn := metrics["request_duration_millis"]
+	assert.NotNil(rqDurationMillisIn)
+	rsSizeIn := metrics["response_size"]
+	assert.NotNil(rsSizeIn)
+	tcpRecIn := metrics["tcp_received"]
+	assert.NotNil(tcpRecIn)
+	tcpSentIn := metrics["tcp_sent"]
+	assert.NotNil(tcpSentIn)
 
-	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1000.0, float64(rqThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1001.0, float64(rsThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
+	assert.Equal(2.5, float64(rqCountIn[0].Datapoints[0].Value))
+	assert.Equal(4.5, float64(rqErrorCountIn[0].Datapoints[0].Value))
+	assert.Equal(1000.0, float64(rqThroughput[0].Datapoints[0].Value))
+	assert.Equal(1001.0, float64(rsThroughput[0].Datapoints[0].Value))
+	assertHisto(assert, rqSizeIn, "0.99", 0.7)
+	assertHisto(assert, rqDurationMillisIn, "0.99", 0.8)
+	assertHisto(assert, rsSizeIn, "0.99", 0.9)
+	assert.Equal(11.0, float64(tcpRecIn[0].Datapoints[0].Value))
+	assert.Equal(13.0, float64(tcpSentIn[0].Datapoints[0].Value))
+}
+
+func assertHisto(assert *assert.Assertions, metrics []models.Metric, stat string, expected float64) {
+	for _, m := range metrics {
+		if m.Stat == stat {
+			assert.Equal(expected, m.Datapoints[0].Value)
+			return
+		}
+	}
+	assert.Fail(fmt.Sprintf("Stat %s not found in %v", stat, metrics))
+}
+
+func assertEmptyHisto(assert *assert.Assertions, metrics []models.Metric, stat string) {
+	for _, m := range metrics {
+		if m.Stat == stat {
+			assert.Empty(m.Datapoints, fmt.Sprintf("Expected stat %s to be empty", stat))
+			return
+		}
+	}
+	assert.Fail(fmt.Sprintf("Stat %s not found in %v", stat, metrics))
 }
 
 func TestGetAppMetrics(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -113,44 +135,45 @@ func TestGetAppMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
-	rqCountIn := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountIn)
-	rqErrorCountIn := metrics.Metrics["request_error_count"]
-	assert.NotNil(t, rqErrorCountIn)
-	rqThroughput := metrics.Metrics["request_throughput"]
-	assert.NotNil(t, rqThroughput)
-	rsThroughput := metrics.Metrics["response_throughput"]
-	assert.NotNil(t, rsThroughput)
-	rqSizeIn := metrics.Histograms["request_size"]
-	assert.NotNil(t, rqSizeIn)
-	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
-	assert.NotNil(t, rqDurationMillisIn)
-	rsSizeIn := metrics.Histograms["response_size"]
-	assert.NotNil(t, rsSizeIn)
-	tcpRecIn := metrics.Metrics["tcp_received"]
-	assert.NotNil(t, tcpRecIn)
-	tcpSentIn := metrics.Metrics["tcp_sent"]
-	assert.NotNil(t, tcpSentIn)
+	assert.Nil(err)
+	assert.Equal(9, len(metrics))
+	rqCountIn := metrics["request_count"]
+	assert.NotNil(rqCountIn)
+	rqErrorCountIn := metrics["request_error_count"]
+	assert.NotNil(rqErrorCountIn)
+	rqThroughput := metrics["request_throughput"]
+	assert.NotNil(rqThroughput)
+	rsThroughput := metrics["response_throughput"]
+	assert.NotNil(rsThroughput)
+	rqSizeIn := metrics["request_size"]
+	assert.NotNil(rqSizeIn)
+	rqDurationMillisIn := metrics["request_duration_millis"]
+	assert.NotNil(rqDurationMillisIn)
+	rsSizeIn := metrics["response_size"]
+	assert.NotNil(rsSizeIn)
+	tcpRecIn := metrics["tcp_received"]
+	assert.NotNil(tcpRecIn)
+	tcpSentIn := metrics["tcp_sent"]
+	assert.NotNil(tcpSentIn)
 
-	assert.Equal(t, 1.5, float64(rqCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 3.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1000.0, float64(rqThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1001.0, float64(rsThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.35, float64(rqSizeIn["avg"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.2, float64(rqSizeIn["0.5"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.3, float64(rqSizeIn["0.95"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.4, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationMillisIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.6, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 10.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 12.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
+	assert.Equal(1.5, float64(rqCountIn[0].Datapoints[0].Value))
+	assert.Equal(3.5, float64(rqErrorCountIn[0].Datapoints[0].Value))
+	assert.Equal(1000.0, float64(rqThroughput[0].Datapoints[0].Value))
+	assert.Equal(1001.0, float64(rsThroughput[0].Datapoints[0].Value))
+	assertHisto(assert, rqSizeIn, "avg", 0.35)
+	assertHisto(assert, rqSizeIn, "0.5", 0.2)
+	assertHisto(assert, rqSizeIn, "0.95", 0.3)
+	assertHisto(assert, rqSizeIn, "0.99", 0.4)
+	assertHisto(assert, rqDurationMillisIn, "0.99", 0.5)
+	assertHisto(assert, rsSizeIn, "0.99", 0.6)
+	assert.Equal(10.0, float64(tcpRecIn[0].Datapoints[0].Value))
+	assert.Equal(12.0, float64(tcpSentIn[0].Datapoints[0].Value))
 }
 
 func TestGetFilteredAppMetrics(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -165,17 +188,18 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Filters = []string{"request_count", "request_size"}
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
-	assert.Equal(t, 1, len(metrics.Histograms), "Should have 1 histogram")
-	rqCountOut := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountOut)
-	rqSizeOut := metrics.Histograms["request_size"]
-	assert.NotNil(t, rqSizeOut)
+	assert.Nil(err)
+	assert.Equal(2, len(metrics))
+	rqCountOut := metrics["request_count"]
+	assert.NotNil(rqCountOut)
+	rqSizeOut := metrics["request_size"]
+	assert.NotNil(rqSizeOut)
 }
 
 func TestGetAppMetricsInstantRates(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -189,15 +213,16 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 	q.FillDefaults()
 	q.RateFunc = "irate"
 	q.Filters = []string{"request_count"}
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
-	assert.Equal(t, 0, len(metrics.Histograms), "Should have no histogram")
-	rqCountOut := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountOut)
+	assert.Nil(err)
+	assert.Equal(1, len(metrics))
+	rqCountOut := metrics["request_count"]
+	assert.NotNil(rqCountOut)
 }
 
 func TestGetAppMetricsUnavailable(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -214,24 +239,25 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	q.Filters = []string{"request_count", "request_size"}
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 1, len(metrics.Metrics), "Should have 1 simple metric")
-	assert.Equal(t, 1, len(metrics.Histograms), "Should have 1 histogram")
-	rqCountIn := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountIn)
-	rqSizeIn := metrics.Histograms["request_size"]
-	assert.NotNil(t, rqSizeIn)
-
+	assert.Nil(err)
+	assert.Equal(2, len(metrics))
 	// Simple metric & histogram are empty
-	assert.Empty(t, rqCountIn.Matrix[0].Values)
-	assert.Empty(t, rqSizeIn["avg"].Matrix[0].Values)
-	assert.Empty(t, rqSizeIn["0.5"].Matrix[0].Values)
-	assert.Empty(t, rqSizeIn["0.95"].Matrix[0].Values)
-	assert.Empty(t, rqSizeIn["0.99"].Matrix[0].Values)
+	rqCountIn := metrics["request_count"]
+	assert.NotNil(rqCountIn)
+	assert.Empty(rqCountIn[0].Datapoints)
+
+	rqSizeIn := metrics["request_size"]
+	assert.NotNil(rqSizeIn)
+	assertEmptyHisto(assert, rqSizeIn, "avg")
+	assertEmptyHisto(assert, rqSizeIn, "0.5")
+	assertEmptyHisto(assert, rqSizeIn, "0.95")
+	assertEmptyHisto(assert, rqSizeIn, "0.99")
 }
 
 func TestGetNamespaceMetrics(t *testing.T) {
+	assert := assert.New(t)
 	srv, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -255,41 +281,41 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.5", "0.95", "0.99"}
-	metrics := srv.GetMetrics(q)
+	metrics, err := srv.GetMetrics(q, nil)
 
-	assert.Equal(t, 6, len(metrics.Metrics), "Should have 6 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
-	rqCountOut := metrics.Metrics["request_count"]
-	assert.NotNil(t, rqCountOut)
-	rqErrorCountOut := metrics.Metrics["request_error_count"]
-	assert.NotNil(t, rqErrorCountOut)
-	rqThroughput := metrics.Metrics["request_throughput"]
-	assert.NotNil(t, rqThroughput)
-	rsThroughput := metrics.Metrics["response_throughput"]
-	assert.NotNil(t, rsThroughput)
-	rqSizeOut := metrics.Histograms["request_size"]
-	assert.NotNil(t, rqSizeOut)
-	rqDurationMillisOut := metrics.Histograms["request_duration_millis"]
-	assert.NotNil(t, rqDurationMillisOut)
-	rsSizeOut := metrics.Histograms["response_size"]
-	assert.NotNil(t, rsSizeOut)
-	tcpRecOut := metrics.Metrics["tcp_received"]
-	assert.NotNil(t, tcpRecOut)
-	tcpSentOut := metrics.Metrics["tcp_sent"]
-	assert.NotNil(t, tcpSentOut)
+	assert.Nil(err)
+	assert.Equal(9, len(metrics))
+	rqCountOut := metrics["request_count"]
+	assert.NotNil(rqCountOut)
+	rqErrorCountOut := metrics["request_error_count"]
+	assert.NotNil(rqErrorCountOut)
+	rqThroughput := metrics["request_throughput"]
+	assert.NotNil(rqThroughput)
+	rsThroughput := metrics["response_throughput"]
+	assert.NotNil(rsThroughput)
+	rqSizeOut := metrics["request_size"]
+	assert.NotNil(rqSizeOut)
+	rqDurationMillisOut := metrics["request_duration_millis"]
+	assert.NotNil(rqDurationMillisOut)
+	rsSizeOut := metrics["response_size"]
+	assert.NotNil(rsSizeOut)
+	tcpRecOut := metrics["tcp_received"]
+	assert.NotNil(tcpRecOut)
+	tcpSentOut := metrics["tcp_sent"]
+	assert.NotNil(tcpSentOut)
 
-	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1000.0, float64(rqThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1001.0, float64(rsThroughput.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.35, float64(rqSizeOut["avg"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.2, float64(rqSizeOut["0.5"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.3, float64(rqSizeOut["0.95"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.4, float64(rqSizeOut["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationMillisOut["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.6, float64(rsSizeOut["0.99"].Matrix[0].Values[0].Value))
-	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
+	assert.Equal(1.5, float64(rqCountOut[0].Datapoints[0].Value))
+	assert.Equal(3.5, float64(rqErrorCountOut[0].Datapoints[0].Value))
+	assert.Equal(1000.0, float64(rqThroughput[0].Datapoints[0].Value))
+	assert.Equal(1001.0, float64(rsThroughput[0].Datapoints[0].Value))
+	assertHisto(assert, rqSizeOut, "avg", 0.35)
+	assertHisto(assert, rqSizeOut, "0.5", 0.2)
+	assertHisto(assert, rqSizeOut, "0.95", 0.3)
+	assertHisto(assert, rqSizeOut, "0.99", 0.4)
+	assertHisto(assert, rqDurationMillisOut, "0.99", 0.5)
+	assertHisto(assert, rsSizeOut, "0.99", 0.6)
+	assert.Equal(10.0, float64(tcpRecOut[0].Datapoints[0].Value))
+	assert.Equal(12.0, float64(tcpSentOut[0].Datapoints[0].Value))
 }
 
 func TestCreateMetricsLabelsBuilder(t *testing.T) {

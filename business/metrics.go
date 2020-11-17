@@ -20,10 +20,10 @@ func NewMetricsService(prom prometheus.ClientInterface) *MetricsService {
 	return &MetricsService{prom: prom}
 }
 
-func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery) models.Metrics {
+func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
 	lb := createMetricsLabelsBuilder(&q)
 	grouping := strings.Join(q.ByLabels, ",")
-	return in.fetchAllMetrics(q, lb, grouping)
+	return in.fetchAllMetrics(q, lb, grouping, scaler)
 }
 
 func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuilder {
@@ -55,12 +55,12 @@ func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuild
 	return lb
 }
 
-func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *MetricsLabelsBuilder, grouping string) models.Metrics {
+func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *MetricsLabelsBuilder, grouping string, scaler func(n string) float64) (models.MetricsMap, error) {
 	labels := lb.Build()
 	labelsError := lb.BuildForErrors()
 
 	var wg sync.WaitGroup
-	fetchRate := func(p8sFamilyName string, metric **prometheus.Metric, lbl []string) {
+	fetchRate := func(p8sFamilyName string, metric *prometheus.Metric, lbl []string) {
 		defer wg.Done()
 		m := in.prom.FetchRateRange(p8sFamilyName, lbl, grouping, &q.RangeQuery)
 		*metric = m
@@ -73,7 +73,7 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 	}
 
 	type resultHolder struct {
-		metric     *prometheus.Metric
+		metric     prometheus.Metric
 		histo      prometheus.Histogram
 		definition istioMetric
 	}
@@ -109,21 +109,33 @@ func (in *MetricsService) fetchAllMetrics(q models.IstioMetricsQuery, lb *Metric
 	wg.Wait()
 
 	// Return results as two maps per reporter
-	metrics := make(map[string]*prometheus.Metric)
-	histograms := make(map[string]prometheus.Histogram)
+	metrics := make(models.MetricsMap)
 	for _, result := range results {
 		if result != nil {
-			if result.definition.isHisto {
-				histograms[result.definition.kialiName] = result.histo
-			} else {
-				metrics[result.definition.kialiName] = result.metric
+			conversionParams := models.ConversionParams{Scale: 1.0}
+			if scaler != nil {
+				scale := scaler(result.definition.kialiName)
+				if scale != 0.0 {
+					conversionParams.Scale = scale
+				}
 			}
+			var converted []models.Metric
+			var err error
+			if result.definition.isHisto {
+				converted, err = models.ConvertHistogram(result.definition.kialiName, result.histo, conversionParams)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				converted, err = models.ConvertMetric(result.definition.kialiName, result.metric, conversionParams)
+				if err != nil {
+					return nil, err
+				}
+			}
+			metrics[result.definition.kialiName] = append(metrics[result.definition.kialiName], converted...)
 		}
 	}
-	return models.Metrics{
-		Metrics:    metrics,
-		Histograms: histograms,
-	}
+	return metrics, nil
 }
 
 // GetStats computes metrics stats, currently response times, for a set of queries

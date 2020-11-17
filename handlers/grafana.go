@@ -9,10 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiali/k-charted/kubernetes/v1alpha1"
-	kmodel "github.com/kiali/k-charted/model"
-
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -72,7 +70,7 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	links := []kmodel.ExternalLink{}
+	links := []models.ExternalLink{}
 	urlParts := strings.Split(externalURL, "?")
 	for _, dashboardConfig := range grafanaConfig.Dashboards {
 		dashboardPath, err := getDashboardPath(apiURL, dashboardConfig.Name, &auth, dashboardSupplier)
@@ -85,7 +83,7 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 			if len(urlParts) > 1 {
 				externalURL = externalURL + "?" + urlParts[1]
 			}
-			externalLink := kmodel.ExternalLink{
+			externalLink := models.ExternalLink{
 				URL:  externalURL,
 				Name: dashboardConfig.Name,
 				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
