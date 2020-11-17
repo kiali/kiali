@@ -3948,6 +3948,33 @@
       },
       "x-go-package": "github.com/kiali/k-charted/model"
     },
+    "Cluster": {
+      "description": "Cluster holds some metadata about a cluster that is\npart of the mesh.",
+      "type": "object",
+      "properties": {
+        "apiEndpoint": {
+          "description": "ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted",
+          "type": "string",
+          "x-go-name": "ApiEndpoint"
+        },
+        "isKialiHome": {
+          "description": "IsKialiHome specifies if this cluster is hosting this Kiali instance (and the observed Mesh Control Plane)",
+          "type": "boolean",
+          "x-go-name": "IsKialiHome"
+        },
+        "name": {
+          "description": "Name specifies the CLUSTER_ID as known by the Control Plane",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "secretName": {
+          "description": "SecretName is the name of the kubernetes \"remote secret\" where data of this cluster was resolved",
+          "type": "string",
+          "x-go-name": "SecretName"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/business"
+    },
     "ComponentStatus": {
       "type": "object",
       "required": [
@@ -5155,33 +5182,6 @@
         "$ref": "#/definitions/SampleStream"
       },
       "x-go-package": "github.com/prometheus/common/model"
-    },
-    "MeshCluster": {
-      "description": "MeshCluster holds some metadata about a cluster that is\npart of the mesh.",
-      "type": "object",
-      "properties": {
-        "apiEndpoint": {
-          "description": "ApiEndpoint is the URL where the Kubernetes/Cluster API Server can be contacted",
-          "type": "string",
-          "x-go-name": "ApiEndpoint"
-        },
-        "isHomeCluster": {
-          "description": "IsHomeCluster specifies if this cluster is hosting Kiali (and the observed Mesh Control Plane)",
-          "type": "boolean",
-          "x-go-name": "IsHomeCluster"
-        },
-        "name": {
-          "description": "Name specifies the CLUSTER_ID as known by the Control Plane",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "secretName": {
-          "description": "SecretName is the name of the kubernetes \"remote secret\" where data of this cluster was resolved",
-          "type": "string",
-          "x-go-name": "SecretName"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/business"
     },
     "Metric": {
       "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
@@ -7448,6 +7448,15 @@
         }
       }
     },
+    "clustersResponse": {
+      "description": "Return a list of Cluster items",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Cluster"
+        }
+      }
+    },
     "dashboardResponse": {
       "description": "Dashboard response model",
       "schema": {
@@ -7538,15 +7547,6 @@
       "description": "Return all the descriptor data related to Jaeger",
       "schema": {
         "$ref": "#/definitions/JaegerInfo"
-      }
-    },
-    "meshClustersResponse": {
-      "description": "Return a list of Mesh Cluster items",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/MeshCluster"
-        }
       }
     },
     "meshTlsResponse": {
