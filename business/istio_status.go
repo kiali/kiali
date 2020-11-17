@@ -2,6 +2,7 @@ package business
 
 import (
 	"sync"
+	"time"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -10,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -39,10 +41,16 @@ type ComponentStatus struct {
 
 type IstioComponentStatus []ComponentStatus
 
+func (ics *IstioComponentStatus) merge(cs IstioComponentStatus) IstioComponentStatus {
+	*ics = append(*ics, cs...)
+	return *ics
+}
+
 const (
-	Healthy   string = "Healthy"
-	Unhealthy string = "Unhealthy"
-	NotFound  string = "NotFound"
+	Healthy     string = "Healthy"
+	Unhealthy   string = "Unhealthy"
+	NotFound    string = "NotFound"
+	Unreachable string = "Unreachable"
 )
 
 func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
@@ -50,6 +58,15 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 		return IstioComponentStatus{}, nil
 	}
 
+	ics, err := iss.getIstioComponentStatus()
+	if err != nil {
+		return nil, err
+	}
+
+	return ics.merge(iss.getAddonComponentStatus()), nil
+}
+
+func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
 	ds, error := iss.getComponentNamespacesWorkloads()
 	if error != nil {
@@ -119,21 +136,8 @@ func getComponentNamespaces() []string {
 	// By default, add the istio control plane namespace
 	nss = append(nss, config.Get().IstioNamespace)
 
-	// Adding addons namespaces
-	externalServices := config.Get().ExternalServices
-	if externalServices.Prometheus.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Prometheus.ComponentStatus.Namespace)
-	}
-
-	if externalServices.Grafana.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Grafana.ComponentStatus.Namespace)
-	}
-
-	if externalServices.Tracing.ComponentStatus.Namespace != "" {
-		nss = append(nss, externalServices.Tracing.ComponentStatus.Namespace)
-	}
-
 	// Adding Istio Components namespaces
+	externalServices := config.Get().ExternalServices
 	for _, cmp := range externalServices.Istio.ComponentStatuses.Components {
 		if cmp.Namespace != "" {
 			nss = append(nss, cmp.Namespace)
@@ -152,25 +156,8 @@ func istioCoreComponents() map[string]bool {
 	return components
 }
 
-func addAddOnComponents(components map[string]bool) map[string]bool {
-	confExtSvcs := config.Get().ExternalServices
-
-	components[confExtSvcs.Prometheus.ComponentStatus.AppLabel] = confExtSvcs.Prometheus.ComponentStatus.IsCore
-
-	if confExtSvcs.Grafana.Enabled {
-		components[confExtSvcs.Grafana.ComponentStatus.AppLabel] = confExtSvcs.Grafana.ComponentStatus.IsCore
-	}
-
-	if confExtSvcs.Tracing.Enabled {
-		components[confExtSvcs.Tracing.ComponentStatus.AppLabel] = confExtSvcs.Tracing.ComponentStatus.IsCore
-	}
-
-	return components
-}
-
 func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioComponentStatus, error) {
 	statusComponents := istioCoreComponents()
-	statusComponents = addAddOnComponents(statusComponents)
 	isc := IstioComponentStatus{}
 	cf := map[string]bool{}
 
@@ -222,4 +209,62 @@ func GetDeploymentStatus(d apps_v1.Deployment) string {
 		status = Healthy
 	}
 	return status
+}
+
+func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
+	var wg sync.WaitGroup
+	wg.Add(4)
+
+	staChan := make(chan IstioComponentStatus, 4)
+	extServices := config.Get().ExternalServices
+	ics := IstioComponentStatus{}
+
+	go getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true, staChan, &wg)
+	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.IsCoreComponent, staChan, &wg)
+	go getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.IsCoreComponent, staChan, &wg)
+
+	// Custom dashboards may use the main Prometheus config
+	customProm := extServices.CustomDashboards.Prometheus
+	if customProm.URL == "" {
+		customProm = extServices.Prometheus
+	}
+	go getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, customProm.URL, &customProm.Auth, extServices.CustomDashboards.IsCoreComponent, staChan, &wg)
+
+	wg.Wait()
+
+	close(staChan)
+	for stat := range staChan {
+		ics.merge(stat)
+	}
+
+	return ics
+}
+
+func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if auth.UseKialiToken {
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+		}
+		auth.Token = token
+	}
+
+	// When the addOn is disabled, don't perform any check
+	if !enabled {
+		return
+	}
+
+	// Call the addOn service endpoint to find out whether is reachable or not
+	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
+	if err != nil || statusCode > 399 {
+		staChan <- IstioComponentStatus{
+			ComponentStatus{
+				Name:   name,
+				Status: Unreachable,
+				IsCore: isCore,
+			},
+		}
+	}
 }
