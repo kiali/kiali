@@ -15,7 +15,7 @@ import {
   DecoratedGraphNodeData,
   UNKNOWN
 } from '../../types/Graph';
-import { Metrics, Metric, Datapoint } from '../../types/Metrics';
+import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import {
   shouldRefreshData,
   NodeMetricType,
@@ -78,7 +78,7 @@ const defaultState: SummaryPanelNodeState = {
 type SummaryPanelNodeProps = SummaryPanelPropType;
 
 export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodeProps, SummaryPanelNodeState> {
-  private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
+  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
 
   constructor(props: SummaryPanelNodeProps) {
     super(props);
@@ -132,8 +132,8 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       return;
     }
 
-    let promiseOut: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
-    let promiseIn: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+    let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
+    let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
     // Ignore outgoing traffic if it is a non-root outsider (because they have no outgoing edges) or a
     // service node or aggregate node (because they don't have "real" outgoing edges).
@@ -231,41 +231,41 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   showRequestCountMetrics(
-    outbound: Metrics,
-    inbound: Metrics,
+    outbound: IstioMetricsMap,
+    inbound: IstioMetricsMap,
     data: DecoratedGraphNodeData,
     nodeMetricType: NodeMetricType
   ) {
-    let comparator = (metric: Metric, protocol?: Protocol) => {
-      return protocol ? metric.request_protocol === protocol : true;
+    let comparator = (labels: Labels, protocol?: Protocol) => {
+      return protocol ? labels.request_protocol === protocol : true;
     };
     if (this.isServiceDestCornerCase(nodeMetricType)) {
-      comparator = (metric: Metric, protocol?: Protocol) => {
-        return (protocol ? metric.request_protocol === protocol : true) && metric.destination_workload === UNKNOWN;
+      comparator = (labels: Labels, protocol?: Protocol) => {
+        return (protocol ? labels.request_protocol === protocol : true) && labels.destination_workload === UNKNOWN;
       };
     } else if (data.isOutside) {
       // filter out traffic completely outside the active namespaces
-      comparator = (metric: Metric, protocol?: Protocol) => {
-        if (protocol && metric.request_protocol !== protocol) {
+      comparator = (labels: Labels, protocol?: Protocol) => {
+        if (protocol && labels.request_protocol !== protocol) {
           return false;
         }
-        if (metric.destination_service_namespace && !this.isActiveNamespace(metric.destination_service_namespace)) {
+        if (labels.destination_service_namespace && !this.isActiveNamespace(labels.destination_service_namespace)) {
           return false;
         }
-        if (metric.source_workload_namespace && !this.isActiveNamespace(metric.source_workload_namespace)) {
+        if (labels.source_workload_namespace && !this.isActiveNamespace(labels.source_workload_namespace)) {
           return false;
         }
         return true;
       };
     }
-    const rcOut = outbound.metrics.request_count;
-    const ecOut = outbound.metrics.request_error_count;
-    const tcpSentOut = outbound.metrics.tcp_sent;
-    const tcpReceivedOut = outbound.metrics.tcp_received;
-    const rcIn = inbound.metrics.request_count;
-    const ecIn = inbound.metrics.request_error_count;
-    const tcpSentIn = inbound.metrics.tcp_sent;
-    const tcpReceivedIn = inbound.metrics.tcp_received;
+    const rcOut = outbound.request_count;
+    const ecOut = outbound.request_error_count;
+    const tcpSentOut = outbound.tcp_sent;
+    const tcpReceivedOut = outbound.tcp_received;
+    const rcIn = inbound.request_count;
+    const ecIn = inbound.request_error_count;
+    const tcpSentIn = inbound.tcp_sent;
+    const tcpReceivedIn = inbound.tcp_received;
     this.setState({
       loading: false,
       grpcRequestCountOut: getDatapoints(rcOut, comparator, Protocol.GRPC),

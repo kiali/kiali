@@ -52,7 +52,6 @@
     "snyk-protect": "snyk protect"
   },
   "dependencies": {
-    "@kiali/k-charted-pf4": "0.6.3",
     "@patternfly/patternfly": "2.71.6",
     "@patternfly/react-charts": "5.3.22",
     "@patternfly/react-core": "3.158.4",
@@ -94,6 +93,7 @@
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
     "screenfull": "5.0.2",
+    "seedrandom": "3.0.1",
     "ssri": "6.0.1",
     "tippy.js": "3.4.1",
     "typesafe-actions": "3.2.1",
@@ -131,8 +131,7 @@
     "dot-prop": "4.2.1",
     "hoist-non-react-statics": "3.3.0",
     "kind-of": "6.0.3",
-    "victory": "~34.0.1",
-    "victory-core": "~34.0.0"
+    "victory": "34.3.12"
   },
   "engines": {
     "node": ">=10.0.0 && <13",

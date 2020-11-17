@@ -24,7 +24,7 @@ import {
   summaryPanel,
   summaryFont
 } from './SummaryPanelCommon';
-import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
+import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -82,7 +82,7 @@ const principalStyle = style({
 });
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
-  private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
@@ -272,7 +272,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   private getNodeDataPoints = (
-    m: MetricGroup,
+    m: Metric[] | undefined,
     sourceMetricType: NodeMetricType,
     destMetricType: NodeMetricType,
     data: DecoratedGraphNodeData,
@@ -280,9 +280,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   ) => {
     if (isServiceEntry) {
       // For service entries, metrics are grouped by destination_service_name and we need to match it per "data.destServices"
-      return getDatapoints(m, (metric: Metric) => {
+      return getDatapoints(m, (labels: Labels) => {
         return data.destServices
-          ? data.destServices.some(svc => svc.name === metric['destination_service_name'])
+          ? data.destServices.some(svc => svc.name === labels['destination_service_name'])
           : false;
       });
     }
@@ -322,8 +322,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         value = data.workload;
     }
     const comparator = this.isSpecialServiceDest(destMetricType)
-      ? (metric: Metric) => metric[label] === value && metric.destination_workload === UNKNOWN
-      : (metric: Metric) => metric[label] === value;
+      ? (labels: Labels) => labels[label] === value && labels.destination_workload === UNKNOWN
+      : (labels: Labels) => labels[label] === value;
     return getDatapoints(m, comparator);
   };
 
@@ -381,8 +381,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         edge.target().isIstio
           ? 'destination'
           : 'source';
-      // see comment below about why we have both 'request_duration' and 'request_duration_millis'
-      const filtersRps = ['request_count', 'request_duration', 'request_duration_millis', 'request_error_count'];
+      const filtersRps = ['request_count', 'request_duration_millis', 'request_error_count'];
       promiseRps = getNodeMetrics(
         metricType,
         metricsNode,
@@ -416,8 +415,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     this.metricsPromise = makeCancelablePromise(promiseRps ? promiseRps : promiseTcp);
     this.metricsPromise.promise
       .then(response => {
-        const metrics = response.data.metrics;
-        const histograms = response.data.histograms;
+        const metrics = response.data;
         let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultMetricsState;
         if (isGrpc || isHttp) {
           reqRates = this.getNodeDataPoints(
@@ -434,39 +432,30 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             otherEndData,
             isDestServiceEntry
           );
-          // We query for both 'request_duration' and 'request_duration_millis' because the former is used
-          // with Istio mixer telemetry and the latter with Istio mixer-less (introduced as an experimental
-          // option in istion 1.3.0).  Until we can safely rely on the newer metric we must support both. So,
-          // prefer the newer but if it holds no valid data, revert to the older.
-          let histo = histograms.request_duration_millis;
-          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, otherEndData, isDestServiceEntry);
-          if (this.isEmpty(rtAvg)) {
-            histo = histograms.request_duration;
-            unit = 's';
-            rtAvg = this.getNodeDataPoints(
-              histo.avg,
-              sourceMetricType,
-              destMetricType,
-              otherEndData,
-              isDestServiceEntry
-            );
-          }
+          const duration = metrics.request_duration_millis || [];
+          rtAvg = this.getNodeDataPoints(
+            duration.filter(m => m.stat === 'avg'),
+            sourceMetricType,
+            destMetricType,
+            otherEndData,
+            isDestServiceEntry
+          );
           rtMed = this.getNodeDataPoints(
-            histo['0.5'],
+            duration.filter(m => m.stat === '0.5'),
             sourceMetricType,
             destMetricType,
             otherEndData,
             isDestServiceEntry
           );
           rt95 = this.getNodeDataPoints(
-            histo['0.95'],
+            duration.filter(m => m.stat === '0.95'),
             sourceMetricType,
             destMetricType,
             otherEndData,
             isDestServiceEntry
           );
           rt99 = this.getNodeDataPoints(
-            histo['0.99'],
+            duration.filter(m => m.stat === '0.99'),
             sourceMetricType,
             destMetricType,
             otherEndData,
@@ -518,16 +507,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     this.setState({ loading: true, metricsLoadError: null });
   };
-
-  // Returns true if the histo datum values are all NaN
-  private isEmpty(dps: Datapoint[]): boolean {
-    for (const dp of dps) {
-      if (!isNaN(dp[1])) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   private safeRate = (s: any) => {
     return isNaN(s) ? 0.0 : Number(s);

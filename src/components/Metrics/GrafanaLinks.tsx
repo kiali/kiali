@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { ToolbarItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { ExternalLink } from '@kiali/k-charted-pf4';
 
-import { MetricsObjectTypes } from '../../types/Metrics';
+import { MetricsObjectTypes } from 'types/Metrics';
+import { ExternalLink } from 'types/Dashboards';
 
 type Props = {
   links: ExternalLink[];

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, ExternalLink, RawOrBucket, Overlay } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
@@ -26,6 +25,10 @@ import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import { DashboardModel, ExternalLink } from 'types/Dashboards';
+import { Overlay } from 'types/Overlay';
+import { RawOrBucket } from 'types/VictoryChartInfo';
+import { Dashboard } from 'components/Charts/Dashboard';
 
 type MetricsState = {
   dashboard?: DashboardModel;

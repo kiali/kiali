@@ -1,4 +1,4 @@
-import { ExternalLink } from '@kiali/k-charted-pf4';
+import { ExternalLink } from './Dashboards';
 
 export interface GrafanaInfo {
   externalLinks: ExternalLink[];

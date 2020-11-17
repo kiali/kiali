@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Dropdown, DropdownToggle, Radio } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import isEqual from 'lodash/isEqual';
-import { PromLabel } from '@kiali/k-charted-pf4';
 
 import history, { URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
@@ -13,6 +12,7 @@ import {
   retrieveMetricsSettings
 } from 'components/Metrics/Helper';
 import { PfColors } from '../Pf/PfColors';
+import { PromLabel } from 'types/Metrics';
 
 interface Props {
   onChanged: (state: MetricsSettings) => void;

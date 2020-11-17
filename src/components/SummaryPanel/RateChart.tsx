@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { VCLines, addLegendEvent, VCEvent, RichDataPoint } from '@kiali/k-charted-pf4';
 import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { VictoryLegend } from 'victory';
 
 import { PfColors, getPFAlertColorVals } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import { RichDataPoint, VCLines } from 'types/VictoryChartInfo';
+import { addLegendEvent, VCEvent } from 'utils/VictoryEvents';
 
 export const legendHeight = 25;
 export const legendTopMargin = 20;

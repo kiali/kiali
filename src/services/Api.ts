@@ -1,9 +1,8 @@
 import axios, { AxiosError } from 'axios';
-import { DashboardModel, DashboardQuery } from '@kiali/k-charted-pf4';
 
 import Namespace from '../types/Namespace';
-import { IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
-import { Metrics, MetricsStatsResult } from '../types/Metrics';
+import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
 import { IstioConfigDetails, IstioPermissions } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
@@ -33,6 +32,7 @@ import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
 import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info, ExperimentSpec } from '../types/Iter8';
 import { ComponentStatus } from '../types/IstioStatus';
+import { DashboardModel } from 'types/Dashboards';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -114,7 +114,7 @@ export const getNamespaces = () => {
 };
 
 export const getNamespaceMetrics = (namespace: string, params: IstioMetricsOptions) => {
-  return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {});
+  return newRequest<Readonly<IstioMetricsMap>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {});
 };
 
 export const getMeshTls = () => {
@@ -192,7 +192,7 @@ export const getServices = (namespace: string) => {
 };
 
 export const getServiceMetrics = (namespace: string, service: string, params: IstioMetricsOptions) => {
-  return newRequest<Metrics>(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {});
+  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {});
 };
 
 export const getServiceDashboard = (namespace: string, service: string, params: IstioMetricsOptions) => {
@@ -205,7 +205,12 @@ export const getAggregateMetrics = (
   aggregateValue: string,
   params: IstioMetricsOptions
 ) => {
-  return newRequest<Metrics>(HTTP_VERBS.GET, urls.aggregateMetrics(namespace, aggregate, aggregateValue), params, {});
+  return newRequest<IstioMetricsMap>(
+    HTTP_VERBS.GET,
+    urls.aggregateMetrics(namespace, aggregate, aggregateValue),
+    params,
+    {}
+  );
 };
 
 export const getApp = (namespace: string, app: string) => {
@@ -217,7 +222,7 @@ export const getApps = (namespace: string) => {
 };
 
 export const getAppMetrics = (namespace: string, app: string, params: IstioMetricsOptions) => {
-  return newRequest<Metrics>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {});
+  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {});
 };
 
 export const getAppDashboard = (namespace: string, app: string, params: IstioMetricsOptions) => {
@@ -225,7 +230,7 @@ export const getAppDashboard = (namespace: string, app: string, params: IstioMet
 };
 
 export const getWorkloadMetrics = (namespace: string, workload: string, params: IstioMetricsOptions) => {
-  return newRequest<Metrics>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {});
+  return newRequest<IstioMetricsMap>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {});
 };
 
 export const getWorkloadDashboard = (namespace: string, workload: string, params: IstioMetricsOptions) => {

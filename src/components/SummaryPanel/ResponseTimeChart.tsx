@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { SparklineChart } from '@kiali/k-charted-pf4';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
 import { PfColors } from 'components/Pf/PfColors';
-import Graphing from 'utils/Graphing';
+import { toVCLine } from 'utils/VictoryChartsUtils';
+import { SparklineChart } from 'components/Charts/SparklineChart';
 
 import 'components/Charts/Charts.css';
 
@@ -33,10 +33,10 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
   render() {
     const scaler = this.props.unit === 's' ? this.toMillis : a => a;
     const series = [
-      Graphing.toVCLine(scaler(this.props.rtAvg), 'avg', PfColors.Black),
-      Graphing.toVCLine(scaler(this.props.rtMed), 'p50', PfColors.Green400),
-      Graphing.toVCLine(scaler(this.props.rt95), 'p95', PfColors.Blue),
-      Graphing.toVCLine(scaler(this.props.rt99), 'p99', PfColors.Orange400)
+      toVCLine(scaler(this.props.rtAvg), 'avg', PfColors.Black),
+      toVCLine(scaler(this.props.rtMed), 'p50', PfColors.Green400),
+      toVCLine(scaler(this.props.rt95), 'p95', PfColors.Blue),
+      toVCLine(scaler(this.props.rt99), 'p99', PfColors.Orange400)
     ];
 
     return (

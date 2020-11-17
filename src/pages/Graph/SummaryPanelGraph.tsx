@@ -17,7 +17,7 @@ import {
   hr
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
-import { Metrics, Datapoint } from '../../types/Metrics';
+import { IstioMetricsMap, Datapoint } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -78,7 +78,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     width: '25em'
   };
 
-  private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>>;
   private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
@@ -393,10 +393,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       .then(response => {
         this.setState({
           loading: false,
-          reqRates: getFirstDatapoints(response.data.metrics.request_count),
-          errRates: getFirstDatapoints(response.data.metrics.request_error_count),
-          tcpSent: getFirstDatapoints(response.data.metrics.tcp_sent),
-          tcpReceived: getFirstDatapoints(response.data.metrics.tcp_received)
+          reqRates: getFirstDatapoints(response.data.request_count),
+          errRates: getFirstDatapoints(response.data.request_error_count),
+          tcpSent: getFirstDatapoints(response.data.tcp_sent),
+          tcpReceived: getFirstDatapoints(response.data.tcp_received)
         });
       })
       .catch(error => {

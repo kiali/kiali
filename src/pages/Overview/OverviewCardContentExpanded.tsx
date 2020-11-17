@@ -5,7 +5,7 @@ import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
 import { switchType } from './OverviewHelper';
 import { Paths } from '../../config';
-import { TimeSeries } from '../../types/Metrics';
+import { Metric } from '../../types/Metrics';
 import { DurationInSeconds } from '../../types/Common';
 import OverviewCardSparkline from './OverviewCardSparkline';
 
@@ -14,7 +14,7 @@ type Props = {
   type: OverviewType;
   duration: DurationInSeconds;
   status: NamespaceStatus;
-  metrics?: TimeSeries[];
+  metrics?: Metric[];
 };
 
 class OverviewCardContentExpanded extends React.Component<Props> {

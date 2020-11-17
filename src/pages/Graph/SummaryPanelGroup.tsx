@@ -15,7 +15,7 @@ import {
   summaryPanel
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
-import { Metrics, Datapoint } from '../../types/Metrics';
+import { IstioMetricsMap, Datapoint } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
@@ -61,7 +61,7 @@ const defaultState: SummaryPanelGroupState = {
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
-  private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
+  private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
@@ -195,9 +195,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
 
     this.metricsPromise.promise
-      .then((responses: Response<Metrics>[]) => {
-        const metricsOut = responses[0].data.metrics;
-        const metricsIn = responses[1].data.metrics;
+      .then((responses: Response<IstioMetricsMap>[]) => {
+        const metricsOut = responses[0].data;
+        const metricsIn = responses[1].data;
         this.setState({
           loading: false,
           requestCountIn: getFirstDatapoints(metricsIn.request_count),

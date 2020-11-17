@@ -1,20 +1,22 @@
 import * as React from 'react';
-import { ChartWithLegend, makeLegend, LineInfo, VCDataPoint } from '@kiali/k-charted-pf4';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { ChartScatter } from '@patternfly/react-charts';
+import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
+
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { isErrorTag } from './JaegerHelper';
 import { PfColors } from '../Pf/PfColors';
-import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 
 import jaegerIcon from '../../assets/img/jaeger-icon.svg';
 import * as MetricsHelper from '../Metrics/Helper';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
-import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
-import { connect } from 'react-redux';
+import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
+import ChartWithLegend from 'components/Charts/ChartWithLegend';
 
 interface JaegerScatterProps {
   traces: JaegerTrace[];

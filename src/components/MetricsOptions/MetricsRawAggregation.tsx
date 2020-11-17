@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Aggregator } from '@kiali/k-charted-pf4';
+import { Aggregator } from 'types/MetricsOptions';
 
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';

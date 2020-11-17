@@ -1,24 +1,23 @@
 import * as React from 'react';
-import { SparklineChart } from '@kiali/k-charted-pf4';
-import { ChartThemeColor } from '@patternfly/react-charts';
 
 import { DurationInSeconds } from '../../types/Common';
-import { TimeSeries } from '../../types/Metrics';
-import graphUtils from '../../utils/Graphing';
+import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
 import { PfColors } from 'components/Pf/PfColors';
+import { SparklineChart } from 'components/Charts/SparklineChart';
+import { toVCLines } from 'utils/VictoryChartsUtils';
 
 import 'components/Charts/Charts.css';
 
 type Props = {
-  metrics?: TimeSeries[];
+  metrics?: Metric[];
   duration: DurationInSeconds;
 };
 
 class OverviewCardSparkline extends React.Component<Props, {}> {
   render() {
     if (this.props.metrics && this.props.metrics.length > 0) {
-      const data = graphUtils.toVCLines(this.props.metrics, [PfColors.Blue]);
+      const data = toVCLines(this.props.metrics, 'rps', [PfColors.Blue], 'time');
 
       return (
         <>
@@ -28,7 +27,6 @@ class OverviewCardSparkline extends React.Component<Props, {}> {
             height={60}
             showLegend={false}
             padding={{ top: 5 }}
-            themeColor={ChartThemeColor.multi}
             tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${dp.y} RPS`}
             series={data}
           />

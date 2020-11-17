@@ -2,15 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem, Grid, GridItem, Card, CardBody } from '@patternfly/react-core';
-import {
-  Dashboard,
-  DashboardModel,
-  DashboardQuery,
-  Aggregator,
-  ExternalLink,
-  Overlay,
-  RawOrBucket
-} from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
@@ -30,8 +21,12 @@ import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
 import TimeRangeComponent from 'components/Time/TimeRangeComponent';
 import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
-import { statLabel } from '@kiali/k-charted-pf4/dist/common/types/Labels';
 import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import { DashboardModel, ExternalLink } from 'types/Dashboards';
+import { Overlay } from 'types/Overlay';
+import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
+import { RawOrBucket } from 'types/VictoryChartInfo';
+import { Dashboard } from 'components/Charts/Dashboard';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -223,10 +218,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
 
   private renderOptionsBar() {
     const hasHistograms =
-      this.state.dashboard !== undefined &&
-      this.state.dashboard.charts.some(chart => {
-        return chart.metrics.some(m => m.labelSet.hasOwnProperty(statLabel));
-      });
+      this.state.dashboard !== undefined && this.state.dashboard.charts.some(chart => chart.metrics.some(m => m.stat));
     return (
       <Toolbar style={{ paddingBottom: 8 }}>
         <ToolbarGroup>

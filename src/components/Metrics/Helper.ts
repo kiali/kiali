@@ -1,18 +1,11 @@
-import {
-  TimeSeries,
-  DashboardModel,
-  AggregationModel,
-  SingleLabelValues,
-  AllPromLabelsValues,
-  PromLabel,
-  MetricsQuery
-} from '@kiali/k-charted-pf4';
-
 import { MetricsSettings, LabelsSettings, Quantiles, LabelSettings } from '../MetricsOptions/MetricsSettings';
 import { boundsToDuration, guardTimeRange, TimeRange, DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import history, { URLParam } from '../../app/History';
 import responseFlags from 'utils/ResponseFlags';
+import { AggregationModel, DashboardModel } from 'types/Dashboards';
+import { AllPromLabelsValues, Metric, PromLabel, SingleLabelValues } from 'types/Metrics';
+import { MetricsQuery } from 'types/MetricsOptions';
 
 // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
 export const defaultMetricsDuration: DurationInSeconds = 600;
@@ -41,15 +34,15 @@ export const combineLabelsSettings = (newSettings: LabelsSettings, stateSettings
 };
 
 export const extractLabelsSettingsOnSeries = (
-  series: TimeSeries[],
+  metrics: Metric[],
   aggregations: AggregationModel[],
   extracted: LabelsSettings
 ): void => {
-  series.forEach(ts => {
-    Object.keys(ts.labelSet).forEach(k => {
+  metrics.forEach(m => {
+    Object.keys(m.labels).forEach(k => {
       const agg = aggregations.find(a => a.label === k);
       if (agg) {
-        const value = ts.labelSet[k];
+        const value = m.labels[k];
         let lblObj = extracted.get(agg.label);
         if (!lblObj) {
           lblObj = {

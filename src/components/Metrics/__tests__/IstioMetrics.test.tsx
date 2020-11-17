@@ -2,7 +2,6 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
-import { DashboardModel, ChartModel } from '@kiali/k-charted-pf4';
 import { shallowToJson } from 'enzyme-to-json';
 
 import IstioMetrics from '../IstioMetrics';
@@ -10,6 +9,7 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import MounterMocker from 'services/__mocks__/MounterMocker';
+import { ChartModel, DashboardModel } from 'types/Dashboards';
 
 jest.spyOn(API, 'getGrafanaInfo').mockImplementation(() => {
   return new Promise(r => {
@@ -24,8 +24,9 @@ const createMetricChart = (name: string): ChartModel => {
     spans: 12,
     metrics: [
       {
-        labelSet: { __name__: name },
-        values: [
+        labels: {},
+        name: name,
+        datapoints: [
           [1111, 5],
           [2222, 10]
         ]
@@ -42,29 +43,37 @@ const createHistogramChart = (name: string): ChartModel => {
     spans: 12,
     metrics: [
       {
-        labelSet: { __name__: name, __stat__: 'avg' },
-        values: [
+        labels: {},
+        name: name,
+        stat: 'avg',
+        datapoints: [
           [1111, 10],
           [2222, 11]
         ]
       },
       {
-        labelSet: { __name__: name, __stat__: '0.5' },
-        values: [
+        labels: {},
+        name: name,
+        stat: '0.5',
+        datapoints: [
           [1111, 20],
           [2222, 21]
         ]
       },
       {
-        labelSet: { __name__: name, __stat__: '0.95' },
-        values: [
+        labels: {},
+        name: name,
+        stat: '0.95',
+        datapoints: [
           [1111, 30],
           [2222, 31]
         ]
       },
       {
-        labelSet: { __name__: name, __stat__: '0.99' },
-        values: [
+        labels: {},
+        name: name,
+        stat: '0.99',
+        datapoints: [
           [1111, 40],
           [2222, 41]
         ]

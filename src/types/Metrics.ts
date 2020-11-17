@@ -1,26 +1,24 @@
-export interface Metrics {
-  metrics: { [key: string]: MetricGroup };
-  histograms: { [key: string]: Histogram };
-}
-
-export type Histogram = { [key: string]: MetricGroup };
-
-export interface MetricGroup {
-  matrix: TimeSeries[];
-}
-
-export type Metric = {
-  [key: string]: string;
-};
-
-export interface TimeSeries {
-  metric: Metric;
-  values: Datapoint[];
-  name: string;
-}
-
 // First is timestamp, second is value
 export type Datapoint = [number, number];
+
+export interface Metric {
+  labels: Labels;
+  datapoints: Datapoint[];
+  name: string;
+  stat?: string;
+}
+
+export type IstioMetricsMap = {
+  request_count?: Metric[];
+  request_error_count?: Metric[];
+  request_duration_millis?: Metric[];
+  request_throughput?: Metric[];
+  response_throughput?: Metric[];
+  request_size?: Metric[];
+  response_size?: Metric[];
+  tcp_received?: Metric[];
+  tcp_sent?: Metric[];
+};
 
 export enum MetricsObjectTypes {
   SERVICE,
@@ -44,3 +42,16 @@ export interface Stat {
   name: string;
   value: number;
 }
+
+export type LabelDisplayName = string;
+export type PromLabel = string;
+
+// Collection of values for a single label, associated to a show/hide flag
+export type SingleLabelValues = { [key: string]: boolean };
+
+// Map of all labels (using prometheus name), each with its set of values
+export type AllPromLabelsValues = Map<PromLabel, SingleLabelValues>;
+
+export type Labels = {
+  [key: string]: string;
+};

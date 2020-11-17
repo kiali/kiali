@@ -1,11 +1,13 @@
 import { PfColors, PFAlertColor } from 'components/Pf/PfColors';
-import { toOverlay, OverlayInfo, Overlay, LineInfo } from '@kiali/k-charted-pf4';
 
-import * as API from '../../services/Api';
-import { TimeRange, durationToBounds, guardTimeRange } from '../../types/Common';
-import * as AlertUtils from '../../utils/AlertUtils';
+import * as API from 'services/Api';
+import { TimeRange, durationToBounds, guardTimeRange } from 'types/Common';
+import * as AlertUtils from 'utils/AlertUtils';
 import { Span, TracingQuery } from 'types/Tracing';
 import { MetricsObjectTypes } from 'types/Metrics';
+import { LineInfo } from 'types/VictoryChartInfo';
+import { Overlay, OverlayInfo } from 'types/Overlay';
+import { toOverlay } from 'utils/VictoryChartsUtils';
 
 export type JaegerLineInfo = LineInfo & { traceId?: string };
 

@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
-import { SparklineChart, VCLines, VCLine, VCDataPoint, RichDataPoint } from '@kiali/k-charted-pf4';
 
+import { SparklineChart } from 'components/Charts/SparklineChart';
 import { PfColors, PFAlertColor } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
-import Graphing from 'utils/Graphing';
+import { toVCLine } from 'utils/VictoryChartsUtils';
+import { RichDataPoint, VCDataPoint, VCLine, VCLines } from 'types/VictoryChartInfo';
 
 import 'components/Charts/Charts.css';
 
@@ -81,8 +82,8 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PFAlertColor.Info);
-    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PFAlertColor.Danger);
+    const rpsLine = toVCLine(this.props.dataRps, 'RPS', PFAlertColor.Info);
+    const errLine = toVCLine(this.props.dataErrors, 'Error', PFAlertColor.Danger);
     if (thereIsTrafficData(rpsLine)) {
       return (
         <>
@@ -142,8 +143,8 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const sentLine = Graphing.toVCLine(this.props.sentRates, 'Sent', PfColors.Blue);
-    const receivedLine = Graphing.toVCLine(this.props.receivedRates, 'Received', PfColors.Green);
+    const sentLine = toVCLine(this.props.sentRates, 'Sent', PfColors.Blue);
+    const receivedLine = toVCLine(this.props.receivedRates, 'Received', PfColors.Green);
     if (thereIsTrafficData(sentLine) || thereIsTrafficData(receivedLine)) {
       return (
         <>
