@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
@@ -50,8 +51,10 @@ func NewServer() *Server {
 
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
-		Addr:      fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
-		TLSConfig: tlsConfig,
+		Addr:         fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
+		TLSConfig:    tlsConfig,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	// return our new Server
