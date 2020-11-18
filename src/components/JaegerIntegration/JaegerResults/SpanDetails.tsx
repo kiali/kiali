@@ -6,7 +6,7 @@ import { SpanTable } from './SpanTable';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
-import { itemFromSpan, SpanTableItem } from './SpanTableItem';
+import { buildItemData, SpanItemData } from './SpanTableItem';
 import { spanFilters } from './Filters';
 import { runFilters } from 'components/FilterList/FilterHelper';
 import { ActiveFiltersInfo } from 'types/Filters';
@@ -33,8 +33,8 @@ class SpanDetails extends React.Component<Props, State> {
     };
   }
 
-  private buildSpansItems = (): SpanTableItem[] => {
-    return this.props.trace?.spans.map(s => itemFromSpan(s, this.props.namespace)) || [];
+  private buildSpansItems = (): SpanItemData[] => {
+    return this.props.trace?.spans.map(s => buildItemData(s, this.props.namespace)) || [];
   };
 
   render() {
@@ -42,20 +42,20 @@ class SpanDetails extends React.Component<Props, State> {
       return null;
     }
 
-    const spans: SpanTableItem[] = this.props.trace.spans.map(s => itemFromSpan(s, this.props.namespace));
-    const filters = spanFilters(spans);
-    const filteredSpans = runFilters(spans, filters, this.state.activeFilters);
+    const items = this.buildSpansItems();
+    const filters = spanFilters(items);
+    const filteredItems = runFilters(items, filters, this.state.activeFilters);
     return (
       <Card isCompact style={{ border: '1px solid #e6e6e6' }}>
         <CardBody>
           <StatefulFilters initialFilters={filters} onFilterChange={active => this.setState({ activeFilters: active })}>
             <TraceLabels
-              spans={spans}
-              filteredSpans={this.state.activeFilters.filters.length > 0 ? filteredSpans : undefined}
+              spans={this.props.trace.spans}
+              filteredSpans={this.state.activeFilters.filters.length > 0 ? filteredItems : undefined}
               oneline={true}
             />
           </StatefulFilters>
-          <SpanTable spans={filteredSpans} namespace={this.props.namespace} externalURL={this.props.externalURL} />
+          <SpanTable items={filteredItems} namespace={this.props.namespace} externalURL={this.props.externalURL} />
         </CardBody>
       </Card>
     );

@@ -18,9 +18,11 @@ type Props = {
   colorUndefined: string;
   valueFormat: (v: number) => string;
   tooltip: (x: number, y: number, v: number) => string;
+  compactMode?: boolean;
 };
 
 const cellHeight = '2rem';
+const compactCellHeight = '1rem';
 
 const rowStyle = style({
   display: 'flex',
@@ -53,7 +55,7 @@ const xLabelStyle = style({
   width: cellHeight
 });
 
-const cellStyle = style({
+const largeCellStyle = style({
   textAlign: 'center',
   overflow: 'hidden',
   boxSizing: 'border-box',
@@ -62,6 +64,18 @@ const cellStyle = style({
   height: cellHeight,
   lineHeight: cellHeight,
   fontSize: '.7rem',
+  borderRadius: 3,
+  margin: 1
+});
+
+const compactCellStyle = style({
+  textAlign: 'center',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+  flexBasis: compactCellHeight,
+  flexShrink: 0,
+  height: compactCellHeight,
+  lineHeight: compactCellHeight,
   borderRadius: 3,
   margin: 1
 });
@@ -95,22 +109,25 @@ export class HeatMap extends React.Component<Props> {
   };
 
   render() {
+    const cellStyle = this.props.compactMode ? compactCellStyle : largeCellStyle;
     return (
       <div className={rowStyle}>
         <div className={columnStyle} style={{ marginTop: cellHeight }}>
-          {this.props.yLabels.map(label => (
-            <div key={label} className={yLabelStyle}>
-              {label}
-            </div>
-          ))}
-        </div>
-        <div className={columnStyle}>
-          <div className={xLabelRowStyle}>
-            {this.props.xLabels.map(label => (
-              <div key={label} className={xLabelStyle}>
+          {!this.props.compactMode &&
+            this.props.yLabels.map(label => (
+              <div key={label} className={yLabelStyle}>
                 {label}
               </div>
             ))}
+        </div>
+        <div className={columnStyle}>
+          <div className={xLabelRowStyle}>
+            {!this.props.compactMode &&
+              this.props.xLabels.map(label => (
+                <div key={label} className={xLabelStyle}>
+                  {label}
+                </div>
+              ))}
           </div>
           <div className={columnStyle}>
             {this.props.yLabels.map((_, y) => (
@@ -126,7 +143,7 @@ export class HeatMap extends React.Component<Props> {
                         style={style}
                         title={this.props.tooltip(x, y, value)}
                       >
-                        {this.props.valueFormat(value)}
+                        {!this.props.compactMode && this.props.valueFormat(value)}
                       </div>
                     );
                   }

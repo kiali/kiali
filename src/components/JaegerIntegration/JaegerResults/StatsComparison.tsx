@@ -6,7 +6,7 @@ import * as API from 'services/Api';
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { MetricsStatsQuery, Target } from 'types/MetricsOptions';
 import { EnvoySpanInfo } from '../JaegerHelper';
-import { SpanTableItem } from './SpanTableItem';
+import { SpanItemData } from './SpanTableItem';
 import { MetricsStats } from 'types/Metrics';
 import { PfColors } from 'components/Pf/PfColors';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
@@ -14,7 +14,8 @@ import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 // TODO / follow-up: these variables are to be removed from here and managed from the toolbar
 const statsQuantiles = ['0.5', '0.9', '0.99'];
 const statsAvgWithQuantiles = ['avg', ...statsQuantiles];
-const statsIntervals = ['10m', '60m', '6h'];
+const allStatsIntervals = ['10m', '60m', '6h'];
+const compactStatsIntervals = ['60m', '6h'];
 const statsPerPeer = false;
 let statsCompareKind: 'app' | 'workload' = 'workload';
 
@@ -28,10 +29,10 @@ const statToText = {
   '0.999': { short: 'p99.9', long: '99.9th percentile' }
 };
 
-export const fetchStats = (spans: SpanTableItem[]) => {
+export const fetchStats = (items: SpanItemData[]) => {
   const queryTime = Math.floor(Date.now() / 1000);
-  const queries: MetricsStatsQuery[] = spans.flatMap(span => {
-    const info = span.info as EnvoySpanInfo;
+  const queries: MetricsStatsQuery[] = items.flatMap(item => {
+    const info = item.info as EnvoySpanInfo;
     if (!info.direction) {
       console.warn('Could not determine direction from Envoy span.');
       return [];
@@ -40,7 +41,7 @@ export const fetchStats = (spans: SpanTableItem[]) => {
       console.warn('Could not determine peer from Envoy span.');
       return [];
     }
-    const name = statsCompareKind === 'app' ? span.app : span.workload;
+    const name = statsCompareKind === 'app' ? item.app : item.workload;
     if (!name) {
       console.warn('Could not determine workload from Envoy span.');
       return [];
@@ -48,7 +49,7 @@ export const fetchStats = (spans: SpanTableItem[]) => {
     const query: MetricsStatsQuery = {
       queryTime: queryTime,
       target: {
-        namespace: span.namespace,
+        namespace: item.namespace,
         name: name,
         kind: statsCompareKind
       },
@@ -58,7 +59,7 @@ export const fetchStats = (spans: SpanTableItem[]) => {
       avg: true,
       quantiles: statsQuantiles
     };
-    return statsIntervals.map(interval => ({ ...query, interval: interval }));
+    return allStatsIntervals.map(interval => ({ ...query, interval: interval }));
   });
   return API.getMetricsStats(deduplicateMetricQueries(queries));
 };
@@ -86,10 +87,10 @@ const genTargetKey = (target: Target): string | undefined => {
 };
 
 type StatsWithIntervalIndex = MetricsStats & { intervalIndex: number };
-const buildStatsData = (item: SpanTableItem, itemStats: StatsWithIntervalIndex[]) => {
+const buildStatsData = (item: SpanItemData, itemStats: StatsWithIntervalIndex[], intervals: string[]) => {
   const data: (number | undefined)[][] = new Array(statsAvgWithQuantiles.length)
     .fill(0)
-    .map(() => new Array(statsIntervals.length).fill(0).map(() => undefined));
+    .map(() => new Array(intervals.length).fill(0).map(() => undefined));
   const baseLine = item.duration / 1000;
 
   itemStats.forEach(stats => {
@@ -103,13 +104,19 @@ const buildStatsData = (item: SpanTableItem, itemStats: StatsWithIntervalIndex[]
   return data;
 };
 
-const renderHeatMap = (item: SpanTableItem, stats: StatsWithIntervalIndex[]) => {
-  const data = buildStatsData(item, stats);
+const renderHeatMap = (
+  item: SpanItemData,
+  stats: StatsWithIntervalIndex[],
+  intervals: string[],
+  compactMode: boolean
+) => {
+  const data = buildStatsData(item, stats, intervals);
   return (
     <HeatMap
       xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
-      yLabels={statsIntervals}
+      yLabels={intervals}
       data={data}
+      compactMode={compactMode}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PfColors.Black200}
@@ -118,7 +125,7 @@ const renderHeatMap = (item: SpanTableItem, stats: StatsWithIntervalIndex[]) => 
         // Build explanation tooltip
         const slowOrFast = v > 0 ? 'slower' : 'faster';
         const stat = statToText[statsAvgWithQuantiles[x]]?.long || statsAvgWithQuantiles[x];
-        const interval = statsIntervals[y];
+        const interval = intervals[y];
         const info = item.info as EnvoySpanInfo;
         let dir = 'from',
           rev = 'to';
@@ -137,11 +144,13 @@ const renderHeatMap = (item: SpanTableItem, stats: StatsWithIntervalIndex[]) => 
 };
 
 export const renderMetricsComparison = (
-  item: SpanTableItem,
+  item: SpanItemData,
+  compactMode: boolean,
   metricsStats: { [key: string]: MetricsStats },
   load: () => void
 ) => {
-  const itemStats = statsIntervals.flatMap((interval, intervalIndex) => {
+  const intervals = compactMode ? compactStatsIntervals : allStatsIntervals;
+  const itemStats = intervals.flatMap((interval, intervalIndex) => {
     const info = item.info as EnvoySpanInfo;
     const target = {
       namespace: item.namespace,
@@ -160,12 +169,14 @@ export const renderMetricsComparison = (
   if (itemStats.length > 0) {
     return (
       <>
-        <Tooltip content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details.">
-          <>
-            <InfoAltIcon /> <strong>Comparison map: </strong>
-          </>
-        </Tooltip>
-        {renderHeatMap(item, itemStats)}
+        {!compactMode && (
+          <Tooltip content="This heatmap is a comparison matrix of this request duration against duration statistics aggregated over time. Move the pointer over cells to get more details.">
+            <>
+              <InfoAltIcon /> <strong>Comparison map: </strong>
+            </>
+          </Tooltip>
+        )}
+        {renderHeatMap(item, itemStats, intervals, compactMode)}
       </>
     );
   }

@@ -1,7 +1,7 @@
 import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterTypes, FilterValue, RunnableFilter } from 'types/Filters';
-import { SpanTableItem } from './SpanTableItem';
+import { SpanItemData } from './SpanTableItem';
 
-const byWorkload = (workloads: FilterValue[]): RunnableFilter<SpanTableItem> => {
+const byWorkload = (workloads: FilterValue[]): RunnableFilter<SpanItemData> => {
   return {
     id: 'workload',
     title: 'Workload',
@@ -13,7 +13,7 @@ const byWorkload = (workloads: FilterValue[]): RunnableFilter<SpanTableItem> => 
   };
 };
 
-const byApp = (apps: FilterValue[]): RunnableFilter<SpanTableItem> => {
+const byApp = (apps: FilterValue[]): RunnableFilter<SpanItemData> => {
   return {
     id: 'app',
     title: 'App',
@@ -25,7 +25,7 @@ const byApp = (apps: FilterValue[]): RunnableFilter<SpanTableItem> => {
   };
 };
 
-const byComponent = (components: FilterValue[]): RunnableFilter<SpanTableItem> => {
+const byComponent = (components: FilterValue[]): RunnableFilter<SpanItemData> => {
   return {
     id: 'type',
     title: 'Component',
@@ -37,7 +37,7 @@ const byComponent = (components: FilterValue[]): RunnableFilter<SpanTableItem> =
   };
 };
 
-const byOperation = (ops: FilterValue[]): RunnableFilter<SpanTableItem> => {
+const byOperation = (ops: FilterValue[]): RunnableFilter<SpanItemData> => {
   return {
     id: 'operation',
     title: 'Operation',
@@ -49,7 +49,7 @@ const byOperation = (ops: FilterValue[]): RunnableFilter<SpanTableItem> => {
   };
 };
 
-const byError: RunnableFilter<SpanTableItem> = {
+const byError: RunnableFilter<SpanItemData> = {
   id: 'error',
   title: 'Error',
   placeholder: 'Filter by Error',
@@ -59,10 +59,10 @@ const byError: RunnableFilter<SpanTableItem> = {
     { id: 'yes', title: 'With errors' },
     { id: 'no', title: 'Without errors' }
   ],
-  run: (item, filters) => filters.filters.some(f => f.value === (item.hasError ? 'With errors' : 'Without errors'))
+  run: (item, filters) => filters.filters.some(f => f.value === (item.info.hasError ? 'With errors' : 'Without errors'))
 };
 
-export const spanFilters = (spans: SpanTableItem[]): RunnableFilter<SpanTableItem>[] => {
+export const spanFilters = (spans: SpanItemData[]): RunnableFilter<SpanItemData>[] => {
   const workloads = new Set<string>();
   const apps = new Set<string>();
   const components = new Set<string>();
