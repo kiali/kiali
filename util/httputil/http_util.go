@@ -24,11 +24,16 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int,
 	if err != nil {
 		return nil, 0, err
 	}
-	transport, err := AuthTransport(auth, &http.Transport{})
-	if err != nil {
-		return nil, 0, err
+	var client http.Client
+	if auth != nil {
+		transport, err := AuthTransport(auth, &http.Transport{})
+		if err != nil {
+			return nil, 0, err
+		}
+		client = http.Client{Transport: transport, Timeout: timeout}
+	} else {
+		client = http.Client{Timeout: timeout}
 	}
-	client := http.Client{Transport: transport, Timeout: timeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
