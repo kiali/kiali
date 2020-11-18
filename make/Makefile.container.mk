@@ -90,7 +90,7 @@ container-push: container-push-kiali-quay
 .ensure-buildx-builder: .ensure-docker-buildx
 	@if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx inspect kiali-builder > /dev/null 2>&1; then \
 	  echo "The buildx builder instance named 'kiali-builder' does not exist. Creating one now."; \
-	  if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx create --name=kiali-builder; then \
+	  if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx create --name=kiali-builder --driver-opt=image=moby/buildkit:v0.8.0-rc2; then \
 	    echo "Failed to create the buildx builder 'kiali-builder'"; \
 	    exit 1; \
 	  fi \
