@@ -30,7 +30,7 @@ type Cluster struct {
 
 // GetClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
 // is done as best-effort using the resources that are present in the cluster.
-func (in *MeshService) GetClusters() ([]Cluster, error) {
+func (in *MeshService) GetClusters() (clusters []Cluster, errVal error) {
 	var err error
 
 	remoteClusters, err := in.resolveRemoteClustersFromSecrets()
@@ -43,9 +43,13 @@ func (in *MeshService) GetClusters() ([]Cluster, error) {
 		return nil, err
 	}
 
-	allClusters := append(remoteClusters, *myCluster)
+	if myCluster == nil {
+		clusters = remoteClusters
+	} else {
+		clusters = append(remoteClusters, *myCluster)
+	}
 
-	return allClusters, nil
+	return
 }
 
 // resolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
@@ -59,6 +63,10 @@ func (in *MeshService) resolveKialiControlPlaneCluster() (*Cluster, error) {
 	istioDeployment, err := in.k8s.GetDeployment(conf.IstioNamespace, "istiod")
 	if err != nil {
 		return nil, err
+	}
+
+	if istioDeployment == nil {
+		return nil, nil
 	}
 
 	if len(istioDeployment.Spec.Template.Spec.Containers) == 0 {
