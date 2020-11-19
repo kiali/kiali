@@ -745,3 +745,10 @@ type MetricsStatsResponse struct {
 	// in: body
 	Body models.MetricsStats
 }
+
+// Return a list of Cluster items
+// swagger:response clustersResponse
+type ClustersResponse struct {
+	// in: body
+	Body []business.Cluster
+}

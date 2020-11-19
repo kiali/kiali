@@ -13,20 +13,21 @@ import (
 
 // Layer is a container for fast access to inner services
 type Layer struct {
-	Svc            SvcService
-	Health         HealthService
-	Validations    IstioValidationsService
-	IstioConfig    IstioConfigService
-	Workload       WorkloadService
 	App            AppService
-	Namespace      NamespaceService
+	Health         HealthService
+	IstioConfig    IstioConfigService
+	IstioStatus    IstioStatusService
+	Iter8          Iter8Service
 	Jaeger         JaegerService
 	k8s            kubernetes.ClientInterface
+	Mesh           MeshService
+	Namespace      NamespaceService
 	OpenshiftOAuth OpenshiftOAuthService
-	TLS            TLSService
-	Iter8          Iter8Service
-	IstioStatus    IstioStatusService
 	ProxyStatus    ProxyStatus
+	Svc            SvcService
+	TLS            TLSService
+	Validations    IstioValidationsService
+	Workload       WorkloadService
 }
 
 // Global clientfactory and prometheus clients.
@@ -111,20 +112,21 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8s and prom clients
 func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInterface, jaegerClient JaegerLoader) *Layer {
 	temporaryLayer := &Layer{}
-	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
-	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Namespace = NewNamespaceService(k8s)
+	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
+	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
+	temporaryLayer.Mesh = MeshService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
-	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatus{k8s: k8s}
+	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
 
 	return temporaryLayer
 }
