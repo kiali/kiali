@@ -1,8 +1,13 @@
 package models
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	adminapi "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	envoy_config_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/golang/protobuf/ptypes"
@@ -49,10 +54,35 @@ type RouteConfig struct {
 	VersionInfo string                    `json:"version_info,omitempty"`
 }
 
+type ClusterSummary struct {
+	ServiceFQDN string `json:"service_fqdn"`
+	Port        int    `json:"port"`
+	Subset      string `json:"subset"`
+	Direction   string `json:"direction"`
+	Type        int32  `json:"type"`
+}
+
+type RouteSummary struct {
+	Name           string `json:"name"`
+	Domains        string `json:"domains"`
+	Match          string `json:"match"`
+	VirtualService string `json:"virtual_service"`
+}
+
+type ProxyConfigSummarizer interface {
+	Summary() interface{}
+}
+
+type ClusterSummarizer struct {
+	*ConfigDump
+}
+
+type RouteSummarizer struct {
+	*ConfigDump
+}
+
 func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
-	cd := &ConfigDump{}
-	cd.configDump = dump
-	return cd
+	return &ConfigDump{configDump: dump}
 }
 
 func (cd *ConfigDump) UnmarshallAll() {
@@ -205,5 +235,136 @@ func (cd *ConfigDump) UnmarshallRoutes() {
 }
 
 func (cd *ConfigDump) UnmarshallSecrets() {
+	// TODO: implement the unmarshalling of the secrets
+}
 
+func (cs ClusterSummarizer) Summary() interface{} {
+	cs.UnmarshallClusters()
+	clusters := make([]*ClusterSummary, 0, len(cs.Clusters.DynamicActiveClusters)+len(cs.Clusters.StaticClusters))
+
+	for _, clusterSet := range [][]*Cluster{cs.Clusters.StaticClusters, cs.Clusters.DynamicActiveClusters} {
+		for _, cluster := range clusterSet {
+			clusters = append(clusters, cluster.summary())
+		}
+	}
+
+	return clusters
+}
+
+func (c Cluster) summary() *ClusterSummary {
+	summary := &ClusterSummary{
+		ServiceFQDN: c.Cluster.Name,
+		Port:        0,
+		Subset:      "",
+		Direction:   "",
+		Type:        int32(c.Cluster.GetType()),
+	}
+
+	parts := strings.Split(c.Cluster.Name, "|")
+	if len(parts) > 3 {
+		summary.ServiceFQDN = parts[3]
+		summary.Port, _ = strconv.Atoi(strings.TrimSuffix(parts[1], "_"))
+		summary.Subset = parts[2]
+		summary.Direction = strings.TrimSuffix(parts[0], "_")
+		summary.Type = int32(c.Cluster.GetType())
+	}
+
+	return summary
+}
+
+func (cs RouteSummarizer) Summary() interface{} {
+	cs.UnmarshallRoutes()
+	routes := make([]*RouteSummary, 0, len(cs.Routes.StaticRouteConfigs)+len(cs.Routes.DynamicRouteConfigs))
+
+	for _, routeSet := range [][]*RouteConfig{cs.Routes.StaticRouteConfigs, cs.Routes.DynamicRouteConfigs} {
+		for _, route := range routeSet {
+			routes = append(routes, route.summary()...)
+		}
+	}
+
+	return routes
+}
+
+func (r RouteConfig) summary() []*RouteSummary {
+	routes := make([]*RouteSummary, 0, len(r.Route.GetVirtualHosts()))
+
+	for _, vhs := range r.Route.GetVirtualHosts() {
+		for _, route := range vhs.GetRoutes() {
+			route := &RouteSummary{
+				Name:           r.Route.Name,
+				Domains:        bestDomainMatch(vhs.GetDomains()),
+				Match:          matchSummary(route.GetMatch()),
+				VirtualService: istioMetadata(route.GetMetadata()),
+			}
+			routes = append(routes, route)
+		}
+	}
+	return routes
+}
+
+func matchSummary(match *route.RouteMatch) string {
+	conds := []string{}
+	if match.GetPrefix() != "" {
+		conds = append(conds, fmt.Sprintf("%s*", match.GetPrefix()))
+	}
+	if match.GetPath() != "" {
+		conds = append(conds, match.GetPath())
+	}
+	if match.GetSafeRegex() != nil {
+		conds = append(conds, fmt.Sprintf("regex %s", match.GetSafeRegex().String()))
+	}
+	// Ignore headers
+	return strings.Join(conds, " ")
+}
+
+func bestDomainMatch(domains []string) string {
+	if len(domains) == 0 {
+		return ""
+	}
+
+	if len(domains) == 1 {
+		return domains[0]
+	}
+
+	bestMatch := domains[0]
+	for _, domain := range domains {
+		if len(domain) == 0 {
+			continue
+		}
+
+		if domain[0] <= '9' {
+			continue
+		}
+
+		if len(bestMatch) > len(domain) {
+			bestMatch = domain
+		}
+	}
+	return bestMatch
+}
+
+func istioMetadata(metadata *envoy_config_core_v3.Metadata) string {
+	if metadata == nil {
+		return ""
+	}
+	istioMetadata, ok := metadata.FilterMetadata["istio"]
+	if !ok {
+		return ""
+	}
+	config, ok := istioMetadata.Fields["config"]
+	if !ok {
+		return ""
+	}
+	return renderConfig(config.GetStringValue())
+}
+
+func renderConfig(configPath string) string {
+	if strings.HasPrefix(configPath, "/apis/networking.istio.io/v1alpha3/namespaces/") {
+		parts := strings.Split(configPath, "/")
+		if len(parts) != 8 {
+			return ""
+		}
+		return fmt.Sprintf("%s.%s", parts[7], parts[5])
+	}
+	return "<unknown>"
 }

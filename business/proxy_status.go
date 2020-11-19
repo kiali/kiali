@@ -77,7 +77,7 @@ func xdsStatus(sent, acked string) string {
 	return "Stale"
 }
 
-func (in *ProxyStatus) GetConfigDump(pod, namespace string) (interface{}, error) {
+func (in *ProxyStatus) GetConfigDump(namespace, pod string) (interface{}, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
 	defer promtimer.ObserveNow(&err)
@@ -87,25 +87,34 @@ func (in *ProxyStatus) GetConfigDump(pod, namespace string) (interface{}, error)
 		return nil, err
 	}
 
-	filter := "all"
-	// Fetch clusters, listeners, whatsoever
-	return buildConfigDump(dump, filter)
+	cd := models.NewConfigDump(dump)
+	cd.UnmarshallAll()
+	return cd, nil
 }
 
-func buildConfigDump(configDump *config_dump.ConfigDump, filter string) (*models.ConfigDump, error) {
-	cd := models.NewConfigDump(configDump)
-	switch filter {
-	case "all":
-		cd.UnmarshallAll()
-	case "clusters":
-		cd.UnmarshallClusters()
-	case "listeners":
-		cd.UnmarshallListeners()
-	case "routes":
-		cd.UnmarshallRoutes()
-	case "secrets":
-		cd.UnmarshallSecrets()
+func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (interface{}, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
+	defer promtimer.ObserveNow(&err)
+
+	dump, err := in.k8s.GetConfigDump(namespace, pod)
+	if err != nil {
+		return nil, err
 	}
 
-	return cd, nil
+	return buildSummarizer(dump, resource).Summary(), nil
+}
+
+func buildSummarizer(dump *config_dump.ConfigDump, resource string) models.ProxyConfigSummarizer {
+	var summarizer models.ProxyConfigSummarizer
+	cd := models.NewConfigDump(dump)
+
+	switch resource {
+	case "clusters":
+		summarizer = models.ClusterSummarizer{cd}
+	case "routes":
+		summarizer = models.RouteSummarizer{cd}
+	}
+
+	return summarizer
 }
