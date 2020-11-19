@@ -80,6 +80,11 @@ func (o *K8SClientMock) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, 
 	return args.Get(0).([]apps_v1.ReplicaSet), args.Error(1)
 }
 
+func (o *K8SClientMock) GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error) {
+	args := o.Called(namespace, labelSelector)
+	return args.Get(0).([]core_v1.Secret), args.Error(1)
+}
+
 func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
 	args := o.Called(namespace, api, resourceType, verbs)
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
