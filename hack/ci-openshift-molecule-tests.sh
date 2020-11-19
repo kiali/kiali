@@ -313,7 +313,7 @@ else
 fi
 
 infomsg "Building the Molecule test docker image using [${DORP}]"
-DORP=${DORP} make molecule-build
+FORCE_MOLECULE_BUILD="true" DORP=${DORP} make molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
