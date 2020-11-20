@@ -5,76 +5,85 @@ import {
   BoundsInMilliseconds,
   guardTimeRange,
   TimeRange,
-  durationToBounds
+  durationToBounds,
+  isEqualTimeRange
 } from '../../types/Common';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
-import { defaultMetricsDuration } from 'components/Metrics/Helper';
-import { retrieveTimeRange, retrieveDuration, storeBounds, storeDuration } from './TimeRangeHelper';
+import { retrieveTimeRange, storeTimeRange } from './TimeRangeHelper';
 import { DateTimePicker } from './DateTimePicker';
+import { KialiAppState } from '../../store/Store';
+import { timeRangeSelector } from '../../store/Selectors';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { style } from 'typestyle';
 
 type Props = {
-  range?: TimeRange;
-  allowCustom: boolean;
+  timeRange: TimeRange;
   tooltip: string;
-  onChanged: (range: TimeRange) => void;
+  setTimeRange: (range: TimeRange) => void;
 };
 
-export default class TimeRangeComponent extends React.Component<Props> {
-  private range: TimeRange;
+const labelStyle = style({
+  margin: '5px 5px 0px 5px'
+});
 
+class TimeRangeComponent extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
-    if (props.range) {
-      this.range = props.range;
-    } else {
-      this.range = (this.props.allowCustom ? retrieveTimeRange() : retrieveDuration()) || defaultMetricsDuration;
+    const range = retrieveTimeRange();
+    if ((range.rangeDuration !== undefined || range.from !== undefined) && !isEqualTimeRange(props.timeRange, range)) {
+      this.props.setTimeRange(range);
     }
+    storeTimeRange(this.props.timeRange);
   }
 
-  componentDidUpdate(prev: Props) {
-    if (this.props.range && prev.range !== this.props.range) {
-      this.range = this.props.range;
-    }
+  componentDidUpdate() {
+    storeTimeRange(this.props.timeRange);
   }
 
   onDurationChanged = (key: string) => {
+    let range: TimeRange = {};
     if (key === 'custom') {
       // Convert to bounds
-      this.range = guardTimeRange(this.range, durationToBounds, b => b);
-      storeBounds(this.range);
+      range = guardTimeRange(range, durationToBounds, b => b);
+      range.rangeDuration = undefined;
     } else {
-      this.range = Number(key);
-      storeDuration(this.range);
+      range.rangeDuration = Number(key);
+      range.from = undefined;
+      range.to = undefined;
     }
-    this.props.onChanged(this.range);
+    this.props.setTimeRange(range);
   };
 
   onStartPickerChanged = (d?: Date) => {
+    let range: TimeRange = {};
     if (d) {
-      this.range = guardTimeRange(this.range, durationToBounds, b => b);
-      this.range.from = d.getTime();
-      if (this.range.to && this.range.from > this.range.to) {
-        this.range.from = this.range.to;
+      range = guardTimeRange(range, durationToBounds, b => b);
+      range.from = d.getTime();
+      if (range.to && range.from > range.to) {
+        range.from = range.to;
       }
-      storeBounds(this.range);
-      this.props.onChanged(this.range);
+      range.rangeDuration = undefined;
+      this.props.setTimeRange(range);
     }
   };
 
   onEndPickerChanged = (d?: Date) => {
-    this.range = guardTimeRange(this.range, durationToBounds, b => b);
-    this.range.to = d ? d.getTime() : undefined;
-    if (this.range.to && this.range.from > this.range.to) {
-      this.range.to = this.range.from;
+    const range = guardTimeRange(this.props.timeRange, durationToBounds, b => b);
+    range.to = d ? d.getTime() : undefined;
+    if (range.to && range.from && range.from > range.to) {
+      range.to = range.from;
     }
-    storeBounds(this.range);
-    this.props.onChanged(this.range);
+    this.props.setTimeRange(range);
   };
 
   render() {
     return guardTimeRange(
-      this.range,
+      this.props.timeRange,
       d => this.renderDuration(d),
       ft => this.renderWithCustom(ft)
     );
@@ -82,7 +91,7 @@ export default class TimeRangeComponent extends React.Component<Props> {
 
   renderDuration(d?: DurationInSeconds) {
     const durations = humanDurations(serverConfig, 'Last', undefined);
-    const options = this.props.allowCustom ? { custom: 'Custom', ...durations } : durations;
+    const options = { custom: 'Custom', ...durations };
     return (
       <ToolbarDropdown
         id={'metrics_filter_interval_duration'}
@@ -100,11 +109,26 @@ export default class TimeRangeComponent extends React.Component<Props> {
     return (
       <>
         {this.renderDuration()}
-        {' From '}
+        <div className={labelStyle}>From</div>
         <DateTimePicker selected={bounds.from} onChange={date => this.onStartPickerChanged(date)} maxDate={bounds.to} />
-        {' To '}
+        <div className={labelStyle}>To</div>
         <DateTimePicker selected={bounds.to} onChange={date => this.onEndPickerChanged(date)} minDate={bounds.from} />
       </>
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    timeRange: timeRangeSelector(state)
+  };
+};
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+  return {
+    setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
+  };
+};
+
+const TimeRangeContainer = connect(mapStateToProps, mapDispatchToProps)(TimeRangeComponent);
+export default TimeRangeContainer;

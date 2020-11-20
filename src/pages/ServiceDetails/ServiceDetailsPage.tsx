@@ -8,21 +8,33 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
-import { DurationInSeconds } from '../../types/Common';
-import { durationSelector } from '../../store/Selectors';
+import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ServiceInfo from './ServiceInfo';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
+import * as API from '../../services/Api';
+import Namespace from '../../types/Namespace';
+import * as AlertUtils from '../../utils/AlertUtils';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
+import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { PeerAuthentication, Validations } from '../../types/IstioObjects';
+import ServiceWizardDropdown from '../../components/IstioWizards/ServiceWizardDropdown';
+import TimeControl from '../../components/Time/TimeControl';
 
 type ServiceDetailsState = {
   currentTab: string;
+  gateways: string[];
+  serviceDetails?: ServiceDetailsInfo;
+  peerAuthentications: PeerAuthentication[];
+  validations: Validations;
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
+  lastRefreshAt: TimeInMilliseconds;
 }
 
 const tabName = 'tab';
@@ -37,46 +49,113 @@ const tabIndex: { [tab: string]: number } = {
 };
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
+  private promises = new PromisesRegistry();
+
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
-      currentTab: activeTab(tabName, defaultTab)
+      currentTab: activeTab(tabName, defaultTab),
+      gateways: [],
+      validations: {},
+      peerAuthentications: []
     };
   }
 
+  componentDidMount(): void {
+    this.fetchService();
+  }
+
   componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
-    const active = activeTab(tabName, defaultTab);
+    const currentTab = activeTab(tabName, defaultTab);
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service ||
-      this.state.currentTab !== active ||
-      prevProps.duration !== this.props.duration
+      prevProps.lastRefreshAt !== this.props.lastRefreshAt
     ) {
-      this.setState({ currentTab: active });
+      if (currentTab === 'info') {
+        this.fetchService();
+      }
+      if (currentTab !== this.state.currentTab) {
+        this.setState({ currentTab: currentTab });
+      }
     }
   }
 
-  render() {
-    const overviewTab = (
+  private fetchService = () => {
+    this.promises.cancelAll();
+    this.promises
+      .register('namespaces', API.getNamespaces())
+      .then(namespacesResponse => {
+        const namespaces: Namespace[] = namespacesResponse.data;
+        this.promises
+          .registerAll(
+            'gateways',
+            namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false, '', ''))
+          )
+          .then(responses => {
+            let gatewayList: string[] = [];
+            responses.forEach(response => {
+              const ns = response.data.namespace;
+              response.data.gateways.forEach(gw => {
+                gatewayList = gatewayList.concat(ns.name + '/' + gw.metadata.name);
+              });
+            });
+            this.setState({ gateways: gatewayList });
+          })
+          .catch(gwError => {
+            AlertUtils.addError('Could not fetch Gateways list.', gwError);
+          });
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch Namespaces list.', error);
+      });
+
+    API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
+      .then(results => {
+        this.setState({
+          serviceDetails: results,
+          validations: results.validations
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch Service Details.', error);
+      });
+
+    API.getIstioConfig(this.props.match.params.namespace, ['peerauthentications'], false, '', '')
+      .then(results => {
+        this.setState({
+          peerAuthentications: results.data.peerAuthentications
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch PeerAuthentications.', error);
+      });
+  };
+
+  private renderTabs() {
+    const overTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
           namespace={this.props.match.params.namespace}
           service={this.props.match.params.service}
-          duration={this.props.duration}
+          serviceDetails={this.state.serviceDetails}
+          gateways={this.state.gateways}
+          peerAuthentications={this.state.peerAuthentications}
+          validations={this.state.validations}
         />
       </Tab>
     );
     const trafficTab = (
       <Tab eventKey={1} title="Traffic" key={trafficTabName}>
         <TrafficDetails
-          duration={this.props.duration}
           itemName={this.props.match.params.service}
           itemType={MetricsObjectTypes.SERVICE}
           namespace={this.props.match.params.namespace}
         />
       </Tab>
     );
-    const inboundMetricsTab = (
+
+    const inTab = (
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
         <IstioMetricsContainer
           namespace={this.props.match.params.namespace}
@@ -87,10 +166,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       </Tab>
     );
 
-    // Default tabs
-    const tabsArray: JSX.Element[] = [overviewTab, trafficTab, inboundMetricsTab];
+    const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab];
 
-    // Conditional Traces tab
     if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
@@ -98,21 +175,48 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             namespace={this.props.match.params.namespace}
             target={this.props.match.params.service}
             targetKind={'service'}
-            showErrors={false}
-            duration={this.props.duration}
           />
         </Tab>
       );
     }
 
+    return tabsArray;
+  }
+
+  render() {
+    let useCustomTime = false;
+    switch (this.state.currentTab) {
+      case 'info':
+      case 'traffic':
+      case 'traces':
+        useCustomTime = false;
+        break;
+      case 'metrics':
+        useCustomTime = true;
+        break;
+    }
+    const actionsToolbar = this.state.serviceDetails ? (
+      <ServiceWizardDropdown
+        namespace={this.props.match.params.namespace}
+        serviceName={this.state.serviceDetails.service.name}
+        show={false}
+        workloads={this.state.serviceDetails.workloads || []}
+        virtualServices={this.state.serviceDetails.virtualServices}
+        destinationRules={this.state.serviceDetails.destinationRules}
+        gateways={this.state.gateways}
+        peerAuthentications={this.state.peerAuthentications}
+        tlsStatus={this.state.serviceDetails.namespaceMTLS}
+        onChange={this.fetchService}
+      />
+    ) : undefined;
+
     return (
       <>
-        <RenderHeader location={this.props.location}>
-          {
-            // This magic space will align details header width with Graph, List pages
-          }
-          <div style={{ paddingBottom: 14 }} />
-        </RenderHeader>
+        <RenderHeader
+          location={this.props.location}
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+          actionsToolbar={actionsToolbar}
+        />
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
@@ -125,7 +229,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           mountOnEnter={true}
           unmountOnExit={true}
         >
-          {tabsArray}
+          {this.renderTabs()}
         </ParameterizedTabs>
       </>
     );
@@ -133,8 +237,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state),
-  jaegerInfo: state.jaegerState.info
+  jaegerInfo: state.jaegerState.info,
+  lastRefreshAt: state.globalState.lastRefreshAt
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);

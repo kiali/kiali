@@ -1,5 +1,11 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { DurationInSeconds, ReplayWindow, IntervalInMilliseconds, TimeInMilliseconds } from '../types/Common';
+import {
+  DurationInSeconds,
+  ReplayWindow,
+  IntervalInMilliseconds,
+  TimeInMilliseconds,
+  TimeRange
+} from '../types/Common';
 import { ActionKeys } from './ActionKeys';
 
 export const UserSettingsActions = {
@@ -7,6 +13,7 @@ export const UserSettingsActions = {
     resolve({ collapse: collapsed })
   ),
   setDuration: createStandardAction(ActionKeys.SET_DURATION)<DurationInSeconds>(),
+  setTimeRange: createStandardAction(ActionKeys.SET_TIME_RANGE)<TimeRange>(),
   setRefreshInterval: createStandardAction(ActionKeys.SET_REFRESH_INTERVAL)<IntervalInMilliseconds>(),
   setReplayWindow: createStandardAction(ActionKeys.SET_REPLAY_WINDOW)<ReplayWindow>(),
   setReplayQueryTime: createStandardAction(ActionKeys.SET_REPLAY_QUERY_TIME)<TimeInMilliseconds>(),

@@ -24,7 +24,7 @@ type ComponentProps = {
   hideLabel?: boolean;
   manageURL?: boolean;
 
-  handleRefresh: () => void;
+  handleRefresh?: () => void;
 };
 
 type Props = ComponentProps & ReduxProps;
@@ -89,6 +89,7 @@ class Refresh extends React.PureComponent<Props, State> {
             label={REFRESH_INTERVALS[this.props.refreshInterval]}
             options={REFRESH_INTERVALS}
             tooltip={'Refresh interval'}
+            tooltipBottom={true}
           />
           <RefreshButtonContainer handleRefresh={this.handleRefresh} disabled={this.props.disabled} />
         </>
@@ -115,7 +116,10 @@ class Refresh extends React.PureComponent<Props, State> {
 
   private handleRefresh = () => {
     this.props.setLastRefreshAt(Date.now());
-    this.props.handleRefresh();
+    // Components may connect to the lastRefreshAt property instead to pass a refreshMethod
+    if (this.props.handleRefresh) {
+      this.props.handleRefresh();
+    }
   };
 }
 

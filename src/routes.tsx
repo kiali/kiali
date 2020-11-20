@@ -10,7 +10,6 @@ import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './pages/Graph/GraphPage';
 import { Paths } from './config';
 import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
-import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import IstioConfigNewPageContainer from './pages/IstioConfigNew/IstioConfigNewPage';
 import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/ExperimentListPage';
 import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
@@ -144,33 +143,6 @@ const pathRoutes: Path[] = [
   }
 ];
 
-const secondaryMastheadRoutes: Path[] = [
-  {
-    path: '/' + Paths.APPLICATIONS,
-    component: DefaultSecondaryMasthead
-  },
-  {
-    path: '/' + Paths.SERVICES,
-    component: DefaultSecondaryMasthead
-  },
-  {
-    path: '/' + Paths.WORKLOADS,
-    component: DefaultSecondaryMasthead
-  },
-  {
-    path: '/' + Paths.ISTIO,
-    component: DefaultSecondaryMasthead
-  },
-  {
-    path: '/' + Paths.JAEGER,
-    component: DefaultSecondaryMasthead
-  },
-  {
-    path: '/extensions/iter8',
-    component: DefaultSecondaryMasthead
-  }
-];
-
 const extensionsRoutes: Path[] = [
   // Keep routes ordered with the more specific URLs first
   // Extension will follow /extensions/<extension>/namespaces/:namespace/experiments/:name pattern
@@ -193,4 +165,4 @@ const extensionsRoutes: Path[] = [
   }
 ];
 
-export { defaultRoute, navItems, extensionsItems, pathRoutes, secondaryMastheadRoutes, extensionsRoutes };
+export { defaultRoute, navItems, extensionsItems, pathRoutes, extensionsRoutes };

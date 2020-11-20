@@ -24,7 +24,6 @@ import { GraphActions } from '../../../actions/GraphActions';
 import { KialiAppAction } from '../../../actions/KialiAppAction';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import TourStopContainer from 'components/Tour/TourStop';
-import TimeControlsContainer from 'components/Time/TimeControls';
 import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import ReplayContainer from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
@@ -157,6 +156,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           graphType={this.props.graphType}
           onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
+          onHandleRefresh={this.handleRefresh}
         />
         <Toolbar className={toolbarStyle}>
           <div style={{ display: 'flex' }}>
@@ -173,14 +173,17 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
           </div>
           <GraphFindContainer cy={this.props.cy} />
           <ToolbarGroup className={rightToolbarStyle} aria-label="graph_refresh_toolbar">
-            <TourStopContainer info={GraphTourStops.TimeRange}>
-              <TimeControlsContainer
-                id="graph_time_range"
-                disabled={this.props.disabled}
-                handleRefresh={this.handleRefresh}
-                supportsReplay={true}
-              />
-            </TourStopContainer>
+            <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
+              <Button
+                className={rightToolbarStyle}
+                variant="link"
+                style={{ paddingLeft: '6px', paddingRight: '0px' }}
+                onClick={this.props.onToggleHelp}
+              >
+                <KialiIcon.Help className={defaultIconStyle} />
+                {' Graph tour'}
+              </Button>
+            </Tooltip>
           </ToolbarGroup>
         </Toolbar>
         {this.props.replayActive && <ReplayContainer id={'time-range-replay'} />}

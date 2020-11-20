@@ -2,22 +2,18 @@
 
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
-  <div
-    className="fkgsrw4"
-  >
-    <Connect(OverviewToolbar)
-      displayMode={1}
-      onError={[Function]}
-      onRefresh={[Function]}
-      setDisplayMode={[Function]}
-      sort={[Function]}
-      statefulFilterRef={
-        Object {
-          "current": null,
-        }
+  <Connect(OverviewToolbar)
+    displayMode={1}
+    onError={[Function]}
+    onRefresh={[Function]}
+    setDisplayMode={[Function]}
+    sort={[Function]}
+    statefulFilterRef={
+      Object {
+        "current": null,
       }
-    />
-  </div>
+    }
+  />
   <div
     style={
       Object {

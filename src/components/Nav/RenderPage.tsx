@@ -1,7 +1,7 @@
 import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
-import { pathRoutes, defaultRoute, secondaryMastheadRoutes, extensionsRoutes } from '../../routes';
+import { pathRoutes, defaultRoute, extensionsRoutes } from '../../routes';
 import { Path } from '../../types/Routes';
 import { style } from 'typestyle';
 import { PfColors } from '../Pf/PfColors';
@@ -16,10 +16,6 @@ class RenderPage extends React.Component<{ isGraph: boolean }> {
     return paths.map((item, index) => {
       return <Route key={index} path={item.path} component={item.component} />;
     });
-  }
-
-  renderSecondaryMastheadRoutes() {
-    return this.renderPaths(secondaryMastheadRoutes);
   }
 
   renderPathRoutes() {
@@ -46,12 +42,7 @@ class RenderPage extends React.Component<{ isGraph: boolean }> {
         </SwitchErrorBoundary>
       </div>
     );
-    return (
-      <>
-        {this.renderSecondaryMastheadRoutes()}
-        {!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}
-      </>
-    );
+    return <>{!this.props.isGraph ? <div className={containerGray}>{component}</div> : component}</>;
   }
 }
 

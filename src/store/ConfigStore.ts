@@ -50,7 +50,7 @@ const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState
 
 const userSettingsPersitFilter = whitelistInputWithInitialState(
   'userSettings',
-  ['duration', 'refreshInterval'],
+  ['duration', 'refreshInterval', 'timeRange'],
   INITIAL_USER_SETTINGS_STATE
 );
 

@@ -3,6 +3,7 @@ import { KeyValuePair, Span } from '../../types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { guardTimeRange, durationToBounds } from 'types/Common';
 import { Target } from 'types/MetricsOptions';
+import { defaultMetricsDuration } from '../Metrics/Helper';
 
 export const buildTags = (showErrors: boolean, statusCode: string): string => {
   let tags = '';
@@ -32,12 +33,14 @@ const convTagsLogfmt = (tags: string) => {
 };
 
 export const getTimeRangeMicros = () => {
-  const range = retrieveTimeRange() || 600;
+  const range = retrieveTimeRange();
   // Convert any time range (like duration) to bounded from/to
   const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
+  // Not necessary, we know that guardTimeRange will always send a default
+  const defaultFrom = new Date().getTime() - defaultMetricsDuration * 1000;
   // Convert to microseconds
   return {
-    from: boundsMillis.from * 1000,
+    from: boundsMillis.from ? boundsMillis.from * 1000 : defaultFrom * 1000,
     to: boundsMillis.to ? boundsMillis.to * 1000 : undefined
   };
 };

@@ -18,7 +18,9 @@ import NamespaceInfo from './NamespaceInfo';
 import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
-import TimeControlsContainer from 'components/Time/TimeControls';
+import { style } from 'typestyle';
+import { PfColors } from '../../components/Pf/PfColors';
+import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -56,6 +58,34 @@ const sortTypes = (function () {
   });
   return o;
 })();
+
+const containerPadding = style({
+  backgroundColor: PfColors.White,
+  padding: '0px 20px 0px 20px'
+});
+
+const containerFlex = style({
+  display: 'flex',
+  flexWrap: 'wrap'
+});
+
+const filterToolbarStyle = style({
+  paddingTop: '10px'
+});
+
+const rightToolbarStyle = style({
+  marginLeft: 'auto',
+  height: '118px',
+  padding: '10px 0px 0px 0px'
+});
+
+const timeToolbarStyle = style({
+  textAlign: 'right'
+});
+
+const actionsToolbarStyle = style({
+  paddingTop: '17px'
+});
 
 export type OverviewType = keyof typeof overviewTypes;
 
@@ -130,18 +160,10 @@ export class OverviewToolbar extends React.Component<Props, State> {
   };
 
   render() {
-    return (
+    const filterToolbar = (
       <StatefulFilters
         initialFilters={Filters.availableFilters}
         onFilterChange={this.props.onRefresh}
-        rightToolbar={[
-          <TimeControlsContainer
-            key="overview-time-range"
-            id="overview-time-range"
-            disabled={false}
-            handleRefresh={this.props.onRefresh}
-          />
-        ]}
         ref={this.props.statefulFilterRef}
       >
         {this.props.displayMode !== OverviewDisplayMode.LIST && (
@@ -158,48 +180,71 @@ export class OverviewToolbar extends React.Component<Props, State> {
             </Button>
           </>
         )}
+      </StatefulFilters>
+    );
+    const timeToolbar = (
+      <div className={timeToolbarStyle}>
+        <TimeDurationContainer
+          key="overview-time-range"
+          id="overview-time-range"
+          disabled={false}
+          handleRefresh={this.props.onRefresh}
+        />
+      </div>
+    );
+    const actionsToolbar = (
+      <div className={actionsToolbarStyle}>
         <ToolbarDropdown
           id="overview-type"
           disabled={false}
           handleSelect={this.updateOverviewType}
-          nameDropdown="Show health for"
+          nameDropdown="Health for"
           value={this.state.overviewType}
           label={overviewTypes[this.state.overviewType]}
           options={overviewTypes}
         />
-        <>
-          <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
-            <Button
-              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-              variant="plain"
-              isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
-              style={{ padding: '0 4px 0 4px' }}
-            >
-              <ThLargeIcon />
-            </Button>
-          </Tooltip>
-          <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
-            <Button
-              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-              variant="plain"
-              isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
-              style={{ padding: '0 4px 0 4px' }}
-            >
-              <ThIcon />
-            </Button>
-          </Tooltip>
-          <Tooltip content={<>List view</>} position={TooltipPosition.top}>
-            <Button
-              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
-              variant="plain"
-              isActive={this.props.displayMode === OverviewDisplayMode.LIST}
-              style={{ padding: '0 4px 0 4px' }}
-            >
-              <ListIcon />
-            </Button>
-          </Tooltip>
-        </>
-      </StatefulFilters>
+        <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
+          <Button
+            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
+            variant="plain"
+            isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
+            style={{ padding: '0 4px 0 16px' }}
+          >
+            <ThLargeIcon />
+          </Button>
+        </Tooltip>
+        <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
+          <Button
+            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
+            variant="plain"
+            isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
+            style={{ padding: '0 4px 0 4px' }}
+          >
+            <ThIcon />
+          </Button>
+        </Tooltip>
+        <Tooltip content={<>List view</>} position={TooltipPosition.top}>
+          <Button
+            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
+            variant="plain"
+            isActive={this.props.displayMode === OverviewDisplayMode.LIST}
+            style={{ padding: '0 4px 0 4px' }}
+          >
+            <ListIcon />
+          </Button>
+        </Tooltip>
+      </div>
+    );
+    return (
+      <div className={containerPadding}>
+        <div className={containerFlex}>
+          <div className={filterToolbarStyle}>{filterToolbar}</div>
+          <div className={rightToolbarStyle}>
+            {timeToolbar}
+            {actionsToolbar}
+          </div>
+        </div>
+      </div>
     );
   }
 }

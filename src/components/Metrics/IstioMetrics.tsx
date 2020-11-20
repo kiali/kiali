@@ -4,11 +4,10 @@ import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
-import RefreshContainer from '../../components/Refresh/Refresh';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { TimeRange, evalTimeRange } from '../../types/Common';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOptions';
 import * as AlertUtils from '../../utils/AlertUtils';
 
@@ -22,20 +21,22 @@ import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
 import { GrafanaLinks } from './GrafanaLinks';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
-import { retrieveTimeRange, storeBounds } from 'components/Time/TimeRangeHelper';
-import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+
 import { DashboardModel, ExternalLink } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
+import { timeRangeSelector } from '../../store/Selectors';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { bindActionCreators } from 'redux';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay<JaegerLineInfo>;
-  timeRange: TimeRange;
 };
 
 type ObjectId = {
@@ -52,6 +53,9 @@ type IstioMetricsProps = ObjectId &
 type Props = IstioMetricsProps & {
   // Redux props
   jaegerIntegration: boolean;
+  lastRefreshAt: TimeInMilliseconds;
+  timeRange: TimeRange;
+  setTimeRange: (range: TimeRange) => void;
 };
 
 const displayFlex = style({
@@ -65,12 +69,10 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   constructor(props: Props) {
     super(props);
-
     const settings = MetricsHelper.retrieveMetricsSettings();
-    const timeRange = retrieveTimeRange() || MetricsHelper.defaultMetricsDuration;
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [], timeRange: timeRange };
+    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
@@ -91,19 +93,20 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  componentDidUpdate(prev: Props) {
+  componentDidUpdate(prevProps: Props) {
     if (
-      this.props.direction !== prev.direction ||
-      this.props.namespace !== prev.namespace ||
-      this.props.object !== prev.object ||
-      this.props.objectType !== prev.objectType
+      this.props.direction !== prevProps.direction ||
+      this.props.namespace !== prevProps.namespace ||
+      this.props.object !== prevProps.object ||
+      this.props.objectType !== prevProps.objectType ||
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
-      if (this.props.direction !== prev.direction) {
+      if (this.props.direction !== prevProps.direction) {
         const settings = MetricsHelper.retrieveMetricsSettings();
         this.options = this.initOptions(settings);
       }
       this.spanOverlay.reset();
-      this.setState({ dashboard: undefined, spanOverlay: undefined });
       this.refresh();
     }
   }
@@ -115,14 +118,14 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         namespace: this.props.namespace,
         target: this.props.object,
         targetKind: this.props.objectType,
-        range: this.state.timeRange
+        range: this.props.timeRange
       });
     }
   };
 
   private fetchMetrics = () => {
     // Time range needs to be reevaluated everytime fetching
-    MetricsHelper.timeRangeToOptions(this.state.timeRange, this.options);
+    MetricsHelper.timeRangeToOptions(this.props.timeRange, this.options);
     let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
       case MetricsObjectTypes.WORKLOAD:
@@ -189,12 +192,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  private onTimeFrameChanged = (range: TimeRange) => {
-    this.setState({ timeRange: range }, () => {
-      this.refresh();
-    });
-  };
-
   private onReporterChanged = (reporter: Reporter) => {
     this.options.reporter = reporter;
     this.fetchMetrics();
@@ -224,8 +221,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         from: dates[0].getTime(),
         to: dates[1].getTime()
       };
-      storeBounds(range);
-      this.onTimeFrameChanged(range);
+      this.props.setTimeRange(range);
     }
   }
 
@@ -235,17 +231,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
     return (
       <>
-        <RightActionBar>
-          <TimeRangeComponent
-            range={this.state.timeRange}
-            onChanged={this.onTimeFrameChanged}
-            tooltip={'Time range'}
-            allowCustom={true}
-          />
-          <RefreshContainer id="metrics-refresh" handleRefresh={this.refresh} hideLabel={true} />
-        </RightActionBar>
         <RenderComponentScroll>
-          <Grid style={{ padding: '10px' }}>
+          <Grid>
             <GridItem span={12}>
               <Card>
                 <CardBody>
@@ -259,10 +246,11 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                       onClick={this.onClickDataPoint}
                       labelPrettifier={MetricsHelper.prettyLabelValues}
                       overlay={this.state.spanOverlay}
-                      timeWindow={evalTimeRange(retrieveTimeRange() || MetricsHelper.defaultMetricsDuration)}
+                      timeWindow={evalTimeRange(this.props.timeRange)}
                       brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
                     />
                   )}
+                  IstioMetricsProps
                 </CardBody>
               </Card>
             </GridItem>
@@ -314,12 +302,20 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false
+    jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
+    lastRefreshAt: state.globalState.lastRefreshAt,
+    timeRange: timeRangeSelector(state)
+  };
+};
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+  return {
+    setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };
 };
 
 const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
-  connect(mapStateToProps)(IstioMetrics)
+  connect(mapStateToProps, mapDispatchToProps)(IstioMetrics)
 );
 
 export default IstioMetricsContainer;

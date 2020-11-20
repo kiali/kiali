@@ -82,7 +82,7 @@ const gridStyleList = style({
   marginTop: '0px'
 });
 
-const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '10px' });
+const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '0px' });
 
 const emptyStateStyle = style({
   height: '300px',
@@ -113,13 +113,6 @@ const cardNamespaceNameLongStyle = style({
   textOverflow: 'ellipsis',
   verticalAlign: 'middle',
   whiteSpace: 'nowrap'
-});
-
-// Yes, the 20px is a magic number to adjust the style as there are several chained components
-// with their own style.
-const overviewHeader = style({
-  backgroundColor: PfColors.White,
-  padding: '10px 20px 10px 20px'
 });
 
 enum Show {
@@ -233,7 +226,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
             this.fetchPermissions();
-            if (displayMode === OverviewDisplayMode.EXPAND) {
+            if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics();
             }
           }
@@ -757,24 +750,17 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         : '';
     return (
       <>
-        <div className={overviewHeader}>
-          <OverviewToolbarContainer
-            onRefresh={this.load}
-            onError={FilterHelper.handleError}
-            sort={this.sort}
-            displayMode={this.state.displayMode}
-            setDisplayMode={this.setDisplayMode}
-            statefulFilterRef={this.sFOverviewToolbar}
-          />
-        </div>
+        <OverviewToolbarContainer
+          onRefresh={this.load}
+          onError={FilterHelper.handleError}
+          sort={this.sort}
+          displayMode={this.state.displayMode}
+          setDisplayMode={this.setDisplayMode}
+          statefulFilterRef={this.sFOverviewToolbar}
+        />
         {filteredNamespaces.length > 0 ? (
           <RenderComponentScroll
             className={this.state.displayMode === OverviewDisplayMode.LIST ? gridStyleList : gridStyleCompact}
-            overview={
-              this.sFOverviewToolbar.current && this.sFOverviewToolbar.current.state.activeFilters.filters.length > 0
-                ? true
-                : false
-            }
           >
             {this.state.displayMode === OverviewDisplayMode.LIST ? (
               <VirtualList
@@ -788,7 +774,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                 {filteredNamespaces.map((ns, i) => {
                   const isLongNs = ns.name.length > NS_LONG;
                   return (
-                    <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
+                    <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 5px 0 5px' }}>
                       <Card isCompact={true} className={cardGridStyle}>
                         <CardHead>
                           <CardActions>{namespaceActions[i]}</CardActions>

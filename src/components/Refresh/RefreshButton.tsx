@@ -31,7 +31,7 @@ class RefreshButton extends React.Component<Props> {
 
   render() {
     return (
-      <Tooltip content={<>Refresh</>}>
+      <Tooltip position="bottom" content={<>Refresh</>}>
         <Button
           id={this.getElementId()}
           onClick={this.handleRefresh}

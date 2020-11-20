@@ -8,6 +8,7 @@ import { MetricsObjectTypes } from 'types/Metrics';
 import { LineInfo } from 'types/VictoryChartInfo';
 import { Overlay, OverlayInfo } from 'types/Overlay';
 import { toOverlay } from 'utils/VictoryChartsUtils';
+import { defaultMetricsDuration } from './Helper';
 
 export type JaegerLineInfo = LineInfo & { traceId?: string };
 
@@ -30,8 +31,9 @@ export class SpanOverlay {
 
   fetch(opts: FetchOptions) {
     const boundsMillis = guardTimeRange(opts.range, durationToBounds, b => b);
+    const defaultFrom = new Date().getTime() - defaultMetricsDuration * 1000;
     const q: TracingQuery = {
-      startMicros: boundsMillis.from * 1000,
+      startMicros: boundsMillis.from ? boundsMillis.from * 1000 : defaultFrom * 1000,
       endMicros: boundsMillis.to ? boundsMillis.to * 1000 : undefined
     };
     // Remove any out-of-bound spans

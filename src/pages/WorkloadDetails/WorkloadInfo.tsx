@@ -15,18 +15,19 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import Validation from '../../components/Validations/Validation';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import GraphDataSource from '../../services/GraphDataSource';
-import { DurationInSeconds } from 'types/Common';
-import { RightActionBar } from 'components/RightActionBar/RightActionBar';
-import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
+import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import IstioConfigSubList from '../../components/IstioConfigSubList/IstioConfigSubList';
-import TimeControlsContainer from '../../components/Time/TimeControls';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { durationSelector } from '../../store/Selectors';
 
 type WorkloadInfoProps = {
   namespace: string;
   workload?: Workload;
   duration: DurationInSeconds;
+  lastRefreshAt: TimeInMilliseconds;
   refreshWorkload: () => void;
 };
 
@@ -77,16 +78,8 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   }
 
   componentDidUpdate(prev: WorkloadInfoProps) {
-    const aTab = activeTab(tabName, defaultTab);
-
-    if (this.state.currentTab !== aTab) {
-      this.setState({
-        currentTab: aTab
-      });
-    }
-
-    // Fetch WorkloadInfo backend on duration changes or workload updates (reference comparison)
-    if (prev.duration !== this.props.duration || prev.workload !== this.props.workload) {
+    // Fetch WorkloadInfo backend on duration changes or WorkloadDetailsPage update
+    if (prev.duration !== this.props.duration || prev.lastRefreshAt !== this.props.lastRefreshAt) {
       this.fetchBackend();
     }
   }
@@ -293,23 +286,8 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     );
     return (
       <>
-        <RightActionBar>
-          <TimeControlsContainer
-            key={'DurationDropdown'}
-            id="worload-info-duration-dropdown"
-            handleRefresh={this.props.refreshWorkload}
-            disabled={false}
-          />
-          {workload && (
-            <WorkloadWizardDropdown
-              namespace={this.props.namespace}
-              workload={workload}
-              onChange={this.props.refreshWorkload}
-            />
-          )}
-        </RightActionBar>
         <RenderComponentScroll>
-          <Grid style={{ margin: '10px' }} gutter={'md'}>
+          <Grid gutter={'md'}>
             <GridItem span={12}>
               <WorkloadDescription
                 workload={workload}
@@ -362,4 +340,10 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   }
 }
 
-export default WorkloadInfo;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
+  lastRefreshAt: state.globalState.lastRefreshAt
+});
+
+const WorkloadInfoContainer = connect(mapStateToProps)(WorkloadInfo);
+export default WorkloadInfoContainer;

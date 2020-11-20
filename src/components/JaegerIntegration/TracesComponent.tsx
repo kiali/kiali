@@ -25,13 +25,11 @@ import TraceDetails from './JaegerResults/TraceDetails';
 import JaegerScatter from './JaegerScatter';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config } from '../../config';
-import TimeRangeComponent from 'components/Time/TimeRangeComponent';
-import RefreshContainer from 'components/Refresh/Refresh';
-import { RightActionBar } from 'components/RightActionBar/RightActionBar';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 import SpanDetails from './JaegerResults/SpanDetails';
-import { TargetKind } from 'types/Common';
+import { TargetKind, TimeInMilliseconds } from 'types/Common';
+import { durationSelector } from '../../store/Selectors';
 
 interface TracesProps {
   namespace: string;
@@ -39,9 +37,9 @@ interface TracesProps {
   targetKind: TargetKind;
   urlJaeger: string;
   namespaceSelector: boolean;
-  showErrors: boolean;
   duration: number;
   selectedTrace?: JaegerTrace;
+  lastRefreshAt: TimeInMilliseconds;
 }
 
 type IntervalScale = 1 | 1000 | 1000000;
@@ -116,7 +114,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       url: '',
       width: 0,
       adjustTime: false,
-      showErrors: this.props.showErrors,
+      showErrors: false,
       intervalDurations: [],
       selectedIntervalDuration: interval ? intervalFromKey(interval) : undefined,
       selectedStatusCode: statusCode,
@@ -130,7 +128,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   }
 
   componentDidMount() {
-    this.refresh();
+    this.fetchTraces();
   }
 
   componentDidUpdate(prevProps: TracesProps) {
@@ -145,9 +143,12 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         this.setState({ traces: traces });
       }
     }
+    if (prevProps.duration !== this.props.duration || prevProps.lastRefreshAt !== this.props.lastRefreshAt) {
+      this.fetchTraces();
+    }
   }
 
-  private refresh = () => {
+  private fetchTraces = () => {
     this.fetcher.fetch(
       {
         namespace: this.props.namespace,
@@ -174,7 +175,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
 
   private setErrorTraces = (value: string) => {
     this.fetcher.resetLastFetchTime();
-    this.setState({ showErrors: value === 'Error traces' }, this.refresh);
+    this.setState({ showErrors: value === 'Error traces' }, this.fetchTraces);
   };
 
   private saveValue = (key: URLParam, value: string) => {
@@ -207,7 +208,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   private handleStatusCode = (value: string) => {
     this.fetcher.resetLastFetchTime();
     this.saveValue(URLParam.JAEGER_STATUS_CODE, value);
-    this.setState({ selectedStatusCode: value }, this.refresh);
+    this.setState({ selectedStatusCode: value }, this.fetchTraces);
   };
 
   private handleIntervalDuration = (key: string) => {
@@ -227,7 +228,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     } else {
       this.removeValue(URLParam.JAEGER_LIMIT_TRACES);
     }
-    this.setState({ selectedLimitSpans: value }, this.refresh);
+    this.setState({ selectedLimitSpans: value }, this.fetchTraces);
   };
 
   private extractIntervalDurations = (traces: JaegerTrace[]): IntervalDuration[] => {
@@ -273,9 +274,8 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       : 'none';
     return (
       <>
-        {this.renderActions()}
         <RenderComponentScroll>
-          <Grid style={{ padding: '10px' }} gutter="md">
+          <Grid gutter="md">
             <GridItem span={12}>
               <Card>
                 <CardBody>
@@ -413,22 +413,15 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       </>
     );
   }
-
-  private renderActions = (): JSX.Element => {
-    return (
-      <RightActionBar>
-        <TimeRangeComponent onChanged={this.refresh} allowCustom={false} tooltip={'Time range'} />
-        <RefreshContainer id="traces-refresh" handleRefresh={this.refresh} hideLabel={true} />
-      </RightActionBar>
-    );
-  };
 }
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
+    duration: durationSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
-    selectedTrace: state.jaegerState.selectedTrace
+    selectedTrace: state.jaegerState.selectedTrace,
+    lastRefreshAt: state.globalState.lastRefreshAt
   };
 };
 

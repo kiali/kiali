@@ -21,6 +21,7 @@ type DurationDropdownProps = ReduxProps & {
   id: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipBottom?: boolean;
   nameDropdown?: string;
   suffix?: string;
   prefix?: string;
@@ -39,6 +40,7 @@ export class DurationDropdown extends React.Component<DurationDropdownProps> {
         label={durations[this.props.duration]}
         options={durations}
         tooltip={this.props.tooltip}
+        tooltipBottom={this.props.tooltipBottom}
         nameDropdown={this.props.nameDropdown}
       />
     );

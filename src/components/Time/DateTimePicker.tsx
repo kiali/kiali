@@ -13,7 +13,18 @@ export const DateTimePicker = (props: any) => {
     <DatePicker
       className={pickerStyle}
       dateFormat="MMM dd, hh:mm aa"
-      popperPlacement="auto-end"
+      popperPlacement="bottom-start"
+      popperModifiers={{
+        offset: {
+          enabled: true,
+          offset: '5px, 10px'
+        },
+        preventOverflow: {
+          enabled: true,
+          escapeWithReference: false,
+          boundariesElement: 'viewport'
+        }
+      }}
       showTimeSelect={true}
       timeCaption="Time"
       timeFormat="hh:mm aa"

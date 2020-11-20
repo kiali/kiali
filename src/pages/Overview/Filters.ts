@@ -43,7 +43,7 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
   id: 'nsLabel',
   title: 'Namespace Label',
-  placeholder: 'Filter by Label',
+  placeholder: 'Filter by Namespace Label',
   filterType: FilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],

@@ -8,7 +8,8 @@ const widthAuto = style({
 
 const spacingRight = style({
   marginRight: '10px',
-  marginTop: '10px'
+  marginTop: '10px',
+  display: 'inline'
 });
 
 type ToolbarDropdownProps = {
@@ -20,9 +21,11 @@ type ToolbarDropdownProps = {
   nameDropdown?: string;
   options: object;
   tooltip?: string;
+  tooltipBottom?: boolean;
   value?: number | string;
   useName?: boolean;
   classNameSelect?: string;
+  classNameToolbar?: string;
 
   handleSelect: (value: string) => void;
   onToggle?: (isOpen: boolean) => void;
@@ -94,7 +97,12 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
           </Text>
         )}
         {this.props.tooltip ? (
-          <Tooltip key={'ot-' + this.props.id} entryDelay={1000} content={<>{this.props.tooltip}</>}>
+          <Tooltip
+            key={'ot-' + this.props.id}
+            entryDelay={1000}
+            position={this.props.tooltipBottom ? 'bottom' : 'top'}
+            content={<>{this.props.tooltip}</>}
+          >
             {dropdownButton}
           </Tooltip>
         ) : (

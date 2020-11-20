@@ -7,6 +7,7 @@ import { UserSettingsActions } from '../actions/UserSettingsActions';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   duration: config.toolbar.defaultDuration,
+  timeRange: config.toolbar.defaultTimeRange,
   interface: { navCollapse: false },
   refreshInterval: config.toolbar.defaultRefreshInterval,
   replayActive: false,
@@ -38,6 +39,11 @@ const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, ac
       return updateState(state, {
         replayWindow: action.payload,
         replayQueryTime: 0
+      });
+    }
+    case getType(UserSettingsActions.setTimeRange): {
+      return updateState(state, {
+        timeRange: action.payload
       });
     }
     case getType(UserSettingsActions.toggleReplayActive): {

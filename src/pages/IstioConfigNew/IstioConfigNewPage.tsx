@@ -44,6 +44,7 @@ import RequestAuthenticationForm, {
   RequestAuthenticationState
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
+import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 type Props = {
   activeNamespaces: Namespace[];
@@ -296,92 +297,102 @@ class IstioConfigNewPage extends React.Component<Props, State> {
     const isNamespacesValid = this.props.activeNamespaces.length > 0;
     const isFormValid = canCreate && isNameValid && isNamespacesValid && this.isIstioFormValid();
     return (
-      <RenderContent>
-        <Form className={formPadding} isHorizontal={true}>
-          <FormGroup
-            label="Namespaces"
-            isRequired={true}
-            fieldId="namespaces"
-            helperText={'Select namespace(s) where this configuration will be applied'}
-            helperTextInvalid={'At least one namespace should be selected'}
-            isValid={isNamespacesValid}
-          >
-            <TextInput
-              value={this.props.activeNamespaces.map(n => n.name).join(',')}
+      <>
+        <div style={{ backgroundColor: '#fff' }}>
+          <DefaultSecondaryMasthead />
+        </div>
+        <RenderContent>
+          <Form className={formPadding} isHorizontal={true}>
+            <FormGroup
+              label="Namespaces"
               isRequired={true}
-              type="text"
-              id="namespaces"
-              aria-describedby="namespaces"
-              name="namespaces"
-              isDisabled={true}
+              fieldId="namespaces"
+              helperText={'Select namespace(s) where this configuration will be applied'}
+              helperTextInvalid={'At least one namespace should be selected'}
               isValid={isNamespacesValid}
-            />
-          </FormGroup>
-          <FormGroup label="Istio Resource" fieldId="istio-resource">
-            <FormSelect
-              value={this.state.istioResource}
-              onChange={this.onIstioResourceChange}
-              id="istio-resource"
-              name="istio-resource"
             >
-              {istioResourceOptions.map((option, index) => (
-                <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
-              ))}
-            </FormSelect>
-          </FormGroup>
-          <FormGroup
-            label="Name"
-            isRequired={true}
-            fieldId="name"
-            helperText={this.state.istioResource + ' name'}
-            helperTextInvalid={'A valid ' + this.state.istioResource + ' name is required'}
-            isValid={isNameValid}
-          >
-            <TextInput
-              value={this.state.name}
+              <TextInput
+                value={this.props.activeNamespaces.map(n => n.name).join(',')}
+                isRequired={true}
+                type="text"
+                id="namespaces"
+                aria-describedby="namespaces"
+                name="namespaces"
+                isDisabled={true}
+                isValid={isNamespacesValid}
+              />
+            </FormGroup>
+            <FormGroup label="Istio Resource" fieldId="istio-resource">
+              <FormSelect
+                value={this.state.istioResource}
+                onChange={this.onIstioResourceChange}
+                id="istio-resource"
+                name="istio-resource"
+              >
+                {istioResourceOptions.map((option, index) => (
+                  <FormSelectOption
+                    isDisabled={option.disabled}
+                    key={index}
+                    value={option.value}
+                    label={option.label}
+                  />
+                ))}
+              </FormSelect>
+            </FormGroup>
+            <FormGroup
+              label="Name"
               isRequired={true}
-              type="text"
-              id="name"
-              aria-describedby="name"
-              name="name"
-              onChange={this.onNameChange}
+              fieldId="name"
+              helperText={this.state.istioResource + ' name'}
+              helperTextInvalid={'A valid ' + this.state.istioResource + ' name is required'}
               isValid={isNameValid}
-            />
-          </FormGroup>
-          {this.state.istioResource === AUTHORIZACION_POLICY && (
-            <AuthorizationPolicyForm
-              authorizationPolicy={this.state.authorizationPolicy}
-              onChange={this.onChangeAuthorizationPolicy}
-            />
-          )}
-          {this.state.istioResource === GATEWAY && (
-            <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
-          )}
-          {this.state.istioResource === PEER_AUTHENTICATION && (
-            <PeerAuthenticationForm
-              peerAuthentication={this.state.peerAuthentication}
-              onChange={this.onChangePeerAuthentication}
-            />
-          )}
-          {this.state.istioResource === REQUEST_AUTHENTICATION && (
-            <RequestAuthenticationForm
-              requestAuthentication={this.state.requestAuthentication}
-              onChange={this.onChangeRequestAuthentication}
-            />
-          )}
-          {this.state.istioResource === SIDECAR && (
-            <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
-          )}
-          <ActionGroup>
-            <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.onIstioResourceCreate()}>
-              Create
-            </Button>
-            <Button variant="secondary" onClick={() => this.backToList()}>
-              Cancel
-            </Button>
-          </ActionGroup>
-        </Form>
-      </RenderContent>
+            >
+              <TextInput
+                value={this.state.name}
+                isRequired={true}
+                type="text"
+                id="name"
+                aria-describedby="name"
+                name="name"
+                onChange={this.onNameChange}
+                isValid={isNameValid}
+              />
+            </FormGroup>
+            {this.state.istioResource === AUTHORIZACION_POLICY && (
+              <AuthorizationPolicyForm
+                authorizationPolicy={this.state.authorizationPolicy}
+                onChange={this.onChangeAuthorizationPolicy}
+              />
+            )}
+            {this.state.istioResource === GATEWAY && (
+              <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
+            )}
+            {this.state.istioResource === PEER_AUTHENTICATION && (
+              <PeerAuthenticationForm
+                peerAuthentication={this.state.peerAuthentication}
+                onChange={this.onChangePeerAuthentication}
+              />
+            )}
+            {this.state.istioResource === REQUEST_AUTHENTICATION && (
+              <RequestAuthenticationForm
+                requestAuthentication={this.state.requestAuthentication}
+                onChange={this.onChangeRequestAuthentication}
+              />
+            )}
+            {this.state.istioResource === SIDECAR && (
+              <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
+            )}
+            <ActionGroup>
+              <Button variant="primary" isDisabled={!isFormValid} onClick={() => this.onIstioResourceCreate()}>
+                Create
+              </Button>
+              <Button variant="secondary" onClick={() => this.backToList()}>
+                Cancel
+              </Button>
+            </ActionGroup>
+          </Form>
+        </RenderContent>
+      </>
     );
   }
 }

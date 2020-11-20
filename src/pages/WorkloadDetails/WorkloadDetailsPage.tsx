@@ -12,14 +12,15 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { RenderHeader } from '../../components/Nav/Page';
 import { serverConfig } from '../../config/ServerConfig';
-import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
-import { DurationInSeconds } from '../../types/Common';
+import WorkloadPodLogs from './WorkloadPodLogs';
+import { TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector } from '../../store/Selectors';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import TracesComponent from 'components/JaegerIntegration/TracesComponent';
 import { JaegerInfo } from 'types/JaegerInfo';
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
+import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
+import TimeControl from '../../components/Time/TimeControl';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -27,8 +28,8 @@ type WorkloadDetailsState = {
 };
 
 type WorkloadDetailsPageProps = RouteComponentProps<WorkloadId> & {
-  duration: DurationInSeconds;
   jaegerInfo?: JaegerInfo;
+  lastRefreshAt: TimeInMilliseconds;
 };
 
 const tabName = 'tab';
@@ -55,15 +56,19 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
-    const aTab = activeTab(tabName, defaultTab);
+    const currentTab = activeTab(tabName, defaultTab);
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.workload !== prevProps.match.params.workload ||
-      this.state.currentTab !== aTab ||
-      this.props.duration !== prevProps.duration
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      currentTab !== this.state.currentTab
     ) {
-      this.setState({ currentTab: aTab });
-      this.fetchWorkload();
+      if (currentTab === 'info' || currentTab === 'logs') {
+        this.fetchWorkload();
+      }
+      if (currentTab !== this.state.currentTab) {
+        this.setState({ currentTab: currentTab });
+      }
     }
   }
 
@@ -85,7 +90,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         <WorkloadInfo
           workload={this.state.workload}
           namespace={this.props.match.params.namespace}
-          duration={this.props.duration}
           refreshWorkload={this.fetchWorkload}
         />
       </Tab>
@@ -93,7 +97,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
-          duration={this.props.duration}
           itemName={this.props.match.params.workload}
           itemType={MetricsObjectTypes.WORKLOAD}
           namespace={this.props.match.params.namespace}
@@ -146,8 +149,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             namespace={this.props.match.params.namespace}
             target={this.props.match.params.workload}
             targetKind={'workload'}
-            showErrors={false}
-            duration={this.props.duration}
           />
         </Tab>
       );
@@ -196,14 +197,34 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   render() {
+    let useCustomTime = false;
+    switch (this.state.currentTab) {
+      case 'info':
+      case 'traffic':
+      case 'traces':
+        useCustomTime = false;
+        break;
+      case 'in_metrics':
+      case 'out_metrics':
+      case 'logs':
+        useCustomTime = true;
+        break;
+    }
+    const actionsToolbar =
+      this.state.currentTab === 'info' && this.state.workload ? (
+        <WorkloadWizardDropdown
+          namespace={this.props.match.params.namespace}
+          workload={this.state.workload}
+          onChange={this.fetchWorkload}
+        />
+      ) : undefined;
     return (
       <>
-        <RenderHeader location={this.props.location}>
-          {
-            // This magic space will align details header width with Graph, List pages
-          }
-          <div style={{ paddingBottom: 14 }} />
-        </RenderHeader>
+        <RenderHeader
+          location={this.props.location}
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+          actionsToolbar={actionsToolbar}
+        />
         {this.state.workload && (
           <ParameterizedTabs
             id="basic-tabs"
@@ -226,7 +247,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state),
   jaegerInfo: state.jaegerState.info
 });
 

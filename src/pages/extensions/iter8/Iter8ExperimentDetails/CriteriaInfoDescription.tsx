@@ -158,7 +158,7 @@ class CriteriaInfoDescription extends React.Component<ExperimentInfoDescriptionP
     const { columns, rows } = this.state;
     return (
       <RenderComponentScroll>
-        <Grid gutter="md" style={{ margin: '10px' }}>
+        <Grid gutter="md">
           <GridItem span={12}>
             <Table
               aria-label="SpanTable"

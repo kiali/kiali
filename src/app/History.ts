@@ -32,6 +32,7 @@ export enum URLParam {
   OPERATION_NODES = 'operationNodes',
   OVERVIEW_TYPE = 'otype',
   QUANTILES = 'quantiles',
+  RANGE_DURATION = 'rangeDuration',
   REFRESH_INTERVAL = 'refresh',
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
@@ -114,6 +115,14 @@ export class HistoryManager {
     const duration = HistoryManager.getNumericParam(URLParam.DURATION, urlParams);
     if (duration) {
       return toValidDuration(Number(duration));
+    }
+    return undefined;
+  };
+
+  static getRangeDuration = (urlParams?: URLSearchParams): number | undefined => {
+    const rangeDuration = HistoryManager.getNumericParam(URLParam.RANGE_DURATION, urlParams);
+    if (rangeDuration) {
+      return toValidDuration(Number(rangeDuration));
     }
     return undefined;
   };

@@ -6,6 +6,7 @@ import {
   RawDate,
   ReplayWindow,
   TimeInMilliseconds,
+  TimeRange,
   UserName
 } from '../types/Common';
 import { EdgeLabelMode, GraphDefinition, GraphType, Layout, NodeParamsType, SummaryData } from '../types/Graph';
@@ -102,6 +103,7 @@ export interface UserSettings {
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   replayWindow: ReplayWindow;
+  timeRange: TimeRange;
 }
 
 export interface TourState {

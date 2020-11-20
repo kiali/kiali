@@ -1,6 +1,7 @@
 import { createSelector } from 'reselect';
 import { KialiAppState } from './Store';
 import { isMTLSEnabled } from '../types/TLSStatus';
+import { TimeRange } from '../types/Common';
 // These memoized selectors are from Redux Reselect package
 
 type Selector<T> = (state: KialiAppState) => T;
@@ -17,6 +18,10 @@ export const activeNamespacesSelector = createIdentitySelector(activeNamespaces)
 const duration = (state: KialiAppState) => state.userSettings.duration;
 
 export const durationSelector = createIdentitySelector(duration);
+
+const timeRange = (state: KialiAppState): TimeRange => state.userSettings.timeRange;
+
+export const timeRangeSelector = createIdentitySelector(timeRange);
 
 const namespaceFilter = (state: KialiAppState) => state.namespaces.filter;
 

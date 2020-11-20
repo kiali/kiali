@@ -1,6 +1,4 @@
 import React from 'react';
-import { Tooltip, TooltipPosition, Button } from '@patternfly/react-core';
-import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import SecondaryMasthead from 'components/Nav/SecondaryMasthead';
 import NamespaceDropdownContainer from 'components/NamespaceDropdown';
 import { style } from 'typestyle';
@@ -9,6 +7,7 @@ import { GraphTourStops } from '../GraphHelpTour';
 import ToolbarDropdown from 'components/ToolbarDropdown/ToolbarDropdown';
 import { GraphType } from 'types/Graph';
 import * as _ from 'lodash';
+import TimeDurationContainer from '../../../components/Time/TimeDurationComponent';
 
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
@@ -16,6 +15,7 @@ type GraphSecondaryMastheadProps = {
 
   onToggleHelp: () => void;
   onGraphTypeChange: (graphType: GraphType) => void;
+  onHandleRefresh: () => void;
 };
 
 const mastheadStyle = style({
@@ -66,17 +66,16 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
               />
             </span>
           </TourStopContainer>
-          <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Graph help tour...">
-            <Button
-              className={rightToolbarStyle}
-              variant="link"
-              style={{ paddingLeft: '6px', paddingRight: '0px' }}
-              onClick={this.props.onToggleHelp}
-            >
-              <KialiIcon.Help className={defaultIconStyle} />
-              {' Graph tour'}
-            </Button>
-          </Tooltip>
+          <div className={rightToolbarStyle}>
+            <TourStopContainer info={GraphTourStops.TimeRange}>
+              <TimeDurationContainer
+                id="graph_time_range"
+                disabled={this.props.disabled}
+                handleRefresh={this.props.onHandleRefresh}
+                supportsReplay={true}
+              />
+            </TourStopContainer>
+          </div>
         </div>
       </SecondaryMasthead>
     );

@@ -31,6 +31,7 @@ import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
 import { PfColors } from '../../../../components/Pf/PfColors';
 import { InfoAltIcon } from '@patternfly/react-icons';
+import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 interface Props {
   serviceName: string;
@@ -1086,6 +1087,9 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     const isFormValid = this.isMainFormValid() && this.isSCFormValid();
     return (
       <>
+        <div style={{ backgroundColor: '#fff' }}>
+          <DefaultSecondaryMasthead />
+        </div>
         <RenderContent>
           <div className={containerPadding}>
             <Form className={formPadding} isHorizontal={true}>

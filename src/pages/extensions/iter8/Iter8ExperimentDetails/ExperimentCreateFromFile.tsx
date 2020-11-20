@@ -25,6 +25,7 @@ import AceEditor from 'react-ace';
 import { aceOptions } from '../../../../types/IstioConfigDetails';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { PfColors } from '../../../../components/Pf/PfColors';
+import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 interface Props {
   activeNamespaces: Namespace[];
@@ -181,6 +182,9 @@ class ExperimentCreateFromFile extends React.Component<Props, State> {
     const { filename, isLoading, experimentYaml } = this.state;
     return (
       <>
+        <div style={{ backgroundColor: '#fff' }}>
+          <DefaultSecondaryMasthead />
+        </div>
         <Grid style={{ margin: '10px' }} gutter={'md'}>
           <GridItem span={12}>
             <Form isHorizontal={true} className={containerPadding}>

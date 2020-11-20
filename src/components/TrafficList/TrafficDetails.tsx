@@ -12,12 +12,13 @@ import {
 import { RenderComponentScroll } from '../Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import GraphDataSource from 'services/GraphDataSource';
-import { DurationInSeconds } from 'types/Common';
-import { RightActionBar } from 'components/RightActionBar/RightActionBar';
+import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import TrafficListComponent from 'components/TrafficList/TrafficListComponent';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as TrafficListFilters from './FiltersAndSorts';
-import TimeControlsContainer from '../Time/TimeControls';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { durationSelector } from '../../store/Selectors';
 
 export interface AppNode {
   id: string;
@@ -62,6 +63,7 @@ type TrafficDetailsProps = {
   itemName: string;
   itemType: MetricsObjectTypes;
   namespace: string;
+  lastRefreshAt: TimeInMilliseconds;
 };
 
 type TrafficDetailsState = {
@@ -94,8 +96,9 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     const itemNameChanged = prevProps.itemName !== this.props.itemName;
     const itemTypeChanged = prevProps.itemType !== this.props.itemType;
     const namespaceChanged = prevProps.namespace !== this.props.namespace;
+    const refreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
 
-    if (durationChanged || itemNameChanged || itemTypeChanged || namespaceChanged) {
+    if (durationChanged || itemNameChanged || itemTypeChanged || namespaceChanged || refreshChanged) {
       this.fetchDataSource();
     }
   }
@@ -103,16 +106,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   render() {
     return (
       <>
-        <RightActionBar>
-          <TimeControlsContainer
-            key={'DurationDropdown'}
-            id="app-info-duration-dropdown"
-            handleRefresh={this.fetchDataSource}
-            disabled={false}
-          />
-        </RightActionBar>
         <RenderComponentScroll>
-          <Grid style={{ padding: '10px' }}>
+          <Grid>
             <GridItem span={12}>
               <Card>
                 <CardBody>
@@ -297,4 +292,12 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   };
 }
 
-export default TrafficDetails;
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    duration: durationSelector(state),
+    lastRefreshAt: state.globalState.lastRefreshAt
+  };
+};
+
+const TrafficDetailsContainer = connect(mapStateToProps)(TrafficDetails);
+export default TrafficDetailsContainer;

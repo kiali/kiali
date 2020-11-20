@@ -257,6 +257,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
 
           return statefulFilter ? (
             <Tooltip
+              key={'Tooltip_Label_' + key + '_' + value}
               content={
                 labelAct ? (
                   isExactlyLabelFilter ? (

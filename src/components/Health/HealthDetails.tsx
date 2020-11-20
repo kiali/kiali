@@ -38,7 +38,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
                   {createIcon(sub.status)} {sub.text}
                 </li>
               ) : (
-                <></>
+                <React.Fragment key={subIdx} />
               );
             })}
             {config && isValueInConfig && (
@@ -52,7 +52,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
         )}
       </div>
     ) : (
-      <></>
+      <React.Fragment key={idx} />
     );
   };
 
