@@ -65,25 +65,18 @@ container-push: container-push-kiali-quay
 
 # Ensure "docker buildx" is available and enabled. For more details, see: https://github.com/docker/buildx/blob/master/README.md
 .ensure-docker-buildx:
-	@if docker buildx version > /dev/null 2>&1 || DOCKER_CLI_EXPERIMENTAL="${DOCKER_CLI_EXPERIMENTAL}" docker buildx version > /dev/null 2>&1 ; then \
+	@required_buildx_version="v0.4.2"; \
+	current_buildx_version=$$(DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version); \
+	if [[ "$${current_buildx_version}" == *"$${required_buildx_version}"* ]]; then \
 	  echo "'docker buildx' is available and enabled."; \
 	else \
-	  if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version > /dev/null 2>&1 ; then \
-	    echo "You do not have 'docker buildx' installed. Will now download and install it to [${HOME}/.docker/cli-plugins]."; \
-	    mkdir -p ${HOME}/.docker/cli-plugins; \
-	    curl -L --output ${HOME}/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.${GOOS}-${GOARCH}; \
-	    chmod a+x ${HOME}/.docker/cli-plugins/docker-buildx; \
-	    DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version; \
-	    if docker buildx version > /dev/null 2>&1 || DOCKER_CLI_EXPERIMENTAL="${DOCKER_CLI_EXPERIMENTAL}" docker buildx version > /dev/null 2>&1 ; then \
-	      echo "'docker buildx' has been installed and is enabled."; \
-	    else \
-	      echo "'docker buildx' has been installed but is not enabled by default. Set DOCKER_CLI_EXPERIMENTAL=enabled if you want to use it."; \
-	      exit 1; \
-	    fi \
-	  else \
-	    echo "'docker buildx' is available but not enabled. Set DOCKER_CLI_EXPERIMENTAL=enabled if you want to use it."; \
-	    exit 1; \
-	  fi \
+		buildx_download_url=https://github.com/docker/buildx/releases/download/$${required_buildx_version}/buildx-$${required_buildx_version}.${GOOS}-${GOARCH}; \
+		echo "You do not have 'docker buildx' installed. Will now download from $${buildx_download_url} and install it to [${HOME}/.docker/cli-plugins]."; \
+		mkdir -p ${HOME}/.docker/cli-plugins; \
+		curl -L --output ${HOME}/.docker/cli-plugins/docker-buildx "$${buildx_download_url}"; \
+		chmod a+x ${HOME}/.docker/cli-plugins/docker-buildx; \
+		DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version; \
+		echo "'docker buildx' is available and enabled."; \
 	fi
 
 # Ensure a local builder for multi-arch build. For more details, see: https://github.com/docker/buildx/blob/master/README.md#building-multi-platform-images
