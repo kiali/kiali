@@ -153,17 +153,28 @@ class VirtualListC<R extends RenderResource> extends React.Component<VirtualList
             ) : (
               <tr>
                 <td colSpan={tableProps.cells.length}>
-                  <EmptyState variant={EmptyStateVariant.full}>
-                    <Title headingLevel="h5" size="lg">
-                      No {typeDisplay} found
-                    </Title>
-                    <EmptyStateBody>
-                      No {typeDisplay} in namespace
-                      {this.props.activeNamespaces.length === 1
-                        ? ` ${this.props.activeNamespaces[0].name}`
-                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-                    </EmptyStateBody>
-                  </EmptyState>
+                  {this.props.activeNamespaces.length > 0 ? (
+                    <EmptyState variant={EmptyStateVariant.full}>
+                      <Title headingLevel="h5" size="lg">
+                        No {typeDisplay} found
+                      </Title>
+                      <EmptyStateBody>
+                        No {typeDisplay} in namespace
+                        {this.props.activeNamespaces.length === 1
+                          ? ` ${this.props.activeNamespaces[0].name}`
+                          : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                      </EmptyStateBody>
+                    </EmptyState>
+                  ) : (
+                    <EmptyState variant={EmptyStateVariant.full}>
+                      <Title headingLevel="h5" size="lg">
+                        No namespace is selected
+                      </Title>
+                      <EmptyStateBody>
+                        There is currently no namespace selected, please select one using the Namespace selector.
+                      </EmptyStateBody>
+                    </EmptyState>
+                  )}
                 </td>
               </tr>
             )}

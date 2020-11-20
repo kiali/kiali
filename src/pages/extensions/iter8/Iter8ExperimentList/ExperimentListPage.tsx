@@ -139,19 +139,21 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
               'You are running an unsupported Iter8 vresion, please upgrade to supported version  (v0.2+) to take advantage of the full features of Iter8 .'
             );
           }
-          API.getExperiments(namespaces)
-            .then(result => {
-              this.setState(prevState => {
-                return {
-                  iter8Info: iter8Info,
-                  experimentLists: Iter8ExperimentListFilters.filterBy(result.data, FilterSelected.getSelected()),
-                  sortBy: prevState.sortBy
-                };
+          if (namespaces.length > 0) {
+            API.getExperiments(namespaces)
+              .then(result => {
+                this.setState(prevState => {
+                  return {
+                    iter8Info: iter8Info,
+                    experimentLists: Iter8ExperimentListFilters.filterBy(result.data, FilterSelected.getSelected()),
+                    sortBy: prevState.sortBy
+                  };
+                });
+              })
+              .catch(error => {
+                AlertUtils.addError('Could not fetch Iter8 Experiments.', error);
               });
-            })
-            .catch(error => {
-              AlertUtils.addError('Could not fetch Iter8 Experiments.', error);
-            });
+          }
         } else {
           AlertUtils.addError('Kiali has Iter8 extension enabled but it is not detected in the cluster');
         }
@@ -217,20 +219,10 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
   updateListItems = () => {
     this.promises.cancelAll();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
-    if (namespacesSelected.length === 0) {
-      this.promises
-        .register('namespaces', API.getNamespaces())
-        .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchExperiments(namespaces.map(namespace => namespace.name));
-        })
-        .catch(namespacesError => {
-          if (!namespacesError.isCanceled) {
-            AlertUtils.addError('Could not fetch namespace list.', namespacesError);
-          }
-        });
-    } else {
+    if (namespacesSelected.length !== 0) {
       this.fetchExperiments(namespacesSelected);
+    } else {
+      this.setState({ experimentLists: [] });
     }
   };
 
@@ -554,17 +546,28 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
               ) : (
                 <tr>
                   <td colSpan={columns.length}>
-                    <EmptyState variant={EmptyStateVariant.full}>
-                      <Title headingLevel="h5" size="lg">
-                        No Iter8 Experiments found
-                      </Title>
-                      <EmptyStateBody>
-                        No Iter8 Experiments in namespace
-                        {this.props.activeNamespaces.length === 1
-                          ? ` ${this.props.activeNamespaces[0].name}`
-                          : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-                      </EmptyStateBody>
-                    </EmptyState>
+                    {this.props.activeNamespaces.length > 0 ? (
+                      <EmptyState variant={EmptyStateVariant.full}>
+                        <Title headingLevel="h5" size="lg">
+                          No Iter8 Experiments found
+                        </Title>
+                        <EmptyStateBody>
+                          No Iter8 Experiments in namespace
+                          {this.props.activeNamespaces.length === 1
+                            ? ` ${this.props.activeNamespaces[0].name}`
+                            : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
+                        </EmptyStateBody>
+                      </EmptyState>
+                    ) : (
+                      <EmptyState variant={EmptyStateVariant.full}>
+                        <Title headingLevel="h5" size="lg">
+                          No namespace is selected
+                        </Title>
+                        <EmptyStateBody>
+                          There is currently no namespace selected, please select one using the Namespace selector.
+                        </EmptyStateBody>
+                      </EmptyState>
+                    )}
                   </td>
                 </tr>
               )}

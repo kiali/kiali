@@ -54,13 +54,16 @@ class ServiceListPageComponent extends FilterComponent.Component<
   componentDidUpdate(prevProps: ServiceListPageProps, _prevState: ServiceListPageState, _snapshot: any) {
     const prevCurrentSortField = FilterHelper.currentSortField(ServiceListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-    const [paramsSynced] = this.paramsAreSynced(prevProps);
-    if (!paramsSynced) {
+    if (
+      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+      this.props.duration !== prevProps.duration ||
+      this.state.currentSortField !== prevCurrentSortField ||
+      this.state.isSortAscending !== prevIsSortAscending
+    ) {
       this.setState({
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
-
       this.updateListItems();
     }
   }
@@ -68,12 +71,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
   componentWillUnmount() {
     this.promises.cancelAll();
   }
-
-  paramsAreSynced = (prevProps: ServiceListPageProps): [boolean, boolean] => {
-    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
-    const paramsSynced = prevProps.duration === this.props.duration && activeNamespacesCompare;
-    return [paramsSynced, activeNamespacesCompare];
-  };
 
   sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
@@ -89,24 +86,10 @@ class ServiceListPageComponent extends FilterComponent.Component<
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
-    if (namespacesSelected.length === 0) {
-      this.promises
-        .register('namespaces', API.getNamespaces())
-        .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchServices(
-            namespaces.map(namespace => namespace.name),
-            activeFilters,
-            this.props.duration
-          );
-        })
-        .catch(namespacesError => {
-          if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list', namespacesError);
-          }
-        });
-    } else {
+    if (namespacesSelected.length !== 0) {
       this.fetchServices(namespacesSelected, activeFilters, this.props.duration);
+    } else {
+      this.setState({ listItems: [] });
     }
   }
 

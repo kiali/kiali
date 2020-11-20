@@ -30,8 +30,7 @@ import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/
 
 interface IstioConfigListPageState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListPageProps extends FilterComponent.Props<IstioConfigItem> {
-  // We keep this as Optional because it does not come from the params
-  activeNamespaces?: Namespace[];
+  activeNamespaces: Namespace[];
 }
 
 class IstioConfigListPageComponent extends FilterComponent.Component<
@@ -60,8 +59,11 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   componentDidUpdate(prevProps: IstioConfigListPageProps, _prevState: IstioConfigListPageState, _snapshot: any) {
     const prevCurrentSortField = FilterHelper.currentSortField(IstioConfigListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-    const [paramsSynced] = this.paramsAreSynced(prevProps);
-    if (!paramsSynced) {
+    if (
+      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+      this.state.currentSortField !== prevCurrentSortField ||
+      this.state.isSortAscending !== prevIsSortAscending
+    ) {
       this.setState({
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
@@ -74,12 +76,6 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   componentWillUnmount() {
     this.promises.cancelAll();
   }
-
-  paramsAreSynced = (prevProps: IstioConfigListPageProps): [boolean, boolean] => {
-    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces!, this.props.activeNamespaces!);
-    const paramsSynced = activeNamespacesCompare;
-    return [paramsSynced, activeNamespacesCompare];
-  };
 
   sortItemList(apps: IstioConfigItem[], sortField: SortField<IstioConfigItem>, isAscending: boolean) {
     return IstioConfigListFilters.sortIstioItems(apps, sortField, isAscending);
@@ -99,25 +95,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       activeFilters
     );
 
-    if (namespacesSelected.length === 0) {
-      this.promises
-        .register('namespaces', API.getNamespaces())
-        .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchConfigs(
-            namespaces.map(namespace => namespace.name),
-            istioTypeFilters,
-            istioNameFilters,
-            configValidationFilters
-          );
-        })
-        .catch(namespacesError => {
-          if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list', namespacesError);
-          }
-        });
-    } else {
+    if (namespacesSelected.length !== 0) {
       this.fetchConfigs(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters);
+    } else {
+      this.setState({ listItems: [] });
     }
   }
 

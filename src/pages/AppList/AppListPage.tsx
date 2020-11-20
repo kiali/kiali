@@ -47,11 +47,15 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: AppListPageProps, _prevState: AppListPageState, _snapshot: any) {
+  componentDidUpdate(prevProps: AppListPageProps) {
     const prevCurrentSortField = FilterHelper.currentSortField(AppListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-    const [paramsSynced] = this.paramsAreSynced(prevProps);
-    if (!paramsSynced) {
+    if (
+      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+      this.props.duration !== prevProps.duration ||
+      this.state.currentSortField !== prevCurrentSortField ||
+      this.state.isSortAscending !== prevIsSortAscending
+    ) {
       this.setState({
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
@@ -64,12 +68,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     this.promises.cancelAll();
   }
 
-  paramsAreSynced = (prevProps: AppListPageProps): [boolean, boolean] => {
-    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
-    const paramsSynced = prevProps.duration === this.props.duration && activeNamespacesCompare;
-    return [paramsSynced, activeNamespacesCompare];
-  };
-
   sortItemList(items: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
@@ -80,28 +78,12 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
   updateListItems() {
     this.promises.cancelAll();
-
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
-
-    if (namespacesSelected.length === 0) {
-      this.promises
-        .register('namespaces', API.getNamespaces())
-        .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchApps(
-            namespaces.map(namespace => namespace.name),
-            activeFilters,
-            this.props.duration
-          );
-        })
-        .catch(namespacesError => {
-          if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list', namespacesError);
-          }
-        });
-    } else {
+    if (namespacesSelected.length !== 0) {
       this.fetchApps(namespacesSelected, activeFilters, this.props.duration);
+    } else {
+      this.setState({ listItems: [] });
     }
   }
 

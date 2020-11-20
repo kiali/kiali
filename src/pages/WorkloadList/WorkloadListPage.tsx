@@ -53,13 +53,16 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   componentDidUpdate(prevProps: WorkloadListPageProps, _prevState: WorkloadListPageState, _snapshot: any) {
     const prevCurrentSortField = FilterHelper.currentSortField(WorkloadListFilters.sortFields);
     const prevIsSortAscending = FilterHelper.isCurrentSortAscending();
-    const [paramsSynced] = this.paramsAreSynced(prevProps);
-    if (!paramsSynced) {
+    if (
+      !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+      this.props.duration !== prevProps.duration ||
+      this.state.currentSortField !== prevCurrentSortField ||
+      this.state.isSortAscending !== prevIsSortAscending
+    ) {
       this.setState({
         currentSortField: prevCurrentSortField,
         isSortAscending: prevIsSortAscending
       });
-
       this.updateListItems();
     }
   }
@@ -67,12 +70,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   componentWillUnmount() {
     this.promises.cancelAll();
   }
-
-  paramsAreSynced = (prevProps: WorkloadListPageProps): [boolean, boolean] => {
-    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
-    const paramsSynced = prevProps.duration === this.props.duration && activeNamespacesCompare;
-    return [paramsSynced, activeNamespacesCompare];
-  };
 
   sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
@@ -84,27 +81,12 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
   updateListItems() {
     this.promises.cancelAll();
-
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
-
-    if (namespacesSelected.length === 0) {
-      this.promises
-        .register('namespaces', API.getNamespaces())
-        .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchWorkloads(
-            namespaces.map(namespace => namespace.name),
-            activeFilters
-          );
-        })
-        .catch(namespacesError => {
-          if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list', namespacesError);
-          }
-        });
-    } else {
+    if (namespacesSelected.length !== 0) {
       this.fetchWorkloads(namespacesSelected, activeFilters);
+    } else {
+      this.setState({ listItems: [] });
     }
   }
 
