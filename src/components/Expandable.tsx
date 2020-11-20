@@ -13,6 +13,7 @@ export type CellProps<R> = R & { isExpanded: boolean };
 
 type ExpandableProps<R> = R & {
   listeners: ExpandListener[];
+  isExpanded: boolean;
   clickToExpand: boolean;
   innerComponent: React.ComponentType<R & { isExpanded: boolean }>;
 };
@@ -24,7 +25,7 @@ type ExpandableState = {
 export class Expandable<R> extends React.Component<ExpandableProps<R>, ExpandableState> {
   constructor(props: ExpandableProps<R>) {
     super(props);
-    this.state = { isExpanded: false };
+    this.state = { isExpanded: props.isExpanded };
   }
 
   componentDidMount() {
@@ -45,10 +46,11 @@ export class Expandable<R> extends React.Component<ExpandableProps<R>, Expandabl
   }
 }
 
-export const renderExpandArrow = (listeners: ExpandListener[]) => {
+export const renderExpandArrow = (listeners: ExpandListener[], isExpanded: boolean) => {
   return (
     <Expandable
       listeners={listeners}
+      isExpanded={isExpanded}
       clickToExpand={true}
       innerComponent={(props: { isExpanded: boolean }) => (props.isExpanded ? <AngleDownIcon /> : <AngleRightIcon />)}
     />

@@ -74,10 +74,14 @@ type RowProps = SpanItemData & {
   externalURL?: string;
   onClickFetchStats: () => void;
   metricsStats: { [key: string]: MetricsStats };
+  // onExpand and isExpandable are used to keep the extend state at an upper level
+  onExpand: (isExpanded: boolean) => void;
+  isExpanded: boolean;
 };
 
 export const buildRow = (props: RowProps) => {
   const expandListeners = createListeners();
+  expandListeners.push(props.onExpand);
   return {
     className: props.tags.some(isErrorTag) ? dangerErrorStyle : undefined,
     isOpen: false,
@@ -85,7 +89,7 @@ export const buildRow = (props: RowProps) => {
       {
         title: (
           <>
-            {renderExpandArrow(expandListeners)} {formatDuration(props.relativeStartTime)}
+            {renderExpandArrow(expandListeners, props.isExpanded)} {formatDuration(props.relativeStartTime)}
           </>
         )
       },

@@ -33,12 +33,13 @@ interface State {
   sortIndex: number;
   sortDirection: SortByDirection;
   metricsStats: { [key: string]: MetricsStats };
+  expandedSpans: Map<string, boolean>;
 }
 
 export class SpanTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, metricsStats: {} };
+    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, metricsStats: {}, expandedSpans: new Map() };
   }
 
   componentDidMount() {
@@ -112,6 +113,11 @@ export class SpanTable extends React.Component<Props, State> {
         setToggledLinks: key => this.setState({ toggledLinks: key }),
         onClickFetchStats: () => this.fetchComparisonMetrics([item]),
         metricsStats: this.state.metricsStats,
+        isExpanded: this.state.expandedSpans.get(item.spanID) || false,
+        onExpand: isExpanded => {
+          this.state.expandedSpans.set(item.spanID, isExpanded);
+          this.setState({ expandedSpans: this.state.expandedSpans });
+        },
         ...item
       })
     );
