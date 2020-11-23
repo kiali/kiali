@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -17,8 +18,10 @@ func StartMetricsServer() {
 	conf := config.Get()
 	log.Infof("Starting Metrics Server on [%v:%v]", conf.Server.Address, conf.Server.MetricsPort)
 	metricsServer = &http.Server{
-		Addr:    fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.MetricsPort),
-		Handler: promhttp.Handler(),
+		Addr:         fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.MetricsPort),
+		Handler:      promhttp.Handler(),
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 	go func() {
 		log.Warning(metricsServer.ListenAndServe())

@@ -3,8 +3,6 @@ package status
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -101,25 +99,16 @@ func validateVersion(requiredVersion string, installedVersion string) bool {
 
 // istioVersion returns the current istio version information
 func istioVersion() (*ExternalServiceInfo, error) {
-	var (
-		body    []byte
-		err     error
-		product *ExternalServiceInfo
-		resp    *http.Response
-	)
-
 	istioConfig := config.Get().ExternalServices.Istio
-	resp, err = http.Get(istioConfig.UrlServiceVersion)
-	if err == nil {
-		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
-		if err == nil {
-			rawVersion := string(body)
-			product, err = parseIstioRawVersion(rawVersion)
-			return product, err
-		}
+	body, code, err := httputil.HttpGet(istioConfig.UrlServiceVersion, nil, 10*time.Second)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	if code >= 400 {
+		return nil, fmt.Errorf("getting istio version returned error code %d", code)
+	}
+	rawVersion := string(body)
+	return parseIstioRawVersion(rawVersion)
 }
 
 func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
