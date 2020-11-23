@@ -81,19 +81,17 @@ def test_workload_metrics(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.request(method_name='workloadMetrics', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE},
-                                    params=METRICS_PARAMS).json()
+                                    params=METRICS_PARAMS)
 
     assert workload != None
 
-    metrics = workload.get('metrics')
+    metrics = workload.json()
     assert 'request_count' in metrics
     assert 'tcp_received' in metrics
     assert 'tcp_sent' in metrics
-
-    histograms = workload.get('histograms')
-    assert 'request_duration_millis' in histograms
-    assert 'request_size' in histograms
-    assert 'response_size' in histograms
+    assert 'request_duration_millis' in metrics
+    assert 'request_size' in metrics
+    assert 'response_size' in metrics
 
 def test_workload_health(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
