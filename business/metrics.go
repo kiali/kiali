@@ -180,7 +180,9 @@ func (in *MetricsService) getSingleQueryStats(q *models.MetricsStatsQuery) (*mod
 	if err != nil {
 		return nil, err
 	}
-	metricsStats := models.MetricsStats{}
+	metricsStats := models.MetricsStats{
+		ResponseTimes: []models.Stat{},
+	}
 	for stat, vec := range stats {
 		for _, sample := range vec {
 			value := float64(sample.Value)
