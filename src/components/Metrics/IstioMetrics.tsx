@@ -250,7 +250,6 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                       brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
                     />
                   )}
-                  IstioMetricsProps
                 </CardBody>
               </Card>
             </GridItem>
