@@ -3,6 +3,7 @@ package business
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -360,11 +361,13 @@ func mockServer(mr *mux.Router) *httptest.Server {
 	return httptest.NewServer(mr)
 }
 
-func addAddOnRoute(mr *mux.Router, url string, statusCode int, callNum *int) {
+func addAddOnRoute(mr *mux.Router, mu sync.Mutex, url string, statusCode int, callNum *int) {
 	mr.HandleFunc(url, func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
 		if callNum != nil {
 			*callNum = *callNum + 1
 		}
+		mu.Unlock()
 		if statusCode > 299 {
 			http.Error(w, "Not a success", statusCode)
 		} else {
@@ -376,9 +379,10 @@ func addAddOnRoute(mr *mux.Router, url string, statusCode int, callNum *int) {
 }
 
 func mockAddOnCalls(addons map[string]addOnsSetup) *mux.Router {
+	var mu sync.Mutex
 	mr := mux.NewRouter()
 	for _, addon := range addons {
-		addAddOnRoute(mr, addon.Url, addon.StatusCode, addon.CallCount)
+		addAddOnRoute(mr, mu, addon.Url, addon.StatusCode, addon.CallCount)
 	}
 	return mr
 }
