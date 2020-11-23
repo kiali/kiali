@@ -153,7 +153,7 @@ export class HeatMap extends React.Component<Props> {
                       className={cellStyle}
                       style={{ backgroundColor: this.props.colorUndefined }}
                     >
-                      n/a
+                      {!this.props.compactMode && 'n/a'}
                     </div>
                   );
                 })}

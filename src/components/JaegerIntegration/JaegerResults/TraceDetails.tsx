@@ -37,6 +37,9 @@ class TraceDetails extends React.Component<Props, State> {
     const urlTrace = getTraceId();
     if (urlTrace && urlTrace !== props.trace?.traceID) {
       props.setTraceId(urlTrace);
+    } else if (!urlTrace && props.trace) {
+      // Remove old stored selected trace
+      props.setTraceId(undefined);
     }
   }
 
