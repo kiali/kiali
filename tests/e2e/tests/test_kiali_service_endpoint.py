@@ -186,19 +186,17 @@ def test_service_detail_with_destination_rule(kiali_client):
 def test_service_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params=METRICS_PARAMS).json()
+    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params=METRICS_PARAMS)
     assert service != None
 
-    metrics = service.get('metrics')
+    metrics = service.json()
     assert 'request_count' in metrics
     assert 'request_error_count' in metrics
     assert 'tcp_received' in metrics
     assert 'tcp_sent' in metrics
-
-    histograms = service.get('histograms')
-    assert 'request_duration_millis' in histograms
-    assert 'request_size' in histograms
-    assert 'response_size' in histograms
+    assert 'request_duration_millis' in metrics
+    assert 'request_size' in metrics
+    assert 'response_size' in metrics
 
 def test_service_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()

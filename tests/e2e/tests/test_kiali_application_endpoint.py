@@ -47,17 +47,14 @@ def test_application_health_endpoint(kiali_client):
 def test_application_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    response = kiali_client.request(method_name='appMetrics', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}, params=METRICS_PARAMS)
-    app_metrics = response.json()
+    app_metrics = kiali_client.request(method_name='appMetrics', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}, params=METRICS_PARAMS)
     assert app_metrics != None
 
-    metrics = app_metrics.get('metrics')
+    metrics = app_metrics.json()
     assert 'request_count' in metrics
     assert 'request_error_count' in metrics
     assert 'tcp_received' in metrics
     assert 'tcp_sent' in metrics
-
-    histograms = app_metrics.get('histograms')
-    assert 'request_duration_millis' in histograms
-    assert 'request_size' in histograms
-    assert 'response_size' in histograms
+    assert 'request_duration_millis' in metrics
+    assert 'request_size' in metrics
+    assert 'response_size' in metrics
