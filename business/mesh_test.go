@@ -9,6 +9,7 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -84,8 +85,16 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			{
 				Name: "KialiCluster",
 				Cluster: kubernetes.RemoteSecretCluster{
-					CertificateAuthorityData: "foo",
+					CertificateAuthorityData: "eAo=",
 					Server:                   "https://192.168.144.17:123",
+				},
+			},
+		},
+		Users: []kubernetes.RemoteSecretUser {
+			{
+				Name: "foo",
+				User: kubernetes.RemoteSecretUserToken{
+					Token: "bar",
 				},
 			},
 		},
@@ -109,6 +118,20 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{secretMock}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, nil)
 
+	newRemoteClient = func(config *rest.Config) (kubernetes.ClientInterface, error) {
+		remoteClient := new(kubetest.K8SClientMock)
+
+		remoteNs := &core_v1.Namespace{
+			ObjectMeta: v1.ObjectMeta{
+				Labels: map[string]string{ "topology.istio.io/network": "TheRemoteNetwork" },
+			},
+		}
+
+		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
+
+		return remoteClient, nil
+	}
+
 	bsLayer := NewWithBackends(k8s, nil, nil)
 	meshSvc := MeshService{k8s: k8s, businessLayer: bsLayer}
 
@@ -121,4 +144,5 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.False(a[0].IsKialiHome, "Remote cluster mistakenly marked as the Kiali home")
 	check.Equal("https://192.168.144.17:123", a[0].ApiEndpoint)
 	check.Equal("TheRemoteSecret", a[0].SecretName)
+	check.Equal("TheRemoteNetwork", a[0].Network)
 }

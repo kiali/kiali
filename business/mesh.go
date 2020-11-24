@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"k8s.io/client-go/rest"
 )
 
 // MeshService is a support service for retrieving data about the mesh environment
@@ -34,6 +35,20 @@ type Cluster struct {
 
 	// SecretName is the name of the kubernetes "remote secret" where data of this cluster was resolved
 	SecretName string `json:"secretName"`
+}
+
+// newRemoteClient is a helper variable holding a function that should return an
+// initialized kubernetes client using the specified config argument. An init() funcition
+// initializes the value of this variable. This was created, mainly, for tests to set a
+// function returning a mock of the kuberentes client.
+var newRemoteClient func(config *rest.Config) (kubernetes.ClientInterface, error)
+
+// init initializes the newRemoteClient variable to a wrapper function that invokes
+// kubernetes.NewClientFromConfig and returns its result.
+func init() {
+	newRemoteClient = func(config *rest.Config) (kubernetes.ClientInterface, error) {
+		return kubernetes.NewClientFromConfig(config)
+	}
 }
 
 // GetClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
@@ -259,7 +274,7 @@ func resolveNetwork(clusterName string, kubeconfig *kubernetes.RemoteSecret) str
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := kubernetes.NewClientFromConfig(restConfig)
+	clientSet, clientSetErr := newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return ""
