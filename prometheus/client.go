@@ -81,7 +81,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		auth.Token = token
 	}
 
-	transportConfig, err := httputil.AuthTransport(&auth, api.DefaultRoundTripper.(*http.Transport))
+	transportConfig, err := httputil.CreateTransport(&auth, api.DefaultRoundTripper.(*http.Transport), 10*time.Second)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,16 +25,13 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int,
 	if err != nil {
 		return nil, 0, err
 	}
-	var client http.Client
-	if auth != nil {
-		transport, err := AuthTransport(auth, &http.Transport{})
-		if err != nil {
-			return nil, 0, err
-		}
-		client = http.Client{Transport: transport, Timeout: timeout}
-	} else {
-		client = http.Client{Timeout: timeout}
+
+	transport, err := CreateTransport(auth, &http.Transport{}, timeout)
+	if err != nil {
+		return nil, 0, err
 	}
+
+	client := http.Client{Transport: transport, Timeout: timeout}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -67,7 +65,19 @@ func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTrip
 	}
 }
 
-func AuthTransport(auth *config.Auth, transportConfig *http.Transport) (http.RoundTripper, error) {
+func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration) (http.RoundTripper, error) {
+	// Limits the time spent establishing a TCP connection if a new one is
+	// needed.
+	transportConfig.Dial = (&net.Dialer{
+		Timeout:   timeout,
+		KeepAlive: timeout,
+	}).Dial
+	transportConfig.IdleConnTimeout = timeout
+
+	if auth == nil {
+		return transportConfig, nil
+	}
+
 	if auth.InsecureSkipVerify || auth.CAFile != "" {
 		var certPool *x509.CertPool
 		if auth.CAFile != "" {
