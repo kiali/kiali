@@ -19,7 +19,7 @@ type RemoteSecretClusterListItem struct {
 }
 
 type RemoteSecretUser struct {
-	Name string `yaml:"name"`
+	Name string                `yaml:"name"`
 	User RemoteSecretUserToken `yaml:"user"`
 }
 

@@ -90,7 +90,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 				},
 			},
 		},
-		Users: []kubernetes.RemoteSecretUser {
+		Users: []kubernetes.RemoteSecretUser{
 			{
 				Name: "foo",
 				User: kubernetes.RemoteSecretUserToken{
@@ -123,7 +123,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 
 		remoteNs := &core_v1.Namespace{
 			ObjectMeta: v1.ObjectMeta{
-				Labels: map[string]string{ "topology.istio.io/network": "TheRemoteNetwork" },
+				Labels: map[string]string{"topology.istio.io/network": "TheRemoteNetwork"},
 			},
 		}
 

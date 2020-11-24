@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"k8s.io/client-go/rest"
 )
 
 // MeshService is a support service for retrieving data about the mesh environment
