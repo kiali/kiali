@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	adminapi "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
+	envoy_config_bootstrap_v3 "github.com/envoyproxy/go-control-plane/envoy/config/bootstrap/v3"
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	envoy_config_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
@@ -19,10 +20,15 @@ import (
 type ConfigDump struct {
 	configDump *config_dump.ConfigDump
 
+	Bootstrap BootstrapDump `json:"bootstrap,omitempty"`
 	Clusters  ClustersDump  `json:"clusters"`
 	Listeners ListenersDump `json:"listeners"`
 	Routes    RoutesDump    `json:"routes"`
-	Secrets   interface{}   `json:"secrets"`
+}
+
+type BootstrapDump struct {
+	Bootstrap   *envoy_config_bootstrap_v3.Bootstrap `json:"bootstrap"`
+	LastUpdated string                               `json:"last_updated"`
 }
 
 type ClustersDump struct {
@@ -81,6 +87,10 @@ type RouteSummarizer struct {
 	*ConfigDump
 }
 
+type BootstrapSummarizer struct {
+	*ConfigDump
+}
+
 func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
 	return &ConfigDump{configDump: dump}
 }
@@ -89,7 +99,24 @@ func (cd *ConfigDump) UnmarshallAll() {
 	cd.UnmarshallClusters()
 	cd.UnmarshallListeners()
 	cd.UnmarshallRoutes()
-	cd.UnmarshallSecrets()
+	cd.UnmarshallBootstrap()
+}
+
+func (cd *ConfigDump) UnmarshallBootstrap() {
+	bootstrapDumpAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.BootstrapConfigDump")
+	if bootstrapDumpAny == nil {
+		return
+	}
+
+	bootstrapDumpRaw := &adminapi.BootstrapConfigDump{}
+	err := ptypes.UnmarshalAny(bootstrapDumpAny, bootstrapDumpRaw)
+	if err != nil {
+		return
+	}
+	cd.Bootstrap = BootstrapDump{
+		LastUpdated: ptypes.TimestampString(bootstrapDumpRaw.LastUpdated),
+		Bootstrap:   bootstrapDumpRaw.Bootstrap,
+	}
 }
 
 func (cd *ConfigDump) UnmarshallClusters() {
@@ -234,8 +261,9 @@ func (cd *ConfigDump) UnmarshallRoutes() {
 	cd.Routes.StaticRouteConfigs = routes
 }
 
-func (cd *ConfigDump) UnmarshallSecrets() {
-	// TODO: implement the unmarshalling of the secrets
+func (bs BootstrapSummarizer) Summary() interface{} {
+	bs.UnmarshallBootstrap()
+	return bs.Bootstrap
 }
 
 func (cs ClusterSummarizer) Summary() interface{} {

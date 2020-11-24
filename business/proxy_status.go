@@ -110,10 +110,12 @@ func buildSummarizer(dump *config_dump.ConfigDump, resource string) models.Proxy
 	cd := models.NewConfigDump(dump)
 
 	switch resource {
+	case "bootstrap":
+		summarizer = models.BootstrapSummarizer{ConfigDump: cd}
 	case "clusters":
-		summarizer = models.ClusterSummarizer{cd}
+		summarizer = models.ClusterSummarizer{ConfigDump: cd}
 	case "routes":
-		summarizer = models.RouteSummarizer{cd}
+		summarizer = models.RouteSummarizer{ConfigDump: cd}
 	}
 
 	return summarizer
