@@ -42,9 +42,16 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 		},
 	}
 
+	sidecarConfigMapMock := core_v1.ConfigMap{
+		Data: map[string]string{
+			"values": "{ \"global\": { \"network\": \"kialiNetwork\" } }",
+		},
+	}
+
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(&istioDeploymentMock, nil)
+	k8s.On("GetConfigMap", conf.IstioNamespace, "istio-sidecar-injector").Return(&sidecarConfigMapMock, nil)
 
 	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
@@ -61,6 +68,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
 	check.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 	check.Len(a[0].SecretName, 0)
+	check.Equal("kialiNetwork", a[0].Network)
 }
 
 func TestGetClustersResolvesRemoteClusters(t *testing.T) {
