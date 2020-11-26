@@ -112,7 +112,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   }
 
   private getCurrentContextMenu() {
-    return this.contextMenuRef!.current!._contextMenu;
+    return this.contextMenuRef?.current?._contextMenu;
   }
 
   private setCurrentContextMenu(current: TippyInstance) {
