@@ -4,7 +4,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/util/config_dump"
 )
 
 type ProxyStatus struct {
@@ -87,9 +86,7 @@ func (in *ProxyStatus) GetConfigDump(namespace, pod string) (interface{}, error)
 		return nil, err
 	}
 
-	cd := models.NewConfigDump(dump)
-	cd.UnmarshallAll()
-	return cd, nil
+	return dump, nil
 }
 
 func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (interface{}, error) {
@@ -102,21 +99,22 @@ func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource str
 		return nil, err
 	}
 
-	return buildSummarizer(dump, resource).Summary(), nil
+	return buildDump(dump, resource), nil
 }
 
-func buildSummarizer(dump *config_dump.ConfigDump, resource string) models.ProxyConfigSummarizer {
-	var summarizer models.ProxyConfigSummarizer
-	cd := models.NewConfigDump(dump)
-
+func buildDump(dump *kubernetes.ConfigDump, resource string) models.ResourceDump {
+	var summary models.ResourceDump
 	switch resource {
-	case "bootstrap":
-		summarizer = models.BootstrapSummarizer{ConfigDump: cd}
 	case "clusters":
-		summarizer = models.ClusterSummarizer{ConfigDump: cd}
+		summary = &models.Clusters{}
+		summary.Parse(dump)
 	case "routes":
-		summarizer = models.RouteSummarizer{ConfigDump: cd}
+		summary = &models.Routes{}
+		summary.Parse(dump)
+	case "bootstrap":
+		summary = &models.Bootstrap{}
+		summary.Parse(dump)
 	}
 
-	return summarizer
+	return summary
 }

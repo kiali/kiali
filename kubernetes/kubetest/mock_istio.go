@@ -2,7 +2,6 @@ package kubetest
 
 import (
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/util/config_dump"
 )
 
 func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, json string) (kubernetes.IstioObject, error) {
@@ -35,7 +34,7 @@ func (o *K8SClientMock) GetProxyStatus() ([]*kubernetes.ProxyStatus, error) {
 	return args.Get(0).([]*kubernetes.ProxyStatus), args.Error(1)
 }
 
-func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*config_dump.ConfigDump, error) {
+func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*kubernetes.ConfigDump, error) {
 	args := o.Called(namespace, podName)
-	return args.Get(0).(*config_dump.ConfigDump), args.Error(1)
+	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
 }

@@ -2,46 +2,13 @@ package models
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"strconv"
 	"strings"
 
-	adminapi "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
-	envoy_config_bootstrap_v3 "github.com/envoyproxy/go-control-plane/envoy/config/bootstrap/v3"
-	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
-	envoy_config_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
-	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
-	"github.com/golang/protobuf/ptypes"
-
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/util/config_dump"
 )
-
-type ConfigDump struct {
-	configDump *config_dump.ConfigDump
-
-	Bootstrap BootstrapDump `json:"bootstrap,omitempty"`
-	Clusters  ClustersDump  `json:"clusters"`
-	Listeners ListenersDump `json:"listeners"`
-	Routes    RoutesDump    `json:"routes"`
-}
-
-type BootstrapDump struct {
-	Bootstrap   *envoy_config_bootstrap_v3.Bootstrap `json:"bootstrap"`
-	LastUpdated string                               `json:"last_updated"`
-}
-
-type ClustersDump struct {
-	VersionInfo           string     `json:"version_info"`
-	StaticClusters        []*Cluster `json:"static_clusters"`
-	DynamicActiveClusters []*Cluster `json:"dynamic_active_clusters"`
-}
-
-type Cluster struct {
-	Cluster     *cluster.Cluster `json:"cluster"`
-	LastUpdated string           `json:"last_updated"`
-	VersionInfo string           `json:"version_info,omitempty"`
-}
 
 type ListenersDump struct {
 	VersionInfo      string               `json:"version_info"`
@@ -49,313 +16,172 @@ type ListenersDump struct {
 	DynamicListeners []*listener.Listener `json:"dynamic_active_listeners"`
 }
 
-type RoutesDump struct {
-	StaticRouteConfigs  []*RouteConfig `json:"static_route_configs"`
-	DynamicRouteConfigs []*RouteConfig `json:"dynamic_route_configs"`
-}
-
-type RouteConfig struct {
-	Route       *route.RouteConfiguration `json:"route"`
-	LastUpdated string                    `json:"last_updated"`
-	VersionInfo string                    `json:"version_info,omitempty"`
-}
-
-type ClusterSummary struct {
+type Clusters []*Cluster
+type Cluster struct {
 	ServiceFQDN string `json:"service_fqdn"`
 	Port        int    `json:"port"`
 	Subset      string `json:"subset"`
 	Direction   string `json:"direction"`
-	Type        int32  `json:"type"`
+	Type        string  `json:"type"`
+	DestinationRule string `json:"destination_rule"`
 }
 
-type RouteSummary struct {
+type Routes []*Route
+type Route struct {
 	Name           string `json:"name"`
 	Domains        string `json:"domains"`
 	Match          string `json:"match"`
 	VirtualService string `json:"virtual_service"`
 }
 
-type ProxyConfigSummarizer interface {
-	Summary() interface{}
+type Bootstrap struct {
+	Bootstrap map[string]interface{} `json:"bootstrap,inline"`
 }
 
-type ClusterSummarizer struct {
-	*ConfigDump
+type ResourceDump interface {
+	Parse(dump *kubernetes.ConfigDump)
 }
 
-type RouteSummarizer struct {
-	*ConfigDump
-}
-
-type BootstrapSummarizer struct {
-	*ConfigDump
-}
-
-func NewConfigDump(dump *config_dump.ConfigDump) *ConfigDump {
-	return &ConfigDump{configDump: dump}
-}
-
-func (cd *ConfigDump) UnmarshallAll() {
-	cd.UnmarshallClusters()
-	cd.UnmarshallListeners()
-	cd.UnmarshallRoutes()
-	cd.UnmarshallBootstrap()
-}
-
-func (cd *ConfigDump) UnmarshallBootstrap() {
-	bootstrapDumpAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.BootstrapConfigDump")
-	if bootstrapDumpAny == nil {
-		return
+func (css *Clusters) Parse(dump *kubernetes.ConfigDump) {
+	clusterDumpRaw := dump.GetConfig("type.googleapis.com/envoy.admin.v3.ClustersConfigDump")
+	dynamicActiveClusters, ok := clusterDumpRaw["dynamic_active_clusters"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the ClustersDump")
 	}
 
-	bootstrapDumpRaw := &adminapi.BootstrapConfigDump{}
-	err := ptypes.UnmarshalAny(bootstrapDumpAny, bootstrapDumpRaw)
-	if err != nil {
-		return
-	}
-	cd.Bootstrap = BootstrapDump{
-		LastUpdated: ptypes.TimestampString(bootstrapDumpRaw.LastUpdated),
-		Bootstrap:   bootstrapDumpRaw.Bootstrap,
-	}
-}
-
-func (cd *ConfigDump) UnmarshallClusters() {
-	clusterDump := &adminapi.ClustersConfigDump{}
-	clusterStruct := ClustersDump{}
-
-	clusterAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.ClustersConfigDump")
-	if clusterAny == nil {
-		return
+	dac, ok := dynamicActiveClusters.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the ClustersDump")
 	}
 
-	err := ptypes.UnmarshalAny(clusterAny, clusterDump)
-	if err != nil {
-		log.Errorf("Error unmarshalling config_dump.config: %v", err)
-		return
+	staticClusters, ok := clusterDumpRaw["static_clusters"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the ClustersDump")
 	}
 
-	clusterStruct.VersionInfo = clusterDump.VersionInfo
+	sc, ok := staticClusters.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the ClustersDump")
+	}
 
-	clusters := make([]*Cluster, 0)
-	for _, c := range clusterDump.DynamicActiveClusters {
-		if c.Cluster != nil {
-			dcd := &cluster.Cluster{}
-			err = ptypes.UnmarshalAny(c.Cluster, dcd)
-			if err != nil {
-				continue
+	for _, clusterSet := range [][]interface{}{sc, dac} {
+		for _, clusterRaw := range clusterSet {
+			cluster, ok := clusterRaw.(map[string]interface{})
+			if !ok {
+				log.Error("unexpected format of the config dump in the ClustersDump")
 			}
-			clusters = append(clusters, &Cluster{
-				Cluster:     dcd,
-				LastUpdated: ptypes.TimestampString(c.LastUpdated),
-				VersionInfo: c.VersionInfo,
-			})
+			cs := &Cluster{}
+			cs.Parse(cluster["cluster"].(map[string]interface{}))
+			*css = append(*css, cs)
 		}
 	}
-	clusterStruct.DynamicActiveClusters = clusters
-
-	clusters = make([]*Cluster, 0)
-	for _, c := range clusterDump.StaticClusters {
-		if c.Cluster != nil {
-			dcd := &cluster.Cluster{}
-			err = ptypes.UnmarshalAny(c.Cluster, dcd)
-			if err != nil {
-				continue
-			}
-			clusters = append(clusters, &Cluster{
-				Cluster:     dcd,
-				LastUpdated: ptypes.TimestampString(c.LastUpdated),
-			})
-		}
-	}
-	clusterStruct.StaticClusters = clusters
-
-	cd.Clusters = clusterStruct
 }
 
-func (cd *ConfigDump) UnmarshallListeners() {
-	cd.Listeners = ListenersDump{}
-	listenerAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.ListenersConfigDump")
-	if listenerAny == nil {
-		return
-	}
+func (cs *Cluster) Parse(cluster map[string]interface{}) {
+	cs.ServiceFQDN = cluster["name"].(string)
+	cs.Type = cluster["type"].(string)
+	cs.Port = 0
+	cs.Subset = ""
+	cs.Direction = ""
+	cs.DestinationRule = ""
 
-	listenerDump := &adminapi.ListenersConfigDump{}
-	err := ptypes.UnmarshalAny(listenerAny, listenerDump)
-	if err != nil {
-		return
-	}
-
-	cd.Listeners.VersionInfo = listenerDump.VersionInfo
-
-	listeners := make([]*listener.Listener, 0)
-	for _, l := range listenerDump.DynamicListeners {
-		if l.ActiveState != nil && l.ActiveState.Listener != nil {
-			lcd := &listener.Listener{}
-			err = ptypes.UnmarshalAny(l.ActiveState.Listener, lcd)
-			if err != nil {
-				continue
-			}
-			listeners = append(listeners, lcd)
-		}
-	}
-	cd.Listeners.DynamicListeners = listeners
-
-	listeners = make([]*listener.Listener, 0)
-	for _, l := range listenerDump.StaticListeners {
-		if l.Listener != nil {
-			lcd := &listener.Listener{}
-			err = ptypes.UnmarshalAny(l.Listener, lcd)
-			if err != nil {
-				continue
-			}
-			listeners = append(listeners, lcd)
-		}
-	}
-	cd.Listeners.StaticListeners = listeners
-}
-
-func (cd *ConfigDump) UnmarshallRoutes() {
-	cd.Routes = RoutesDump{}
-	routesAny := cd.configDump.GetConfig("type.googleapis.com/envoy.admin.v3.RoutesConfigDump")
-	if routesAny == nil {
-		return
-	}
-
-	routesDump := &adminapi.RoutesConfigDump{}
-	err := ptypes.UnmarshalAny(routesAny, routesDump)
-	if err != nil {
-		return
-	}
-
-	routes := make([]*RouteConfig, 0)
-	for _, routeConf := range routesDump.DynamicRouteConfigs {
-		if routeConf.RouteConfig != nil {
-			rcd := &route.RouteConfiguration{}
-			err = ptypes.UnmarshalAny(routeConf.RouteConfig, rcd)
-			if err != nil {
-				continue
-			}
-			routes = append(routes, &RouteConfig{
-				Route:       rcd,
-				LastUpdated: ptypes.TimestampString(routeConf.LastUpdated),
-				VersionInfo: routeConf.VersionInfo,
-			})
-		}
-	}
-	cd.Routes.DynamicRouteConfigs = routes
-
-	routes = make([]*RouteConfig, 0)
-	for _, routeConf := range routesDump.StaticRouteConfigs {
-		if routeConf.RouteConfig != nil {
-			rcd := &route.RouteConfiguration{}
-			err = ptypes.UnmarshalAny(routeConf.RouteConfig, rcd)
-			if err != nil {
-				continue
-			}
-			routes = append(routes, &RouteConfig{
-				Route:       rcd,
-				LastUpdated: ptypes.TimestampString(routeConf.LastUpdated),
-			})
-		}
-	}
-	cd.Routes.StaticRouteConfigs = routes
-}
-
-func (bs BootstrapSummarizer) Summary() interface{} {
-	bs.UnmarshallBootstrap()
-	return bs.Bootstrap
-}
-
-func (cs ClusterSummarizer) Summary() interface{} {
-	cs.UnmarshallClusters()
-	clusters := make([]*ClusterSummary, 0, len(cs.Clusters.DynamicActiveClusters)+len(cs.Clusters.StaticClusters))
-
-	for _, clusterSet := range [][]*Cluster{cs.Clusters.StaticClusters, cs.Clusters.DynamicActiveClusters} {
-		for _, cluster := range clusterSet {
-			clusters = append(clusters, cluster.summary())
-		}
-	}
-
-	return clusters
-}
-
-func (c Cluster) summary() *ClusterSummary {
-	summary := &ClusterSummary{
-		ServiceFQDN: c.Cluster.Name,
-		Port:        0,
-		Subset:      "",
-		Direction:   "",
-		Type:        int32(c.Cluster.GetType()),
-	}
-
-	parts := strings.Split(c.Cluster.Name, "|")
+	parts := strings.Split(cs.ServiceFQDN, "|")
 	if len(parts) > 3 {
-		summary.ServiceFQDN = parts[3]
-		summary.Port, _ = strconv.Atoi(strings.TrimSuffix(parts[1], "_"))
-		summary.Subset = parts[2]
-		summary.Direction = strings.TrimSuffix(parts[0], "_")
-		summary.Type = int32(c.Cluster.GetType())
+		cs.ServiceFQDN = parts[3]
+		cs.Port, _ = strconv.Atoi(strings.TrimSuffix(parts[1], "_"))
+		cs.Subset = parts[2]
+		cs.Direction = strings.TrimSuffix(parts[0], "_")
+		cs.DestinationRule = istioMetadata(cluster["metadata"])
 	}
-
-	return summary
 }
 
-func (cs RouteSummarizer) Summary() interface{} {
-	cs.UnmarshallRoutes()
-	routes := make([]*RouteSummary, 0, len(cs.Routes.StaticRouteConfigs)+len(cs.Routes.DynamicRouteConfigs))
+func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
+	routesDumpRaw := dump.GetConfig("type.googleapis.com/envoy.admin.v3.RoutesConfigDump")
 
-	for _, routeSet := range [][]*RouteConfig{cs.Routes.StaticRouteConfigs, cs.Routes.DynamicRouteConfigs} {
-		for _, route := range routeSet {
-			routes = append(routes, route.summary()...)
-		}
+	dynamicRoutes, ok := routesDumpRaw["dynamic_route_configs"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the RouteDump")
 	}
 
-	return routes
-}
+	dr, ok := dynamicRoutes.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the RouteDump")
+	}
 
-func (r RouteConfig) summary() []*RouteSummary {
-	routes := make([]*RouteSummary, 0, len(r.Route.GetVirtualHosts()))
+	staticRoutes, ok := routesDumpRaw["static_route_configs"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the RouteDump")
+	}
 
-	for _, vhs := range r.Route.GetVirtualHosts() {
-		for _, route := range vhs.GetRoutes() {
-			route := &RouteSummary{
-				Name:           r.Route.Name,
-				Domains:        bestDomainMatch(vhs.GetDomains()),
-				Match:          matchSummary(route.GetMatch()),
-				VirtualService: istioMetadata(route.GetMetadata()),
+	sr, ok := staticRoutes.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the RouteDump")
+	}
+
+	for _, routeSet := range [][]interface{}{dr, sr} {
+		for _, routeRaw := range routeSet {
+			route, ok := routeRaw.(map[string]interface{})
+			if !ok {
+				log.Error("unexpected format of the config dump in the RouteDump")
 			}
-			routes = append(routes, route)
+
+			rc := route["route_config"].(map[string]interface{})
+			rcName, found := rc["name"]
+			if !found {
+				rcName = ""
+			}
+			virtualHosts := rc["virtual_hosts"].([]interface{})
+
+			for _, vhsRaw := range virtualHosts {
+				vhs := vhsRaw.(map[string]interface{})
+				vhsRoutes := vhs["routes"].([]interface{})
+				for _, routeRaw := range vhsRoutes {
+					routeMap := routeRaw.(map[string]interface{})
+					route := &Route{
+						Name:           rcName.(string),
+						Domains:        bestDomainMatch(vhs["domains"].([]interface{})),
+						Match:          matchSummary(routeMap["match"].(map[string]interface{})),
+						VirtualService: istioMetadata(routeMap["metadata"]),
+					}
+					*rs = append(*rs, route)
+				}
+			}
 		}
 	}
-	return routes
 }
 
-func matchSummary(match *route.RouteMatch) string {
+func (bd *Bootstrap) Parse(dump *kubernetes.ConfigDump) {
+	bd.Bootstrap = dump.GetConfig("type.googleapis.com/envoy.admin.v3.BootstrapConfigDump")
+}
+
+func matchSummary(match map[string]interface{}) string {
 	conds := []string{}
-	if match.GetPrefix() != "" {
-		conds = append(conds, fmt.Sprintf("%s*", match.GetPrefix()))
+	if prefixRaw, found := match["prefix"]; found && prefixRaw.(string) != "" {
+		conds = append(conds, fmt.Sprintf("%s*", prefixRaw))
 	}
-	if match.GetPath() != "" {
-		conds = append(conds, match.GetPath())
+	if pathRaw, found := match["path"]; found && pathRaw.(string) != "" {
+		conds = append(conds, fmt.Sprintf("%s", pathRaw))
 	}
-	if match.GetSafeRegex() != nil {
-		conds = append(conds, fmt.Sprintf("regex %s", match.GetSafeRegex().String()))
+
+	if  safeRegex, found := match["safe_regex"]; found {
+		conds = append(conds, fmt.Sprintf("regex %s", safeRegex))
 	}
 	// Ignore headers
 	return strings.Join(conds, " ")
 }
 
-func bestDomainMatch(domains []string) string {
+func bestDomainMatch(domains []interface{}) string {
 	if len(domains) == 0 {
 		return ""
 	}
 
 	if len(domains) == 1 {
-		return domains[0]
+		return domains[0].(string)
 	}
 
-	bestMatch := domains[0]
-	for _, domain := range domains {
+	bestMatch := domains[0].(string)
+	for _, domainRaw := range domains {
+		domain := domainRaw.(string)
 		if len(domain) == 0 {
 			continue
 		}
@@ -371,19 +197,39 @@ func bestDomainMatch(domains []string) string {
 	return bestMatch
 }
 
-func istioMetadata(metadata *envoy_config_core_v3.Metadata) string {
+func istioMetadata(metadata interface{}) string {
 	if metadata == nil {
 		return ""
 	}
-	istioMetadata, ok := metadata.FilterMetadata["istio"]
+	metadataMap, ok := metadata.(map[string]interface{})
 	if !ok {
 		return ""
 	}
-	config, ok := istioMetadata.Fields["config"]
+	filterMetadataRaw, ok := metadataMap["filter_metadata"]
 	if !ok {
 		return ""
 	}
-	return renderConfig(config.GetStringValue())
+	filterMetadata, ok := filterMetadataRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	istioMetadataRaw, ok := filterMetadata["istio"]
+	if !ok {
+		return ""
+	}
+
+	istioMetadata, ok := istioMetadataRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	config, ok := istioMetadata["config"]
+	if !ok {
+		return ""
+	}
+
+	return renderConfig(config.(string))
 }
 
 func renderConfig(configPath string) string {

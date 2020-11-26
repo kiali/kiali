@@ -252,7 +252,7 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 	return fullStatus, nil
 }
 
-func (in *K8SClient) GetConfigDump(namespace, podName string) (*config_dump.ConfigDump, error) {
+func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
 	// Fetching the config_dump data, raw.
 	resp, err := in.EnvoyForward(namespace, podName, "/config_dump")
 	if err != nil {
@@ -260,14 +260,13 @@ func (in *K8SClient) GetConfigDump(namespace, podName string) (*config_dump.Conf
 		return nil, err
 	}
 
-	// Converting Raw data to Json
-	cdw := &config_dump.ConfigDump{}
-	err = json.Unmarshal(resp, cdw)
+	cd := &ConfigDump{}
+	err = json.Unmarshal(resp, cd)
 	if err != nil {
 		log.Errorf("Error Unmarshalling the config_dump: %v", err)
 	}
 
-	return cdw, err
+	return cd, err
 }
 
 func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
