@@ -40,8 +40,12 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 
 	// Ensure the service exists
 	if service != "" {
-		if _, err := in.k8s.GetService(namespace, service); err != nil {
-			return nil, err
+		svc, err := in.businessLayer.Svc.getService(namespace, service)
+		if svc == nil || err != nil {
+			if err != nil {
+				log.Warningf("Error invoking GetService %s", err)
+			}
+			return nil, fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist for Validations.", namespace, service)
 		}
 	}
 
