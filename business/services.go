@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"fmt"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -291,6 +292,18 @@ func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.S
 	return &s, nil
 }
 
+func (in *SvcService) getService(namespace, service string) (svc *core_v1.Service, err error) {
+	if IsNamespaceCached(namespace) {
+		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			svc, err = kialiCache.GetService(namespace, service)
+		}
+	} else {
+		svc, err = in.k8s.GetService(namespace, service)
+	}
+	return svc, err
+}
+
 func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core_v1.Service, eps *core_v1.Endpoints, err error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -299,7 +312,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	go func() {
 		defer wg.Done()
 		var err2 error
-		svc, err2 = in.k8s.GetService(namespace, service)
+		svc, err2 = in.getService(namespace, service)
 		if err2 != nil {
 			log.Errorf("Error fetching definition for service [%s:%s]: %s", namespace, service, err2)
 			errChan <- err2
@@ -309,7 +322,14 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	go func() {
 		defer wg.Done()
 		var err2 error
-		eps, err2 = in.k8s.GetEndpoints(namespace, service)
+		if IsNamespaceCached(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				eps, err = kialiCache.GetEndpoints(namespace, service)
+			}
+		} else {
+			eps, err2 = in.k8s.GetEndpoints(namespace, service)
+		}
 		if err2 != nil && !errors.IsNotFound(err2) {
 			log.Errorf("Error fetching Endpoints  namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
@@ -380,9 +400,9 @@ func (in *SvcService) GetServiceAppName(namespace, service string) (string, erro
 		return "", err
 	}
 
-	svc, err := in.k8s.GetService(namespace, service)
-	if err != nil {
-		return "", err
+	svc, err := in.getService(namespace, service)
+	if svc == nil || err != nil {
+		return "", fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist.", namespace, service)
 	}
 
 	appLabelName := config.Get().IstioLabels.AppLabelName

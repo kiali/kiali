@@ -18,9 +18,11 @@ type (
 		GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 		GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
+		GetEndpoints(namespace, name string) (*core_v1.Endpoints, error)
 		GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 		GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error)
 		GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+		GetService(namespace string, name string) (*core_v1.Service, error)
 		GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 		GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	}
@@ -34,6 +36,7 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 	(*informer)[kubernetes.ConfigMapType] = sharedInformers.Core().V1().ConfigMaps().Informer()
+	(*informer)[kubernetes.EndpointsType] = sharedInformers.Core().V1().Endpoints().Informer()
 }
 
 func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
@@ -44,7 +47,8 @@ func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
 			nsCache[kubernetes.ReplicaSetType].HasSynced() &&
 			nsCache[kubernetes.ServiceType].HasSynced() &&
 			nsCache[kubernetes.PodType].HasSynced() &&
-			nsCache[kubernetes.ConfigMapType].HasSynced()
+			nsCache[kubernetes.ConfigMapType].HasSynced() &&
+			nsCache[kubernetes.EndpointsType].HasSynced()
 	} else {
 		isSynced = false
 	}
@@ -106,6 +110,26 @@ func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 			}
 			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
 			return dep, nil
+		}
+	}
+	return nil, nil
+}
+
+func (c *kialiCacheImpl) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.EndpointsType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			eps, ok := obj.(*core_v1.Endpoints)
+			if !ok {
+				return nil, errors.New("bad Endpoints type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: Endpoints] for [namespace: %s] [name: %s]", namespace, name)
+			return eps, nil
 		}
 	}
 	return nil, nil
@@ -180,6 +204,26 @@ func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string
 		}
 	}
 	return []core_v1.Service{}, nil
+}
+
+func (c *kialiCacheImpl) GetService(namespace, name string) (*core_v1.Service, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.ServiceType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			svc, ok := obj.(*core_v1.Service)
+			if !ok {
+				return nil, errors.New("bad Service type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] [name: %s]", namespace, name)
+			return svc, nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
