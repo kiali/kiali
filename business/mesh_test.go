@@ -57,8 +57,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 
-	bsLayer := NewWithBackends(k8s, nil, nil)
-	meshSvc := MeshService{k8s: k8s, businessLayer: bsLayer}
+	meshSvc := NewMeshService(k8s, nil)
 
 	a, err := meshSvc.GetClusters()
 	check.Nil(err, "GetClusters returned error: %v", err)
@@ -118,7 +117,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{secretMock}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(nilDeployment, nil)
 
-	newRemoteClient = func(config *rest.Config) (kubernetes.ClientInterface, error) {
+	newRemoteClient := func(config *rest.Config) (kubernetes.ClientInterface, error) {
 		remoteClient := new(kubetest.K8SClientMock)
 
 		remoteNs := &core_v1.Namespace{
@@ -132,8 +131,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		return remoteClient, nil
 	}
 
-	bsLayer := NewWithBackends(k8s, nil, nil)
-	meshSvc := MeshService{k8s: k8s, businessLayer: bsLayer}
+	meshSvc := NewMeshService(k8s, newRemoteClient)
 
 	a, err := meshSvc.GetClusters()
 	check.Nil(err, "GetClusters returned error: %v", err)

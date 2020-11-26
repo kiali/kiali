@@ -13,10 +13,15 @@ import (
 )
 
 // MeshService is a support service for retrieving data about the mesh environment
-// when Istio is installed with multi-cluster enabled.
+// when Istio is installed with multi-cluster enabled. Prefer initializing this
+// type via the NewMeshService function.
 type MeshService struct {
-	k8s           kubernetes.ClientInterface
-	businessLayer *Layer
+	k8s kubernetes.ClientInterface
+
+	// newRemoteClient is a helper variable holding a function that should return an
+	// initialized kubernetes client using the specified config argument. This was created,
+	// mainly, for tests to set a function returning a mock of the kuberentes client.
+	newRemoteClient func(config *rest.Config) (kubernetes.ClientInterface, error)
 }
 
 // Cluster holds some metadata about a cluster that is
@@ -38,17 +43,19 @@ type Cluster struct {
 	SecretName string `json:"secretName"`
 }
 
-// newRemoteClient is a helper variable holding a function that should return an
-// initialized kubernetes client using the specified config argument. An init() funcition
-// initializes the value of this variable. This was created, mainly, for tests to set a
-// function returning a mock of the kuberentes client.
-var newRemoteClient func(config *rest.Config) (kubernetes.ClientInterface, error)
+// NewMeshService initializes a new MeshService structure with the given k8s client and
+// newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
+// can be passed a nil value and a default function will be used.
+func NewMeshService(k8s kubernetes.ClientInterface, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
+	if newRemoteClientFunc == nil {
+		newRemoteClientFunc = func(config *rest.Config) (kubernetes.ClientInterface, error) {
+			return kubernetes.NewClientFromConfig(config)
+		}
+	}
 
-// init initializes the newRemoteClient variable to a wrapper function that invokes
-// kubernetes.NewClientFromConfig and returns its result.
-func init() {
-	newRemoteClient = func(config *rest.Config) (kubernetes.ClientInterface, error) {
-		return kubernetes.NewClientFromConfig(config)
+	return MeshService{
+		k8s:             k8s,
+		newRemoteClient: newRemoteClientFunc,
 	}
 }
 
@@ -245,7 +252,7 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 			ApiEndpoint: parsedSecret.Clusters[0].Cluster.Server,
 		}
 
-		networkName := resolveNetwork(clusterName, parsedSecret)
+		networkName := in.resolveNetwork(clusterName, parsedSecret)
 		if len(networkName) != 0 {
 			meshCluster.Network = networkName
 		}
@@ -264,7 +271,7 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
-func resolveNetwork(clusterName string, kubeconfig *kubernetes.RemoteSecret) string {
+func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes.RemoteSecret) string {
 	conf := config.Get()
 
 	restConfig, restConfigErr := kubernetes.UseRemoteCreds(kubeconfig)
@@ -275,7 +282,7 @@ func resolveNetwork(clusterName string, kubeconfig *kubernetes.RemoteSecret) str
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := newRemoteClient(restConfig)
+	clientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return ""
