@@ -15,7 +15,7 @@ const (
 	CronJobType               = "CronJob"
 	DeploymentType            = "Deployment"
 	DeploymentConfigType      = "DeploymentConfig"
-	EndpointsType              = "Endpoints"
+	EndpointsType             = "Endpoints"
 	JobType                   = "Job"
 	PodType                   = "Pod"
 	ReplicationControllerType = "ReplicationController"
