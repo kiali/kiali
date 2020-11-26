@@ -126,6 +126,14 @@ backend-build-release:
 backend-test:
 	$(MAKE) test-race
 
+# prepare backend tags
+QUAY_TAG = $(QUAY_NAME):$(VERSION_TAG)
+ifneq ($(IS_SNAPSHOT),y)
+   # Create or update vX.Y tags (without the patch number)
+   # quay.io/kiali
+   QUAY_TAG := $(QUAY_TAG) $(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)
+endif
+
 backend-push-docker:
 ifdef QUAY_USER
 ifdef QUAY_PASSWORD
@@ -133,19 +141,10 @@ ifdef QUAY_PASSWORD
 	@docker login -u "$(QUAY_USER)" -p "$(QUAY_PASSWORD)" quay.io
 endif
 endif
-	CONTAINER_VERSION="$(VERSION_TAG)" \
+	QUAY_TAG="$(QUAY_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
-	  make container-build-kiali container-push
-ifneq ($(IS_SNAPSHOT),y)
-   # Create or update vX.Y tags (without the patch number)
-   # quay.io/kiali
-	docker tag "$(QUAY_NAME):$(VERSION_TAG)" "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker push "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
-	docker rmi "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
-endif
-   # Clean-up
-	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
+	  $(MAKE) -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-push-kiali-quay
 
 backend-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
