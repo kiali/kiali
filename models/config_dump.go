@@ -2,27 +2,28 @@ package models
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"strconv"
 	"strings"
 
-	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
-type ListenersDump struct {
-	VersionInfo      string               `json:"version_info"`
-	StaticListeners  []*listener.Listener `json:"static_listeners"`
-	DynamicListeners []*listener.Listener `json:"dynamic_active_listeners"`
+type Listeners []*Listener
+type Listener struct {
+	Address     string  `json:"address"`
+	Port        float64 `json:"port"`
+	Match       string  `json:"match"`
+	Destination string  `json:"destination"`
 }
 
 type Clusters []*Cluster
 type Cluster struct {
-	ServiceFQDN string `json:"service_fqdn"`
-	Port        int    `json:"port"`
-	Subset      string `json:"subset"`
-	Direction   string `json:"direction"`
-	Type        string  `json:"type"`
+	ServiceFQDN     string `json:"service_fqdn"`
+	Port            int    `json:"port"`
+	Subset          string `json:"subset"`
+	Direction       string `json:"direction"`
+	Type            string `json:"type"`
 	DestinationRule string `json:"destination_rule"`
 }
 
@@ -40,6 +41,109 @@ type Bootstrap struct {
 
 type ResourceDump interface {
 	Parse(dump *kubernetes.ConfigDump)
+}
+
+func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
+	listenersDump := dump.GetConfig("type.googleapis.com/envoy.admin.v3.ListenersConfigDump")
+
+	dynamicListeners, ok := listenersDump["dynamic_listeners"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the ListenersDump")
+	}
+
+	dl, ok := dynamicListeners.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the ListenersDump")
+	}
+
+	staticListeners, ok := listenersDump["static_listeners"]
+	if !ok {
+		log.Error("unexpected format of the config dump in the ListenersDump")
+	}
+
+	sl, ok := staticListeners.([]interface{})
+	if !ok {
+		log.Error("unexpected format of the config dump in the ListenersDump")
+	}
+
+	for _, listenerSet := range [][]interface{}{dl, sl} {
+		for _, listenerRaw := range listenerSet {
+			listenerGen, ok := listenerRaw.(map[string]interface{})
+			if !ok {
+				log.Error("unexpected format of the config dump in the ListenersDump")
+			}
+
+			activeState, found := listenerGen["active_state"].(map[string]interface{})
+			if !found {
+				activeState = listenerGen
+			}
+
+			listenerRaw := activeState["listener"].(map[string]interface{})
+			addressRaw := listenerRaw["address"].(map[string]interface{})
+			socketAddressRaw := addressRaw["socket_address"].(map[string]interface{})
+
+			for _, match := range listenerMatches(listenerRaw["filter_chains"].([]interface{})) {
+				*ls = append(*ls, &Listener{
+					Address: socketAddressRaw["address"].(string),
+					Port:    socketAddressRaw["port_value"].(float64),
+					Match:   match["match"].(string),
+				})
+			}
+		}
+	}
+}
+
+func listenerMatches(chains []interface{}) []map[string]interface{} {
+	matches := make([]map[string]interface{}, 0, len(chains))
+	for _, chainRaw := range chains {
+		descriptors := make([]string, 0)
+
+		chain := chainRaw.(map[string]interface{})
+		chainMatchRaw, found := chain["filter_chain_match"]
+		if !found {
+			continue
+		}
+
+		chainMatch := chainMatchRaw.(map[string]interface{})
+		if snd := getChainDescriptor("server_names", "SNI", chainMatch); snd != "" {
+			descriptors = append(descriptors, snd)
+		}
+
+		if apd := getChainDescriptor("application_protocols", "App", chainMatch); apd != "" {
+			descriptors = append(descriptors, apd)
+		}
+
+		if tp, found := chainMatch["transport_protocol"]; found {
+			descriptors = append(descriptors, fmt.Sprintf("Trans: %s", tp))
+		}
+
+		match := strings.Join(descriptors, ";")
+		if len(descriptors) == 0 {
+			match = "ALL"
+		}
+
+		matches = append(matches, map[string]interface{}{
+			"match": match,
+		})
+	}
+	return matches
+}
+
+func getChainDescriptor(match, label string, chainMatch map[string]interface{}) string {
+	result := ""
+	if serverNames, found := chainMatch[match]; found {
+		if sn, ok := serverNames.([]interface{}); ok && len(sn) > 0 {
+			for i, desc := range sn {
+				sns := desc.(string)
+				if i > 0 {
+					result = result + ","
+				}
+				result = result + sns
+			}
+			result = fmt.Sprintf("%s: %s", label, result)
+		}
+	}
+	return result
 }
 
 func (css *Clusters) Parse(dump *kubernetes.ConfigDump) {
@@ -163,7 +267,7 @@ func matchSummary(match map[string]interface{}) string {
 		conds = append(conds, fmt.Sprintf("%s", pathRaw))
 	}
 
-	if  safeRegex, found := match["safe_regex"]; found {
+	if safeRegex, found := match["safe_regex"]; found {
 		conds = append(conds, fmt.Sprintf("regex %s", safeRegex))
 	}
 	// Ignore headers

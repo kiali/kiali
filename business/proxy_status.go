@@ -114,6 +114,9 @@ func buildDump(dump *kubernetes.ConfigDump, resource string) models.ResourceDump
 	case "bootstrap":
 		summary = &models.Bootstrap{}
 		summary.Parse(dump)
+	case "listeners":
+		summary = &models.Listeners{}
+		summary.Parse(dump)
 	}
 
 	return summary
