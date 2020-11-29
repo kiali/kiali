@@ -243,12 +243,12 @@ type KubernetesConfig struct {
 
 // ApiConfig contains API specific configuration.
 type ApiConfig struct {
-	Namespaces ApiNamespacesConfig
+	Namespaces ApiNamespacesConfig `yaml:"namespaces,omitempty" json:"namespaces"`
 }
 
 // ApiNamespacesConfig provides a list of regex strings defining namespaces to blacklist.
 type ApiNamespacesConfig struct {
-	Exclude       []string
+	Exclude       []string `yaml:"exclude,omitempty" json:"exclude"`
 	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
 }
 
