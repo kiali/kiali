@@ -345,7 +345,7 @@ func NewConfig() (c *Config) {
 			Namespaces: ApiNamespacesConfig{
 				Exclude: []string{
 					"istio-operator",
-					"kube.*",
+					"kube-system",
 					"openshift.*",
 					"ibm.*",
 					"kial-operator",
