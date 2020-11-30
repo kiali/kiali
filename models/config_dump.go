@@ -84,9 +84,10 @@ func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
 
 			for _, match := range listenerMatches(listenerRaw) {
 				*ls = append(*ls, &Listener{
-					Address: socketAddressRaw["address"].(string),
-					Port:    socketAddressRaw["port_value"].(float64),
-					Match:   match["match"].(string),
+					Address:     socketAddressRaw["address"].(string),
+					Port:        socketAddressRaw["port_value"].(float64),
+					Match:       match["match"].(string),
+					Destination: match["destination"].(string),
 				})
 			}
 		}
@@ -94,7 +95,6 @@ func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
 }
 
 func listenerMatches(listener map[string]interface{}) []map[string]interface{} {
-	emptyMatch := map[string]interface{}{ "match": "ALL" }
 	chains := listener["filter_chains"].([]interface{})
 	if defaultFilterChain, found := listener["default_filter_chain"]; found {
 		chains = append(chains, defaultFilterChain)
@@ -107,7 +107,7 @@ func listenerMatches(listener map[string]interface{}) []map[string]interface{} {
 		chain := chainRaw.(map[string]interface{})
 		chainMatchRaw, found := chain["filter_chain_match"]
 		if !found {
-			matches = append(matches, emptyMatch)
+			matches = append(matches, map[string]interface{}{"match": "ALL", "destination": getListenerDestination(chain["filters"])})
 			continue
 		}
 
@@ -150,17 +150,177 @@ func listenerMatches(listener map[string]interface{}) []map[string]interface{} {
 		}
 
 		matches = append(matches, map[string]interface{}{
-			"match": match,
+			"match":       match,
+			"destination": getListenerDestination(chain["filters"]),
 		})
 	}
 	return matches
 }
 
+func getListenerDestination(filtersRaw interface{}) string {
+	filters, ok := filtersRaw.([]interface{})
+	if !ok {
+		return ""
+	}
+
+	for _, filterRaw := range filters {
+		filter, ok := filterRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		if tcRaw, found := filter["typed_config"]; found {
+			tc := tcRaw.(map[string]interface{})
+			if filter["name"].(string) == "envoy.filters.network.http_connection_manager" {
+				if routeConfigRaw, found := tc["route_config"]; found {
+					routeConfig := routeConfigRaw.(map[string]interface{})
+					if cluster := getMatchAllCluster(routeConfig); cluster != "" {
+						return cluster
+					}
+					vhosts := []string{}
+					for _, vh := range routeConfig["virtual_hosts"].([]interface{}) {
+						if describeDomains(vh.(map[string]interface{})) == "" {
+							vhosts = append(vhosts, describeRoutes(vh.(map[string]interface{})))
+						} else {
+							vhosts = append(vhosts, fmt.Sprintf("%s %s", describeDomains(vh.(map[string]interface{})), describeRoutes(vh.(map[string]interface{}))))
+						}
+					}
+					return fmt.Sprintf("Inline Route: %s", strings.Join(vhosts, "; "))
+				}
+
+				if rdsRaw, found := tc["rds"]; found {
+					rds := rdsRaw.(map[string]interface{})
+					if rcn, found := rds["route_config_name"]; found {
+						return fmt.Sprintf("Route: %s", rcn.(string))
+					}
+				}
+				return "HTTP"
+			} else if filter["name"].(string) == "envoy.filters.network.tcp_proxy" {
+				if cluster, found := tc["cluster"]; found {
+					if strings.Contains(cluster.(string), "Cluster") {
+						return cluster.(string)
+					} else {
+						return fmt.Sprintf("Cluster: %s", cluster.(string))
+					}
+				}
+			}
+		}
+	}
+	return "Non-HTTP/Non-TCP"
+}
+
+func describeDomains(vh map[string]interface{}) string {
+	domainsRaw, found := vh["domains"]
+	if !found {
+		return ""
+	}
+	domains, ok := domainsRaw.([]interface{})
+	if !ok {
+		return ""
+	}
+	if len(domains) == 1 && domains[0] == "*" {
+		return ""
+	}
+	domainstr := make([]string, len(domains))
+	for _, domain := range domains {
+		domainstr = append(domainstr, domain.(string))
+	}
+	return strings.Join(domainstr, "/")
+}
+
+func describeRoutes(vh map[string]interface{}) string {
+	routesRaw, ok := vh["routes"].([]interface{})
+	if !ok {
+		return ""
+	}
+
+	routes := make([]string, 0, len(routesRaw))
+	for _, routeRaw := range routesRaw {
+		if route, ok := routeRaw.(map[string]interface{}); ok {
+			routes = append(routes, matchSummary(route["match"].(map[string]interface{})))
+		}
+	}
+	return strings.Join(routes, ", ")
+}
+
+func getMatchAllCluster(route map[string]interface{}) string {
+	vhsRaw, found := route["virtual_hosts"]
+	if !found {
+		return ""
+	}
+
+	vhs, ok := vhsRaw.([]interface{})
+	if ok && len(vhs) != 1 {
+		return ""
+	}
+
+	vh := vhs[0].(map[string]interface{})
+	if domainsRaw, found := vh["domains"]; found {
+		if domains, ok := domainsRaw.([]interface{}); ok && !(len(domains) == 1 && domains[0] == "*") {
+			return ""
+		}
+	}
+
+	routesRaw, found := vh["routes"]
+	if !found {
+		return ""
+	}
+
+	routes, ok := routesRaw.([]interface{})
+	if !ok {
+		return ""
+	}
+
+	if len(routes) != 1 {
+		return ""
+	}
+
+	r, ok := routes[0].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	routeMatchRaw, found := r["match"]
+	if !found {
+		return ""
+	}
+
+	routeMatch, ok := routeMatchRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	if prefix, found := routeMatch["prefix"]; found && prefix.(string) != "/" {
+		return ""
+	}
+
+	routeActionRaw, found := r["route"]
+	if !found {
+		return ""
+	}
+
+	routeAction, ok := routeActionRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	routeActionCluster, found := routeAction["cluster"]
+	if !found {
+		return ""
+	}
+
+	if strings.Contains(routeActionCluster.(string), "Cluster") {
+		return routeActionCluster.(string)
+	}
+
+	return fmt.Sprintf("Cluster: %s", routeActionCluster)
+}
+
 func getAppDescriptor(chainMatch map[string]interface{}) string {
 	plainText := []string{"http/1.0", "http/1.1", "h2c"}
 	istioPlainText := []string{"istio", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
-	httpTLS            := []string{"http/1.0", "http/1.1", "h2c", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
-	tcpTLS             := []string{"istio-peer-exchange", "istio"}
+	httpTLS := []string{"http/1.0", "http/1.1", "h2c", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
+	tcpTLS := []string{"istio-peer-exchange", "istio"}
 
 	protocolMap := map[string][]string{
 		"App: HTTP TLS":         httpTLS,
