@@ -82,7 +82,7 @@ func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
 			addressRaw := listenerRaw["address"].(map[string]interface{})
 			socketAddressRaw := addressRaw["socket_address"].(map[string]interface{})
 
-			for _, match := range listenerMatches(listenerRaw["filter_chains"].([]interface{})) {
+			for _, match := range listenerMatches(listenerRaw) {
 				*ls = append(*ls, &Listener{
 					Address: socketAddressRaw["address"].(string),
 					Port:    socketAddressRaw["port_value"].(float64),
@@ -93,7 +93,13 @@ func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
 	}
 }
 
-func listenerMatches(chains []interface{}) []map[string]interface{} {
+func listenerMatches(listener map[string]interface{}) []map[string]interface{} {
+	emptyMatch := map[string]interface{}{ "match": "ALL" }
+	chains := listener["filter_chains"].([]interface{})
+	if defaultFilterChain, found := listener["default_filter_chain"]; found {
+		chains = append(chains, defaultFilterChain)
+	}
+
 	matches := make([]map[string]interface{}, 0, len(chains))
 	for _, chainRaw := range chains {
 		descriptors := make([]string, 0)
@@ -101,6 +107,7 @@ func listenerMatches(chains []interface{}) []map[string]interface{} {
 		chain := chainRaw.(map[string]interface{})
 		chainMatchRaw, found := chain["filter_chain_match"]
 		if !found {
+			matches = append(matches, emptyMatch)
 			continue
 		}
 
@@ -109,12 +116,32 @@ func listenerMatches(chains []interface{}) []map[string]interface{} {
 			descriptors = append(descriptors, snd)
 		}
 
-		if apd := getChainDescriptor("application_protocols", "App", chainMatch); apd != "" {
+		if apd := getAppDescriptor(chainMatch); apd != "" {
 			descriptors = append(descriptors, apd)
 		}
 
 		if tp, found := chainMatch["transport_protocol"]; found {
 			descriptors = append(descriptors, fmt.Sprintf("Trans: %s", tp))
+		}
+
+		port := ""
+		if dp, found := chainMatch["destination_port"]; found {
+			port = fmt.Sprintf(":%d", int(dp.(float64)))
+		}
+
+		preRanRaw, found := chainMatch["prefix_ranges"]
+		if found {
+			if prefixRanges, ok := preRanRaw.([]interface{}); ok && len(prefixRanges) > 0 {
+				pfs := []string{}
+				for _, p := range prefixRanges {
+					if prefixRange, ok := p.(map[string]interface{}); ok {
+						pfs = append(pfs, fmt.Sprintf("%s/%d", prefixRange["address_prefix"], int(prefixRange["prefix_len"].(float64))))
+					}
+				}
+				descriptors = append(descriptors, fmt.Sprintf("Addr: %s%s", strings.Join(pfs, ","), port))
+			}
+		} else if port != "" {
+			descriptors = append(descriptors, fmt.Sprintf("Addr: *%s", port))
 		}
 
 		match := strings.Join(descriptors, ";")
@@ -127,6 +154,44 @@ func listenerMatches(chains []interface{}) []map[string]interface{} {
 		})
 	}
 	return matches
+}
+
+func getAppDescriptor(chainMatch map[string]interface{}) string {
+	plainText := []string{"http/1.0", "http/1.1", "h2c"}
+	istioPlainText := []string{"istio", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
+	httpTLS            := []string{"http/1.0", "http/1.1", "h2c", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
+	tcpTLS             := []string{"istio-peer-exchange", "istio"}
+
+	protocolMap := map[string][]string{
+		"App: HTTP TLS":         httpTLS,
+		"App: Istio HTTP Plain": istioPlainText,
+		"App: TCP TLS":          tcpTLS,
+		"App: HTTP":             plainText,
+	}
+
+	apsRaw, found := chainMatch["application_protocols"]
+	if !found {
+		return ""
+	}
+
+	aps, ok := apsRaw.([]interface{})
+	if !ok {
+		return ""
+	}
+
+	for label, protList := range protocolMap {
+		if len(protList) == len(aps) {
+			same := true
+			for i, prot := range protList {
+				same = same && prot == aps[i].(string)
+			}
+			if same {
+				return label
+			}
+		}
+	}
+
+	return ""
 }
 
 func getChainDescriptor(match, label string, chainMatch map[string]interface{}) string {
