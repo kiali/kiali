@@ -16,6 +16,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jaegertracing/jaeger v1.15.1
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/mitchellh/mapstructure v1.4.0
 	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
 	github.com/prometheus/client_golang v0.9.4
 	github.com/prometheus/client_model v0.2.0 // indirect
