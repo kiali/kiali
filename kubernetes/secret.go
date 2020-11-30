@@ -18,6 +18,15 @@ type RemoteSecretClusterListItem struct {
 	Name    string              `yaml:"name"`
 }
 
+type RemoteSecretUser struct {
+	Name string                `yaml:"name"`
+	User RemoteSecretUserToken `yaml:"user"`
+}
+
+type RemoteSecretUserToken struct {
+	Token string `yaml:"token"`
+}
+
 type RemoteSecret struct {
 	APIVersion string                        `yaml:"apiVersion"`
 	Clusters   []RemoteSecretClusterListItem `yaml:"clusters"`
@@ -32,12 +41,7 @@ type RemoteSecret struct {
 	Kind           string `yaml:"kind"`
 	Preferences    struct {
 	} `yaml:"preferences"`
-	Users []struct {
-		Name string `yaml:"name"`
-		User struct {
-			Token string `yaml:"token"`
-		} `yaml:"user"`
-	} `yaml:"users"`
+	Users []RemoteSecretUser `yaml:"users"`
 }
 
 func GetRemoteSecret(path string) (*RemoteSecret, error) {
