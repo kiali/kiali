@@ -83,7 +83,7 @@
  *                    Do not include the trailing slash.
  */
 
-node('kiali-build') {
+node('kiali-build && fedora') {
   def (backendForkUri, uiForkUri, operatorForkUri,helmForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git', 'git@github.com:kiali-bot/helm-charts.git']
   def (backendDir, uiDir, operatorDir, helmDir, siteDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts', 'src/github.com/kiali/kiali.io']
   def (backendMakefile, uiMakefile, operatorMakefile, helmMakefile, siteMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins', 'Makefile.helm.jenkins', 'Makefile.site.jenkins']
