@@ -35,7 +35,8 @@ import {
   WIZARD_REQUEST_TIMEOUTS,
   getInitTimeoutRetryRoute,
   getInitConnectionPool,
-  getInitOutlierDetection
+  getInitOutlierDetection,
+  WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
@@ -269,6 +270,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     const promises: Promise<Response<string>>[] = [];
     switch (this.props.type) {
       case WIZARD_TRAFFIC_SHIFTING:
+      case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
@@ -506,7 +508,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             onChange={this.onFaultInjectionRouteChange}
           />
         )}
-        {this.props.type === WIZARD_TRAFFIC_SHIFTING && (
+        {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
           <TrafficShifting
             workloads={this.props.workloads}
             initWeights={getInitWeights(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
@@ -526,6 +528,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         {(this.props.type === WIZARD_REQUEST_ROUTING ||
           this.props.type === WIZARD_FAULT_INJECTION ||
           this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+          this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
           this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
           <Expandable
             className={advancedOptionsStyle}
@@ -575,17 +578,19 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
                   />
                 </div>
               </Tab>
-              <Tab eventKey={3} title={'Circuit Breaker'}>
-                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                  <CircuitBreaker
-                    hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
-                    connectionPool={this.state.trafficPolicy.connectionPool}
-                    hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
-                    outlierDetection={this.state.trafficPolicy.outlierDetection}
-                    onCircuitBreakerChange={this.onCircuitBreaker}
-                  />
-                </div>
-              </Tab>
+              {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
+                <Tab eventKey={3} title={'Circuit Breaker'}>
+                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <CircuitBreaker
+                      hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                      connectionPool={this.state.trafficPolicy.connectionPool}
+                      hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                      outlierDetection={this.state.trafficPolicy.outlierDetection}
+                      onCircuitBreakerChange={this.onCircuitBreaker}
+                    />
+                  </div>
+                </Tab>
+              )}
             </Tabs>
           </Expandable>
         )}

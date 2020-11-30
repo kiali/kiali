@@ -24,6 +24,8 @@ import {
   Sidecar,
   Source,
   StringMatch,
+  TCPRoute,
+  TLSRoute,
   VirtualService,
   VirtualServices,
   WorkloadEntrySelector
@@ -42,6 +44,7 @@ import { TimeoutRetryRoute } from './RequestTimeouts';
 import { GraphDefinition, NodeType } from '../../types/Graph';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
+export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
 export const WIZARD_REQUEST_ROUTING = 'request_routing';
 export const WIZARD_FAULT_INJECTION = 'fault_injection';
 export const WIZARD_REQUEST_TIMEOUTS = 'request_timeouts';
@@ -54,6 +57,7 @@ export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
+  WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS
 ];
 
@@ -61,6 +65,7 @@ export const WIZARD_TITLES = {
   [WIZARD_REQUEST_ROUTING]: 'Request Routing',
   [WIZARD_FAULT_INJECTION]: 'Fault Injection',
   [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
+  [WIZARD_TCP_TRAFFIC_SHIFTING]: 'TCP Traffic Shifting',
   [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts'
 };
 
@@ -316,6 +321,25 @@ export const buildIstioConfig = (
       // VirtualService from the weights
       wizardVS.spec = {
         http: [
+          {
+            route: wState.workloads.map(workload => {
+              return {
+                destination: {
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                  subset: wkdNameVersion[workload.name]
+                },
+                weight: workload.weight
+              };
+            })
+          }
+        ]
+      };
+      break;
+    }
+    case WIZARD_TCP_TRAFFIC_SHIFTING: {
+      // VirtualService from the weights
+      wizardVS.spec = {
+        tcp: [
           {
             route: wState.workloads.map(workload => {
               return {
@@ -606,20 +630,27 @@ export const getInitWeights = (
 ): WorkloadWeight[] => {
   const wkdVersionName = getWorkloadsByVersion(workloads, destinationRules);
   const wkdWeights: WorkloadWeight[] = [];
-  if (virtualServices.items.length === 1 && virtualServices.items[0].spec.http!.length === 1) {
-    // Populate WorkloadWeights from a VirtualService
-    virtualServices.items[0].spec.http![0].route!.forEach(route => {
-      // A wkdVersionName[route.destination.subset] === undefined may indicate that a VS contains a removed workload
-      // Checking before to add it to the Init Weights
-      if (route.destination.subset && wkdVersionName[route.destination.subset]) {
-        wkdWeights.push({
-          name: wkdVersionName[route.destination.subset],
-          weight: route.weight || 0,
-          locked: false,
-          maxWeight: 100
-        });
-      }
-    });
+  if (virtualServices.items.length === 1) {
+    let route: HTTPRoute | TCPRoute | TLSRoute | undefined;
+    if (virtualServices.items[0].spec.http && virtualServices.items[0].spec.http!.length === 1) {
+      route = virtualServices.items[0].spec.http![0];
+    }
+    if (virtualServices.items[0].spec.tcp && virtualServices.items[0].spec.tcp!.length === 1) {
+      route = virtualServices.items[0].spec.tcp![0];
+    }
+    if (route) {
+      // Populate WorkloadWeights from a VirtualService
+      route.route?.forEach(route => {
+        if (route.destination.subset && wkdVersionName[route.destination.subset]) {
+          wkdWeights.push({
+            name: wkdVersionName[route.destination.subset],
+            weight: route.weight || 0,
+            locked: false,
+            maxWeight: 100
+          });
+        }
+      });
+    }
   }
   // Add new workloads with 0 weight if there is missing workloads
   if (wkdWeights.length > 0 && workloads.length !== wkdWeights.length) {
