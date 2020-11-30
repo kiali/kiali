@@ -4116,6 +4116,11 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "network": {
+          "description": "Network specifies the logical NETWORK_ID as known by the Control Plane",
+          "type": "string",
+          "x-go-name": "Network"
+        },
         "secretName": {
           "description": "SecretName is the name of the kubernetes \"remote secret\" where data of this cluster was resolved",
           "type": "string",

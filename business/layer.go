@@ -119,7 +119,7 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Jaeger = JaegerService{loader: jaegerClient, businessLayer: temporaryLayer}
 	temporaryLayer.k8s = k8s
-	temporaryLayer.Mesh = MeshService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Mesh = NewMeshService(k8s, nil)
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatus{k8s: k8s}
