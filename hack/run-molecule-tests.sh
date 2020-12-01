@@ -39,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_DESTROY_NEVER="$2"
       shift;shift
       ;;
+    -p|--profiler)
+      MOLECULE_OPERATOR_PROFILER_ENABLED="$2"
+      shift;shift
+      ;;
     -st|--skip-tests)
       SKIP_TESTS="$2"
       shift;shift
@@ -70,6 +74,7 @@ $0 [option...] command
                         will help test failures by allowing you to examine the operator logs after a test finished.
                         Default is 'false' - the operator resources will be deleted after a test completes, no matter
                         if the test succeeded or failed.
+-p|--profiler           True if you want to enable the ansible profiler in the operator (default: true)
 -st|--skip-tests        Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
 -tld|--test-logs-dir    Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
 -udi|--use-dev-images   If true, the tests will use locally built dev images of Kiali and the operator. When using dev
@@ -128,6 +133,10 @@ export MOLECULE_DEBUG="${MOLECULE_DEBUG:-true}"
 # Set this to true if you want molecule to keep the operator resources intact after a test completes.
 export MOLECULE_DESTROY_NEVER="${MOLECULE_DESTROY_NEVER:-false}"
 
+# Set this to true if you want molecule to install the operator with its profiler enabled.
+# This will dump profiler logs after each reconciliation run so will make the logs a little bigger.
+export MOLECULE_OPERATOR_PROFILER_ENABLED="${MOLECULE_OPERATOR_PROFILER_ENABLED:-true}"
+
 # The parent directory where all the test logs are going to be stored.
 TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_%H-%M-%S')}"
 
@@ -142,6 +151,7 @@ echo CLUSTER_TYPE="$CLUSTER_TYPE"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
+echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
