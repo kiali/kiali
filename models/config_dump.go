@@ -2,10 +2,12 @@ package models
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/mitchellh/mapstructure"
 	"strconv"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type Listeners []*Listener
@@ -44,7 +46,7 @@ type ResourceDump interface {
 
 type ClusterDump struct {
 	DynamicClusters []EnvoyClusterWrapper `mapstructure:"dynamic_active_clusters"`
-	StaticClusters []EnvoyClusterWrapper `mapstructure:"static_clusters"`
+	StaticClusters  []EnvoyClusterWrapper `mapstructure:"static_clusters"`
 }
 
 type EnvoyClusterWrapper struct {
@@ -52,8 +54,8 @@ type EnvoyClusterWrapper struct {
 }
 
 type EnvoyCluster struct {
-	Name string `mapstructure:"name"`
-	Type string `mapstructure:"type"`
+	Name     string         `mapstructure:"name"`
+	Type     string         `mapstructure:"type"`
 	Metadata *EnvoyMetadata `mapstructure:"metadata,omitempty"`
 }
 
@@ -67,7 +69,7 @@ type EnvoyMetadata struct {
 
 type RouteDump struct {
 	DynamicRouteConfigs []EnvoyRouteConfig `mapstructure:"dynamic_route_configs"`
-	StaticRouteConfigs []EnvoyRouteConfig `mapstructure:"static_route_configs"`
+	StaticRouteConfigs  []EnvoyRouteConfig `mapstructure:"static_route_configs"`
 }
 
 type EnvoyRouteConfig struct {
@@ -127,10 +129,10 @@ type VirtualHostFilter struct {
 	Domains []string `mapstructure:"domains,omitempty"`
 	Name    string   `mapstructure:"name,omitempty"`
 	Routes  []struct {
-		Name  string                 `mapstructure:"name"`
-		Match map[string]interface{} `mapstructure:"match"`
-		Metadata *EnvoyMetadata `mapstructure:"metadata,omitempty"`
-		Route *struct {
+		Name     string                 `mapstructure:"name"`
+		Match    map[string]interface{} `mapstructure:"match"`
+		Metadata *EnvoyMetadata         `mapstructure:"metadata,omitempty"`
+		Route    *struct {
 			Cluster string `mapstructure:"cluster,omitempty"`
 		} `mapstructure:"route,omitempty"`
 	} `mapstructure:"routes,omitempty"`
@@ -274,11 +276,7 @@ func describeDomains(vh VirtualHostFilter) string {
 	if len(domains) == 1 && domains[0] == "*" {
 		return ""
 	}
-	domainstr := make([]string, len(domains))
-	for _, domain := range domains {
-		domainstr = append(domainstr, domain)
-	}
-	return strings.Join(domainstr, "/")
+	return strings.Join(domains, "/")
 }
 
 func describeRoutes(vh VirtualHostFilter) string {
@@ -362,7 +360,7 @@ func (css *Clusters) Parse(dump *kubernetes.ConfigDump) {
 	}
 
 	for _, clusterSet := range [][]EnvoyClusterWrapper{clusterDump.DynamicClusters, clusterDump.StaticClusters} {
-		for _, cluster:= range clusterSet {
+		for _, cluster := range clusterSet {
 			cs := &Cluster{}
 			cs.Parse(cluster.Cluster)
 			*css = append(*css, cs)
@@ -400,7 +398,7 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
 		for _, route := range routeSet {
 			rc := route.RouteConfig
 
-			for _, vhs:= range rc.VirtualHosts {
+			for _, vhs := range rc.VirtualHosts {
 				for _, r := range vhs.Routes {
 					if r.Route != nil && r.Route.Cluster != "PassthroughCluster" {
 						*rs = append(*rs, &Route{
@@ -414,9 +412,9 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
 
 				if len(vhs.Routes) == 0 {
 					*rs = append(*rs, &Route{
-						Name: rc.Name,
-						Domains: bestDomainMatch(vhs.Domains),
-						Match: "/*",
+						Name:           rc.Name,
+						Domains:        bestDomainMatch(vhs.Domains),
+						Match:          "/*",
 						VirtualService: "404",
 					})
 				}
@@ -455,7 +453,7 @@ func bestDomainMatch(domains []string) string {
 	}
 
 	bestMatch := domains[0]
-	for _, domain:= range domains {
+	for _, domain := range domains {
 		if len(domain) == 0 {
 			continue
 		}
