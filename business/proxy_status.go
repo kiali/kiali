@@ -99,25 +99,26 @@ func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource str
 		return nil, err
 	}
 
-	return buildDump(dump, resource), nil
+	return buildDump(dump, resource)
 }
 
-func buildDump(dump *kubernetes.ConfigDump, resource string) models.ResourceDump {
+func buildDump(dump *kubernetes.ConfigDump, resource string) (models.ResourceDump, error) {
 	var summary models.ResourceDump
+	var err error
 	switch resource {
 	case "clusters":
 		summary = &models.Clusters{}
-		summary.Parse(dump)
+		err = summary.Parse(dump)
 	case "routes":
 		summary = &models.Routes{}
-		summary.Parse(dump)
+		err = summary.Parse(dump)
 	case "bootstrap":
 		summary = &models.Bootstrap{}
-		summary.Parse(dump)
+		err = summary.Parse(dump)
 	case "listeners":
 		summary = &models.Listeners{}
-		summary.Parse(dump)
+		err = summary.Parse(dump)
 	}
 
-	return summary
+	return summary, err
 }

@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -41,123 +39,15 @@ type Bootstrap struct {
 }
 
 type ResourceDump interface {
-	Parse(dump *kubernetes.ConfigDump)
+	Parse(dump *kubernetes.ConfigDump) error
 }
 
-type ClusterDump struct {
-	DynamicClusters []EnvoyClusterWrapper `mapstructure:"dynamic_active_clusters"`
-	StaticClusters  []EnvoyClusterWrapper `mapstructure:"static_clusters"`
-}
-
-type EnvoyClusterWrapper struct {
-	Cluster EnvoyCluster `mapstructure:"cluster"`
-}
-
-type EnvoyCluster struct {
-	Name     string         `mapstructure:"name"`
-	Type     string         `mapstructure:"type"`
-	Metadata *EnvoyMetadata `mapstructure:"metadata,omitempty"`
-}
-
-type EnvoyMetadata struct {
-	FilterMetadata *struct {
-		Istio *struct {
-			Config string `mapstructure:"config,omitempty"`
-		} `mapstructure:"istio,omitempty"`
-	} `mapstructure:"filter_metadata,omitempty"`
-}
-
-type RouteDump struct {
-	DynamicRouteConfigs []EnvoyRouteConfig `mapstructure:"dynamic_route_configs"`
-	StaticRouteConfigs  []EnvoyRouteConfig `mapstructure:"static_route_configs"`
-}
-
-type EnvoyRouteConfig struct {
-	RouteConfig *RouteConfig `mapstructure:"route_config,omitempty"`
-}
-
-type ListenerDump struct {
-	DynamicListeners []DynamicListener `mapstructure:"dynamic_listeners"`
-	StaticListeners  []StaticListener  `mapstructure:"static_listeners"`
-}
-
-type DynamicListener struct {
-	Name        string         `mapstructure:"name"`
-	ActiveState StaticListener `mapstructure:"active_state"`
-}
-
-type StaticListener struct {
-	LastUpdated string        `mapstructure:"last_updated"`
-	VersionInfo string        `mapstructure:"version_info"`
-	Listener    EnvoyListener `mapstructure:"listener"`
-}
-
-type EnvoyListener struct {
-	Address struct {
-		SocketAddress struct {
-			Address   string  `mapstructure:"address"`
-			PortValue float64 `mapstructure:"port_value"`
-		} `mapstructure:"socket_address"`
-	} `mapstructure:"address"`
-	FilterChains       []EnvoyFilterChain `mapstructure:"filter_chains,omitempty"`
-	DefaultFilterChain *EnvoyFilterChain  `mapstructure:"default_filter_chain,omitempty"`
-}
-
-type EnvoyFilterChain struct {
-	Filters          []EnvoyListenerFilter `mapstructure:"filters"`
-	FilterChainMatch *FilterChainMatch     `mapstructure:"filter_chain_match"`
-}
-
-type EnvoyListenerFilter struct {
-	Name        string `mapstructure:"name"`
-	TypedConfig struct {
-		Type        string       `mapstructure:"@type"`
-		Cluster     string       `mapstructure:"cluster"`
-		RouteConfig *RouteConfig `mapstructure:"route_config,omitempty"`
-		Rds         *struct {
-			RouteConfigName string `mapstructure:"route_config_name"`
-		} `mapstructure:"rds,omitempty"`
-	} `mapstructure:"typed_config"`
-}
-
-type RouteConfig struct {
-	Name         string              `mapstructure:"name"`
-	VirtualHosts []VirtualHostFilter `mapstructure:"virtual_hosts,omitempty"`
-}
-
-type VirtualHostFilter struct {
-	Domains []string `mapstructure:"domains,omitempty"`
-	Name    string   `mapstructure:"name,omitempty"`
-	Routes  []struct {
-		Name     string                 `mapstructure:"name"`
-		Match    map[string]interface{} `mapstructure:"match"`
-		Metadata *EnvoyMetadata         `mapstructure:"metadata,omitempty"`
-		Route    *struct {
-			Cluster string `mapstructure:"cluster,omitempty"`
-		} `mapstructure:"route,omitempty"`
-	} `mapstructure:"routes,omitempty"`
-}
-
-type FilterChainMatch struct {
-	ApplicationProtocols []string `mapstructure:"application_protocols,omitempty"`
-	TransportProtocol    string   `mapstructure:"transport_protocol,omitempty"`
-	ServerNames          []string `mapstructure:"server_names,omitempty"`
-	DestinationPort      *int32   `mapstructure:"destination_port,omitempty"`
-	PrefixRanges         []struct {
-		AddressPrefix string `mapstructure:"address_prefix"`
-		PrefixLen     int    `mapstructure:"prefix_len"`
-	} `mapstructure:"prefix_ranges"`
-}
-
-func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
-	listenersDumpRaw := dump.GetConfig("type.googleapis.com/envoy.admin.v3.ListenersConfigDump")
-	var listenersDump ListenerDump
-	err := mapstructure.Decode(listenersDumpRaw, &listenersDump)
+func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) error {
+	listenersDump, err := dump.GetListeners()
 	if err != nil {
-		return
+		return err
 	}
-
-	listeners := make([]EnvoyListener, 0, len(listenersDump.StaticListeners)+len(listenersDump.DynamicListeners))
+	listeners := make([]kubernetes.EnvoyListener, 0, len(listenersDump.StaticListeners)+len(listenersDump.DynamicListeners))
 	for _, dynamicListener := range listenersDump.DynamicListeners {
 		listeners = append(listeners, dynamicListener.ActiveState.Listener)
 	}
@@ -175,9 +65,10 @@ func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) {
 			})
 		}
 	}
+	return nil
 }
 
-func listenerMatches(listener EnvoyListener) []map[string]interface{} {
+func listenerMatches(listener kubernetes.EnvoyListener) []map[string]interface{} {
 	chains := listener.FilterChains
 	if listener.DefaultFilterChain != nil {
 		chains = append(chains, *listener.DefaultFilterChain)
@@ -189,7 +80,7 @@ func listenerMatches(listener EnvoyListener) []map[string]interface{} {
 
 		match := chain.FilterChainMatch
 		if match == nil {
-			match = &FilterChainMatch{}
+			match = &kubernetes.FilterChainMatch{}
 		}
 
 		if len(match.ServerNames) > 0 {
@@ -231,7 +122,7 @@ func listenerMatches(listener EnvoyListener) []map[string]interface{} {
 	return matches
 }
 
-func getListenerDestination(filters []EnvoyListenerFilter) string {
+func getListenerDestination(filters []kubernetes.EnvoyListenerFilter) string {
 	if len(filters) == 0 {
 		return ""
 	}
@@ -271,7 +162,7 @@ func getListenerDestination(filters []EnvoyListenerFilter) string {
 	return "Non-HTTP/Non-TCP"
 }
 
-func describeDomains(vh VirtualHostFilter) string {
+func describeDomains(vh kubernetes.VirtualHostFilter) string {
 	domains := vh.Domains
 	if len(domains) == 1 && domains[0] == "*" {
 		return ""
@@ -279,7 +170,7 @@ func describeDomains(vh VirtualHostFilter) string {
 	return strings.Join(domains, "/")
 }
 
-func describeRoutes(vh VirtualHostFilter) string {
+func describeRoutes(vh kubernetes.VirtualHostFilter) string {
 	routes := make([]string, 0, len(vh.Routes))
 	for _, route := range vh.Routes {
 		routes = append(routes, matchSummary(route.Match))
@@ -287,7 +178,7 @@ func describeRoutes(vh VirtualHostFilter) string {
 	return strings.Join(routes, ", ")
 }
 
-func getMatchAllCluster(route *RouteConfig) string {
+func getMatchAllCluster(route *kubernetes.RouteConfig) string {
 	vhs := route.VirtualHosts
 	if len(vhs) != 1 {
 		return ""
@@ -319,7 +210,7 @@ func getMatchAllCluster(route *RouteConfig) string {
 	return fmt.Sprintf("Cluster: %s", r.Route.Cluster)
 }
 
-func getAppDescriptor(chainMatch *FilterChainMatch) string {
+func getAppDescriptor(chainMatch *kubernetes.FilterChainMatch) string {
 	plainText := []string{"http/1.0", "http/1.1", "h2c"}
 	istioPlainText := []string{"istio", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
 	httpTLS := []string{"http/1.0", "http/1.1", "h2c", "istio-http/1.0", "istio-http/1.1", "istio-h2"}
@@ -351,24 +242,24 @@ func getAppDescriptor(chainMatch *FilterChainMatch) string {
 	return ""
 }
 
-func (css *Clusters) Parse(dump *kubernetes.ConfigDump) {
-	clusterDumpRaw := dump.GetConfig("type.googleapis.com/envoy.admin.v3.ClustersConfigDump")
-	var clusterDump ClusterDump
-	err := mapstructure.Decode(clusterDumpRaw, &clusterDump)
+func (css *Clusters) Parse(dump *kubernetes.ConfigDump) error {
+	clusterDump, err := dump.GetClusters()
 	if err != nil {
-		return
+		return err
 	}
 
-	for _, clusterSet := range [][]EnvoyClusterWrapper{clusterDump.DynamicClusters, clusterDump.StaticClusters} {
+	for _, clusterSet := range [][]kubernetes.EnvoyClusterWrapper{clusterDump.DynamicClusters, clusterDump.StaticClusters} {
 		for _, cluster := range clusterSet {
 			cs := &Cluster{}
 			cs.Parse(cluster.Cluster)
 			*css = append(*css, cs)
 		}
 	}
+
+	return nil
 }
 
-func (cs *Cluster) Parse(cluster EnvoyCluster) {
+func (cs *Cluster) Parse(cluster kubernetes.EnvoyCluster) {
 	cs.ServiceFQDN = cluster.Name
 	cs.Type = cluster.Type
 	cs.Port = 0
@@ -386,15 +277,13 @@ func (cs *Cluster) Parse(cluster EnvoyCluster) {
 	}
 }
 
-func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
-	routesDumpRaw := dump.GetConfig("type.googleapis.com/envoy.admin.v3.RoutesConfigDump")
-	var routesDump RouteDump
-	err := mapstructure.Decode(routesDumpRaw, &routesDump)
+func (rs *Routes) Parse(dump *kubernetes.ConfigDump) error {
+	routesDump, err := dump.GetRoutes()
 	if err != nil {
-		return
+		return err
 	}
 
-	for _, routeSet := range [][]EnvoyRouteConfig{routesDump.DynamicRouteConfigs, routesDump.StaticRouteConfigs} {
+	for _, routeSet := range [][]kubernetes.EnvoyRouteConfig{routesDump.DynamicRouteConfigs, routesDump.StaticRouteConfigs} {
 		for _, route := range routeSet {
 			rc := route.RouteConfig
 
@@ -421,10 +310,13 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
 			}
 		}
 	}
+
+	return nil
 }
 
-func (bd *Bootstrap) Parse(dump *kubernetes.ConfigDump) {
+func (bd *Bootstrap) Parse(dump *kubernetes.ConfigDump) error {
 	bd.Bootstrap = dump.GetConfig("type.googleapis.com/envoy.admin.v3.BootstrapConfigDump")
+	return nil
 }
 
 func matchSummary(match map[string]interface{}) string {
@@ -469,7 +361,7 @@ func bestDomainMatch(domains []string) string {
 	return bestMatch
 }
 
-func istioMetadata(metadata *EnvoyMetadata) string {
+func istioMetadata(metadata *kubernetes.EnvoyMetadata) string {
 	if metadata == nil || metadata.FilterMetadata == nil || metadata.FilterMetadata.Istio == nil {
 		return ""
 	}
