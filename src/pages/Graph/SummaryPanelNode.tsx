@@ -58,6 +58,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderTraces =
+      !isServiceEntry &&
       !nodeData.isInaccessible &&
       this.props.jaegerState.info &&
       this.props.jaegerState.info.enabled &&
