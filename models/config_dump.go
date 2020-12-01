@@ -191,7 +191,7 @@ func listenerMatches(listener EnvoyListener) []map[string]interface{} {
 		}
 
 		if len(match.ServerNames) > 0 {
-			descriptors = append(descriptors, fmt.Sprintf("SNI: %s", strings.Join(match.ServerNames, ",")))
+			descriptors = append(descriptors, fmt.Sprintf("SNI: %s", strings.Join(match.ServerNames, ", ")))
 		}
 
 		if len(match.TransportProtocol) > 0 {
@@ -212,7 +212,7 @@ func listenerMatches(listener EnvoyListener) []map[string]interface{} {
 			for _, p := range match.PrefixRanges {
 				pfs = append(pfs, fmt.Sprintf("%s/%d", p.AddressPrefix, p.PrefixLen))
 			}
-			descriptors = append(descriptors, fmt.Sprintf("Addr: %s%s", strings.Join(pfs, ","), port))
+			descriptors = append(descriptors, fmt.Sprintf("Addr: %s%s", strings.Join(pfs, ", "), port))
 		} else if port != "" {
 			descriptors = append(descriptors, fmt.Sprintf("Addr: *%s", port))
 		}
@@ -222,7 +222,7 @@ func listenerMatches(listener EnvoyListener) []map[string]interface{} {
 		}
 
 		matches = append(matches, map[string]interface{}{
-			"match":       strings.Join(descriptors, ";"),
+			"match":       strings.Join(descriptors, "; "),
 			"destination": getListenerDestination(chain.Filters),
 		})
 	}
@@ -401,14 +401,24 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) {
 			rc := route.RouteConfig
 
 			for _, vhs:= range rc.VirtualHosts {
-				for _, route := range vhs.Routes {
-					route := &Route{
-						Name:           rc.Name,
-						Domains:        bestDomainMatch(vhs.Domains),
-						Match:          matchSummary(route.Match),
-						VirtualService: istioMetadata(route.Metadata),
+				for _, r := range vhs.Routes {
+					if r.Route != nil && r.Route.Cluster != "PassthroughCluster" {
+						*rs = append(*rs, &Route{
+							Name:           rc.Name,
+							Domains:        bestDomainMatch(vhs.Domains),
+							Match:          matchSummary(r.Match),
+							VirtualService: istioMetadata(r.Metadata),
+						})
 					}
-					*rs = append(*rs, route)
+				}
+
+				if len(vhs.Routes) == 0 {
+					*rs = append(*rs, &Route{
+						Name: rc.Name,
+						Domains: bestDomainMatch(vhs.Domains),
+						Match: "/*",
+						VirtualService: "404",
+					})
 				}
 			}
 		}
@@ -477,5 +487,5 @@ func renderConfig(configPath string) string {
 		}
 		return fmt.Sprintf("%s.%s", parts[7], parts[5])
 	}
-	return "<unknown>"
+	return ""
 }
