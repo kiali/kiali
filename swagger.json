@@ -2219,6 +2219,104 @@
         }
       }
     },
+    "/namespaces/{namespace}/pods/{pod}/config_dump": {
+      "get": {
+        "description": "Endpoint to get pod proxy dump",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "pods"
+        ],
+        "operationId": "podProxyDump",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The pod name.",
+            "name": "pod",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/configDump"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/pods/{pod}/config_dump/{resource}": {
+      "get": {
+        "description": "Endpoint to get pod logs",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "pods"
+        ],
+        "operationId": "podProxyResource",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The pod name.",
+            "name": "pod",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The discovery service resource",
+            "name": "resource",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/configDumpResource"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/pods/{pod}/logs": {
       "get": {
         "description": "Endpoint to get pod logs",
@@ -7384,6 +7482,24 @@
             "type": "string",
             "x-go-name": "Message"
           }
+        }
+      }
+    },
+    "configDump": {
+      "description": "Return a dump of the configuration of a given envoy proxy",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      }
+    },
+    "configDumpResource": {
+      "description": "Return a dump of the configuration of a given envoy proxy",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
         }
       }
     },

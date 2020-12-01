@@ -61,7 +61,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments
+// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations getIter8Experiments postIter8Experiments patchIter8Experiments deleteIter8Experiments podProxyDump podProxyResource
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -98,13 +98,22 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
-// swagger:parameters podDetails podLogs
+// swagger:parameters podDetails podLogs podProxyDump podProxyResource
 type PodParam struct {
 	// The pod name.
 	//
 	// in: path
 	// required: true
 	Name string `json:"pod"`
+}
+
+// swagger:parameters podProxyResource
+type ResourceParam struct {
+	// The discovery service resource
+	//
+	// in: path
+	// required: true
+	Name string `json:"resource"`
 }
 
 // swagger:parameters serviceDetails serviceMetrics graphService graphAggregateByService serviceDashboard serviceSpans serviceTraces
@@ -660,6 +669,20 @@ type NamespaceTlsResponse struct {
 type NamespaceValidationSummaryResponse struct {
 	// in:body
 	Body models.IstioValidationSummary
+}
+
+// Return a dump of the configuration of a given envoy proxy
+// swagger:response configDump
+type ConfigDumpResponse struct {
+	// in:body
+	Body map[string]interface{}
+}
+
+// Return a dump of the configuration of a given envoy proxy
+// swagger:response configDumpResource
+type ConfigDumpResourceResponse struct {
+	// in:body
+	Body map[string]interface{}
 }
 
 //////////////////
