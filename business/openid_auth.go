@@ -262,6 +262,25 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 	return &sessionData, nil
 }
 
+func getProxyForUrl(targetURL *url.URL, httpProxy string, httpsProxy string) func(req *http.Request) (*url.URL, error) {
+	return func(req *http.Request) (*url.URL, error) {
+		var proxyUrl *url.URL
+		var err error
+
+		if httpProxy != "" && targetURL.Scheme == "http" {
+			proxyUrl, err = url.Parse(httpProxy)
+		} else if httpsProxy != "" && targetURL.Scheme == "https" {
+			proxyUrl, err = url.Parse(httpsProxy)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return proxyUrl, nil
+	}
+}
+
 // GetOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
 // downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
 // validations are performed and the parsed metadata is returned. Since the metadata should be
@@ -284,6 +303,17 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 			httpTransport.TLSClientConfig = &tls.Config{
 				InsecureSkipVerify: true,
 			}
+		}
+
+		parsedUrl, err := url.Parse(trimmedIssuerUri)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
+			proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPProxy)
+			httpTransport.Proxy = proxyFunc
 		}
 
 		httpClient := http.Client{
