@@ -675,7 +675,7 @@ type NamespaceValidationSummaryResponse struct {
 // swagger:response configDump
 type ConfigDumpResponse struct {
 	// in:body
-	Body models.ConfigDump
+	Body models.EnvoyProxyDump
 }
 
 // Return a dump of the configuration of a given envoy proxy

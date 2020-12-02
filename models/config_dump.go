@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-type ConfigDump struct {
+type EnvoyProxyDump struct {
 	*kubernetes.ConfigDump
 }
 
