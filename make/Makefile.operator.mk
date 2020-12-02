@@ -103,9 +103,8 @@ kiali-reload-image: .ensure-oc-exists
 
 ## run-operator-playbook: Run the operator dev playbook to run the operator ansible script locally.
 run-operator-playbook: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
-	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
-
-## run-operator-playbook-tag: Run a tagged set of tasks via operator dev playbook to run parts of the operator ansible script locally.
-# To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
-run-operator-playbook-tag: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
-	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml --tags test
+ifeq ($(OPERATOR_PROFILER_ENABLED),true)
+	@$(eval ANSIBLE_CALLBACK_WHITELIST_ARG ?= ANSIBLE_CALLBACK_WHITELIST=profile_tasks)
+endif
+	ansible-galaxy collection install operator_sdk.util
+	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
