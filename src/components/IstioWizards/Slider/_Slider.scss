@@ -24,6 +24,32 @@ Keep same height that buttons
   }
 }
 
+.slider-pf-mirrored {
+  display: flex;
+  align-items: center;
+
+  * {
+    margin-right: 10px;
+
+    &:last-child {
+      margin: 0;
+    }
+  }
+
+  .slider {
+    width: auto;
+    flex: 1 1 100%;
+
+    .slider-track {
+      .slider-selection {
+        background-image: -webkit-linear-gradient(top, #703fec 0%, #7144e7 100%);
+        background-image: -o-linear-gradient(top, #703fec 0%, #7144e7 100%);
+        background-image: linear-gradient(to bottom, #703fec 0%, #7144e7 100%);
+      }
+    }
+  }
+}
+
 .slider-handle {
   width: 16px;
   height: 16px;

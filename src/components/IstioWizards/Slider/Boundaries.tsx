@@ -6,6 +6,7 @@ type BoundariesProps = {
   max: number;
   reversed: boolean;
   showBoundaries: boolean;
+  mirrored: boolean;
   slider?: JSX.Element;
 };
 
@@ -37,7 +38,7 @@ class Boundaries extends React.Component<BoundariesProps, {}> {
     }
 
     return (
-      <div className="slider-pf">
+      <div className={this.props.mirrored ? 'slider-pf-mirrored' : 'slider-pf'}>
         {leftBoundary}
         {slider}
         {rightBoundary}

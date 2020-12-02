@@ -90,8 +90,10 @@ class RuleBuilder extends React.Component<Props, State> {
           </Tab>
           <Tab eventKey={1} title={'Route To'}>
             <TrafficShifting
+              showValid={false}
               workloads={this.props.workloads}
               initWeights={this.props.weights}
+              showMirror={true}
               onChange={this.props.onSelectWeights}
             />
           </Tab>

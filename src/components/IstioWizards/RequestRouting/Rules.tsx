@@ -132,16 +132,34 @@ class Rules extends React.Component<Props> {
                 </>,
                 <>
                   <div key={'ww_' + order}>
-                    {rule.workloadWeights.map((wk, i) => {
-                      return (
-                        <div key={'wk_' + order + '_' + wk.name + '_' + i}>
-                          <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
-                            <Badge className={'virtualitem_badge_definition'}>WS</Badge>
-                          </Tooltip>
-                          {wk.name} ({wk.weight} %)
-                        </div>
-                      );
-                    })}
+                    {rule.workloadWeights
+                      .filter(wk => !wk.mirrored)
+                      .map((wk, i) => {
+                        return (
+                          <div key={'wk_' + order + '_' + wk.name + '_' + i}>
+                            <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
+                              <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+                            </Tooltip>
+                            {wk.name} ({wk.weight}% routed traffic)
+                          </div>
+                        );
+                      })}
+                    {rule.workloadWeights
+                      .filter(wk => wk.mirrored)
+                      .map((wk, i) => {
+                        return (
+                          <div key={'wk_mirrored_' + order + '_' + wk.name + '_' + i}>
+                            <Tooltip
+                              key={'mirrorred_' + wk.name}
+                              position={TooltipPosition.top}
+                              content={<>Mirrored Workload</>}
+                            >
+                              <Badge className={'faultinjection_badge_definition'}>MI</Badge>
+                            </Tooltip>
+                            {wk.name} ({wk.weight}% mirrored traffic)
+                          </div>
+                        );
+                      })}
                   </div>
                   {rule.delay && (
                     <div key={'delay_' + order}>

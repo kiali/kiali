@@ -3,7 +3,7 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import Rules, { MOVE_TYPE, Rule } from './RequestRouting/Rules';
 import RuleBuilder from './RequestRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
-import { WorkloadWeight } from './TrafficShifting';
+import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
@@ -143,7 +143,8 @@ class RequestRouting extends React.Component<Props, State> {
             name: ww.name,
             weight: ww.weight,
             locked: ww.locked,
-            maxWeight: ww.maxWeight
+            maxWeight: ww.maxWeight,
+            mirrored: ww.mirrored
           })
         );
         const newRule: Rule = {
@@ -244,9 +245,10 @@ class RequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectWeights = (_valid: boolean, workloads: WorkloadWeight[]) => {
+  onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState({
-      workloadWeights: workloads
+      workloadWeights: workloads,
+      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
     });
   };
 

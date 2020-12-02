@@ -262,6 +262,8 @@ export class Replay extends React.PureComponent<ReplayProps, ReplayState> {
               input={false}
               locked={false}
               showLock={false}
+              mirrored={false}
+              showMirror={false}
             />
           </div>
           <span className={controlStyle}>

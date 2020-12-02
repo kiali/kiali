@@ -322,18 +322,31 @@ export const buildIstioConfig = (
       wizardVS.spec = {
         http: [
           {
-            route: wState.workloads.map(workload => {
-              return {
-                destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name]
-                },
-                weight: workload.weight
-              };
-            })
+            route: wState.workloads
+              .filter(workload => !workload.mirrored)
+              .map(workload => {
+                return {
+                  destination: {
+                    host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                    subset: wkdNameVersion[workload.name]
+                  },
+                  weight: workload.weight
+                };
+              })
           }
         ]
       };
+      // Update HTTP Route with mirror destination + percentage
+      const mirrorWorkload = wState.workloads.filter(workload => workload.mirrored).pop();
+      if (mirrorWorkload && wizardVS?.spec?.http?.length === 1) {
+        wizardVS.spec.http[0].mirror = {
+          host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+          subset: wkdNameVersion[mirrorWorkload.name]
+        };
+        wizardVS.spec.http[0].mirrorPercentage = {
+          value: mirrorWorkload.weight
+        };
+      }
       break;
     }
     case WIZARD_TCP_TRAFFIC_SHIFTING: {
@@ -361,15 +374,28 @@ export const buildIstioConfig = (
         http: wState.rules.map(rule => {
           const httpRoute: HTTPRoute = {};
           httpRoute.route = [];
-          for (let iRoute = 0; iRoute < rule.workloadWeights.length; iRoute++) {
-            const destW: HTTPRouteDestination = {
-              destination: {
-                host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                subset: wkdNameVersion[rule.workloadWeights[iRoute].name]
-              }
+          rule.workloadWeights
+            .filter(workload => !workload.mirrored)
+            .forEach(workload => {
+              const destW: HTTPRouteDestination = {
+                destination: {
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+                  subset: wkdNameVersion[workload.name]
+                }
+              };
+              destW.weight = workload.weight;
+              httpRoute.route?.push(destW);
+            });
+
+          const mirrorWorkload = rule.workloadWeights.filter(workload => workload.mirrored).pop();
+          if (mirrorWorkload) {
+            httpRoute.mirror = {
+              host: fqdnServiceName(wProps.serviceName, wProps.namespace),
+              subset: wkdNameVersion[mirrorWorkload.name]
             };
-            destW.weight = rule.workloadWeights[iRoute].weight;
-            httpRoute.route.push(destW);
+            httpRoute.mirrorPercentage = {
+              value: mirrorWorkload.weight
+            };
           }
 
           if (rule.matches.length > 0) {
@@ -615,7 +641,8 @@ export const getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight
     name: workload.name,
     weight: wkTraffic,
     locked: false,
-    maxWeight: 100
+    maxWeight: 100,
+    mirrored: false
   }));
   if (remainTraffic > 0) {
     wkWeights[wkWeights.length - 1].weight = wkWeights[wkWeights.length - 1].weight + remainTraffic;
@@ -646,10 +673,27 @@ export const getInitWeights = (
             name: wkdVersionName[route.destination.subset],
             weight: route.weight || 0,
             locked: false,
-            maxWeight: 100
+            maxWeight: 100,
+            mirrored: false
           });
         }
       });
+    }
+
+    // Convention: we place the mirror routes as last position
+    if ((route as HTTPRoute).mirror) {
+      const httpRoute = route as HTTPRoute;
+      // Check mirror on HTTP Route
+      if (httpRoute.mirror && httpRoute.mirror.subset && wkdVersionName[httpRoute.mirror.subset]) {
+        const mirrorPercentage = httpRoute.mirrorPercentage ? httpRoute.mirrorPercentage.value : 100;
+        wkdWeights.push({
+          name: wkdVersionName[httpRoute.mirror.subset],
+          weight: mirrorPercentage,
+          locked: false,
+          maxWeight: 100,
+          mirrored: true
+        });
+      }
     }
   }
   // Add new workloads with 0 weight if there is missing workloads
@@ -669,7 +713,8 @@ export const getInitWeights = (
           name: wkd.name,
           weight: 0,
           locked: false,
-          maxWeight: 100
+          maxWeight: 100,
+          mirrored: false
         });
       }
     }
@@ -704,11 +749,25 @@ export const getInitRules = (
               name: workload,
               weight: r.weight ? r.weight : 0,
               locked: false,
-              maxWeight: 100
+              maxWeight: 100,
+              mirrored: false
             });
           }
         });
       }
+
+      if (httpRoute.mirror) {
+        const subset = httpRoute.mirror.subset;
+        const workload = wkdVersionName[subset || ''];
+        rule.workloadWeights.push({
+          name: workload,
+          weight: httpRoute.mirrorPercentage ? httpRoute.mirrorPercentage.value : 100,
+          locked: false,
+          maxWeight: 100,
+          mirrored: true
+        });
+      }
+
       if (httpRoute.fault) {
         if (httpRoute.fault.delay) {
           rule.delay = httpRoute.fault.delay;

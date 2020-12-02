@@ -510,8 +510,10 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
         )}
         {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
           <TrafficShifting
+            showValid={true}
             workloads={this.props.workloads}
             initWeights={getInitWeights(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
+            showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
             onChange={this.onWeightsChange}
           />
         )}

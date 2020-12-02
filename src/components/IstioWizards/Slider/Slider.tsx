@@ -1,9 +1,9 @@
 import React from 'react';
 import BootstrapSlider from './BootstrapSlider';
-import { Button, ButtonVariant, InputGroupText, TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Boundaries from './Boundaries';
 import { style } from 'typestyle';
-import { MinusIcon, PlusIcon, ThumbTackIcon } from '@patternfly/react-icons';
+import { MinusIcon, PlusIcon, ThumbTackIcon, VirtualMachineIcon } from '@patternfly/react-icons';
 import './styles/default.css';
 
 export const noop = Function.prototype;
@@ -28,6 +28,9 @@ type Props = {
   locked: boolean;
   showLock: boolean;
   onLock: (locked: boolean) => void;
+  mirrored: boolean;
+  showMirror: boolean;
+  onMirror: (mirror: boolean) => void;
 };
 
 type State = {
@@ -57,7 +60,9 @@ class Slider extends React.Component<Props, State> {
     inputFormat: '',
     locked: false,
     showLock: true,
-    onLock: noop
+    onLock: noop,
+    showMirror: true,
+    onMirror: noop
   };
 
   constructor(props: Props) {
@@ -120,7 +125,7 @@ class Slider extends React.Component<Props, State> {
   formatter = value => {
     return this.props.tooltipFormatter !== noop
       ? this.props.tooltipFormatter(value)
-      : `${value} ${this.state.tooltipFormat}`;
+      : `${value} ${this.state.tooltipFormat} ${this.props.mirrored ? ' mirrored traffic' : ''}`;
   };
 
   render() {
@@ -159,13 +164,31 @@ class Slider extends React.Component<Props, State> {
       paddingRight: 8
     });
     const LockIcon = (
-      <Button
-        className={pinButtonStyle}
-        variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
-        onClick={() => this.props.onLock(!this.props.locked)}
+      <Tooltip
+        position={TooltipPosition.top}
+        content={<>{this.props.locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}
       >
-        <ThumbTackIcon />
-      </Button>
+        <Button
+          className={pinButtonStyle}
+          isDisabled={this.props.mirrored}
+          variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
+          onClick={() => this.props.onLock(!this.props.locked)}
+        >
+          <ThumbTackIcon />
+        </Button>
+      </Tooltip>
+    );
+
+    const MirrorIcon = (
+      <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
+        <Button
+          className={pinButtonStyle}
+          variant={this.props.mirrored ? ButtonVariant.primary : ButtonVariant.secondary}
+          onClick={() => this.props.onMirror(!this.props.mirrored)}
+        >
+          <VirtualMachineIcon />
+        </Button>
+      </Tooltip>
     );
 
     return (
@@ -200,6 +223,7 @@ class Slider extends React.Component<Props, State> {
               <InputGroupText>{this.props.inputFormat}</InputGroupText>
             </>
           )}
+          {this.props.showMirror ? MirrorIcon : <></>}
           {this.props.showLock ? LockIcon : <></>}
         </Boundaries>
       </>

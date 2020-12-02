@@ -12,6 +12,8 @@ type Props = {
   workloads: WorkloadOverview[];
   initWeights: WorkloadWeight[];
   onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;
+  showValid: boolean;
+  showMirror: boolean;
 };
 
 export type WorkloadWeight = {
@@ -19,6 +21,7 @@ export type WorkloadWeight = {
   weight: number;
   locked: boolean;
   maxWeight: number;
+  mirrored: boolean;
 };
 
 type State = {
@@ -35,6 +38,8 @@ const evenlyButtonStyle = style({
   width: '100%',
   textAlign: 'right'
 });
+
+export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
 
 class TrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -82,8 +87,11 @@ class TrafficShifting extends React.Component<Props, State> {
         for (let i = 0; i < prevState.workloads.length; i++) {
           if (prevState.workloads[i].name === workloadName) {
             prevState.workloads[i].weight = newWeight;
-            maxWeight -= newWeight;
-          } else if (!prevState.workloads[i].locked) {
+            // Don't update maxWeight if node is mirrored
+            if (!prevState.workloads[i].mirrored) {
+              maxWeight -= newWeight;
+            }
+          } else if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
             // Only adjust those nodes that are not locked
             nodeId.push(i);
           }
@@ -125,7 +133,7 @@ class TrafficShifting extends React.Component<Props, State> {
       }
       // Update non locked nodes maxWeight
       for (let i = 0; i < prevState.workloads.length; i++) {
-        if (!prevState.workloads[i].locked) {
+        if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
           prevState.workloads[i].maxWeight = maxWeights;
         }
       }
@@ -135,16 +143,62 @@ class TrafficShifting extends React.Component<Props, State> {
     });
   };
 
+  onMirror = (workloadName: string, mirrored: boolean) => {
+    this.setState(
+      prevState => {
+        const nodeId: number[] = [];
+        let maxWeight = 100;
+
+        // Reset all mirrored workload but selected one.
+        for (let i = 0; i < prevState.workloads.length; i++) {
+          prevState.workloads[i].mirrored = false;
+          prevState.workloads[i].locked = false;
+          if (mirrored && prevState.workloads[i].name === workloadName) {
+            prevState.workloads[i].mirrored = mirrored;
+            prevState.workloads[i].locked = false;
+          }
+          if (!prevState.workloads[i].mirrored) {
+            nodeId.push(i);
+          }
+        }
+
+        // Distribute pending weights
+        let sumWeights = 0;
+        for (let j = 0; j < nodeId.length; j++) {
+          if (sumWeights + prevState.workloads[nodeId[j]].weight > maxWeight) {
+            prevState.workloads[nodeId[j]].weight = maxWeight - sumWeights;
+          }
+          sumWeights += prevState.workloads[nodeId[j]].weight;
+        }
+
+        // Adjust last element
+        if (nodeId.length > 0 && sumWeights < maxWeight) {
+          prevState.workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+        }
+
+        return {
+          workloads: prevState.workloads
+        };
+      },
+      () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
+    );
+  };
+
   checkTotalWeight = (): boolean => {
     // Check all weights are equal to 100
-    return this.state.workloads.map(w => w.weight).reduce((a, b) => a + b, 0) === 100;
+    return (
+      this.state.workloads
+        .filter(w => !w.mirrored)
+        .map(w => w.weight)
+        .reduce((a, b) => a + b, 0) === 100
+    );
   };
 
   render() {
     const isValid = this.checkTotalWeight();
     // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
     // https://github.com/patternfly/patternfly-next/issues/2373
-    const headerCells: ICell[] = [
+    const workloadCells: ICell[] = [
       {
         title: 'Workload',
         transforms: [cellWidth(30) as any],
@@ -156,47 +210,118 @@ class TrafficShifting extends React.Component<Props, State> {
         props: {}
       }
     ];
-    const workloadsRows = this.state.workloads.map(workload => {
-      return {
-        cells: [
-          <>
-            <Tooltip key={'tooltip_' + workload.name} position={TooltipPosition.top} content={<>Workload</>}>
-              <Badge className={'virtualitem_badge_definition'}>WS</Badge>
-            </Tooltip>
-            {workload.name}
-          </>,
-          // This <> wrapper is needed by Slider
-          <>
-            <Slider
-              id={'slider-' + workload.name}
-              key={'slider-' + workload.name}
-              tooltip={true}
-              input={true}
-              inputFormat="%"
-              value={workload.weight}
-              min={0}
-              max={workload.maxWeight}
-              maxLimit={100}
-              onSlide={value => {
-                this.onWeight(workload.name, value as number);
-              }}
-              onSlideStop={value => {
-                this.onWeight(workload.name, value as number);
-              }}
-              locked={this.state.workloads.length > 1 ? workload.locked : true}
-              showLock={this.state.workloads.length > 2}
-              onLock={locked => this.onLock(workload.name, locked)}
-            />
-          </>
-        ]
-      };
-    });
+    const workloadsRows = this.state.workloads
+      .filter(workload => !workload.mirrored)
+      .map(workload => {
+        return {
+          cells: [
+            <>
+              <div>
+                <Tooltip key={'tooltip_' + workload.name} position={TooltipPosition.top} content={<>Workload</>}>
+                  <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+                </Tooltip>
+                {workload.name}
+              </div>
+            </>,
+            // This <> wrapper is needed by Slider
+            <>
+              <Slider
+                id={'slider-' + workload.name}
+                key={'slider-' + workload.name}
+                tooltip={true}
+                input={true}
+                inputFormat="%"
+                value={workload.weight}
+                min={0}
+                max={workload.maxWeight}
+                maxLimit={100}
+                onSlide={value => {
+                  this.onWeight(workload.name, value as number);
+                }}
+                onSlideStop={value => {
+                  this.onWeight(workload.name, value as number);
+                }}
+                locked={this.state.workloads.length > 1 ? workload.locked : true}
+                showLock={this.state.workloads.length > 2}
+                onLock={locked => this.onLock(workload.name, locked)}
+                mirrored={workload.mirrored}
+                showMirror={this.props.showMirror && this.state.workloads.length > 1}
+                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
+              />
+            </>
+          ]
+        };
+      });
+    const mirrorCells: ICell[] = [
+      {
+        title: 'Mirrored Workload',
+        transforms: [cellWidth(30) as any],
+        props: {}
+      },
+      {
+        title: 'Mirror Percentage',
+        transforms: [cellWidth(70) as any],
+        props: {}
+      }
+    ];
+    const mirrorRows = this.state.workloads
+      .filter(workload => workload.mirrored)
+      .map(workload => {
+        return {
+          cells: [
+            <>
+              <div>
+                <Tooltip
+                  key={'mirrorred_' + workload.name}
+                  position={TooltipPosition.top}
+                  content={<>Mirrored Workload</>}
+                >
+                  <Badge className={'faultinjection_badge_definition'}>MI</Badge>
+                </Tooltip>
+                {workload.name}
+              </div>
+            </>,
+            // This <> wrapper is needed by Slider
+            <>
+              <Slider
+                id={'slider-' + workload.name}
+                key={'slider-' + workload.name}
+                tooltip={true}
+                input={true}
+                inputFormat="%"
+                value={workload.weight}
+                min={0}
+                max={workload.maxWeight}
+                maxLimit={100}
+                onSlide={value => {
+                  this.onWeight(workload.name, value as number);
+                }}
+                onSlideStop={value => {
+                  this.onWeight(workload.name, value as number);
+                }}
+                locked={this.state.workloads.length > 1 ? workload.locked : true}
+                showLock={this.state.workloads.length > 2}
+                onLock={locked => this.onLock(workload.name, locked)}
+                mirrored={workload.mirrored}
+                showMirror={this.props.showMirror}
+                onMirror={mirrored => this.onMirror(workload.name, mirrored)}
+              />
+            </>
+          ]
+        };
+      });
     return (
       <>
-        <Table cells={headerCells} rows={workloadsRows} aria-label="weighted routing">
+        <Table cells={workloadCells} rows={workloadsRows} aria-label="weighted routing">
           <TableHeader />
           <TableBody />
         </Table>
+        {mirrorRows.length > 0 && (
+          <Table cells={mirrorCells} rows={mirrorRows} aria-label="mirrors">
+            <TableHeader />
+            <TableBody />
+          </Table>
+        )}
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
             <Button variant="link" icon={<EqualizerIcon />} onClick={() => this.resetState()}>
@@ -204,7 +329,7 @@ class TrafficShifting extends React.Component<Props, State> {
             </Button>{' '}
           </div>
         )}
-        {!isValid && <div className={validationStyle}>The sum of all weights must be 100 %</div>}
+        {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );
   }

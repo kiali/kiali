@@ -68,7 +68,11 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     if (this.state.currentTab !== aTab) {
       this.setState({ currentTab: aTab });
     }
-    if (prev.duration !== this.props.duration || prev.lastRefreshAt !== this.props.lastRefreshAt) {
+    if (
+      prev.duration !== this.props.duration ||
+      prev.lastRefreshAt !== this.props.lastRefreshAt ||
+      prev.serviceDetails !== this.props.serviceDetails
+    ) {
       this.fetchBackend();
     }
   }
