@@ -123,9 +123,9 @@ container-push: container-push-kiali-quay
 ## container-multi-arch-push-kiali-operator-quay: Pushes the Kiali Operator multi-arch image to quay.
 container-multi-arch-push-kiali-operator-quay: .ensure-operator-repo-exists .ensure-buildx-builder
 	@echo Pushing Kiali Operator multi-arch image to ${OPERATOR_QUAY_TAG} using docker buildx
-	docker buildx build --push --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${OPERATOR_QUAY_TAG},--tag=${tag}) -f ${ROOTDIR}/operator/build/Dockerfile ${ROOTDIR}/operator
+	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${OPERATOR_QUAY_TAG},--tag=${tag}) -f ${ROOTDIR}/operator/build/Dockerfile ${ROOTDIR}/operator
 
 ## container-multi-arch-push-kiali-quay: Pushes the Kiali multi-arch image to quay.
 container-multi-arch-push-kiali-quay: .ensure-buildx-builder .prepare-kiali-image-files
 	@echo Pushing Kiali multi-arch image to ${QUAY_TAG} using docker buildx
-	docker buildx build --push --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
+	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
