@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
@@ -21,6 +20,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/config_dump"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 var (
@@ -300,13 +300,12 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	defer f.Stop()
 
 	// Ready to create a request
-	resp, err := http.Get(fmt.Sprintf("http://localhost:15000%s", path))
-	if err != nil {
-		log.Errorf("Error creating a request to forward: %v", err)
+	resp, code, err := httputil.HttpGetWithBasicAuth(fmt.Sprintf("http://localhost:15000%s", path), 10*time.Second)
+	if code >= 400 {
+		return resp, fmt.Errorf("error fetching the /config_dump for the Envoy. Response code: %d", code)
 	}
-	defer resp.Body.Close()
 
-	return ioutil.ReadAll(resp.Body)
+	return resp, err
 }
 
 func (in *K8SClient) hasNetworkingResource(resource string) bool {
