@@ -74,7 +74,7 @@ container-push: container-push-kiali-quay
 	@if ! which docker > /dev/null 2>&1; then echo "'docker' is not in your PATH."; exit 1; fi
 	@required_buildx_version="0.4.2"; \
 	if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version > /dev/null 2>&1 ; then \
-	  buildx_download_url="https://github.com/docker/buildx/releases/download/$${required_buildx_version}/buildx-$${required_buildx_version}.${GOOS}-${GOARCH}"; \
+	  buildx_download_url="https://github.com/docker/buildx/releases/download/v$${required_buildx_version}/buildx-v$${required_buildx_version}.${GOOS}-${GOARCH}"; \
 	  echo "You do not have 'docker buildx' installed. Will now download from [$${buildx_download_url}] and install it to [${HOME}/.docker/cli-plugins]."; \
 	  mkdir -p ${HOME}/.docker/cli-plugins; \
 	  curl -L --output ${HOME}/.docker/cli-plugins/docker-buildx "$${buildx_download_url}"; \
