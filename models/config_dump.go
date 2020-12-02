@@ -8,6 +8,10 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+type ConfigDump struct {
+	*kubernetes.ConfigDump
+}
+
 type Listeners []*Listener
 type Listener struct {
 	Address     string  `json:"address"`

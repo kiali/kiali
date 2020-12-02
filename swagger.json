@@ -4098,6 +4098,19 @@
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
+    "ConfigDump": {
+      "type": "object",
+      "properties": {
+        "configs": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Configs"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "ContainerInfo": {
       "description": "ContainerInfo holds container name and image",
       "type": "object",
@@ -7488,10 +7501,7 @@
     "configDump": {
       "description": "Return a dump of the configuration of a given envoy proxy",
       "schema": {
-        "type": "object",
-        "additionalProperties": {
-          "type": "object"
-        }
+        "$ref": "#/definitions/ConfigDump"
       }
     },
     "configDumpResource": {

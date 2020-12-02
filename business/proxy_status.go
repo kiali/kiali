@@ -76,20 +76,16 @@ func xdsStatus(sent, acked string) string {
 	return "Stale"
 }
 
-func (in *ProxyStatus) GetConfigDump(namespace, pod string) (interface{}, error) {
+func (in *ProxyStatus) GetConfigDump(namespace, pod string) (models.ConfigDump, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
 	defer promtimer.ObserveNow(&err)
 
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
-	if err != nil {
-		return nil, err
-	}
-
-	return dump, nil
+	return models.ConfigDump{ConfigDump: dump}, err
 }
 
-func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (interface{}, error) {
+func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (models.ResourceDump, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
 	defer promtimer.ObserveNow(&err)
