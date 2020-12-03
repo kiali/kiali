@@ -46,7 +46,7 @@ func NewClient(token string) (*Client, error) {
 			return nil, errParse
 		}
 		timeout := time.Duration(5000 * time.Millisecond)
-		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, 10*time.Second)
+		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout)
 		if err != nil {
 			return nil, err
 		}

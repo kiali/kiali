@@ -15,6 +15,8 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+const DefaultTimeout = 10 * time.Second
+
 func HttpMethods() []string {
 	return []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch,
 		http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
@@ -65,13 +67,19 @@ func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTrip
 	}
 }
 
+// Creates a new HTTP Transport with TLS and Timeouts.
+//
+// Please remember that setting long timeouts is not recommended as it can make
+// idle connections stay open for as long as 2 * timeout. This should only be
+// done in cases where you know the request is very likely going to be reused at
+// some point in the near future.
 func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed.
 	transportConfig.Dial = (&net.Dialer{
-		Timeout:   timeout,
-		KeepAlive: timeout,
+		Timeout: timeout,
 	}).Dial
+
 	transportConfig.IdleConnTimeout = timeout
 
 	if auth == nil {
