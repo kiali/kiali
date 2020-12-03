@@ -28,8 +28,8 @@ import { config } from '../../config';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 import { SpanDetails } from './JaegerResults/SpanDetails';
-import { TargetKind, TimeInMilliseconds } from 'types/Common';
-import { durationSelector } from '../../store/Selectors';
+import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
+import { timeRangeSelector } from '../../store/Selectors';
 
 interface TracesProps {
   namespace: string;
@@ -37,7 +37,7 @@ interface TracesProps {
   targetKind: TargetKind;
   urlJaeger: string;
   namespaceSelector: boolean;
-  duration: number;
+  timeRange: TimeRange;
   selectedTrace?: JaegerTrace;
   lastRefreshAt: TimeInMilliseconds;
 }
@@ -143,7 +143,12 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
         this.setState({ traces: traces });
       }
     }
-    if (prevProps.duration !== this.props.duration || prevProps.lastRefreshAt !== this.props.lastRefreshAt) {
+
+    const changedTimeRange = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
+    if (this.props.lastRefreshAt !== prevProps.lastRefreshAt || changedTimeRange) {
+      if (changedTimeRange) {
+        this.fetcher.resetLastFetchTime();
+      }
       this.fetchTraces();
     }
   }
@@ -418,7 +423,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    duration: durationSelector(state),
+    timeRange: timeRangeSelector(state),
     urlJaeger: state.jaegerState.info ? state.jaegerState.info.url : '',
     namespaceSelector: state.jaegerState.info ? state.jaegerState.info.namespaceSelector : true,
     selectedTrace: state.jaegerState.selectedTrace,

@@ -201,12 +201,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     switch (this.state.currentTab) {
       case 'info':
       case 'traffic':
-      case 'traces':
         useCustomTime = false;
         break;
       case 'in_metrics':
       case 'out_metrics':
       case 'logs':
+      case 'traces':
         useCustomTime = true;
         break;
     }

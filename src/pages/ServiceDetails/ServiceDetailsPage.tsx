@@ -188,10 +188,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     switch (this.state.currentTab) {
       case 'info':
       case 'traffic':
-      case 'traces':
         useCustomTime = false;
         break;
       case 'metrics':
+      case 'traces':
         useCustomTime = true;
         break;
     }
