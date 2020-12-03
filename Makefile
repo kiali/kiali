@@ -127,6 +127,10 @@ else
 KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev.yaml
 endif
 
+# When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
+# If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.
+HELM_CHARTS_REPO_PULL ?= true
+
 include make/Makefile.build.mk
 include make/Makefile.container.mk
 include make/Makefile.cluster.mk
