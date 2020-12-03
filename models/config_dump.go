@@ -9,7 +9,11 @@ import (
 )
 
 type EnvoyProxyDump struct {
-	*kubernetes.ConfigDump
+	ConfigDump *kubernetes.ConfigDump `json:"config_dump,omitempty"`
+	Bootstrap  *Bootstrap             `json:"bootstrap,omitempty"`
+	Clusters   *Clusters              `json:"clusters,omitempty"`
+	Listeners  *Listeners             `json:"listeners,omitempty"`
+	Routes     *Routes                `json:"routes,omitempty"`
 }
 
 type Listeners []*Listener
@@ -40,10 +44,6 @@ type Route struct {
 
 type Bootstrap struct {
 	Bootstrap map[string]interface{} `json:"bootstrap,inline"`
-}
-
-type ResourceDump interface {
-	Parse(dump *kubernetes.ConfigDump) error
 }
 
 func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) error {
