@@ -19,10 +19,6 @@ func HttpMethods() []string {
 		http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
 }
 
-func HttpGetWithBasicAuth(url string, timeout time.Duration) ([]byte, int, error) {
-	return HttpGet(url, &config.Auth{InsecureSkipVerify: false}, timeout)
-}
-
 func HttpGet(url string, auth *config.Auth, timeout time.Duration) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

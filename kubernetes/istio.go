@@ -302,7 +302,7 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	defer f.Stop()
 
 	// Ready to create a request
-	resp, code, err := httputil.HttpGetWithBasicAuth(fmt.Sprintf("http://localhost:15000%s", path), 10*time.Second)
+	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:15000%s", path), nil, 10*time.Second)
 	if code >= 400 {
 		return resp, fmt.Errorf("error fetching the /config_dump for the Envoy. Response code: %d", code)
 	}
