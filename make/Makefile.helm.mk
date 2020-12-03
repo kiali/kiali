@@ -29,7 +29,11 @@
 	  echo; echo "ERROR! You specified an invalid helm-charts repo: ${HELM_CHARTS_REPO}"; echo; \
 	  exit 1; \
 	fi
-	@cd ${HELM_CHARTS_REPO}; git pull > /dev/null
+ifeq ($(HELM_CHARTS_REPO_PULL),true)
+	@echo "Pulling down latest helm-charts from remote repo to here: ${HELM_CHARTS_REPO}"; cd ${HELM_CHARTS_REPO}; git pull > /dev/null || (printf "==========\nFailed to update your local helm chart repo.\nYou can either attempt to correct the error mentioned above,\nor set 'HELM_CHARTS_REPO_PULL=false' and try again.\n==========\n"; exit 1)
+else
+	@echo "Using local helm-charts repo found here: ${HELM_CHARTS_REPO}"
+endif
 
 .ensure-operator-helm-chart-exists: .ensure-helm-charts-repo-exists
 	@echo "Git repo for the helm charts is found here: ${HELM_CHARTS_REPO}"
