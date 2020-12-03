@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
 import {
   Table,
@@ -12,68 +14,61 @@ import {
   cellWidth
 } from '@patternfly/react-table';
 
-import { addError, addInfo } from 'utils/AlertUtils';
-import { buildRow, SpanItemData } from './SpanTableItem';
+import { buildRow } from './SpanTableItem';
 import { compareNullable } from 'components/FilterList/FilterHelper';
 import { MetricsStats } from 'types/Metrics';
-import { fetchStats } from './StatsComparison';
+import { KialiAppState } from 'store/Store';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { MetricsStatsQuery } from 'types/MetricsOptions';
+import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
+import { sameSpans } from '../JaegerHelper';
+import { RichSpanData } from 'types/JaegerInfo';
+import { buildQueriesFromSpans } from 'utils/TraceStats';
 
 type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;
 };
 
 interface Props {
-  items: SpanItemData[];
+  items: RichSpanData[];
   namespace: string;
   externalURL?: string;
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => void;
+  metricsStats: Map<string, MetricsStats>;
 }
 
 interface State {
   toggledLinks?: string;
   sortIndex: number;
   sortDirection: SortByDirection;
-  metricsStats: { [key: string]: MetricsStats };
   expandedSpans: Map<string, boolean>;
 }
 
-export class SpanTable extends React.Component<Props, State> {
+class SpanTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, metricsStats: {}, expandedSpans: new Map() };
+    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, expandedSpans: new Map() };
   }
 
   componentDidMount() {
-    // Load stats for first 10 spans, to avoid heavy loading. More stats can be loaded individually.
-    this.fetchComparisonMetrics(this.props.items.filter(s => s.type === 'envoy').slice(0, 10));
+    this.fetchComparisonMetrics(this.props.items);
   }
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>) {
     if (prevState.toggledLinks) {
       this.setState({ toggledLinks: undefined });
     }
-    if (this.props.items !== prevProps.items) {
-      this.setState({ metricsStats: {} });
-      // Load stats for first 10 spans, to avoid heavy loading. More stats can be loaded individually.
-      this.fetchComparisonMetrics(this.props.items.filter(s => s.type === 'envoy').slice(0, 10));
+    if (!sameSpans(prevProps.items, this.props.items)) {
+      this.fetchComparisonMetrics(this.props.items);
     }
   }
 
-  private fetchComparisonMetrics(items: SpanItemData[]) {
-    fetchStats(items)
-      .then(res => {
-        // Merge stats
-        const merged = { ...this.state.metricsStats, ...res.data.stats };
-        this.setState({ metricsStats: merged });
-        if (res.data.warnings && res.data.warnings.length > 0) {
-          addInfo(res.data.warnings.join('; '), false);
-        }
-      })
-      .catch(err => {
-        addError('Could not fetch metrics stats.', err);
-      });
+  private fetchComparisonMetrics(items: RichSpanData[]) {
+    const queries = buildQueriesFromSpans(items);
+    this.props.loadMetricsStats(queries);
   }
 
-  private cells = (): SortableCell<SpanItemData>[] => {
+  private cells = (): SortableCell<RichSpanData>[] => {
     return [
       {
         title: 'Timeline',
@@ -101,7 +96,7 @@ export class SpanTable extends React.Component<Props, State> {
     ];
   };
 
-  private rows = (cells: SortableCell<SpanItemData>[]) => {
+  private rows = (cells: SortableCell<RichSpanData>[]) => {
     const compare = cells[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
@@ -112,7 +107,7 @@ export class SpanTable extends React.Component<Props, State> {
         toggledLinks: this.state.toggledLinks,
         setToggledLinks: key => this.setState({ toggledLinks: key }),
         onClickFetchStats: () => this.fetchComparisonMetrics([item]),
-        metricsStats: this.state.metricsStats,
+        metricsStats: this.props.metricsStats,
         isExpanded: this.state.expandedSpans.get(item.spanID) || false,
         onExpand: isExpanded => {
           this.state.expandedSpans.set(item.spanID, isExpanded);
@@ -158,3 +153,14 @@ export class SpanTable extends React.Component<Props, State> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  metricsStats: state.metricsStats.data
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  loadMetricsStats: (queries: MetricsStatsQuery[]) => dispatch(MetricsStatsThunkActions.load(queries))
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SpanTable);
+export default Container;

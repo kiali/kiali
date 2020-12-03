@@ -1,8 +1,14 @@
 import logfmtParser from 'logfmt/lib/logfmt_parser';
-import { KeyValuePair, Span } from '../../types/JaegerInfo';
+import {
+  EnvoySpanInfo,
+  KeyValuePair,
+  OpenTracingBaseInfo,
+  OpenTracingHTTPInfo,
+  OpenTracingTCPInfo,
+  Span
+} from '../../types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { guardTimeRange, durationToBounds } from 'types/Common';
-import { Target } from 'types/MetricsOptions';
 import { defaultMetricsDuration } from '../Metrics/Helper';
 
 export const buildTags = (showErrors: boolean, statusCode: string): string => {
@@ -150,18 +156,6 @@ export const getSpanType = (span: Span): 'envoy' | 'http' | 'tcp' | 'unknown' =>
   return 'unknown';
 };
 
-export type OpenTracingBaseInfo = {
-  component?: string;
-  hasError: boolean;
-};
-
-export type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
-  statusCode?: number;
-  url?: string;
-  method?: string;
-  direction?: 'inbound' | 'outbound';
-};
-
 export const extractOpenTracingBaseInfo = (span: Span): OpenTracingBaseInfo => {
   const info: OpenTracingBaseInfo = { hasError: false };
   span.tags.forEach(t => {
@@ -199,13 +193,6 @@ export const extractOpenTracingHTTPInfo = (span: Span): OpenTracingHTTPInfo => {
   return info;
 };
 
-export type OpenTracingTCPInfo = OpenTracingBaseInfo & {
-  topic?: string;
-  peerAddress?: string;
-  peerHostname?: string;
-  direction?: 'inbound' | 'outbound';
-};
-
 export const extractOpenTracingTCPInfo = (span: Span): OpenTracingTCPInfo => {
   // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
   const info: OpenTracingTCPInfo = extractOpenTracingBaseInfo(span);
@@ -225,11 +212,6 @@ export const extractOpenTracingTCPInfo = (span: Span): OpenTracingTCPInfo => {
     }
   });
   return info;
-};
-
-export type EnvoySpanInfo = OpenTracingHTTPInfo & {
-  responseFlags?: string;
-  peer?: Target;
 };
 
 export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo => {
@@ -280,4 +262,8 @@ export const extractSpanInfo = (span: Span) => {
       ? extractOpenTracingTCPInfo(span)
       : extractOpenTracingBaseInfo(span);
   return { type: type, info: info };
+};
+
+export const sameSpans = (a: Span[], b: Span[]): boolean => {
+  return a.map(s => s.spanID).join() === b.map(s => s.spanID).join();
 };

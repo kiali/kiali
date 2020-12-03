@@ -20,6 +20,7 @@ import { INITIAL_JAEGER_STATE } from '../reducers/JaegerState';
 import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 import { INITIAL_TOUR_STATE } from '../reducers/TourState';
 import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
+import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
 
 declare const window;
 
@@ -88,6 +89,7 @@ const initialStore: KialiAppState = {
   userSettings: INITIAL_USER_SETTINGS_STATE,
   jaegerState: INITIAL_JAEGER_STATE,
   meshTLSStatus: INITIAL_MESH_TLS_STATE,
+  metricsStats: INITIAL_METRICS_STATS_STATE,
   istioStatus: INITIAL_ISTIO_STATUS_STATE,
   tourState: INITIAL_TOUR_STATE
 };

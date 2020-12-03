@@ -10,6 +10,7 @@ import { JaegerAction } from './JaegerActions';
 import { MeshTlsAction } from './MeshTlsActions';
 import { TourAction } from './TourActions';
 import { IstioStatusAction } from './IstioStatusActions';
+import { MetricsStatsAction } from './MetricsStatsActions';
 
 export type KialiAppAction =
   | GlobalAction
@@ -23,4 +24,5 @@ export type KialiAppAction =
   | JaegerAction
   | MeshTlsAction
   | IstioStatusAction
-  | TourAction;
+  | TourAction
+  | MetricsStatsAction;

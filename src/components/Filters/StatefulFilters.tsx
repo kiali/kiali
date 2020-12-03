@@ -129,7 +129,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       }
     });
 
-    this.promises.registerAll('filterType', filterTypePromises).then(types => this.setState({ filterTypes: types }));
+    this.promises
+      .registerAll('filterType', filterTypePromises)
+      .then(types => this.setState({ filterTypes: types }))
+      .catch(err => {
+        if (!err.isCanceled) {
+          console.debug(err);
+        }
+      });
   }
 
   componentDidUpdate(prev: StatefulFiltersProps) {

@@ -27,12 +27,14 @@ export enum MetricsObjectTypes {
 }
 
 export interface MetricsStatsResult {
-  // Key is built from query params, see StatsComparison.genKey. The same key needs to be generated server-side for matching.
-  stats: { [key: string]: MetricsStats };
+  stats: MetricsStatsMap;
   // Note: warnings here is for non-blocking errors, it's set when some stats are available, but not all, for instance due to inaccessible namespaces
   // For more serious errors (e.g. prometheus inaccessible) the query would return an HTTP error
   warnings?: string[];
 }
+
+// Key is built from query params, see StatsComparison.genKey. The same key needs to be generated server-side for matching.
+export type MetricsStatsMap = { [key: string]: MetricsStats };
 
 export interface MetricsStats {
   responseTimes: Stat[];

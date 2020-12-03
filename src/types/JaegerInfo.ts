@@ -2,6 +2,8 @@
  Jaeger types are exported from https://github.com/jaegertracing/jaeger-ui/blob/5af9ed27c5c95031ca2c926902b51dc392413a09/packages/jaeger-ui/src/types/trace.tsx
 */
 
+import { Target } from './MetricsOptions';
+
 export interface JaegerInfo {
   enabled: boolean;
   integration: boolean;
@@ -57,6 +59,42 @@ export type Span = SpanData & {
   warnings: NonNullable<SpanData['warnings']>;
 };
 
+export type RichSpanData = Span & {
+  type: 'envoy' | 'http' | 'tcp' | 'unknown';
+  component: string;
+  namespace: string;
+  app: string;
+  linkToApp?: string;
+  workload?: string;
+  pod?: string;
+  linkToWorkload?: string;
+  info: OpenTracingBaseInfo;
+};
+
+export type OpenTracingBaseInfo = {
+  component?: string;
+  hasError: boolean;
+};
+
+export type OpenTracingHTTPInfo = OpenTracingBaseInfo & {
+  statusCode?: number;
+  url?: string;
+  method?: string;
+  direction?: 'inbound' | 'outbound';
+};
+
+export type OpenTracingTCPInfo = OpenTracingBaseInfo & {
+  topic?: string;
+  peerAddress?: string;
+  peerHostname?: string;
+  direction?: 'inbound' | 'outbound';
+};
+
+export type EnvoySpanInfo = OpenTracingHTTPInfo & {
+  responseFlags?: string;
+  peer?: Target;
+};
+
 export type TraceData = {
   processes: Record<string, Process>;
   traceID: string;
@@ -65,7 +103,7 @@ export type TraceData = {
 export type JaegerTrace = TraceData & {
   duration: number;
   endTime: number;
-  spans: Span[];
+  spans: RichSpanData[];
   startTime: number;
   traceName: string;
   services: { name: string; numberOfSpans: number }[];

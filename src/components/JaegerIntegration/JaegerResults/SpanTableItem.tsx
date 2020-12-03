@@ -6,16 +6,8 @@ import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-ic
 
 import history from 'app/History';
 import { PFAlertColor } from 'components/Pf/PfColors';
-import { Span } from 'types/JaegerInfo';
-import {
-  EnvoySpanInfo,
-  isErrorTag,
-  OpenTracingHTTPInfo,
-  OpenTracingTCPInfo,
-  OpenTracingBaseInfo,
-  getWorkloadFromSpan,
-  extractSpanInfo
-} from '../JaegerHelper';
+import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/JaegerInfo';
+import { isErrorTag } from '../JaegerHelper';
 import { formatDuration } from './transform';
 import { renderMetricsComparison } from './StatsComparison';
 import { MetricsStats } from 'types/Metrics';
@@ -33,47 +25,12 @@ const linkStyle = style({
   fontSize: 14
 });
 
-export type SpanItemData = Span & {
-  type: 'envoy' | 'http' | 'tcp' | 'unknown';
-  component: string;
-  namespace: string;
-  app: string;
-  linkToApp: string;
-  workload?: string;
-  pod?: string;
-  linkToWorkload?: string;
-  info: OpenTracingBaseInfo;
-};
-
-// Extracts some information from a span to make it suitable for table-display
-export const buildItemData = (span: Span, defaultNamespace: string): SpanItemData => {
-  const { type, info } = extractSpanInfo(span);
-  const workloadNs = getWorkloadFromSpan(span);
-  const split = span.process.serviceName.split('.');
-  const app = split[0];
-  const namespace = workloadNs ? workloadNs.namespace : split.length > 1 ? split[1] : defaultNamespace;
-  const linkToApp = '/namespaces/' + namespace + '/applications/' + app;
-  const linkToWorkload = workloadNs ? '/namespaces/' + namespace + '/workloads/' + workloadNs.workload : undefined;
-  return {
-    ...span,
-    type: type,
-    info: info,
-    component: info.component || 'unknown',
-    namespace: namespace,
-    app: app,
-    linkToApp: linkToApp,
-    workload: workloadNs?.workload,
-    pod: workloadNs?.pod,
-    linkToWorkload: linkToWorkload
-  };
-};
-
-type RowProps = SpanItemData & {
+type RowProps = RichSpanData & {
   toggledLinks?: string;
   setToggledLinks: (key: string) => void;
   externalURL?: string;
   onClickFetchStats: () => void;
-  metricsStats: { [key: string]: MetricsStats };
+  metricsStats: Map<string, MetricsStats>;
   // onExpand and isExpandable are used to keep the extend state at an upper level
   onExpand: (isExpanded: boolean) => void;
   isExpanded: boolean;
@@ -110,7 +67,7 @@ const OriginCell = (props: CellProps<RowProps>) => {
   return (
     <>
       <strong>Application: </strong>
-      <Link to={props.linkToApp}>{props.app}</Link>
+      {(props.linkToApp && <Link to={props.linkToApp}>{props.app}</Link>) || props.app}
       <br />
       <strong>Workload: </strong>
       {(props.linkToWorkload && <Link to={props.linkToWorkload}>{props.workload}</Link>) || 'unknown'}

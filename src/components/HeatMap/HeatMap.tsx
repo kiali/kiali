@@ -10,74 +10,24 @@ export type Color = { r: number; g: number; b: number };
 export type ColorMap = Color[];
 
 type Props = {
-  xLabels: string[];
-  yLabels: string[];
+  xLabels: (string | JSX.Element)[];
+  yLabels: (string | JSX.Element)[];
   data: (number | undefined)[][];
   colorMap: ColorMap;
   dataRange: { from: number; to: number };
   colorUndefined: string;
   valueFormat: (v: number) => string;
   tooltip: (x: number, y: number, v: number) => string;
-  compactMode?: boolean;
+  displayMode?: 'compact' | 'normal' | 'large';
 };
 
-const cellHeight = '2rem';
-const compactCellHeight = '1rem';
-
-const rowStyle = style({
-  display: 'flex',
-  flexDirection: 'row'
-});
-
-const columnStyle = style({
-  display: 'flex',
-  flexDirection: 'column'
-});
-
-const yLabelStyle = style({
-  boxSizing: 'border-box',
-  padding: '0 0.2rem',
-  lineHeight: cellHeight,
-  whiteSpace: 'nowrap'
-});
-
-const xLabelRowStyle = style({
-  display: 'flex',
-  textAlign: 'center'
-});
-
-const xLabelStyle = style({
-  padding: '0.2rem 0',
-  boxSizing: 'border-box',
+const cellStyle = style({
   overflow: 'hidden',
-  flexShrink: 1,
-  flexBasis: cellHeight,
-  width: cellHeight
-});
-
-const largeCellStyle = style({
-  textAlign: 'center',
-  overflow: 'hidden',
-  boxSizing: 'border-box',
-  flexBasis: cellHeight,
-  flexShrink: 0,
-  height: cellHeight,
-  lineHeight: cellHeight,
   fontSize: '.7rem',
   borderRadius: 3,
-  margin: 1
-});
-
-const compactCellStyle = style({
-  textAlign: 'center',
-  overflow: 'hidden',
-  boxSizing: 'border-box',
-  flexBasis: compactCellHeight,
-  flexShrink: 0,
-  height: compactCellHeight,
-  lineHeight: compactCellHeight,
-  borderRadius: 3,
-  margin: 1
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
 });
 
 export class HeatMap extends React.Component<Props> {
@@ -88,6 +38,18 @@ export class HeatMap extends React.Component<Props> {
     { r: 240, g: 171, b: 0 }, // PF Warning 100 (#f0ab00)
     { r: 201, g: 25, b: 11 } // PF Danger 100 (#c9190b)
   ];
+
+  private getGridStyle = (): React.CSSProperties => {
+    const cellHeight = this.props.displayMode === 'compact' ? '1rem' : '2rem';
+    const cellWidth = this.props.displayMode === 'compact' ? 1 : this.props.displayMode === 'large' ? 3 : 2;
+    return {
+      display: 'grid',
+      gridTemplateColumns: `${cellWidth}rem repeat(${this.props.xLabels.length}, 1fr)`,
+      gridTemplateRows: new Array(this.props.yLabels.length + 1).fill(cellHeight).join(' '),
+      gridGap: 2,
+      maxWidth: `${cellWidth * (1 + this.props.xLabels.length)}rem`
+    };
+  };
 
   private getCellColors = (value: number) => {
     const { from, to } = this.props.dataRange;
@@ -109,58 +71,49 @@ export class HeatMap extends React.Component<Props> {
   };
 
   render() {
-    const cellStyle = this.props.compactMode ? compactCellStyle : largeCellStyle;
+    const isCompact = this.props.displayMode === 'compact';
     return (
-      <div className={rowStyle}>
-        <div className={columnStyle} style={{ marginTop: cellHeight }}>
-          {!this.props.compactMode &&
-            this.props.yLabels.map(label => (
-              <div key={label} className={yLabelStyle}>
-                {label}
-              </div>
-            ))}
-        </div>
-        <div className={columnStyle}>
-          <div className={xLabelRowStyle}>
-            {!this.props.compactMode &&
-              this.props.xLabels.map(label => (
-                <div key={label} className={xLabelStyle}>
-                  {label}
-                </div>
-              ))}
+      <div style={this.getGridStyle()}>
+        <div></div>
+        {this.props.xLabels.map((xLabel, x) => (
+          <div key={'xlabel_' + x} className={cellStyle}>
+            {isCompact ? '' : xLabel}
           </div>
-          <div className={columnStyle}>
-            {this.props.yLabels.map((_, y) => (
-              <div key={`heatmap_${y}`} className={rowStyle}>
-                {this.props.xLabels.map((_, x) => {
-                  const value = this.props.data[x][y];
-                  if (value) {
-                    const style = this.getCellColors(value);
-                    return (
-                      <div
-                        key={`heatmap_${x}-${y}`}
-                        className={cellStyle}
-                        style={style}
-                        title={this.props.tooltip(x, y, value)}
-                      >
-                        {!this.props.compactMode && this.props.valueFormat(value)}
-                      </div>
-                    );
-                  }
+        ))}
+        {this.props.yLabels.map((yLabel, y) => {
+          return (
+            <>
+              <div key={'ylabel_' + y} className={cellStyle}>
+                {isCompact ? '' : yLabel}
+              </div>
+              {this.props.xLabels.map((_, x) => {
+                const value = this.props.data[x][y];
+                if (value) {
+                  const style = this.getCellColors(value);
                   return (
                     <div
                       key={`heatmap_${x}-${y}`}
                       className={cellStyle}
-                      style={{ backgroundColor: this.props.colorUndefined }}
+                      style={style}
+                      title={this.props.tooltip(x, y, value)}
                     >
-                      {!this.props.compactMode && 'n/a'}
+                      {!isCompact && this.props.valueFormat(value)}
                     </div>
                   );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+                }
+                return (
+                  <div
+                    key={`heatmap_${x}-${y}`}
+                    className={cellStyle}
+                    style={{ backgroundColor: this.props.colorUndefined }}
+                  >
+                    {!isCompact && 'n/a'}
+                  </div>
+                );
+              })}
+            </>
+          );
+        })}
       </div>
     );
   }

@@ -2,22 +2,22 @@ import * as React from 'react';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import _round from 'lodash/round';
 
-import * as API from 'services/Api';
 import { HeatMap } from 'components/HeatMap/HeatMap';
-import { MetricsStatsQuery, Target } from 'types/MetricsOptions';
-import { EnvoySpanInfo } from '../JaegerHelper';
-import { SpanItemData } from './SpanTableItem';
 import { MetricsStats } from 'types/Metrics';
 import { PfColors } from 'components/Pf/PfColors';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-
-// TODO / follow-up: these variables are to be removed from here and managed from the toolbar
-const statsQuantiles = ['0.5', '0.9', '0.99'];
-const statsAvgWithQuantiles = ['avg', ...statsQuantiles];
-const allStatsIntervals = ['10m', '60m', '6h'];
-const compactStatsIntervals = ['60m', '6h'];
-const statsPerPeer = false;
-let statsCompareKind: 'app' | 'workload' = 'workload';
+import { EnvoySpanInfo, RichSpanData } from 'types/JaegerInfo';
+import {
+  compactStatsIntervals,
+  allStatsIntervals,
+  getSpanStats,
+  statsAvgWithQuantiles,
+  StatsMatrix,
+  statsToMatrix,
+  StatsWithIntervalIndex,
+  statsPerPeer,
+  statsCompareKind
+} from 'utils/TraceStats';
 
 const statToText = {
   avg: { short: 'avg', long: 'average' },
@@ -29,94 +29,18 @@ const statToText = {
   '0.999': { short: 'p99.9', long: '99.9th percentile' }
 };
 
-export const fetchStats = (items: SpanItemData[]) => {
-  const queryTime = Math.floor(Date.now() / 1000);
-  const queries: MetricsStatsQuery[] = items.flatMap(item => {
-    const info = item.info as EnvoySpanInfo;
-    if (!info.direction) {
-      console.warn('Could not determine direction from Envoy span.');
-      return [];
-    }
-    if (statsPerPeer && !info.peer) {
-      console.warn('Could not determine peer from Envoy span.');
-      return [];
-    }
-    const name = statsCompareKind === 'app' ? item.app : item.workload;
-    if (!name) {
-      console.warn('Could not determine workload from Envoy span.');
-      return [];
-    }
-    const query: MetricsStatsQuery = {
-      queryTime: queryTime,
-      target: {
-        namespace: item.namespace,
-        name: name,
-        kind: statsCompareKind
-      },
-      peerTarget: statsPerPeer ? info.peer : undefined,
-      interval: '', // placeholder
-      direction: info.direction,
-      avg: true,
-      quantiles: statsQuantiles
-    };
-    return allStatsIntervals.map(interval => ({ ...query, interval: interval }));
-  });
-  return API.getMetricsStats(deduplicateMetricQueries(queries));
-};
-
-const deduplicateMetricQueries = (queries: MetricsStatsQuery[]) => {
-  // Exclude redundant queries based on this keygen as a merger, + hashmap
-  const dedup = new Map<string, MetricsStatsQuery>();
-  queries.forEach(q => {
-    const key = genKey(q.target, q.peerTarget, q.direction, q.interval);
-    if (key) {
-      dedup.set(key, q);
-    }
-  });
-  return Array.from(dedup.values());
-};
-
-// !! genKey HAS to mirror backend's models.MetricsStatsQuery#GenKey in models/metrics.go
-const genKey = (target: Target, peer: Target | undefined, direction: string, interval: string): string | undefined => {
-  const peerKey = peer ? genTargetKey(peer) : '';
-  return `${genTargetKey(target)}:${peerKey}:${direction}:${interval}`;
-};
-
-const genTargetKey = (target: Target): string | undefined => {
-  return `${target.namespace}:${target.kind}:${target.name}`;
-};
-
-type StatsWithIntervalIndex = MetricsStats & { intervalIndex: number };
-const buildStatsData = (item: SpanItemData, itemStats: StatsWithIntervalIndex[], intervals: string[]) => {
-  const data: (number | undefined)[][] = new Array(statsAvgWithQuantiles.length)
-    .fill(0)
-    .map(() => new Array(intervals.length).fill(0).map(() => undefined));
-  const baseLine = item.duration / 1000;
-
-  itemStats.forEach(stats => {
-    stats.responseTimes.forEach(stat => {
-      const x = statsAvgWithQuantiles.indexOf(stat.name);
-      if (x >= 0) {
-        data[x][stats.intervalIndex] = baseLine - stat.value;
-      }
-    });
-  });
-  return data;
-};
-
 const renderHeatMap = (
-  item: SpanItemData,
+  item: RichSpanData,
   stats: StatsWithIntervalIndex[],
   intervals: string[],
   compactMode: boolean
 ) => {
-  const data = buildStatsData(item, stats, intervals);
   return (
     <HeatMap
       xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
       yLabels={intervals}
-      data={data}
-      compactMode={compactMode}
+      data={statsToMatrix(stats, intervals)}
+      displayMode={compactMode ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PfColors.Black200}
@@ -144,28 +68,13 @@ const renderHeatMap = (
 };
 
 export const renderMetricsComparison = (
-  item: SpanItemData,
+  item: RichSpanData,
   compactMode: boolean,
-  metricsStats: { [key: string]: MetricsStats },
+  metricsStats: Map<string, MetricsStats>,
   load: () => void
 ) => {
   const intervals = compactMode ? compactStatsIntervals : allStatsIntervals;
-  const itemStats = intervals.flatMap((interval, intervalIndex) => {
-    const info = item.info as EnvoySpanInfo;
-    const target = {
-      namespace: item.namespace,
-      name: statsCompareKind === 'app' ? item.app : item.workload!,
-      kind: statsCompareKind
-    };
-    const key = genKey(target, statsPerPeer ? info.peer : undefined, info.direction!, interval);
-    if (key) {
-      const stats = metricsStats[key];
-      if (stats) {
-        return [{ ...stats, intervalIndex: intervalIndex }];
-      }
-    }
-    return [];
-  });
+  const itemStats = getSpanStats(item, intervals, metricsStats);
   if (itemStats.length > 0) {
     return (
       <>
@@ -186,5 +95,30 @@ export const renderMetricsComparison = (
         <strong>Load statistics</strong>
       </Button>
     </Tooltip>
+  );
+};
+
+export const renderTraceHeatMap = (matrix: StatsMatrix, intervals: string[], compactMode: boolean) => {
+  return (
+    <HeatMap
+      xLabels={statsAvgWithQuantiles.map(s => statToText[s]?.short || s)}
+      yLabels={intervals}
+      data={matrix}
+      displayMode={compactMode ? 'compact' : 'normal'}
+      colorMap={HeatMap.HealthColorMap}
+      dataRange={{ from: -10, to: 10 }}
+      colorUndefined={PfColors.Black200}
+      valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
+      tooltip={(x, y, v) => {
+        // Build explanation tooltip
+        const slowOrFast = v > 0 ? 'slower' : 'faster';
+        const stat = statToText[statsAvgWithQuantiles[x]]?.long || statsAvgWithQuantiles[x];
+        const interval = intervals[y];
+        return `Trace requests have been, in average, ${_round(
+          Math.abs(v),
+          2
+        )}ms ${slowOrFast} than the ${stat} of the requests involving the same services in the last ${interval}`;
+      }}
+    />
   );
 };

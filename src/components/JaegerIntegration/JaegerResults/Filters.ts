@@ -1,7 +1,7 @@
 import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterTypes, FilterValue, RunnableFilter } from 'types/Filters';
-import { SpanItemData } from './SpanTableItem';
+import { RichSpanData } from 'types/JaegerInfo';
 
-const byWorkload = (workloads: FilterValue[]): RunnableFilter<SpanItemData> => {
+const byWorkload = (workloads: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     id: 'workload',
     title: 'Workload',
@@ -13,7 +13,7 @@ const byWorkload = (workloads: FilterValue[]): RunnableFilter<SpanItemData> => {
   };
 };
 
-const byApp = (apps: FilterValue[]): RunnableFilter<SpanItemData> => {
+const byApp = (apps: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     id: 'app',
     title: 'App',
@@ -25,7 +25,7 @@ const byApp = (apps: FilterValue[]): RunnableFilter<SpanItemData> => {
   };
 };
 
-const byComponent = (components: FilterValue[]): RunnableFilter<SpanItemData> => {
+const byComponent = (components: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     id: 'type',
     title: 'Component',
@@ -37,7 +37,7 @@ const byComponent = (components: FilterValue[]): RunnableFilter<SpanItemData> =>
   };
 };
 
-const byOperation = (ops: FilterValue[]): RunnableFilter<SpanItemData> => {
+const byOperation = (ops: FilterValue[]): RunnableFilter<RichSpanData> => {
   return {
     id: 'operation',
     title: 'Operation',
@@ -49,7 +49,7 @@ const byOperation = (ops: FilterValue[]): RunnableFilter<SpanItemData> => {
   };
 };
 
-const byError: RunnableFilter<SpanItemData> = {
+const byError: RunnableFilter<RichSpanData> = {
   id: 'error',
   title: 'Error',
   placeholder: 'Filter by Error',
@@ -62,7 +62,7 @@ const byError: RunnableFilter<SpanItemData> = {
   run: (item, filters) => filters.filters.some(f => f.value === (item.info.hasError ? 'With errors' : 'Without errors'))
 };
 
-export const spanFilters = (spans: SpanItemData[]): RunnableFilter<SpanItemData>[] => {
+export const spanFilters = (spans: RichSpanData[]): RunnableFilter<RichSpanData>[] => {
   const workloads = new Set<string>();
   const apps = new Set<string>();
   const components = new Set<string>();

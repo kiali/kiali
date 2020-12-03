@@ -15,6 +15,7 @@ import { StatusState } from '../types/StatusState';
 import { TourInfo } from 'components/Tour/TourStop';
 import { ComponentStatus } from '../types/IstioStatus';
 import { JaegerState } from 'reducers/JaegerState';
+import { MetricsStatsState } from 'reducers/MetricsStatsState';
 
 // Store is the Redux Data store
 
@@ -129,4 +130,5 @@ export interface KialiAppState {
   /** Jaeger Settings */
   jaegerState: JaegerState;
   tourState: TourState;
+  metricsStats: MetricsStatsState;
 }

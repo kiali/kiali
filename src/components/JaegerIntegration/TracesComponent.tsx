@@ -27,7 +27,7 @@ import { HistoryManager, URLParam } from '../../app/History';
 import { config } from '../../config';
 import { TracesFetcher } from './TracesFetcher';
 import { getTimeRangeMicros, buildTags } from './JaegerHelper';
-import SpanDetails from './JaegerResults/SpanDetails';
+import { SpanDetails } from './JaegerResults/SpanDetails';
 import { TargetKind, TimeInMilliseconds } from 'types/Common';
 import { durationSelector } from '../../store/Selectors';
 
@@ -403,6 +403,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                       namespace={this.props.namespace}
                       target={this.props.target}
                       externalURL={this.props.urlJaeger}
+                      items={this.props.selectedTrace.spans}
                     />
                   </Tab>
                 </Tabs>

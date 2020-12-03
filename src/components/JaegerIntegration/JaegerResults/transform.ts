@@ -2,7 +2,8 @@ import _isEqual from 'lodash/isEqual';
 import _round from 'lodash/round';
 import moment from 'moment';
 // Imported from Jaeger-UIU
-import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData } from '../../../types/JaegerInfo';
+import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from '../../../types/JaegerInfo';
+import { extractSpanInfo, getWorkloadFromSpan } from '../JaegerHelper';
 
 class TreeNode {
   value: string;
@@ -196,7 +197,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
   const tree = getTraceSpanIdsAsTree(data);
-  const spans: Span[] = [];
+  const spans: RichSpanData[] = [];
   const svcCounts: Record<string, number> = {};
   let traceName = '';
 
@@ -229,7 +230,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
         ref.span = refSpan;
       }
     });
-    spans.push(span);
+    spans.push(transformSpanData(span));
   });
   const services = Object.keys(svcCounts).map(name => ({ name, numberOfSpans: svcCounts[name] }));
   return {
@@ -246,6 +247,34 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     endTime: traceEndTime
   };
 }
+
+// Extracts some information from a span to make it suitable for table-display
+export const transformSpanData = (span: Span): RichSpanData => {
+  const { type, info } = extractSpanInfo(span);
+  const workloadNs = getWorkloadFromSpan(span);
+  const split = span.process.serviceName.split('.');
+  const app = split[0];
+  const namespace = workloadNs ? workloadNs.namespace : split.length > 1 ? split[1] : undefined;
+  if (!namespace) {
+    console.warn('Could not determine span namespace');
+  }
+  const linkToApp = namespace ? '/namespaces/' + namespace + '/applications/' + app : undefined;
+  const linkToWorkload = workloadNs
+    ? '/namespaces/' + workloadNs.namespace + '/workloads/' + workloadNs.workload
+    : undefined;
+  return {
+    ...span,
+    type: type,
+    info: info,
+    component: info.component || 'unknown',
+    namespace: namespace || 'unknown',
+    app: app,
+    linkToApp: linkToApp,
+    workload: workloadNs?.workload,
+    pod: workloadNs?.pod,
+    linkToWorkload: linkToWorkload
+  };
+};
 
 export function formatDuration(micros: number): string {
   let d = micros / 1000;

@@ -44,3 +44,15 @@ export interface MetricsStatsQuery {
   avg: boolean;
   quantiles: string[];
 }
+
+export const statsQueryToKey = (q: MetricsStatsQuery) => genStatsKey(q.target, q.peerTarget, q.direction, q.interval);
+
+// !! genStatsKey HAS to mirror backend's models.MetricsStatsQuery#GenKey in models/metrics.go
+export const genStatsKey = (target: Target, peer: Target | undefined, direction: string, interval: string): string => {
+  const peerKey = peer ? genTargetKey(peer) : '';
+  return `${genTargetKey(target)}:${peerKey}:${direction}:${interval}`;
+};
+
+const genTargetKey = (target: Target): string => {
+  return `${target.namespace}:${target.kind}:${target.name}`;
+};
