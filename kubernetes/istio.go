@@ -286,7 +286,9 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	}
 
 	// Create a Port Forwarder
-	f, err := config_dump.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig, namespace, podName, "localhost", "15000", writer)
+	portMap := fmt.Sprintf("%d:15000", config.Get().ExternalServices.Istio.EnvoyAdminLocalPort)
+	f, err := config_dump.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig,
+		namespace, podName, "localhost", portMap, writer)
 	if err != nil {
 		return nil, err
 	}
