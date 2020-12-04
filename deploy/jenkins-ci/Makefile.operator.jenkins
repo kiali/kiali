@@ -106,8 +106,7 @@ ifdef QUAY_PASSWORD
 	@docker login -u "$(QUAY_USER)" -p "$(QUAY_PASSWORD)" quay.io
 endif
 endif
-	QUAY_OPERATOR_TAG="$(QUAY_OPERATOR_TAG)" \
-	  OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
+	OPERATOR_QUAY_TAG="$(QUAY_OPERATOR_TAG)" \
 	 $(MAKE) -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
 
 operator-push-version-tag:
