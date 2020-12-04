@@ -285,8 +285,11 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 		return nil, err
 	}
 
+	// Building the port mapping local:target port
+	envoyLocalPort := config.Get().ExternalServices.Istio.EnvoyAdminLocalPort
+	portMap := fmt.Sprintf("%d:15000", envoyLocalPort)
+
 	// Create a Port Forwarder
-	portMap := fmt.Sprintf("%d:15000", config.Get().ExternalServices.Istio.EnvoyAdminLocalPort)
 	f, err := config_dump.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig,
 		namespace, podName, "localhost", portMap, writer)
 	if err != nil {
@@ -302,7 +305,7 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	defer f.Stop()
 
 	// Ready to create a request
-	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:15000%s", path), nil, 10*time.Second)
+	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", envoyLocalPort, path), nil, 10*time.Second)
 	if code >= 400 {
 		return resp, fmt.Errorf("error fetching the /config_dump for the Envoy. Response code: %d", code)
 	}
