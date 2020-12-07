@@ -1,11 +1,13 @@
 package kubernetes
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
@@ -17,6 +19,8 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/config_dump"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 var (
@@ -246,6 +250,67 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 		fullStatus = append(fullStatus, ss...)
 	}
 	return fullStatus, nil
+}
+
+func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
+	// Fetching the config_dump data, raw.
+	resp, err := in.EnvoyForward(namespace, podName, "/config_dump")
+	if err != nil {
+		log.Errorf("Error fetching config_map: %v", err)
+		return nil, err
+	}
+
+	cd := &ConfigDump{}
+	err = json.Unmarshal(resp, cd)
+	if err != nil {
+		log.Errorf("Error Unmarshalling the config_dump: %v", err)
+	}
+
+	return cd, err
+}
+
+func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
+	writer := new(bytes.Buffer)
+
+	clientConfig, err := ConfigClient()
+	if err != nil {
+		log.Errorf("Error getting Kubernetes Client config: %v", err)
+		return nil, err
+	}
+
+	// First try whether the pod exist or not
+	_, err = in.GetPod(namespace, podName)
+	if err != nil {
+		log.Errorf("Couldn't fetch the Pod: %v", err)
+		return nil, err
+	}
+
+	// Building the port mapping local:target port
+	envoyLocalPort := config.Get().ExternalServices.Istio.EnvoyAdminLocalPort
+	portMap := fmt.Sprintf("%d:15000", envoyLocalPort)
+
+	// Create a Port Forwarder
+	f, err := config_dump.NewPortForwarder(in.k8s.CoreV1().RESTClient(), clientConfig,
+		namespace, podName, "localhost", portMap, writer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start the forwarding
+	if err := f.Start(); err != nil {
+		return nil, err
+	}
+
+	// Defering the finish of the port-forwarding
+	defer f.Stop()
+
+	// Ready to create a request
+	resp, code, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", envoyLocalPort, path), nil, 10*time.Second)
+	if code >= 400 {
+		return resp, fmt.Errorf("error fetching the /config_dump for the Envoy. Response code: %d", code)
+	}
+
+	return resp, err
 }
 
 func (in *K8SClient) hasNetworkingResource(resource string) bool {

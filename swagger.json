@@ -2219,6 +2219,104 @@
         }
       }
     },
+    "/namespaces/{namespace}/pods/{pod}/config_dump": {
+      "get": {
+        "description": "Endpoint to get pod proxy dump",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "pods"
+        ],
+        "operationId": "podProxyDump",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The pod name.",
+            "name": "pod",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/configDump"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/pods/{pod}/config_dump/{resource}": {
+      "get": {
+        "description": "Endpoint to get pod logs",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "pods"
+        ],
+        "operationId": "podProxyResource",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The pod name.",
+            "name": "pod",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The discovery service resource",
+            "name": "resource",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/configDumpResource"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/pods/{pod}/logs": {
       "get": {
         "description": "Endpoint to get pod logs",
@@ -3890,6 +3988,19 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Bootstrap": {
+      "type": "object",
+      "properties": {
+        "bootstrap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Bootstrap"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "CauseType": {
       "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
       "type": "string",
@@ -3948,6 +4059,44 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Cluster": {
+      "type": "object",
+      "properties": {
+        "destination_rule": {
+          "type": "string",
+          "x-go-name": "DestinationRule"
+        },
+        "direction": {
+          "type": "string",
+          "x-go-name": "Direction"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Port"
+        },
+        "service_fqdn": {
+          "type": "string",
+          "x-go-name": "ServiceFQDN"
+        },
+        "subset": {
+          "type": "string",
+          "x-go-name": "Subset"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Clusters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Cluster"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "ComponentStatus": {
       "type": "object",
       "required": [
@@ -3999,6 +4148,20 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
+    "ConfigDump": {
+      "description": "Root of ConfigDump",
+      "type": "object",
+      "properties": {
+        "configs": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "x-go-name": "Configs"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "ContainerInfo": {
       "description": "ContainerInfo holds container name and image",
@@ -4150,6 +4313,27 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Endpoint"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "EnvoyProxyDump": {
+      "type": "object",
+      "properties": {
+        "bootstrap": {
+          "$ref": "#/definitions/Bootstrap"
+        },
+        "clusters": {
+          "$ref": "#/definitions/Clusters"
+        },
+        "config_dump": {
+          "$ref": "#/definitions/ConfigDump"
+        },
+        "listeners": {
+          "$ref": "#/definitions/Listeners"
+        },
+        "routes": {
+          "$ref": "#/definitions/Routes"
+        }
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
@@ -5096,6 +5280,36 @@
       },
       "x-go-package": "github.com/jaegertracing/jaeger/model/json"
     },
+    "Listener": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "x-go-name": "Address"
+        },
+        "destination": {
+          "type": "string",
+          "x-go-name": "Destination"
+        },
+        "match": {
+          "type": "string",
+          "x-go-name": "Match"
+        },
+        "port": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Port"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Listeners": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Listener"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Log": {
       "description": "Log is a log emitted in a span",
       "type": "object",
@@ -5855,6 +6069,35 @@
         "$ref": "#/definitions/ResponseDetail"
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
+    "Route": {
+      "type": "object",
+      "properties": {
+        "domains": {
+          "type": "string",
+          "x-go-name": "Domains"
+        },
+        "match": {
+          "type": "string",
+          "x-go-name": "Match"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "virtual_service": {
+          "type": "string",
+          "x-go-name": "VirtualService"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Routes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Route"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Runtime": {
       "description": "Runtime holds the runtime title and associated dashboard template(s)",
@@ -7384,6 +7627,21 @@
             "type": "string",
             "x-go-name": "Message"
           }
+        }
+      }
+    },
+    "configDump": {
+      "description": "Return a dump of the configuration of a given envoy proxy",
+      "schema": {
+        "$ref": "#/definitions/EnvoyProxyDump"
+      }
+    },
+    "configDumpResource": {
+      "description": "Return a dump of the configuration of a given envoy proxy",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
         }
       }
     },

@@ -154,6 +154,7 @@ type TracingConfig struct {
 type IstioConfig struct {
 	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
 	ConfigMapName            string            `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort      int               `yaml:"envoy_admin_local_port,omitempty"`
 	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
 	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
@@ -173,7 +174,7 @@ type ComponentStatus struct {
 
 type Iter8Config struct {
 	Enabled bool `yaml:"enabled"`
-	// Defein which namespace Iter8 is installed on, default to iter8
+	// Define which namespace Iter8 is installed on, default to iter8
 	Namespace string `yaml:"namespace"`
 }
 
@@ -394,9 +395,6 @@ func NewConfig() (c *Config) {
 				IsCoreComponent: false,
 			},
 			Istio: IstioConfig{
-				IstioIdentityDomain:      "svc.cluster.local",
-				IstioInjectionAnnotation: "sidecar.istio.io/inject",
-				IstioSidecarAnnotation:   "sidecar.istio.io/status",
 				ComponentStatuses: ComponentStatuses{
 					Enabled: true,
 					Components: []ComponentStatus{
@@ -414,8 +412,12 @@ func NewConfig() (c *Config) {
 						},
 					},
 				},
-				ConfigMapName:     "istio",
-				UrlServiceVersion: "http://istiod:15014/version",
+				ConfigMapName:            "istio",
+				EnvoyAdminLocalPort:      15000,
+				IstioIdentityDomain:      "svc.cluster.local",
+				IstioInjectionAnnotation: "sidecar.istio.io/inject",
+				IstioSidecarAnnotation:   "sidecar.istio.io/status",
+				UrlServiceVersion:        "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{

@@ -33,3 +33,8 @@ func (o *K8SClientMock) GetProxyStatus() ([]*kubernetes.ProxyStatus, error) {
 	args := o.Called()
 	return args.Get(0).([]*kubernetes.ProxyStatus), args.Error(1)
 }
+
+func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*kubernetes.ConfigDump, error) {
+	args := o.Called(namespace, podName)
+	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
+}

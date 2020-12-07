@@ -3,6 +3,7 @@ package business
 import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type ProxyStatus struct {
@@ -73,4 +74,51 @@ func xdsStatus(sent, acked string) string {
 	}
 	// Since the Nonce changes to uuid, so there is no more any time diff info
 	return "Stale"
+}
+
+func (in *ProxyStatus) GetConfigDump(namespace, pod string) (models.EnvoyProxyDump, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
+	defer promtimer.ObserveNow(&err)
+
+	dump, err := in.k8s.GetConfigDump(namespace, pod)
+	return models.EnvoyProxyDump{ConfigDump: dump}, err
+}
+
+func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDump")
+	defer promtimer.ObserveNow(&err)
+
+	dump, err := in.k8s.GetConfigDump(namespace, pod)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildDump(dump, resource)
+}
+
+func buildDump(dump *kubernetes.ConfigDump, resource string) (*models.EnvoyProxyDump, error) {
+	response := &models.EnvoyProxyDump{}
+	var err error
+	switch resource {
+	case "clusters":
+		summary := &models.Clusters{}
+		err = summary.Parse(dump)
+		response.Clusters = summary
+	case "routes":
+		summary := &models.Routes{}
+		err = summary.Parse(dump)
+		response.Routes = summary
+	case "bootstrap":
+		summary := &models.Bootstrap{}
+		err = summary.Parse(dump)
+		response.Bootstrap = summary
+	case "listeners":
+		summary := &models.Listeners{}
+		err = summary.Parse(dump)
+		response.Listeners = summary
+	}
+
+	return response, err
 }
