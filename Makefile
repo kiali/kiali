@@ -60,8 +60,8 @@ NAMESPACE ?= ${ISTIO_NAMESPACE}
 GOPATH ?= ${HOME}/go
 
 # Environment variables set when running the Go compiler.
-GOOS ?= $(shell go env GOOS)
-GOARCH ?= $(shell go env GOARCH)
+GOOS ?= $(shell ${GO} env GOOS)
+GOARCH ?= $(shell ${GO} env GOARCH)
 GO_BUILD_ENVVARS = \
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
