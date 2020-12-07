@@ -75,11 +75,12 @@ func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTrip
 // some point in the near future.
 func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout time.Duration) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
-	// needed.
-	if transportConfig.Dial == nil && transportConfig.DialContext == nil {
-		transportConfig.Dial = (&net.Dialer{
+	// needed. If DialContext is not set, Dial is used, we only create a new one
+	// if neither is defined.
+	if transportConfig.DialContext == nil && transportConfig.Dial == nil {
+		transportConfig.DialContext = (&net.Dialer{
 			Timeout: timeout,
-		}).Dial
+		}).DialContext
 	}
 
 	transportConfig.IdleConnTimeout = timeout
