@@ -27,10 +27,10 @@ import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
-import { Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
+import { EnvoyProxyDump, Pod, PodLogs, ValidationStatus } from '../types/IstioObjects';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { Span, TracingQuery } from 'types/Tracing';
-import { Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info, ExperimentSpec } from '../types/Iter8';
+import { ExperimentSpec, Iter8ExpDetailsInfo, Iter8Experiment, Iter8Info } from '../types/Iter8';
 import { ComponentStatus } from '../types/IstioStatus';
 import { DashboardModel } from 'types/Dashboards';
 
@@ -493,6 +493,19 @@ export const getPodLogs = (
     params.duration = `${duration}s`;
   }
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
+};
+
+export const getPodEnvoyProxy = (namespace: string, pod: string) => {
+  return newRequest<EnvoyProxyDump>(HTTP_VERBS.GET, urls.podEnvoyProxy(namespace, pod), {}, {});
+};
+
+export const getPodEnvoyProxyResourceEntries = (namespace: string, pod: string, resource: string) => {
+  return newRequest<EnvoyProxyDump>(
+    HTTP_VERBS.GET,
+    urls.podEnvoyProxyResourceEntries(namespace, pod, resource),
+    {},
+    {}
+  );
 };
 
 export const getErrorString = (error: AxiosError): string => {

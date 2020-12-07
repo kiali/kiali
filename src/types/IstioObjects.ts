@@ -139,6 +139,45 @@ export interface PodLogs {
   entries: LogEntry[];
 }
 
+export interface EnvoyProxyDump {
+  configDump?: EnvoyConfigDump;
+  bootstrap?: BootstrapSummary;
+  clusters?: ClusterSummary[];
+  listeners?: ListenerSummary[];
+  routes?: RouteSummary[];
+}
+
+export interface EnvoyConfigDump {
+  configs: any[];
+}
+
+export interface ClusterSummary {
+  service_fqdn: string;
+  port: number;
+  subset: string;
+  direction: string;
+  type: number;
+  destination_rule: string;
+}
+
+export interface ListenerSummary {
+  address: string;
+  port: number;
+  match: string;
+  destination: string;
+}
+
+export interface RouteSummary {
+  name: string;
+  domains: string;
+  match: string;
+  virtual_service: string;
+}
+
+export interface BootstrapSummary {
+  bootstrap: any;
+}
+
 export interface Service {
   name: string;
   createdAt: string;
