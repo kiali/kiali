@@ -297,28 +297,9 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
-		// Create HTTP client
-		httpTransport := &http.Transport{}
-		if cfg.InsecureSkipVerifyTLS {
-			httpTransport.TLSClientConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-		}
-
-		parsedUrl, err := url.Parse(trimmedIssuerUri)
-
+		httpClient, err := createHttpClient(trimmedIssuerUri)
 		if err != nil {
 			return nil, err
-		}
-
-		if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
-			proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPProxy)
-			httpTransport.Proxy = proxyFunc
-		}
-
-		httpClient := http.Client{
-			Timeout:   time.Second * 10,
-			Transport: httpTransport,
 		}
 
 		// Fetch IdP metadata
@@ -400,17 +381,9 @@ func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
 		}
 
 		// Create HTTP client
-		cfg := config.Get().Auth.OpenId
-		httpTransport := &http.Transport{}
-		if cfg.InsecureSkipVerifyTLS {
-			httpTransport.TLSClientConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-		}
-
-		httpClient := http.Client{
-			Timeout:   time.Second * 10,
-			Transport: httpTransport,
+		httpClient, err := createHttpClient(oidcMetadata.JWKSURL)
+		if err != nil {
+			return nil, err
 		}
 
 		// Fetch Keys document
@@ -491,9 +464,9 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 		}
 	}
 
-	httpClient := http.Client{
-		Timeout:   time.Second * 10,
-		Transport: httpTransport,
+	httpClient, err := createHttpClient(openIdMetadata.TokenURL)
+	if err != nil {
+		return err
 	}
 
 	// Exchange authorization code for a token
@@ -751,4 +724,32 @@ func parseTimeClaim(claimValue interface{}) (int64, error) {
 	}
 
 	return parsedTime, nil
+}
+
+func createHttpClient(toUrl string) (*http.Client, error) {
+	cfg := config.Get().Auth.OpenId
+	parsedUrl, err := url.Parse(toUrl)
+
+	if err != nil {
+		return nil, err
+	}
+
+	httpTransport := &http.Transport{}
+	if cfg.InsecureSkipVerifyTLS {
+		httpTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
+	}
+
+	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
+		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPProxy)
+		httpTransport.Proxy = proxyFunc
+	}
+
+	return &httpClient, nil
 }
