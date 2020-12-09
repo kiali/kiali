@@ -113,7 +113,7 @@ type Iter8CriterionAssessment struct {
 				Lower *float32 `json:"lower"`
 				Upper *float32 `json:"upper"`
 			} `json:"credible_interval"`
-		} `json:"ratio_statitics,omitempty"`
+		} `json:"ratio_statistics,omitempty"`
 	} `json:"statistics,omitempty"`
 	ThresholdAssessment *struct {
 		ThresholdBreached                bool     `json:"threshold_breached"`
