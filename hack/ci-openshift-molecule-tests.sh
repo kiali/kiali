@@ -50,12 +50,20 @@ Options:
     If true, an Istio control plane will be installed
     in 'istio-system' namespace if one does not already exist.
     If false, and no Istio is installed, this script aborts.
+    If you elect to install Istio, you can indicate which
+    Istio version you want via -iv option.
     Default: true
 
 -ir|--irc-room <irc room name>
     The freenode IRC room to send the results message.
     Set to "" to not send any message.
     Default: kiali-molecule-tests
+
+-iv|--istio-version <#.#.#>
+    The version of Istio you want to install.
+    This option is ignored if -ii is false.
+    If not specified, the latest version of Istio is installed.
+    Default: <the latest release>
 
 -kb|--kiali-branch <branch name>
     The kiali branch to clone.
@@ -146,6 +154,7 @@ while [[ $# -gt 0 ]]; do
     -hf|--helm-fork)              HELM_FORK="$2";             shift;shift; ;;
     -ii|--install-istio)          INSTALL_ISTIO="$2";         shift;shift; ;;
     -ir|--irc-room)               IRC_ROOM="$2";              shift;shift; ;;
+    -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -kb|--kiali-branch)           KIALI_BRANCH="$2";          shift;shift; ;;
     -kf|--kiali-fork)             KIALI_FORK="$2";            shift;shift; ;;
     -kob|--kiali-operator-branch) KIALI_OPERATOR_BRANCH="$2"; shift;shift; ;;
@@ -342,6 +351,10 @@ hack/purge-kiali-from-cluster.sh --client-exe "$OC"
 
 if ! $OC get namespace istio-system > /dev/null; then
   if [ "${INSTALL_ISTIO}" == "true" ]; then
+    if [ ! -z "${ISTIO_VERSION}" ]; then
+      DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+    fi
+    hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
     hack/istio/install-istio-via-istioctl.sh --client-exe-path "$OC"
   else
     infomsg "There is no 'istio-system' namespace, and this script was told not to install Istio. Aborting."
