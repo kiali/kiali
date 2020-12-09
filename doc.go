@@ -52,6 +52,15 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
+// swagger:parameters graphAggregate graphAggregateByService graphApp graphAppVersion graphService graphWorkload
+type ClusterParam struct {
+	// The cluster name. If not supplied queries/results will not be constrained by cluster.
+	//
+	// in: query
+	// required: false
+	Name string `json:"container"`
+}
+
 // swagger:parameters podLogs
 type ContainerParam struct {
 	// The pod container name. Optional for single-container pod. Otherwise required.
@@ -207,13 +216,13 @@ type GraphTypeParam struct {
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
-type GroupByParam struct {
-	// App box grouping characteristic. Available groupings: [app, none, version].
+type BoxByParam struct {
+	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
 	//
 	// in: query
 	// required: false
 	// default: none
-	Name string `json:"groupBy"`
+	Name string `json:"boxBy"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload

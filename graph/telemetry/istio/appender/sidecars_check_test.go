@@ -132,7 +132,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	node := graph.NewNode(graph.Unknown, "testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -141,7 +141,7 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 func buildAppTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
+	node := graph.NewNode(graph.Unknown, "testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -150,7 +150,7 @@ func buildAppTrafficMap() graph.TrafficMap {
 func buildServiceTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testNamespace", "svc", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	node := graph.NewNode(graph.Unknown, "testNamespace", "svc", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap

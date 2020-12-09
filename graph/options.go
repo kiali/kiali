@@ -27,13 +27,14 @@ const (
 )
 
 const (
-	GroupByApp                string = "app"
-	GroupByNone               string = "none"
-	GroupByVersion            string = "version"
+	BoxByApp                  string = "app"
+	BoxByCluster              string = "cluster"
+	BoxByNamespace            string = "namespace"
+	BoxByNone                 string = "none"
 	NamespaceIstio            string = "istio-system"
+	defaultBoxBy              string = BoxByNone
 	defaultDuration           string = "10m"
 	defaultGraphType          string = GraphTypeWorkload
-	defaultGroupBy            string = GroupByNone
 	defaultIncludeIdleEdges   bool   = false
 	defaultInjectServiceNodes bool   = false
 )
@@ -48,6 +49,7 @@ type NodeOptions struct {
 	Aggregate      string
 	AggregateValue string
 	App            string
+	Cluster        string
 	Namespace      string
 	Service        string
 	Version        string
@@ -64,7 +66,7 @@ type CommonOptions struct {
 
 // ConfigOptions are those supplied to Config Vendors
 type ConfigOptions struct {
-	GroupBy string
+	BoxBy string
 	CommonOptions
 }
 
@@ -110,10 +112,11 @@ func NewOptions(r *net_http.Request) Options {
 	var injectServiceNodes bool
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
+	boxBy := params.Get("boxBy")
+	cluster := params.Get("cluster")
 	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
-	groupBy := params.Get("groupBy")
 	includeIdleEdgesString := params.Get("includeIdleEdges")
 	injectServiceNodesString := params.Get("injectServiceNodes")
 	namespaces := params.Get("namespaces") // csl of namespaces
@@ -128,6 +131,9 @@ func NewOptions(r *net_http.Request) Options {
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
 
+	if cluster == "" {
+		cluster = Unknown
+	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
 	} else if configVendor != VendorCytoscape {
@@ -151,10 +157,21 @@ func NewOptions(r *net_http.Request) Options {
 	if app != "" && graphType != GraphTypeApp && graphType != GraphTypeVersionedApp {
 		BadRequest(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType))
 	}
-	if groupBy == "" {
-		groupBy = defaultGroupBy
-	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
-		BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
+	if boxBy == "" {
+		boxBy = defaultBoxBy
+	} else {
+		for _, box := range strings.Split(boxBy, ",") {
+			switch strings.TrimSpace(box) {
+			case BoxByApp:
+				continue
+			case BoxByCluster:
+				continue
+			case BoxByNamespace:
+				continue
+			default:
+				BadRequest(fmt.Sprintf("Invalid boxBy [%s]", boxBy))
+			}
+		}
 	}
 	if includeIdleEdgesString == "" {
 		includeIdleEdges = defaultIncludeIdleEdges
@@ -239,7 +256,7 @@ func NewOptions(r *net_http.Request) Options {
 		ConfigVendor:    configVendor,
 		TelemetryVendor: telemetryVendor,
 		ConfigOptions: ConfigOptions{
-			GroupBy: groupBy,
+			BoxBy: boxBy,
 			CommonOptions: CommonOptions{
 				Duration:  time.Duration(duration),
 				GraphType: graphType,
@@ -263,6 +280,7 @@ func NewOptions(r *net_http.Request) Options {
 				Aggregate:      aggregate,
 				AggregateValue: aggregateValue,
 				App:            app,
+				Cluster:        cluster,
 				Namespace:      namespace,
 				Service:        service,
 				Version:        version,

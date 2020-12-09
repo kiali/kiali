@@ -21,7 +21,7 @@ package handlers
 //   configVendor:    default: cytoscape
 //   duration:        time.Duration indicating desired query range duration, (default: 10m)
 //   graphType:       Determines how to present the telemetry data. app | service | versionedApp | workload (default: workload)
-//   groupBy:         If supported by vendor, visually group by a specified node attribute (default: version)
+//   boxBy:           If supported by vendor, visually box by a specified node attribute (default: none)
 //   namespaces:      Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:       Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   TelemetryVendor: default: istio
