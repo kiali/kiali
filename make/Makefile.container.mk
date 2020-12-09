@@ -114,7 +114,7 @@ container-push: container-push-kiali-quay
 	fi; \
 	if [[ $$(uname -s) == "Linux" ]]; then \
 	  echo "Ensuring QEMU is set up for this Linux host"; \
-	  if ! docker run --privileged --rm tonistiigi/binfmt --install all; then \
+	  if ! docker run --privileged --rm quay.io/kiali/binfmt:latest --install all; then \
 	    echo "Failed to ensure QEMU is set up. This build will be allowed to continue, but it may fail at a later step."; \
 	  fi \
 	fi
