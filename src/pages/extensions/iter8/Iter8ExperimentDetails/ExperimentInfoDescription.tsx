@@ -21,6 +21,8 @@ import {
   PopoverPosition,
   Stack,
   StackItem,
+  Tab,
+  Tabs,
   Text,
   TextVariants,
   Title,
@@ -38,6 +40,10 @@ import jsyaml from 'js-yaml';
 import YAML from 'yaml';
 import { KialiIcon } from '../../../../config/KialiIcon';
 import { style } from 'typestyle';
+import equal from 'fast-deep-equal';
+import TrafficControlInfo from './TrafficControlInfo';
+import ErrorBoundaryWithMessage from '../../../../components/ErrorBoundary/ErrorBoundaryWithMessage';
+import { PfColors } from '../../../../components/Pf/PfColors';
 
 interface ExperimentInfoDescriptionProps {
   target: string;
@@ -47,19 +53,23 @@ interface ExperimentInfoDescriptionProps {
   actionTaken: string;
 }
 
-type MiniGraphCardState = {
+type ExperimentInfoState = {
   isKebabOpen: boolean;
+  isUpdated: boolean;
 };
 
 const infoStyle = style({
   margin: '0px 16px 2px 4px'
 });
 
-class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps, MiniGraphCardState> {
+class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptionProps, ExperimentInfoState> {
   constructor(props) {
     super(props);
 
-    this.state = { isKebabOpen: false };
+    this.state = {
+      isKebabOpen: false,
+      isUpdated: false
+    };
   }
 
   serviceLink(namespace: string, workload: string) {
@@ -129,6 +139,10 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
         <Text>{bpercentage} %</Text>
       </DataListCell>
     ];
+  }
+
+  defaultTab() {
+    return 'trafficControl';
   }
 
   gatewayInfo(badgeKind: string, namespace: string, gatewayname: string) {
@@ -201,11 +215,19 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
           <Title style={{ float: 'left' }} headingLevel="h3" size="2xl">
             <Badge className={'virtualitem_badge_definition'}>{this.props.experimentDetails.experimentType}</Badge>
             &nbsp;&nbsp;
-            {this.props.experimentDetails !== undefined ? this.props.experimentDetails.experimentItem.name : 'N/A'}
+            {this.props.experimentDetails.experimentItem.name}
           </Title>
         </CardHeader>
       </CardHead>
     ];
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!equal(this.props.experiment, prevProps.experiment)) {
+      this.setState({ isUpdated: true });
+    } else if (equal(this.props.experiment, prevProps.experiment) && this.state.isUpdated) {
+      this.setState({ isUpdated: false });
+    }
   }
 
   render() {
@@ -226,195 +248,228 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
         ? this.props.experimentDetails.networking.hosts.length > 0
         : false
       : false;
-
+    let winnerInfo = '';
+    let additionInfo = '';
+    if (this.props.experimentDetails.experimentItem.status.indexOf('Abort') > 0) {
+      winnerInfo = ' (Tentative)';
+      additionInfo = ' at the time of Termination(Abort).';
+    }
     return (
-      <RenderComponentScroll>
-        <Grid gutter="md">
-          <GridItem span={6}>
-            <Card style={{ height: '100%' }}>
-              {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? this.renderCardHead() : ''}
-              <CardBody>
-                <DataList aria-label="baseline and candidate">
-                  {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? (
-                    <DataListItem aria-labelledby="target">
-                      <DataListItemRow>
-                        <DataListItemCells dataListCells={this.serviceInfo()} />
-                        <DataListItemCells dataListCells={this.serviceLinkCell(targetNamespace, targetService)} />
-                      </DataListItemRow>
-                    </DataListItem>
-                  ) : (
-                    ''
-                  )}
-
-                  <DataListItem aria-labelledby="Baseline">
-                    <DataListItemRow>
-                      <DataListItemCells
-                        dataListCells={this.baselineInfo(
-                          'Baseline',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline.name : '',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
+      <>
+        <RenderComponentScroll>
+          <Grid gutter="md">
+            <GridItem span={12}>
+              <Grid gutter="md">
+                <GridItem span={6}>
+                  <Card style={{ height: '100%' }}>
+                    {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? this.renderCardHead() : ''}
+                    <CardBody>
+                      <DataList aria-label="baseline and candidate">
+                        {this.props.experimentDetails?.experimentItem.kind === 'Deployment' ? (
+                          <DataListItem aria-labelledby="target">
+                            <DataListItemRow>
+                              <DataListItemCells dataListCells={this.serviceInfo()} />
+                              <DataListItemCells dataListCells={this.serviceLinkCell(targetNamespace, targetService)} />
+                            </DataListItemRow>
+                          </DataListItem>
+                        ) : (
+                          ''
                         )}
-                      />
-                      <DataListItemCells
-                        dataListCells={this.percentageInfo(
-                          'Baseline',
-                          this.props.experimentDetails ? this.props.experimentDetails.experimentItem.baseline.weight : 0
-                        )}
-                      />
-                    </DataListItemRow>
-                  </DataListItem>
-                  {this.props.experimentDetails?.experimentItem.candidates.map(can => {
-                    let kind = this.props.experimentDetails?.experimentItem.kind
-                      ? this.props.experimentDetails?.experimentItem.kind
-                      : 'Deployment';
-                    return (
-                      <DataListItem aria-labelledby="Candidate">
-                        <DataListItemRow>
-                          <DataListItemCells dataListCells={this.baselineInfo('Candidate', can.name, kind)} />
-                          <DataListItemCells dataListCells={this.percentageInfo('Candidate', can.weight)} />
-                        </DataListItemRow>
-                      </DataListItem>
-                    );
-                  })}
-                  {hasHosts ? (
-                    <DataListItem aria-labelledby="Gateway">
-                      <DataListItemRow>
-                        <DataListItemCells
-                          dataListCells={this.gatewayInfo(
-                            'H',
 
-                            this.props.namespace,
-                            this.props.experimentDetails.networking
-                              ? this.props.experimentDetails.networking.hosts[0].gateway
-                              : ''
+                        <DataListItem aria-labelledby="Baseline">
+                          <DataListItemRow>
+                            <DataListItemCells
+                              dataListCells={this.baselineInfo(
+                                'Baseline',
+                                this.props.experimentDetails
+                                  ? this.props.experimentDetails.experimentItem.baseline.name
+                                  : '',
+                                this.props.experimentDetails ? this.props.experimentDetails.experimentItem.kind : ''
+                              )}
+                            />
+                            <DataListItemCells
+                              dataListCells={this.percentageInfo(
+                                'Baseline',
+                                this.props.experimentDetails
+                                  ? this.props.experimentDetails.experimentItem.baseline.weight
+                                  : 0
+                              )}
+                            />
+                          </DataListItemRow>
+                        </DataListItem>
+                        {this.props.experimentDetails?.experimentItem.candidates.map(can => {
+                          let kind = this.props.experimentDetails?.experimentItem.kind
+                            ? this.props.experimentDetails?.experimentItem.kind
+                            : 'Deployment';
+                          return (
+                            <DataListItem aria-labelledby="Candidate">
+                              <DataListItemRow>
+                                <DataListItemCells dataListCells={this.baselineInfo('Candidate', can.name, kind)} />
+                                <DataListItemCells dataListCells={this.percentageInfo('Candidate', can.weight)} />
+                              </DataListItemRow>
+                            </DataListItem>
+                          );
+                        })}
+                        {hasHosts ? (
+                          <DataListItem aria-labelledby="Gateway">
+                            <DataListItemRow>
+                              <DataListItemCells
+                                dataListCells={this.gatewayInfo(
+                                  'H',
+
+                                  this.props.namespace,
+                                  this.props.experimentDetails.networking
+                                    ? this.props.experimentDetails.networking.hosts[0].gateway
+                                    : ''
+                                )}
+                              />
+                              <DataListItemCells
+                                dataListCells={
+                                  <DataListCell key="gateway">
+                                    <Text>Name</Text>
+                                    <Text component={TextVariants.h3}>
+                                      {this.props.experimentDetails.networking
+                                        ? this.props.experimentDetails.networking.hosts[0].name
+                                        : ''}
+                                    </Text>
+                                  </DataListCell>
+                                }
+                              />
+                            </DataListItemRow>
+                          </DataListItem>
+                        ) : (
+                          <></>
+                        )}
+                      </DataList>
+                    </CardBody>
+                  </Card>
+                </GridItem>
+                <GridItem span={6}>
+                  <Card style={{ height: '100%' }}>
+                    <CardBody>
+                      <Stack gutter="md" style={{ marginTop: '10px' }}>
+                        <StackItem id={'Status'}>
+                          <Text component={TextVariants.h3}> Status: </Text>
+                          {statusString}
+                        </StackItem>
+                        <StackItem id={'Status'}>
+                          <Text component={TextVariants.h3}> Phase: </Text>
+                          {this.props.experimentDetails ? this.props.experimentDetails.experimentItem.phase : ''}
+                        </StackItem>
+                        <StackItem id={'Winner'}>
+                          {this.props.experimentDetails.experimentItem.endTime !== '' ? (
+                            <Grid>
+                              <GridItem span={12}>
+                                <StackItem>
+                                  {this.props.experimentDetails.experimentItem.winner.winning_version_found ? (
+                                    <>
+                                      <Text component={TextVariants.h3}> Winner Found: {winnerInfo}</Text>
+                                      {this.props.experimentDetails.experimentItem.winner.name}
+                                      <Tooltip
+                                        key={'winnerTooltip'}
+                                        aria-label={'Winner Tooltip'}
+                                        position={PopoverPosition.auto}
+                                        className={'health_indicator'}
+                                        content={
+                                          <>
+                                            {'Winning version identified by iter8 analytics'}
+                                            {additionInfo}
+                                          </>
+                                        }
+                                      >
+                                        <KialiIcon.Info className={infoStyle} />
+                                      </Tooltip>
+                                    </>
+                                  ) : (
+                                    <Text component={TextVariants.h3}> Winner not Found </Text>
+                                  )}
+                                </StackItem>
+                              </GridItem>
+                            </Grid>
+                          ) : (
+                            <Grid>
+                              <GridItem span={6}>
+                                <StackItem>
+                                  <Text component={TextVariants.h3}>
+                                    {' '}
+                                    {this.props.experimentDetails.experimentItem.endTime === ''
+                                      ? 'Current Best Version'
+                                      : 'Winner Version'}{' '}
+                                  </Text>
+                                  {this.props.experimentDetails.experimentItem.winner.name}
+                                </StackItem>
+                              </GridItem>
+                              <GridItem span={6}>
+                                <StackItem>
+                                  <Text component={TextVariants.h3}> Probability of Winning: </Text>
+                                  {
+                                    this.props.experimentDetails.experimentItem.winner
+                                      .probability_of_winning_for_best_version
+                                  }
+                                </StackItem>
+                              </GridItem>
+                            </Grid>
                           )}
-                        />
-                        <DataListItemCells
-                          dataListCells={
-                            <DataListCell key="gateway">
-                              <Text>Name</Text>
-                              <Text component={TextVariants.h3}>
-                                {this.props.experimentDetails.networking
-                                  ? this.props.experimentDetails.networking.hosts[0].name
-                                  : ''}
-                              </Text>
-                            </DataListCell>
-                          }
-                        />
-                      </DataListItemRow>
-                    </DataListItem>
-                  ) : (
-                    <></>
-                  )}
-                </DataList>
-              </CardBody>
-            </Card>
-          </GridItem>
-          <GridItem span={6}>
-            <Card style={{ height: '100%' }}>
-              <CardBody>
-                <Stack gutter="md" style={{ marginTop: '10px' }}>
-                  <StackItem id={'Status'}>
-                    <Text component={TextVariants.h3}> Status: </Text>
-                    {statusString}
-                  </StackItem>
-                  <StackItem id={'Status'}>
-                    <Text component={TextVariants.h3}> Phase: </Text>
-                    {this.props.experimentDetails ? this.props.experimentDetails.experimentItem.phase : ''}
-                  </StackItem>
-                  <StackItem id={'Winner'}>
-                    {this.props.experimentDetails.experimentItem.endTime !== '' ? (
-                      <Grid>
-                        <GridItem span={12}>
-                          <StackItem>
-                            {this.props.experimentDetails.experimentItem.winner.winning_version_found ? (
-                              <>
-                                <Text component={TextVariants.h3}> Winner Found:</Text>
-                                {this.props.experimentDetails.experimentItem.winner.name}
-                                <Tooltip
-                                  key={'winnerTooltip'}
-                                  aria-label={'Winner Tooltip'}
-                                  position={PopoverPosition.auto}
-                                  className={'health_indicator'}
-                                  content={<>{'Winning version identified by iter8 analytics'}</>}
-                                >
-                                  <KialiIcon.Info className={infoStyle} />
-                                </Tooltip>
-                              </>
-                            ) : (
-                              <Text component={TextVariants.h3}> Winner not Found </Text>
-                            )}
-                          </StackItem>
-                        </GridItem>
-                      </Grid>
-                    ) : (
-                      <Grid>
-                        <GridItem span={6}>
-                          <StackItem>
-                            <Text component={TextVariants.h3}>
-                              {' '}
-                              {this.props.experimentDetails.experimentItem.endTime === ''
-                                ? 'Current Best Version'
-                                : 'Winner Version'}{' '}
-                            </Text>
-                            {this.props.experimentDetails.experimentItem.winner.name}
-                          </StackItem>
-                        </GridItem>
-                        <GridItem span={6}>
-                          <StackItem>
-                            <Text component={TextVariants.h3}> Probability of Winning: </Text>
-                            {this.props.experimentDetails.experimentItem.winner.probability_of_winning_for_best_version}
-                          </StackItem>
-                        </GridItem>
-                      </Grid>
-                    )}
-                  </StackItem>
-                  <StackItem>
-                    <Grid>
-                      <GridItem span={4}>
-                        <StackItem id={'started_at'}>
-                          <Text component={TextVariants.h3}> Created at </Text>
-                          <LocalTime
-                            time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.initTime
-                                ? this.props.experimentDetails.experimentItem.initTime
-                                : ''
-                            }
-                          />
                         </StackItem>
-                      </GridItem>
-                      <GridItem span={4}>
-                        <StackItem id={'started_at'}>
-                          <Text component={TextVariants.h3}> Started at </Text>
-                          <LocalTime
-                            time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.startTime
-                                ? this.props.experimentDetails.experimentItem.startTime
-                                : ''
-                            }
-                          />
+                        <StackItem>
+                          <Grid>
+                            <GridItem span={4}>
+                              <StackItem id={'started_at'}>
+                                <Text component={TextVariants.h3}> Created at </Text>
+                                <LocalTime
+                                  time={
+                                    this.props.experimentDetails && this.props.experimentDetails.experimentItem.initTime
+                                      ? this.props.experimentDetails.experimentItem.initTime
+                                      : ''
+                                  }
+                                />
+                              </StackItem>
+                            </GridItem>
+                            <GridItem span={4}>
+                              <StackItem id={'started_at'}>
+                                <Text component={TextVariants.h3}> Started at </Text>
+                                <LocalTime
+                                  time={
+                                    this.props.experimentDetails &&
+                                    this.props.experimentDetails.experimentItem.startTime
+                                      ? this.props.experimentDetails.experimentItem.startTime
+                                      : ''
+                                  }
+                                />
+                              </StackItem>
+                            </GridItem>
+                            <GridItem span={4}>
+                              <StackItem id={'ended_at'}>
+                                <Text component={TextVariants.h3}> Ended at </Text>
+                                <LocalTime
+                                  time={
+                                    this.props.experimentDetails && this.props.experimentDetails.experimentItem.endTime
+                                      ? this.props.experimentDetails.experimentItem.endTime
+                                      : ''
+                                  }
+                                />
+                              </StackItem>
+                            </GridItem>
+                          </Grid>
                         </StackItem>
-                      </GridItem>
-                      <GridItem span={4}>
-                        <StackItem id={'ended_at'}>
-                          <Text component={TextVariants.h3}> Ended at </Text>
-                          <LocalTime
-                            time={
-                              this.props.experimentDetails && this.props.experimentDetails.experimentItem.endTime
-                                ? this.props.experimentDetails.experimentItem.endTime
-                                : ''
-                            }
-                          />
-                        </StackItem>
-                      </GridItem>
-                    </Grid>
-                  </StackItem>
-                </Stack>
-              </CardBody>
-            </Card>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
+                      </Stack>
+                    </CardBody>
+                  </Card>
+                </GridItem>
+              </Grid>
+            </GridItem>
+            <GridItem span={12}>
+              <Tabs isFilled={false} activeKey={0}>
+                <Tab title={'Traffic Control'} eventKey={0} style={{ backgroundColor: PfColors.White }}>
+                  <ErrorBoundaryWithMessage message={'Something went wrong'}>
+                    <TrafficControlInfo trafficControl={this.props.experimentDetails.trafficControl} />
+                  </ErrorBoundaryWithMessage>
+                </Tab>
+              </Tabs>
+            </GridItem>
+          </Grid>
+        </RenderComponentScroll>
+      </>
     );
   }
 

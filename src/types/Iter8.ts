@@ -30,7 +30,7 @@ export interface RatioStatitics {
 
 export interface Statistics {
   value: number;
-  ratio_statitics: RatioStatitics;
+  ratio_statistics: RatioStatitics;
 }
 
 export interface ThresholdAssessment {
@@ -53,6 +53,7 @@ export interface MetricProgressInfo {
   unit: string;
   isReward: boolean;
 }
+
 export interface Iter8Experiment {
   name: string;
   phase: string;
@@ -83,7 +84,7 @@ export interface ExpId {
 }
 
 export interface TrafficControl {
-  algorithm: string;
+  strategy: string;
   maxIncrement: number;
   onTermination: string;
   match: {
@@ -95,11 +96,13 @@ export interface HttpMatch {
   headers: HeaderMatch[];
   uri: URIMatch;
 }
+
 export interface Duration {
   interval: string;
   intervalInSecond: number;
   maxIterations: number;
 }
+
 export interface Iter8ExpDetailsInfo {
   experimentItem: Iter8Experiment;
   criterias: CriteriaInfoDetail[];
@@ -145,7 +148,7 @@ export const emptyExperimentDetailsInfo: Iter8ExpDetailsInfo = {
   experimentItem: emptyExperimentItem,
   criterias: [],
   trafficControl: {
-    algorithm: 'check_and_increment',
+    strategy: 'check_and_increment',
     maxIncrement: 2,
     onTermination: 'to_winner',
     match: {
@@ -195,6 +198,7 @@ export interface CriteriaInfoDetail {
   criteria: Iter8Criteria;
   metric: Iter8Metric;
 }
+
 export interface Iter8Criteria {
   metric: string;
   tolerance: number;
@@ -237,7 +241,7 @@ export interface URIMatch {
 
 export interface ExperimentAction {
   action: string;
-  trafficSplit: [string, number][];
+  trafficSplit: [string, string][];
 }
 
 export interface ExperimentSpec {

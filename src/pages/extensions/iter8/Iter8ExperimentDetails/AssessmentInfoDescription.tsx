@@ -10,9 +10,15 @@ import {
   Title,
   Tooltip
 } from '@patternfly/react-core';
-import { ChartBullet, ChartThemeColor } from '@patternfly/react-charts';
+import { ChartBullet, ChartLegend, ChartThemeColor, ChartThemeVariant } from '@patternfly/react-charts';
 
-import { emptyExperimentItem, Iter8Experiment, Iter8Info, MetricProgressInfo } from '../../../../types/Iter8';
+import {
+  emptyExperimentItem,
+  Iter8Experiment,
+  Iter8Info,
+  MetricProgressInfo,
+  Statistics
+} from '../../../../types/Iter8';
 import {
   cellWidth,
   expandable,
@@ -34,9 +40,6 @@ import { KialiAppState } from '../../../../store/Store';
 import { durationSelector, lastRefreshAtSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
 import * as API from '../../../../services/Api';
-
-const classNames = require('classnames');
-const paddingStyle = style({ padding: '0px 0px 0px 0px' });
 
 interface AssesmentInfoDescriptionProps {
   lastRefreshAt: TimeInMilliseconds;
@@ -114,7 +117,13 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
     });
   }
 
-  renderTresholdBar(idx, name, value) {
+  getLegend(total, idx) {
+    const shown = idx === total - 1 ? "{[{ name: 'Current Measurement'}]}" : '{}';
+    return shown;
+  }
+
+  renderTresholdBar(total, idx, name, statistics: Statistics) {
+    let value = statistics.value;
     if (value === undefined) {
       return (
         <>
@@ -144,7 +153,7 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
       maxDomain = Number((Number((this.getMaxThreshold(name) * baseLineValue).toFixed(2)) * 1.1).toFixed(0));
     }
 
-    maxDomain = value > maxDomain ? value.toFixed(2) : maxDomain.toFixed(2);
+    maxDomain = value > maxDomain ? Number(value.toFixed(2)) : Number(maxDomain.toFixed(2));
 
     let color;
     let range1 = 0;
@@ -172,6 +181,39 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
         range2Name = 'Upper Limit';
       }
     }
+    let marginBottom =
+      idx === total - 1 ? (statistics.ratio_statistics?.credible_interval.upper != null ? 120 : 100) : 0;
+    let height = idx === total - 1 ? 20 : 110;
+
+    let lowerCredible =
+      statistics.ratio_statistics?.credible_interval.upper != null
+        ? [{ name: 'Credible Lower Range', y: statistics.ratio_statistics.credible_interval.lower }]
+        : [];
+    let higherCredible =
+      statistics.ratio_statistics?.credible_interval.upper != null
+        ? [{ name: 'Credible Upper Range', y: statistics.ratio_statistics.credible_interval.upper }]
+        : [];
+    let dataLegend =
+      statistics.ratio_statistics?.credible_interval.upper != null
+        ? [
+            { name: 'Credible Lower Range', symbol: { type: 'minus' } },
+            { name: 'Credible Higher Range', symbol: { type: 'minus' } },
+            { name: 'Exception' },
+            { name: 'Threshold' },
+            { name: 'Measurement inside threshold' },
+            { name: 'Measurement outside threshold' }
+          ]
+        : [
+            { name: 'Exception' },
+            { name: 'Threshold' },
+            { name: 'Measurement inside threshold' },
+            { name: 'Measurement outside threshold' }
+          ];
+    let colorScale =
+      statistics.ratio_statistics?.credible_interval.upper != null
+        ? ['#ec7a08', '#c9190a', '#ededed', '#d2d2d2', '#0466cc', '#ec7a08']
+        : ['#ededed', '#d2d2d2', '#0466cc', '#ec7a08'];
+    let legendHeight = statistics.ratio_statistics?.credible_interval.upper != null ? 60 : 40;
     return (
       <>
         {idx === 0 ? '' : <Divider />}
@@ -179,28 +221,40 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
           <GridItem span={4}>{name}</GridItem>
           <GridItem span={2}>{valueString}</GridItem>
           <GridItem span={6}>
-            <div className={classNames(paddingStyle)}>
+            <div style={{ marginTop: -50, marginBottom: marginBottom }}>
               <ChartBullet
-                legendPosition={'right'}
                 qualitativeRangeData={[
                   { name: range1Name, y: range1 },
                   { name: range2Name, y: range2 }
                 ]}
                 maxDomain={{ y: Number(maxDomain) }}
-                primarySegmentedMeasureData={[{ name: 'Measure', y: valueString }]}
+                comparativeWarningMeasureData={lowerCredible}
+                comparativeErrorMeasureData={higherCredible}
+                primarySegmentedMeasureData={[{ name: 'Current ', y: valueString }]}
                 constrainToVisibleArea
                 themeColor={color}
-                padding={{
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  top: 0
-                }}
-                height={110}
+                themeVariant={ChartThemeVariant.dark}
+                padding={{ bottom: 0, left: 0, right: 0, top: 0 }}
+                height={height}
                 standalone={true}
                 labels={({ datum }) => `${datum.name}: ${datum.y}`}
+                legendPosition="bottom"
               />
             </div>
+
+            {idx === total - 1 ? (
+              <>
+                <ChartLegend
+                  data={dataLegend}
+                  style={{ labels: { fontSize: 12 } }}
+                  colorScale={colorScale}
+                  itemsPerRow={2}
+                  height={legendHeight}
+                />
+              </>
+            ) : (
+              <></>
+            )}
           </GridItem>
         </Grid>
       </>
@@ -264,7 +318,7 @@ class AssessmentInfoDescriptionTab extends React.Component<AssesmentInfoDescript
                 assessment.criterionAssessment.map((c, i) => {
                   return (
                     <Grid gutter="md">
-                      <GridItem span={12}>{this.renderTresholdBar(i, c.metric_id, c.statistics.value)}</GridItem>
+                      {this.renderTresholdBar(assessment.criterionAssessment.length, i, c.metric_id, c.statistics)}
                     </Grid>
                   );
                 })}

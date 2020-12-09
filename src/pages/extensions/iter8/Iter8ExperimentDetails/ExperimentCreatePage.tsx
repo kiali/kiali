@@ -100,7 +100,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
         candidates: [],
         experimentKind: 'Deployment',
         trafficControl: {
-          algorithm: 'progressive',
+          strategy: 'progressive',
           maxIncrement: 10,
           onTermination: 'to_winner',
           match: {
@@ -416,7 +416,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
                 showMaxIncrement: false
               });
             }
-            newExperiment.trafficControl.algorithm = value.trim();
+            newExperiment.trafficControl.strategy = value.trim();
             break;
           case 'onTermination':
             newExperiment.trafficControl.onTermination = value.trim();
@@ -772,7 +772,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
               helperText="Strategy used to analyze the candidate and shift the traffic"
             >
               <FormSelect
-                value={this.state.experiment.trafficControl.algorithm}
+                value={this.state.experiment.trafficControl.strategy}
                 id="algorithm"
                 name="Algorithm"
                 onChange={value => this.changeExperiment('algorithm', value)}
