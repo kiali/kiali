@@ -6,12 +6,14 @@
     "nodes": [
       {
         "data": {
-          "id": "7fb749d8703ff9fde566213cb1c98b41",
+          "id": "c2fbd34235fb33d25809469e43f19344",
           "nodeType": "service",
+          "cluster": "cluster-bookinfo",
           "namespace": "bookinfo",
           "service": "app.example.com",
           "destServices": [
             {
+              "cluster": "cluster-bookinfo",
               "namespace": "bookinfo",
               "name": "app.example.com"
             }
@@ -28,14 +30,16 @@
       },
       {
         "data": {
-          "id": "a1ffc0d6abdf480e17b214b85257e633",
+          "id": "d4f8c4953121af1b02155b494ebb6063",
           "nodeType": "app",
+          "cluster": "cluster-bookinfo",
           "namespace": "bookinfo",
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
           "destServices": [
             {
+              "cluster": "cluster-bookinfo",
               "namespace": "bookinfo",
               "name": "productpage"
             }
@@ -52,8 +56,10 @@
       },
       {
         "data": {
-          "id": "332209947916c37701f39500789b6792",
+          "id": "ddedb716cef6d38da883fcb5ca8797e9",
+          "parent": "fa75195fe2333d2362fce7f62eaeac7e",
           "nodeType": "app",
+          "cluster": "cluster-cp",
           "namespace": "istio-system",
           "workload": "istio-egressgateway",
           "app": "istio-egressgateway",
@@ -65,19 +71,22 @@
                 "httpOut": "400.00"
               }
             }
-          ]
+          ],
+          "isRoot": true
         }
       },
       {
         "data": {
-          "id": "d75c918a12f72a1ea1797911cb9770f7",
+          "id": "11de61605e36ab80a0b85d03f8d48a48",
           "nodeType": "app",
+          "cluster": "cluster-tutorial",
           "namespace": "tutorial",
           "workload": "customer-v1",
           "app": "customer",
           "version": "v1",
           "destServices": [
             {
+              "cluster": "cluster-tutorial",
               "namespace": "tutorial",
               "name": "customer"
             }
@@ -101,12 +110,59 @@
       },
       {
         "data": {
-          "id": "c4d8519b61e39974286357006b354f99",
+          "id": "fa75195fe2333d2362fce7f62eaeac7e",
+          "nodeType": "app",
+          "cluster": "unknown",
+          "namespace": "istio-system",
+          "app": "istio-egressgateway",
+          "isGroup": "app"
+        }
+      },
+      {
+        "data": {
+          "id": "2b8c0b20b3d123cfd18420b39505349e",
+          "parent": "fa75195fe2333d2362fce7f62eaeac7e",
+          "nodeType": "app",
+          "cluster": "unknown",
+          "namespace": "istio-system",
+          "workload": "istio-egressgateway",
+          "app": "istio-egressgateway",
+          "version": "latest",
+          "destServices": [
+            {
+              "cluster": "unknown",
+              "namespace": "istio-system",
+              "name": "istio-egressgateway"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcIn": "600.00",
+                "grpcInNoResponse": "600.00"
+              }
+            },
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "900.00",
+                "httpInNoResponse": "500.00"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "id": "7f92c6688ae60c2f8095fff466a1a7fa",
           "nodeType": "service",
+          "cluster": "unknown",
           "namespace": "unknown",
           "service": "app.example-2.com",
           "destServices": [
             {
+              "cluster": "unknown",
               "namespace": "unknown",
               "name": "app.example-2.com"
             }
@@ -124,8 +180,9 @@
       },
       {
         "data": {
-          "id": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
           "nodeType": "unknown",
+          "cluster": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
           "app": "unknown",
@@ -152,81 +209,9 @@
     "edges": [
       {
         "data": {
-          "id": "b8652735083f361a13ab190a26f37e89",
-          "source": "332209947916c37701f39500789b6792",
-          "target": "c4d8519b61e39974286357006b354f99",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "400.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "app.example-2.com": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "e0040271cbc5fd1bcf9e605d7a2c367d",
-          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
-          "target": "a1ffc0d6abdf480e17b214b85257e633",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "50.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "1f024523da856e5b5a549d4a64b26cd3",
-          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
-          "target": "d75c918a12f72a1ea1797911cb9770f7",
-          "traffic": {
-            "protocol": "grpc",
-            "rates": {
-              "grpc": "50.00",
-              "grpcPercentReq": "100.0"
-            },
-            "responses": {
-              "0": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "customer:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "864c8eae6f988891d9df2d9f378eece5",
-          "source": "d75c918a12f72a1ea1797911cb9770f7",
-          "target": "332209947916c37701f39500789b6792",
+          "id": "77899caeb6bf5939c31a1966cdf977f7",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "2b8c0b20b3d123cfd18420b39505349e",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -258,9 +243,9 @@
       },
       {
         "data": {
-          "id": "485623cf19d454363bc392d13e19902f",
-          "source": "d75c918a12f72a1ea1797911cb9770f7",
-          "target": "332209947916c37701f39500789b6792",
+          "id": "21376d8a16db38773a4f5c4f08b50f06",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "2b8c0b20b3d123cfd18420b39505349e",
           "traffic": {
             "protocol": "grpc",
             "rates": {
@@ -284,9 +269,9 @@
       },
       {
         "data": {
-          "id": "62adcb3e419f4bcee6f1528dd9d2eb56",
-          "source": "d75c918a12f72a1ea1797911cb9770f7",
-          "target": "7fb749d8703ff9fde566213cb1c98b41",
+          "id": "94e90d3a3a2fa9f92042e6c4bac9a584",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "c2fbd34235fb33d25809469e43f19344",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -308,9 +293,9 @@
       },
       {
         "data": {
-          "id": "de3e83491767bce819c83b9f9a75b497",
-          "source": "d75c918a12f72a1ea1797911cb9770f7",
-          "target": "a1ffc0d6abdf480e17b214b85257e633",
+          "id": "0d2c42e0ce8e8657642ea70e2d9f2e4d",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "d4f8c4953121af1b02155b494ebb6063",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -324,6 +309,78 @@
                 },
                 "hosts": {
                   "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "7538d228a4a583d292019bfc8c4ce6d6",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "11de61605e36ab80a0b85d03f8d48a48",
+          "traffic": {
+            "protocol": "grpc",
+            "rates": {
+              "grpc": "50.00",
+              "grpcPercentReq": "100.0"
+            },
+            "responses": {
+              "0": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "customer:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "a7a647415970806452ba65adfe29f7e0",
+          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "target": "d4f8c4953121af1b02155b494ebb6063",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "4fc5a84e4417d16fe352d3b5d749dcc4",
+          "source": "ddedb716cef6d38da883fcb5ca8797e9",
+          "target": "7f92c6688ae60c2f8095fff466a1a7fa",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "400.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "app.example-2.com": "100.0"
                 }
               }
             }

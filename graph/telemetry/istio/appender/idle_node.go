@@ -66,7 +66,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 	idleNodeTrafficMap := graph.NewTrafficMap()
 
 	for _, s := range services {
-		id, nodeType := graph.Id(namespace, s.Service.Name, "", "", "", "", a.GraphType)
+		id, nodeType := graph.Id(graph.Unknown, namespace, s.Service.Name, "", "", "", "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for service [%s]", s.Service.Name)
@@ -91,7 +91,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 		if v, ok := labels[versionLabel]; ok {
 			version = v
 		}
-		id, nodeType := graph.Id("", "", namespace, w.Name, app, version, a.GraphType)
+		id, nodeType := graph.Id(graph.Unknown, "", "", namespace, w.Name, app, version, a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)

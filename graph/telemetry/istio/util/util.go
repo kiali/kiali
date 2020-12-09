@@ -3,15 +3,32 @@ package util
 import (
 	"fmt"
 	"regexp"
-	"strings"
+
+	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 )
 
 // badServiceMatcher looks for a physical IP address with optional port (e.g. 10.11.12.13:80)
 var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
 var egressHost string
+
+// HandleClusters just sets source an dest cluster to unknown if it is not supplied on the telemetry
+func HandleClusters(lSourceCluster model.LabelValue, sourceClusterOk bool, lDestCluster model.LabelValue, destClusterOk bool) (sourceCluster, destCluster string) {
+	if sourceClusterOk {
+		sourceCluster = string(lSourceCluster)
+	} else {
+		sourceCluster = graph.Unknown
+	}
+	if destClusterOk {
+		destCluster = string(lDestCluster)
+	} else {
+		destCluster = graph.Unknown
+	}
+	return sourceCluster, destCluster
+}
 
 // HandleDestination modifies the destination information, when necessary, for various corner
 // cases.  It should be called after source validation and before destination processing.
@@ -63,13 +80,18 @@ func HandleDestination(sourceWlNs, sourceWl, destSvcNs, destSvc, destSvcName, de
 //
 // Returns destSvcNs, destSvcName, isUpdated
 func handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName string) (string, string, bool) {
-	if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown {
-		destSvcNameEntries := strings.Split(destSvcName, ".")
+	// *** TODO *** commenting this logic out as part of the 1.8 MC work, on the assumption that Istio should be
+	// improving the MC reporting starting with 1.8.  We'll see whether we need any of this logic as we move
+	// forward...  If not this function should be deleted.
+	/*
+		if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown {
+			destSvcNameEntries := strings.Split(destSvcName, ".")
 
-		if len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
-			return destSvcNameEntries[1], destSvcNameEntries[0], true
+			if len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
+				return destSvcNameEntries[1], destSvcNameEntries[0], true
+			}
 		}
-	}
+	*/
 
 	return destSvcNs, destSvcName, false
 }
@@ -98,19 +120,40 @@ func HandleResponseCode(protocol, responseCode string, grpcResponseStatusOk bool
 }
 
 // IsBadSourceTelemetry tests for known issues in generated telemetry given indicative label values.
-// 1) source namespace is provided with neither workload nor app
-// 2) no more conditions known
-func IsBadSourceTelemetry(ns, wl, app string) bool {
+// 1) source namespace is ok but neither workload nor app are set
+// 2) source namespace is ok and source_cluster is provided but not ok.
+// 3) no more conditions known
+func IsBadSourceTelemetry(lCluster model.LabelValue, clusterOK bool, ns, wl, app string) bool {
 	// case1
-	return graph.IsOK(ns) && !graph.IsOK(wl) && !graph.IsOK(app)
+	if graph.IsOK(ns) && !graph.IsOK(wl) && !graph.IsOK(app) {
+		log.Debugf("Skipping bad source telemetry [case 1] [%s] [%s] [%s]", ns, wl, app)
+		return true
+	}
+	// case2
+	if graph.IsOK(ns) && clusterOK && !graph.IsOK(string(lCluster)) {
+		log.Debugf("Skipping bad source telemetry [case 2] [%s] [%s] [%s] [%s]", ns, wl, app, string(lCluster))
+		return true
+	}
+
+	return false
 }
 
 // IsBadDestTelemetry tests for known issues in generated telemetry given indicative label values.
 // 1) During pod lifecycle changes incomplete telemetry may be generated that results in
 //    destSvc == destSvcName and no dest workload, where destSvc[Name] is in the form of an IP address.
-// 2) no more conditions known
-func IsBadDestTelemetry(svc, svcName, wl string) bool {
+// 2) destSvc is ok and destCluster is provided but not ok
+// 3) no more conditions known
+func IsBadDestTelemetry(lCluster model.LabelValue, clusterOK bool, svc, svcName, wl string) bool {
 	// case1
 	failsEqualsTest := (!graph.IsOK(wl) && graph.IsOK(svc) && graph.IsOK(svcName) && (svc == svcName))
-	return failsEqualsTest && badServiceMatcher.MatchString(svcName)
+	if failsEqualsTest && badServiceMatcher.MatchString(svcName) {
+		log.Debugf("Skipping bad dest telemetry [case 1] [%s] [%s] [%s]", svc, svcName, wl)
+		return true
+	}
+	// case2
+	if graph.IsOK(svc) && clusterOK && !graph.IsOK(string(lCluster)) {
+		log.Debugf("Skipping bad dest telemetry [case 2] [%s] [%s]", svc, string(lCluster))
+		return true
+	}
+	return false
 }
