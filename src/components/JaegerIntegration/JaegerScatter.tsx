@@ -16,6 +16,7 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
 import ChartWithLegend from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
+import { TraceTooltip } from './TraceTooltip';
 
 interface JaegerScatterProps {
   duration: number;
@@ -31,7 +32,7 @@ const ONE_MILLISECOND = 1000000;
 const MINIMAL_SIZE = 2;
 const MAXIMAL_SIZE = 30;
 
-type JaegerLineInfo = LineInfo & { id: string };
+export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
 class JaegerScatter extends React.Component<JaegerScatterProps> {
@@ -75,7 +76,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
         )})`,
         color: isSelected ? PfColors.Blue500 : PfColors.Blue200,
         unit: 'seconds',
-        id: trace.traceID,
+        trace: trace,
         size: Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
       };
       if (traceError) {
@@ -106,7 +107,8 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
         unit="seconds"
         seriesComponent={<ChartScatter />}
         timeWindow={this.props.fixedTime ? timeWindow : undefined}
-        onClick={dp => this.props.setTraceId(dp.id)}
+        onClick={dp => this.props.setTraceId(dp.trace.traceID)}
+        labelComponent={<TraceTooltip />}
       />
     ) : (
       this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')

@@ -5,8 +5,7 @@ import { VictoryVoronoiContainerProps } from 'victory-voronoi-container';
 import { VictoryBrushContainerProps } from 'victory-brush-container';
 import { format as d3Format } from 'd3-format';
 import { getFormatter } from 'utils/Formatter';
-import { CustomTooltip } from './CustomTooltip';
-import { RichDataPoint, VCDataPoint } from 'types/VictoryChartInfo';
+import { RichDataPoint } from 'types/VictoryChartInfo';
 
 type BrushDomain = { x: DomainTuple; y: DomainTuple };
 
@@ -24,11 +23,7 @@ const formatValue = (label: string, datum: RichDataPoint, value: number) => {
   return label + ': ' + getFormatter(d3Format, datum.unit!)(value / (datum.scaleFactor || 1));
 };
 
-export const newBrushVoronoiContainer = (
-  onTooltipOpen: (items: VCDataPoint[]) => void,
-  onTooltipClose: () => void,
-  handlers?: BrushHandlers
-) => {
+export const newBrushVoronoiContainer = (labelComponent: JSX.Element, handlers?: BrushHandlers) => {
   const voronoiProps = {
     labels: obj => {
       if (obj.datum.hideLabel) {
@@ -51,7 +46,7 @@ export const newBrushVoronoiContainer = (
       }
       return formatValue(obj.datum.name, obj.datum, obj.datum.y);
     },
-    labelComponent: <CustomTooltip showTime={true} onOpen={onTooltipOpen} onClose={onTooltipClose} />,
+    labelComponent: labelComponent,
     // We blacklist "parent" as a workaround to avoid the VictoryVoronoiContainer crashing.
     // See https://github.com/FormidableLabs/victory/issues/1355
     voronoiBlacklist: ['parent']

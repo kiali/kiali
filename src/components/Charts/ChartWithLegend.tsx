@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chart, ChartGroup, ChartAxis, ChartScatter, ChartProps } from '@patternfly/react-charts';
+import { Chart, ChartGroup, ChartAxis, ChartScatter, ChartProps, ChartTooltipProps } from '@patternfly/react-charts';
 import { VictoryLegend, VictoryPortal, VictoryLabel, VictoryBoxPlot } from 'victory';
 import { format as d3Format } from 'd3-format';
 
@@ -10,6 +10,7 @@ import { newBrushVoronoiContainer, BrushHandlers } from './Container';
 import { buildLegendInfo, toBuckets } from 'utils/VictoryChartsUtils';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 import { XAxisType } from 'types/Dashboards';
+import { CustomTooltip } from './CustomTooltip';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
   chartHeight?: number;
@@ -27,6 +28,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   timeWindow?: [Date, Date];
   unit: string;
   xAxis?: XAxisType;
+  labelComponent?: React.ReactElement<ChartTooltipProps>;
 };
 
 type State = {
@@ -127,6 +129,12 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
         );
       }
     }
+    const tooltipHooks = { onOpen: this.onTooltipOpen, onClose: this.onTooltipClose };
+    const labelComponent = this.props.labelComponent ? (
+      React.cloneElement(this.props.labelComponent as any, tooltipHooks)
+    ) : (
+      <CustomTooltip showTime={true} {...tooltipHooks} />
+    );
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
     return (
       <div ref={this.containerRef}>
@@ -135,11 +143,7 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
           width={this.state.width}
           padding={padding}
           events={events}
-          containerComponent={newBrushVoronoiContainer(
-            this.onTooltipOpen,
-            this.onTooltipClose,
-            this.props.brushHandlers
-          )}
+          containerComponent={newBrushVoronoiContainer(labelComponent, this.props.brushHandlers)}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time' }}
           // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
           domainPadding={{ y: 1, x: this.props.xAxis === 'series' ? 50 : undefined }}

@@ -13,7 +13,7 @@ const canvasContext: any = document.createElement('canvas').getContext('2d');
 canvasContext.font = '14px overpass';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }) => {
+const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }) => {
   const x = props.x - 11 - props.textWidth / 2;
   const textsWithHead = props.head ? [props.head, ' '].concat(props.text) : props.text;
   const headSize = props.head ? 2 * dy : 0;
@@ -52,11 +52,32 @@ const getHeader = (activePoints?: VCDataPoint[]): string | undefined => {
   return undefined;
 };
 
-type Props = ChartTooltipProps & {
-  showTime?: boolean;
-  activePoints?: VCDataPoint[];
+export type HookedTooltipProps<T> = ChartTooltipProps & {
+  activePoints?: (VCDataPoint & T)[];
   onOpen?: (items: VCDataPoint[]) => void;
   onClose?: () => void;
+};
+
+export class HookedChartTooltip<T> extends React.Component<HookedTooltipProps<T>> {
+  componentDidMount() {
+    if (this.props.onOpen && this.props.activePoints) {
+      this.props.onOpen(this.props.activePoints);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.props.onClose) {
+      this.props.onClose();
+    }
+  }
+
+  render() {
+    return <ChartTooltip {...this.props} />;
+  }
+}
+
+type Props = HookedTooltipProps<{}> & {
+  showTime?: boolean;
 };
 
 type State = {
@@ -91,21 +112,9 @@ export class CustomTooltip extends React.Component<Props, State> {
     this.state = CustomTooltip.getDerivedStateFromProps(p);
   }
 
-  componentDidMount() {
-    if (this.props.onOpen && this.props.activePoints) {
-      this.props.onOpen(this.props.activePoints);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.props.onClose) {
-      this.props.onClose();
-    }
-  }
-
   render() {
     return (
-      <ChartTooltip
+      <HookedChartTooltip
         {...this.props}
         text={this.state.texts}
         flyoutWidth={this.state.width}

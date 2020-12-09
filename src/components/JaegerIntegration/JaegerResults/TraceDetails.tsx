@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
-import { InfoAltIcon } from '@patternfly/react-icons';
+import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 
 import { JaegerTrace, RichSpanData } from 'types/JaegerInfo';
 import { JaegerTraceTitle } from './JaegerTraceTitle';
@@ -223,6 +223,11 @@ class TraceDetails extends React.Component<Props, State> {
                 <>
                   <strong>Compared with metrics: </strong>
                   {renderTraceHeatMap(this.props.statsMatrix, heatmapIntervals, false)}
+                  {!this.props.isStatsMatrixComplete && (
+                    <>
+                      <WarningTriangleIcon /> Incomplete data, check Spans Details
+                    </>
+                  )}
                 </>
               )}
             </GridItem>

@@ -40,8 +40,17 @@ export class HeatMap extends React.Component<Props> {
   ];
 
   private getGridStyle = (): React.CSSProperties => {
-    const cellHeight = this.props.displayMode === 'compact' ? '1rem' : '2rem';
-    const cellWidth = this.props.displayMode === 'compact' ? 1 : this.props.displayMode === 'large' ? 3 : 2;
+    if (this.props.displayMode === 'compact') {
+      return {
+        display: 'grid',
+        gridTemplateColumns: `0 repeat(${this.props.xLabels.length}, 1fr)`,
+        gridTemplateRows: `0 repeat(${this.props.yLabels.length}, 1rem)`,
+        gridGap: 2,
+        maxWidth: `${this.props.xLabels.length}rem`
+      };
+    }
+    const cellHeight = '2rem';
+    const cellWidth = this.props.displayMode === 'large' ? 3 : 2;
     return {
       display: 'grid',
       gridTemplateColumns: `${cellWidth}rem repeat(${this.props.xLabels.length}, 1fr)`,
@@ -105,7 +114,7 @@ export class HeatMap extends React.Component<Props> {
                   <div
                     key={`heatmap_${x}-${y}`}
                     className={cellStyle}
-                    style={{ backgroundColor: this.props.colorUndefined }}
+                    style={{ backgroundColor: this.props.colorUndefined, color: PfColors.Black1000 }}
                   >
                     {!isCompact && 'n/a'}
                   </div>

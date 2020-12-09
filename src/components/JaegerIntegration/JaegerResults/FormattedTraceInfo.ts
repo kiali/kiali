@@ -35,7 +35,7 @@ export class FormattedTraceInfo {
   }
 
   shortID() {
-    return this.trace.traceID.slice(0, 7);
+    return this.trace.traceID.slice(0, 6);
   }
 
   duration() {
