@@ -341,6 +341,9 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 		err = <-errChan
 		return nil, nil, err
 	}
+	if svc == nil {
+		return nil, nil, kubernetes.NewNotFound(service, "Kiali", "Service")
+	}
 
 	return svc, eps, nil
 }
