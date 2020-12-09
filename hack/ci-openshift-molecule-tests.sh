@@ -33,6 +33,11 @@ Options:
     What to use when building images.
     Default: docker
 
+-gcp|--git-clone-protocol <git|https>
+    Determine what protocol to use when git cloning the repos.
+    If you want to upload logs (-ul true), you must set this to "git".
+    Default: git
+
 -hb|--helm-branch <branch name>
     The helm-chart branch to clone.
     Default: master
@@ -135,6 +140,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -at|--all-tests)              ALL_TESTS="$2";             shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
+    -gcp|--git-clone-protocol)    GIT_CLONE_PROTOCOL="$2";    shift;shift; ;;
     -hb|--helm-branch)            HELM_BRANCH="$2";           shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hf|--helm-fork)              HELM_FORK="$2";             shift;shift; ;;
@@ -170,6 +176,7 @@ OC=${OC:-/root/ocp4_setup_ocp4/oc}
 OPENSHIFT_API=${OPENSHIFT_API:-https://api.ocp4.local:6443}
 SRC="${SRC:-/tmp/KIALI-GIT}"
 DORP="${DORP:-docker}"
+GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 
 # if you want to test code from different forks and/or branches, set them here
 HELM_FORK="${HELM_FORK:-kiali}"
@@ -192,7 +199,18 @@ LOGS_LOCAL_RESULTS="${LOGS_LOCAL_SUBDIR_ABS}/results.log"
 LOGS_GITHUB_HTTPS_BASE="https://github.com/${LOGS_FORK}/${LOGS_PROJECT_NAME}/tree/${LOGS_BRANCH}"
 LOGS_GITHUB_HTTPS_SUBDIR="${LOGS_GITHUB_HTTPS_BASE}/${LOGS_LOCAL_SUBDIR}"
 LOGS_GITHUB_HTTPS_RESULTS="${LOGS_GITHUB_HTTPS_SUBDIR}/results.log"
-LOGS_GITHUB_GITCLONE="git@github.com:${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
+
+# The github git clone locations
+GITHUB_PROTOCOL_GIT="git@github.com:"
+GITHUB_PROTOCOL_HTTPS="https://github.com/"
+HELM_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${HELM_FORK}/helm-charts.git"
+HELM_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${HELM_FORK}/helm-charts.git"
+KIALI_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_FORK}/kiali.git"
+KIALI_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_FORK}/kiali.git"
+KIALI_OPERATOR_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${KIALI_OPERATOR_FORK}/kiali-operator.git"
+KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${KIALI_OPERATOR_FORK}/kiali-operator.git"
+LOGS_GITHUB_GITCLONE_GIT="${GITHUB_PROTOCOL_GIT}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
+LOGS_GITHUB_GITCLONE_HTTPS="${GITHUB_PROTOCOL_HTTPS}${LOGS_FORK}/${LOGS_PROJECT_NAME}.git"
 
 # the freenode IRC room where notifications are to be sent (allow the user to set this to "" via -ir option)
 IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
@@ -211,6 +229,7 @@ cat <<EOM
 === SETTINGS ===
 ALL_TESTS=$ALL_TESTS
 DORP=$DORP
+GIT_CLONE_PROTOCOL=$GIT_CLONE_PROTOCOL
 HELM_BRANCH=$HELM_BRANCH
 HELM_FORK=$HELM_FORK
 INSTALL_ISTIO=$INSTALL_ISTIO
@@ -221,7 +240,8 @@ KIALI_OPERATOR_BRANCH=$KIALI_OPERATOR_BRANCH
 KIALI_OPERATOR_FORK=$KIALI_OPERATOR_FORK
 KUBEADMIN_PW_FILE=$KUBEADMIN_PW_FILE
 KUBEADMIN_USER=$KUBEADMIN_USER
-LOGS_GITHUB_GITCLONE=$LOGS_GITHUB_GITCLONE
+LOGS_GITHUB_GITCLONE_GIT=$LOGS_GITHUB_GITCLONE_GIT
+LOGS_GITHUB_GITCLONE_HTTPS=$LOGS_GITHUB_GITCLONE_HTTPS
 LOGS_GITHUB_HTTPS_RESULTS=$LOGS_GITHUB_HTTPS_RESULTS
 LOGS_GITHUB_HTTPS_SUBDIR=$LOGS_GITHUB_HTTPS_SUBDIR
 LOGS_LOCAL_RESULTS=$LOGS_LOCAL_RESULTS
@@ -234,6 +254,25 @@ UPLOAD_LOGS=$UPLOAD_LOGS
 USE_DEV_IMAGES=$USE_DEV_IMAGES
 === SETTINGS ===
 EOM
+
+if [ "${GIT_CLONE_PROTOCOL}" == "git" ]; then
+  HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_GIT}"
+  KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_GIT}"
+  KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_GIT}"
+  LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_GIT}"
+elif [ "${GIT_CLONE_PROTOCOL}" == "https" ]; then
+  HELM_GITHUB_GITCLONE="${HELM_GITHUB_GITCLONE_HTTPS}"
+  KIALI_GITHUB_GITCLONE="${KIALI_GITHUB_GITCLONE_HTTPS}"
+  KIALI_OPERATOR_GITHUB_GITCLONE="${KIALI_OPERATOR_GITHUB_GITCLONE_HTTPS}"
+  LOGS_GITHUB_GITCLONE="${LOGS_GITHUB_GITCLONE_HTTPS}"
+  if [ "${UPLOAD_LOGS}" == "true" ]; then
+    echo "The git clone protocol (-gcp) must be 'git' when upload logs is enabled (-ul true)."
+    exit 1
+  fi
+else
+  echo "The git clone protocol must be one of 'git' or 'https'. It was [${GIT_CLONE_PROTOCOL}]"
+  exit 1
+fi
 
 infomsg "Create a clean github repo location"
 if [ "${SRC}" == "" ]; then
@@ -265,17 +304,17 @@ infomsg "Clone github repos in [$SRC] to make sure we have the latest tests and 
 
 cd ${SRC}
 
-infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}]..."
+infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
 git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE}
 
-infomsg "Cloning helm-charts [${HELM_FORK}/helm-charts:${HELM_BRANCH}]..."
-git clone --single-branch --branch ${HELM_BRANCH} git@github.com:${HELM_FORK}/helm-charts
+infomsg "Cloning helm-charts [${HELM_FORK}/helm-charts:${HELM_BRANCH}] from [${HELM_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${HELM_BRANCH} ${HELM_GITHUB_GITCLONE}
 
-infomsg "Cloning kiali [${KIALI_FORK}/kiali:${KIALI_BRANCH}]..."
-git clone --single-branch --branch ${KIALI_BRANCH} git@github.com:${KIALI_FORK}/kiali
+infomsg "Cloning kiali [${KIALI_FORK}/kiali:${KIALI_BRANCH}] from [${KIALI_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${KIALI_BRANCH} ${KIALI_GITHUB_GITCLONE}
 
-infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}/kiali-operator:${KIALI_OPERATOR_BRANCH}]..."
-git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} git@github.com:${KIALI_OPERATOR_FORK}/kiali-operator
+infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}/kiali-operator:${KIALI_OPERATOR_BRANCH}] from [${KIALI_OPERATOR_GITHUB_GITCLONE}]..."
+git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GITHUB_GITCLONE}
 
 ln -s ${SRC}/kiali-operator kiali/operator
 cd kiali
