@@ -74,7 +74,7 @@ container-push: container-push-kiali-quay
 	@if ! which docker > /dev/null 2>&1; then echo "'docker' is not in your PATH."; exit 1; fi
 	@required_buildx_version="0.4.2"; \
 	if ! DOCKER_CLI_EXPERIMENTAL="enabled" docker buildx version > /dev/null 2>&1 ; then \
-	  buildx_download_url="https://github.com/docker/buildx/releases/download/$${required_buildx_version}/buildx-$${required_buildx_version}.${GOOS}-${GOARCH}"; \
+	  buildx_download_url="https://github.com/docker/buildx/releases/download/v$${required_buildx_version}/buildx-v$${required_buildx_version}.${GOOS}-${GOARCH}"; \
 	  echo "You do not have 'docker buildx' installed. Will now download from [$${buildx_download_url}] and install it to [${HOME}/.docker/cli-plugins]."; \
 	  mkdir -p ${HOME}/.docker/cli-plugins; \
 	  curl -L --output ${HOME}/.docker/cli-plugins/docker-buildx "$${buildx_download_url}"; \
@@ -107,14 +107,14 @@ container-push: container-push-kiali-quay
 .ensure-buildx-builder: .ensure-docker-buildx
 	@if ! docker buildx inspect kiali-builder > /dev/null 2>&1; then \
 	  echo "The buildx builder instance named 'kiali-builder' does not exist. Creating one now."; \
-	  if ! docker buildx create --name=kiali-builder --driver-opt=image=moby/buildkit:v0.8.0-rc2; then \
+	  if ! docker buildx create --name=kiali-builder --driver-opt=image=moby/buildkit:v0.8.0; then \
 	    echo "Failed to create the buildx builder 'kiali-builder'"; \
 	    exit 1; \
 	  fi \
 	fi; \
 	if [[ $$(uname -s) == "Linux" ]]; then \
 	  echo "Ensuring QEMU is set up for this Linux host"; \
-	  if ! docker run --privileged --rm tonistiigi/binfmt --install all; then \
+	  if ! docker run --privileged --rm quay.io/kiali/binfmt:latest --install all; then \
 	    echo "Failed to ensure QEMU is set up. This build will be allowed to continue, but it may fail at a later step."; \
 	  fi \
 	fi
@@ -123,9 +123,9 @@ container-push: container-push-kiali-quay
 ## container-multi-arch-push-kiali-operator-quay: Pushes the Kiali Operator multi-arch image to quay.
 container-multi-arch-push-kiali-operator-quay: .ensure-operator-repo-exists .ensure-buildx-builder
 	@echo Pushing Kiali Operator multi-arch image to ${OPERATOR_QUAY_TAG} using docker buildx
-	docker buildx build --push --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${OPERATOR_QUAY_TAG},--tag=${tag}) -f ${ROOTDIR}/operator/build/Dockerfile ${ROOTDIR}/operator
+	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${OPERATOR_QUAY_TAG},--tag=${tag}) -f ${ROOTDIR}/operator/build/Dockerfile ${ROOTDIR}/operator
 
 ## container-multi-arch-push-kiali-quay: Pushes the Kiali multi-arch image to quay.
 container-multi-arch-push-kiali-quay: .ensure-buildx-builder .prepare-kiali-image-files
 	@echo Pushing Kiali multi-arch image to ${QUAY_TAG} using docker buildx
-	docker buildx build --push --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker
+	docker buildx build --push --pull --no-cache --builder=kiali-builder $(foreach arch,${TARGET_ARCHS},--platform=linux/${arch}) $(foreach tag,${QUAY_TAG},--tag=${tag}) -f ${OUTDIR}/docker/Dockerfile-multi-arch ${OUTDIR}/docker

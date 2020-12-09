@@ -91,6 +91,14 @@ operator-build-release:
 	OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
 	  $(MAKE) clean build
 
+# prepare operator tags
+QUAY_OPERATOR_TAG = $(QUAY_OPERATOR_NAME):$(VERSION_TAG)
+ifneq ($(IS_SNAPSHOT),y)
+   # Create or update vX.Y tags (without the patch number)
+   # quay.io/kiali-operator
+   QUAY_OPERATOR_TAG := $(QUAY_OPERATOR_TAG) $(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)
+endif
+
 operator-push-quay:
 ifdef QUAY_USER
 ifdef QUAY_PASSWORD
@@ -98,18 +106,8 @@ ifdef QUAY_PASSWORD
 	@docker login -u "$(QUAY_USER)" -p "$(QUAY_PASSWORD)" quay.io
 endif
 endif
-	OPERATOR_CONTAINER_VERSION="$(VERSION_TAG)" \
-	  OPERATOR_QUAY_NAME="$(QUAY_OPERATOR_NAME)" \
-	 $(MAKE) push
-ifneq ($(IS_SNAPSHOT),y)
-   # Create or update vX.Y tags (without the patch number)
-   # quay.io/kiali-operator
-	docker tag "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)" "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
-	docker push "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
-	docker rmi "$(QUAY_OPERATOR_NAME):v$(OPERATOR_VERSION_BRANCH)"
-endif
-   # Clean-up
-	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
+	OPERATOR_QUAY_TAG="$(QUAY_OPERATOR_TAG)" \
+	 $(MAKE) -e DOCKER_CLI_EXPERIMENTAL=enabled container-multi-arch-push-kiali-operator-quay
 
 operator-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
