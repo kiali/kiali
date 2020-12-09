@@ -9,8 +9,8 @@ type JaegerInfo struct {
 }
 
 type TracingQuery struct {
-	StartMicros string `json:"startMicros"`
-	EndMicros   string `json:"endMicros"`
+	StartMicros int64  `json:"startMicros"`
+	EndMicros   int64  `json:"endMicros"`
 	Tags        string `json:"tags"`
 	MinDuration string `json:"minDuration"`
 	Limit       int    `json:"limit"`

@@ -1,9 +1,8 @@
 package business
 
 import (
-	"fmt"
-	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	jaegerModels "github.com/jaegertracing/jaeger/model/json"
@@ -34,23 +33,27 @@ func (in *JaegerService) client() (jaeger.ClientInterface, error) {
 }
 
 func (in *JaegerService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]jaeger.JaegerSpan, error) {
-	client, err := in.client()
-	if err != nil {
-		return nil, err
-	}
-	r, err := client.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
 		return []jaeger.JaegerSpan{}, err
 	}
-
 	spans := tracesToSpans(app, r, filter)
-	if len(r.Data) == query.Limit && len(spans) > 0 {
-		// Reached the limit, trying to be smart enough to show more and get the most relevant ones
-		log.Trace("Limit of traces was reached, trying to find more relevant spans...")
-		return findRelevantSpans(client, spans, ns, app, query, filter)
-	}
-
 	return spans, nil
+}
+
+func mergeResponses(dest *jaeger.JaegerResponse, src *jaeger.JaegerResponse) {
+	dest.JaegerServiceName = src.JaegerServiceName
+	dest.Errors = append(dest.Errors, src.Errors...)
+	traceIds := make(map[jaegerModels.TraceID]bool)
+	for _, prev := range dest.Data {
+		traceIds[prev.TraceID] = true
+	}
+	for _, trace := range src.Data {
+		if _, ok := traceIds[trace.TraceID]; !ok {
+			dest.Data = append(dest.Data, trace)
+			traceIds[trace.TraceID] = true
+		}
+	}
 }
 
 func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
@@ -99,7 +102,23 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 	if err != nil {
 		return nil, err
 	}
-	return client.GetAppTraces(ns, app, query)
+	r, err := client.GetAppTraces(ns, app, query)
+	if err != nil {
+		return nil, err
+	}
+	if len(r.Data) == query.Limit {
+		// Reached the limit, use split & join mode to spread traces over the requested interval
+		log.Trace("Limit of traces was reached, using split & join mode")
+		more, err := in.getAppTracesSlicedInterval(ns, app, query)
+		if err != nil {
+			// Log error but continue to process results (might still have some data fetched)
+			log.Errorf("Traces split & join failed: %v", err)
+		}
+		if more != nil {
+			mergeResponses(r, more)
+		}
+	}
+	return r, nil
 }
 
 func (in *JaegerService) GetServiceTraces(ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
@@ -113,7 +132,6 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 	}
 	// Now we're in context where app != service, so we need to perform post-filtering based on operation names
 	// Artificial increase of limit (see explanation in GetWorkloadTraces)
-	reqLimit := query.Limit
 	query.Limit *= 2
 	r, err := in.GetAppTraces(ns, app, query)
 	if r != nil && err == nil {
@@ -127,9 +145,6 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 					traces = append(traces, trace)
 					break
 				}
-			}
-			if reqLimit > 0 && len(traces) == reqLimit {
-				break
 			}
 		}
 		r.Data = traces
@@ -146,7 +161,6 @@ func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.Tra
 	// so it will not be consistent with the final result. In other words, we ask for 15 traces but could very well end up with
 	// only 3 traces for the workload even if there's more.
 	// To try to attenuate this effect, we will artificially increase the limit, then cut it down after workload filtering.
-	reqLimit := query.Limit
 	query.Limit *= 5
 	r, err := in.GetAppTraces(ns, app, query)
 	// Filter out app traces based on the node_id tag, that contains workload information.
@@ -155,14 +169,62 @@ func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.Tra
 		for _, trace := range r.Data {
 			if matchesWorkload(&trace, ns, workload) {
 				traces = append(traces, trace)
-				if reqLimit > 0 && len(traces) == reqLimit {
-					break
-				}
 			}
 		}
 		r.Data = traces
 	}
 	return r, err
+}
+
+func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
+	client, err := in.client()
+	if err != nil {
+		return nil, err
+	}
+	// Spread queries over 10 interval slices
+	nSlices := 10
+	limit := query.Limit / nSlices
+	if limit == 0 {
+		limit = 1
+	}
+	end := query.EndMicros
+	if end == 0 {
+		// End not set, using "now"
+		end = time.Now().Unix() * 1000000
+	}
+	duration := (end - query.StartMicros) / int64(nSlices)
+
+	type tracesChanResult struct {
+		resp *jaeger.JaegerResponse
+		err  error
+	}
+	tracesChan := make(chan tracesChanResult, nSlices)
+	var wg sync.WaitGroup
+
+	for i := 0; i < nSlices; i++ {
+		q := query
+		q.Limit = limit
+		q.StartMicros = query.StartMicros + int64(i)*duration
+		q.EndMicros = q.StartMicros + duration
+		wg.Add(1)
+		go func(q models.TracingQuery) {
+			defer wg.Done()
+			r, err := client.GetAppTraces(ns, app, q)
+			tracesChan <- tracesChanResult{resp: r, err: err}
+		}(q)
+	}
+	wg.Wait()
+	// All slices are fetched, close channel
+	close(tracesChan)
+	merged := &jaeger.JaegerResponse{}
+	for r := range tracesChan {
+		if r.err != nil {
+			err = r.err
+			continue
+		}
+		mergeResponses(merged, r.resp)
+	}
+	return merged, err
 }
 
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
@@ -246,48 +308,4 @@ func tracesToSpans(app string, r *jaeger.JaegerResponse, filter SpanFilter) []ja
 	}
 	log.Tracef("Found %d spans in the %d traces for app %s", len(spans), len(r.Data), app)
 	return spans
-}
-
-func findRelevantSpans(client jaeger.ClientInterface, spansSample []jaeger.JaegerSpan, ns, app string, query models.TracingQuery, filter SpanFilter) ([]jaeger.JaegerSpan, error) {
-	spansMap := make(map[jaegerModels.SpanID]jaeger.JaegerSpan)
-	if query.Tags == "" {
-		// Query for errors
-		q := query
-		q.Tags = "{\"error\":\"true\"}"
-		response, _ := client.GetAppTraces(ns, app, query)
-		errSpans := tracesToSpans(app, response, filter)
-		for _, span := range errSpans {
-			spansMap[span.SpanID] = span
-		}
-	}
-
-	// Find 90th percentile; sort per duration
-	sort.Slice(spansSample, func(i, j int) bool {
-		return spansSample[i].Span.Duration < spansSample[j].Span.Duration
-	})
-	idx90 := int(9 * len(spansSample) / 10)
-	duration90th := time.Duration(spansSample[idx90].Duration) * time.Microsecond
-	log.Tracef("90th percentile duration: %s", duration90th)
-	for _, span := range spansSample[idx90:] {
-		spansMap[span.SpanID] = span
-	}
-
-	// Query 90th percentile
-	// %.1gms would print for instance 0.00012456 as 0.0001ms
-	q := query
-	q.MinDuration = fmt.Sprintf("%.1gms", float64(duration90th.Nanoseconds())/1000000)
-	response, _ := client.GetAppTraces(ns, app, query)
-	// TODO / Question: if limit is reached again we might limit to 99th percentile instead?
-	pct90Spans := tracesToSpans(app, response, filter)
-	for _, span := range pct90Spans {
-		spansMap[span.SpanID] = span
-	}
-
-	// Map to list
-	ret := []jaeger.JaegerSpan{}
-	for _, span := range spansMap {
-		ret = append(ret, span)
-	}
-	log.Tracef("Found %d relevant spans", len(ret))
-	return ret, nil
 }
