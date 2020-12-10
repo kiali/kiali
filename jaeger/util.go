@@ -1,6 +1,7 @@
 package jaeger
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -23,9 +24,9 @@ func buildJaegerServiceName(namespace, app string) string {
 func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("service", jaegerServiceName)
-	q.Set("start", query.StartMicros)
-	if query.EndMicros != "" {
-		q.Set("end", query.EndMicros)
+	q.Set("start", fmt.Sprintf("%d", query.StartMicros))
+	if query.EndMicros != 0 {
+		q.Set("end", fmt.Sprintf("%d", query.EndMicros))
 	}
 	if query.Tags != "" {
 		q.Set("tags", query.Tags)
