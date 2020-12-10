@@ -310,7 +310,7 @@ export class GraphStyles {
       const edgeData = decoratedEdgeData(ele);
 
       switch (edgeLabelMode) {
-        case EdgeLabelMode.REQUESTS_PER_SECOND: {
+        case EdgeLabelMode.REQUEST_RATE: {
           let rate = 0;
           let pErr = 0;
           if (edgeData.http > 0) {
@@ -348,7 +348,7 @@ export class GraphStyles {
           }
           break;
         }
-        case EdgeLabelMode.REQUESTS_PERCENTAGE: {
+        case EdgeLabelMode.REQUEST_DISTRIBUTION: {
           let pReq;
           if (edgeData.httpPercentReq > 0) {
             pReq = edgeData.httpPercentReq;

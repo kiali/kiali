@@ -182,8 +182,8 @@ export default class GraphDataSource {
         appenders += ',responseTime';
         break;
 
-      case EdgeLabelMode.REQUESTS_PER_SECOND:
-      case EdgeLabelMode.REQUESTS_PERCENTAGE:
+      case EdgeLabelMode.REQUEST_RATE:
+      case EdgeLabelMode.REQUEST_DISTRIBUTION:
       case EdgeLabelMode.NONE:
       default:
         break;

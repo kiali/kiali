@@ -57,6 +57,13 @@ const menuStyle = style({
   fontSize: '14px'
 });
 
+// this emulates Select component .pf-c-select__menu
+const menuEntryStyle = style({
+  cursor: 'not-allowed',
+  display: 'inline-block',
+  width: '15.5em'
+});
+
 // this emulates Select component .pf-c-select__menu-group-title but with less bottom padding to conserve space
 const titleStyle = style({
   padding: '8px 16px 2px 16px',
@@ -74,7 +81,7 @@ const itemStyle = (hasInfo: boolean) =>
   });
 
 const infoStyle = style({
-  margin: '0px 16px 2px 4px'
+  margin: '0px 5px 2px 4px'
 });
 
 class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
@@ -168,14 +175,27 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         isChecked: edgeLabelMode === EdgeLabelMode.NONE
       },
       {
-        id: EdgeLabelMode.REQUESTS_PER_SECOND,
-        labelText: _.startCase(EdgeLabelMode.REQUESTS_PER_SECOND),
-        isChecked: edgeLabelMode === EdgeLabelMode.REQUESTS_PER_SECOND
+        id: EdgeLabelMode.REQUEST_RATE,
+        labelText: _.startCase(EdgeLabelMode.REQUEST_RATE),
+        isChecked: edgeLabelMode === EdgeLabelMode.REQUEST_RATE,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            HTTP and GRPC rates are in requests-per-second. The percentage of error responses is shown below the rate,
+            when non-zero. TCP rates are in bytes-sent-per-second. Rates are rounded to 2 significant digits.
+          </div>
+        )
       },
       {
-        id: EdgeLabelMode.REQUESTS_PERCENTAGE,
-        labelText: _.startCase(EdgeLabelMode.REQUESTS_PERCENTAGE),
-        isChecked: edgeLabelMode === EdgeLabelMode.REQUESTS_PERCENTAGE
+        id: EdgeLabelMode.REQUEST_DISTRIBUTION,
+        labelText: _.startCase(EdgeLabelMode.REQUEST_DISTRIBUTION),
+        isChecked: edgeLabelMode === EdgeLabelMode.REQUEST_DISTRIBUTION,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            HTTP and GRPC Edges display the percentage of outgoing requests for that edge. For a source node, the sum
+            for outgoing edges should be equal to or near 100%, given rounding. TCP edges are not included in the
+            distribution because their rates reflect bytes sent, not requests sent.
+          </div>
+        )
       },
       {
         id: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
@@ -203,8 +223,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         onChange: toggleCompressOnHide,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            When enabled the graph is compressed after graph-hide removes matching elements. Otherwise the graph
-            maintains the space consumed by the hidden elements.
+            Compress the graph after graph-hide removes matching elements. Otherwise the graph maintains the space
+            consumed by the hidden elements.
           </div>
         )
       },
@@ -241,19 +261,39 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         disabled: this.props.graphType === GraphType.SERVICE,
         labelText: 'Service Nodes',
         isChecked: showServiceNodes,
-        onChange: toggleServiceNodes
+        onChange: toggleServiceNodes,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Reflect service routing by injecting the destination service nodes into the graph. This can be useful for
+            grouping requests for the same service, but routed to different workloads. Edges leading into service nodes
+            are logical aggregations and will not show response time labels, but if selected the side panel will provide
+            a response time chart.
+          </div>
+        )
       },
       {
         id: 'filterTrafficAnimation',
         labelText: 'Traffic Animation',
         isChecked: showTrafficAnimation,
-        onChange: toggleTrafficAnimation
+        onChange: toggleTrafficAnimation,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Animate the graph to reflect traffic flow. The particle density and speed roughly reflects an edge's request
+            load relevant to the other edges. Animation can be CPU intensive.
+          </div>
+        )
       },
       {
         id: 'filterUnusedNodes',
         labelText: 'Unused Nodes',
         isChecked: showUnusedNodes,
-        onChange: toggleUnusedNodes
+        onChange: toggleUnusedNodes,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Display orphan nodes for defined services that have never received traffic. This can help locate
+            misconfigured or obsolete services.
+          </div>
+        )
       }
     ];
 
@@ -302,7 +342,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         <div id="graph-display-menu" className={menuStyle}>
           <div className={titleStyle}>Show Edge Labels</div>
           {edgeLabelOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} className={menuEntryStyle}>
               <label key={item.id} className={itemStyle(!!item.tooltip)}>
                 <Radio
                   id={item.id}

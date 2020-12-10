@@ -382,7 +382,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
           "_errorMessage": null,
           "_fetchParams": Object {
             "duration": 0,
-            "edgeLabelMode": "noEdgeLabels",
+            "edgeLabelMode": "noLabel",
             "graphType": "versionedApp",
             "includeHealth": true,
             "injectServiceNodes": true,

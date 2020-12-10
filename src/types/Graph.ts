@@ -31,9 +31,9 @@ export interface SummaryPanelPropType {
 }
 
 export enum EdgeLabelMode {
-  NONE = 'noEdgeLabels',
-  REQUESTS_PER_SECOND = 'requestsPerSecond',
-  REQUESTS_PERCENTAGE = 'requestsPercentage',
+  NONE = 'noLabel',
+  REQUEST_RATE = 'requestRate',
+  REQUEST_DISTRIBUTION = 'requestDistribution',
   RESPONSE_TIME_95TH_PERCENTILE = 'responseTime'
 }
 

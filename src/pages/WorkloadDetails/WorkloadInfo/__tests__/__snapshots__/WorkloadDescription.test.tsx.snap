@@ -136,7 +136,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
           "_errorMessage": null,
           "_fetchParams": Object {
             "duration": 0,
-            "edgeLabelMode": "noEdgeLabels",
+            "edgeLabelMode": "noLabel",
             "graphType": "versionedApp",
             "includeHealth": true,
             "injectServiceNodes": true,
