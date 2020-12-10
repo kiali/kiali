@@ -177,12 +177,14 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
     return (
       <>
         {dropdown}
-        <EnvoyDetailsModal
-          namespace={this.props.namespace}
-          workload={this.props.workload}
-          show={this.state.showWizard}
-          onClose={this.onClose}
-        />
+        {this.state.showWizard ? (
+          <EnvoyDetailsModal
+            namespace={this.props.namespace}
+            workload={this.props.workload}
+            show={this.state.showWizard}
+            onClose={this.onClose}
+          />
+        ) : undefined}
       </>
     );
   }
