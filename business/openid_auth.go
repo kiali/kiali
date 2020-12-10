@@ -456,14 +456,6 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	cfg := config.Get().Auth.OpenId
 
-	// Create HTTP client
-	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS {
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
-
 	httpClient, err := createHttpClient(openIdMetadata.TokenURL)
 	if err != nil {
 		return err
@@ -741,14 +733,14 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 		}
 	}
 
-	httpClient := http.Client{
-		Timeout:   time.Second * 10,
-		Transport: httpTransport,
-	}
-
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
 		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPProxy)
 		httpTransport.Proxy = proxyFunc
+	}
+
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
 	}
 
 	return &httpClient, nil
