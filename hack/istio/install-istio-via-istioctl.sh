@@ -208,6 +208,7 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
 fi
 
 for s in \
+   "--set hub=gcr.io/istio-release" \
    "${MTLS_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "${CNI_OPTIONS}" \
