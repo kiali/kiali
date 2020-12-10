@@ -18,7 +18,6 @@ import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { DashboardModel, ExternalLink } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
@@ -57,7 +56,7 @@ const displayFlex = style({
   display: 'flex'
 });
 
-export class CustomMetrics extends React.Component<Props, MetricsState> {
+class CustomMetrics extends React.Component<Props, MetricsState> {
   options: DashboardQuery;
   spanOverlay: SpanOverlay;
 
@@ -191,7 +190,7 @@ export class CustomMetrics extends React.Component<Props, MetricsState> {
                       expandHandler={this.expandHandler}
                       onClick={this.onClickDataPoint}
                       overlay={this.state.spanOverlay}
-                      timeWindow={evalTimeRange(retrieveTimeRange())}
+                      timeWindow={evalTimeRange(this.props.timeRange)}
                       brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
                     />
                   )}

@@ -190,7 +190,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   render() {
-    let useCustomTime = false;
+    // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
+    let useCustomTime = true;
     switch (this.state.currentTab) {
       case 'info':
       case 'traffic':
