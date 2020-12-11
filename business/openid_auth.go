@@ -299,7 +299,7 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 
 		httpClient, err := createHttpClient(trimmedIssuerUri)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create http client to fetch OpenId Metadata: %w", err)
 		}
 
 		// Fetch IdP metadata
@@ -383,7 +383,7 @@ func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
 		// Create HTTP client
 		httpClient, err := createHttpClient(oidcMetadata.JWKSURL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create http client to fetch OpenId JWKS document: %w", err)
 		}
 
 		// Fetch Keys document
@@ -458,7 +458,7 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	httpClient, err := createHttpClient(openIdMetadata.TokenURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failure when creating http client to request open id token: %w", err)
 	}
 
 	// Exchange authorization code for a token
@@ -734,7 +734,7 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 	}
 
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
-		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPProxy)
+		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPSProxy)
 		httpTransport.Proxy = proxyFunc
 	}
 
