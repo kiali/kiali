@@ -86,9 +86,9 @@ endif
 ## molecule-build: Builds an image to run Molecule without requiring the host to have python/pip installed. If it already exists, and you want to build it again, set env var FORCE_MOLECULE_BUILD to "true".
 molecule-build: .ensure-operator-repo-exists .prepare-force-molecule-build
 ifeq ($(DORP),docker)
-	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then docker build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
+	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then docker build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
 else
-	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then podman build -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
+	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then podman build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
 endif
 
 ifndef MOLECULE_ADD_HOST_ARGS
