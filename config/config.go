@@ -274,6 +274,8 @@ type OpenIdConfig struct {
 	ClientId              string   `yaml:"client_id,omitempty"`
 	ClientSecret          string   `yaml:"client_secret,omitempty"`
 	DisableRBAC           bool     `yaml:"disable_rbac,omitempty"`
+	HTTPProxy             string   `yaml:"http_proxy,omitempty"`
+	HTTPSProxy            string   `yaml:"https_proxy,omitempty"`
 	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
 	Scopes                []string `yaml:"scopes,omitempty"`

@@ -262,6 +262,25 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 	return &sessionData, nil
 }
 
+func getProxyForUrl(targetURL *url.URL, httpProxy string, httpsProxy string) func(req *http.Request) (*url.URL, error) {
+	return func(req *http.Request) (*url.URL, error) {
+		var proxyUrl *url.URL
+		var err error
+
+		if httpProxy != "" && targetURL.Scheme == "http" {
+			proxyUrl, err = url.Parse(httpProxy)
+		} else if httpsProxy != "" && targetURL.Scheme == "https" {
+			proxyUrl, err = url.Parse(httpsProxy)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return proxyUrl, nil
+	}
+}
+
 // GetOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
 // downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
 // validations are performed and the parsed metadata is returned. Since the metadata should be
@@ -278,17 +297,9 @@ func GetOpenIdMetadata() (*OpenIdMetadata, error) {
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
 
-		// Create HTTP client
-		httpTransport := &http.Transport{}
-		if cfg.InsecureSkipVerifyTLS {
-			httpTransport.TLSClientConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-		}
-
-		httpClient := http.Client{
-			Timeout:   time.Second * 10,
-			Transport: httpTransport,
+		httpClient, err := createHttpClient(trimmedIssuerUri)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create http client to fetch OpenId Metadata: %w", err)
 		}
 
 		// Fetch IdP metadata
@@ -370,17 +381,9 @@ func GetOpenIdJwks() (*jose.JSONWebKeySet, error) {
 		}
 
 		// Create HTTP client
-		cfg := config.Get().Auth.OpenId
-		httpTransport := &http.Transport{}
-		if cfg.InsecureSkipVerifyTLS {
-			httpTransport.TLSClientConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-		}
-
-		httpClient := http.Client{
-			Timeout:   time.Second * 10,
-			Transport: httpTransport,
+		httpClient, err := createHttpClient(oidcMetadata.JWKSURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create http client to fetch OpenId JWKS document: %w", err)
 		}
 
 		// Fetch Keys document
@@ -453,17 +456,9 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	cfg := config.Get().Auth.OpenId
 
-	// Create HTTP client
-	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS {
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
-
-	httpClient := http.Client{
-		Timeout:   time.Second * 10,
-		Transport: httpTransport,
+	httpClient, err := createHttpClient(openIdMetadata.TokenURL)
+	if err != nil {
+		return fmt.Errorf("failure when creating http client to request open id token: %w", err)
 	}
 
 	// Exchange authorization code for a token
@@ -721,4 +716,32 @@ func parseTimeClaim(claimValue interface{}) (int64, error) {
 	}
 
 	return parsedTime, nil
+}
+
+func createHttpClient(toUrl string) (*http.Client, error) {
+	cfg := config.Get().Auth.OpenId
+	parsedUrl, err := url.Parse(toUrl)
+
+	if err != nil {
+		return nil, err
+	}
+
+	httpTransport := &http.Transport{}
+	if cfg.InsecureSkipVerifyTLS {
+		httpTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+
+	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
+		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPSProxy)
+		httpTransport.Proxy = proxyFunc
+	}
+
+	httpClient := http.Client{
+		Timeout:   time.Second * 10,
+		Transport: httpTransport,
+	}
+
+	return &httpClient, nil
 }
