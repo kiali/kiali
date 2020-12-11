@@ -217,6 +217,16 @@ type GroupByParam struct {
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
+type IncludeIdleEdges struct {
+	// Flag for including edges that have no request traffic for the time period.
+	//
+	// in: query
+	// required: false
+	// default: false
+	Name string `json:"includeIdleEdges"`
+}
+
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
 type InjectServiceNodes struct {
 	// Flag for injecting the requested service node between source and destination nodes.
 	//

@@ -607,6 +607,14 @@
             "type": "string",
             "default": "false",
             "x-go-name": "Name",
+            "description": "Flag for including edges that have no request traffic for the time period.",
+            "name": "includeIdleEdges",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
             "description": "Flag for injecting the requested service node between source and destination nodes.",
             "name": "injectServiceNodes",
             "in": "query"
@@ -1024,6 +1032,14 @@
             "type": "string",
             "default": "false",
             "x-go-name": "Name",
+            "description": "Flag for including edges that have no request traffic for the time period.",
+            "name": "includeIdleEdges",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
             "description": "Flag for injecting the requested service node between source and destination nodes.",
             "name": "injectServiceNodes",
             "in": "query"
@@ -1119,6 +1135,14 @@
             "x-go-name": "Name",
             "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including edges that have no request traffic for the time period.",
+            "name": "includeIdleEdges",
             "in": "query"
           },
           {
@@ -3380,6 +3404,14 @@
             "type": "string",
             "default": "false",
             "x-go-name": "Name",
+            "description": "Flag for including edges that have no request traffic for the time period.",
+            "name": "includeIdleEdges",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
             "description": "Flag for injecting the requested service node between source and destination nodes.",
             "name": "injectServiceNodes",
             "in": "query"
@@ -4827,7 +4859,7 @@
         "statistics": {
           "type": "object",
           "properties": {
-            "ratio_statitics": {
+            "ratio_statistics": {
               "type": "object",
               "properties": {
                 "credible_interval": {
