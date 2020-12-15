@@ -106,5 +106,6 @@ run-operator-playbook: .ensure-operator-repo-exists .ensure-operator-helm-chart-
 ifeq ($(OPERATOR_PROFILER_ENABLED),true)
 	@$(eval ANSIBLE_CALLBACK_WHITELIST_ARG ?= ANSIBLE_CALLBACK_WHITELIST=profile_tasks)
 endif
+	@echo Ensure the CRDs exist; ${OC} apply -f ${HELM_CHARTS_REPO}/kiali-operator/crds/crds.yaml
 	ansible-galaxy collection install operator_sdk.util
 	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
