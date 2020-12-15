@@ -4,7 +4,7 @@ from utils.timeout import timeout
 import time
 from utils.command_exec import command_exec
 
-PARAMS = {'graphType':'versionedApp', 'duration':'60s', 'injectServiceNodes':'true', 'edges':'trafficRatePerSecond', 'pi':'1500', 'appenders':'serviceEntry', 'unusedNodes':'false'}
+PARAMS = {'graphType':'versionedApp', 'duration':'60s', 'injectServiceNodes':'true', 'edges':'trafficRatePerSecond', 'pi':'1500', 'appenders':'serviceEntry', 'idleNode':'false'}
 EXPECTED_EXTERNAL_SERVICE_NAME = 'external-service-foo-se'
 
 def test_external_host_node(kiali_client):

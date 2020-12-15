@@ -178,7 +178,7 @@ type WorkloadParam struct {
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type AppendersParam struct {
-	// Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].
+	// Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].
 	//
 	// in: query
 	// required: false

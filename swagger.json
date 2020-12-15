@@ -575,7 +575,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
             "name": "appenders",
             "in": "query"
           },
@@ -1000,7 +1000,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
             "name": "appenders",
             "in": "query"
           },
@@ -1109,7 +1109,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
             "name": "appenders",
             "in": "query"
           },
@@ -2654,7 +2654,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
             "name": "appenders",
             "in": "query"
           },
@@ -3372,7 +3372,7 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
             "name": "appenders",
             "in": "query"
           },
@@ -5604,6 +5604,10 @@
           "type": "string",
           "x-go-name": "IsGroup"
         },
+        "isIdle": {
+          "type": "boolean",
+          "x-go-name": "IsIdle"
+        },
         "isInaccessible": {
           "type": "boolean",
           "x-go-name": "IsInaccessible"
@@ -5623,10 +5627,6 @@
         "isServiceEntry": {
           "type": "string",
           "x-go-name": "IsServiceEntry"
-        },
-        "isUnused": {
-          "type": "boolean",
-          "x-go-name": "IsUnused"
         },
         "namespace": {
           "type": "string",
