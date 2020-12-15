@@ -1,6 +1,8 @@
 package business
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -188,14 +190,24 @@ func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioCompon
 	}
 
 	// Add missing deployments
+	componentNotFound := 0
 	for comp, isCore := range statusComponents {
 		if _, found := cf[comp]; !found {
+			componentNotFound += 1
 			isc = append(isc, ComponentStatus{
 				Name:   comp,
 				Status: NotFound,
 				IsCore: isCore,
 			})
 		}
+	}
+
+	// When all the deployments are missing,
+	// Warn users that their kiali config might be wrong
+	if componentNotFound == len(statusComponents) {
+		return isc, errors.New(fmt.Sprintf(
+			"Are you sure Istio is installed in the %s namespace?",
+			config.Get().IstioNamespace))
 	}
 
 	return isc, nil
