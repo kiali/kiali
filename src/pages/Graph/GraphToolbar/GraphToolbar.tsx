@@ -10,7 +10,7 @@ import {
   activeNamespacesSelector,
   edgeLabelModeSelector,
   graphTypeSelector,
-  showUnusedNodesSelector,
+  showIdleNodesSelector,
   replayActiveSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
@@ -35,13 +35,13 @@ type ReduxProps = {
   graphType: GraphType;
   node?: NodeParamsType;
   replayActive: boolean;
-  showUnusedNodes: boolean;
+  showIdleNodes: boolean;
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
   setGraphType: (graphType: GraphType) => void;
+  setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
-  setShowUnusedNodes: (unusedNodes: boolean) => void;
   toggleReplayActive: () => void;
 };
 
@@ -107,13 +107,13 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
 
-    const unusedNodes = HistoryManager.getBooleanParam(URLParam.UNUSED_NODES);
-    if (unusedNodes !== undefined) {
-      if (props.showUnusedNodes !== unusedNodes) {
-        props.setShowUnusedNodes(unusedNodes);
+    const idleNodes = HistoryManager.getBooleanParam(URLParam.GRAPH_IDLE_NODES);
+    if (idleNodes !== undefined) {
+      if (props.showIdleNodes !== idleNodes) {
+        props.setIdleNodes(idleNodes);
       }
     } else {
-      HistoryManager.setParam(URLParam.UNUSED_NODES, String(this.props.showUnusedNodes));
+      HistoryManager.setParam(URLParam.GRAPH_IDLE_NODES, String(this.props.showIdleNodes));
     }
   }
 
@@ -127,7 +127,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     }
     HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
     HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
-    HistoryManager.setParam(URLParam.UNUSED_NODES, String(this.props.showUnusedNodes));
+    HistoryManager.setParam(URLParam.GRAPH_IDLE_NODES, String(this.props.showIdleNodes));
   }
 
   componentWillUnmount() {
@@ -198,7 +198,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   graphType: graphTypeSelector(state),
   node: state.graph.node,
   replayActive: replayActiveSelector(state),
-  showUnusedNodes: showUnusedNodesSelector(state)
+  showIdleNodes: showIdleNodesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
@@ -206,8 +206,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
     setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
+    setIdleNodes: bindActionCreators(GraphToolbarActions.setIdleNodes, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),
-    setShowUnusedNodes: bindActionCreators(GraphToolbarActions.setShowUnusedNodes, dispatch),
     toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
   };
 };

@@ -87,7 +87,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
                 fetchParams: this.props.dataSource.fetchParameters,
                 timestamp: this.props.dataSource.graphTimestamp
               }}
-              displayUnusedNodes={() => undefined}
+              toggleIdleNodes={() => undefined}
               edgeLabelMode={EdgeLabelMode.NONE}
               isMTLSEnabled={false}
               isMiniGraph={true}
@@ -95,13 +95,14 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               onNodeTap={this.handleNodeTap}
               refreshInterval={0}
               showCircuitBreakers={false}
+              showIdleEdges={false}
               showMissingSidecars={true}
               showNodeLabels={true}
               showOperationNodes={false}
               showSecurity={false}
               showServiceNodes={true}
               showTrafficAnimation={false}
-              showUnusedNodes={false}
+              showIdleNodes={false}
               showVirtualServices={true}
             />
           </div>
@@ -170,7 +171,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
         break;
     }
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&unusedNodes=true&focusSelector=${encodeURI(
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&idleNodes=true&focusSelector=${encodeURI(
       cytoscapeGraph.build()
     )}`;
 

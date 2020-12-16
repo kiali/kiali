@@ -8,7 +8,7 @@ import serviceEntryImage from '../../assets/img/legend/service-entry.svg';
 import nodeColorNormalImage from '../../assets/img/legend/node-color-normal.svg';
 import nodeColorWarningImage from '../../assets/img/legend/node-color-warning.svg';
 import nodeColorDangerImage from '../../assets/img/legend/node-color-danger.svg';
-import nodeColorUnusedImage from '../../assets/img/legend/node-color-unused.svg';
+import nodeColorIdleImage from '../../assets/img/legend/node-color-idle.svg';
 // Node Background
 import externalNamespaceImage from '../../assets/img/legend/external-namespace.svg';
 import restrictedNamespaceImage from '../../assets/img/legend/restricted-namespace.svg';
@@ -55,7 +55,7 @@ const legendData: GraphLegendItem[] = [
       { label: 'Normal', icon: nodeColorNormalImage },
       { label: 'Warn', icon: nodeColorWarningImage },
       { label: 'Danger', icon: nodeColorDangerImage },
-      { label: 'Unused', icon: nodeColorUnusedImage }
+      { label: 'Idle', icon: nodeColorIdleImage }
     ]
   },
   {

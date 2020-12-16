@@ -7,15 +7,15 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
 
 type EmptyGraphLayoutProps = {
+  action?: any;
   elements?: DecoratedGraphElements;
   namespaces: Namespace[];
-  action?: any;
-  displayUnusedNodes: () => void;
-  isDisplayingUnusedNodes: boolean;
   isLoading?: boolean;
   isError: boolean;
   isMiniGraph: boolean;
   error?: string;
+  showIdleNodes: boolean;
+  toggleIdleNodes: () => void;
 };
 
 const emptyStateStyle = style({
@@ -119,21 +119,15 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
             service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
             the service mesh has yet to see request traffic.
-            {this.props.isDisplayingUnusedNodes && (
-              <> You are currently displaying 'Unused nodes', send requests to the service mesh and click 'Refresh'.</>
+            {this.props.showIdleNodes && (
+              <> You are currently displaying 'Idle nodes', send requests to the service mesh and click 'Refresh'.</>
             )}
-            {!this.props.isDisplayingUnusedNodes && (
-              <>
-                {' '}
-                You can enable 'Unused nodes' to display service mesh nodes that have yet to see any request traffic.
-              </>
+            {!this.props.showIdleNodes && (
+              <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
             )}
           </EmptyStateBody>
-          <Button
-            onClick={this.props.isDisplayingUnusedNodes ? this.props.action : this.props.displayUnusedNodes}
-            variant="primary"
-          >
-            {(this.props.isDisplayingUnusedNodes && <>Refresh</>) || <>Display unused nodes</>}
+          <Button onClick={this.props.showIdleNodes ? this.props.action : this.props.toggleIdleNodes} variant="primary">
+            {(this.props.showIdleNodes && <>Refresh</>) || <>Display idle nodes</>}
           </Button>
         </EmptyState>
       );

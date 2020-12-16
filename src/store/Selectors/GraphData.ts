@@ -60,13 +60,13 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       httpOut: NaN,
       isDead: undefined,
       isGroup: undefined,
+      isIdle: undefined,
       isInaccessible: undefined,
       isIstio: undefined,
       isMisconfigured: undefined,
       isOutside: undefined,
       isRoot: undefined,
       isServiceEntry: undefined,
-      isUnused: undefined,
       service: undefined,
       tcpIn: NaN,
       tcpOut: NaN,
@@ -117,7 +117,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
         const decoratedNode: any = { ...node };
         // parse out the traffic data into top level fields for the various protocols. This is done
         // to be back compatible with our existing ui code that expects the explicit http and tcp fields.
-        // We can then set the 'traffic' field undefined because it is unused in the cy element handling.
+        // We can then set the 'traffic' field undefined because it is not used in the cy element handling.
         if (decoratedNode.data.traffic) {
           const traffic = decoratedNode.data.traffic;
           decoratedNode.data.traffic = undefined;

@@ -77,23 +77,28 @@ type ReduxProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
   compressOnHide: boolean;
-  displayUnusedNodes: () => void;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabelMode: EdgeLabelMode;
+  endTour: () => void;
   graphType: GraphType;
   isPageVisible: boolean;
   lastRefreshAt: TimeInMilliseconds;
   layout: Layout;
+  mtlsEnabled: boolean;
   node?: NodeParamsType;
+  onNamespaceChange: () => void;
   onReady: (cytoscapeRef: any) => void;
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
   setActiveNamespaces: (namespace: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
+  setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
+  showIdleEdges: boolean;
+  showIdleNodes: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
@@ -101,18 +106,13 @@ type ReduxProps = {
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
-  showUnusedNodes: boolean;
   showVirtualServices: boolean;
+  startTour: ({ info: TourInfo, stop: number }) => void;
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
-  updateSummary: (event: CytoscapeClickEvent) => void;
-  mtlsEnabled: boolean;
-
-  onNamespaceChange: () => void;
-  setNode: (node?: NodeParamsType) => void;
+  toggleIdleNodes: () => void;
   toggleLegend: () => void;
-  endTour: () => void;
-  startTour: ({ info: TourInfo, stop: number }) => void;
+  updateSummary: (event: CytoscapeClickEvent) => void;
 };
 
 export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
@@ -180,11 +180,11 @@ const GraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
       <EmptyGraphLayout
-        namespaces={[]}
         isError={true}
-        isDisplayingUnusedNodes={false}
-        displayUnusedNodes={() => undefined}
         isMiniGraph={false}
+        namespaces={[]}
+        showIdleNodes={false}
+        toggleIdleNodes={() => undefined}
       />
     </div>
   );
@@ -278,15 +278,16 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         fetchParams: {
           namespaces: props.node ? [props.node.namespace] : props.activeNamespaces,
           duration: props.duration,
+          edgeLabelMode: props.edgeLabelMode,
           graphType: props.graphType,
           includeHealth: true,
           injectServiceNodes: props.showServiceNodes,
-          edgeLabelMode: props.edgeLabelMode,
-          showOperationNodes: props.showOperationNodes,
-          showSecurity: props.showSecurity,
-          showUnusedNodes: props.showUnusedNodes,
           node: props.node,
-          queryTime: 0
+          queryTime: 0,
+          showIdleEdges: props.showIdleEdges,
+          showIdleNodes: props.showIdleNodes,
+          showOperationNodes: props.showOperationNodes,
+          showSecurity: props.showSecurity
         },
         timestamp: 0
       }
@@ -333,10 +334,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       prev.graphType !== curr.graphType ||
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
       prev.replayQueryTime !== curr.replayQueryTime ||
+      prev.showIdleEdges !== curr.showIdleEdges ||
       prev.showOperationNodes !== curr.showOperationNodes ||
       prev.showServiceNodes !== curr.showServiceNodes ||
       prev.showSecurity !== curr.showSecurity ||
-      prev.showUnusedNodes !== curr.showUnusedNodes ||
+      prev.showIdleNodes !== curr.showIdleNodes ||
       GraphPage.isNodeChanged(prev.node, curr.node)
     ) {
       this.loadGraphDataFromBackend();
@@ -522,9 +524,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       );
       return;
     }
-    if (event.isUnused) {
+    if (event.isIdle) {
       AlertUtils.add(
-        `An unused node has no node-specific traffic and can not provide a node detail graph.`,
+        `An idle node has no node-specific traffic and can not provide a node detail graph.`,
         undefined,
         MessageType.WARNING
       );
@@ -583,9 +585,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       graphType: this.state.graphData.fetchParams.graphType,
       node: targetNode,
       refreshInterval: this.props.refreshInterval,
+      showIdleEdges: this.props.showIdleEdges,
+      showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
-      showServiceNodes: this.props.showServiceNodes,
-      showUnusedNodes: this.props.showUnusedNodes
+      showServiceNodes: this.props.showServiceNodes
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
@@ -643,9 +646,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       includeHealth: true,
       injectServiceNodes: this.props.showServiceNodes,
       edgeLabelMode: this.props.edgeLabelMode,
+      showIdleEdges: this.props.showIdleEdges,
+      showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
       showSecurity: this.props.showSecurity,
-      showUnusedNodes: this.props.showUnusedNodes,
       node: this.props.node,
       queryTime: queryTime
     });
@@ -673,11 +677,14 @@ const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
   lastRefreshAt: lastRefreshAtSelector(state),
   layout: state.graph.layout,
+  mtlsEnabled: meshWideMTLSEnabledSelector(state),
   node: state.graph.node,
   refreshInterval: refreshIntervalSelector(state),
   replayActive: replayActiveSelector(state),
   replayQueryTime: replayQueryTimeSelector(state),
   showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
+  showIdleEdges: state.graph.toolbarState.showIdleEdges,
+  showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showLegend: state.graph.toolbarState.showLegend,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
   showNodeLabels: state.graph.toolbarState.showNodeLabels,
@@ -685,15 +692,12 @@ const mapStateToProps = (state: KialiAppState) => ({
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
   showTrafficAnimation: state.graph.toolbarState.showTrafficAnimation,
-  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
   showVirtualServices: state.graph.toolbarState.showVirtualServices,
   summaryData: state.graph.summaryData,
-  trace: state.jaegerState?.selectedTrace,
-  mtlsEnabled: meshWideMTLSEnabledSelector(state)
+  trace: state.jaegerState?.selectedTrace
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  displayUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch),
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
   onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
@@ -703,6 +707,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   setTraceId: (traceId?: string) => dispatch(JaegerThunkActions.setTraceId(traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
+  toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
   toggleLegend: bindActionCreators(GraphToolbarActions.toggleLegend, dispatch),
   updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
 });

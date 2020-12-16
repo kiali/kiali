@@ -20,6 +20,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     hideValue: '',
     showCircuitBreakers: true,
     showFindHelp: false,
+    showIdleEdges: false,
+    showIdleNodes: false,
     showLegend: false,
     showMissingSidecars: true,
     showNodeLabels: true,
@@ -27,7 +29,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showSecurity: false,
     showServiceNodes: true,
     showTrafficAnimation: false,
-    showUnusedNodes: false,
     showVirtualServices: true
   },
   updateTime: 0
@@ -94,10 +95,10 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           hideValue: action.payload
         })
       });
-    case getType(GraphToolbarActions.setShowUnusedNodes):
+    case getType(GraphToolbarActions.setIdleNodes):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          showUnusedNodes: action.payload
+          showIdleNodes: action.payload
         })
       });
     case getType(GraphToolbarActions.toggleCompressOnHide):
@@ -110,6 +111,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showFindHelp: !state.toolbarState.showFindHelp
+        })
+      });
+    case getType(GraphToolbarActions.toggleIdleEdges):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showIdleEdges: !state.toolbarState.showIdleEdges
         })
       });
     case getType(GraphToolbarActions.toggleGraphNodeLabel):
@@ -142,6 +149,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           showSecurity: !state.toolbarState.showSecurity
         })
       });
+    case getType(GraphToolbarActions.toggleIdleNodes):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showIdleNodes: !state.toolbarState.showIdleNodes
+        })
+      });
     case getType(GraphToolbarActions.toggleLegend):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
@@ -168,12 +181,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showTrafficAnimation: !state.toolbarState.showTrafficAnimation
-        })
-      });
-    case getType(GraphToolbarActions.toggleUnusedNodes):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showUnusedNodes: !state.toolbarState.showUnusedNodes
         })
       });
     default:

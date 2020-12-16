@@ -197,11 +197,11 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['workload <op> <workloadName>'],
       ['circuitbreaker'],
       ['healthy', 'is not degraded or failing.'],
+      ['idle', `will auto-enable 'idle nodes' display option`],
       ['outside', 'is outside of requested namespaces'],
       ['sidecar'],
       ['serviceentry'],
       ['trafficsource', `has only outgoing edges`],
-      ['unused', `will auto-enable 'unused nodes' display option`],
       ['virtualservice']
     ];
   };

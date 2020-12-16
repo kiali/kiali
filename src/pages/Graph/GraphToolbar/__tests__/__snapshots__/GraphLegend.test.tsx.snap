@@ -211,18 +211,18 @@ exports[`GraphLegend test should render correctly 1`] = `
           </div>
           <div
             className="f1n8a700"
-            key="node-color-unused.svg"
+            key="node-color-idle.svg"
           >
             <span>
               <img
-                alt="Unused"
-                src="node-color-unused.svg"
+                alt="Idle"
+                src="node-color-idle.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Unused
+              Idle
             </span>
           </div>
         </div>

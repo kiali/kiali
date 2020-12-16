@@ -38,7 +38,6 @@ type CytoscapeGraphProps = {
   contextMenuEdgeComponent?: EdgeContextMenuType;
   contextMenuGroupComponent?: NodeContextMenuType;
   contextMenuNodeComponent?: NodeContextMenuType;
-  displayUnusedNodes: () => void;
   edgeLabelMode: EdgeLabelMode;
   graphData: GraphData;
   focusSelector?: string;
@@ -55,14 +54,16 @@ type CytoscapeGraphProps = {
   setTraceId?: (traceId?: string) => void;
   setUpdateTime?: (val: TimeInMilliseconds) => void;
   showCircuitBreakers: boolean;
+  showIdleEdges: boolean;
+  showIdleNodes: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
-  showUnusedNodes: boolean;
   showVirtualServices: boolean;
+  toggleIdleNodes: () => void;
   trace?: JaegerTrace;
   updateSummary?: (event: CytoscapeClickEvent) => void;
 };
@@ -75,7 +76,7 @@ export interface GraphNodeTapEvent {
   isInaccessible: boolean;
   isOutside: boolean;
   isServiceEntry: boolean;
-  isUnused: boolean;
+  isIdle: boolean;
   namespace: string;
   nodeType: NodeType;
   service: string;
@@ -130,7 +131,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     // only update on display changes for the existing graph. Duration or refreshInterval changes don't
     // affect display. Options that trigger a graph refresh will have an update when the refresh
-    // completes (showSecurity, showServiceNodes, showUnusedNodes, etc).
+    // completes (showIdleNodes, showSecurity, showServiceNodes, etc).
     let result =
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.graphData.isLoading !== nextProps.graphData.isLoading ||
@@ -209,14 +210,14 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
         <EmptyGraphLayout
           action={this.props.onEmptyGraphAction}
-          displayUnusedNodes={this.props.displayUnusedNodes}
           elements={this.props.graphData.elements}
           error={this.props.graphData.errorMessage}
-          isDisplayingUnusedNodes={this.props.showUnusedNodes}
           isLoading={this.props.graphData.isLoading}
           isError={!!this.props.graphData.isError}
           isMiniGraph={this.props.isMiniGraph}
           namespaces={this.props.graphData.fetchParams.namespaces}
+          showIdleNodes={this.props.showIdleNodes}
+          toggleIdleNodes={this.props.toggleIdleNodes}
         >
           <CytoscapeContextMenuWrapper
             ref={this.contextMenuRef}
@@ -248,7 +249,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       isInaccessible: target.data(CyNode.isInaccessible),
       isOutside: target.data(CyNode.isOutside),
       isServiceEntry: target.data(CyNode.isServiceEntry),
-      isUnused: targetOrGroupChildren.every(t => t.data(CyNode.isUnused)),
+      isIdle: targetOrGroupChildren.every(t => t.data(CyNode.isIdle)),
       namespace: target.data(CyNode.namespace),
       nodeType: target.data(CyNode.nodeType),
       service: target.data(CyNode.service),

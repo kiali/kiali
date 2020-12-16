@@ -481,7 +481,7 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
 
   private showFullGraph = () => {
     let graphType: GraphType = GraphType.WORKLOAD;
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${this.props.namespace}&unusedNodes=false&edges=requestsPercentage&`;
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${this.props.namespace}&idleNodes=false&edges=requestsPercentage&`;
     history.push(graphUrl);
   };
 

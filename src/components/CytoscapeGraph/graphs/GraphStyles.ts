@@ -492,7 +492,7 @@ export class GraphStyles {
             return getNodeBorderColor(ele);
           },
           'border-style': (ele: Cy.NodeSingular) => {
-            return decoratedNodeData(ele).isUnused ? 'dotted' : 'solid';
+            return decoratedNodeData(ele).isIdle ? 'dotted' : 'solid';
           },
           'border-width': NodeBorderWidth,
           ghost: 'yes',

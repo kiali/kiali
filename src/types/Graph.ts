@@ -181,12 +181,12 @@ export interface GraphNodeData {
   hasVS?: boolean;
   isDead?: boolean;
   isGroup?: string;
+  isIdle?: boolean;
   isInaccessible?: boolean;
   isMisconfigured?: string;
   isOutside?: boolean;
   isRoot?: boolean;
   isServiceEntry?: string;
-  isUnused?: boolean;
 }
 
 // Edge data expected from server

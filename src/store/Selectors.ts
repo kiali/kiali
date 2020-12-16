@@ -67,9 +67,9 @@ const lastRefreshAt = (state: KialiAppState) => state.globalState.lastRefreshAt;
 
 export const lastRefreshAtSelector = createIdentitySelector(lastRefreshAt);
 
-const showUnusedNodes = (state: KialiAppState) => state.graph.toolbarState.showUnusedNodes;
+const showIdleNodes = (state: KialiAppState) => state.graph.toolbarState.showIdleNodes;
 
-export const showUnusedNodesSelector = createIdentitySelector(showUnusedNodes);
+export const showIdleNodesSelector = createIdentitySelector(showIdleNodes);
 
 const meshwideMTLSStatus = (state: KialiAppState) => state.meshTLSStatus.status;
 

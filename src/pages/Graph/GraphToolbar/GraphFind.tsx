@@ -27,8 +27,8 @@ type ReduxProps = {
   hideValue: string;
   layout: Layout;
   showFindHelp: boolean;
+  showIdleNodes: boolean;
   showSecurity: boolean;
-  showUnusedNodes: boolean;
   updateTime: TimeInMilliseconds;
 
   setEdgeLabelMode: (val: EdgeLabelMode) => void;
@@ -36,7 +36,7 @@ type ReduxProps = {
   setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
-  toggleUnusedNodes: () => void;
+  toggleIdleNodes: () => void;
 };
 
 type GraphFindProps = ReduxProps & {
@@ -80,6 +80,7 @@ const operands: string[] = [
   'http',
   'httpin',
   'httpout',
+  'idle',
   'mtls',
   'name',
   'namespace',
@@ -94,7 +95,6 @@ const operands: string[] = [
   'tcp',
   'traffic',
   'trafficsource',
-  'unused',
   'version',
   'tcpin',
   'tcpout',
@@ -376,10 +376,10 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       let hiddenElements = cy.$(selector);
       // add the edges connected to hidden nodes
       hiddenElements = hiddenElements.add(hiddenElements.connectedEdges());
-      // add nodes with only hidden edges (keep unused nodes as that is an explicit option)
+      // add nodes with only hidden edges (keep idle nodes as that is an explicit option)
       const visibleElements = hiddenElements.absoluteComplement();
       const nodesWithVisibleEdges = visibleElements.edges().connectedNodes();
-      const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isUnused}]`).subtract(nodesWithVisibleEdges);
+      const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isIdle}]`).subtract(nodesWithVisibleEdges);
       hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
       // subtract any appbox hits, we only hide empty appboxes
       hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isGroup]'));
@@ -730,6 +730,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
             ? `[${CyNode.healthStatus} != "${HEALTHY.name}"]`
             : `[${CyNode.healthStatus} = "${HEALTHY.name}"]`
         };
+      case 'idle':
+        if (!this.props.showIdleNodes) {
+          AlertUtils.addSuccess('Enabling "idle nodes" display option for graph find/hide expression');
+          this.props.toggleIdleNodes();
+        }
+        return { target: 'node', selector: isNegation ? `[^${CyNode.isIdle}]` : `[?${CyNode.isIdle}]` };
       case 'outside':
       case 'outsider':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isOutside}]` : `[?${CyNode.isOutside}]` };
@@ -742,12 +748,6 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'trafficsource':
       case 'root':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isRoot}]` : `[?${CyNode.isRoot}]` };
-      case 'unused':
-        if (!this.props.showUnusedNodes) {
-          AlertUtils.addSuccess('Enabling "unused nodes" display option for graph find/hide expression');
-          this.props.toggleUnusedNodes();
-        }
-        return { target: 'node', selector: isNegation ? `[^${CyNode.isUnused}]` : `[?${CyNode.isUnused}]` };
       case 'vs':
       case 'virtualservice':
         return { target: 'node', selector: isNegation ? `[^${CyNode.hasVS}]` : `[?${CyNode.hasVS}]` };
@@ -790,8 +790,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
   showFindHelp: state.graph.toolbarState.showFindHelp,
+  showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showSecurity: state.graph.toolbarState.showSecurity,
-  showUnusedNodes: state.graph.toolbarState.showUnusedNodes,
   updateTime: state.graph.updateTime
 });
 
@@ -802,7 +802,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setHideValue: bindActionCreators(GraphToolbarActions.setHideValue, dispatch),
     toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
-    toggleUnusedNodes: bindActionCreators(GraphToolbarActions.toggleUnusedNodes, dispatch)
+    toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch)
   };
 };
 
