@@ -6,12 +6,12 @@
     "nodes": [
       {
         "data": {
-          "id": "4dbce17737348d2e200a0b22fea3145b",
-          "nodeType": "app",
+          "id": "472bfb370dd24116b28b534e453ef044",
+          "nodeType": "box",
           "cluster": "unknown",
           "namespace": "bookinfo",
           "app": "reviews",
-          "isGroup": "app"
+          "isBox": "app"
         }
       },
       {
@@ -79,7 +79,7 @@
       {
         "data": {
           "id": "ab3aaaac969f359da3dd1f50364f1952",
-          "parent": "4dbce17737348d2e200a0b22fea3145b",
+          "parent": "472bfb370dd24116b28b534e453ef044",
           "nodeType": "app",
           "cluster": "unknown",
           "namespace": "bookinfo",
@@ -106,7 +106,7 @@
       {
         "data": {
           "id": "dfeed878f470746a60e51dfbea7db762",
-          "parent": "4dbce17737348d2e200a0b22fea3145b",
+          "parent": "472bfb370dd24116b28b534e453ef044",
           "nodeType": "app",
           "cluster": "unknown",
           "namespace": "bookinfo",
@@ -133,7 +133,7 @@
       {
         "data": {
           "id": "984add433545d4b5012c54cc76a17596",
-          "parent": "4dbce17737348d2e200a0b22fea3145b",
+          "parent": "472bfb370dd24116b28b534e453ef044",
           "nodeType": "app",
           "cluster": "unknown",
           "namespace": "bookinfo",

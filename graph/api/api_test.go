@@ -644,7 +644,7 @@ func TestAppGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespacesIstio
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&groupBy=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -683,7 +683,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespacesIstio
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1038,7 +1038,7 @@ func TestAppNodeGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNodeIstio
-	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/graph?graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/graph?graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1315,7 +1315,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNodeIstio
-	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/versions/v1/graph?graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/versions/v1/graph?graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1767,8 +1767,8 @@ func TestComplexGraph(t *testing.T) {
 		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
 	q6m1 := model.Metric{
-		"source_cluster":                 "unknown",
-		"source_workload_namespace":      "bad-source-temetry",
+		"source_cluster":                 "cluster-tutorial",
+		"source_workload_namespace":      "bad-source-telemetry-case-1",
 		"source_workload":                "unknown",
 		"source_canonical_service":       "unknown",
 		"source_canonical_revision":      "unknown",
@@ -1814,7 +1814,7 @@ func TestComplexGraph(t *testing.T) {
 		"response_code":                  "200",
 		"grpc_response_status":           "0",
 		"response_flags":                 "-"}
-	q8m1 := model.Metric{ // bad telem (variant 1)
+	q8m1 := model.Metric{ // bad dest telem (variant 1.0)
 		"source_cluster":                 "cluster-tutorial",
 		"source_workload_namespace":      "tutorial",
 		"source_workload":                "customer-v1",
@@ -1831,7 +1831,7 @@ func TestComplexGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
-	q8m2 := model.Metric{ // bad telem (variant 2)
+	q8m2 := model.Metric{ // bad dest telem (variant 1.2)
 		"source_cluster":                 "cluster-tutorial",
 		"source_workload_namespace":      "tutorial",
 		"source_workload":                "customer-v1",
@@ -1916,6 +1916,24 @@ func TestComplexGraph(t *testing.T) {
 		"request_protocol":               "grpc",
 		"response_code":                  "0", // note, grpc_response_status is not reported for grpc with no response
 		"response_flags":                 "DC"}
+	q8m7 := model.Metric{ // bad dest telem (variant 2.1)
+		"source_cluster":                 "cluster-tutorial",
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_canonical_service":       "customer",
+		"source_canonical_revision":      "v1",
+		"destination_cluster":            "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "reviews",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"response_flags":                 "-"}
+
 	v8 := model.Vector{
 		&model.Sample{
 			Metric: q8m0,
@@ -1937,7 +1955,11 @@ func TestComplexGraph(t *testing.T) {
 			Value:  500},
 		&model.Sample{
 			Metric: q8m6,
-			Value:  600}}
+			Value:  600},
+		&model.Sample{
+			Metric: q8m7,
+			Value:  700},
+	}
 
 	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags),0.001)`
 	v9 := model.Vector{}
@@ -1955,7 +1977,7 @@ func TestComplexGraph(t *testing.T) {
 	v13 := model.Vector{}
 
 	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags),0.001)`
-	q14m0 := model.Metric{ // good telem (service entry via egressgateway, see the second hop below)
+	q14m0 := model.Metric{ // good telem (service entry via egressgateway, the second hop)
 		"source_cluster":                 "cluster-cp",
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "istio-egressgateway",
@@ -2024,7 +2046,7 @@ func TestComplexGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespacesIstio
-	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&groupBy=app&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
+	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
