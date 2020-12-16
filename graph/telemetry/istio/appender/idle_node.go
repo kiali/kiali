@@ -70,7 +70,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for service [%s]", s.Service.Name)
-				node := graph.NewNodeExplicit(id, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
+				node := graph.NewNodeExplicit(id, graph.Unknown, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
 				idleNodeTrafficMap[id] = &node
@@ -95,7 +95,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
-				node := graph.NewNodeExplicit(id, namespace, w.Name, app, version, "", nodeType, a.GraphType)
+				node := graph.NewNodeExplicit(id, graph.Unknown, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
 				idleNodeTrafficMap[id] = &node
