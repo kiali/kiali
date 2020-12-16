@@ -34,6 +34,7 @@ const (
 	defaultDuration           string = "10m"
 	defaultGraphType          string = GraphTypeWorkload
 	defaultGroupBy            string = GroupByNone
+	defaultIncludeIdleEdges   bool   = false
 	defaultInjectServiceNodes bool   = false
 )
 
@@ -76,6 +77,7 @@ type RequestedAppenders struct {
 type TelemetryOptions struct {
 	AccessibleNamespaces map[string]time.Time
 	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
+	IncludeIdleEdges     bool               // include edges with request rates of 0
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
 	Namespaces           NamespaceInfoMap
 	CommonOptions
@@ -104,6 +106,7 @@ func NewOptions(r *net_http.Request) Options {
 	// query params
 	params := r.URL.Query()
 	var duration model.Duration
+	var includeIdleEdges bool
 	var injectServiceNodes bool
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
@@ -111,6 +114,7 @@ func NewOptions(r *net_http.Request) Options {
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
+	includeIdleEdgesString := params.Get("includeIdleEdges")
 	injectServiceNodesString := params.Get("injectServiceNodes")
 	namespaces := params.Get("namespaces") // csl of namespaces
 	queryTimeString := params.Get("queryTime")
@@ -151,6 +155,15 @@ func NewOptions(r *net_http.Request) Options {
 		groupBy = defaultGroupBy
 	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
 		BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
+	}
+	if includeIdleEdgesString == "" {
+		includeIdleEdges = defaultIncludeIdleEdges
+	} else {
+		var includeIdleEdgesErr error
+		includeIdleEdges, includeIdleEdgesErr = strconv.ParseBool(includeIdleEdgesString)
+		if includeIdleEdgesErr != nil {
+			BadRequest(fmt.Sprintf("Invalid includeIdleEdges [%s]", includeIdleEdgesString))
+		}
 	}
 	if injectServiceNodesString == "" {
 		injectServiceNodes = defaultInjectServiceNodes
@@ -237,6 +250,7 @@ func NewOptions(r *net_http.Request) Options {
 		TelemetryOptions: TelemetryOptions{
 			AccessibleNamespaces: accessibleNamespaces,
 			Appenders:            appenders,
+			IncludeIdleEdges:     includeIdleEdges,
 			InjectServiceNodes:   injectServiceNodes,
 			Namespaces:           namespaceMap,
 			CommonOptions: CommonOptions{

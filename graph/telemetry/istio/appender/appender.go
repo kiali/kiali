@@ -26,6 +26,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
+			case IdleNodeAppenderName:
+				requestedAppenders[IdleNodeAppenderName] = true
 			case IstioAppenderName:
 				requestedAppenders[IstioAppenderName] = true
 			case ResponseTimeAppenderName:
@@ -36,8 +38,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[ServiceEntryAppenderName] = true
 			case SidecarsCheckAppenderName:
 				requestedAppenders[SidecarsCheckAppenderName] = true
-			case UnusedNodeAppenderName:
-				requestedAppenders[UnusedNodeAppenderName] = true
 			case "":
 				// skip
 			default:
@@ -49,9 +49,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	// The appender order is important
 	// To pre-process service nodes run service_entry appender first
 	// To reduce processing, filter dead nodes next
-	// To reduce processing, next run appenders that don't apply to unused services
+	// To reduce processing, next run appenders that don't apply to idle (aka unused) services
 	// - lazily inject aggregate nodes so other decorations can influence the new nodes/edges, if necessary
-	// Add orphan (unused) services
+	// Add orphan (idle) services
 	// Run remaining appenders
 	var appenders []graph.Appender
 
@@ -111,9 +111,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[UnusedNodeAppenderName]; ok || o.Appenders.All {
+	if _, ok := requestedAppenders[IdleNodeAppenderName]; ok || o.Appenders.All {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
-		a := UnusedNodeAppender{
+		a := IdleNodeAppender{
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
 			IsNodeGraph:        hasNodeOptions,

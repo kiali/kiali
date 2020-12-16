@@ -178,7 +178,7 @@ type WorkloadParam struct {
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type AppendersParam struct {
-	// Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, aggregateNode, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].
+	// Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].
 	//
 	// in: query
 	// required: false
@@ -214,6 +214,16 @@ type GroupByParam struct {
 	// required: false
 	// default: none
 	Name string `json:"groupBy"`
+}
+
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
+type IncludeIdleEdges struct {
+	// Flag for including edges that have no request traffic for the time period.
+	//
+	// in: query
+	// required: false
+	// default: false
+	Name string `json:"includeIdleEdges"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload

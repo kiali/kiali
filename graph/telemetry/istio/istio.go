@@ -148,6 +148,12 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 
 func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
 	for _, s := range *vector {
+		val := float64(s.Value)
+
+		if !o.IncludeIdleEdges && val == 0 {
+			continue
+		}
+
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
@@ -195,8 +201,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | request.host | "unknown"
 		host := destSvc
-
-		val := float64(s.Value)
 
 		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
 		inject := false
@@ -248,6 +252,12 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags,
 
 func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
 	for _, s := range *vector {
+		val := float64(s.Value)
+
+		if !o.IncludeIdleEdges && val == 0 {
+			continue
+		}
+
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
 		lSourceWl, sourceWlOk := m["source_workload"]
@@ -287,8 +297,6 @@ func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o 
 
 		// make code more readable by setting "host" because "destSvc" holds destination.service.host | "unknown"
 		host := destSvc
-
-		val := float64(s.Value)
 
 		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
 		inject := false

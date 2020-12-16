@@ -73,12 +73,12 @@ type NodeData struct {
 	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
 	IsDead          bool                `json:"isDead,omitempty"`          // true (has no pods) | false
 	IsGroup         string              `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
+	IsIdle          bool                `json:"isIdle,omitempty"`          // true | false
 	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
 	IsServiceEntry  string              `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
-	IsUnused        bool                `json:"isUnused,omitempty"`        // true | false
 }
 
 type EdgeData struct {
@@ -204,14 +204,14 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.IsDead = val.(bool)
 		}
 
+		// node may be idle
+		if val, ok := n.Metadata[graph.IsIdle]; ok {
+			nd.IsIdle = val.(bool)
+		}
+
 		// node may be a root
 		if val, ok := n.Metadata[graph.IsRoot]; ok {
 			nd.IsRoot = val.(bool)
-		}
-
-		// node may be unused
-		if val, ok := n.Metadata[graph.IsUnused]; ok {
-			nd.IsUnused = val.(bool)
 		}
 
 		// node is not accessible to the current user

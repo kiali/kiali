@@ -7,24 +7,24 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const UnusedNodeAppenderName = "unusedNode"
+const IdleNodeAppenderName = "idleNode"
 
-// UnusedNodeAppender looks for services that have never seen request traffic.  It adds nodes to represent the
-// unused definitions.  The added node types depend on the graph type and/or labeling on the definition.
-// Name: unusedNode
-type UnusedNodeAppender struct {
+// IdleNodeAppender looks for services that have never seen request traffic.  It adds nodes to represent the
+// idle/unused definitions.  The added node types depend on the graph type and/or labeling on the definition.
+// Name: idleNode
+type IdleNodeAppender struct {
 	GraphType          string
-	InjectServiceNodes bool // This appender addes unused services only when service node are injected or graphType=service
+	InjectServiceNodes bool // This appender adds idle services only when service nodes are injected or graphType=service
 	IsNodeGraph        bool // This appender does not operate on node detail graphs because we want to focus on the specific node.
 }
 
 // Name implements Appender
-func (a UnusedNodeAppender) Name() string {
-	return UnusedNodeAppenderName
+func (a IdleNodeAppender) Name() string {
+	return IdleNodeAppenderName
 }
 
 // AppendGraph implements Appender
-func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if a.IsNodeGraph {
 		return
 	}
@@ -50,30 +50,30 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		services = getServiceDefinitionList(namespaceInfo).ServiceDefinitions
 	}
 
-	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, services, workloads)
+	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, services, workloads)
 }
 
-func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
-	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, services, workloads)
+func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
+	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, services, workloads)
 
-	// Integrate the unused nodes into the existing traffic map
-	for id, unusedNode := range unusedTrafficMap {
-		trafficMap[id] = unusedNode
+	// Integrate the idle nodes into the existing traffic map
+	for id, idleNode := range idleNodeTrafficMap {
+		trafficMap[id] = idleNode
 	}
 }
 
-func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) graph.TrafficMap {
-	unusedTrafficMap := graph.NewTrafficMap()
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) graph.TrafficMap {
+	idleNodeTrafficMap := graph.NewTrafficMap()
 
 	for _, s := range services {
 		id, nodeType := graph.Id(namespace, s.Service.Name, "", "", "", "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
-			if _, found = unusedTrafficMap[id]; !found {
-				log.Tracef("Adding unused node for service [%s]", s.Service.Name)
+			if _, found = idleNodeTrafficMap[id]; !found {
+				log.Tracef("Adding idle node for service [%s]", s.Service.Name)
 				node := graph.NewNodeExplicit(id, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}
-				unusedTrafficMap[id] = &node
+				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
+				idleNodeTrafficMap[id] = &node
 			}
 		}
 	}
@@ -93,14 +93,14 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		}
 		id, nodeType := graph.Id("", "", namespace, w.Name, app, version, a.GraphType)
 		if _, found := trafficMap[id]; !found {
-			if _, found = unusedTrafficMap[id]; !found {
-				log.Tracef("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
+			if _, found = idleNodeTrafficMap[id]; !found {
+				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
 				node := graph.NewNodeExplicit(id, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}
-				unusedTrafficMap[id] = &node
+				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
+				idleNodeTrafficMap[id] = &node
 			}
 		}
 	}
-	return unusedTrafficMap
+	return idleNodeTrafficMap
 }
