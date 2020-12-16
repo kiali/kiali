@@ -150,12 +150,12 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destSvc := string(lDestSvc)
 		responseCode := string(lResponseCode)
 
-		if util.IsBadSourceTelemetry(lSourceCluster, sourceClusterOk, sourceWlNs, sourceWl, sourceApp) {
-			continue
-		}
-
 		// handle clusters
 		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
+
+		if util.IsBadSourceTelemetry(sourceCluster, sourceClusterOk, sourceWlNs, sourceWl, sourceApp) {
+			continue
+		}
 
 		// This was added in istio 1.5, handle in a backward compatible way
 		grpcReponseStatus := "0"
@@ -172,9 +172,9 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		val := float64(s.Value)
 
 		// handle unusual destinations
-		destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceWlNs, sourceWl, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
+		destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, _ := util.HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, string(lDestSvcNs), string(lDestSvc), string(lDestSvcName), string(lDestWlNs), string(lDestWl), string(lDestApp), string(lDestVer))
 
-		if util.IsBadDestTelemetry(lDestCluster, destClusterOk, destSvc, destSvcName, destWl) {
+		if util.IsBadDestTelemetry(destCluster, destClusterOk, destSvcNs, destSvc, destSvcName, destWl) {
 			continue
 		}
 

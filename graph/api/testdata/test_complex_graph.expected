@@ -57,7 +57,6 @@
       {
         "data": {
           "id": "ddedb716cef6d38da883fcb5ca8797e9",
-          "parent": "fa75195fe2333d2362fce7f62eaeac7e",
           "nodeType": "app",
           "cluster": "cluster-cp",
           "namespace": "istio-system",
@@ -73,6 +72,40 @@
             }
           ],
           "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "624e46d76d5b71881ff3ce37f3c8774b",
+          "nodeType": "app",
+          "cluster": "cluster-tutorial",
+          "namespace": "istio-system",
+          "workload": "istio-egressgateway",
+          "app": "istio-egressgateway",
+          "version": "latest",
+          "destServices": [
+            {
+              "cluster": "cluster-tutorial",
+              "namespace": "istio-system",
+              "name": "istio-egressgateway"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "grpc",
+              "rates": {
+                "grpcIn": "600.00",
+                "grpcInNoResponse": "600.00"
+              }
+            },
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "900.00",
+                "httpInNoResponse": "500.00"
+              }
+            }
+          ]
         }
       },
       {
@@ -103,51 +136,6 @@
               "protocol": "http",
               "rates": {
                 "httpOut": "1250.00"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "data": {
-          "id": "fa75195fe2333d2362fce7f62eaeac7e",
-          "nodeType": "app",
-          "cluster": "unknown",
-          "namespace": "istio-system",
-          "app": "istio-egressgateway",
-          "isGroup": "app"
-        }
-      },
-      {
-        "data": {
-          "id": "2b8c0b20b3d123cfd18420b39505349e",
-          "parent": "fa75195fe2333d2362fce7f62eaeac7e",
-          "nodeType": "app",
-          "cluster": "unknown",
-          "namespace": "istio-system",
-          "workload": "istio-egressgateway",
-          "app": "istio-egressgateway",
-          "version": "latest",
-          "destServices": [
-            {
-              "cluster": "unknown",
-              "namespace": "istio-system",
-              "name": "istio-egressgateway"
-            }
-          ],
-          "traffic": [
-            {
-              "protocol": "grpc",
-              "rates": {
-                "grpcIn": "600.00",
-                "grpcInNoResponse": "600.00"
-              }
-            },
-            {
-              "protocol": "http",
-              "rates": {
-                "httpIn": "900.00",
-                "httpInNoResponse": "500.00"
               }
             }
           ]
@@ -209,9 +197,35 @@
     "edges": [
       {
         "data": {
-          "id": "77899caeb6bf5939c31a1966cdf977f7",
+          "id": "99179012a3b0b2c25ac81320ca4c32b2",
           "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "2b8c0b20b3d123cfd18420b39505349e",
+          "target": "624e46d76d5b71881ff3ce37f3c8774b",
+          "traffic": {
+            "protocol": "grpc",
+            "rates": {
+              "grpc": "600.00",
+              "grpcNoResponse": "600.00",
+              "grpcPercentErr": "100.0",
+              "grpcPercentReq": "100.0"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "DC": "100.0"
+                },
+                "hosts": {
+                  "istio-egressgateway.istio-system.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "17d932b883781f1dbafee8176601e953",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "624e46d76d5b71881ff3ce37f3c8774b",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -235,32 +249,6 @@
                 },
                 "hosts": {
                   "istio-egressgateway.istio-system.svc.cluster.local": "44.4"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "21376d8a16db38773a4f5c4f08b50f06",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "2b8c0b20b3d123cfd18420b39505349e",
-          "traffic": {
-            "protocol": "grpc",
-            "rates": {
-              "grpc": "600.00",
-              "grpcNoResponse": "600.00",
-              "grpcPercentErr": "100.0",
-              "grpcPercentReq": "100.0"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "DC": "100.0"
-                },
-                "hosts": {
-                  "istio-egressgateway.istio-system.svc.cluster.local": "100.0"
                 }
               }
             }

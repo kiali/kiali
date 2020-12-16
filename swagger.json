@@ -4134,44 +4134,6 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Cluster": {
-      "type": "object",
-      "properties": {
-        "destination_rule": {
-          "type": "string",
-          "x-go-name": "DestinationRule"
-        },
-        "direction": {
-          "type": "string",
-          "x-go-name": "Direction"
-        },
-        "port": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "Port"
-        },
-        "service_fqdn": {
-          "type": "string",
-          "x-go-name": "ServiceFQDN"
-        },
-        "subset": {
-          "type": "string",
-          "x-go-name": "Subset"
-        },
-        "type": {
-          "type": "string",
-          "x-go-name": "Type"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Clusters": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Cluster"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "Cluster": {
       "description": "Cluster holds some metadata about a cluster that is\npart of the mesh.",
       "type": "object",
       "properties": {
@@ -4202,6 +4164,13 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/business"
+    },
+    "Clusters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Cluster"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ComponentStatus": {
       "type": "object",
@@ -7744,6 +7713,15 @@
         }
       }
     },
+    "clustersResponse": {
+      "description": "Return a list of Cluster items",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Cluster"
+        }
+      }
+    },
     "configDump": {
       "description": "Return a dump of the configuration of a given envoy proxy",
       "schema": {
@@ -7756,15 +7734,6 @@
         "type": "object",
         "additionalProperties": {
           "type": "object"
-        }
-      }
-    },
-    "clustersResponse": {
-      "description": "Return a list of Cluster items",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Cluster"
         }
       }
     },

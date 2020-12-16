@@ -133,7 +133,7 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 	buildConfig(trafficMap, &nodes, &edges, o)
 
 	// Add compound nodes as needed, inner boxes first
-	if strings.Contains(o.BoxBy, graph.BoxByApp) && o.GraphType != graph.GraphTypeService {
+	if strings.Contains(o.BoxBy, graph.BoxByApp) || o.GraphType == graph.GraphTypeApp || o.GraphType == graph.GraphTypeVersionedApp {
 		boxByApp(&nodes)
 	}
 	if strings.Contains(o.BoxBy, graph.BoxByNamespace) {
@@ -177,12 +177,13 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 	})
 	sort.Slice(edges, func(i, j int) bool {
 		switch {
-		case edges[i].Data.Source < edges[j].Data.Source:
-			return true
-		case edges[i].Data.Source > edges[j].Data.Source:
-			return false
-		default:
+		case edges[i].Data.Source != edges[j].Data.Source:
+			return edges[i].Data.Source < edges[j].Data.Source
+		case edges[i].Data.Target != edges[j].Data.Target:
 			return edges[i].Data.Target < edges[j].Data.Target
+		default:
+			// source and target are the same, it must differ on protocol
+			return edges[i].Data.Traffic.Protocol < edges[j].Data.Traffic.Protocol
 		}
 	})
 
