@@ -108,11 +108,25 @@ func mockAddOnsCalls(ds []apps_v1.Deployment) (*kubetest.K8SClientMock, *httptes
 	return k8s, httpServer, &jaegerCalls, &grafanaCalls, &prometheusCalls
 }
 
+func sampleIstioComponent() []apps_v1.Deployment {
+	return []apps_v1.Deployment{
+		fakeDeploymentWithStatus(
+			"istio-egressgateway",
+			map[string]string{"app": "istio-egressgateway"},
+			apps_v1.DeploymentStatus{
+				Replicas:            2,
+				AvailableReplicas:   2,
+				UnavailableReplicas: 0,
+			}),
+	}
+}
+
 func TestGrafanaWorking(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls([]apps_v1.Deployment{})
+	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
+
 
 	iss := IstioStatusService{k8s: k8s}
 	icsl, error := iss.GetStatus()
@@ -132,7 +146,7 @@ func TestGrafanaWorking(t *testing.T) {
 func TestGrafanaDisabled(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls([]apps_v1.Deployment{})
+	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
 	// Disable Grafana
@@ -144,8 +158,8 @@ func TestGrafanaDisabled(t *testing.T) {
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
-	// Only the Istio components are missing
-	assert.Equal(3, len(icsl))
+	// Only two Istio components are missing
+	assert.Equal(2, len(icsl))
 
 	// No request performed to Grafana endpoint
 	assert.Zero(*grafanaCalls)
@@ -163,7 +177,7 @@ func TestGrafanaDisabled(t *testing.T) {
 func TestGrafanaNotWorking(t *testing.T) {
 	assert := assert.New(t)
 	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
-	k8s := mockDeploymentCall([]apps_v1.Deployment{})
+	k8s := mockDeploymentCall(sampleIstioComponent())
 	addOnsStetup := defaultAddOnCalls(&jaegerCalls, &grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
@@ -182,8 +196,8 @@ func TestGrafanaNotWorking(t *testing.T) {
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
 
-	// Grafana and Istio comps missing
-	assert.Equal(4, len(icsl))
+	// Grafana and two Istio comps missing
+	assert.Equal(3, len(icsl))
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, grafanaCalls)
@@ -199,7 +213,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls([]apps_v1.Deployment{})
+	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
 	// Custom Dashboard prom URL forced to be empty
@@ -220,6 +234,17 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
+}
+
+func TestNoIstioComponentFoundError(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{})
+	defer httpServ.Close()
+
+	iss := IstioStatusService{k8s: k8s}
+	_, error := iss.GetStatus()
+	assert.Error(error)
 }
 
 func TestDefaults(t *testing.T) {
