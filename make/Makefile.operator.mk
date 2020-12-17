@@ -106,5 +106,10 @@ run-operator-playbook: .ensure-operator-repo-exists .ensure-operator-helm-chart-
 ifeq ($(OPERATOR_PROFILER_ENABLED),true)
 	@$(eval ANSIBLE_CALLBACK_WHITELIST_ARG ?= ANSIBLE_CALLBACK_WHITELIST=profile_tasks)
 endif
-	ansible-galaxy collection install operator_sdk.util
-	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv -i ${ROOTDIR}/operator/dev-hosts ${ROOTDIR}/operator/dev-playbook.yml
+	@$(eval ANSIBLE_PYTHON_INTERPRETER ?= $(shell if (which python 2>/dev/null 1>&2 && python --version 2>&1 | grep -q " 2\.*"); then echo "-e ansible_python_interpreter=python3"; else echo ""; fi))
+	@if [ ! -z "${ANSIBLE_PYTHON_INTERPRETER}" ]; then echo "ANSIBLE_PYTHON_INTERPRETER is [${ANSIBLE_PYTHON_INTERPRETER}]. Make sure that refers to a Python3 installation. If you do not have Python3 in that location, you must ensure you have Python3 and ANSIBLE_PYTHON_INTERPRETER is set to '-e ansible_python_interpreter=<full path to your python3 executable>"; fi
+	@echo "Ensure the CRDs exist"; ${OC} apply -f ${HELM_CHARTS_REPO}/kiali-operator/crds/crds.yaml
+	@echo "Create a dummy Kiali CR"; ${OC} apply -f ${ROOTDIR}/operator/dev-playbook-config/dev-kiali-cr.yaml
+	ansible-galaxy collection install operator_sdk.util community.kubernetes
+	ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv ${ANSIBLE_PYTHON_INTERPRETER} -i ${ROOTDIR}/operator/dev-playbook-config/dev-hosts.yaml ${ROOTDIR}/operator/dev-playbook-config/dev-playbook.yaml
+	@echo "Remove the dummy Kiali CR"; ${OC} delete -f ${ROOTDIR}/operator/dev-playbook-config/dev-kiali-cr.yaml
