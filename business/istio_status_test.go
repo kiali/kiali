@@ -127,7 +127,6 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(sampleIstioComponent())
 	defer httpServ.Close()
 
-
 	iss := IstioStatusService{k8s: k8s}
 	icsl, error := iss.GetStatus()
 	assert.NoError(error)
