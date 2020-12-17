@@ -4827,7 +4827,7 @@
         "statistics": {
           "type": "object",
           "properties": {
-            "ratio_statitics": {
+            "ratio_statistics": {
               "type": "object",
               "properties": {
                 "credible_interval": {

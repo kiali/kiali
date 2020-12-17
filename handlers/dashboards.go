@@ -19,6 +19,12 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := pathParams["namespace"]
 	dashboardName := pathParams["dashboard"]
 
+	requestToken, err := getToken(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
+		return
+	}
+
 	svc := business.NewDashboardsService()
 	if !svc.CustomEnabled {
 		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
@@ -43,7 +49,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := svc.GetDashboard(params, dashboardName)
+	dashboard, err := svc.GetDashboard(requestToken, params, dashboardName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())
