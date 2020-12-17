@@ -7,7 +7,6 @@ import { MessageType } from '../../types/MessageCenter';
 import Namespace from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, lastRefreshAtSelector, namespaceItemsSelector } from '../../store/Selectors';
-import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
@@ -16,10 +15,14 @@ import IstioStatusList from './IstioStatusList';
 import { PFAlertColor } from '../Pf/PfColors';
 import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import NamespaceThunkActions from '../../actions/NamespaceThunkActions';
 
 type ReduxProps = {
   lastRefreshAt: TimeInMilliseconds;
   setIstioStatus: (istioStatus: ComponentStatus[]) => void;
+  refreshNamespaces: () => void;
   namespaces: Namespace[] | undefined;
   status: ComponentStatus[];
 };
@@ -35,6 +38,7 @@ const ValidToColor = {
 
 export class IstioStatus extends React.Component<Props> {
   componentDidMount() {
+    this.props.refreshNamespaces();
     this.fetchStatus();
   }
 
@@ -107,8 +111,11 @@ const mapStateToProps = (state: KialiAppState) => ({
   namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
-  setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch)
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setIstioStatus: bindActionCreators(IstioStatusActions.setinfo, dispatch),
+  refreshNamespaces: () => {
+    dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
+  }
 });
 
 const IstioStatusConnected = connect(mapStateToProps, mapDispatchToProps)(IstioStatus);
