@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"net/url"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
@@ -14,10 +13,6 @@ import (
 type promClientSupplier func() (*prometheus.Client, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
-
-func validateURL(serviceURL string) (*url.URL, error) {
-	return url.ParseRequestURI(serviceURL)
-}
 
 func checkNamespaceAccess(nsServ business.NamespaceService, namespace string) (*models.Namespace, error) {
 	if nsInfo, err := nsServ.GetNamespace(namespace); err != nil {

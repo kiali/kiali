@@ -2,6 +2,7 @@ package business
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,40 +13,85 @@ import (
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
 )
 
 type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
 
+var GrafanaDashboardSupplier = findDashboard
+
+// GetGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
+func GetGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+	grafanaConfig := config.Get().ExternalServices.Grafana
+	if !grafanaConfig.Enabled {
+		return nil, http.StatusNoContent, nil
+	}
+	conn, code, err := getGrafanaConnectionInfo(requestToken, &grafanaConfig)
+	if err != nil {
+		return nil, code, err
+	}
+
+	// Call Grafana REST API to get dashboard urls
+	links := []models.ExternalLink{}
+	for _, dashboardConfig := range grafanaConfig.Dashboards {
+		dashboardPath, err := getDashboardPath(dashboardConfig.Name, conn, dashboardSupplier)
+		if err != nil {
+			return nil, http.StatusServiceUnavailable, err
+		}
+		if dashboardPath != "" {
+			externalLink := models.ExternalLink{
+				URL:  dashboardPath,
+				Name: dashboardConfig.Name,
+				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
+					App:       dashboardConfig.Variables.App,
+					Namespace: dashboardConfig.Variables.Namespace,
+					Service:   dashboardConfig.Variables.Service,
+					Version:   dashboardConfig.Variables.Version,
+					Workload:  dashboardConfig.Variables.Workload,
+				},
+			}
+			links = append(links, externalLink)
+		}
+	}
+
+	grafanaInfo := models.GrafanaInfo{
+		ExternalLinks: links,
+	}
+
+	return &grafanaInfo, http.StatusOK, nil
+}
+
 // GetGrafanaLinks returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaLinks(linksSpec []v1alpha1.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
-	cfg := config.Get().ExternalServices.Grafana
-	if !cfg.Enabled || cfg.URL == "" {
+func GetGrafanaLinks(requestToken string, linksSpec []v1alpha1.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
+	grafanaConfig := config.Get().ExternalServices.Grafana
+	if !grafanaConfig.Enabled {
+		return nil, 0, nil
+	}
+
+	connectionInfo, code, err := getGrafanaConnectionInfo(requestToken, &grafanaConfig)
+	if err != nil {
+		return nil, code, err
+	}
+	if connectionInfo.baseExternalURL == "" {
 		log.Tracef("Skip checking Grafana links as Grafana is not configured")
 		return nil, 0, nil
 	}
-	return getGrafanaLinks(cfg, linksSpec, findDashboard)
+	return getGrafanaLinks(connectionInfo, linksSpec, GrafanaDashboardSupplier)
 }
 
-func getGrafanaLinks(cfg config.GrafanaConfig, linksSpec []v1alpha1.MonitoringDashboardExternalLink, dashboardSupplier dashboardSupplier) ([]models.ExternalLink, int, error) {
-	apiURL := cfg.URL
-
-	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
-	if cfg.InClusterURL != "" {
-		apiURL = cfg.InClusterURL
-	}
-
+func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []v1alpha1.MonitoringDashboardExternalLink, dashboardSupplier dashboardSupplier) ([]models.ExternalLink, int, error) {
 	// Call Grafana REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {
 		if linkSpec.Type == "grafana" {
-			dashboardPath, err := getDashboardPath(apiURL, linkSpec.Name, &cfg.Auth, dashboardSupplier)
+			dashboardPath, err := getDashboardPath(linkSpec.Name, conn, dashboardSupplier)
 			if err != nil {
 				return nil, http.StatusServiceUnavailable, err
 			}
 			if dashboardPath != "" {
 				linkOut := models.ExternalLink{
-					URL:       strings.TrimSuffix(cfg.URL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
+					URL:       dashboardPath,
 					Name:      linkSpec.Name,
 					Variables: linkSpec.Variables,
 				}
@@ -57,8 +103,50 @@ func getGrafanaLinks(cfg config.GrafanaConfig, linksSpec []v1alpha1.MonitoringDa
 	return linksOut, http.StatusOK, nil
 }
 
-func getDashboardPath(basePath, name string, auth *config.Auth, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(basePath, url.PathEscape(name), auth)
+type grafanaConnectionInfo struct {
+	baseExternalURL   string
+	externalURLParams string
+	inClusterURL      string
+	auth              *config.Auth
+}
+
+func getGrafanaConnectionInfo(requestToken string, cfg *config.GrafanaConfig) (grafanaConnectionInfo, int, error) {
+	externalURL := status.DiscoverGrafana()
+	if externalURL == "" {
+		return grafanaConnectionInfo{}, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
+	}
+
+	// Check if URL is valid
+	_, err := url.ParseRequestURI(externalURL)
+	if err != nil {
+		return grafanaConnectionInfo{}, http.StatusServiceUnavailable, errors.New("wrong format for Grafana URL: " + err.Error())
+	}
+
+	apiURL := externalURL
+
+	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
+	if cfg.InClusterURL != "" {
+		apiURL = cfg.InClusterURL
+	}
+
+	urlParts := strings.Split(externalURL, "?")
+	externalURLParams := ""
+	// E.g.: http://localhost:3000?orgId=1 transformed into http://localhost:3000/d/LJ_uJAvmk/istio-service-dashboard?orgId=1
+	externalURL = urlParts[0]
+	if len(urlParts) > 1 {
+		externalURLParams = "?" + urlParts[1]
+	}
+
+	return grafanaConnectionInfo{
+		baseExternalURL:   externalURL,
+		externalURLParams: externalURLParams,
+		inClusterURL:      apiURL,
+		auth:              &cfg.Auth,
+	}, 0, nil
+}
+
+func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(conn.inClusterURL, url.PathEscape(name), conn.auth)
 	if err != nil {
 		return "", err
 	}
@@ -94,9 +182,23 @@ func getDashboardPath(basePath, name string, auth *config.Auth, dashboardSupplie
 		log.Warningf("URL field not found in Grafana dashboard for search pattern '%s'", name)
 		return "", nil
 	}
-	return dashPath.(string), nil
+
+	fullPath := dashPath.(string)
+	if fullPath != "" {
+		// Dashboard path might be an absolute URL (hence starting with cfg.URL) or a relative one, depending on grafana's "GF_SERVER_SERVE_FROM_SUB_PATH"
+		if !strings.HasPrefix(fullPath, conn.baseExternalURL) {
+			fullPath = strings.TrimSuffix(conn.baseExternalURL, "/") + "/" + strings.TrimPrefix(fullPath, "/")
+		}
+	}
+
+	return fullPath + conn.externalURLParams, nil
 }
 
 func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(strings.TrimSuffix(url, "/")+"/api/search?query="+searchPattern, auth, time.Second*10)
+	urlParts := strings.Split(url, "?")
+	query := strings.TrimSuffix(urlParts[0], "/") + "/api/search?query=" + searchPattern
+	if len(urlParts) > 1 {
+		query = query + "&" + urlParts[1]
+	}
+	return httputil.HttpGet(query, auth, time.Second*10)
 }
