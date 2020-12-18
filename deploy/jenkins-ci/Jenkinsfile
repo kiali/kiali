@@ -293,7 +293,7 @@ node('kiali-build && fedora') {
 
       stage('Invoke other jobs') {
         if ( buildSite ) {
-          build(job: 'kiali-website-release'
+          build(job: 'kiali-website-release',
               parameters: [
               [$class: 'StringParameterValue', value: params.SITE_REPO, name: 'SITE_REPO'],
               [$class: 'StringParameterValue', value: params.SITE_RELEASING_BRANCH, name: 'SITE_RELEASING_BRANCH']
