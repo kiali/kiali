@@ -88,12 +88,19 @@ node('kiali-build && fedora') {
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
   def buildHelm = params.SKIP_HELM_RELEASE != "y" && (params.RELEASE_TYPE == "minor" || params.RELEASE_TYPE == "major")
+  def buildSite = params.SKIP_SITE_RELEASE != "y" // Temptative value. It's re-assigned later.
   def quayTag = ""
+
+  if ( !buildBackend && !buildUi && !buildOperator && !buildHelm && !buildSite ) {
+    currentBuild.result = 'ABORTED'
+    echo "Nothing to release. Stopping."
+    return
+  }
 
   try {
     cleanWs()
     stage('Checkout code') {
-      if ( buildBackend || buildOperator || buildHelm ) {
+      if ( buildBackend || buildOperator || buildHelm || buildSite ) {
         checkout([
           $class: 'GitSCM',
           branches: [[name: params.BACKEND_RELEASING_BRANCH]],
@@ -173,7 +180,7 @@ node('kiali-build && fedora') {
         script: "${backendDir}/deploy/jenkins-ci/bin/determine-release-type.sh").trim()
     }
 
-    def buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
+    buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
     echo "Resolved release type: ${releaseType}"
     echo "Will build site? ${buildSite}"
 
