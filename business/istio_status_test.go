@@ -317,6 +317,50 @@ func TestNonDefaults(t *testing.T) {
 	assert.Equal(1, *promCalls)
 }
 
+// Istio deployments only have the "app" app_label.
+// Users can't customize this one. They can only customize it for their own deployments.
+func TestCustomizedAppLabel(t *testing.T) {
+	assert := assert.New(t)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+	}
+
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods)
+	defer httpServer.Close()
+
+	c := config.Get()
+	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+		Enabled: true,
+		Components: []config.ComponentStatus{
+			{AppLabel: "istiod", IsCore: false},
+			{AppLabel: "istio-egressgateway", IsCore: false},
+			{AppLabel: "istio-ingressgateway", IsCore: false},
+		},
+	}
+	config.Set(c)
+
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+
+	// Don't return healthy deployments
+	assertNotPresent(assert, icsl, "istiod")
+	assertNotPresent(assert, icsl, "grafana")
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "jaeger")
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
+	assert.Equal(1, *jaegerCalls)
+	assert.Equal(1, *promCalls)
+}
+
 func assertComponent(assert *assert.Assertions, icsl IstioComponentStatus, name string, status string, isCore bool) {
 	componentFound := false
 	for _, ics := range icsl {
