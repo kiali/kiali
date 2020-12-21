@@ -1,0 +1,41 @@
+name: Kiali Go CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Swagger Install
+        run: make swagger-install
+
+      - name: Lint Install
+        run: make lint-install
+
+      - name: Gofmt
+        run: |
+          GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
+          if [ ! -z "$(gofmt -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -l ${GO_FILES})";echo "Diff files:"; gofmt -d ${GO_FILES}; exit 1; fi # Gofmt Linter
+          echo "Done gofmt"
+
+      - name: Build
+        run: make clean build
+
+      - name: Test
+        run: make test
+
