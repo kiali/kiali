@@ -3,6 +3,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import * as React from 'react';
 import {
   Button,
+  ButtonVariant,
   Card,
   EmptyState,
   EmptyStateIcon,
@@ -23,7 +24,9 @@ import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import AceEditor from 'react-ace';
 import { aceOptions } from '../../types/IstioConfigDetails';
 import { style } from 'typestyle';
-import { SummaryTableBuilder } from './writers/BaseTable';
+import { SummaryTableBuilder } from './tables/BaseTable';
+import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -47,9 +50,9 @@ type EnvoyDetailProps = {
 
 type EnvoyDetailState = {
   config: EnvoyProxyDump;
-  resource: string;
   fetch: boolean;
   pod: Pod;
+  resource: string;
 };
 
 export const Loading = () => (
@@ -69,9 +72,9 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
     this.aceEditorRef = React.createRef();
     this.state = {
       config: {},
-      resource: 'all',
       fetch: false,
-      pod: this.sortedPods()[0]
+      pod: this.sortedPods()[0],
+      resource: 'all'
     };
   }
 
@@ -156,13 +159,27 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
     return Object.keys(this.state.config).length < 1;
   };
 
+  showEditor = () => {
+    return this.state.resource === 'all' || this.state.resource === 'bootstrap';
+  };
+
+  editorContent = () => JSON.stringify(this.state.config, null, '  ');
+
+  onCopyToClipboard = (_text: string, _result: boolean) => {
+    const editor = this.aceEditorRef.current!['editor'];
+    if (editor) {
+      editor.selectAll();
+    }
+  };
+
   render() {
     const builder = SummaryTableBuilder(this.state.resource, this.state.config);
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
+
     return (
       <Modal
-        width={'50%'}
+        width={'75%'}
         title={`Envoy config for ${this.props.workload.name}`}
         isOpen={this.props.show}
         onClose={this.props.onClose}
@@ -199,13 +216,24 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
                   />
                 </ToolbarItem>
               </ToolbarGroup>
+              <ToolbarGroup style={{ marginLeft: 'auto' }}>
+                <ToolbarItem>
+                  {this.showEditor() ? (
+                    <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
+                      <Button variant={ButtonVariant.link} isInline>
+                        <KialiIcon.Copy className={defaultIconStyle} />
+                      </Button>
+                    </CopyToClipboard>
+                  ) : undefined}
+                </ToolbarItem>
+              </ToolbarGroup>
             </Toolbar>
           </StackItem>
           <StackItem>
             <Card style={{ height: '400px' }}>
               {this.isLoadingConfig() ? (
                 <Loading />
-              ) : this.state.resource === 'all' || this.state.resource === 'bootstrap' ? (
+              ) : this.showEditor() ? (
                 <AceEditor
                   ref={this.aceEditorRef}
                   mode="yaml"
@@ -216,7 +244,7 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
                   wrapEnabled={true}
                   readOnly={true}
                   setOptions={aceOptions || { foldStyle: 'markbegin' }}
-                  value={JSON.stringify(this.state.config, null, 2)}
+                  value={this.editorContent()}
                 />
               ) : (
                 <SummaryWriterComp writer={summaryWriter} />
