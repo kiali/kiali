@@ -203,7 +203,7 @@ type SyncStatus struct {
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 	c := config.Get()
 	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
-		c.IstioLabels.AppLabelName: "istiod",
+		"app": "istiod",
 	}).String())
 
 	if err != nil {
