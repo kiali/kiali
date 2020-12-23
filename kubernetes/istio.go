@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -180,6 +179,42 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 	return io, nil
 }
 
+func (in *K8SClient) proxyPilot(path string) (map[string][]byte, error) {
+	c := config.Get()
+	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
+		"app": "istiod",
+	}).String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(istiods) == 0 {
+		return nil, fmt.Errorf("unable to find any Pilot instances")
+	}
+
+	result := map[string][]byte{}
+	for _, istiod := range istiods {
+		res, err := in.k8s.CoreV1().RESTClient().Get().
+			Namespace(istiod.Namespace).
+			Resource("pods").
+			SubResource("proxy").
+			Name(istiod.Name).
+			Suffix(path).
+			DoRaw()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(res) > 0 {
+			result[istiod.Name] = res
+		}
+	}
+	return result, nil
+}
+
+
 type ProxyStatus struct {
 	pilot string
 	SyncStatus
@@ -201,38 +236,10 @@ type SyncStatus struct {
 }
 
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
-	c := config.Get()
-	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
-		"app": "istiod",
-	}).String())
-
+	result, err := in.proxyPilot("/debug/syncz")
 	if err != nil {
 		return nil, err
 	}
-
-	if len(istiods) == 0 {
-		return nil, errors.New("unable to find any Pilot instances")
-	}
-
-	result := map[string][]byte{}
-	for _, istiod := range istiods {
-		res, err := in.k8s.CoreV1().RESTClient().Get().
-			Namespace(istiod.Namespace).
-			Resource("pods").
-			SubResource("proxy").
-			Name(istiod.Name).
-			Suffix("/debug/syncz").
-			DoRaw()
-
-		if err != nil {
-			return nil, err
-		}
-
-		if len(res) > 0 {
-			result[istiod.Name] = res
-		}
-	}
-
 	return getStatus(result)
 }
 
@@ -250,6 +257,29 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 		fullStatus = append(fullStatus, ss...)
 	}
 	return fullStatus, nil
+}
+
+func (in *K8SClient) GetPilotConfigDump(namespace, podName string) (*ConfigDump, error) {
+	var err error
+	var pilotDump *ConfigDump
+
+	results, err := in.proxyPilot(fmt.Sprintf("/debug/config_dump?proxyID=%s.%s", podName, namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dump := range results {
+		err = json.Unmarshal(dump, pilotDump)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to find any Pilot instances")
+	}
+
+	return pilotDump, err
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
