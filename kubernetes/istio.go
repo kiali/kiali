@@ -179,7 +179,7 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 	return io, nil
 }
 
-func (in *K8SClient) proxyPilot(path string) (map[string][]byte, error) {
+func (in *K8SClient) proxyPilot(path string, params map[string]string) (map[string][]byte, error) {
 	c := config.Get()
 	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
 		"app": "istiod",
@@ -195,13 +195,19 @@ func (in *K8SClient) proxyPilot(path string) (map[string][]byte, error) {
 
 	result := map[string][]byte{}
 	for _, istiod := range istiods {
-		res, err := in.k8s.CoreV1().RESTClient().Get().
+		req := in.k8s.CoreV1().RESTClient().Get().
 			Namespace(istiod.Namespace).
 			Resource("pods").
 			SubResource("proxy").
 			Name(istiod.Name).
-			Suffix(path).
-			DoRaw()
+			Suffix(path)
+
+		for k, v := range params {
+			req = req.Param(k, v)
+		}
+
+		log.Error(req.URL().String())
+		res, err := req.DoRaw()
 
 		if err != nil {
 			return nil, err
@@ -213,7 +219,6 @@ func (in *K8SClient) proxyPilot(path string) (map[string][]byte, error) {
 	}
 	return result, nil
 }
-
 
 type ProxyStatus struct {
 	pilot string
@@ -236,7 +241,7 @@ type SyncStatus struct {
 }
 
 func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
-	result, err := in.proxyPilot("/debug/syncz")
+	result, err := in.proxyPilot("/debug/syncz", map[string]string{})
 	if err != nil {
 		return nil, err
 	}
@@ -261,9 +266,9 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 
 func (in *K8SClient) GetPilotConfigDump(namespace, podName string) (*ConfigDump, error) {
 	var err error
-	var pilotDump *ConfigDump
+	pilotDump :=  &ConfigDump{}
 
-	results, err := in.proxyPilot(fmt.Sprintf("/debug/config_dump?proxyID=%s.%s", podName, namespace))
+	results, err := in.proxyPilot("/debug/config_dump", map[string]string { "proxyID": fmt.Sprintf("%s.%s", podName, namespace) })
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +281,7 @@ func (in *K8SClient) GetPilotConfigDump(namespace, podName string) (*ConfigDump,
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to find any Pilot instances")
+		return nil, fmt.Errorf("unable to process the config dump")
 	}
 
 	return pilotDump, err

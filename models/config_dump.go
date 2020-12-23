@@ -46,6 +46,12 @@ type Bootstrap struct {
 	Bootstrap map[string]interface{} `json:"bootstrap,inline"`
 }
 
+type ProxyDiff struct {
+	ClusterDiff  string `json:"cluster_diff"`
+	ListenerDiff string `json:"listener_diff"`
+	RouteDiff    string `json:"route_diff"`
+}
+
 func (ls *Listeners) Parse(dump *kubernetes.ConfigDump) error {
 	listenersDump, err := dump.GetListeners()
 	if err != nil {

@@ -38,3 +38,8 @@ func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*kubern
 	args := o.Called(namespace, podName)
 	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
 }
+
+func (o *K8SClientMock) GetPilotConfigDump(namespace string, podName string) (*kubernetes.ConfigDump, error) {
+	args := o.Called(namespace, podName)
+	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
+}

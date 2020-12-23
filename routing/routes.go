@@ -1300,6 +1300,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ConfigDump,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump_diff pods podProxyDumpDiff
+		// ---
+		// Endpoint to get pod proxy dump diff with pilot config dump
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      200: configDumpDiff
+		//
+		{
+			"PodConfigDumpDiff",
+			"GET",
+			"/api/namespaces/{namespace}/pods/{pod}/config_dump_diff",
+			handlers.ConfigDumpDiff,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/pods/{pod}/config_dump/{resource} pods podProxyResource
 		// ---
 		// Endpoint to get pod logs

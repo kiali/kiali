@@ -28,6 +28,28 @@ func ConfigDump(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, dump)
 }
 
+func ConfigDumpDiff(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	namespace := params["namespace"]
+	pod := params["pod"]
+
+	dump, err := business.ProxyStatus.GetConfigDumpDiff(namespace, pod)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, dump)
+}
+
 func ConfigDumpResourceEntries(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 

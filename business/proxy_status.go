@@ -1,6 +1,10 @@
 package business
 
 import (
+	"encoding/json"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -121,4 +125,48 @@ func buildDump(dump *kubernetes.ConfigDump, resource string) (*models.EnvoyProxy
 	}
 
 	return response, err
+}
+
+func (in *ProxyStatus) GetConfigDumpDiff(namespace, pod string) (*models.ProxyDiff, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDumpDiff")
+	defer promtimer.ObserveNow(&err)
+
+	dump, err := in.k8s.GetConfigDump(namespace, pod)
+	if err != nil {
+		return nil, err
+	}
+
+	pilotDump, err := in.k8s.GetPilotConfigDump(namespace, pod)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildDumpDiff(dump, pilotDump)
+}
+
+func buildDumpDiff(podDump, pilotDump *kubernetes.ConfigDump) (*models.ProxyDiff, error) {
+	dmp := diffmatchpatch.New()
+	diff := &models.ProxyDiff{}
+
+	// Cluster diff
+	var podBytes, pilotBytes []byte
+	pilotClusterDump, err := pilotDump.GetClusters()
+	if err != nil {
+		pilotBytes = []byte(err.Error())
+	} else if pilotBytes, err = json.Marshal(*pilotClusterDump); err != nil {
+		return nil, err
+	}
+
+	podClusterDump, err := podDump.GetClusters()
+	if err != nil {
+		podBytes = []byte(err.Error())
+	} else if podBytes, err = json.Marshal(*podClusterDump); err != nil {
+		return nil, err
+	}
+
+	diffs := dmp.DiffMain(string(podBytes), string(pilotBytes), false)
+	diff.ClusterDiff = dmp.DiffPrettyText(diffs)
+
+	return diff, nil
 }

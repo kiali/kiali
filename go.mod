@@ -23,6 +23,7 @@ require (
 	github.com/prometheus/common v0.4.1
 	github.com/prometheus/procfs v0.0.10 // indirect
 	github.com/rs/zerolog v1.20.0
+	github.com/sergi/go-diff v1.1.0
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
