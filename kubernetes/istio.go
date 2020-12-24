@@ -206,7 +206,6 @@ func (in *K8SClient) proxyPilot(path string, params map[string]string) (map[stri
 			req = req.Param(k, v)
 		}
 
-		log.Error(req.URL().String())
 		res, err := req.DoRaw()
 
 		if err != nil {

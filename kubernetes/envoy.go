@@ -8,8 +8,9 @@ type ConfigDump struct {
 }
 
 type ClusterDump struct {
-	DynamicClusters []EnvoyClusterWrapper `mapstructure:"dynamic_active_clusters"`
-	StaticClusters  []EnvoyClusterWrapper `mapstructure:"static_clusters"`
+	DynamicClusters []EnvoyClusterWrapper `mapstructure:"dynamic_active_clusters,omitempty"`
+	StaticClusters  []EnvoyClusterWrapper `mapstructure:"static_clusters,omitempty"`
+	// TODO: pilot dumps have different field name: dynamicActiveClusters instead
 }
 
 type EnvoyClusterWrapper struct {
