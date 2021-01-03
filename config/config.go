@@ -40,6 +40,7 @@ const (
 	AuthStrategyAnonymous = "anonymous"
 	AuthStrategyToken     = "token"
 	AuthStrategyOpenId    = "openid"
+	AuthStrategyHeader    = "header"
 
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
