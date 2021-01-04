@@ -84,6 +84,17 @@ func getTokenStringFromRequest(r *http.Request) string {
 	return tokenString
 }
 
+func getTokenStringFromHeader(r *http.Request) string {
+	tokenString := "" // Default to no token.
+
+	// Extract token from the Authorization HTTP header sent from the reverse proxy
+	if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
+		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
+	}
+
+	return tokenString
+}
+
 func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	err := r.ParseForm()
 
@@ -215,6 +226,75 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: openIdParams.ExpiresOn.Format(time.RFC1123Z), Username: openIdParams.Subject})
 	return true
+}
+
+func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	token := getTokenStringFromHeader(r)
+
+	if token == "" {
+		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
+		return false
+	}
+
+	business, err := business.Get(token)
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		return false
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	nsList, err := business.Namespace.GetNamespaces()
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
+		return false
+	}
+
+	// If namespace list is empty, return unauthorized error
+	if len(nsList) == 0 {
+		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
+		return false
+	}
+
+	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
+	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	tokenSubject := "token" // Set a default value
+
+	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(token, &jwt.StandardClaims{})
+	if err == nil {
+		tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
+		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+	}
+
+	// Build the Kiali token
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	tokenClaims := config.IanaClaims{
+		SessionId: token,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   tokenSubject,
+			ExpiresAt: timeExpire.Unix(),
+			Issuer:    config.AuthStrategyTokenIssuer,
+		},
+	}
+	tokenString, err := config.GetSignedTokenString(tokenClaims)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    tokenString,
+		Expires:  timeExpire,
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
+	return true
+
 }
 
 func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
@@ -472,6 +552,12 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
+
+			//mlbiam - Add case for proxy token
+		case config.AuthStrategyHeader:
+			log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
+			token = getTokenStringFromHeader(r)
+			statusCode = http.StatusOK
 		}
 
 		switch statusCode {
@@ -503,6 +589,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyToken:
 		performTokenAuthentication(w, r)
+	case config.AuthStrategyHeader:
+		performHeaderAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
 	default:
