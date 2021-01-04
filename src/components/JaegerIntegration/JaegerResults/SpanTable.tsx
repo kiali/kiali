@@ -21,9 +21,9 @@ import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
-import { sameSpans } from '../JaegerHelper';
 import { RichSpanData } from 'types/JaegerInfo';
-import { buildQueriesFromSpans } from 'utils/TraceStats';
+import { sameSpans } from 'utils/tracing/TracingHelper';
+import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 
 type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;

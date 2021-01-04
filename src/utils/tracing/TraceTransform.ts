@@ -1,9 +1,6 @@
 import _isEqual from 'lodash/isEqual';
-import _round from 'lodash/round';
-import moment from 'moment';
-// Imported from Jaeger-UIU
-import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from '../../../types/JaegerInfo';
-import { extractSpanInfo, getWorkloadFromSpan } from '../JaegerHelper';
+import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from 'types/JaegerInfo';
+import { extractSpanInfo, getWorkloadFromSpan } from './TracingHelper';
 
 class TreeNode {
   value: string;
@@ -111,7 +108,10 @@ function deduplicateTags(spanTags: Array<KeyValuePair>) {
 
 export const TREE_ROOT_ID = '__root__';
 
-export function getTraceSpanIdsAsTree(trace) {
+export const spansSort = (a: SpanData, b: SpanData) =>
+  +(a.startTime > b.startTime) || +(a.startTime === b.startTime) - 1;
+
+export function getTraceSpanIdsAsTree(trace: TraceData<SpanData>) {
   const nodesById = new Map(trace.spans.map(span => [span.spanID, new TreeNode(span.spanID)]));
   const spansById = new Map(trace.spans.map(span => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
@@ -120,7 +120,7 @@ export function getTraceSpanIdsAsTree(trace) {
     if (Array.isArray(span.references) && span.references.length) {
       const { refType, spanID: parentID } = span.references[0];
       if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
-        const parent: any = nodesById.get(parentID) || root;
+        const parent = nodesById.get(parentID) || root;
         parent.children.push(node);
       } else {
         throw new Error(`Unrecognized ref type: ${refType}`);
@@ -129,11 +129,7 @@ export function getTraceSpanIdsAsTree(trace) {
       root.children.push(node);
     }
   });
-  const comparator = (nodeA, nodeB) => {
-    const a: any = spansById.get(nodeA.value);
-    const b: any = spansById.get(nodeB.value);
-    return +(a.startTime > b.startTime) || +(a.startTime === b.startTime) - 1;
-  };
+  const comparator = (a, b) => spansSort(spansById.get(a.value)!, spansById.get(b.value)!);
   trace.spans.forEach(span => {
     const node: any = nodesById.get(span.spanID);
     if (node.children.length > 1) {
@@ -148,7 +144,7 @@ export function getTraceSpanIdsAsTree(trace) {
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData & { spans: SpanData[] }): JaegerTrace | null {
+export default function transformTraceData(data: TraceData<SpanData>): JaegerTrace | null {
   let { traceID } = data;
   if (!traceID) {
     return null;
@@ -275,36 +271,3 @@ export const transformSpanData = (span: Span): RichSpanData => {
     linkToWorkload: linkToWorkload
   };
 };
-
-export function formatDuration(micros: number): string {
-  let d = micros / 1000;
-  let unit = 'ms';
-  if (d >= 1000) {
-    unit = 's';
-    d /= 1000;
-  }
-  return _round(d, 2) + unit;
-}
-
-const TODAY = 'Today';
-const YESTERDAY = 'Yesterday';
-
-export function formatRelativeDate(value: any, fullMonthName: boolean = false) {
-  const m = moment.isMoment(value) ? value : moment(value);
-  const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
-  const dt = new Date();
-  if (dt.getFullYear() !== m.year()) {
-    return m.format(`${monthFormat} D, YYYY`);
-  }
-  const mMonth = m.month();
-  const mDate = m.date();
-  const date = dt.getDate();
-  if (mMonth === dt.getMonth() && mDate === date) {
-    return TODAY;
-  }
-  dt.setDate(date - 1);
-  if (mMonth === dt.getMonth() && mDate === dt.getDate()) {
-    return YESTERDAY;
-  }
-  return m.format(`${monthFormat} D`);
-}

@@ -1,7 +1,8 @@
-import { buildTags, getWorkloadFromSpan, searchParentWorkload } from '../JaegerHelper';
-import { Span, KeyValuePair } from 'types/JaegerInfo';
+import { buildTags, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
+import { Span, KeyValuePair, SpanData } from 'types/JaegerInfo';
+import transformTraceData from '../TraceTransform';
 
-describe('JaegerHelper', () => {
+describe('TracingHelper', () => {
   it('should build tags', () => {
     expect(buildTags(true, '404')).toEqual('{"error":"true","http.status_code":"404"}');
     expect(buildTags(true, 'none')).toEqual('{"error":"true"}');
@@ -136,5 +137,57 @@ describe('JaegerHelper', () => {
     const span2 = {} as Span;
     const wkdNs2 = searchParentWorkload(span2);
     expect(wkdNs2).toBeUndefined();
+  });
+});
+
+describe('Trace depth-first iterate', () => {
+  const trace = transformTraceData({
+    traceID: 't-1234',
+    processes: { p: { serviceName: 'svc', tags: [] } },
+    spans: [
+      { spanID: 's-1', operationName: 'op1', startTime: 1, processID: 'p' },
+      {
+        spanID: 's-2',
+        operationName: 'op2',
+        startTime: 2,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
+      },
+      {
+        spanID: 's-3',
+        operationName: 'op3',
+        startTime: 3,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-1' }]
+      },
+      {
+        spanID: 's-4',
+        operationName: 'op4',
+        startTime: 4,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
+      },
+      {
+        spanID: 's-5',
+        operationName: 'op5',
+        startTime: 5,
+        processID: 'p',
+        references: [{ refType: 'CHILD_OF', spanID: 's-2' }]
+      }
+    ] as SpanData[]
+  })!;
+  const s1 = trace.spans.find(s => s.spanID === 's-1')!;
+  const s2 = trace.spans.find(s => s.spanID === 's-2')!;
+  const s3 = trace.spans.find(s => s.spanID === 's-3')!;
+  const s4 = trace.spans.find(s => s.spanID === 's-4')!;
+  const s5 = trace.spans.find(s => s.spanID === 's-5')!;
+
+  it('should find parents', () => {
+    const [p1, p2, p3, p4, p5] = [findParent(s1), findParent(s2), findParent(s3), findParent(s4), findParent(s5)];
+    expect(p1).toBeUndefined();
+    expect(p2?.spanID).toEqual('s-1');
+    expect(p3?.spanID).toEqual('s-1');
+    expect(p4?.spanID).toEqual('s-2');
+    expect(p5?.spanID).toEqual('s-2');
   });
 });

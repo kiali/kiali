@@ -1,7 +1,7 @@
 import { EnvoySpanInfo, JaegerTrace, Span, RichSpanData } from 'types/JaegerInfo';
 import { MetricsStats } from 'types/Metrics';
 import { statsQueryToKey } from 'types/MetricsOptions';
-import { averageSpanDuration, buildQueriesFromSpans, isSimilarTrace, reduceMetricsStats } from 'utils/TraceStats';
+import { averageSpanDuration, buildQueriesFromSpans, isSimilarTrace, reduceMetricsStats } from '../TraceStats';
 
 const traceBase = {
   spans: [

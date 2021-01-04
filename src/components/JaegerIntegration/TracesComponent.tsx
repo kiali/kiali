@@ -26,10 +26,10 @@ import JaegerScatter from './JaegerScatter';
 import { HistoryManager, URLParam } from '../../app/History';
 import { config } from '../../config';
 import { TracesFetcher } from './TracesFetcher';
-import { getTimeRangeMicros, buildTags } from './JaegerHelper';
 import { SpanDetails } from './JaegerResults/SpanDetails';
 import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
 import { timeRangeSelector } from '../../store/Selectors';
+import { buildTags, getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 
 interface TracesProps {
   namespace: string;

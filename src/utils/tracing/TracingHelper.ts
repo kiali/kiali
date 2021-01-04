@@ -1,3 +1,5 @@
+import _round from 'lodash/round';
+import moment from 'moment';
 import logfmtParser from 'logfmt/lib/logfmt_parser';
 import {
   EnvoySpanInfo,
@@ -6,10 +8,11 @@ import {
   OpenTracingHTTPInfo,
   OpenTracingTCPInfo,
   Span
-} from '../../types/JaegerInfo';
+} from 'types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
-import { guardTimeRange, durationToBounds } from 'types/Common';
-import { defaultMetricsDuration } from '../Metrics/Helper';
+import { guardTimeRange, durationToBounds, DurationInSeconds } from 'types/Common';
+
+export const defaultTracingDuration: DurationInSeconds = 600;
 
 export const buildTags = (showErrors: boolean, statusCode: string): string => {
   let tags = '';
@@ -43,7 +46,7 @@ export const getTimeRangeMicros = () => {
   // Convert any time range (like duration) to bounded from/to
   const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
   // Not necessary, we know that guardTimeRange will always send a default
-  const defaultFrom = new Date().getTime() - defaultMetricsDuration * 1000;
+  const defaultFrom = new Date().getTime() - defaultTracingDuration * 1000;
   // Convert to microseconds
   return {
     from: boundsMillis.from ? boundsMillis.from * 1000 : defaultFrom * 1000,
@@ -116,14 +119,49 @@ const adjustWorkloadNameFromReplicaset = (replicaset: string): string => {
   return replicaset;
 };
 
-export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefined => {
+export const findParent = (span: Span): Span | undefined => {
   if (Array.isArray(span.references)) {
     const ref = span.references.find(s => s.refType === 'CHILD_OF' || s.refType === 'FOLLOWS_FROM');
-    if (ref && ref.span) {
-      return getWorkloadFromSpan(ref.span);
-    }
+    return ref?.span || undefined;
   }
   return undefined;
+};
+
+// export const findChildren = (span: Span, trace: JaegerTrace): Span[] => {
+//   const children = trace.spans.filter(s => findParent(s)?.spanID === span.spanID);
+//   return children.sort(spansSort);
+// };
+
+// export const findDepthFirstNext = (current: Span, trace: JaegerTrace): Span | undefined => {
+//   // Check children
+//   const children = findChildren(current, trace);
+//   console.log('children of ', current.spanID, ' are ', children.map(s => s.spanID));
+//   if (children.length > 0) {
+//     return children[0];
+//   }
+//   // Leaf reached => check siblings
+//   return findNextSibling(current, trace);
+// };
+
+// export const findNextSibling = (current: Span, trace: JaegerTrace): Span | undefined => {
+//   const parent = findParent(current);
+//   if (parent) {
+//     const siblings = findChildren(parent, trace);
+//     const nextIdx = 1 + siblings.findIndex(s => s.spanID === current.spanID);
+//     if (nextIdx < siblings.length) {
+//       // There's a next sibling
+//       return siblings[nextIdx];
+//     }
+//     // End of siblings => repeat on parent (recursive)
+//     return findNextSibling(parent, trace);
+//   }
+//   // Reached root => end of depth-first
+//   return undefined;
+// };
+
+export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefined => {
+  const parent = findParent(span);
+  return parent ? getWorkloadFromSpan(parent) : undefined;
 };
 
 type AppAndNamespace = { app: string; namespace: string };
@@ -133,13 +171,8 @@ export const getAppFromSpan = (span: Span): AppAndNamespace | undefined => {
 };
 
 export const searchParentApp = (span: Span): AppAndNamespace | undefined => {
-  if (Array.isArray(span.references)) {
-    const ref = span.references.find(s => s.refType === 'CHILD_OF' || s.refType === 'FOLLOWS_FROM');
-    if (ref && ref.span) {
-      return getAppFromSpan(ref.span);
-    }
-  }
-  return undefined;
+  const parent = findParent(span);
+  return parent ? getAppFromSpan(parent) : undefined;
 };
 
 export const getSpanType = (span: Span): 'envoy' | 'http' | 'tcp' | 'unknown' => {
@@ -267,3 +300,36 @@ export const extractSpanInfo = (span: Span) => {
 export const sameSpans = (a: Span[], b: Span[]): boolean => {
   return a.map(s => s.spanID).join() === b.map(s => s.spanID).join();
 };
+
+export function formatDuration(micros: number): string {
+  let d = micros / 1000;
+  let unit = 'ms';
+  if (d >= 1000) {
+    unit = 's';
+    d /= 1000;
+  }
+  return _round(d, 2) + unit;
+}
+
+const TODAY = 'Today';
+const YESTERDAY = 'Yesterday';
+
+export function formatRelativeDate(value: any, fullMonthName: boolean = false) {
+  const m = moment.isMoment(value) ? value : moment(value);
+  const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
+  const dt = new Date();
+  if (dt.getFullYear() !== m.year()) {
+    return m.format(`${monthFormat} D, YYYY`);
+  }
+  const mMonth = m.month();
+  const mDate = m.date();
+  const date = dt.getDate();
+  if (mMonth === dt.getMonth() && mDate === date) {
+    return TODAY;
+  }
+  dt.setDate(date - 1);
+  if (mMonth === dt.getMonth() && mDate === dt.getDate()) {
+    return YESTERDAY;
+  }
+  return m.format(`${monthFormat} D`);
+}

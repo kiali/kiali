@@ -1,13 +1,13 @@
 import * as Cy from 'cytoscape';
 import { CyNode } from './CytoscapeGraphUtils';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
+import { NodeType, DestService, GraphType } from 'types/Graph';
 import {
-  getWorkloadFromSpan,
   getAppFromSpan,
+  getWorkloadFromSpan,
   searchParentApp,
   searchParentWorkload
-} from 'components/JaegerIntegration/JaegerHelper';
-import { NodeType, DestService, GraphType } from 'types/Graph';
+} from 'utils/tracing/TracingHelper';
 
 export const showTrace = (cy: Cy.Core, graphType: GraphType, trace: JaegerTrace) => {
   if (!cy) {
@@ -117,10 +117,10 @@ const addSpan = (ele: Cy.NodeSingular | Cy.EdgeSingular | undefined, span: Span)
   }
 
   if (ele.hasClass('span')) {
-    ele.data('spans').push(span);
+    ele.data('spans').push(span.spanID);
   } else {
     ele.addClass('span');
-    ele.data('spans', [span]);
+    ele.data('spans', [span.spanID]);
   }
 };
 

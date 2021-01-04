@@ -95,15 +95,15 @@ export type EnvoySpanInfo = OpenTracingHTTPInfo & {
   peer?: Target;
 };
 
-export type TraceData = {
+export type TraceData<S extends SpanData> = {
   processes: Record<string, Process>;
   traceID: string;
+  spans: S[];
 };
 
-export type JaegerTrace = TraceData & {
+export type JaegerTrace = TraceData<RichSpanData> & {
   duration: number;
   endTime: number;
-  spans: RichSpanData[];
   startTime: number;
   traceName: string;
   services: { name: string; numberOfSpans: number }[];

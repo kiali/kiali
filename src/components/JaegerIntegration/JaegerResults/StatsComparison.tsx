@@ -17,7 +17,7 @@ import {
   StatsWithIntervalIndex,
   statsPerPeer,
   statsCompareKind
-} from 'utils/TraceStats';
+} from 'utils/tracing/TraceStats';
 
 const statToText = {
   avg: { short: 'avg', long: 'average' },

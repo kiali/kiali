@@ -10,7 +10,6 @@ import { JaegerTraceTitle } from './JaegerTraceTitle';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
-import { formatDuration } from './transform';
 import { PfColors } from 'components/Pf/PfColors';
 import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
@@ -23,14 +22,14 @@ import {
   isSimilarTrace,
   reduceMetricsStats,
   StatsMatrix
-} from 'utils/TraceStats';
+} from 'utils/tracing/TraceStats';
 import { TraceLabels } from './TraceLabels';
 import { TargetKind } from 'types/Common';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
-import { sameSpans } from '../JaegerHelper';
 import { HeatMap } from 'components/HeatMap/HeatMap';
+import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 
 interface Props {
   otherTraces: JaegerTrace[];

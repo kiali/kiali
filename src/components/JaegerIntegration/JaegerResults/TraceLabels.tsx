@@ -3,7 +3,7 @@ import { Label, pluralize } from '@patternfly/react-core';
 
 import { PFAlertColor } from 'components/Pf/PfColors';
 import { Span } from 'types/JaegerInfo';
-import { isErrorTag } from '../JaegerHelper';
+import { isErrorTag } from 'utils/tracing/TracingHelper';
 
 type Props = {
   spans: Span[];
