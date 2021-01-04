@@ -25,9 +25,9 @@
  *   - UI_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-ui.git
  *      description: SSH Url of the kiali-ui GitHub repository
- *   - SITE_GITHUB_URI
- *      defaultValue: git@github.com:kiali/kiali.io.git
- *      description: SSH Url of the kiali.io GitHub repository
+ *   - SITE_REPO
+ *      defaultValue: kiali/kiali.io
+ *      description: The GitHub repo of the website sources, in owner/repo format.
  *   - OPERATOR_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-operator.git
  *      description: SSH Url of the kiali-operator GitHub repository
@@ -46,9 +46,6 @@
  *   - UI_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-ui/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)
- *   - SITE_PULL_URI
- *      defaultValue: https://api.github.com/repos/kiali/kiali.io/pulls
- *      description: The URL of the GitHub API to use to create pull requests for the website (changes to prepare for next version)
  *   - OPERATOR_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-operator/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the operator (changes to prepare for next version)
@@ -70,9 +67,9 @@
  *   - SKIP_HELM_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the helm charts
- *   - SHOULD_RELEASE_SITE
- *      defaultValue: auto
- *      description: Set to 'y' to force release of the website even for patch versions
+ *   - SKIP_SITE_RELEASE
+ *      defaultValue: n
+ *      description: Set to 'y' if you don't want to release the website
  *   - UI_VERSION
  *       defaultValue: ''
  *       description: If you are skipping UI release. Specify the UI version to package, or leave
@@ -85,19 +82,25 @@
 
 node('kiali-build && fedora') {
   def (backendForkUri, uiForkUri, operatorForkUri,helmForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git', 'git@github.com:kiali-bot/helm-charts.git']
-  def (backendDir, uiDir, operatorDir, helmDir, siteDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts', 'src/github.com/kiali/kiali.io']
-  def (backendMakefile, uiMakefile, operatorMakefile, helmMakefile, siteMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins', 'Makefile.helm.jenkins', 'Makefile.site.jenkins']
+  def (backendDir, uiDir, operatorDir, helmDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts']
+  def (backendMakefile, uiMakefile, operatorMakefile, helmMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins', 'Makefile.helm.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
   def buildHelm = params.SKIP_HELM_RELEASE != "y" && (params.RELEASE_TYPE == "minor" || params.RELEASE_TYPE == "major")
-  def buildSite = (params.SHOULD_RELEASE_SITE == "auto" && params.RELEASE_TYPE == "minor") || params.SHOULD_RELEASE_SITE == "y"
+  def buildSite = params.SKIP_SITE_RELEASE != "y" // Temptative value. It's re-assigned later.
   def quayTag = ""
+
+  if ( !buildBackend && !buildUi && !buildOperator && !buildHelm && !buildSite ) {
+    currentBuild.result = 'ABORTED'
+    echo "Nothing to release. Stopping."
+    return
+  }
 
   try {
     cleanWs()
     stage('Checkout code') {
-      if ( buildBackend || buildOperator || buildSite || buildHelm ) {
+      if ( buildBackend || buildOperator || buildHelm || buildSite ) {
         checkout([
           $class: 'GitSCM',
           branches: [[name: params.BACKEND_RELEASING_BRANCH]],
@@ -167,25 +170,6 @@ node('kiali-build && fedora') {
         sh "cd ${helmDir}; git config user.name 'kiali-bot'"
         sh "cp ${backendDir}/deploy/jenkins-ci/${helmMakefile} ${helmDir}"
       }
-
-      if ( buildSite ) {
-        checkout([
-            $class: 'GitSCM',
-            branches: [[name: params.SITE_RELEASING_BRANCH]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [
-            [$class: 'RelativeTargetDirectory', relativeTargetDir: siteDir]
-            ],
-            submoduleCfg: [],
-            userRemoteConfigs: [[
-            credentialsId: 'kiali-bot-gh-ssh',
-            url: params.SITE_GITHUB_URI]]
-        ])
-
-          sh "cd ${siteDir}; git config user.email 'kiali-dev@googlegroups.com'"
-          sh "cd ${siteDir}; git config user.name 'kiali-bot'"
-          sh "cp ${backendDir}/deploy/jenkins-ci/${siteMakefile} ${siteDir}"
-      }
     }
 
     // Determine release type if "auto" was specified
@@ -195,7 +179,10 @@ node('kiali-build && fedora') {
         returnStdout: true,
         script: "${backendDir}/deploy/jenkins-ci/bin/determine-release-type.sh").trim()
     }
+
+    buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
     echo "Resolved release type: ${releaseType}"
+    echo "Will build site? ${buildSite}"
 
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
@@ -311,27 +298,28 @@ node('kiali-build && fedora') {
         }
       }
 
-      stage('Create release for the website') {
+      stage('Invoke other jobs') {
         if ( buildSite ) {
-          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-            sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${siteMakefile} -C ${siteDir} website-build-archive"
-            }
-          }
+          build(job: 'kiali-website-release',
+              parameters: [
+              [$class: 'StringParameterValue', value: params.SITE_REPO, name: 'SITE_REPO'],
+              [$class: 'StringParameterValue', value: params.SITE_RELEASING_BRANCH, name: 'SITE_RELEASING_BRANCH']
+              ], wait: false
+              )
         }
       }
 
-     stage('Post Msg Bus Notification') {
-       if ( releaseType == "minor" ) {
-           build(job: 'kiali-release-notifier',
-             parameters: [
-               [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
-               [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
-               [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
-             ], wait: false
-           )
-       }
-     }
+      stage('Post Msg Bus Notification') {
+        if ( releaseType == "minor" ) {
+          build(job: 'kiali-release-notifier',
+              parameters: [
+              [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
+              [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
+              [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
+              ], wait: false
+              )
+        }
+      }
     }
   } finally {
     cleanWs()
