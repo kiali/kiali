@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"k8s.io/apimachinery/pkg/util/uuid"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -269,7 +270,7 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Build the Kiali token
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
 	tokenClaims := config.IanaClaims{
-		SessionId: token,
+		SessionId: string(uuid.NewUUID()),
 		StandardClaims: jwt.StandardClaims{
 			Subject:   tokenSubject,
 			ExpiresAt: timeExpire.Unix(),
