@@ -273,7 +273,7 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   tokenSubject,
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    config.AuthStrategyTokenIssuer,
+			Issuer:    config.AuthStrategyHeaderIssuer,
 		},
 	}
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
