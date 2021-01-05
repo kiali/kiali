@@ -139,8 +139,10 @@ const (
 )
 
 type serviceEntry struct {
-	location string
-	name     string // serviceEntry name
+	exportTo  interface{}
+	location  string
+	name      string // serviceEntry name
+	namespace string // namespace in which the service entry is defined
 }
 
 type serviceEntryHosts map[string]*serviceEntry

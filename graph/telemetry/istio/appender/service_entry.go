@@ -105,7 +105,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 		// A service node represents a serviceEntry when the service name matches serviceEntry host. Map
 		// these "se-service" nodes to the serviceEntries that represent them.
-		if se, ok := a.getServiceEntry(n.Service, globalInfo); ok {
+		if se, ok := a.getServiceEntry(n.Service, globalInfo, namespaceInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -165,10 +165,10 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 // getServiceEntry queries the cluster API to resolve service entries across all accessible namespaces
 // in the cluster.
-// TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace but exported to
-// all namespaces (exportTo: *). It's possible that would allow traffic to flow from an accessible workload
-// through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+// TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
+// but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
+// accessible workload through a serviceEntry whose definition we can't fetch.
+func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
@@ -185,8 +185,10 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 						location = "MESH_INTERNAL"
 					}
 					se := serviceEntry{
-						location: location,
-						name:     entry.Metadata.Name,
+						exportTo:  entry.Spec.ExportTo,
+						location:  location,
+						name:      entry.Metadata.Name,
+						namespace: entry.Metadata.Namespace,
 					}
 					for _, host := range entry.Spec.Hosts.([]interface{}) {
 						serviceEntryHosts.addHost(host.(string), &se)
@@ -198,6 +200,10 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 	}
 
 	for host, se := range serviceEntryHosts {
+		if !isExportedToNamespace(se, namespaceInfo) {
+			continue
+		}
+
 		// handle exact match
 		// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
 		// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
@@ -224,4 +230,23 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 	}
 
 	return nil, false
+}
+
+func isExportedToNamespace(se *serviceEntry, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+	if se.exportTo == nil {
+		return true
+	}
+	for _, export := range se.exportTo.([]interface{}) {
+		if export == "*" {
+			return true
+		}
+		if export == "." && se.namespace == namespaceInfo.Namespace {
+			return true
+		}
+		if export == se.namespace {
+			return true
+		}
+	}
+
+	return false
 }
