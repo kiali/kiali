@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type promClientSupplier func() (*prometheus.Client, error)
@@ -66,26 +67,26 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 	return metrics, nsInfos
 }
 
-// getToken retrieves the token from the request's context
-func getToken(r *http.Request) (string, error) {
-	tokenContext := r.Context().Value("token")
-	if tokenContext != nil {
-		if token, ok := tokenContext.(string); ok {
-			return token, nil
+// getAuthInfo retrieves the token from the request's context
+func getAuthInfo(r *http.Request) (*api.AuthInfo, error) {
+	authInfoContext := r.Context().Value("authInfo")
+	if authInfoContext != nil {
+		if authInfo, ok := authInfoContext.(*api.AuthInfo); ok {
+			return authInfo, nil
 		} else {
-			return "", errors.New("token is not of type string")
+			return nil, errors.New("authInfo is not of type *api.AuthInfo")
 		}
 	} else {
-		return "", errors.New("token missing from the request context")
+		return nil, errors.New("authInfo missing from the request context")
 	}
 }
 
 // getBusiness returns the business layer specific to the users's request
 func getBusiness(r *http.Request) (*business.Layer, error) {
-	token, err := getToken(r)
+	authInfo, err := getAuthInfo(r)
 	if err != nil {
 		return nil, err
 	}
 
-	return business.Get(token)
+	return business.Get(authInfo)
 }

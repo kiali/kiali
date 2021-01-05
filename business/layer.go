@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 // Layer is a container for fast access to inner services
@@ -65,7 +66,7 @@ func IsResourceCached(namespace string, resource string) bool {
 }
 
 // Get the business.Layer
-func Get(token string) (*Layer, error) {
+func Get(authInfo *api.AuthInfo) (*Layer, error) {
 	// Kiali Cache will be initialized once at first use of Business layer
 	once.Do(initKialiCache)
 
@@ -79,7 +80,7 @@ func Get(token string) (*Layer, error) {
 	}
 
 	// Creates a new k8s client based on the current users token
-	k8s, err := clientFactory.GetClient(token)
+	k8s, err := clientFactory.GetClient(authInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func Get(token string) (*Layer, error) {
 
 	// Create Jaeger client
 	jaegerLoader := func() (jaeger.ClientInterface, error) {
-		return jaeger.NewClient(token)
+		return jaeger.NewClient(authInfo.Token)
 	}
 
 	return NewWithBackends(k8s, prometheusClient, jaegerLoader), nil

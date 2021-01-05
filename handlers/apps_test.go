@@ -21,6 +21,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -146,20 +147,23 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	conf := config.NewConfig()
 	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
-	api := new(prometheustest.PromAPIMock)
+	xapi := new(prometheustest.PromAPIMock)
 	k8s := new(kubetest.K8SClientMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	prom.Inject(api)
+	prom.Inject(xapi)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetNamespace", "ns").Return(&core_v1.Namespace{}, nil)
 
 	mr := mux.NewRouter()
+
+	authInfo := &api.AuthInfo{Token: "test"}
+
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			getAppMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})
@@ -170,7 +174,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)
 
-	return ts, api, k8s
+	return ts, xapi, k8s
 }
 
 func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
@@ -186,13 +190,13 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			AppList(w, r.WithContext(context))
 		}))
 
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			AppDetails(w, r.WithContext(context))
 		}))
 

@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
@@ -22,13 +23,13 @@ type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in Istio installation namespace
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	requestToken, err := getToken(r)
+	requestAuthInfo, err := getAuthInfo(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "authInfo initialization error: "+err.Error())
 		return
 	}
 
-	info, code, err := getGrafanaInfo(requestToken, findDashboard)
+	info, code, err := getGrafanaInfo(requestAuthInfo, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -38,7 +39,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func getGrafanaInfo(authInfo *api.AuthInfo, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.Enabled {
@@ -66,7 +67,7 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 	// Be sure to copy config.Auth and not modify the existing
 	auth := grafanaConfig.Auth
 	if auth.UseKialiToken {
-		auth.Token = requestToken
+		auth.Token = authInfo.Token
 	}
 
 	// Call Grafana REST API to get dashboard urls

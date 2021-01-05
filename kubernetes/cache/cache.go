@@ -9,6 +9,7 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -100,7 +101,7 @@ func NewKialiCache() (KialiCache, error) {
 		BearerToken:     cacheToken,
 		Burst:           config.Burst,
 	}
-	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig)
+	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig, &api.AuthInfo{Token: cacheToken})
 	if err != nil {
 		return nil, err
 	}

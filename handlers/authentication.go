@@ -17,6 +17,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -85,7 +86,7 @@ func getTokenStringFromRequest(r *http.Request) string {
 	return tokenString
 }
 
-func getTokenStringFromHeader(r *http.Request) string {
+func getTokenStringFromHeader(r *http.Request) *api.AuthInfo {
 	tokenString := "" // Default to no token.
 
 	// Extract token from the Authorization HTTP header sent from the reverse proxy
@@ -93,7 +94,31 @@ func getTokenStringFromHeader(r *http.Request) string {
 		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
 	}
 
-	return tokenString
+	authInfo := &api.AuthInfo{Token: tokenString}
+
+	impersonationHeader := r.Header.Get("Impersonate-User")
+	if len(impersonationHeader) > 0 {
+		//there's an impersonation header, lets make sure to add it
+		authInfo.Impersonate = impersonationHeader
+
+		//Check for impersonated groups
+		if groupsImpersonationHeader := r.Header["Impersonate-Group"]; len(groupsImpersonationHeader) > 0 {
+			authInfo.ImpersonateGroups = groupsImpersonationHeader
+		}
+
+		//check for extra fields
+		for headerName, headerValues := range r.Header {
+			if strings.HasPrefix(headerName, "Impersonate-Extra-") {
+				extraName := headerName[len("Impersonate-Extra-"):]
+				if authInfo.ImpersonateUserExtra == nil {
+					authInfo.ImpersonateUserExtra = make(map[string][]string)
+				}
+				authInfo.ImpersonateUserExtra[extraName] = headerValues
+			}
+		}
+	}
+
+	return authInfo
 }
 
 func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool {
@@ -230,14 +255,14 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	token := getTokenStringFromHeader(r)
+	authInfo := getTokenStringFromHeader(r)
 
-	if token == "" {
+	if authInfo == nil {
 		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
 		return false
 	}
 
-	business, err := business.Get(token)
+	business, err := business.Get(authInfo)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
 		return false
@@ -261,10 +286,14 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// the name of the service account. The "subject" is passed to the front-end to be displayed.
 	tokenSubject := "token" // Set a default value
 
-	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(token, &jwt.StandardClaims{})
-	if err == nil {
-		tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
-		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+	if authInfo.Impersonate == "" {
+		parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(authInfo.Token, &jwt.StandardClaims{})
+		if err == nil {
+			tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
+			tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+		}
+	} else {
+		tokenSubject = authInfo.Impersonate
 	}
 
 	// Build the Kiali token
@@ -313,7 +342,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	business, err := business.Get(token)
+	business, err := business.Get(&api.AuthInfo{Token: token})
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
 		return false
@@ -383,7 +412,7 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 		log.Warningf("Token is invalid: %s", err.Error())
 		return http.StatusInternalServerError, err
 	} else {
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, err
@@ -410,7 +439,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 			return http.StatusUnauthorized, ""
 		}
 
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, ""
@@ -460,7 +489,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		return http.StatusUnauthorized, ""
 	}
 
-	business, err := business.Get(claims.SessionId)
+	business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 	if err != nil {
 		log.Warning("Could not get the business layer : ", err)
 		return http.StatusInternalServerError, ""
@@ -502,7 +531,7 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 			return http.StatusUnauthorized, ""
 		}
 
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, ""
@@ -535,11 +564,13 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		statusCode := http.StatusOK
 		conf := config.Get()
 
+		var authInfo *api.AuthInfo
 		var token string
 
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyOpenshift:
 			statusCode, token = checkOpenshiftSession(w, r)
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyOpenId:
 			statusCode, token = checkOpenIdSession(w, r)
 			if conf.Auth.OpenId.DisableRBAC {
@@ -547,23 +578,24 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				// Instead, we use the Kiali token an this has the side effect that all users will share the
 				// same privileges.
 				token = aHandler.saToken
+				authInfo = &api.AuthInfo{Token: token}
 			}
 		case config.AuthStrategyToken:
 			statusCode, token = checkTokenSession(w, r)
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
-
-			//mlbiam - Add case for proxy token
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyHeader:
 			log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
-			token = getTokenStringFromHeader(r)
+			authInfo = getTokenStringFromHeader(r)
 			statusCode = http.StatusOK
 		}
 
 		switch statusCode {
 		case http.StatusOK:
-			context := context.WithValue(r.Context(), "token", token)
+			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

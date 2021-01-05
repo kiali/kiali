@@ -11,6 +11,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -30,7 +31,7 @@ func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMo
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(token string) (kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
 	return o.k8s, nil
 }
 
@@ -95,6 +96,12 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 func (o *K8SClientMock) GetToken() string {
 	args := o.Called()
 	return args.Get(0).(string)
+}
+
+// GetAuthInfo returns the AuthInfo struct for the client
+func (o *K8SClientMock) GetAuthInfo() *api.AuthInfo {
+	args := o.Called()
+	return args.Get(0).(*api.AuthInfo)
 }
 
 func (o *K8SClientMock) MockService(namespace, name string) {
