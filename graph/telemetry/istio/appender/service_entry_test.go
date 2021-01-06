@@ -732,3 +732,160 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	}
 	assert.Equal(1, numMatches)
 }
+
+func TestServiceEntrySameHost(t *testing.T) {
+	k8s := kubetest.NewK8SClientMock()
+
+	SE1 := kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "SE1",
+			Namespace: "fooNamespace", // definition namespace is irrelevant in this case
+		},
+		Spec: map[string]interface{}{
+			"exportTo": []interface{}{"*"}, // can match a service in any namespace
+			"hosts": []interface{}{
+				"host1.external.com",
+			},
+			"location": "MESH_EXTERNAL",
+		},
+	}
+	SE2 := kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "SE2",
+			Namespace: "testNamespace",
+		},
+		Spec: map[string]interface{}{
+			"exportTo": []interface{}{"."}, // can match a service in only testNamespace
+			"hosts": []interface{}{
+				"host1.external.com",
+				"host2.external.com",
+			},
+			"location": "MESH_EXTERNAL",
+		},
+	}
+
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
+		&SE1,
+		&SE2},
+		nil)
+	config.Set(config.NewConfig())
+
+	businessLayer := business.NewWithBackends(k8s, nil, nil)
+
+	assert := assert.New(t)
+
+	trafficMap := make(map[string]*graph.Node)
+
+	// unknownNode
+	n0 := graph.NewNode(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+
+	// NotSE host2 serviceNode
+	n1 := graph.NewNode("barNamespace", "host2.external.com", "barNamespace", "", "", "", graph.GraphTypeVersionedApp)
+
+	// SE1 host1 serviceNode
+	n2 := graph.NewNode("barNamespace", "host1.external.com", "barNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n2.Metadata = graph.NewMetadata()
+	destServices := graph.NewDestServicesMetadata()
+	destService := graph.ServiceName{Namespace: n2.Namespace, Name: n2.Service}
+	destServices[destService.Key()] = destService
+	n2.Metadata[graph.DestServices] = destServices
+
+	// SE2 host1 serviceNode
+	n3 := graph.NewNode("testNamespace", "host1.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n3.Metadata = graph.NewMetadata()
+	destServices = graph.NewDestServicesMetadata()
+	destService = graph.ServiceName{Namespace: n3.Namespace, Name: n3.Service}
+	destServices[destService.Key()] = destService
+	n3.Metadata[graph.DestServices] = destServices
+
+	// SE2 host2 serviceNode
+	n4 := graph.NewNode("testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n4.Metadata = graph.NewMetadata()
+	destServices = graph.NewDestServicesMetadata()
+	destService = graph.ServiceName{Namespace: n4.Namespace, Name: n4.Service}
+	destServices[destService.Key()] = destService
+	n4.Metadata[graph.DestServices] = destServices
+
+	trafficMap[n0.ID] = &n0
+	trafficMap[n1.ID] = &n1
+	trafficMap[n2.ID] = &n2
+	trafficMap[n3.ID] = &n3
+	trafficMap[n4.ID] = &n4
+
+	n0.AddEdge(&n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(&n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(&n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n0.AddEdge(&n4).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+
+	assert.Equal(5, len(trafficMap))
+
+	unknownID, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	unknownNode, found0 := trafficMap[unknownID]
+	assert.Equal(true, found0)
+	assert.Equal(4, len(unknownNode.Edges))
+	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _ := graph.Id("barNamespace", "host2.external.com", "barNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 := trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(0, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	SE1Host1ServiceID, _ := graph.Id("barNamespace", "host1.external.com", "barNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	SE1Host1ServiceNode, found2 := trafficMap[SE1Host1ServiceID]
+	assert.Equal(true, found2)
+	assert.Equal(0, len(SE1Host1ServiceNode.Edges))
+	assert.Equal(nil, SE1Host1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	SE2Host1ServiceID, _ := graph.Id("testNamespace", "host1.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	SE2Host1ServiceNode, found3 := trafficMap[SE2Host1ServiceID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(SE2Host1ServiceNode.Edges))
+	assert.Equal(nil, SE2Host1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	SE2Host2ServiceID, _ := graph.Id("testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	SE2Host2ServiceNode, found4 := trafficMap[SE2Host2ServiceID]
+	assert.Equal(true, found4)
+	assert.Equal(0, len(SE2Host2ServiceNode.Edges))
+	assert.Equal(nil, SE2Host2ServiceNode.Metadata[graph.IsServiceEntry])
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(4, len(trafficMap))
+
+	unknownID, _ = graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	unknownNode, found0 = trafficMap[unknownID]
+	assert.Equal(true, found0)
+	assert.Equal(3, len(unknownNode.Edges))
+	assert.Equal(nil, unknownNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _ = graph.Id("barNamespace", "host2.external.com", "barNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 = trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(0, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	// note that the SE namespace will always be set to the namespace being processed for the graph
+	SE1ID, _ := graph.Id("testNamespace", "SE1", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	SE1Node, found2 := trafficMap[SE1ID]
+	assert.Equal(true, found2)
+	assert.Equal(0, len(SE1Node.Edges))
+	assert.Equal("MESH_EXTERNAL", SE1Node.Metadata[graph.IsServiceEntry])
+	assert.Equal(1, len(SE1Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+
+	SE2ID, _ := graph.Id("testNamespace", "SE2", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	SE2Node, found3 := trafficMap[SE2ID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(SE2Node.Edges))
+	assert.Equal("MESH_EXTERNAL", SE2Node.Metadata[graph.IsServiceEntry])
+	assert.Equal(2, len(SE2Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+}

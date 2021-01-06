@@ -6,7 +6,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -145,17 +144,25 @@ type serviceEntry struct {
 	namespace string // namespace in which the service entry is defined
 }
 
-type serviceEntryHosts map[string]*serviceEntry
+type serviceEntryHosts map[string][]*serviceEntry
 
 func newServiceEntryHosts() serviceEntryHosts {
-	return make(map[string]*serviceEntry)
+	return make(map[string][]*serviceEntry)
 }
 
 func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
-	if existingSe, ok := seh[host]; ok {
-		log.Warningf("Same host [%s] found in ServiceEntry [%s] and [%s]", host, existingSe.name, se.name)
+	seArr := []*serviceEntry{se}
+	if serviceEntriesForHost, ok := seh[host]; ok {
+		// if the same host is defined in multiple service entries, prefer the most
+		// specific namespace match when checking for a match...
+		if se.exportTo == nil || se.exportTo.([]interface{})[0] == '*' {
+			seh[host] = append(serviceEntriesForHost, seArr...)
+		} else {
+			seh[host] = append(seArr, serviceEntriesForHost...)
+		}
+	} else {
+		seh[host] = seArr
 	}
-	seh[host] = se
 }
 
 func getServiceDefinitionList(ni *graph.AppenderNamespaceInfo) *models.ServiceDefinitionList {

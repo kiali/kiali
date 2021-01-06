@@ -105,7 +105,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 		// A service node represents a serviceEntry when the service name matches serviceEntry host. Map
 		// these "se-service" nodes to the serviceEntries that represent them.
-		if se, ok := a.getServiceEntry(n.Service, globalInfo, namespaceInfo); ok {
+		if se, ok := a.getServiceEntry(n.Namespace, n.Service, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -168,7 +168,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(serviceNamespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
@@ -199,32 +199,34 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 		globalInfo.Vendor[serviceEntryHostsKey] = serviceEntryHosts
 	}
 
-	for host, se := range serviceEntryHosts {
-		if !isExportedToNamespace(se, namespaceInfo) {
-			continue
-		}
-
-		// handle exact match
-		// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
-		// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
-		if host == serviceName {
-			return se, true
-		}
-		// handle serviceName prefix (e.g. host = serviceName.namespace.svc.cluster.local)
-		if se.location == "MESH_INTERNAL" {
-			hostSplitted := strings.Split(host, ".")
-
-			if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
-				// If suffix is "global", this node should be a service entry
-				// related to multi-cluster configs. Only exact match should be done, so
-				// skip prefix matching.
-				//
-				// Number of entries == 3 in the host is checked because the host
-				// must be of the form svc.namespace.global for Istio to
-				// work correctly in the multi-cluster/multiple-control-plane scenario.
+	for host, serviceEntriesForHost := range serviceEntryHosts {
+		for _, se := range serviceEntriesForHost {
+			if !isExportedToNamespace(se, serviceNamespace) {
 				continue
-			} else if hostSplitted[0] == serviceName {
+			}
+
+			// handle exact match
+			// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
+			// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
+			if host == serviceName {
 				return se, true
+			}
+			// handle serviceName prefix (e.g. host = serviceName.namespace.svc.cluster.local)
+			if se.location == "MESH_INTERNAL" {
+				hostSplitted := strings.Split(host, ".")
+
+				if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
+					// If suffix is "global", this node should be a service entry
+					// related to multi-cluster configs. Only exact match should be done, so
+					// skip prefix matching.
+					//
+					// Number of entries == 3 in the host is checked because the host
+					// must be of the form svc.namespace.global for Istio to
+					// work correctly in the multi-cluster/multiple-control-plane scenario.
+					continue
+				} else if hostSplitted[0] == serviceName {
+					return se, true
+				}
 			}
 		}
 	}
@@ -232,7 +234,7 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 	return nil, false
 }
 
-func isExportedToNamespace(se *serviceEntry, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+func isExportedToNamespace(se *serviceEntry, serviceNamespace string) bool {
 	if se.exportTo == nil {
 		return true
 	}
@@ -240,7 +242,7 @@ func isExportedToNamespace(se *serviceEntry, namespaceInfo *graph.AppenderNamesp
 		if export == "*" {
 			return true
 		}
-		if export == "." && se.namespace == namespaceInfo.Namespace {
+		if export == "." && se.namespace == serviceNamespace {
 			return true
 		}
 		if export == se.namespace {
