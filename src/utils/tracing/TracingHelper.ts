@@ -3,6 +3,7 @@ import moment from 'moment';
 import logfmtParser from 'logfmt/lib/logfmt_parser';
 import {
   EnvoySpanInfo,
+  JaegerTrace,
   KeyValuePair,
   OpenTracingBaseInfo,
   OpenTracingHTTPInfo,
@@ -11,6 +12,7 @@ import {
 } from 'types/JaegerInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
 import { guardTimeRange, durationToBounds, DurationInSeconds } from 'types/Common';
+import { spansSort } from './TraceTransform';
 
 export const defaultTracingDuration: DurationInSeconds = 600;
 
@@ -127,37 +129,9 @@ export const findParent = (span: Span): Span | undefined => {
   return undefined;
 };
 
-// export const findChildren = (span: Span, trace: JaegerTrace): Span[] => {
-//   const children = trace.spans.filter(s => findParent(s)?.spanID === span.spanID);
-//   return children.sort(spansSort);
-// };
-
-// export const findDepthFirstNext = (current: Span, trace: JaegerTrace): Span | undefined => {
-//   // Check children
-//   const children = findChildren(current, trace);
-//   console.log('children of ', current.spanID, ' are ', children.map(s => s.spanID));
-//   if (children.length > 0) {
-//     return children[0];
-//   }
-//   // Leaf reached => check siblings
-//   return findNextSibling(current, trace);
-// };
-
-// export const findNextSibling = (current: Span, trace: JaegerTrace): Span | undefined => {
-//   const parent = findParent(current);
-//   if (parent) {
-//     const siblings = findChildren(parent, trace);
-//     const nextIdx = 1 + siblings.findIndex(s => s.spanID === current.spanID);
-//     if (nextIdx < siblings.length) {
-//       // There's a next sibling
-//       return siblings[nextIdx];
-//     }
-//     // End of siblings => repeat on parent (recursive)
-//     return findNextSibling(parent, trace);
-//   }
-//   // Reached root => end of depth-first
-//   return undefined;
-// };
+export const findChildren = (span: Span, trace: JaegerTrace): Span[] => {
+  return trace.spans.filter(s => findParent(s)?.spanID === span.spanID).sort(spansSort);
+};
 
 export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefined => {
   const parent = findParent(span);

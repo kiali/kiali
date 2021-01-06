@@ -117,10 +117,10 @@ const addSpan = (ele: Cy.NodeSingular | Cy.EdgeSingular | undefined, span: Span)
   }
 
   if (ele.hasClass('span')) {
-    ele.data('spans').push(span.spanID);
+    ele.data('spans').push(span);
   } else {
     ele.addClass('span');
-    ele.data('spans', [span.spanID]);
+    ele.data('spans', [span]);
   }
 };
 

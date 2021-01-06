@@ -1,4 +1,4 @@
-import { buildTags, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
+import { buildTags, findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
 import { Span, KeyValuePair, SpanData } from 'types/JaegerInfo';
 import transformTraceData from '../TraceTransform';
 
@@ -140,7 +140,7 @@ describe('TracingHelper', () => {
   });
 });
 
-describe('Trace depth-first iterate', () => {
+describe('Trace find related', () => {
   const trace = transformTraceData({
     traceID: 't-1234',
     processes: { p: { serviceName: 'svc', tags: [] } },
@@ -189,5 +189,20 @@ describe('Trace depth-first iterate', () => {
     expect(p3?.spanID).toEqual('s-1');
     expect(p4?.spanID).toEqual('s-2');
     expect(p5?.spanID).toEqual('s-2');
+  });
+
+  it('should find children', () => {
+    const [c1, c2, c3, c4, c5] = [
+      findChildren(s1, trace),
+      findChildren(s2, trace),
+      findChildren(s3, trace),
+      findChildren(s4, trace),
+      findChildren(s5, trace)
+    ];
+    expect(c1.map(s => s.spanID)).toEqual(['s-2', 's-3']);
+    expect(c2.map(s => s.spanID)).toEqual(['s-4', 's-5']);
+    expect(c3.map(s => s.spanID)).toEqual([]);
+    expect(c4.map(s => s.spanID)).toEqual([]);
+    expect(c5.map(s => s.spanID)).toEqual([]);
   });
 });

@@ -154,7 +154,7 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
   let traceEndTime = 0;
   let traceStartTime = Number.MAX_SAFE_INTEGER;
   const spanIdCounts = new Map();
-  const spanMap = new Map<string, Span>();
+  const spanMap = new Map<string, RichSpanData>();
   // filter out spans with empty start times
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter(span => Boolean(span.startTime));
@@ -188,7 +188,7 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
       spanIdCounts.set(spanID, 1);
     }
     span.process = data.processes[processID];
-    spanMap.set(spanID, span);
+    spanMap.set(spanID, transformSpanData(span));
   }
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
@@ -201,7 +201,7 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
     if (spanID === '__root__') {
       return;
     }
-    const span = spanMap.get(spanID) as Span;
+    const span = spanMap.get(spanID);
     if (!span) {
       return;
     }
@@ -213,12 +213,6 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
-    span.warnings = span.warnings || [];
-    span.tags = span.tags || [];
-    span.references = span.references || [];
-    const tagsInfo = deduplicateTags(span.tags);
-    span.tags = tagsInfo.tags;
-    span.warnings = span.warnings.concat(tagsInfo.warnings);
     span.references.forEach(ref => {
       const refSpan = spanMap.get(ref.spanID) as Span;
       if (refSpan) {
@@ -226,7 +220,7 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
         ref.span = refSpan;
       }
     });
-    spans.push(transformSpanData(span));
+    spans.push(span);
   });
   const services = Object.keys(svcCounts).map(name => ({ name, numberOfSpans: svcCounts[name] }));
   return {
@@ -246,6 +240,12 @@ export default function transformTraceData(data: TraceData<SpanData>): JaegerTra
 
 // Extracts some information from a span to make it suitable for table-display
 export const transformSpanData = (span: Span): RichSpanData => {
+  span.warnings = span.warnings || [];
+  span.tags = span.tags || [];
+  span.references = span.references || [];
+  const tagsInfo = deduplicateTags(span.tags);
+  span.tags = tagsInfo.tags;
+  span.warnings = span.warnings.concat(tagsInfo.warnings);
   const { type, info } = extractSpanInfo(span);
   const workloadNs = getWorkloadFromSpan(span);
   const split = span.process.serviceName.split('.');
