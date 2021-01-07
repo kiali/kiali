@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	kmock "github.com/kiali/kiali/kubernetes/monitoringdashboards/mock"
@@ -48,7 +49,7 @@ func TestGetDashboard(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard("", query, "dashboard1")
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
 
 	assert.Nil(err)
 	k8s.AssertNumberOfCalls(t, "GetDashboard", 1)
@@ -84,7 +85,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard("", query, "dashboard1")
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
 
 	assert.Nil(err)
 	k8s.AssertNumberOfCalls(t, "GetDashboard", 2)

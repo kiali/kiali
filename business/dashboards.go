@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 const defaultNamespaceLabel = "namespace"
@@ -181,7 +182,7 @@ func (in *DashboardsService) resolveReferences(namespace string, dashboard *v1al
 }
 
 // GetDashboard returns a dashboard filled-in with target data
-func (in *DashboardsService) GetDashboard(requestToken string, params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
+func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
 	promClient, err := in.prom()
 	if err != nil {
 		return nil, err
@@ -261,7 +262,7 @@ func (in *DashboardsService) GetDashboard(requestToken string, params models.Das
 	var externalLinks []models.ExternalLink
 	go func() {
 		defer wg.Done()
-		links, _, err := GetGrafanaLinks(requestToken, dashboard.Spec.ExternalLinks)
+		links, _, err := GetGrafanaLinks(authInfo, dashboard.Spec.ExternalLinks)
 		if err != nil {
 			log.Errorf("Error while getting Grafana links: %v", err)
 		}
