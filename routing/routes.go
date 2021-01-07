@@ -373,6 +373,31 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
+		// swagger:route PATCH /namespaces/{namespace}/services/{service} services serviceUpdate
+		// ---
+		// Endpoint to update the Service configuration using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: serviceDetailsResponse
+		//
+		{
+			"ServiceUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}/services/{service}",
+			handlers.ServiceUpdate,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/spans traces appSpans
 		// ---
 		// Endpoint to get Jaeger spans for a given app

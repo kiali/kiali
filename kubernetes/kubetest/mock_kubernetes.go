@@ -119,3 +119,8 @@ func (o *K8SClientMock) UpdateWorkload(namespace string, workloadName string, wo
 	args := o.Called(namespace, workloadName, workloadType, jsonPatch)
 	return args.Error(1)
 }
+
+func (o *K8SClientMock) UpdateService(namespace string, serviceName string, jsonPatch string) error {
+	args := o.Called(namespace, serviceName, jsonPatch)
+	return args.Error(1)
+}

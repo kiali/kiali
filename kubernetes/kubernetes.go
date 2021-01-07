@@ -379,6 +379,13 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	return err
 }
 
+func (in *K8SClient) UpdateService(namespace string, serviceName string, jsonPatch string) error {
+	bytePatch := []byte(jsonPatch)
+	var err error
+	_, err = in.k8s.CoreV1().Services(namespace).Patch(serviceName, types.MergePatchType, bytePatch)
+	return err
+}
+
 func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error) {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)

@@ -74,9 +74,10 @@ type K8SClientInterface interface {
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
-	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
-	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
+	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
+	UpdateService(namespace string, serviceName string, jsonPatch string) error
+	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
 }
 
 type OSClientInterface interface {

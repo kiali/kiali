@@ -2512,6 +2512,55 @@
             "$ref": "#/responses/internalError"
           }
         }
+      },
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "summary": "Endpoint to update the Service configuration using Json Merge Patch strategy.",
+        "operationId": "serviceUpdate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceDetailsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
       }
     },
     "/namespaces/{namespace}/services/{service}/dashboard": {
