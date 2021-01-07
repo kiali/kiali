@@ -154,7 +154,8 @@ func validateConfig() error {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
 	} else if auth.Strategy != config.AuthStrategyOpenId &&
 		auth.Strategy != config.AuthStrategyOpenshift &&
-		auth.Strategy != config.AuthStrategyToken {
+		auth.Strategy != config.AuthStrategyToken &&
+		auth.Strategy != config.AuthStrategyHeader {
 		return fmt.Errorf("Invalid authentication strategy [%v]", auth.Strategy)
 	}
 

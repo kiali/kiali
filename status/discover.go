@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 var clientFactory kubernetes.ClientFactory
@@ -26,7 +27,7 @@ func getClient() (kubernetes.ClientInterface, error) {
 		clientFactory = userClientFactory
 	}
 
-	client, err := clientFactory.GetClient(saToken)
+	client, err := clientFactory.GetClient(&api.AuthInfo{Token: saToken})
 	if err != nil {
 		return nil, err
 	}

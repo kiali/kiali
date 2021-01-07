@@ -6,6 +6,7 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -288,7 +289,7 @@ func getNamespacesForKialiSA(labelSelector string) ([]core_v1.Namespace, error) 
 		return nil, err
 	}
 
-	k8s, err := clientFactory.GetClient(kialiToken)
+	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
 	if err != nil {
 		return nil, err
 	}

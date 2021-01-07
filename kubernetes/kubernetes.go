@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
+	goerrors "errors"
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
 	apps_v1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/authentication/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
@@ -19,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 // GetConfigMap fetches and returns the specified ConfigMap definition
@@ -394,4 +398,22 @@ func (in *K8SClient) UpdateProject(name string, jsonPatch string) (*osproject_v1
 	}
 
 	return result, nil
+}
+
+// GetTokenSubject returns the subject of the authInfo using
+// the TokenReview api
+func (in *K8SClient) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
+	tokenReview := &v1.TokenReview{}
+	tokenReview.Spec.Token = authInfo.Token
+
+	result, err := in.k8s.AuthenticationV1().TokenReviews().Create(tokenReview)
+
+	if err != nil {
+		return "", err
+	} else if result.Status.Error != "" {
+		return "", goerrors.New(result.Status.Error)
+	} else {
+		return result.Status.User.Username, nil
+	}
+
 }
