@@ -30,6 +30,7 @@ func NewEmptyRequestHealth() RequestHealth {
 	return RequestHealth{
 		Inbound:            make(map[string]map[string]float64),
 		Outbound:           make(map[string]map[string]float64),
+		HealthAnnotations:  make(map[string]string),
 		inboundSource:      make(map[string]map[string]float64),
 		inboundDestination: make(map[string]map[string]float64),
 	}
@@ -96,6 +97,7 @@ type ProxyStatus struct {
 type RequestHealth struct {
 	Inbound            map[string]map[string]float64 `json:"inbound"`
 	Outbound           map[string]map[string]float64 `json:"outbound"`
+	HealthAnnotations  map[string]string             `json:"healthAnnotations"`
 	inboundSource      map[string]map[string]float64
 	inboundDestination map[string]map[string]float64
 }

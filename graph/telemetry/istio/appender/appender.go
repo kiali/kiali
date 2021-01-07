@@ -25,6 +25,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[AggregateNodeAppenderName] = true
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
+			case HealthConfigAppenderName:
+				requestedAppenders[HealthConfigAppenderName] = true
 			case IdleNodeAppenderName:
 				requestedAppenders[IdleNodeAppenderName] = true
 			case IstioAppenderName:
@@ -110,6 +112,10 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		}
 		appenders = append(appenders, a)
 	}
+	if _, ok := requestedAppenders[HealthConfigAppenderName]; ok || o.Appenders.All {
+		a := HealthConfigAppender{}
+		appenders = append(appenders, a)
+	}
 	if _, ok := requestedAppenders[IdleNodeAppenderName]; ok || o.Appenders.All {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		a := IdleNodeAppender{
@@ -170,6 +176,18 @@ func getServiceDefinitionList(ni *graph.AppenderNamespaceInfo) *models.ServiceDe
 		return sdl.(*models.ServiceDefinitionList)
 	}
 	return nil
+}
+
+func getService(serviceName string, ni *graph.AppenderNamespaceInfo) (*models.Service, bool) {
+	if serviceName == "" || serviceName == graph.Unknown {
+		return nil, false
+	}
+	for _, srv := range getServiceDefinitionList(ni).ServiceDefinitions {
+		if srv.Service.Name == serviceName {
+			return &srv.Service, true
+		}
+	}
+	return nil, false
 }
 
 func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {

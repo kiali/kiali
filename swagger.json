@@ -4540,6 +4540,14 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "HealthConfig": {
+      "description": "HealthConfig maps annotations information for health",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
     "Initializer": {
       "type": "object",
       "title": "Initializer is information about an initializer that has not yet completed.",
@@ -5607,6 +5615,9 @@
     "NodeData": {
       "type": "object",
       "properties": {
+        "HasHealthConfig": {
+          "$ref": "#/definitions/HealthConfig"
+        },
         "aggregate": {
           "type": "string",
           "x-go-name": "Aggregate"
@@ -6058,6 +6069,13 @@
       "description": "RequestHealth holds several stats about recent request errors\nInbound//Outbound are the rates of requests by protocol and status_code.\nExample:   Inbound: { \"http\": {\"200\": 1.5, \"400\": 2.3}, \"grpc\": {\"1\": 1.2} }",
       "type": "object",
       "properties": {
+        "healthAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "HealthAnnotations"
+        },
         "inbound": {
           "type": "object",
           "additionalProperties": {
@@ -6206,6 +6224,13 @@
         "externalName": {
           "type": "string",
           "x-go-name": "ExternalName"
+        },
+        "healthAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "HealthAnnotations"
         },
         "ip": {
           "type": "string",
@@ -6431,6 +6456,14 @@
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "kialiAnnotations": {
+          "description": "Annotations of the service",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "KialiAnnotations"
         },
         "labels": {
           "description": "Labels for Service",
@@ -6923,6 +6956,14 @@
           "x-go-name": "DesiredReplicas",
           "example": 2
         },
+        "healthAnnotations": {
+          "description": "HealthAnnotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "HealthAnnotations"
+        },
         "istioInjectionAnnotation": {
           "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
@@ -7074,6 +7115,14 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "healthAnnotations": {
+          "description": "HealthAnnotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "HealthAnnotations"
         },
         "istioInjectionAnnotation": {
           "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
