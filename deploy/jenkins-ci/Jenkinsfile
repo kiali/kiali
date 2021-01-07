@@ -78,9 +78,9 @@
  */
 
 node('kiali-build && fedora') {
-  def (backendForkUri, uiForkUri, operatorForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git']
-  def (backendDir, uiDir, operatorDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator']
-  def (backendMakefile, uiMakefile, operatorMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins']
+  def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
+  def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
+  def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
@@ -131,24 +131,6 @@ node('kiali-build && fedora') {
         sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
         sh "cd ${uiDir}; git config user.name 'kiali-bot'"
       }
-      if ( buildOperator ) {
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: params.OPERATOR_RELEASING_BRANCH]],
-          doGenerateSubmoduleConfigurations: false,
-          extensions: [
-            [$class: 'RelativeTargetDirectory', relativeTargetDir: operatorDir]
-          ],
-          submoduleCfg: [],
-          userRemoteConfigs: [[
-            credentialsId: 'kiali-bot-gh-ssh',
-            url: params.OPERATOR_GITHUB_URI]]
-        ])
-
-        sh "cd ${operatorDir}; git config user.email 'kiali-dev@googlegroups.com'"
-        sh "cd ${operatorDir}; git config user.name 'kiali-bot'"
-        sh "cp ${backendDir}/deploy/jenkins-ci/${operatorMakefile} ${operatorDir}"
-      }
     }
 
     // Determine release type if "auto" was specified
@@ -163,13 +145,13 @@ node('kiali-build && fedora') {
     buildHelm = params.SKIP_HELM_RELEASE != "y" && releaseType == "minor"
     echo "Resolved release type: ${releaseType}"
     echo "Will build Helm charts? ${buildHelm}"
+    echo "Will build operator? ${buildOperator}"
     echo "Will build site? ${buildSite}"
 
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
             "BACKEND_FORK_URI=${backendForkUri}",
             "UI_FORK_URI=${uiForkUri}",
-            "OPERATOR_FORK_URI=${operatorForkUri}",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
@@ -194,12 +176,6 @@ node('kiali-build && fedora') {
         stage('Test UI') {
           if ( buildUi ) {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
-          }
-        }
-      }, operator: {
-        stage('Build Operator') {
-          if ( buildOperator ) {
-            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-build-release"
           }
         }
       },
@@ -243,26 +219,15 @@ node('kiali-build && fedora') {
         }
       }
 
-      stage('Release Kiali Operator to Container Repositories') {
-        if ( buildOperator ) {
-          withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
-            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-quay"
-            quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${operatorDir}/Makefile").trim()
-          }
-        }
-      }
-
-      stage('Create release cut in operator repo') {
-        if ( buildOperator ) {
-          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-            sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-version-tag operator-prepare-next-version"
-            }
-          }
-        }
-      }
-
       stage('Invoke other jobs') {
+        if ( buildOperator ) {
+          build(job: 'kiali-operator-release',
+              parameters: [
+              [$class: 'StringParameterValue', value: params.OPERATOR_REPO, name: 'OPERATOR_REPO'],
+              [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH']
+              ], wait: false
+              )
+        }
         if ( buildSite ) {
           build(job: 'kiali-website-release',
               parameters: [
