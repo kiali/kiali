@@ -56,33 +56,6 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
-// aggregateEdges identifies edges that are going from <node> to <serviceEntryNode> and
-// aggregates them in only one edge per protocol. This ensures that the traffic map
-// will comply with the assumption/rule of one edge per protocol between any two nodes.
-func aggregateEdges(node *graph.Node, serviceEntryNode *graph.Node) {
-	edgesToAggregate := make(map[string][]*graph.Edge)
-	bound := 0
-	for _, edge := range node.Edges {
-		if edge.Dest == serviceEntryNode {
-			protocol := edge.Metadata[graph.ProtocolKey].(string)
-			edgesToAggregate[protocol] = append(edgesToAggregate[protocol], edge)
-		} else {
-			// Manipulating the slice as in this StackOverflow post: https://stackoverflow.com/a/20551116
-			node.Edges[bound] = edge
-			bound++
-		}
-	}
-	node.Edges = node.Edges[:bound]
-	// Add aggregated edge
-	for protocol, edges := range edgesToAggregate {
-		aggregatedEdge := node.AddEdge(serviceEntryNode)
-		aggregatedEdge.Metadata[graph.ProtocolKey] = protocol
-		for _, e := range edges {
-			graph.AggregateEdgeTraffic(e, aggregatedEdge)
-		}
-	}
-}
-
 func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// a map of "se-service" nodes to the "se-aggregate" information
 	seMap := make(map[*serviceEntry][]*graph.Node)
@@ -103,9 +76,11 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 			continue
 		}
 
-		// A service node represents a serviceEntry when the service name matches serviceEntry host. Map
-		// these "se-service" nodes to the serviceEntries that represent them.
-		if se, ok := a.getServiceEntry(n.Namespace, n.Service, globalInfo); ok {
+		// To match, a service entry must be exported to the source namespace, and the requested
+		// service must match a defined host.  Note that teh source namespace is assumed to be the
+		// the same as the appender namespace as all requests for the service entry should be coming
+		// from workloads in the current namespace being processed for the graph.
+		if se, ok := a.getServiceEntry(namespaceInfo.Namespace, n.Service, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
 			} else {
@@ -168,7 +143,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(serviceNamespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
 		for ns := range a.AccessibleNamespaces {
@@ -201,7 +176,7 @@ func (a ServiceEntryAppender) getServiceEntry(serviceNamespace, serviceName stri
 
 	for host, serviceEntriesForHost := range serviceEntryHosts {
 		for _, se := range serviceEntriesForHost {
-			if !isExportedToNamespace(se, serviceNamespace) {
+			if !isExportedToNamespace(se, namespace) {
 				continue
 			}
 
@@ -234,7 +209,7 @@ func (a ServiceEntryAppender) getServiceEntry(serviceNamespace, serviceName stri
 	return nil, false
 }
 
-func isExportedToNamespace(se *serviceEntry, serviceNamespace string) bool {
+func isExportedToNamespace(se *serviceEntry, namespace string) bool {
 	if se.exportTo == nil {
 		return true
 	}
@@ -242,7 +217,7 @@ func isExportedToNamespace(se *serviceEntry, serviceNamespace string) bool {
 		if export == "*" {
 			return true
 		}
-		if export == "." && se.namespace == serviceNamespace {
+		if export == "." && se.namespace == namespace {
 			return true
 		}
 		if export == se.namespace {
@@ -251,4 +226,31 @@ func isExportedToNamespace(se *serviceEntry, serviceNamespace string) bool {
 	}
 
 	return false
+}
+
+// aggregateEdges identifies edges that are going from <node> to <serviceEntryNode> and
+// aggregates them in only one edge per protocol. This ensures that the traffic map
+// will comply with the assumption/rule of one edge per protocol between any two nodes.
+func aggregateEdges(node *graph.Node, serviceEntryNode *graph.Node) {
+	edgesToAggregate := make(map[string][]*graph.Edge)
+	bound := 0
+	for _, edge := range node.Edges {
+		if edge.Dest == serviceEntryNode {
+			protocol := edge.Metadata[graph.ProtocolKey].(string)
+			edgesToAggregate[protocol] = append(edgesToAggregate[protocol], edge)
+		} else {
+			// Manipulating the slice as in this StackOverflow post: https://stackoverflow.com/a/20551116
+			node.Edges[bound] = edge
+			bound++
+		}
+	}
+	node.Edges = node.Edges[:bound]
+	// Add aggregated edge
+	for protocol, edges := range edgesToAggregate {
+		aggregatedEdge := node.AddEdge(serviceEntryNode)
+		aggregatedEdge.Metadata[graph.ProtocolKey] = protocol
+		for _, e := range edges {
+			graph.AggregateEdgeTraffic(e, aggregatedEdge)
+		}
+	}
 }
