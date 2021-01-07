@@ -262,23 +262,24 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	business, err := business.Get(authInfo)
+	kialiToken, err := kubernetes.GetKialiToken()
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	business, err := business.Get(&api.AuthInfo{Token: kialiToken})
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
 		return false
 	}
 
-	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
-	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := business.Namespace.GetNamespaces()
-	if err != nil {
-		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
-		return false
-	}
+	// Get the subject for the token to validate it as a valid token
+	subjectFromToken, err := business.TokenReview.GetTokenSubject(authInfo)
 
-	// If namespace list is empty, return unauthorized error
-	if len(nsList) == 0 {
-		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return false
 	}
 
@@ -287,9 +288,8 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	tokenSubject := "token" // Set a default value
 
 	if authInfo.Impersonate == "" {
-		parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(authInfo.Token, &jwt.StandardClaims{})
 		if err == nil {
-			tokenSubject = parsedClusterToken.Claims.(*jwt.StandardClaims).Subject
+			tokenSubject = subjectFromToken
 			tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
 		}
 	} else {

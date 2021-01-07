@@ -1,6 +1,7 @@
 package kubetest
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -46,6 +47,7 @@ type K8SClientMock struct {
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetKialiToken").Return("")
 	return k8s
 }
 
@@ -102,6 +104,17 @@ func (o *K8SClientMock) GetToken() string {
 func (o *K8SClientMock) GetAuthInfo() *api.AuthInfo {
 	args := o.Called()
 	return args.Get(0).(*api.AuthInfo)
+}
+
+// GetTokenSubject returns the subject of the authInfo using
+// the TokenReview api
+func (o *K8SClientMock) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
+	parsedClusterToken, _, err := new(jwt.Parser).ParseUnverified(authInfo.Token, &jwt.StandardClaims{})
+	if err != nil {
+		return authInfo.Token, nil
+	}
+
+	return parsedClusterToken.Claims.(*jwt.StandardClaims).Subject, nil
 }
 
 func (o *K8SClientMock) MockService(namespace, name string) {

@@ -74,6 +74,7 @@ type K8SClientInterface interface {
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
+	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 }
 
 type OSClientInterface interface {

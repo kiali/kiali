@@ -28,6 +28,7 @@ type Layer struct {
 	Iter8          Iter8Service
 	IstioStatus    IstioStatusService
 	ProxyStatus    ProxyStatus
+	TokenReview    TokenReviewService
 }
 
 // Global clientfactory and prometheus clients.
@@ -126,7 +127,7 @@ func NewWithBackends(k8s kubernetes.ClientInterface, prom prometheus.ClientInter
 	temporaryLayer.Iter8 = Iter8Service{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.IstioStatus = IstioStatusService{k8s: k8s}
 	temporaryLayer.ProxyStatus = ProxyStatus{k8s: k8s}
-
+	temporaryLayer.TokenReview = NewTokenReview(k8s)
 	return temporaryLayer
 }
 
