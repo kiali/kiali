@@ -59,7 +59,7 @@ msg "Deleting any and all Kiali resources that are found in the cluster..."
 delete_namespace_resources() {
   local selector_expression="$1"
   msg "Deleting namespace-scoped resources with selector [${selector_expression}]..."
-  for r in $(${CLIENT_EXE} get --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses --selector="${selector_expression}" --all-namespaces -o custom-columns=NS:.metadata.namespace,K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
+  for r in $(${CLIENT_EXE} get --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers --selector="${selector_expression}" --all-namespaces -o custom-columns=NS:.metadata.namespace,K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
   do
     local res_namespace=$(echo $r | cut -d: -f1)
     local res_kind=$(echo $r | cut -d: -f2)
