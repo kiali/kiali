@@ -79,7 +79,7 @@
 
 node('kiali-build && fedora') {
   def (backendForkUri, uiForkUri, operatorForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git']
-  def (backendDir, uiDir, operatorDir, helmDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts']
+  def (backendDir, uiDir, operatorDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator']
   def (backendMakefile, uiMakefile, operatorMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
@@ -170,7 +170,6 @@ node('kiali-build && fedora') {
             "BACKEND_FORK_URI=${backendForkUri}",
             "UI_FORK_URI=${uiForkUri}",
             "OPERATOR_FORK_URI=${operatorForkUri}",
-            "HELM_FORK_URI=${helmForkUri}",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
@@ -276,8 +275,7 @@ node('kiali-build && fedora') {
           build(job: 'kiali-helm-release',
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
-              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO'],
-              [$class: 'StringParameterValue', value: params.HELM_RELEASING_BRANCH, name: 'HELM_RELEASING_BRANCH']
+              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO']
               ], wait: false
               )
         }
