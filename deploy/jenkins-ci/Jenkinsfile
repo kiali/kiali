@@ -25,12 +25,12 @@
  *   - UI_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-ui.git
  *      description: SSH Url of the kiali-ui GitHub repository
+ *   - OPERATOR_REPO
+ *      defaultValue: kiali/kiali-operator
+ *      description: The GitHub repo of the kiali-operator sources, in owner/repo format.
  *   - SITE_REPO
  *      defaultValue: kiali/kiali.io
  *      description: The GitHub repo of the website sources, in owner/repo format.
- *   - OPERATOR_GITHUB_URI
- *      defaultValue: git@github.com:kiali/kiali-operator.git
- *      description: SSH Url of the kiali-operator GitHub repository
  *   - HELM_REPO
  *      defaultValue: kiali/helm-charts
  *      description: The GitHub repo of the Helm charts sources, in owner/repo format.
@@ -46,9 +46,6 @@
  *   - UI_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-ui/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)
- *   - OPERATOR_PULL_URI
- *      defaultValue: https://api.github.com/repos/kiali/kiali-operator/pulls
- *      description: The URL of the GitHub API to use to create pull requests for the operator (changes to prepare for next version)
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
@@ -223,8 +220,10 @@ node('kiali-build && fedora') {
         if ( buildOperator ) {
           build(job: 'kiali-operator-release',
               parameters: [
+              [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
               [$class: 'StringParameterValue', value: params.OPERATOR_REPO, name: 'OPERATOR_REPO'],
               [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH']
+              [$class: 'StringParameterValue', value: params.QUAY_OPERATOR_NAME, name: 'QUAY_OPERATOR_NAME']
               ], wait: false
               )
         }
