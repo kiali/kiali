@@ -1,10 +1,11 @@
 package business
 
 import (
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type ProxyStatus struct {

@@ -4,11 +4,12 @@ import (
 	"net/url"
 	"strings"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/appstate"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 var clientFactory kubernetes.ClientFactory

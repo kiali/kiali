@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards"
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
@@ -13,7 +15,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 const defaultNamespaceLabel = "namespace"

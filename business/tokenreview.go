@@ -1,8 +1,9 @@
 package business
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type TokenReviewService struct {

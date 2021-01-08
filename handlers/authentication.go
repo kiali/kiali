@@ -283,8 +283,8 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	// Now that we know that the ServiceAccount token is valid, parse/decode it to extract
-	// the name of the service account. The "subject" is passed to the front-end to be displayed.
+	// The token has been validated via k8s TokenReview, extract the subject for the ui to display
+	// from either the subject (via the TokenReview) or the impersonation header
 	tokenSubject := "token" // Set a default value
 
 	if authInfo.Impersonate == "" {

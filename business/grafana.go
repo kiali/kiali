@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
