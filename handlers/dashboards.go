@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
@@ -20,7 +19,13 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := pathParams["namespace"]
 	dashboardName := pathParams["dashboard"]
 
-	requestToken := getTokenStringFromRequest(r)
+	authInfo, err := getAuthInfo(r)
+	if err != nil {
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
 
 	svc := business.NewDashboardsService()
 	if !svc.CustomEnabled {
@@ -46,7 +51,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := svc.GetDashboard(&api.AuthInfo{Token: requestToken}, params, dashboardName)
+	dashboard, err := svc.GetDashboard(authInfo, params, dashboardName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())
