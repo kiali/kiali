@@ -222,7 +222,7 @@ node('kiali-build && fedora') {
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
               [$class: 'StringParameterValue', value: params.OPERATOR_REPO, name: 'OPERATOR_REPO'],
-              [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH']
+              [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH'],
               [$class: 'StringParameterValue', value: params.QUAY_OPERATOR_NAME, name: 'QUAY_OPERATOR_NAME']
               ], wait: false
               )
