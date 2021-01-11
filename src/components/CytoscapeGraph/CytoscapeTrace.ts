@@ -27,7 +27,25 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
   let lastSelection: Cy.NodeCollection | undefined = undefined;
 
-  if (graphType === GraphType.APP) {
+  if (graphType === GraphType.SERVICE) {
+    // In service graph type, parent can be a Service or a Workload (e.g. when it initiates the transaction)
+    const sourceAppNs = searchParentApp(span);
+    if (sourceAppNs) {
+      let selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      let parent = cy.elements(selector);
+      if (!parent || parent.length === 0) {
+        // Try workload
+        const sourceWlNs = searchParentWorkload(span);
+        if (sourceWlNs) {
+          selector = `node[${CyNode.workload}="${sourceWlNs.workload}"][${CyNode.namespace}="${sourceWlNs.namespace}"]`;
+          parent = cy.elements(selector);
+        }
+      }
+      if (!!parent && parent.length !== 0) {
+        lastSelection = parent;
+      }
+    }
+  } else if (graphType === GraphType.APP) {
     // Parent app
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
