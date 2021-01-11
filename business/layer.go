@@ -3,14 +3,14 @@ package business
 import (
 	"sync"
 
-	"k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 // Layer is a container for fast access to inner services
