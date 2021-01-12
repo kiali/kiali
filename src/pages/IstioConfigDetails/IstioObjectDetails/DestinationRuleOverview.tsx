@@ -17,6 +17,7 @@ import { checkForPath } from '../../../types/ServiceInfo';
 import ValidationList from '../../../components/Validations/ValidationList';
 import Labels from '../../../components/Label/Labels';
 import ServiceLink from './ServiceLink';
+import './IstioObjectDetails.css';
 
 interface DestinationRuleProps {
   namespace: string;

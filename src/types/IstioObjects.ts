@@ -53,10 +53,14 @@ export interface IstioStatus {
 }
 
 export interface ValidationMessage {
-  code: string;
+  description?: string;
   documentation_url: string;
-  level: string;
-  message: string;
+  level?: number;
+  type: ValidationMessageType;
+}
+
+export interface ValidationMessageType {
+  code: string;
 }
 
 // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
@@ -68,6 +72,13 @@ export enum ValidationTypes {
   Correct = 'correct',
   Info = 'info'
 }
+
+export const IstioLevelToSeverity = {
+  0: ValidationTypes.Info,
+  3: ValidationTypes.Error,
+  8: ValidationTypes.Warning,
+  12: ValidationTypes.Info
+};
 
 export interface ObjectValidation {
   name: string;
