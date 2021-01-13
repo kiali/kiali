@@ -186,10 +186,11 @@ EOF
 <         org: kubernetes
 77a62
 >       responseTypes: ["code", "id_token"]
-84a70,74
+84a70,75
 >     - id: kiali-app
 >       redirectURIs:
 >       - 'http://${MINIKUBE_IP}/kiali'
+>       - 'http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback'
 >       name: 'Kiali'
 >       secret: notNeeded
 139c129
@@ -198,12 +199,97 @@ EOF
 >   namespace: dex      # The namespace dex is running in
 EOF
 
+/bin/cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: oauth2-proxy
+spec: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy
+  namespace: oauth2-proxy
+data:
+  oauth2-proxy.conf: |-
+    http_address="0.0.0.0:4180"
+    cookie_secret="secretxxsecretxx"
+    provider="oidc"
+    email_domains="example.com"
+    oidc_issuer_url="https://${KUBE_HOSTNAME}:32000"
+    client_id="kiali-app"
+    cookie_secure="false"
+    redirect_url="http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805/oauth2/callback"
+    upstreams="http://kiali.istio-system.svc:20001"
+    pass_authorization_header = true
+    set_authorization_header = true
+    ssl_insecure_skip_verify = true
+    client_secret="notNeeded"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: oauth2-proxy
+    spec:
+      containers:
+      - args:
+        - --config
+        - /etc/oauthproxy/oauth2-proxy.conf
+        env: []
+        image: quay.io/oauth2-proxy/oauth2-proxy:latest
+        imagePullPolicy: Always
+        name: oauth2-proxy
+        ports:
+        - containerPort: 4180
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/oauthproxy
+          name: config
+      volumes:
+      - configMap:
+          name: oauth2-proxy
+        name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: oauth2-proxy
+spec:
+  ports:
+  - name: http
+    port: 4180
+    protocol: TCP
+    targetPort: 4180
+    nodePort: 30805
+  type: NodePort
+  selector:
+    k8s-app: oauth2-proxy
+EOF
+
+  
   # Install dex
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
-
+  echo "Deploying oauth2 proxy..."
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
   # Restart minikube
   echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
   ${MINIKUBE_EXEC_WITH_PROFILE} stop
@@ -237,9 +323,14 @@ OpenID configuration for Kiali CR:
       issuer_uri: "https://${KUBE_HOSTNAME}:32000"
       username_claim: "email"
 
+
 OpenID user is:
   Username: admin@example.com
   Password: password
+
+
+kiali reverse proxy : http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
+
 EOF
 
   if [ "${DEX_USER_NAMESPACES}" != "none" ]; then
