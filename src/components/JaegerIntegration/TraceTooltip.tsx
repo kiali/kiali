@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { pluralize } from '@patternfly/react-core';
 import { ChartLabelProps } from '@patternfly/react-charts';
 import { Flyout } from 'victory';
+import { style } from 'typestyle';
 
 import { KialiAppState } from 'store/Store';
 import {
@@ -11,7 +13,7 @@ import {
   allStatsIntervals,
   reduceMetricsStats,
   StatsMatrix
-} from 'utils/TraceStats';
+} from 'utils/tracing/TraceStats';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
@@ -19,10 +21,8 @@ import { JaegerLineInfo } from './JaegerScatter';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
 import { PfColors } from 'components/Pf/PfColors';
-import { formatDuration } from './JaegerResults/transform';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
-import { style } from 'typestyle';
-import { pluralize } from '@patternfly/react-core';
+import { formatDuration } from 'utils/tracing/TracingHelper';
 
 const flyoutWidth = 280;
 const flyoutHeight = 130;

@@ -140,6 +140,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
               <SummaryPanelTraceDetailsContainer
                 trace={this.props.jaegerState.selectedTrace}
                 node={this.props.data.summaryTarget}
+                graphType={this.props.graphType}
                 jaegerURL={this.props.jaegerState.info?.url}
               />
             </div>

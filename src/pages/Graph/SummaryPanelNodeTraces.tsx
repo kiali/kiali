@@ -17,8 +17,8 @@ import { TracingQuery } from 'types/Tracing';
 import { TimeInSeconds } from 'types/Common';
 import { TraceListItem } from 'components/JaegerIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
-import transformTraceData from 'components/JaegerIntegration/JaegerResults/transform';
 import { DecoratedGraphNodeData } from 'types/Graph';
+import transformTraceData from 'utils/tracing/TraceTransform';
 
 type Props = {
   nodeData: DecoratedGraphNodeData;

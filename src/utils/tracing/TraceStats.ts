@@ -1,7 +1,7 @@
 import { EnvoySpanInfo, JaegerTrace, RichSpanData } from 'types/JaegerInfo';
 import { MetricsStats } from 'types/Metrics';
 import { genStatsKey, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
-import { average } from './MathUtils';
+import { average } from '../MathUtils';
 
 export const averageSpanDuration = (trace: JaegerTrace): number | undefined => {
   const spansWithDuration = trace.spans.filter(s => s.duration && s.duration > 0);

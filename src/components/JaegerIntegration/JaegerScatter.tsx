@@ -5,7 +5,6 @@ import { ChartScatter } from '@patternfly/react-charts';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
-import { isErrorTag } from './JaegerHelper';
 import { PfColors } from '../Pf/PfColors';
 
 import jaegerIcon from '../../assets/img/jaeger-icon.svg';
@@ -17,6 +16,7 @@ import { LineInfo, makeLegend, VCDataPoint } from 'types/VictoryChartInfo';
 import ChartWithLegend from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
+import { isErrorTag } from 'utils/tracing/TracingHelper';
 
 interface JaegerScatterProps {
   duration: number;

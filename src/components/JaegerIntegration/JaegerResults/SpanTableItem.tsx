@@ -7,11 +7,10 @@ import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-ic
 import history from 'app/History';
 import { PFAlertColor } from 'components/Pf/PfColors';
 import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/JaegerInfo';
-import { isErrorTag } from '../JaegerHelper';
-import { formatDuration } from './transform';
 import { renderMetricsComparison } from './StatsComparison';
 import { MetricsStats } from 'types/Metrics';
 import { CellProps, createListeners, Expandable, renderExpandArrow } from 'components/Expandable';
+import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 
 const dangerErrorStyle = style({
   borderLeft: '3px solid var(--pf-global--danger-color--100)'

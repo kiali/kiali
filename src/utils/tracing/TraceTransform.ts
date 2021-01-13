@@ -1,9 +1,6 @@
 import _isEqual from 'lodash/isEqual';
-import _round from 'lodash/round';
-import moment from 'moment';
-// Imported from Jaeger-UIU
-import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from '../../../types/JaegerInfo';
-import { extractSpanInfo, getWorkloadFromSpan } from '../JaegerHelper';
+import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from 'types/JaegerInfo';
+import { extractSpanInfo, getWorkloadFromSpan } from './TracingHelper';
 
 class TreeNode {
   value: string;
@@ -111,7 +108,10 @@ function deduplicateTags(spanTags: Array<KeyValuePair>) {
 
 export const TREE_ROOT_ID = '__root__';
 
-export function getTraceSpanIdsAsTree(trace) {
+export const spansSort = (a: SpanData, b: SpanData) =>
+  +(a.startTime > b.startTime) || +(a.startTime === b.startTime) - 1;
+
+export function getTraceSpanIdsAsTree(trace: TraceData<SpanData>) {
   const nodesById = new Map(trace.spans.map(span => [span.spanID, new TreeNode(span.spanID)]));
   const spansById = new Map(trace.spans.map(span => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
@@ -120,7 +120,7 @@ export function getTraceSpanIdsAsTree(trace) {
     if (Array.isArray(span.references) && span.references.length) {
       const { refType, spanID: parentID } = span.references[0];
       if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
-        const parent: any = nodesById.get(parentID) || root;
+        const parent = nodesById.get(parentID) || root;
         parent.children.push(node);
       } else {
         throw new Error(`Unrecognized ref type: ${refType}`);
@@ -129,11 +129,7 @@ export function getTraceSpanIdsAsTree(trace) {
       root.children.push(node);
     }
   });
-  const comparator = (nodeA, nodeB) => {
-    const a: any = spansById.get(nodeA.value);
-    const b: any = spansById.get(nodeB.value);
-    return +(a.startTime > b.startTime) || +(a.startTime === b.startTime) - 1;
-  };
+  const comparator = (a, b) => spansSort(spansById.get(a.value)!, spansById.get(b.value)!);
   trace.spans.forEach(span => {
     const node: any = nodesById.get(span.spanID);
     if (node.children.length > 1) {
@@ -148,7 +144,7 @@ export function getTraceSpanIdsAsTree(trace) {
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData & { spans: SpanData[] }): JaegerTrace | null {
+export default function transformTraceData(data: TraceData<SpanData>): JaegerTrace | null {
   let { traceID } = data;
   if (!traceID) {
     return null;
@@ -158,7 +154,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   let traceEndTime = 0;
   let traceStartTime = Number.MAX_SAFE_INTEGER;
   const spanIdCounts = new Map();
-  const spanMap = new Map<string, Span>();
+  const spanMap = new Map<string, RichSpanData>();
   // filter out spans with empty start times
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter(span => Boolean(span.startTime));
@@ -192,7 +188,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
       spanIdCounts.set(spanID, 1);
     }
     span.process = data.processes[processID];
-    spanMap.set(spanID, span);
+    spanMap.set(spanID, transformSpanData(span));
   }
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
@@ -205,7 +201,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     if (spanID === '__root__') {
       return;
     }
-    const span = spanMap.get(spanID) as Span;
+    const span = spanMap.get(spanID);
     if (!span) {
       return;
     }
@@ -217,12 +213,6 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
-    span.warnings = span.warnings || [];
-    span.tags = span.tags || [];
-    span.references = span.references || [];
-    const tagsInfo = deduplicateTags(span.tags);
-    span.tags = tagsInfo.tags;
-    span.warnings = span.warnings.concat(tagsInfo.warnings);
     span.references.forEach(ref => {
       const refSpan = spanMap.get(ref.spanID) as Span;
       if (refSpan) {
@@ -230,7 +220,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
         ref.span = refSpan;
       }
     });
-    spans.push(transformSpanData(span));
+    spans.push(span);
   });
   const services = Object.keys(svcCounts).map(name => ({ name, numberOfSpans: svcCounts[name] }));
   return {
@@ -250,6 +240,12 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
 
 // Extracts some information from a span to make it suitable for table-display
 export const transformSpanData = (span: Span): RichSpanData => {
+  span.warnings = span.warnings || [];
+  span.tags = span.tags || [];
+  span.references = span.references || [];
+  const tagsInfo = deduplicateTags(span.tags);
+  span.tags = tagsInfo.tags;
+  span.warnings = span.warnings.concat(tagsInfo.warnings);
   const { type, info } = extractSpanInfo(span);
   const workloadNs = getWorkloadFromSpan(span);
   const split = span.process.serviceName.split('.');
@@ -275,36 +271,3 @@ export const transformSpanData = (span: Span): RichSpanData => {
     linkToWorkload: linkToWorkload
   };
 };
-
-export function formatDuration(micros: number): string {
-  let d = micros / 1000;
-  let unit = 'ms';
-  if (d >= 1000) {
-    unit = 's';
-    d /= 1000;
-  }
-  return _round(d, 2) + unit;
-}
-
-const TODAY = 'Today';
-const YESTERDAY = 'Yesterday';
-
-export function formatRelativeDate(value: any, fullMonthName: boolean = false) {
-  const m = moment.isMoment(value) ? value : moment(value);
-  const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
-  const dt = new Date();
-  if (dt.getFullYear() !== m.year()) {
-    return m.format(`${monthFormat} D, YYYY`);
-  }
-  const mMonth = m.month();
-  const mDate = m.date();
-  const date = dt.getDate();
-  if (mMonth === dt.getMonth() && mDate === date) {
-    return TODAY;
-  }
-  dt.setDate(date - 1);
-  if (mMonth === dt.getMonth() && mDate === dt.getDate()) {
-    return YESTERDAY;
-  }
-  return m.format(`${monthFormat} D`);
-}
