@@ -29,7 +29,7 @@ DEFAULT_INSECURE_REGISTRY_IP="192.168.99.100"
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="virtualbox"
-DEFAULT_K8S_MEMORY="16g"
+DEFAULT_K8S_MEMORY="4g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_MINIKUBE_EXEC="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
@@ -283,6 +283,34 @@ spec:
 EOF
 
   
+  # Make sure the admin@example.com user has permissions that will allow for Kiali login
+  cat >> ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml <<EOF
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dex-admin-example-com-role
+rules:
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dex-admin-example-com-role-binding
+subjects:
+- kind: User
+  name: admin@example.com
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: dex-admin-example-com-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
   # Install dex
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex

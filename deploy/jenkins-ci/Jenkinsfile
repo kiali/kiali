@@ -25,12 +25,12 @@
  *   - UI_GITHUB_URI
  *      defaultValue: git@github.com:kiali/kiali-ui.git
  *      description: SSH Url of the kiali-ui GitHub repository
+ *   - OPERATOR_REPO
+ *      defaultValue: kiali/kiali-operator
+ *      description: The GitHub repo of the kiali-operator sources, in owner/repo format.
  *   - SITE_REPO
  *      defaultValue: kiali/kiali.io
  *      description: The GitHub repo of the website sources, in owner/repo format.
- *   - OPERATOR_GITHUB_URI
- *      defaultValue: git@github.com:kiali/kiali-operator.git
- *      description: SSH Url of the kiali-operator GitHub repository
  *   - HELM_REPO
  *      defaultValue: kiali/helm-charts
  *      description: The GitHub repo of the Helm charts sources, in owner/repo format.
@@ -46,9 +46,6 @@
  *   - UI_PULL_URI
  *      defaultValue: https://api.github.com/repos/kiali/kiali-ui/pulls
  *      description: The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)
- *   - OPERATOR_PULL_URI
- *      defaultValue: https://api.github.com/repos/kiali/kiali-operator/pulls
- *      description: The URL of the GitHub API to use to create pull requests for the operator (changes to prepare for next version)
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
@@ -78,9 +75,9 @@
  */
 
 node('kiali-build && fedora') {
-  def (backendForkUri, uiForkUri, operatorForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git', 'git@github.com:kiali-bot/kiali-operator.git']
-  def (backendDir, uiDir, operatorDir, helmDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui', 'src/github.com/kiali/kiali-operator', 'src/github.com/kiali/helm-charts']
-  def (backendMakefile, uiMakefile, operatorMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins', 'Makefile.operator.jenkins']
+  def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
+  def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
+  def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
@@ -131,24 +128,6 @@ node('kiali-build && fedora') {
         sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
         sh "cd ${uiDir}; git config user.name 'kiali-bot'"
       }
-      if ( buildOperator ) {
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: params.OPERATOR_RELEASING_BRANCH]],
-          doGenerateSubmoduleConfigurations: false,
-          extensions: [
-            [$class: 'RelativeTargetDirectory', relativeTargetDir: operatorDir]
-          ],
-          submoduleCfg: [],
-          userRemoteConfigs: [[
-            credentialsId: 'kiali-bot-gh-ssh',
-            url: params.OPERATOR_GITHUB_URI]]
-        ])
-
-        sh "cd ${operatorDir}; git config user.email 'kiali-dev@googlegroups.com'"
-        sh "cd ${operatorDir}; git config user.name 'kiali-bot'"
-        sh "cp ${backendDir}/deploy/jenkins-ci/${operatorMakefile} ${operatorDir}"
-      }
     }
 
     // Determine release type if "auto" was specified
@@ -163,14 +142,13 @@ node('kiali-build && fedora') {
     buildHelm = params.SKIP_HELM_RELEASE != "y" && releaseType == "minor"
     echo "Resolved release type: ${releaseType}"
     echo "Will build Helm charts? ${buildHelm}"
+    echo "Will build operator? ${buildOperator}"
     echo "Will build site? ${buildSite}"
 
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
             "BACKEND_FORK_URI=${backendForkUri}",
             "UI_FORK_URI=${uiForkUri}",
-            "OPERATOR_FORK_URI=${operatorForkUri}",
-            "HELM_FORK_URI=${helmForkUri}",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
@@ -195,12 +173,6 @@ node('kiali-build && fedora') {
         stage('Test UI') {
           if ( buildUi ) {
             sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
-          }
-        }
-      }, operator: {
-        stage('Build Operator') {
-          if ( buildOperator ) {
-            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-build-release"
           }
         }
       },
@@ -244,26 +216,17 @@ node('kiali-build && fedora') {
         }
       }
 
-      stage('Release Kiali Operator to Container Repositories') {
-        if ( buildOperator ) {
-          withCredentials([usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
-            sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-quay"
-            quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${operatorDir}/Makefile").trim()
-          }
-        }
-      }
-
-      stage('Create release cut in operator repo') {
-        if ( buildOperator ) {
-          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
-            sshagent(['kiali-bot-gh-ssh']) {
-              sh "make -f ${operatorMakefile} -C ${operatorDir} operator-push-version-tag operator-prepare-next-version"
-            }
-          }
-        }
-      }
-
       stage('Invoke other jobs') {
+        if ( buildOperator ) {
+          build(job: 'kiali-operator-release',
+              parameters: [
+              [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
+              [$class: 'StringParameterValue', value: params.OPERATOR_REPO, name: 'OPERATOR_REPO'],
+              [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH'],
+              [$class: 'StringParameterValue', value: params.QUAY_OPERATOR_NAME, name: 'QUAY_OPERATOR_NAME']
+              ], wait: false
+              )
+        }
         if ( buildSite ) {
           build(job: 'kiali-website-release',
               parameters: [
@@ -276,8 +239,7 @@ node('kiali-build && fedora') {
           build(job: 'kiali-helm-release',
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
-              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO'],
-              [$class: 'StringParameterValue', value: params.HELM_RELEASING_BRANCH, name: 'HELM_RELEASING_BRANCH']
+              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO']
               ], wait: false
               )
         }

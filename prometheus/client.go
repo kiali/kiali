@@ -81,7 +81,10 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		auth.Token = token
 	}
 
-	transportConfig, err := httputil.CreateTransport(&auth, api.DefaultRoundTripper.(*http.Transport), httputil.DefaultTimeout)
+	// make a copy of the prometheus DefaultRoundTripper to avoid race condition (issue #3518)
+	defaultRoundTripper := *api.DefaultRoundTripper.(*http.Transport)
+
+	transportConfig, err := httputil.CreateTransport(&auth, &defaultRoundTripper, httputil.DefaultTimeout)
 	if err != nil {
 		return nil, err
 	}
