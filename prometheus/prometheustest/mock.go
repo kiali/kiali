@@ -53,7 +53,7 @@ func (o *PromAPIMock) LabelNames(ctx context.Context, startTime time.Time, endTi
 
 func (o *PromAPIMock) LabelValues(ctx context.Context, label string, startTime time.Time, endTime time.Time) (model.LabelValues, prom_v1.Warnings, error) {
 	args := o.Called(ctx, label)
-	return args.Get(0).(model.LabelValues),nil, nil
+	return args.Get(0).(model.LabelValues), nil, nil
 }
 
 func (o* PromAPIMock) Metadata(ctx context.Context, metric string, limit string) (map[string][]prom_v1.Metadata, error) {

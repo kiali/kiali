@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -16,7 +15,6 @@ require (
 	github.com/mitchellh/mapstructure v1.4.0
 	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
 	github.com/prometheus/client_golang v1.9.0
-	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1

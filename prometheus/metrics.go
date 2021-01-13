@@ -3,14 +3,14 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"strings"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, labels []string, grouping string, q *RangeQuery) Metric {

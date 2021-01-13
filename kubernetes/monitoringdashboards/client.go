@@ -50,7 +50,7 @@ func NewClient() (*Client, error) {
 	}
 	return &Client{
 		client: client,
-		ctx: context.Background(),
+		ctx: 	context.Background(),
 	}, err
 }
 
