@@ -17,6 +17,7 @@ package istio
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -29,7 +30,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"strings"
 )
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface

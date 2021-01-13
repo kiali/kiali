@@ -3,6 +3,7 @@ package appender
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -11,7 +12,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"strings"
 )
 
 // package-private util functions (used by multiple files)

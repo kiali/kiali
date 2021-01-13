@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
-	"strings"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
