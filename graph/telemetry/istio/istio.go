@@ -29,6 +29,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"strings"
 )
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
@@ -692,7 +693,10 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 	log.Tracef("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
-	value, err := api.Query(ctx, query, queryTime)
+	value, warnings, err := api.Query(ctx, query, queryTime)
+	if warnings != nil && len(warnings) > 0 {
+		log.Warningf("promQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
 	graph.CheckError(err)
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 

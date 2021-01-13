@@ -378,7 +378,7 @@ type Iter8ClientInterface interface {
 func (in *K8SClient) IsIter8Api() bool {
 	if in.isIter8Api == nil {
 		isIter8Api := false
-		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/iter8.tools").Do().Raw()
+		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/iter8.tools").Do(in.ctx).Raw()
 		if err == nil {
 
 			isIter8Api = true
@@ -393,7 +393,7 @@ func (in *K8SClient) Iter8MetricMap() ([]string, error) {
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
 	err := in.k8s.CoreV1().RESTClient().Get().Namespace(conf.Extensions.Iter8.Namespace).Resource("configmaps").
-		Name(Iter8ConfigMap).Do().Into(result)
+		Name(Iter8ConfigMap).Do(in.ctx).Into(result)
 	if err == nil {
 		metrics := []RatioMetric{}
 		err = yaml.Unmarshal([]byte(result.Data["ratio_metrics.yaml"]), &metrics)
@@ -411,7 +411,7 @@ func (in *K8SClient) CreateIter8Experiment(namespace string, json string) (Iter8
 	var result runtime.Object
 	var err error
 	byteJson := []byte(json)
-	result, err = in.iter8Api.Post().Namespace(namespace).Resource(Iter8Experiments).Body(byteJson).Do().Get()
+	result, err = in.iter8Api.Post().Namespace(namespace).Resource(Iter8Experiments).Body(byteJson).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +428,7 @@ func (in *K8SClient) UpdateIter8Experiment(namespace string, name string, json s
 	var result runtime.Object
 	var err error
 	byteJson := []byte(json)
-	result, err = in.iter8Api.Patch(types.MergePatchType).Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Body(byteJson).Do().Get()
+	result, err = in.iter8Api.Patch(types.MergePatchType).Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Body(byteJson).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +442,7 @@ func (in *K8SClient) UpdateIter8Experiment(namespace string, name string, json s
 }
 
 func (in *K8SClient) GetIter8Experiment(namespace string, name string) (Iter8Experiment, error) {
-	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Do().Get()
+	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +456,7 @@ func (in *K8SClient) GetIter8Experiment(namespace string, name string) (Iter8Exp
 }
 
 func (in *K8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, error) {
-	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).Do().Get()
+	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -475,6 +475,6 @@ func (in *K8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, e
 
 func (in *K8SClient) DeleteIter8Experiment(namespace string, name string) error {
 	var err error
-	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(Iter8Experiments).Name(name).Do().Get()
+	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(Iter8Experiments).Name(name).Do(in.ctx).Get()
 	return err
 }

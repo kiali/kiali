@@ -56,7 +56,7 @@ func (in *K8SClient) CreateIstioObject(api, namespace, resourceType, json string
 		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
-	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (in *K8SClient) DeleteIstioObject(api, namespace, resourceType, name string
 	if apiClient == nil {
 		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
-	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do(in.ctx).Get()
 	return err
 }
 
@@ -98,7 +98,7 @@ func (in *K8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonP
 	if apiClient == nil {
 		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
-	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector stri
 
 	var result runtime.Object
 	var err error
-	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do().Get()
+	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).Param("labelSelector", labelSelector).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (Istio
 
 	var result runtime.Object
 	var err error
-	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do().Get()
+	result, err = apiClient.Get().Namespace(namespace).Resource(resourceType).SubResource(name).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 			SubResource("proxy").
 			Name(istiod.Name).
 			Suffix("/debug/syncz").
-			DoRaw()
+			DoRaw(in.ctx)
 
 		if err != nil {
 			return nil, err
@@ -324,7 +324,7 @@ func (in *K8SClient) getNetworkingResources() map[string]bool {
 
 	networkingResources := map[string]bool{}
 	path := fmt.Sprintf("/apis/%s", ApiNetworkingVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do(in.ctx).Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
 		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
@@ -349,7 +349,7 @@ func (in *K8SClient) getSecurityResources() map[string]bool {
 
 	securityResources := map[string]bool{}
 	path := fmt.Sprintf("/apis/%s", ApiSecurityVersion)
-	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do().Raw()
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath(path).Do(in.ctx).Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
 		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
+	"strings"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -39,6 +40,7 @@ type Client struct {
 	ClientInterface
 	p8s api.Client
 	api prom_v1.API
+	ctx context.Context
 }
 
 var once sync.Once
@@ -94,7 +96,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := Client{p8s: p8s, api: prom_v1.NewAPI(p8s)}
+	client := Client{p8s: p8s, api: prom_v1.NewAPI(p8s), ctx: context.Background()}
 	return &client, nil
 }
 
@@ -115,7 +117,7 @@ func (in *Client) GetAllRequestRates(namespace string, ratesInterval string, que
 			return result, nil
 		}
 	}
-	result, err := getAllRequestRates(in.api, namespace, queryTime, ratesInterval)
+	result, err := getAllRequestRates(in.ctx, in.api, namespace, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
@@ -137,7 +139,7 @@ func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterv
 			return result, nil
 		}
 	}
-	result, err := getNamespaceServicesRequestRates(in.api, namespace, queryTime, ratesInterval)
+	result, err := getNamespaceServicesRequestRates(in.ctx, in.api, namespace, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
@@ -159,7 +161,7 @@ func (in *Client) GetServiceRequestRates(namespace, service, ratesInterval strin
 			return result, nil
 		}
 	}
-	result, err := getServiceRequestRates(in.api, namespace, service, queryTime, ratesInterval)
+	result, err := getServiceRequestRates(in.ctx, in.api, namespace, service, queryTime, ratesInterval)
 	if err != nil {
 		return result, err
 	}
@@ -181,7 +183,7 @@ func (in *Client) GetAppRequestRates(namespace, app, ratesInterval string, query
 			return inResult, outResult, nil
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.api, namespace, app, "app", queryTime, ratesInterval)
+	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, app, "app", queryTime, ratesInterval)
 	if err != nil {
 		return inResult, outResult, err
 	}
@@ -203,7 +205,7 @@ func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval str
 			return inResult, outResult, nil
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(in.api, namespace, workload, "workload", queryTime, ratesInterval)
+	inResult, outResult, err := getItemRequestRates(in.ctx, in.api, namespace, workload, "workload", queryTime, ratesInterval)
 	if err != nil {
 		return inResult, outResult, err
 	}
@@ -220,22 +222,22 @@ func (in *Client) FetchRange(metricName, labels, grouping, aggregator string, q 
 		query += fmt.Sprintf(" by (%s)", grouping)
 	}
 	query = roundSignificant(query, 0.001)
-	return fetchRange(in.api, query, q.Range)
+	return fetchRange(in.ctx, in.api, query, q.Range)
 }
 
 // FetchRateRange fetches a counter's rate in given range
 func (in *Client) FetchRateRange(metricName string, labels []string, grouping string, q *RangeQuery) Metric {
-	return fetchRateRange(in.api, metricName, labels, grouping, q)
+	return fetchRateRange(in.ctx, in.api, metricName, labels, grouping, q)
 }
 
 // FetchHistogramRange fetches bucketed metric as histogram in given range
 func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram {
-	return fetchHistogramRange(in.api, metricName, labels, grouping, q)
+	return fetchHistogramRange(in.ctx, in.api, metricName, labels, grouping, q)
 }
 
 // FetchHistogramValues fetches bucketed metric as histogram at a given specific time
 func (in *Client) FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error) {
-	return fetchHistogramValues(in.api, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
+	return fetchHistogramValues(in.ctx, in.api, metricName, labels, grouping, rateInterval, avg, quantiles, queryTime)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
@@ -249,15 +251,19 @@ func (in *Client) Address() string {
 }
 
 func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {
-	config, err := in.API().Config(context.Background())
+	config, err := in.API().Config(in.ctx)
 	if err != nil {
 		return prom_v1.ConfigResult{}, err
 	}
 	return config, nil
 }
 
+func (in *Client) GetContext() context.Context {
+	return in.ctx
+}
+
 func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
-	flags, err := in.API().Flags(context.Background())
+	flags, err := in.API().Flags(in.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +275,10 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
 	end := time.Now()
 	start := end.Add(-time.Hour)
-	results, err := in.api.Series(context.Background(), labels, start, end)
+	results, warnings, err := in.api.Series(in.ctx, labels, start, end)
+	if warnings != nil && len(warnings) > 0 {
+		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
 	if err != nil {
 		return nil, err
 	}

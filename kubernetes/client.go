@@ -19,13 +19,14 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"context"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 const RemoteSecretData = "/kiali-remote-secret/kiali"
@@ -102,6 +103,8 @@ type K8SClient struct {
 	istioNetworkingApi *rest.RESTClient
 	istioSecurityApi   *rest.RESTClient
 	iter8Api           *rest.RESTClient
+	// Used in REST queries after bump to client-go v0.20.x
+	ctx context.Context
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
@@ -201,6 +204,7 @@ func ConfigClient() (*rest.Config, error) {
 	if len(host) == 0 || len(port) == 0 {
 		return nil, fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
 	}
+
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
 		Host:  "http://" + net.JoinHostPort(host, port),
@@ -277,6 +281,7 @@ func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioSecurityApi = istioSecurityApi
 	client.iter8Api = iter8Api
+	client.ctx = context.Background()
 	return &client, nil
 }
 
@@ -286,7 +291,7 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
 			GroupVersion:         &groupVersion,
-			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
+			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
 			ContentType:          runtime.ContentTypeJSON,
 		},
 		BearerToken:     fromCfg.BearerToken,

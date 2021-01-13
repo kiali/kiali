@@ -68,7 +68,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
-	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
@@ -82,7 +82,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
-	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 
 	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]PolicyRates)

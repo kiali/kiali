@@ -78,7 +78,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 
 	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
@@ -92,7 +92,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &outVector)
 
 	// 3) query for responseTime originating from a workload inside of the namespace
@@ -102,7 +102,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &inVector)
 
 	applyResponseTime(trafficMap, responseTimeMap)
