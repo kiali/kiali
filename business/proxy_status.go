@@ -11,26 +11,25 @@ type ProxyStatus struct {
 }
 
 func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
-	if kialiCache != nil {
-		if !kialiCache.CheckProxyStatus() {
-			var proxyStatus []*kubernetes.ProxyStatus
-			var err error
-			proxyStatus, err = in.k8s.GetProxyStatus()
-			if err != nil {
-				if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
-					return &kubernetes.ProxyStatus{}, err
-				}
-			}
-			if err == nil {
-				kialiCache.SetProxyStatus(proxyStatus)
-			} else {
-				return &kubernetes.ProxyStatus{}, err
-			}
-		}
+	if kialiCache == nil {
+		return nil, nil
+	}
+
+	if kialiCache.CheckProxyStatus() {
 		return kialiCache.GetPodProxyStatus(ns, pod), nil
 	}
 
-	return &kubernetes.ProxyStatus{}, nil
+	var proxyStatus []*kubernetes.ProxyStatus
+	var err error
+
+	if proxyStatus, err = in.k8s.GetProxyStatus(); err != nil {
+		if proxyStatus, err = in.getProxyStatusUsingKialiSA(); err != nil {
+			return nil, err
+		}
+	}
+
+	kialiCache.SetProxyStatus(proxyStatus)
+	return kialiCache.GetPodProxyStatus(ns, pod), nil
 }
 
 func (in *ProxyStatus) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, error) {
@@ -52,7 +51,11 @@ func (in *ProxyStatus) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, 
 	return k8s.GetProxyStatus()
 }
 
-func castProxyStatus(ps kubernetes.ProxyStatus) *models.ProxyStatus {
+func castProxyStatus(ps *kubernetes.ProxyStatus) *models.ProxyStatus {
+	if ps == nil {
+		return nil
+	}
+
 	return &models.ProxyStatus{
 		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked),
 		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked),
