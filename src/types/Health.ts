@@ -81,27 +81,26 @@ export interface ProxyStatus {
   RDS: string;
 }
 
-export const IDLE: Status = {
-  name: 'Idle',
-  color: PFAlertColor.InfoBackground,
-  priority: 3,
-  icon: MinusCircleIcon,
-  class: 'icon-idle'
-};
-
 export const FAILURE: Status = {
   name: 'Failure',
   color: PFAlertColor.Danger,
-  priority: 3,
+  priority: 4,
   icon: ExclamationCircleIcon,
   class: 'icon-failure'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
   color: PFAlertColor.Warning,
-  priority: 2,
+  priority: 3,
   icon: ExclamationTriangleIcon,
   class: 'icon-degraded'
+};
+export const IDLE: Status = {
+  name: 'Idle',
+  color: PFAlertColor.InfoBackground,
+  priority: 2,
+  icon: MinusCircleIcon,
+  class: 'icon-idle'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
