@@ -598,7 +598,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case http.StatusOK:
 			if authInfo == nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				log.Errorf("No authInfo", http.StatusBadRequest)
+				log.Error("No authInfo", http.StatusBadRequest)
 			}
 			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
