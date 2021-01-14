@@ -578,8 +578,9 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				// Instead, we use the Kiali token an this has the side effect that all users will share the
 				// same privileges.
 				token = aHandler.saToken
-				authInfo = &api.AuthInfo{Token: token}
 			}
+
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken:
 			statusCode, token = checkTokenSession(w, r)
 			authInfo = &api.AuthInfo{Token: token}
@@ -595,6 +596,10 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 		switch statusCode {
 		case http.StatusOK:
+			if authInfo == nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				log.Errorf("No authInfo", http.StatusBadRequest)
+			}
 			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
