@@ -257,8 +257,8 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	authInfo := getTokenStringFromHeader(r)
 
-	if authInfo == nil {
-		RespondWithError(w, http.StatusInternalServerError, "Token is empty.")
+	if authInfo == nil || authInfo.Token == "" {
+		RespondWithError(w, http.StatusUnauthorized, "Token is missing")
 		return false
 	}
 
@@ -591,7 +591,11 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyHeader:
 			log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 			authInfo = getTokenStringFromHeader(r)
-			statusCode = http.StatusOK
+			if authInfo == nil || authInfo.Token == "" {
+				statusCode = http.StatusUnauthorized
+			} else {
+				statusCode = http.StatusOK
+			}
 		}
 
 		switch statusCode {
