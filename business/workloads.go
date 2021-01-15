@@ -926,7 +926,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		defer wg.Done()
 		// Check if workloadType is passed
 		// Unknown workload type will fetch ReplicaSet list
-		if workloadType != "" && workloadType != kubernetes.ReplicaSetType  && knownWorkloadType {
+		if workloadType != "" && workloadType != kubernetes.ReplicaSetType && knownWorkloadType {
 			return
 		}
 		var err error
