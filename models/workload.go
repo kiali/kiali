@@ -179,6 +179,20 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 }
 
+func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadType string) {
+	// Some properties are taken from the ReplicaSet
+	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
+	// But name and type are coming from the parent
+	// Custom properties from parent controller are not processed by Kiali
+	workload.Type = workloadType
+	workload.Name = workloadName
+	if r.Spec.Replicas != nil {
+		workload.DesiredReplicas = *r.Spec.Replicas
+	}
+	workload.CurrentReplicas = r.Status.Replicas
+	workload.AvailableReplicas = r.Status.AvailableReplicas
+}
+
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
 	workload.Type = "ReplicationController"
 	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
@@ -289,8 +303,8 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 	workload.AvailableReplicas = podAvailableReplicas
 	// We fetch one pod as template for labels
 	// There could be corner cases not correct, then we should support more controllers
+	workload.Labels = map[string]string{}
 	if len(pods) > 0 {
-		workload.Labels = map[string]string{}
 		if pods[0].Labels != nil {
 			workload.Labels = pods[0].Labels
 		}
