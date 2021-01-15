@@ -12,7 +12,7 @@ assignees: ''
 > Please delete this section including header before submitting
 >
 > This form is to report bugs. For general usage questions refer to 
->       [Kiali-users](https://groups.google.com/forum/#!forum/kiali-users) mailing list.
+>       https://github.com/kiali/kiali/discussions
 >
 > For general Kiali-development questions refer to 
 >       [Kiali-dev](https://groups.google.com/forum/#!forum/kiali-dev) mailing list.
