@@ -265,6 +265,6 @@ func (c *promCacheImpl) watchExpiration() {
 		c.wkRequestRatesLock.Lock()
 		c.cacheWkRequestRates = make(map[string]map[string]map[string]timeInOutResult)
 		c.wkRequestRatesLock.Unlock()
-		log.Infof("[Prom Cache] Expired")
+		log.Tracef("[Prom Cache] Expired")
 	}
 }

@@ -1,6 +1,8 @@
 package monitoringdashboards
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -20,6 +22,8 @@ type ClientInterface interface {
 type Client struct {
 	ClientInterface
 	client *rest.RESTClient
+	// Used in REST queries after bump to client-go v0.20.x
+	ctx context.Context
 }
 
 // NewClient creates a new client able to fetch Kiali Monitoring API.
@@ -46,6 +50,7 @@ func NewClient() (*Client, error) {
 	}
 	return &Client{
 		client: client,
+		ctx:    context.Background(),
 	}, err
 }
 
@@ -55,7 +60,7 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
 			GroupVersion:         &groupVersion,
-			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
+			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
 			ContentType:          runtime.ContentTypeJSON,
 		},
 		BearerToken:     fromCfg.BearerToken,
@@ -69,7 +74,7 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 // GetDashboard returns a MonitoringDashboard for the given name
 func (in *Client) GetDashboard(namespace, name string) (*v1alpha1.MonitoringDashboard, error) {
 	result := v1alpha1.MonitoringDashboard{}
-	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").SubResource(name).Do().Into(&result)
+	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").SubResource(name).Do(in.ctx).Into(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +84,7 @@ func (in *Client) GetDashboard(namespace, name string) (*v1alpha1.MonitoringDash
 // GetDashboards returns all MonitoringDashboards from the given namespace
 func (in *Client) GetDashboards(namespace string) ([]v1alpha1.MonitoringDashboard, error) {
 	result := v1alpha1.MonitoringDashboardsList{}
-	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").Do().Into(&result)
+	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").Do(in.ctx).Into(&result)
 	if err != nil {
 		return nil, err
 	}

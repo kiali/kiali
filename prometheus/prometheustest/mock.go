@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/api"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -18,74 +17,90 @@ type PromAPIMock struct {
 	mock.Mock
 }
 
-func (o *PromAPIMock) Alerts(ctx context.Context) (prom_v1.AlertsResult, api.Error) {
+func (o *PromAPIMock) Alerts(ctx context.Context) (prom_v1.AlertsResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.AlertsResult), nil
 }
 
-func (o *PromAPIMock) AlertManagers(ctx context.Context) (prom_v1.AlertManagersResult, api.Error) {
+func (o *PromAPIMock) AlertManagers(ctx context.Context) (prom_v1.AlertManagersResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.AlertManagersResult), nil
 }
 
-func (o *PromAPIMock) CleanTombstones(ctx context.Context) api.Error {
+func (o *PromAPIMock) CleanTombstones(ctx context.Context) error {
 	o.Called(ctx)
 	return nil
 }
 
-func (o *PromAPIMock) Config(ctx context.Context) (prom_v1.ConfigResult, api.Error) {
+func (o *PromAPIMock) Config(ctx context.Context) (prom_v1.ConfigResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.ConfigResult), nil
 }
 
-func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) api.Error {
+func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
 	args := o.Called(ctx, matches, startTime, endTime)
-	return args.Get(0).(api.Error)
+	return args.Get(0).(error)
 }
 
-func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, api.Error) {
+func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.FlagsResult), nil
 }
 
-func (o *PromAPIMock) LabelValues(ctx context.Context, label string) (model.LabelValues, api.Error) {
+func (o *PromAPIMock) LabelNames(ctx context.Context, startTime time.Time, endTime time.Time) ([]string, prom_v1.Warnings, error) {
+	return nil, nil, nil
+}
+
+func (o *PromAPIMock) LabelValues(ctx context.Context, label string, startTime time.Time, endTime time.Time) (model.LabelValues, prom_v1.Warnings, error) {
 	args := o.Called(ctx, label)
-	return args.Get(0).(model.LabelValues), nil
+	return args.Get(0).(model.LabelValues), nil, nil
 }
 
-func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, api.Error) {
+func (o *PromAPIMock) Metadata(ctx context.Context, metric string, limit string) (map[string][]prom_v1.Metadata, error) {
+	return nil, nil
+}
+
+func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, prom_v1.Warnings, error) {
 	args := o.Called(ctx, query, ts)
-	return args.Get(0).(model.Value), nil
+	return args.Get(0).(model.Value), nil, nil
 }
 
-func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, api.Error) {
+func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, prom_v1.Warnings, error) {
 	args := o.Called(ctx, query, r)
-	return args.Get(0).(model.Value), nil
+	return args.Get(0).(model.Value), nil, nil
 }
 
-func (o *PromAPIMock) Rules(ctx context.Context) (prom_v1.RulesResult, api.Error) {
+func (o *PromAPIMock) Rules(ctx context.Context) (prom_v1.RulesResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.RulesResult), nil
 }
 
-func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, api.Error) {
-	args := o.Called(ctx, matches, startTime, endTime)
-	return args.Get(0).([]model.LabelSet), nil
+func (o *PromAPIMock) Runtimeinfo(ctx context.Context) (prom_v1.RuntimeinfoResult, error) {
+	return prom_v1.RuntimeinfoResult{}, nil
 }
 
-func (o *PromAPIMock) Snapshot(ctx context.Context, skipHead bool) (prom_v1.SnapshotResult, api.Error) {
+func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, prom_v1.Warnings, error) {
+	args := o.Called(ctx, matches, startTime, endTime)
+	return args.Get(0).([]model.LabelSet), nil, nil
+}
+
+func (o *PromAPIMock) Snapshot(ctx context.Context, skipHead bool) (prom_v1.SnapshotResult, error) {
 	args := o.Called(ctx, skipHead)
 	return args.Get(0).(prom_v1.SnapshotResult), nil
 }
 
-func (o *PromAPIMock) Targets(ctx context.Context) (prom_v1.TargetsResult, api.Error) {
+func (o *PromAPIMock) Targets(ctx context.Context) (prom_v1.TargetsResult, error) {
 	args := o.Called(ctx)
 	return args.Get(0).(prom_v1.TargetsResult), nil
 }
 
-func (o *PromAPIMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]prom_v1.MetricMetadata, api.Error) {
+func (o *PromAPIMock) TargetsMetadata(ctx context.Context, matchTarget, metric, limit string) ([]prom_v1.MetricMetadata, error) {
 	args := o.Called(ctx)
 	return args.Get(0).([]prom_v1.MetricMetadata), nil
+}
+
+func (o *PromAPIMock) TSDB(ctx context.Context) (prom_v1.TSDBResult, error) {
+	return prom_v1.TSDBResult{}, nil
 }
 
 func (o *PromAPIMock) OnQueryTime(query string, t *time.Time, ret model.Vector) {
