@@ -4,11 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type promClientSupplier func() (*prometheus.Client, error)

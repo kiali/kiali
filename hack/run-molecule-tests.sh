@@ -118,7 +118,7 @@ ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule"; ls -d *-test)
 
 # Put the names of any tests in here if you do not want to run them (space separated).
 if [ "${CLUSTER_TYPE}" == "openshift" ]; then
-  SKIP_TESTS="${SKIP_TESTS:-openid-test}"
+  SKIP_TESTS="${SKIP_TESTS:-header-auth-test openid-test}"
 elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
   SKIP_TESTS="${SKIP_TESTS:-os-console-links-test}"
 fi
@@ -156,6 +156,7 @@ echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
 echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
+echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
 echo "=============================="
 
 # Make sure the cluster is accessible
@@ -202,8 +203,8 @@ prepare_test() {
       fi
       ;;
 
-    # if running the non-OpenShift openid-test, create a rolebinding so the test can log in
-    openid-test)
+    # if running the non-OpenShift openid-test or header-auth-test, create a rolebinding so the test can log in
+    header-auth-test|openid-test)
       if [ "${CLUSTER_TYPE}" == "minikube" ]; then
         ${TEST_CLIENT_EXE:-kubectl} create rolebinding openid-rolebinding-istio-system --clusterrole=kiali --user=admin@example.com --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
@@ -224,7 +225,7 @@ unprepare_test() {
       ;;
 
     # remove the rolebinding that was created
-    openid-test)
+    header-auth-test|openid-test)
       if [ "${CLUSTER_TYPE}" == "minikube" ]; then
         ${TEST_CLIENT_EXE:-kubectl} delete rolebinding openid-rolebinding-istio-system --namespace=istio-system >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi

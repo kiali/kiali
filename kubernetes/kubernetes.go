@@ -2,9 +2,8 @@ package kubernetes
 
 import (
 	"bytes"
-	"fmt"
-
 	goerrors "errors"
+	"fmt"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
