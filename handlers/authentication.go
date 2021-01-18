@@ -617,7 +617,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context := context.WithValue(r.Context(), "token", "")
+		context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: ""})
 		next.ServeHTTP(w, r.WithContext(context))
 	})
 }
