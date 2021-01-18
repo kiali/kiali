@@ -5,12 +5,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
-
-	"github.com/gorilla/mux"
 )
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
