@@ -69,7 +69,7 @@ func (in *MeshService) GetClusters() (clusters []Cluster, errVal error) {
 		return nil, err
 	}
 
-	myCluster, err := in.resolveKialiControlPlaneCluster()
+	myCluster, err := in.ResolveKialiControlPlaneCluster()
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +83,10 @@ func (in *MeshService) GetClusters() (clusters []Cluster, errVal error) {
 	return
 }
 
-// resolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
+// ResolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
 // Kiali is installed. This assumes that the mesh Control Plane is installed in the
 // same cluster as Kiali.
-func (in *MeshService) resolveKialiControlPlaneCluster() (*Cluster, error) {
+func (in *MeshService) ResolveKialiControlPlaneCluster() (*Cluster, error) {
 	conf := config.Get()
 
 	// The "cluster_id" is set in an environment variable of
@@ -205,7 +205,7 @@ func (in *MeshService) resolveRemoteClustersFromSecrets() ([]Cluster, error) {
 	// to the other clusters.
 
 	// So, we use these "remote clusters" as the list of clusters in the mesh (excluding the "home cluster" ,
-	// which is resolved in resolveKialiControlPlaneCluster func).
+	// which is resolved in ResolveKialiControlPlaneCluster func).
 	// Strictly speaking, this list may be incomplete: it's list of visible clusters for a control plane.
 	// But, for now, let's use it as the absolute "list of clusters in the mesh (excluding home cluster)".
 
