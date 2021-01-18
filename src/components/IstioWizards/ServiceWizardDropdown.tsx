@@ -163,7 +163,12 @@ class ServiceWizardDropdown extends React.Component<Props, State> {
 
   getValidWorkloads = (): WorkloadOverview[] => {
     return this.props.workloads.filter(workload => {
-      return workload.labels && workload.labels[this.appLabelName] && workload.labels[this.versionLabelName];
+      // A workload could skip the version label on this check only when there is a single workload list
+      return (
+        workload.labels &&
+        workload.labels[this.appLabelName] &&
+        (workload.labels[this.versionLabelName] || this.props.workloads.length === 1)
+      );
     });
   };
 

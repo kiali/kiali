@@ -21,6 +21,7 @@ import {
   PeerAuthenticationMutualTLSMode,
   PeerAuthenticationWorkloadSelector,
   RequestAuthentication,
+  RouteDestination,
   Sidecar,
   Source,
   StringMatch,
@@ -251,22 +252,33 @@ export const buildIstioConfig = (
       }
     },
     spec: {
-      host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-      subsets: wProps.workloads.map(workload => {
-        // Using version
-        const versionLabelName = serverConfig.istioLabels.versionLabelName;
-        const versionValue = workload.labels![versionLabelName];
-        const labels: { [key: string]: string } = {};
-        labels[versionLabelName] = versionValue;
-        // Populate helper table workloadName -> version
-        wkdNameVersion[workload.name] = versionValue;
-        return {
-          name: versionValue,
-          labels: labels
-        };
-      })
+      host: fqdnServiceName(wProps.serviceName, wProps.namespace)
     }
   };
+
+  const subsets = wProps.workloads
+    .filter(workload => {
+      // Filter out workloads without version label
+      const versionLabelName = serverConfig.istioLabels.versionLabelName;
+      return workload.labels![versionLabelName];
+    })
+    .map(workload => {
+      // Using version
+      const versionLabelName = serverConfig.istioLabels.versionLabelName;
+      const versionValue = workload.labels![versionLabelName];
+      const labels: { [key: string]: string } = {};
+      labels[versionLabelName] = versionValue;
+      // Populate helper table workloadName -> version
+      wkdNameVersion[workload.name] = versionValue;
+      return {
+        name: versionValue,
+        labels: labels
+      };
+    });
+
+  if (subsets.length > 0) {
+    wizardDR.spec.subsets = subsets;
+  }
 
   // In some limited scenarios VS may be created externally to Kiali (i.e. extensions)
   let vsName = wProps.serviceName;
@@ -325,13 +337,16 @@ export const buildIstioConfig = (
             route: wState.workloads
               .filter(workload => !workload.mirrored)
               .map(workload => {
-                return {
+                const httpRouteDestination: HTTPRouteDestination = {
                   destination: {
-                    host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                    subset: wkdNameVersion[workload.name]
+                    host: fqdnServiceName(wProps.serviceName, wProps.namespace)
                   },
                   weight: workload.weight
                 };
+                if (wkdNameVersion[workload.name]) {
+                  httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
+                }
+                return httpRouteDestination;
               })
           }
         ]
@@ -340,9 +355,11 @@ export const buildIstioConfig = (
       const mirrorWorkload = wState.workloads.filter(workload => workload.mirrored).pop();
       if (mirrorWorkload && wizardVS?.spec?.http?.length === 1) {
         wizardVS.spec.http[0].mirror = {
-          host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-          subset: wkdNameVersion[mirrorWorkload.name]
+          host: fqdnServiceName(wProps.serviceName, wProps.namespace)
         };
+        if (wkdNameVersion[mirrorWorkload.name]) {
+          wizardVS.spec.http[0].mirror.subset = wkdNameVersion[mirrorWorkload.name];
+        }
         wizardVS.spec.http[0].mirrorPercentage = {
           value: mirrorWorkload.weight
         };
@@ -355,13 +372,16 @@ export const buildIstioConfig = (
         tcp: [
           {
             route: wState.workloads.map(workload => {
-              return {
+              const routeDestination: RouteDestination = {
                 destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name]
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
                 },
                 weight: workload.weight
               };
+              if (wkdNameVersion[workload.name]) {
+                routeDestination.destination.subset = wkdNameVersion[workload.name];
+              }
+              return routeDestination;
             })
           }
         ]
@@ -379,20 +399,24 @@ export const buildIstioConfig = (
             .forEach(workload => {
               const destW: HTTPRouteDestination = {
                 destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name]
-                }
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
+                },
+                weight: workload.weight
               };
-              destW.weight = workload.weight;
+              if (wkdNameVersion[workload.name]) {
+                destW.destination.subset = wkdNameVersion[workload.name];
+              }
               httpRoute.route?.push(destW);
             });
 
           const mirrorWorkload = rule.workloadWeights.filter(workload => workload.mirrored).pop();
           if (mirrorWorkload) {
             httpRoute.mirror = {
-              host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-              subset: wkdNameVersion[mirrorWorkload.name]
+              host: fqdnServiceName(wProps.serviceName, wProps.namespace)
             };
+            if (wkdNameVersion[mirrorWorkload.name]) {
+              httpRoute.mirror.subset = wkdNameVersion[mirrorWorkload.name];
+            }
             httpRoute.mirrorPercentage = {
               value: mirrorWorkload.weight
             };
@@ -428,13 +452,16 @@ export const buildIstioConfig = (
         http: [
           {
             route: wState.faultInjectionRoute.workloads.map(workload => {
-              return {
+              const httpRouteDestination: HTTPRouteDestination = {
                 destination: {
-                  host: fqdnServiceName(wProps.serviceName, wProps.namespace),
-                  subset: wkdNameVersion[workload.name]
+                  host: fqdnServiceName(wProps.serviceName, wProps.namespace)
                 },
                 weight: workload.weight
               };
+              if (wkdNameVersion[workload.name]) {
+                httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
+              }
+              return httpRouteDestination;
             })
           }
         ]
@@ -458,13 +485,17 @@ export const buildIstioConfig = (
         http: [
           {
             route: wState.timeoutRetryRoute.workloads.map(workload => {
-              return {
+              const httpRouteDestination: HTTPRouteDestination = {
                 destination: {
                   host: fqdnServiceName(wProps.serviceName, wProps.namespace),
                   subset: wkdNameVersion[workload.name]
                 },
                 weight: workload.weight
               };
+              if (wkdNameVersion[workload.name]) {
+                httpRouteDestination.destination.subset = wkdNameVersion[workload.name];
+              }
+              return httpRouteDestination;
             })
           }
         ]
