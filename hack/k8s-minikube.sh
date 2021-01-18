@@ -283,34 +283,6 @@ spec:
 EOF
 
   
-  # Make sure the admin@example.com user has permissions that will allow for Kiali login
-  cat >> ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml <<EOF
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: dex-admin-example-com-role
-rules:
-- apiGroups: [""]
-  resources:
-  - namespaces
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: dex-admin-example-com-role-binding
-subjects:
-- kind: User
-  name: admin@example.com
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: dex-admin-example-com-role
-  apiGroup: rbac.authorization.k8s.io
-EOF
-
   # Install dex
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
@@ -351,24 +323,24 @@ OpenID configuration for Kiali CR:
       issuer_uri: "https://${KUBE_HOSTNAME}:32000"
       username_claim: "email"
 
-
 OpenID user is:
   Username: admin@example.com
   Password: password
 
-
-kiali reverse proxy : http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
+Kiali reverse proxy URL: http://kiali-proxy.${MINIKUBE_IP}.nip.io:30805
 
 EOF
 
   if [ "${DEX_USER_NAMESPACES}" != "none" ]; then
     if [ "${DEX_USER_NAMESPACES}" == "all" ]; then
-      echo "Command to grant the user 'admin@example.com' cluster-admin permissions:"
-      echo ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create clusterrolebinding openid-rolebinding-admin --clusterrole=cluster-admin --user="admin@example.com"
+      echo "!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      echo "!! The user 'admin@example.com' will be granted cluster-admin permissions ! "
+      echo "!!!CAUTION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create clusterrolebinding dex-rolebinding-admin --clusterrole=cluster-admin --user="admin@example.com"
     else
-      echo "Commands to grant the user 'admin@example.com' permission to see specific namespaces:"
+      echo "After you install Kiali, execute these commands to grant the user 'admin@example.com' permission to see specific namespaces:"
       for ns in ${DEX_USER_NAMESPACES}; do
-        echo ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create rolebinding openid-rolebinding-${ns} --clusterrole=kiali --user="admin@example.com" --namespace=${ns}
+        echo ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create rolebinding dex-rolebinding-${ns} --clusterrole=kiali --user="admin@example.com" --namespace=${ns}
       done
     fi
   fi
@@ -434,11 +406,11 @@ Valid options:
       Default: ${DEFAULT_DEX_REPO}
   -dun|--dex-user-namespaces
       A space-separated list of namespaces that you would like the admin@example.com user to be able to see.
-      This option will not trigger actual creation of the role bindings; instead, it merely outputs the
-      commands in the final summary that you should then execute in order to grant those permissions. This is
-      because the namespaces may not exist yet (such as "bookinfo") nor will the kiali role exist.
-      If this value is set to "none", no commands will be output.
-      If this value is set to "all", the command that will be output will grant cluster-admin permissions.
+      If this value is set to "all", the admin@example.com user will immediately be granted cluster-admin permissions.
+      If this value is set to "none", nothing is done.
+      Any other value and this will not trigger actual creation of role bindings but instead the script merely
+      outputs the commands in the final summary that you should then execute in order to grant those permissions.
+      This is because the namespaces may not exist yet (such as "bookinfo") nor will the Kiali role exist.
       Only used for the 'start' command and when Dex is to be installed (--dex-enabled=true).
       Default: ${DEFAULT_DEX_USER_NAMESPACES}
   -dv|--dex-version
