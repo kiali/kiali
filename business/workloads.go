@@ -820,11 +820,10 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
 				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
-				if err != nil || ps == nil {
-					pod.ProxyStatus = &models.ProxyStatus{}
-					continue
+				if err != nil {
+					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
 				}
-				pod.ProxyStatus = castProxyStatus(*ps)
+				pod.ProxyStatus = castProxyStatus(ps)
 			}
 		}
 
@@ -1293,14 +1292,10 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() {
 				ps, err := layer.ProxyStatus.GetPodProxyStatus(namespace, pod.Name)
-				if err != nil || ps == nil {
-					if err != nil {
-						log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
-					}
-					pod.ProxyStatus = nil
-					continue
+				if err != nil {
+					log.Warningf("GetPodProxyStatus is failing for [namespace: %s] [pod: %s]: %s ", namespace, pod.Name, err.Error())
 				}
-				pod.ProxyStatus = castProxyStatus(*ps)
+				pod.ProxyStatus = castProxyStatus(ps)
 			}
 		}
 

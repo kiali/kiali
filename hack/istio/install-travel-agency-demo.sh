@@ -34,7 +34,7 @@ while [ $# -gt 0 ]; do
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
-  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.7 installed in istio-system.
+  -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.8 installed in istio-system.
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
 HELPMSG
@@ -144,33 +144,30 @@ if [ "${ENABLE_OPERATION_METRICS}" != "true" ]; then
   exit 0
 fi
 
-# This only works if you have Istio 1.7 installed, and it is in istio-system namespace.
-${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.7 -o yaml > stats-filter-1.7.yaml
-cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.7.yaml
---- stats-filter-1.7.yaml	2020-06-02 11:10:29.476537126 -0400
-+++ stats-filter-1.7.yaml.new	2020-06-02 09:59:26.434300000 -0400
-@@ -79,7 +79,20 @@ spec:
-                 value: |
-                   {
-                     "debug": "false",
--                    "stat_prefix": "istio"
-+                    "stat_prefix": "istio",
-+                    "metrics": [
-+                     {
-+                       "name": "requests_total",
-+                       "dimensions": {
-+                         "request_operation": "istio_operationId"
-+                       }
-+                     },
-+                     {
-+                       "name": "request_duration_milliseconds",
-+                       "dimensions": {
-+                         "request_operation": "istio_operationId"
-+                       }
-+                     }]
+# This only works if you have Istio 1.8 installed, and it is in istio-system namespace.
+${CLIENT_EXE} -n istio-system get envoyfilter stats-filter-1.8 -o yaml > stats-filter-1.8.yaml
+cat <<EOF | patch -o - | ${CLIENT_EXE} -n istio-system apply -f - && rm stats-filter-1.8.yaml
+--- stats-filter-1.8.yaml	2021-01-13 11:54:58.238566005 -0500
++++ stats-filter-1.8.yaml.new	2021-01-13 12:13:12.710918344 -0500
+@@ -117,6 +117,18 @@
+                           "source_cluster": "downstream_peer.cluster_id",
+                           "destination_cluster": "node.metadata['CLUSTER_ID']"
+                         }
++                      },
++                      {
++                        "name": "requests_total",
++                        "dimensions": {
++                          "request_operation": "istio_operationId"
++                        }
++                      },
++                      {
++                        "name": "request_duration_milliseconds",
++                        "dimensions": {
++                          "request_operation": "istio_operationId"
++                        }
+                       }
+                     ]
                    }
-               root_id: stats_inbound
-               vm_config:
 EOF
 
 cat <<EOF | ${CLIENT_EXE} -n istio-system apply -f -
@@ -190,7 +187,7 @@ spec:
             subFilter:
               name: istio.stats
       proxy:
-        proxyVersion: 1\.7.*
+        proxyVersion: 1\.8.*
     patch:
       operation: INSERT_BEFORE
       value:
@@ -242,7 +239,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.7.*'
+        proxyVersion: '1\.8.*'
       listener:
         filterChain:
           filter:
@@ -296,7 +293,7 @@ spec:
     match:
       context: SIDECAR_INBOUND
       proxy:
-        proxyVersion: '1\.7.*'
+        proxyVersion: '1\.8.*'
       listener:
         filterChain:
           filter:

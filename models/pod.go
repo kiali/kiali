@@ -133,7 +133,7 @@ func (pods Pods) HasIstioSidecar() bool {
 	return true
 }
 
-// HasIstioSidecar returns true if the pod has an Isio proxy sidecar
+// HasIstioSidecar returns true if the pod has an Istio proxy sidecar
 func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
 }
@@ -142,16 +142,18 @@ func (pod Pod) HasIstioSidecar() bool {
 // If none of the pods have Istio Sidecar, then return -1
 func (pods Pods) SyncedPodProxiesCount() int32 {
 	syncedProxies := int32(0)
+	allNullProxies := true
 	hasSidecar := false
 
 	for _, pod := range pods {
 		hasSidecar = hasSidecar || pod.HasIstioSidecar()
+		allNullProxies = allNullProxies && pod.ProxyStatus == nil
 		if pod.ProxyStatus != nil && pod.ProxyStatus.IsSynced() {
 			syncedProxies++
 		}
 	}
 
-	if !hasSidecar {
+	if !hasSidecar || allNullProxies {
 		syncedProxies = -1
 	}
 

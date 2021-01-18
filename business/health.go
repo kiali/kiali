@@ -100,17 +100,6 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, workloadType, ra
 		}, nil
 	}
 
-	// Add Proxy Status info
-	if w.Pods != nil || len(w.Pods) > 0 {
-		syncedProxies := int32(0)
-		for _, p := range w.Pods {
-			if p.ProxyStatus != nil && p.ProxyStatus.IsSynced() {
-				syncedProxies++
-			}
-		}
-		status.SyncedProxies = syncedProxies
-	}
-
 	// Add Telemetry info
 	rate, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
 	return models.WorkloadHealth{

@@ -82,7 +82,7 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	*/
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 
 	// 2) query for requests originating from a workload inside of the namespace
@@ -102,7 +102,7 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	*/
 	query = httpQuery
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 }
 
@@ -138,7 +138,7 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	*/
 	query := httpQuery
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 	a.injectAggregates(trafficMap, &vector)
 }
 
