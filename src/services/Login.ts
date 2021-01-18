@@ -65,6 +65,21 @@ class TokenLogin implements LoginStrategy<WebLoginData> {
   }
 }
 
+class HeaderLogin implements LoginStrategy<WebLoginData> {
+  public async prepare(_info: AuthConfig) {
+    return AuthResult.CONTINUE;
+  }
+
+  public async perform(_request: NullDispatch): Promise<LoginResult> {
+    const session = (await API.login({ username: '', password: '', token: '' })).data;
+
+    return {
+      status: AuthResult.SUCCESS,
+      session: session
+    };
+  }
+}
+
 class OAuthLogin implements LoginStrategy<unknown> {
   public async prepare(info: AuthConfig) {
     if (!info.authorizationEndpoint) {
@@ -105,6 +120,7 @@ export class LoginDispatcher {
     this.strategyMapping.set(AuthStrategy.openshift, new OAuthLogin());
     this.strategyMapping.set(AuthStrategy.token, new TokenLogin());
     this.strategyMapping.set(AuthStrategy.openid, new OAuthLogin());
+    this.strategyMapping.set(AuthStrategy.header, new HeaderLogin());
   }
 
   public async prepare(): Promise<AuthResult> {

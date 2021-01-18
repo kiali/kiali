@@ -13,7 +13,8 @@ export enum AuthStrategy {
   anonymous = 'anonymous',
   openshift = 'openshift',
   token = 'token',
-  openid = 'openid'
+  openid = 'openid',
+  header = 'header'
 }
 
 // Stores the result of a computation:

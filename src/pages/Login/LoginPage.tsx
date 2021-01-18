@@ -20,6 +20,7 @@ import { authenticationConfig, kialiLogo } from '../../config';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import LoginThunkActions from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
+//import { c_wizard__nav_BoxShadow } from '@patternfly/react-tokens';
 
 type LoginProps = {
   status: LoginStatus;
@@ -78,6 +79,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (isAuthStrategyOAuth()) {
       // If we are using OpenShift or OpenId strategy, take the user back to the authorization endpoint
       window.location.href = authenticationConfig.authorizationEndpoint!;
+    } else if (authenticationConfig.strategy === AuthStrategy.header) {
+      window.location.href = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : '/';
     } else if (authenticationConfig.strategy === AuthStrategy.token) {
       if (this.state.password.trim().length !== 0 && this.props.authenticate) {
         this.props.authenticate('', this.state.password);

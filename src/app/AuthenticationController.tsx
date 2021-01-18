@@ -69,9 +69,12 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
     } else {
       let dispatchLoginCycleOnLoad = false;
 
-      // If login strategy is "anonymous", dispatch login cycle
+      // If login strategy is "anonymous" or "header", dispatch login cycle
       // because there is no need to ask for any credentials
-      if (authenticationConfig.strategy === AuthStrategy.anonymous) {
+      if (
+        authenticationConfig.strategy === AuthStrategy.anonymous ||
+        authenticationConfig.strategy === AuthStrategy.header
+      ) {
         dispatchLoginCycleOnLoad = true;
       }
 

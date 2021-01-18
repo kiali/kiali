@@ -54,6 +54,17 @@ const getHeaders = () => {
   return { ...loginHeaders };
 };
 
+
+/** Create content type correctly for a given request type */
+const getHeadersWithMethod = (method) => {
+  var allHeaders = getHeaders();
+  if (method === HTTP_VERBS.PATCH) {
+    allHeaders["Content-Type"] = "application/json";
+  }
+
+  return allHeaders;
+};
+
 const basicAuth = (username: UserName, password: Password) => {
   return { username: username, password: password };
 };
@@ -63,7 +74,7 @@ const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: 
     method: method,
     url: url,
     data: data,
-    headers: getHeaders(),
+    headers: getHeadersWithMethod(method),
     params: queryParams
   });
 
