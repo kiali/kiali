@@ -408,7 +408,7 @@ func (in *K8SClient) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
 	tokenReview := &v1.TokenReview{}
 	tokenReview.Spec.Token = authInfo.Token
 
-	result, err := in.k8s.AuthenticationV1().TokenReviews().Create(tokenReview)
+	result, err := in.k8s.AuthenticationV1().TokenReviews().Create(in.ctx, tokenReview, meta_v1.CreateOptions{})
 
 	if err != nil {
 		return "", err
