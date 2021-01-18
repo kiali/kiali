@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -48,8 +49,12 @@ type Cluster struct {
 // can be passed a nil value and a default function will be used.
 func NewMeshService(k8s kubernetes.ClientInterface, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
 	if newRemoteClientFunc == nil {
+		// Mesh discovery will use ServiceAccount token instead of user token
+		token := ""
+		token, _ = kubernetes.GetKialiToken()
+
 		newRemoteClientFunc = func(config *rest.Config) (kubernetes.ClientInterface, error) {
-			return kubernetes.NewClientFromConfig(config)
+			return kubernetes.NewClientFromConfig(config, &api.AuthInfo{Token: token})
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -98,7 +99,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	// Because of these two reasons, let's simply ignore errors in the following code.
 	token, getTokenErr := kubernetes.GetKialiToken()
 	if getTokenErr == nil {
-		layer, getLayerErr := business.Get(token)
+		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
 		if getLayerErr == nil {
 			cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
 			if cluster != nil {

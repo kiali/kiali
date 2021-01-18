@@ -61,7 +61,7 @@ func (in *K8SClient) GetSecrets(namespace string, labelSelector string) ([]core_
 		listOptions = meta_v1.ListOptions{LabelSelector: labelSelector}
 	}
 
-	if secretsList, err := in.k8s.CoreV1().Secrets(namespace).List(listOptions); err == nil {
+	if secretsList, err := in.k8s.CoreV1().Secrets(namespace).List(in.ctx, listOptions); err == nil {
 		return secretsList.Items, nil
 	} else {
 		return []core_v1.Secret{}, err
