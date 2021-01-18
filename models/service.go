@@ -24,7 +24,7 @@ type ServiceOverview struct {
 	// required: false
 	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
 	// Annotations of the service
-	KialiAnnotations map[string]string `json:"kialiAnnotations"`
+	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
 }

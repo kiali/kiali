@@ -6500,19 +6500,19 @@
           "x-go-name": "AppLabel",
           "example": true
         },
-        "istioSidecar": {
-          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
-          "type": "boolean",
-          "x-go-name": "IstioSidecar",
-          "example": true
-        },
-        "kialiAnnotations": {
+        "healthAnnotations": {
           "description": "Annotations of the service",
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "x-go-name": "KialiAnnotations"
+          "x-go-name": "HealthAnnotations"
+        },
+        "istioSidecar": {
+          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
         },
         "labels": {
           "description": "Labels for Service",

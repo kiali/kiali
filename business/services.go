@@ -123,7 +123,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
-			KialiAnnotations:       models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()).(map[string]string),
+			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()).(map[string]string),
 			Labels:                 item.Labels,
 		}
 	}
