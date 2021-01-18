@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -82,6 +84,41 @@ func getTokenStringFromRequest(r *http.Request) string {
 	}
 
 	return tokenString
+}
+
+func getTokenStringFromHeader(r *http.Request) *api.AuthInfo {
+	tokenString := "" // Default to no token.
+
+	// Extract token from the Authorization HTTP header sent from the reverse proxy
+	if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
+		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
+	}
+
+	authInfo := &api.AuthInfo{Token: tokenString}
+
+	impersonationHeader := r.Header.Get("Impersonate-User")
+	if len(impersonationHeader) > 0 {
+		//there's an impersonation header, lets make sure to add it
+		authInfo.Impersonate = impersonationHeader
+
+		//Check for impersonated groups
+		if groupsImpersonationHeader := r.Header["Impersonate-Group"]; len(groupsImpersonationHeader) > 0 {
+			authInfo.ImpersonateGroups = groupsImpersonationHeader
+		}
+
+		//check for extra fields
+		for headerName, headerValues := range r.Header {
+			if strings.HasPrefix(headerName, "Impersonate-Extra-") {
+				extraName := headerName[len("Impersonate-Extra-"):]
+				if authInfo.ImpersonateUserExtra == nil {
+					authInfo.ImpersonateUserExtra = make(map[string][]string)
+				}
+				authInfo.ImpersonateUserExtra[extraName] = headerValues
+			}
+		}
+	}
+
+	return authInfo
 }
 
 func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool {
@@ -217,6 +254,79 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	authInfo := getTokenStringFromHeader(r)
+
+	if authInfo == nil || authInfo.Token == "" {
+		RespondWithError(w, http.StatusUnauthorized, "Token is missing")
+		return false
+	}
+
+	kialiToken, err := kubernetes.GetKialiToken()
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	business, err := business.Get(&api.AuthInfo{Token: kialiToken})
+	if err != nil {
+		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
+		return false
+	}
+
+	// Get the subject for the token to validate it as a valid token
+	subjectFromToken, err := business.TokenReview.GetTokenSubject(authInfo)
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	// The token has been validated via k8s TokenReview, extract the subject for the ui to display
+	// from either the subject (via the TokenReview) or the impersonation header
+	tokenSubject := "token" // Set a default value
+
+	if authInfo.Impersonate == "" {
+		if err == nil {
+			tokenSubject = subjectFromToken
+			tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+		}
+	} else {
+		tokenSubject = authInfo.Impersonate
+	}
+
+	// Build the Kiali token
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	tokenClaims := config.IanaClaims{
+		SessionId: string(uuid.NewUUID()),
+		StandardClaims: jwt.StandardClaims{
+			Subject:   tokenSubject,
+			ExpiresAt: timeExpire.Unix(),
+			Issuer:    config.AuthStrategyHeaderIssuer,
+		},
+	}
+	tokenString, err := config.GetSignedTokenString(tokenClaims)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    tokenString,
+		Expires:  timeExpire,
+		HttpOnly: true,
+		Path:     config.Get().Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: tokenSubject})
+	return true
+
+}
+
 func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	err := r.ParseForm()
 
@@ -232,7 +342,7 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	business, err := business.Get(token)
+	business, err := business.Get(&api.AuthInfo{Token: token})
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error instantiating the business layer", err.Error())
 		return false
@@ -302,7 +412,7 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 		log.Warningf("Token is invalid: %s", err.Error())
 		return http.StatusInternalServerError, err
 	} else {
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, err
@@ -329,7 +439,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 			return http.StatusUnauthorized, ""
 		}
 
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, ""
@@ -379,7 +489,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		return http.StatusUnauthorized, ""
 	}
 
-	business, err := business.Get(claims.SessionId)
+	business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 	if err != nil {
 		log.Warning("Could not get the business layer : ", err)
 		return http.StatusInternalServerError, ""
@@ -421,7 +531,7 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 			return http.StatusUnauthorized, ""
 		}
 
-		business, err := business.Get(claims.SessionId)
+		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
 			return http.StatusInternalServerError, ""
@@ -454,11 +564,13 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		statusCode := http.StatusOK
 		conf := config.Get()
 
+		var authInfo *api.AuthInfo
 		var token string
 
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyOpenshift:
 			statusCode, token = checkOpenshiftSession(w, r)
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyOpenId:
 			statusCode, token = checkOpenIdSession(w, r)
 			if conf.Auth.OpenId.DisableRBAC {
@@ -467,16 +579,32 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				// same privileges.
 				token = aHandler.saToken
 			}
+
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyToken:
 			statusCode, token = checkTokenSession(w, r)
+			authInfo = &api.AuthInfo{Token: token}
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
+			authInfo = &api.AuthInfo{Token: token}
+		case config.AuthStrategyHeader:
+			log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
+			authInfo = getTokenStringFromHeader(r)
+			if authInfo == nil || authInfo.Token == "" {
+				statusCode = http.StatusUnauthorized
+			} else {
+				statusCode = http.StatusOK
+			}
 		}
 
 		switch statusCode {
 		case http.StatusOK:
-			context := context.WithValue(r.Context(), "token", token)
+			if authInfo == nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				log.Error("No authInfo", http.StatusBadRequest)
+			}
+			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -503,6 +631,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		performOpenIdAuthentication(w, r)
 	case config.AuthStrategyToken:
 		performTokenAuthentication(w, r)
+	case config.AuthStrategyHeader:
+		performHeaderAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
 	default:

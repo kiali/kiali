@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
 	"github.com/kiali/kiali/log"
@@ -22,12 +24,12 @@ type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
 var GrafanaDashboardSupplier = findDashboard
 
 // GetGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func GetGrafanaInfo(authInfo *api.AuthInfo, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, http.StatusNoContent, nil
 	}
-	conn, code, err := getGrafanaConnectionInfo(requestToken, &grafanaConfig)
+	conn, code, err := getGrafanaConnectionInfo(authInfo, &grafanaConfig)
 	if err != nil {
 		return nil, code, err
 	}
@@ -63,13 +65,13 @@ func GetGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 }
 
 // GetGrafanaLinks returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaLinks(requestToken string, linksSpec []v1alpha1.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
+func GetGrafanaLinks(authInfo *api.AuthInfo, linksSpec []v1alpha1.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, 0, nil
 	}
 
-	connectionInfo, code, err := getGrafanaConnectionInfo(requestToken, &grafanaConfig)
+	connectionInfo, code, err := getGrafanaConnectionInfo(authInfo, &grafanaConfig)
 	if err != nil {
 		return nil, code, err
 	}
@@ -110,7 +112,7 @@ type grafanaConnectionInfo struct {
 	auth              *config.Auth
 }
 
-func getGrafanaConnectionInfo(requestToken string, cfg *config.GrafanaConfig) (grafanaConnectionInfo, int, error) {
+func getGrafanaConnectionInfo(authInfo *api.AuthInfo, cfg *config.GrafanaConfig) (grafanaConnectionInfo, int, error) {
 	externalURL := status.DiscoverGrafana()
 	if externalURL == "" {
 		return grafanaConnectionInfo{}, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")

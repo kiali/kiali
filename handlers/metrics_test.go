@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -313,19 +314,19 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 
 func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
-	api := new(prometheustest.PromAPIMock)
+	xapi := new(prometheustest.PromAPIMock)
 	k8s := kubetest.NewK8SClientMock()
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	prom.Inject(api)
+	prom.Inject(xapi)
 	k8s.On("GetProject", "ns").Return(&osproject_v1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			getAggregateMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
 			})
@@ -336,7 +337,7 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)
 
-	return ts, api, k8s
+	return ts, xapi, k8s
 }
 
 func TestPrepareStatsQueriesPartialError(t *testing.T) {
@@ -344,7 +345,7 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
@@ -424,7 +425,7 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	k8s.On("GetNamespace", "ns3").Return(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: creation}}, nil)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{
@@ -456,7 +457,7 @@ func TestValidateBadRequest(t *testing.T) {
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{

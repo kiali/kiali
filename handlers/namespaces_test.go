@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -140,7 +141,7 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 }
 
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
-	client, api, k8s, err := setupMocked()
+	client, xapi, k8s, err := setupMocked()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,14 +150,14 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			getNamespaceMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return client, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
-	return ts, api, k8s
+	return ts, xapi, k8s
 }
 
 // Setup mock

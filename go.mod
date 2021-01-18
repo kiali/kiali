@@ -14,6 +14,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/mapstructure v1.4.0
 	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
+	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0

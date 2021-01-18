@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 )
@@ -32,7 +33,8 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.Enabled = false
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "whatever", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/some_path"), 200, "whatever", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, code)
 	assert.Nil(t, info)
@@ -43,7 +45,9 @@ func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001", t))
+
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -56,7 +60,9 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana.istio-system:3001", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana.istio-system:3001", t))
+
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -68,7 +74,9 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	_, code, err := GetGrafanaInfo("", buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t))
+
+	_, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t))
+
 	assert.Equal(t, "error from Grafana (401): unauthorized", err.Error())
 	assert.Equal(t, 503, code)
 }
@@ -78,7 +86,9 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	_, code, err := GetGrafanaInfo("", buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t))
+
+	_, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t))
+
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "json: cannot unmarshal")
 	assert.Equal(t, 503, code)
@@ -89,7 +99,9 @@ func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("some_path"), 200, "http://grafana-external:3001", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("some_path"), 200, "http://grafana-external:3001", t))
+
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -101,7 +113,9 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/", t))
+
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -113,7 +127,9 @@ func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/?orgId=1"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/?orgId=1", t))
+
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/?orgId=1", t))
+
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -126,7 +142,7 @@ func TestGetGrafanaInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
 	config.Set(conf)
-	info, code, err := GetGrafanaInfo("", buildDashboardSupplier(genDashboard("/system/grafana/some_path"), 200, "http://grafana.istio-system:3001", t))
+	info, code, err := GetGrafanaInfo(&api.AuthInfo{Token: ""}, buildDashboardSupplier(genDashboard("/system/grafana/some_path"), 200, "http://grafana.istio-system:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)

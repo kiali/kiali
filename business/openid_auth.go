@@ -18,6 +18,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/sync/singleflight"
 	"gopkg.in/square/go-jose.v2"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -673,7 +674,7 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 
 func VerifyOpenIdUserAccess(token string) (int, string, error) {
 	// Create business layer using the id_token
-	business, err := Get(token)
+	business, err := Get(&api.AuthInfo{Token: token})
 	if err != nil {
 		return http.StatusInternalServerError, "Error instantiating the business layer", err
 	}

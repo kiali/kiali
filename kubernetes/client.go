@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -74,6 +75,7 @@ type K8SClientInterface interface {
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
+	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 }
 
 type OSClientInterface interface {
@@ -87,6 +89,7 @@ type OSClientInterface interface {
 type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
+	GetAuthInfo() *api.AuthInfo
 	IsOpenShift() bool
 	K8SClientInterface
 	IstioClientInterface
@@ -98,7 +101,7 @@ type ClientInterface interface {
 // It hides the way it queries each API
 type K8SClient struct {
 	ClientInterface
-	token              string
+	authInfo           *api.AuthInfo
 	k8s                *kube.Clientset
 	istioNetworkingApi *rest.RESTClient
 	istioSecurityApi   *rest.RESTClient
@@ -143,7 +146,12 @@ func (client *K8SClient) GetIstioSecurityApi() *rest.RESTClient {
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {
-	return client.token
+	return client.authInfo.Token
+}
+
+// GetAuthInfo returns the AuthInfo struct for the client
+func (client *K8SClient) GetAuthInfo() *api.AuthInfo {
+	return client.authInfo
 }
 
 // Point the k8s client to a remote cluster's API server
@@ -218,10 +226,17 @@ func ConfigClient() (*rest.Config, error) {
 // It hides the access to Kubernetes/Openshift credentials.
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
-func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
+func NewClientFromConfig(config *rest.Config, authInfo *api.AuthInfo) (*K8SClient, error) {
 	client := K8SClient{
-		token: config.BearerToken,
+		authInfo: authInfo,
 	}
+
+	if authInfo.Impersonate != "" {
+		config.Impersonate.UserName = authInfo.Impersonate
+		config.Impersonate.Groups = authInfo.ImpersonateGroups
+		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
+	}
+
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
 
 	k8s, err := kube.NewForConfig(config)
@@ -299,5 +314,12 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 		QPS:             fromCfg.QPS,
 		Burst:           fromCfg.Burst,
 	}
+
+	if fromCfg.Impersonate.UserName != "" {
+		cfg.Impersonate.UserName = fromCfg.Impersonate.UserName
+		cfg.Impersonate.Groups = fromCfg.Impersonate.Groups
+		cfg.Impersonate.Extra = fromCfg.Impersonate.Extra
+	}
+
 	return rest.RESTClientFor(&cfg)
 }

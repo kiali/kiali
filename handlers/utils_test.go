@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -47,7 +48,7 @@ func TestCreateMetricsServiceForNamespace(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespace(w, req, prom, "ns1")
@@ -63,7 +64,7 @@ func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespace(w, req, prom, "nsNil")
@@ -78,7 +79,7 @@ func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 	prom, _, _ := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(context.WithValue(req.Context(), "token", "test"))
+	req = req.WithContext(context.WithValue(req.Context(), "authInfo", &api.AuthInfo{Token: "test"}))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespaces(w, req, prom, []string{"ns1", "ns2", "nsNil"})

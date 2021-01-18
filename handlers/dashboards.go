@@ -5,11 +5,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
+
+	"github.com/gorilla/mux"
 )
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
@@ -19,10 +20,12 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := pathParams["namespace"]
 	dashboardName := pathParams["dashboard"]
 
-	requestToken, err := getToken(r)
+	authInfo, err := getAuthInfo(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
-		return
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	svc := business.NewDashboardsService()
@@ -49,7 +52,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := svc.GetDashboard(requestToken, params, dashboardName)
+	dashboard, err := svc.GetDashboard(authInfo, params, dashboardName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())

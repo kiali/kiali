@@ -1,6 +1,8 @@
 package business
 
 import (
+	"k8s.io/client-go/tools/clientcmd/api"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -43,7 +45,7 @@ func (in *ProxyStatus) getProxyStatusUsingKialiSA() ([]*kubernetes.ProxyStatus, 
 		return nil, err
 	}
 
-	k8s, err := clientFactory.GetClient(kialiToken)
+	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
 	if err != nil {
 		return nil, err
 	}

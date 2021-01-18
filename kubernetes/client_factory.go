@@ -1,10 +1,12 @@
 package kubernetes
 
 import (
+	"crypto/md5"
 	"sync"
 	"time"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -20,7 +22,7 @@ const expirationTime = time.Minute * 15
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
-	GetClient(token string) (ClientInterface, error)
+	GetClient(authInfo *api.AuthInfo) (ClientInterface, error)
 }
 
 // clientFactory used to generate per users clients
@@ -78,10 +80,10 @@ func getClientFactory(istioConfig *rest.Config, expiry time.Duration) (*clientFa
 }
 
 // NewClient creates a new ClientInterface based on a users k8s token
-func (cf *clientFactory) newClient(token string) (ClientInterface, error) {
+func (cf *clientFactory) newClient(authInfo *api.AuthInfo) (ClientInterface, error) {
 	config := *cf.baseIstioConfig
 
-	config.BearerToken = token
+	config.BearerToken = authInfo.Token
 
 	// There is a feature when using OpenID strategy to allow using a proxy
 	// for the cluster API.  People may want to place a proxy in
@@ -102,7 +104,7 @@ func (cf *clientFactory) newClient(token string) (ClientInterface, error) {
 			return nil, err
 		}
 
-		if kialiToken != token {
+		if kialiToken != authInfo.Token {
 			// Using `UseRemoteCreds` function as a  helper
 			apiProxyConfig, errProxy := UseRemoteCreds(&RemoteSecret{
 				Clusters: []RemoteSecretClusterListItem{
@@ -125,12 +127,12 @@ func (cf *clientFactory) newClient(token string) (ClientInterface, error) {
 		}
 	}
 
-	return NewClientFromConfig(&config)
+	return NewClientFromConfig(&config, authInfo)
 }
 
 // GetClient returns a client for the specified token. Creating one if necessary.
-func (cf *clientFactory) GetClient(token string) (ClientInterface, error) {
-	clientEntry, err := cf.getClientEntry(token)
+func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
+	clientEntry, err := cf.getClientEntry(authInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +140,15 @@ func (cf *clientFactory) GetClient(token string) (ClientInterface, error) {
 }
 
 // getClientEntry returns a clientEntry for the specified token. Creating one if necessary.
-func (cf *clientFactory) getClientEntry(token string) (*clientEntry, error) {
+func (cf *clientFactory) getClientEntry(authInfo *api.AuthInfo) (*clientEntry, error) {
+	tokenHash := getTokenHash(authInfo)
 	mutex.RLock()
-	cEntry, ok := cf.clientEntries[token]
+	cEntry, ok := cf.clientEntries[tokenHash]
 	mutex.RUnlock()
 	if ok {
 		return cEntry, nil
 	} else {
-		client, err := cf.newClient(token)
+		client, err := cf.newClient(authInfo)
 		if err != nil {
 			log.Errorf("Error fetching the Kubernetes client: %v", err)
 			return nil, err
@@ -157,7 +160,7 @@ func (cf *clientFactory) getClientEntry(token string) (*clientEntry, error) {
 		}
 
 		mutex.Lock()
-		cf.clientEntries[token] = &cEntry
+		cf.clientEntries[tokenHash] = &cEntry
 		mutex.Unlock()
 		internalmetrics.SetKubernetesClients(len(cf.clientEntries))
 		return &cEntry, nil
@@ -177,4 +180,32 @@ func watchClients(clientEntries map[string]*clientEntry, expiry time.Duration) {
 		internalmetrics.SetKubernetesClients(len(clientEntries))
 		mutex.Unlock()
 	}
+}
+
+func getTokenHash(authInfo *api.AuthInfo) string {
+	tokenData := authInfo.Token
+
+	if authInfo.Impersonate != "" {
+		tokenData += authInfo.Impersonate
+	}
+
+	if authInfo.ImpersonateGroups != nil {
+		for _, group := range authInfo.ImpersonateGroups {
+			tokenData += group
+		}
+	}
+
+	if authInfo.ImpersonateUserExtra != nil {
+		for key, element := range authInfo.ImpersonateUserExtra {
+			for _, userExtra := range element {
+				tokenData += key + userExtra
+			}
+		}
+
+	}
+
+	h := md5.New()
+	h.Write([]byte(tokenData))
+	return string(h.Sum(nil))
+
 }

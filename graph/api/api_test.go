@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -634,7 +635,7 @@ func TestAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -673,7 +674,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -712,7 +713,7 @@ func TestServiceGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -751,7 +752,7 @@ func TestWorkloadGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1013,22 +1014,22 @@ func TestAppNodeGraph(t *testing.T) {
 			Metric: q3m0,
 			Value:  31}}
 
-	client, api, _, err := setupMocked()
+	client, xapi, _, err := setupMocked()
 	if err != nil {
 		return
 	}
 
-	mockQuery(api, q0, &v0)
-	mockQuery(api, q1, &v1)
-	mockQuery(api, q2, &v2)
-	mockQuery(api, q3, &v3)
+	mockQuery(xapi, q0, &v0)
+	mockQuery(xapi, q1, &v1)
+	mockQuery(xapi, q2, &v2)
+	mockQuery(xapi, q3, &v3)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1290,22 +1291,22 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 			Metric: q3m0,
 			Value:  31}}
 
-	client, api, _, err := setupMocked()
+	client, xapi, _, err := setupMocked()
 	if err != nil {
 		return
 	}
 
-	mockQuery(api, q0, &v0)
-	mockQuery(api, q1, &v1)
-	mockQuery(api, q2, &v2)
-	mockQuery(api, q3, &v3)
+	mockQuery(xapi, q0, &v0)
+	mockQuery(xapi, q1, &v1)
+	mockQuery(xapi, q2, &v2)
+	mockQuery(xapi, q3, &v3)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1567,22 +1568,22 @@ func TestWorkloadNodeGraph(t *testing.T) {
 			Metric: q3m0,
 			Value:  31}}
 
-	client, api, _, err := setupMocked()
+	client, xapi, _, err := setupMocked()
 	if err != nil {
 		return
 	}
 
-	mockQuery(api, q0, &v0)
-	mockQuery(api, q1, &v1)
-	mockQuery(api, q2, &v2)
-	mockQuery(api, q3, &v3)
+	mockQuery(xapi, q0, &v0)
+	mockQuery(xapi, q1, &v1)
+	mockQuery(xapi, q2, &v2)
+	mockQuery(xapi, q3, &v3)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1654,21 +1655,21 @@ func TestServiceNodeGraph(t *testing.T) {
 			Metric: q2m0,
 			Value:  31}}
 
-	client, api, _, err := setupMocked()
+	client, xapi, _, err := setupMocked()
 	if err != nil {
 		return
 	}
 
-	mockQuery(api, q0, &v0)
-	mockQuery(api, q1, &v1)
-	mockQuery(api, q2, &v2)
+	mockQuery(xapi, q0, &v0)
+	mockQuery(xapi, q1, &v1)
+	mockQuery(xapi, q2, &v2)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
@@ -1962,36 +1963,36 @@ func TestComplexGraph(t *testing.T) {
 	q17 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags),0.001)`
 	v17 := model.Vector{}
 
-	client, api, _, err := setupMockedWithIstioComponentNamespaces()
+	client, xapi, _, err := setupMockedWithIstioComponentNamespaces()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mockQuery(api, q0, &v0)
-	mockQuery(api, q1, &v1)
-	mockQuery(api, q2, &v2)
-	mockQuery(api, q3, &v3)
-	mockQuery(api, q4, &v4)
-	mockQuery(api, q5, &v5)
-	mockQuery(api, q6, &v6)
-	mockQuery(api, q7, &v7)
-	mockQuery(api, q8, &v8)
-	mockQuery(api, q9, &v9)
-	mockQuery(api, q10, &v10)
-	mockQuery(api, q11, &v11)
-	mockQuery(api, q12, &v12)
-	mockQuery(api, q13, &v13)
-	mockQuery(api, q14, &v14)
-	mockQuery(api, q15, &v15)
-	mockQuery(api, q16, &v16)
-	mockQuery(api, q17, &v17)
+	mockQuery(xapi, q0, &v0)
+	mockQuery(xapi, q1, &v1)
+	mockQuery(xapi, q2, &v2)
+	mockQuery(xapi, q3, &v3)
+	mockQuery(xapi, q4, &v4)
+	mockQuery(xapi, q5, &v5)
+	mockQuery(xapi, q6, &v6)
+	mockQuery(xapi, q7, &v7)
+	mockQuery(xapi, q8, &v8)
+	mockQuery(xapi, q9, &v9)
+	mockQuery(xapi, q10, &v10)
+	mockQuery(xapi, q11, &v11)
+	mockQuery(xapi, q12, &v12)
+	mockQuery(xapi, q13, &v13)
+	mockQuery(xapi, q14, &v14)
+	mockQuery(xapi, q15, &v15)
+	mockQuery(xapi, q16, &v16)
+	mockQuery(xapi, q17, &v17)
 
 	var fut func(b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			context := context.WithValue(r.Context(), "token", "test")
+			context := context.WithValue(r.Context(), "authInfo", &api.AuthInfo{Token: "test"})
 			code, config := fut(nil, client, graph.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
