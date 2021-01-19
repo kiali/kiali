@@ -101,7 +101,7 @@ type ClientInterface interface {
 // It hides the way it queries each API
 type K8SClient struct {
 	ClientInterface
-	authInfo           *api.AuthInfo
+	token              string
 	k8s                *kube.Clientset
 	istioNetworkingApi *rest.RESTClient
 	istioSecurityApi   *rest.RESTClient
@@ -146,12 +146,7 @@ func (client *K8SClient) GetIstioSecurityApi() *rest.RESTClient {
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {
-	return client.authInfo.Token
-}
-
-// GetAuthInfo returns the AuthInfo struct for the client
-func (client *K8SClient) GetAuthInfo() *api.AuthInfo {
-	return client.authInfo
+	return client.token
 }
 
 // Point the k8s client to a remote cluster's API server
@@ -226,15 +221,9 @@ func ConfigClient() (*rest.Config, error) {
 // It hides the access to Kubernetes/Openshift credentials.
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
-func NewClientFromConfig(config *rest.Config, authInfo *api.AuthInfo) (*K8SClient, error) {
+func NewClientFromConfig(config *rest.Config) (*K8SClient, error) {
 	client := K8SClient{
-		authInfo: authInfo,
-	}
-
-	if authInfo.Impersonate != "" {
-		config.Impersonate.UserName = authInfo.Impersonate
-		config.Impersonate.Groups = authInfo.ImpersonateGroups
-		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
+		token: config.BearerToken,
 	}
 
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)

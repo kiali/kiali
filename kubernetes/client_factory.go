@@ -127,7 +127,14 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo) (ClientInterface, err
 		}
 	}
 
-	return NewClientFromConfig(&config, authInfo)
+	// Impersonation is valid only for header authentication strategy
+	if cfg.Auth.Strategy == kialiConfig.AuthStrategyHeader && authInfo.Impersonate != "" {
+		config.Impersonate.UserName = authInfo.Impersonate
+		config.Impersonate.Groups = authInfo.ImpersonateGroups
+		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
+	}
+
+	return NewClientFromConfig(&config)
 }
 
 // GetClient returns a client for the specified token. Creating one if necessary.
