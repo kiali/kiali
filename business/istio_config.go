@@ -597,9 +597,9 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, "", json, true)
 }
 
-func (in *IstioConfigService) GeIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
+func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GeIstioConfigPermissions")
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigPermissions")
 	defer promtimer.ObserveNow(&err)
 
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))

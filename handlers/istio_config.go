@@ -265,7 +265,7 @@ func IstioConfigPermissions(w http.ResponseWriter, r *http.Request) {
 	istioConfigPermissions := models.IstioConfigPermissions{}
 	if len(namespaces) > 0 {
 		ns := strings.Split(namespaces, ",")
-		istioConfigPermissions = business.IstioConfig.GeIstioConfigPermissions(ns)
+		istioConfigPermissions = business.IstioConfig.GetIstioConfigPermissions(ns)
 	}
 	RespondWithJSON(w, http.StatusOK, istioConfigPermissions)
 }
