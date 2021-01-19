@@ -5,7 +5,7 @@ type AnotationKey string
 
 const (
 	AllHealthAnnotation  AnotationKey = ".*"
-		RateHealthAnnotation AnotationKey = "health.kiali.io/rate"
+	RateHealthAnnotation AnotationKey = "health.kiali.io/rate"
 )
 
 func GetHealthConfigAnnotation() []AnotationKey {
