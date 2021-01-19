@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -226,17 +227,21 @@ func WorkloadSpans(w http.ResponseWriter, r *http.Request) {
 }
 
 func readQuery(values url.Values) (models.TracingQuery, error) {
-	q := models.TracingQuery{Limit: 100}
+	q := models.TracingQuery{
+		End:   time.Now(),
+		Limit: 100,
+		Tags:  make(map[string]string),
+	}
 	if v := values.Get("startMicros"); v != "" {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
-			q.StartMicros = num
+			q.Start = time.Unix(0, num*int64(time.Microsecond))
 		} else {
 			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'startMicros': " + err.Error())
 		}
 	}
 	if v := values.Get("endMicros"); v != "" {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
-			q.EndMicros = num
+			q.End = time.Unix(0, num*int64(time.Microsecond))
 		} else {
 			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'endMicros': " + err.Error())
 		}
@@ -248,7 +253,20 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'limit': " + err.Error())
 		}
 	}
-	q.Tags = values.Get("tags")
-	q.MinDuration = values.Get("minDuration")
+	if rawTags := values.Get("tags"); rawTags != "" {
+		var tags map[string]string
+		err := json.Unmarshal([]byte(rawTags), &tags)
+		if err != nil {
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'tags': " + err.Error())
+		}
+		q.Tags = tags
+	}
+	if strMinD := values.Get("minDuration"); strMinD != "" {
+		if num, err := strconv.Atoi(strMinD); err == nil {
+			q.MinDuration = time.Duration(num) * time.Microsecond
+		} else {
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'minDuration': " + err.Error())
+		}
+	}
 	return q, nil
 }

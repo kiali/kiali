@@ -19,8 +19,10 @@ require (
 	github.com/prometheus/common v0.15.0
 	github.com/rs/zerolog v1.20.0
 	github.com/stretchr/testify v1.6.1
+	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	google.golang.org/grpc v1.33.1
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.1

@@ -89,6 +89,18 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 		return transportConfig, nil
 	}
 
+	tlscfg, err := GetTLSConfig(auth)
+	if err != nil {
+		return nil, err
+	}
+	if tlscfg != nil {
+		transportConfig.TLSClientConfig = tlscfg
+	}
+
+	return newAuthRoundTripper(auth, transportConfig), nil
+}
+
+func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
 	if auth.InsecureSkipVerify || auth.CAFile != "" {
 		var certPool *x509.CertPool
 		if auth.CAFile != "" {
@@ -103,14 +115,12 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 				return nil, fmt.Errorf("supplied CA file could not be parsed")
 			}
 		}
-
-		transportConfig.TLSClientConfig = &tls.Config{
+		return &tls.Config{
 			InsecureSkipVerify: auth.InsecureSkipVerify,
 			RootCAs:            certPool,
-		}
+		}, nil
 	}
-
-	return newAuthRoundTripper(auth, transportConfig), nil
+	return nil, nil
 }
 
 func GuessKialiURL(r *http.Request) string {

@@ -212,12 +212,8 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 	if limit == 0 {
 		limit = 1
 	}
-	end := query.EndMicros
-	if end == 0 {
-		// End not set, using "now"
-		end = time.Now().Unix() * 1000000
-	}
-	duration := (end - query.StartMicros) / int64(nSlices)
+	diff := query.End.Sub(query.Start)
+	duration := diff / time.Duration(nSlices)
 
 	type tracesChanResult struct {
 		resp *jaeger.JaegerResponse
@@ -229,8 +225,8 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 	for i := 0; i < nSlices; i++ {
 		q := query
 		q.Limit = limit
-		q.StartMicros = query.StartMicros + int64(i)*duration
-		q.EndMicros = q.StartMicros + duration
+		q.Start = query.Start.Add(duration * time.Duration(i))
+		q.End = q.Start.Add(duration)
 		wg.Add(1)
 		go func(q models.TracingQuery) {
 			defer wg.Done()
