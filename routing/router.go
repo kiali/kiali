@@ -49,10 +49,11 @@ func NewRouter() *mux.Router {
 	apiRoutes := NewRoutes()
 	authenticationHandler, _ := handlers.NewAuthenticationHandler()
 	for _, route := range apiRoutes.Routes {
-		var handlerFunction http.Handler = authenticationHandler.HandleUnauthenticated(route.HandlerFunc)
-		handlerFunction = metricHandler(handlerFunction, route)
+		handlerFunction := metricHandler(route.HandlerFunc, route)
 		if route.Authenticated {
-			handlerFunction = authenticationHandler.Handle(route.HandlerFunc)
+			handlerFunction = authenticationHandler.Handle(handlerFunction)
+		} else {
+			handlerFunction = authenticationHandler.HandleUnauthenticated(handlerFunction)
 		}
 		appRouter.
 			Methods(route.Method).
