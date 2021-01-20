@@ -144,7 +144,12 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     if (
       this.props.initialFilters !== prev.initialFilters &&
       !arrayEquals(this.props.initialFilters, prev.initialFilters, (t1, t2) => {
-        return t1.id === t2.id && arrayEquals(t1.filterValues, t2.filterValues, (v1, v2) => v1 === v2);
+        return (
+          t1.id === t2.id &&
+          arrayEquals(t1.filterValues, t2.filterValues, (v1, v2) => {
+            return v1.id === v2.id && v1.title === v2.title;
+          })
+        );
       })
     ) {
       const current =

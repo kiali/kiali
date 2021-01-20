@@ -27,6 +27,7 @@ import { style } from 'typestyle';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { ISortBy, SortByDirection } from '@patternfly/react-table';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -53,7 +54,10 @@ type EnvoyDetailState = {
   fetch: boolean;
   pod: Pod;
   resource: string;
+  tableSortBy: ResourceSorts;
 };
+
+export type ResourceSorts = { [resource: string]: ISortBy };
 
 export const Loading = () => (
   <EmptyState variant={EmptyStateVariant.full}>
@@ -74,7 +78,21 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
       config: {},
       fetch: false,
       pod: this.sortedPods()[0],
-      resource: 'all'
+      resource: 'all',
+      tableSortBy: {
+        clusters: {
+          index: 0,
+          direction: 'asc'
+        },
+        listeners: {
+          index: 0,
+          direction: 'asc'
+        },
+        routes: {
+          index: 0,
+          direction: 'asc'
+        }
+      }
     };
   }
 
@@ -82,8 +100,11 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
     this.fetchContent();
   }
 
-  componentDidUpdate() {
-    if (this.state.fetch) {
+  componentDidUpdate(_prevProps: EnvoyDetailProps, prevState: EnvoyDetailState) {
+    if (
+      this.state.fetch &&
+      (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource)
+    ) {
       this.fetchContent();
     }
   }
@@ -112,6 +133,17 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
         config: {},
         fetch: true,
         resource: targetResource
+      });
+    }
+  };
+
+  onSort = (tab: string, index: number, direction: SortByDirection) => {
+    if (this.state.tableSortBy[tab].index !== index || this.state.tableSortBy[tab].direction !== direction) {
+      let tableSortBy = this.state.tableSortBy;
+      tableSortBy[tab].index = index;
+      tableSortBy[tab].direction = direction;
+      this.setState({
+        tableSortBy: tableSortBy
       });
     }
   };
@@ -173,7 +205,7 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
   };
 
   render() {
-    const builder = SummaryTableBuilder(this.state.resource, this.state.config);
+    const builder = SummaryTableBuilder(this.state.resource, this.state.config, this.state.tableSortBy);
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
 
@@ -230,7 +262,7 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
             </Toolbar>
           </StackItem>
           <StackItem>
-            <Card style={{ height: '400px' }}>
+            <Card style={{ height: '600px' }}>
               {this.isLoadingConfig() ? (
                 <Loading />
               ) : this.showEditor() ? (
@@ -238,7 +270,7 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
                   ref={this.aceEditorRef}
                   mode="yaml"
                   theme="eclipse"
-                  height={'400px'}
+                  height={'600px'}
                   width={'100%'}
                   className={'istio-ace-editor'}
                   wrapEnabled={true}
@@ -247,7 +279,11 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
                   value={this.editorContent()}
                 />
               ) : (
-                <SummaryWriterComp writer={summaryWriter} />
+                <SummaryWriterComp
+                  writer={summaryWriter}
+                  sortBy={this.state.tableSortBy[this.state.resource]}
+                  onSort={this.onSort}
+                />
               )}
             </Card>
           </StackItem>
