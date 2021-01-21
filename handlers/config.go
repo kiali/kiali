@@ -7,8 +7,11 @@ import (
 
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -16,6 +19,11 @@ import (
 const (
 	defaultPrometheusGlobalScrapeInterval = 15 // seconds
 )
+
+type ClusterInfo struct {
+	Name    string `json:"name,omitempty"`
+	Network string `json:"network,omitempty"`
+}
 
 type Iter8Config struct {
 	Enabled   bool   `json:"enabled"`
@@ -38,6 +46,7 @@ type PrometheusConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
+	ClusterInfo              ClusterInfo                     `json:"clusterInfo,omitempty"`
 	Extensions               Extensions                      `json:"extensions,omitempty"`
 	HealthConfig             config.HealthConfig             `json:"healthConfig,omitempty"`
 	InstallationTag          string                          `json:"installationTag,omitempty"`
@@ -83,6 +92,36 @@ func Config(w http.ResponseWriter, r *http.Request) {
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
 		},
+	}
+
+	// The following code fetches the cluster info. Cluster info is not critical.
+	// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
+	// Because of these two reasons, let's simply ignore errors in the following code.
+	token, getTokenErr := kubernetes.GetKialiToken()
+	if getTokenErr == nil {
+		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
+		if getLayerErr == nil {
+			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
+			if isMeshIdSet {
+				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
+				if cluster != nil {
+					publicConfig.ClusterInfo = ClusterInfo{
+						Name:    cluster.Name,
+						Network: cluster.Network,
+					}
+				} else if resolveClusterErr != nil {
+					log.Warningf("Failure while resolving cluster info: %s", resolveClusterErr.Error())
+				} else {
+					log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
+				}
+			} else if mcErr != nil {
+				log.Warningf("Failure when checking if mesh-id is configured: %s", mcErr.Error())
+			}
+		} else {
+			log.Warningf("Failed to create business layer when resolving cluster info: %s", getLayerErr.Error())
+		}
+	} else {
+		log.Warningf("Failed to fetch Kiali token when resolving cluster info: %s", getTokenErr.Error())
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, publicConfig)

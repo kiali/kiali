@@ -6,14 +6,16 @@
     "nodes": [
       {
         "data": {
-          "id": "240c2314cefc993c5d9479a5c349fbd2",
+          "id": "aa79c6b34228bebc55a417555ccc779e",
           "nodeType": "workload",
+          "cluster": "unknown",
           "namespace": "bookinfo",
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
           "destServices": [
             {
+              "cluster": "unknown",
               "namespace": "bookinfo",
               "name": "productpage"
             }
@@ -36,8 +38,9 @@
       },
       {
         "data": {
-          "id": "c72e12859eac1424516065e6a64c92e0",
+          "id": "d5644516f2f70a6e887a3d366876c647",
           "nodeType": "workload",
+          "cluster": "unknown",
           "namespace": "istio-system",
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
@@ -66,9 +69,9 @@
     "edges": [
       {
         "data": {
-          "id": "347e210a97f5235b5a60b810ef1bfaa6",
-          "source": "c72e12859eac1424516065e6a64c92e0",
-          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "id": "57a9fcf6d2882fbe11c32989224d50b0",
+          "source": "d5644516f2f70a6e887a3d366876c647",
+          "target": "aa79c6b34228bebc55a417555ccc779e",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -90,9 +93,9 @@
       },
       {
         "data": {
-          "id": "c3fa6dedc4a1b3d61a3bb48dcb46dafa",
-          "source": "c72e12859eac1424516065e6a64c92e0",
-          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "id": "c3092cfc23ee87b44610e8244e0f2063",
+          "source": "d5644516f2f70a6e887a3d366876c647",
+          "target": "aa79c6b34228bebc55a417555ccc779e",
           "traffic": {
             "protocol": "tcp",
             "rates": {
