@@ -101,16 +101,21 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	if getTokenErr == nil {
 		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
 		if getLayerErr == nil {
-			cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
-			if cluster != nil {
-				publicConfig.ClusterInfo = ClusterInfo{
-					Name:    cluster.Name,
-					Network: cluster.Network,
+			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
+			if isMeshIdSet {
+				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
+				if cluster != nil {
+					publicConfig.ClusterInfo = ClusterInfo{
+						Name:    cluster.Name,
+						Network: cluster.Network,
+					}
+				} else if resolveClusterErr != nil {
+					log.Warningf("Failure while resolving cluster info: %s", resolveClusterErr.Error())
+				} else {
+					log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
 				}
-			} else if resolveClusterErr != nil {
-				log.Warningf("Failure while resolving cluster info: %s", resolveClusterErr.Error())
-			} else {
-				log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
+			} else if mcErr != nil {
+				log.Warningf("Failure when checking if mesh-id is configured: %s", mcErr.Error())
 			}
 		} else {
 			log.Warningf("Failed to create business layer when resolving cluster info: %s", getLayerErr.Error())

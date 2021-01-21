@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -43,6 +44,12 @@ type Cluster struct {
 	SecretName string `json:"secretName"`
 }
 
+type meshIdConfig struct {
+	DefaultConfig struct {
+		MeshId string `yaml:"meshId,omitempty"`
+	} `yaml:"defaultConfig,omitempty"`
+}
+
 // NewMeshService initializes a new MeshService structure with the given k8s client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
@@ -78,6 +85,36 @@ func (in *MeshService) GetClusters() (clusters []Cluster, errVal error) {
 		clusters = remoteClusters
 	} else {
 		clusters = append(remoteClusters, *myCluster)
+	}
+
+	return
+}
+
+func (in *MeshService) IsMeshConfigured() (isEnabled bool, returnErr error) {
+	isEnabled = false
+	cfg := config.Get()
+
+	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, config.IstioConfigMapName)
+	if err != nil {
+		returnErr = err
+		return
+	}
+
+	meshConfigYaml, ok := istioConfig.Data["mesh"]
+	if !ok {
+		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
+		return
+	}
+
+	meshConfig := meshIdConfig{}
+	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
+	if err != nil {
+		returnErr = err
+		return
+	}
+
+	if len(meshConfig.DefaultConfig.MeshId) > 0 {
+		isEnabled = true
 	}
 
 	return
