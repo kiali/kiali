@@ -660,6 +660,7 @@ export interface ServiceEntrySpec {
   endpoints?: WorkloadEntrySpec[];
   exportTo?: string[];
   subjectAltNames?: string[];
+  workloadSelector?: WorkloadSelector;
 }
 
 // 1.6
