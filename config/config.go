@@ -55,6 +55,7 @@ const (
 )
 
 const (
+	IstioConfigMapName          = "istio"
 	IstioMultiClusterHostSuffix = "global"
 	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
