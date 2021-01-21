@@ -90,7 +90,7 @@ func (in *MeshService) GetClusters() (clusters []Cluster, errVal error) {
 	return
 }
 
-func (in *MeshService) IsMultiClusterEnabled() (isEnabled bool, returnErr error) {
+func (in *MeshService) IsMeshConfigured() (isEnabled bool, returnErr error) {
 	isEnabled = false
 	cfg := config.Get()
 
@@ -102,7 +102,7 @@ func (in *MeshService) IsMultiClusterEnabled() (isEnabled bool, returnErr error)
 
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	if !ok {
-		log.Warning("Istio config not found when resolving if multi-cluster is enabled. Falling back to multi-cluster OFF.")
+		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
 		return
 	}
 

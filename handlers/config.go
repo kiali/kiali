@@ -101,8 +101,8 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	if getTokenErr == nil {
 		layer, getLayerErr := business.Get(&api.AuthInfo{Token: token})
 		if getLayerErr == nil {
-			isMultiClusterEnabled, mcErr := layer.Mesh.IsMultiClusterEnabled()
-			if isMultiClusterEnabled {
+			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
+			if isMeshIdSet {
 				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
 				if cluster != nil {
 					publicConfig.ClusterInfo = ClusterInfo{
@@ -115,7 +115,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 					log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
 				}
 			} else if mcErr != nil {
-				log.Warningf("Failure when checking if multi-cluster is enabled: %s", mcErr.Error())
+				log.Warningf("Failure when checking if mesh-id is configured: %s", mcErr.Error())
 			}
 		} else {
 			log.Warningf("Failed to create business layer when resolving cluster info: %s", getLayerErr.Error())
