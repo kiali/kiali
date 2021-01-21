@@ -36,7 +36,7 @@ func (se *ServiceEntry) Parse(serviceEntry kubernetes.IstioObject) {
 	se.Spec.Location = serviceEntry.GetSpec()["location"]
 	se.Spec.Resolution = serviceEntry.GetSpec()["resolution"]
 	se.Spec.Endpoints = serviceEntry.GetSpec()["endpoints"]
-	se.Spec.WorkloadSelector = serviceEntry.GetSpec()["serviceEntry"]
+	se.Spec.WorkloadSelector = serviceEntry.GetSpec()["workloadSelector"]
 	se.Spec.ExportTo = serviceEntry.GetSpec()["exportTo"]
 	se.Spec.SubjectAltNames = serviceEntry.GetSpec()["subjectAltNames"]
 }
