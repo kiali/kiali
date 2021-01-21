@@ -56,7 +56,7 @@ func FilterPodsForController(controllerName string, controllerType string, allPo
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
 		for _, ref := range pod.OwnerReferences {
-			if ref.Controller != nil && *ref.Controller && ref.Name == controllerName && ref.Kind == controllerType {
+			if ref.Controller != nil && *ref.Controller && strings.HasPrefix(ref.Name, controllerName) && ref.Kind == controllerType {
 				pods = append(pods, pod)
 				break
 			}

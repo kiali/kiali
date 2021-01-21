@@ -506,7 +506,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
 	for cname, ctype := range controllers {
-		if ctype == "ReplicaSet" {
+		if ctype == kubernetes.ReplicaSetType {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -532,7 +532,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				}
 			}
 		}
-		if ctype == "ReplicationController" {
+		if ctype == kubernetes.ReplicationControllerType {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -558,7 +558,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				}
 			}
 		}
-		if ctype == "Job" {
+		if ctype == kubernetes.JobType {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -667,7 +667,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Flag to add a controller if it is found
 		cnFound := true
 		switch ctype {
-		case "Deployment":
+		case kubernetes.DeploymentType:
 			found := false
 			iFound := -1
 			for i, dp := range dep {
@@ -685,7 +685,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as Deployment", cname)
 				cnFound = false
 			}
-		case "ReplicaSet":
+		case kubernetes.ReplicaSetType:
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -703,7 +703,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as ReplicaSet", cname)
 				cnFound = false
 			}
-		case "ReplicationController":
+		case kubernetes.ReplicationControllerType:
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -721,7 +721,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as ReplicationController", cname)
 				cnFound = false
 			}
-		case "DeploymentConfig":
+		case kubernetes.DeploymentConfigType:
 			found := false
 			iFound := -1
 			for i, dc := range depcon {
@@ -739,7 +739,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as DeploymentConfig", cname)
 				cnFound = false
 			}
-		case "StatefulSet":
+		case kubernetes.StatefulSetType:
 			found := false
 			iFound := -1
 			for i, fs := range fulset {
@@ -757,7 +757,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as StatefulSet", cname)
 				cnFound = false
 			}
-		case "Pod":
+		case kubernetes.PodType:
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -774,7 +774,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as Pod", cname)
 				cnFound = false
 			}
-		case "Job":
+		case kubernetes.JobType:
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -792,7 +792,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Errorf("Workload %s is not found as Job", cname)
 				cnFound = false
 			}
-		case "CronJob":
+		case kubernetes.CronJobType:
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -811,9 +811,25 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				cnFound = false
 			}
 		default:
-			cPods := kubernetes.FilterPodsForController(cname, ctype, pods)
+			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			childType := ctype
+			if _, unknownType := controllerOrder[ctype]; !unknownType {
+				childType = kubernetes.ReplicaSetType
+			}
+			cPods := kubernetes.FilterPodsForController(cname, childType, pods)
 			w.SetPods(cPods)
-			w.ParsePods(cname, ctype, cPods)
+			rsParsed := false
+			for _, rs := range repset {
+				if strings.HasPrefix(rs.Name, cname) {
+					w.ParseReplicaSetParent(&rs, cname, ctype)
+					rsParsed = true
+					break
+				}
+			}
+			if !rsParsed {
+				log.Warningf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", cname, ctype)
+				w.ParsePods(cname, ctype, cPods)
+			}
 		}
 
 		// Add the Proxy Status to the workload
@@ -854,6 +870,11 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
 		return nil, err
 	}
+
+	// Flag used for custom controllers
+	// i.e. a third party framework creates its own "Deployment" controller with extra features
+	// on this case, Kiali will collect basic info from the ReplicaSet controller
+	_, knownWorkloadType := controllerOrder[workloadType]
 
 	wg := sync.WaitGroup{}
 	wg.Add(8)
@@ -903,7 +924,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	go func() {
 		defer wg.Done()
 		// Check if workloadType is passed
-		if workloadType != "" && workloadType != kubernetes.ReplicaSetType {
+		// Unknown workload type will fetch ReplicaSet list
+		if workloadType != "" && workloadType != kubernetes.ReplicaSetType && knownWorkloadType {
 			return
 		}
 		var err error
@@ -1037,7 +1059,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
 	for cname, ctype := range controllers {
-		if ctype == "ReplicaSet" {
+		if ctype == kubernetes.ReplicaSetType {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1063,7 +1085,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				}
 			}
 		}
-		if ctype == "ReplicationController" {
+		if ctype == kubernetes.ReplicationControllerType {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1089,7 +1111,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				}
 			}
 		}
-		if ctype == "Job" {
+		if ctype == kubernetes.JobType {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1131,27 +1153,27 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	// Cornercase, check for controllers without pods, to show them as a workload
 	if dep != nil {
 		if _, exist := controllers[dep.Name]; !exist {
-			controllers[dep.Name] = "Deployment"
+			controllers[dep.Name] = kubernetes.DeploymentType
 		}
 	}
 	for _, rs := range repset {
 		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 {
-			controllers[rs.Name] = "ReplicaSet"
+			controllers[rs.Name] = kubernetes.ReplicaSetType
 		}
 	}
 	if depcon != nil {
 		if _, exist := controllers[depcon.Name]; !exist {
-			controllers[depcon.Name] = "DeploymentConfig"
+			controllers[depcon.Name] = kubernetes.DeploymentConfigType
 		}
 	}
 	for _, rc := range repcon {
 		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 {
-			controllers[rc.Name] = "ReplicationController"
+			controllers[rc.Name] = kubernetes.ReplicationControllerType
 		}
 	}
 	if fulset != nil {
 		if _, exist := controllers[fulset.Name]; !exist {
-			controllers[fulset.Name] = "StatefulSet"
+			controllers[fulset.Name] = kubernetes.StatefulSetType
 		}
 	}
 
@@ -1166,7 +1188,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		// Flag to add a controller if it is found
 		cnFound := true
 		switch ctype {
-		case "Deployment":
+		case kubernetes.DeploymentType:
 			if dep.Name == workloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
@@ -1175,7 +1197,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as Deployment", workloadName)
 				cnFound = false
 			}
-		case "ReplicaSet":
+		case kubernetes.ReplicaSetType:
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1193,7 +1215,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as ReplicaSet", workloadName)
 				cnFound = false
 			}
-		case "ReplicationController":
+		case kubernetes.ReplicationControllerType:
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1211,7 +1233,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as ReplicationController", workloadName)
 				cnFound = false
 			}
-		case "DeploymentConfig":
+		case kubernetes.DeploymentConfigType:
 			if depcon.Name == workloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
@@ -1220,7 +1242,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as DeploymentConfig", workloadName)
 				cnFound = false
 			}
-		case "StatefulSet":
+		case kubernetes.StatefulSetType:
 			if fulset.Name == workloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
@@ -1229,7 +1251,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as StatefulSet", workloadName)
 				cnFound = false
 			}
-		case "Pod":
+		case kubernetes.PodType:
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -1246,7 +1268,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as Pod", workloadName)
 				cnFound = false
 			}
-		case "Job":
+		case kubernetes.JobType:
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1264,7 +1286,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Errorf("Workload %s is not found as Job", workloadName)
 				cnFound = false
 			}
-		case "CronJob":
+		case kubernetes.CronJobType:
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -1283,9 +1305,25 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		default:
-			cPods := kubernetes.FilterPodsForController(workloadName, ctype, pods)
+			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			childType := ctype
+			if _, unknownType := controllerOrder[ctype]; !unknownType {
+				childType = kubernetes.ReplicaSetType
+			}
+			cPods := kubernetes.FilterPodsForController(workloadName, childType, pods)
 			w.SetPods(cPods)
-			w.ParsePods(workloadName, ctype, cPods)
+			rsParsed := false
+			for _, rs := range repset {
+				if strings.HasPrefix(rs.Name, workloadName) {
+					w.ParseReplicaSetParent(&rs, workloadName, ctype)
+					rsParsed = true
+					break
+				}
+			}
+			if !rsParsed {
+				log.Warningf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", workloadName, ctype)
+				w.ParsePods(workloadName, ctype, cPods)
+			}
 		}
 
 		// Add the Proxy Status to the workload
