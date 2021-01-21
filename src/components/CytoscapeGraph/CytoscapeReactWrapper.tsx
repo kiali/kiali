@@ -7,7 +7,7 @@ import cytoscape from 'cytoscape';
 import cycola from 'cytoscape-cola';
 import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
-import GroupCompoundLayout from './Layout/GroupCompoundLayout';
+import BoxLayout from './Layout/BoxLayout';
 import popper from 'cytoscape-popper';
 const nodeHtmlLabel = require('cy-node-html-label');
 
@@ -16,7 +16,7 @@ cytoscape.use(cycola);
 cytoscape.use(dagre);
 cytoscape.use(coseBilkent);
 cytoscape.use(popper);
-cytoscape('layout', 'group-compound-layout', GroupCompoundLayout);
+cytoscape('layout', 'box-layout', BoxLayout);
 nodeHtmlLabel(cytoscape);
 
 type CytoscapeReactWrapperProps = {};

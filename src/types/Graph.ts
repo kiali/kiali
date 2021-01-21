@@ -7,7 +7,7 @@ export interface Layout {
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
-export type SummaryType = 'graph' | 'node' | 'edge' | 'group';
+export type SummaryType = 'graph' | 'node' | 'edge' | 'box';
 export interface SummaryData {
   summaryType: SummaryType;
   summaryTarget: any;
@@ -44,15 +44,16 @@ export enum GraphType {
   WORKLOAD = 'workload'
 }
 
-export enum GroupByType {
+export enum BoxByType {
   APP = 'app',
-  NONE = 'none',
-  VERSION = 'version'
+  CLUSTER = 'cluster',
+  NAMESPACE = 'namespace'
 }
 
 export enum NodeType {
   AGGREGATE = 'aggregate',
   APP = 'app',
+  BOX = 'box',
   SERVICE = 'service',
   UNKNOWN = 'unknown',
   WORKLOAD = 'workload'
@@ -77,13 +78,14 @@ export interface NodeParamsType {
 export const CytoscapeGlobalScratchNamespace = '_global';
 export type CytoscapeGlobalScratchData = {
   activeNamespaces: Namespace[];
+  boxByCluster: boolean;
+  boxByNamespace: boolean;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   mtlsEnabled: boolean;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showSecurity: boolean;
-  showNodeLabels: boolean;
   showVirtualServices: boolean;
 };
 
@@ -158,6 +160,7 @@ export const hasProtocolTraffic = (protocolTraffic: ProtocolTraffic): protocolTr
 };
 
 export interface DestService {
+  cluster: string;
   namespace: string;
   name: string;
 }
@@ -167,6 +170,7 @@ export interface GraphNodeData {
   id: string;
   parent?: string;
   nodeType: NodeType;
+  cluster: string;
   namespace: string;
   workload?: string;
   app?: string;
@@ -179,8 +183,8 @@ export interface GraphNodeData {
   hasCB?: boolean;
   hasMissingSC?: boolean;
   hasVS?: boolean;
+  isBox?: string;
   isDead?: boolean;
-  isGroup?: string;
   isIdle?: boolean;
   isInaccessible?: boolean;
   isMisconfigured?: string;

@@ -13,7 +13,8 @@ import {
   NodeType,
   CytoscapeGlobalScratchNamespace,
   CytoscapeGlobalScratchData,
-  UNKNOWN
+  UNKNOWN,
+  BoxByType
 } from '../../../types/Graph';
 import { icons } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
@@ -50,13 +51,16 @@ let NodeColorBorderFailure: string;
 const NodeColorBorderHover = PfColors.Blue300;
 const NodeColorBorderSelected = PfColors.Blue300;
 const NodeColorFill = PfColors.White;
-const NodeColorFillBox = PfColors.White;
+const NodeColorFillBoxApp = PfColors.White;
+const NodeColorFillBoxCluster = PfColors.LightGreen100;
+const NodeColorFillBoxNamespace = PfColors.LightBlue100;
 const NodeColorFillHover = PfColors.Blue50;
 const NodeColorFillHoverDegraded = '#fdf2e5';
 const NodeColorFillHoverFailure = '#ffe6e6';
 const NodeHeight = '25px';
 const NodeIconCB = icons.istio.circuitBreaker.className; // bolt
 const NodeIconMS = icons.istio.missingSidecar.className; // exclamation
+const NodeIconRoot = icons.istio.root.className; // alt-arrow-circle-right
 const NodeIconVS = icons.istio.virtualService.className; // code-branch
 const NodeTextColor = PfColors.Black;
 const NodeTextBackgroundColor = PfColors.White;
@@ -140,26 +144,35 @@ export class GraphStyles {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
-    let content = '';
     const cyGlobal = getCyGlobalData(ele);
     const data = decoratedNodeData(ele);
+    const app = data.app || '';
+    const isBox = data.isBox;
+    const isBoxed = data.parent;
+    const isBoxedBy = isBoxed ? ele.parent()[0].data().isBox : undefined;
+    const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
+    const isOutside = data.isOutside;
+    const namespace = data.namespace;
+    const nodeType = data.nodeType;
+    const service = data.service || '';
+    const version = data.version || '';
+    const workload = data.workload || '';
+
     let labelRawStyle = '';
-
-    const isGroup = data.isGroup;
-
     if (ele.hasClass(HighlightClass)) {
       labelRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
     }
-
     if (ele.hasClass(DimClass)) {
       labelRawStyle += 'opacity: 0.6;';
     }
-
-    if (isGroup) {
+    if (isBox) {
       labelRawStyle += 'margin-top: 13px;';
     }
 
     let badges = '';
+    if (data.isRoot) {
+      badges = `<span class="${NodeIconRoot} ${badgeStyle}"></span> ${badges}`;
+    }
     if (cyGlobal.showMissingSidecars && data.hasMissingSC) {
       badges = `<span class="${NodeIconMS} ${badgeStyle}"></span> ${badges}`;
     }
@@ -169,94 +182,85 @@ export class GraphStyles {
     if (cyGlobal.showVirtualServices && data.hasVS) {
       badges = `<span class="${NodeIconVS} ${badgeStyle}"></span> ${badges}`;
     }
-
     if (badges.length > 0) {
       badges = `<div class=${badgesDefaultStyle}>${badges}</div>`;
     }
-
     const hasBadge = badges.length > 0;
 
-    if (getCyGlobalData(ele).showNodeLabels) {
-      const app = data.app || '';
-      const isGroupMember = data.parent;
-      const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
-      const isOutside = data.isOutside;
-      const namespace = data.namespace;
-      const nodeType = data.nodeType;
-      const service = data.service || '';
-      const version = data.version || '';
-      const workload = data.workload || '';
-
-      let contentRawStyle = '';
-
-      if (isGroup) {
-        contentRawStyle += `background-color: ${NodeVersionParentBackgroundColor};`;
-        contentRawStyle += `color: ${NodeVersionParentTextColor};`;
-      }
-      if (ele.hasClass(HighlightClass)) {
-        contentRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
-      }
-
-      if (isGroupMember) {
-        switch (nodeType) {
-          case NodeType.AGGREGATE:
-            content = data.aggregateValue!;
-            break;
-          case NodeType.APP:
-            if (cyGlobal.graphType === GraphType.APP) {
-              content = app;
-            } else if (version && version !== UNKNOWN) {
-              content = version;
-            } else {
-              content = workload ? `${workload}` : `${app}`;
-            }
-            break;
-          case NodeType.SERVICE:
-            content = service;
-            break;
-          case NodeType.WORKLOAD:
-            content = workload;
-            break;
-          default:
-            content = '';
-        }
-      } else {
-        const contentArray: string[] = [];
-        if ((isMultiNamespace || isOutside) && nodeType !== NodeType.UNKNOWN) {
-          contentArray.push('(' + namespace + ')');
-        }
-        switch (nodeType) {
-          case NodeType.AGGREGATE:
-            contentArray.unshift(data.aggregateValue!);
-            break;
-          case NodeType.APP:
-            if (cyGlobal.graphType === GraphType.APP || isGroup || version === UNKNOWN) {
-              contentArray.unshift(app);
-            } else {
-              contentArray.unshift(version);
-              contentArray.unshift(app);
-            }
-            break;
-          case NodeType.SERVICE:
-            contentArray.unshift(service);
-            break;
-          case NodeType.UNKNOWN:
-            contentArray.unshift(UNKNOWN);
-            break;
-          case NodeType.WORKLOAD:
-            contentArray.unshift(workload);
-            break;
-          default:
-            contentArray.unshift('error');
-        }
-        content = contentArray.join('<br/>');
-      }
-      content = `<div class="${contentStyleDefault} ${
-        hasBadge ? contentStyleWithBadges : ''
-      }" style="${contentRawStyle}">${content}</div>`;
+    let contentRawStyle = '';
+    if (isBox) {
+      contentRawStyle += `background-color: ${NodeVersionParentBackgroundColor};`;
+      contentRawStyle += `color: ${NodeVersionParentTextColor};`;
+    }
+    if (ele.hasClass(HighlightClass)) {
+      contentRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
     }
 
-    return `<div class="${labelStyleDefault}" style="${labelRawStyle}">${badges}${content}</div>`;
+    const label: string[] = [];
+    if (
+      (isMultiNamespace || isOutside) &&
+      !cyGlobal.boxByNamespace &&
+      namespace !== UNKNOWN &&
+      nodeType !== NodeType.UNKNOWN &&
+      isBox !== BoxByType.CLUSTER &&
+      isBox !== BoxByType.NAMESPACE
+    ) {
+      label.push(`(${namespace})`);
+    }
+
+    switch (nodeType) {
+      case NodeType.AGGREGATE:
+        label.unshift(data.aggregateValue!);
+        break;
+      case NodeType.APP:
+        if (isBoxed && isBoxedBy === BoxByType.APP) {
+          if (cyGlobal.graphType === GraphType.APP) {
+            label.unshift(app);
+          } else if (version && version !== UNKNOWN) {
+            label.unshift(version);
+          } else {
+            label.unshift(workload ? workload : app);
+          }
+        } else {
+          if (cyGlobal.graphType === GraphType.APP || version === UNKNOWN) {
+            label.unshift(app);
+          } else {
+            label.unshift(version);
+            label.unshift(app);
+          }
+        }
+        break;
+      case NodeType.BOX:
+        switch (isBox) {
+          case BoxByType.APP:
+            label.unshift(app);
+            break;
+          case BoxByType.CLUSTER:
+            label.unshift(data.cluster);
+            break;
+          case BoxByType.NAMESPACE:
+            label.unshift(data.namespace);
+            if (!cyGlobal.boxByCluster && data.cluster !== UNKNOWN) {
+              label.push(`(${data.cluster})`);
+            }
+            break;
+        }
+        break;
+      case NodeType.SERVICE:
+        label.unshift(service);
+        break;
+      case NodeType.WORKLOAD:
+        label.unshift(workload);
+        break;
+      default:
+        label.unshift('error');
+    }
+
+    let labelHtml = label.join('<br/>');
+    labelHtml = `<div class="${contentStyleDefault} ${
+      hasBadge ? contentStyleWithBadges : ''
+    }" style="${contentRawStyle}">${labelHtml}</div>`;
+    return `<div class="${labelStyleDefault}" style="${labelRawStyle}">${badges}${labelHtml}</div>`;
   }
 
   static htmlNodeLabels(cy: Cy.Core) {
@@ -406,12 +410,12 @@ export class GraphStyles {
       const nodeData = decoratedNodeData(ele);
       const isInaccessible = nodeData.isInaccessible;
       const isServiceEntry = nodeData.isServiceEntry;
-      const isGroup = nodeData.isGroup;
-      if (isInaccessible && !isServiceEntry && !isGroup) {
+      const isBox = nodeData.isBox;
+      if (isInaccessible && !isServiceEntry && !isBox) {
         return NodeImageKey;
       }
       const isOutside = nodeData.isOutside;
-      if (isOutside && !isGroup) {
+      if (isOutside && !isBox) {
         return NodeImageTopology;
       }
       return 'none';
@@ -449,6 +453,8 @@ export class GraphStyles {
         case NodeType.AGGREGATE:
           return 'round-pentagon';
         case NodeType.APP:
+          return 'round-rectangle';
+        case NodeType.BOX:
           return 'round-rectangle';
         case NodeType.SERVICE:
           return nodeData.isServiceEntry ? 'round-tag' : 'round-triangle';
@@ -507,11 +513,25 @@ export class GraphStyles {
           'z-index': 10
         }
       },
+      // Node is a Cluster Box
+      {
+        selector: `node[isBox="${BoxByType.CLUSTER}"]`,
+        css: {
+          'background-color': NodeColorFillBoxCluster
+        }
+      },
+      // Node is a Namespace Box
+      {
+        selector: `node[isBox="${BoxByType.NAMESPACE}"]`,
+        css: {
+          'background-color': NodeColorFillBoxNamespace
+        }
+      },
       // Node is an App Box
       {
-        selector: `node[?isGroup]`,
+        selector: `node[isBox="${BoxByType.APP}"]`,
         css: {
-          'background-color': NodeColorFillBox
+          'background-color': NodeColorFillBoxApp
         }
       },
       // Node is selected
@@ -526,9 +546,9 @@ export class GraphStyles {
           'font-size': NodeTextFontSizeHover
         }
       },
-      // Node other than App Box is highlighted (see GraphHighlighter.ts)
+      // Node other than Box is highlighted (see GraphHighlighter.ts)
       {
-        selector: `node.${HighlightClass}[^isGroup]`,
+        selector: `node.${HighlightClass}[^isBox]`,
         style: {
           'background-color': (ele: Cy.NodeSingular) => {
             switch (ele.data(CyNode.healthStatus)) {
@@ -618,7 +638,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: '*.find[^isGroup]',
+        selector: '*.find[^isBox]',
         style: {
           'overlay-color': PfColors.Gold400,
           'overlay-padding': '7px',
@@ -626,7 +646,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: '*.span[^isGroup]',
+        selector: '*.span[^isBox]',
         style: {
           'overlay-color': PfColors.Purple200,
           'overlay-padding': '7px',

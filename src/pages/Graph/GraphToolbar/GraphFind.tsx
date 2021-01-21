@@ -382,19 +382,19 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isIdle}]`).subtract(nodesWithVisibleEdges);
       hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
       // subtract any appbox hits, we only hide empty appboxes
-      hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isGroup]'));
+      hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isBox]'));
 
       if (this.props.compressOnHide) {
         this.removedElements = cy.remove(hiddenElements);
         // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :inside'));
+        const hiddenAppBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
         this.removedElements = this.removedElements.add(cy.remove(hiddenAppBoxes));
       } else {
         // set the remaining hide-hits hidden
         this.hiddenElements = hiddenElements;
         this.hiddenElements.style({ visibility: 'hidden' });
         // now subtract any appboxes that don't have any visible children
-        const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :visible'));
+        const hiddenAppBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :visible'));
         hiddenAppBoxes.style({ visibility: 'hidden' });
         this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
       }

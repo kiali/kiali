@@ -83,7 +83,7 @@ class TraceDetails extends React.Component<Props, State> {
 
     switch (this.props.targetKind) {
       case 'app':
-        cytoscapeGraph = cytoscapeGraph.app(this.props.target).nodeType(NodeType.APP).isGroup(null);
+        cytoscapeGraph = cytoscapeGraph.app(this.props.target).nodeType(NodeType.APP);
         break;
       case 'service':
         graphType = GraphType.SERVICE;

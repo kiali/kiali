@@ -20,10 +20,11 @@ import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
+  toggleBoxByCluster(): void;
+  toggleBoxByNamespace(): void;
   toggleCompressOnHide(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphMissingSidecars(): void;
-  toggleGraphNodeLabels(): void;
   toggleGraphSecurity(): void;
   toggleGraphVirtualServices(): void;
   toggleIdleEdges(): void;
@@ -151,13 +152,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
   private getPopoverContent() {
     // map our attributes from redux
     const {
+      boxByCluster,
+      boxByNamespace,
       compressOnHide,
       edgeLabelMode,
       showCircuitBreakers,
       showIdleEdges,
       showIdleNodes,
       showMissingSidecars,
-      showNodeLabels,
       showOperationNodes,
       showSecurity,
       showServiceNodes,
@@ -167,10 +169,11 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
     // map our dispatchers for redux
     const {
+      toggleBoxByCluster,
+      toggleBoxByNamespace,
       toggleCompressOnHide,
       toggleGraphCircuitBreakers,
       toggleGraphMissingSidecars,
-      toggleGraphNodeLabels,
       toggleGraphSecurity,
       toggleGraphVirtualServices,
       toggleIdleEdges,
@@ -229,8 +232,30 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
     const visibilityOptions: DisplayOptionType[] = [
       {
+        id: 'boxByCluster',
+        labelText: 'Cluster Boxes',
+        isChecked: boxByCluster,
+        onChange: toggleBoxByCluster,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <strong>Experimental:</strong> When enabled the graph will box nodes in the same cluster.
+          </div>
+        )
+      },
+      {
+        id: 'boxByNamespace',
+        labelText: 'Namespace Boxes',
+        isChecked: boxByNamespace,
+        onChange: toggleBoxByNamespace,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            When enabled the graph will box nodes in the same namespace, within the same cluster.
+          </div>
+        )
+      },
+      {
         id: 'filterHide',
-        labelText: 'Compress Hidden',
+        labelText: 'Compressed Hide',
         isChecked: compressOnHide,
         onChange: toggleCompressOnHide,
         tooltip: (
@@ -264,12 +289,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             provide cleaner graphs. Enable to help locate unused, misconfigured or obsolete services.
           </div>
         )
-      },
-      {
-        id: 'filterNodes',
-        labelText: 'Node Names',
-        isChecked: showNodeLabels,
-        onChange: toggleGraphNodeLabels
       },
       {
         id: 'filterOperationNodes',
@@ -432,13 +451,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
+  boxByCluster: state.graph.toolbarState.boxByCluster,
+  boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
   edgeLabelMode: edgeLabelModeSelector(state),
   showCircuitBreakers: state.graph.toolbarState.showCircuitBreakers,
   showIdleEdges: state.graph.toolbarState.showIdleEdges,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
-  showNodeLabels: state.graph.toolbarState.showNodeLabels,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
@@ -450,10 +470,11 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
+    toggleBoxByCluster: bindActionCreators(GraphToolbarActions.toggleBoxByCluster, dispatch),
+    toggleBoxByNamespace: bindActionCreators(GraphToolbarActions.toggleBoxByNamespace, dispatch),
     toggleCompressOnHide: bindActionCreators(GraphToolbarActions.toggleCompressOnHide, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(GraphToolbarActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphToolbarActions.toggleGraphMissingSidecars, dispatch),
-    toggleGraphNodeLabels: bindActionCreators(GraphToolbarActions.toggleGraphNodeLabel, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleGraphVirtualServices: bindActionCreators(GraphToolbarActions.toggleGraphVirtualServices, dispatch),
     toggleIdleEdges: bindActionCreators(GraphToolbarActions.toggleIdleEdges, dispatch),

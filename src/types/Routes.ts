@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 export interface MenuItem {
   title: string;
   to: string;
@@ -6,5 +8,6 @@ export interface MenuItem {
 
 export interface Path {
   path: string;
-  component: any;
+  component?: any;
+  render?: () => React.ReactNode;
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { NodeType, GraphNodeData, DestService } from '../../types/Graph';
+import { NodeType, GraphNodeData, DestService, BoxByType } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tooltip, Badge, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
@@ -21,6 +21,33 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
           <Badge className="virtualitem_badge_definition">A</Badge>
         </Tooltip>
       );
+    case NodeType.BOX:
+      switch (nodeData.isBox) {
+        case BoxByType.APP:
+          return (
+            <Tooltip position={TooltipPosition.auto} content={<>Application</>}>
+              <Badge className="virtualitem_badge_definition">A</Badge>
+            </Tooltip>
+          );
+        case BoxByType.CLUSTER:
+          return (
+            <Tooltip position={TooltipPosition.auto} content={<>Cluster</>}>
+              <Badge className="virtualitem_badge_definition">C</Badge>
+            </Tooltip>
+          );
+        case BoxByType.NAMESPACE:
+          return (
+            <Tooltip position={TooltipPosition.auto} content={<>Namespace</>}>
+              <Badge className="virtualitem_badge_definition">NS</Badge>
+            </Tooltip>
+          );
+        default:
+          return (
+            <Tooltip position={TooltipPosition.auto} content={<>Unknown</>}>
+              <Badge className="virtualitem_badge_definition">U</Badge>
+            </Tooltip>
+          );
+      }
     case NodeType.SERVICE:
       return !!nodeData.isServiceEntry ? (
         <Tooltip
@@ -52,11 +79,10 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
 };
 
 const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
-  const namespace = nodeData.namespace;
+  const { app, cluster, namespace, service, workload } = nodeData;
   if (!nodeType || nodeData.nodeType === NodeType.UNKNOWN) {
     nodeType = nodeData.nodeType;
   }
-  const { app, service, workload } = nodeData;
   let displayName: string = 'unknown';
   let link: string | undefined;
   let key: string | undefined;
@@ -69,6 +95,21 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
       link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
       key = `${namespace}.app.${app}`;
       displayName = app!;
+      break;
+    case NodeType.BOX:
+      switch (nodeData.isBox) {
+        case BoxByType.APP:
+          link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
+          key = `${namespace}.app.${app}`;
+          displayName = app!;
+          break;
+        case BoxByType.CLUSTER:
+          displayName = cluster;
+          break;
+        case BoxByType.NAMESPACE:
+          displayName = namespace;
+          break;
+      }
       break;
     case NodeType.SERVICE:
       if (nodeData.isServiceEntry) {
@@ -185,6 +226,7 @@ export const renderDestServicesLinks = (node: any) => {
     const serviceNodeData: GraphNodeData = {
       id: nodeData.id,
       app: '',
+      cluster: ds.cluster,
       isInaccessible: nodeData.isInaccessible,
       isOutside: nodeData.isOutside,
       isRoot: nodeData.isRoot,

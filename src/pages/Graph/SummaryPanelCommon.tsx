@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxByType } from '../../types/Graph';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
@@ -13,7 +13,9 @@ export enum NodeMetricType {
   APP = 1,
   WORKLOAD = 2,
   SERVICE = 3,
-  AGGREGATE = 4
+  AGGREGATE = 4,
+  CLUSTER = 5,
+  NAMESPACE = 6
 }
 
 export const summaryBodyTabs = style({
@@ -62,6 +64,16 @@ export const getNodeMetricType = (nodeData: DecoratedGraphNodeData): NodeMetricT
     case NodeType.APP:
       // treat versioned app like a workload to narrow to the specific version
       return nodeData.workload ? NodeMetricType.WORKLOAD : NodeMetricType.APP;
+    case NodeType.BOX:
+      switch (nodeData.isBox) {
+        case BoxByType.APP:
+          return NodeMetricType.APP;
+        case BoxByType.CLUSTER:
+          return NodeMetricType.CLUSTER;
+        case BoxByType.NAMESPACE:
+        default:
+          return NodeMetricType.NAMESPACE;
+      }
     case NodeType.SERVICE:
       return NodeMetricType.SERVICE;
     default:

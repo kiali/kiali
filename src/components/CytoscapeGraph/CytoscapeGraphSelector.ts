@@ -1,4 +1,4 @@
-import { NodeType } from '../../types/Graph';
+import { NodeType, BoxByType } from '../../types/Graph';
 
 export type CytoscapeGraphSelector = string;
 
@@ -7,9 +7,9 @@ interface CytoscapeElementData {
   aggregateValue?: string;
   app?: string;
   id?: string;
-  isGroup?: string | null;
+  isBox?: BoxByType | null;
   namespace?: string;
-  nodeType?: string;
+  nodeType?: NodeType;
   service?: string;
   version?: string;
   workload?: string;
@@ -40,8 +40,8 @@ export class CytoscapeGraphSelectorBuilder {
     return this;
   }
 
-  isGroup(isGroup: string | null) {
-    this.data.isGroup = isGroup;
+  isBox(isBox: BoxByType | null) {
+    this.data.isBox = isBox;
     return this;
   }
 

@@ -5,6 +5,12 @@ export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabe
 interface iter8Config {
   enabled: boolean;
 }
+
+interface ClusterInfo {
+  name: string;
+  network: string;
+}
+
 // Kiali addons/extensions specific
 interface Extensions {
   iter8: iter8Config;
@@ -48,6 +54,7 @@ export interface ToleranceConfig {
 */
 
 export interface ServerConfig {
+  clusterInfo?: ClusterInfo;
   extensions?: Extensions;
   healthConfig: HealthConfig;
   installationTag?: string;

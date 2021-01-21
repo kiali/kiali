@@ -1,10 +1,5 @@
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import {
-  CytoscapeGlobalScratchNamespace,
-  DecoratedGraphEdgeData,
-  DecoratedGraphNodeData,
-  Layout
-} from '../../types/Graph';
+import { DecoratedGraphEdgeData, DecoratedGraphNodeData, Layout } from '../../types/Graph';
 import { DagreGraph } from './graphs/DagreGraph';
 import * as Cy from 'cytoscape';
 
@@ -41,6 +36,7 @@ export const CyNode = {
   aggregate: 'aggregate',
   aggregateValue: 'aggregateValue',
   app: 'app',
+  cluster: 'cluster',
   destServices: 'destServices',
   grpcIn: 'grpcIn',
   grpcInErr: 'grpcInErr',
@@ -58,8 +54,8 @@ export const CyNode = {
   httpInNoResponse: 'httpInNoResponse',
   httpOut: 'httpOut',
   id: 'id',
+  isBox: 'isBox',
   isDead: 'isDead',
-  isGroup: 'isGroup',
   isIdle: 'isIdle',
   isInaccessible: 'isInaccessible',
   isIstio: 'isIstio',
@@ -92,28 +88,21 @@ export const safeFit = (cy: Cy.Core, centerElements?: Cy.Collection) => {
 };
 
 export const runLayout = (cy: Cy.Core, layout: Layout) => {
-  // Enable labels when doing a relayout, layouts can be told to take into account the labels to avoid
-  // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
-  const showNodeLabels = cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels;
-  cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels = true;
-
   // Using an extension
   (cy as any).nodeHtmlLabel().updateNodeLabel(cy.nodes());
 
   const layoutOptions = LayoutDictionary.getLayout(layout);
   if (cy.nodes('$node > node').length > 0) {
-    // if there is any parent node, run the group-compound-layout
+    // if there is any parent (i.e. box) node, run the box-layout
     cy.layout({
       ...layoutOptions,
-      name: 'group-compound-layout',
-      realLayout: layout.name,
-      // Currently we do not support non discrete layouts for the compounds, but this can be supported if needed.
-      compoundLayoutOptions: LayoutDictionary.getLayout(DagreGraph.getLayout())
+      name: 'box-layout',
+      appBoxLayout: LayoutDictionary.getLayout(DagreGraph.getLayout()),
+      defaultLayout: layout
     }).run();
   } else {
     cy.layout(layoutOptions).run();
   }
-  cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels = showNodeLabels;
 };
 
 export const decoratedEdgeData = (ele: Cy.EdgeSingular): DecoratedGraphEdgeData => {

@@ -47,6 +47,8 @@ describe('CytoscapeGraph component test', () => {
     dataSource.on('fetchSuccess', () => {
       const wrapper = shallow(
         <CytoscapeGraph
+          boxByCluster={false}
+          boxByNamespace={false}
           compressOnHide={true}
           edgeLabelMode={myEdgeLabelMode}
           graphData={{
@@ -77,13 +79,12 @@ describe('CytoscapeGraph component test', () => {
           isMTLSEnabled={false}
           showCircuitBreakers={false}
           showIdleEdges={false}
+          showIdleNodes={false}
           showMissingSidecars={true}
-          showNodeLabels={true}
           showOperationNodes={false}
           showSecurity={true}
           showServiceNodes={true}
           showTrafficAnimation={false}
-          showIdleNodes={false}
           showVirtualServices={true}
           toggleIdleNodes={() => undefined}
         />

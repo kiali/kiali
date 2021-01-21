@@ -43,13 +43,14 @@ export interface GraphToolbarState {
   hideValue: string;
   showFindHelp: boolean;
   // Toggle props
+  boxByCluster: boolean;
+  boxByNamespace: boolean;
   compressOnHide: boolean;
   showCircuitBreakers: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;
-  showNodeLabels: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;

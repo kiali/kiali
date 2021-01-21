@@ -5,7 +5,7 @@ import {
   GraphDefinition,
   GraphElements,
   GraphType,
-  GroupByType,
+  BoxByType,
   NodeParamsType,
   NodeType,
   UNKNOWN,
@@ -61,6 +61,8 @@ type NodeHealth = {
 };
 
 export interface FetchParams {
+  boxByCluster?: boolean;
+  boxByNamespace?: boolean;
   duration: DurationInSeconds;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
@@ -155,8 +157,18 @@ export default class GraphDataSource {
       injectServiceNodes: fetchParams.injectServiceNodes
     };
 
+    const boxBy: string[] = [];
+    if (fetchParams.boxByCluster) {
+      boxBy.push(BoxByType.CLUSTER);
+    }
+    if (fetchParams.boxByNamespace) {
+      boxBy.push(BoxByType.NAMESPACE);
+    }
     if (fetchParams.graphType === GraphType.APP || fetchParams.graphType === GraphType.VERSIONED_APP) {
-      restParams.groupBy = GroupByType.APP;
+      boxBy.push(BoxByType.APP);
+    }
+    if (boxBy.length > 0) {
+      restParams.boxBy = boxBy.join(',');
     }
 
     if (fetchParams.queryTime) {
@@ -285,17 +297,16 @@ export default class GraphDataSource {
   // Private methods
 
   private static defaultFetchParams(duration: DurationInSeconds, namespace: string): FetchParams {
+    // queryTime defaults to server's 'now', leave unset
     return {
-      namespaces: [{ name: namespace }],
+      boxByCluster: false,
+      boxByNamespace: false,
       duration: duration,
+      edgeLabelMode: EdgeLabelMode.NONE,
       graphType: GraphType.WORKLOAD,
       includeHealth: true,
       injectServiceNodes: true,
-      edgeLabelMode: EdgeLabelMode.NONE,
-      showIdleEdges: false,
-      showIdleNodes: false,
-      showOperationNodes: false,
-      showSecurity: false,
+      namespaces: [{ name: namespace }],
       node: {
         app: '',
         namespace: { name: namespace },
@@ -303,7 +314,11 @@ export default class GraphDataSource {
         service: '',
         version: '',
         workload: ''
-      }
+      },
+      showIdleEdges: false,
+      showIdleNodes: false,
+      showOperationNodes: false,
+      showSecurity: false
     };
   }
 
@@ -423,27 +438,51 @@ export default class GraphDataSource {
           const nodeHealths = promiseToNode.get(promise);
           nodeHealths!.push(nodeHealth);
         }
-      } else if (nodeType === NodeType.APP) {
-        let promise = appNamespacePromises.get(namespace);
-        const nodeHealth = { node: node, key: node.data.app! };
-        if (!promise) {
-          promise = API.getNamespaceAppHealth(namespace, duration);
-          appNamespacePromises.set(namespace, promise);
-          promiseToNode.set(promise, [nodeHealth]);
-        } else {
-          const nodeHealths = promiseToNode.get(promise);
-          nodeHealths!.push(nodeHealth);
-        }
-      } else if (nodeType === NodeType.SERVICE) {
-        let promise = serviceNamespacePromises.get(namespace);
-        const nodeHealth = { node: node, key: node.data.service! };
-        if (!promise) {
-          promise = API.getNamespaceServiceHealth(namespace, duration);
-          serviceNamespacePromises.set(namespace, promise);
-          promiseToNode.set(promise, [nodeHealth]);
-        } else {
-          const nodeHealths = promiseToNode.get(promise);
-          nodeHealths!.push(nodeHealth);
+      } else {
+        switch (nodeType) {
+          case NodeType.APP: {
+            let promise = appNamespacePromises.get(namespace);
+            const nodeHealth = { node: node, key: node.data.app! };
+            if (!promise) {
+              promise = API.getNamespaceAppHealth(namespace, duration);
+              appNamespacePromises.set(namespace, promise);
+              promiseToNode.set(promise, [nodeHealth]);
+            } else {
+              const nodeHealths = promiseToNode.get(promise);
+              nodeHealths!.push(nodeHealth);
+            }
+            break;
+          }
+          case NodeType.BOX: {
+            if (node.data.isBox === BoxByType.APP) {
+              let promise = appNamespacePromises.get(namespace);
+              const nodeHealth = { node: node, key: node.data.app! };
+              if (!promise) {
+                promise = API.getNamespaceAppHealth(namespace, duration);
+                appNamespacePromises.set(namespace, promise);
+                promiseToNode.set(promise, [nodeHealth]);
+              } else {
+                const nodeHealths = promiseToNode.get(promise);
+                nodeHealths!.push(nodeHealth);
+              }
+            }
+            break;
+          }
+          case NodeType.SERVICE: {
+            let promise = serviceNamespacePromises.get(namespace);
+            const nodeHealth = { node: node, key: node.data.service! };
+            if (!promise) {
+              promise = API.getNamespaceServiceHealth(namespace, duration);
+              serviceNamespacePromises.set(namespace, promise);
+              promiseToNode.set(promise, [nodeHealth]);
+            } else {
+              const nodeHealths = promiseToNode.get(promise);
+              nodeHealths!.push(nodeHealth);
+            }
+            break;
+          }
+          default:
+            break;
         }
       }
     }

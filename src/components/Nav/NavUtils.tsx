@@ -62,6 +62,11 @@ export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
         return (
           `/graph/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
         );
+      case NodeType.BOX:
+        // can only be app box
+        return (
+          `/graph/node/namespaces/${node.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params)
+        );
       case NodeType.SERVICE:
         return (
           `/graph/node/namespaces/${node.namespace.name}/services/${node.service}?` + buildCommonQueryParams(params)

@@ -10,6 +10,7 @@ export const TEST = {
           text: 'details (v1)',
           service: 'details.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -20,6 +21,7 @@ export const TEST = {
           text: 'productpage (v1)',
           service: 'productpage.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -30,6 +32,7 @@ export const TEST = {
           text: 'reviews (v1)',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -40,6 +43,7 @@ export const TEST = {
           text: 'unknown',
           service: 'unknown',
           version: 'unknown',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -86,6 +90,7 @@ export const ISTIO_SYSTEM = {
           text: 'details (v1)',
           service: 'details.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -96,6 +101,7 @@ export const ISTIO_SYSTEM = {
           text: 'productpage (v1)',
           service: 'productpage.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -106,6 +112,7 @@ export const ISTIO_SYSTEM = {
           text: 'ratings (v1)',
           service: 'ratings.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -115,6 +122,7 @@ export const ISTIO_SYSTEM = {
           id: 'n7',
           text: 'reviews',
           service: 'reviews.istio-system.svc.cluster.local',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -126,6 +134,7 @@ export const ISTIO_SYSTEM = {
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v1',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -137,6 +146,7 @@ export const ISTIO_SYSTEM = {
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v2',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -148,6 +158,7 @@ export const ISTIO_SYSTEM = {
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v3',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }
@@ -158,6 +169,7 @@ export const ISTIO_SYSTEM = {
           text: 'unknown',
           service: 'unknown',
           version: 'unknown',
+          cluster: `cluster-1`,
           namespace: 'istio-system',
           nodeType: NodeType.APP
         }

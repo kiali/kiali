@@ -15,6 +15,7 @@ import ExperimentListPage from './pages/extensions/iter8/Iter8ExperimentList/Exp
 import ExperimentCreatePageContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreatePage';
 import ExperimentDetailsPage from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentDetailsPage';
 import ExperimentCreateFromFileContainer from './pages/extensions/iter8/Iter8ExperimentDetails/ExperimentCreateFromFile';
+import MeshPage from 'pages/Mesh/MeshPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -54,6 +55,10 @@ const navItems: MenuItem[] = [
   {
     title: 'Distributed Tracing',
     to: '/jaeger'
+  },
+  {
+    title: 'Mesh',
+    to: '/mesh'
   }
 ];
 
@@ -140,6 +145,10 @@ const pathRoutes: Path[] = [
   {
     path: '/' + Paths.JAEGER,
     component: undefined
+  },
+  {
+    path: '/' + Paths.MESH,
+    component: MeshPage
   }
 ];
 

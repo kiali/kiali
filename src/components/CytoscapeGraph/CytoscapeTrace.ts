@@ -31,7 +31,7 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // In service graph type, parent can be a Service or a Workload (e.g. when it initiates the transaction)
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
-      let selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      let selector = `node[!${CyNode.isBox}][${CyNode.nodeType}="${NodeType.SERVICE}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
       let parent = cy.elements(selector);
       if (!parent || parent.length === 0) {
         // Try workload
@@ -49,7 +49,7 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // Parent app
     const sourceAppNs = searchParentApp(span);
     if (sourceAppNs) {
-      const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
+      const selector = `node[${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${sourceAppNs.app}"][${CyNode.namespace}="${sourceAppNs.namespace}"]`;
       const parent = cy.elements(selector);
       if (!!parent && parent.length !== 0) {
         lastSelection = parent;
@@ -80,7 +80,7 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
     // Main app
     const destAppNs = getAppFromSpan(span);
     if (destAppNs) {
-      const selector = `node[!${CyNode.isGroup}][${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${destAppNs.app}"][${CyNode.namespace}="${destAppNs.namespace}"]`;
+      const selector = `node[${CyNode.nodeType}="${NodeType.APP}"][${CyNode.app}="${destAppNs.app}"][${CyNode.namespace}="${destAppNs.namespace}"]`;
       lastSelection = nextHop(span, cy.elements(selector), lastSelection);
     }
   } else {

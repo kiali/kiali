@@ -56,7 +56,12 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
   }
 
   componentDidMount() {
-    document.title = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali Console';
+    let pageTitle = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali';
+    if (serverConfig.clusterInfo?.name) {
+      pageTitle += ` [${serverConfig.clusterInfo.name}]`;
+    }
+
+    document.title = pageTitle;
   }
 
   isGraph = () => {

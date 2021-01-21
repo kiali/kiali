@@ -13,6 +13,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   node: undefined,
   summaryData: null,
   toolbarState: {
+    boxByCluster: false,
+    boxByNamespace: false,
     compressOnHide: true,
     edgeLabelMode: EdgeLabelMode.NONE,
     findValue: '',
@@ -24,7 +26,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showIdleNodes: false,
     showLegend: false,
     showMissingSidecars: true,
-    showNodeLabels: true,
     showOperationNodes: false,
     showSecurity: false,
     showServiceNodes: true,
@@ -101,6 +102,18 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
           showIdleNodes: action.payload
         })
       });
+    case getType(GraphToolbarActions.toggleBoxByCluster):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          boxByCluster: !state.toolbarState.boxByCluster
+        })
+      });
+    case getType(GraphToolbarActions.toggleBoxByNamespace):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          boxByNamespace: !state.toolbarState.boxByNamespace
+        })
+      });
     case getType(GraphToolbarActions.toggleCompressOnHide):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
@@ -111,18 +124,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showFindHelp: !state.toolbarState.showFindHelp
-        })
-      });
-    case getType(GraphToolbarActions.toggleIdleEdges):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showIdleEdges: !state.toolbarState.showIdleEdges
-        })
-      });
-    case getType(GraphToolbarActions.toggleGraphNodeLabel):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showNodeLabels: !state.toolbarState.showNodeLabels
         })
       });
     case getType(GraphToolbarActions.toggleGraphCircuitBreakers):
@@ -147,6 +148,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showSecurity: !state.toolbarState.showSecurity
+        })
+      });
+    case getType(GraphToolbarActions.toggleIdleEdges):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showIdleEdges: !state.toolbarState.showIdleEdges
         })
       });
     case getType(GraphToolbarActions.toggleIdleNodes):

@@ -1,15 +1,18 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { style } from 'typestyle';
-import { SummaryPanelPropType } from '../../types/Graph';
+import { SummaryPanelPropType, BoxByType } from '../../types/Graph';
 import SummaryPanelEdge from './SummaryPanelEdge';
 import SummaryPanelGraph from './SummaryPanelGraph';
-import SummaryPanelGroup from './SummaryPanelGroup';
+import SummaryPanelAppBox from './SummaryPanelAppBox';
 import { KialiIcon } from 'config/KialiIcon';
 import SummaryPanelNodeContainer from './SummaryPanelNode';
 import { JaegerState } from 'reducers/JaegerState';
 import SummaryPanelTraceDetailsContainer from './SummaryPanelTraceDetails';
 import { KialiAppState } from 'store/Store';
+import SummaryPanelClusterBox from './SummaryPanelClusterBox';
+import SummaryPanelNamespaceBox from './SummaryPanelNamespaceBox';
+import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -77,6 +80,10 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
     if (!this.props.isPageVisible || !this.props.data.summaryTarget) {
       return null;
     }
+    const summaryType = this.props.data.summaryType as string;
+    const boxType: BoxByType | undefined =
+      summaryType === 'box' ? this.props.data.summaryTarget.data(CyNode.isBox) : undefined;
+
     const mainTopStyle = this.state.isVisible
       ? this.props.jaegerState.selectedTrace
         ? expandedHalfStyle
@@ -96,8 +103,44 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
               </>
             )}
           </div>
-          {this.props.data.summaryType === 'edge' ? <SummaryPanelEdge {...this.props} /> : null}
-          {this.props.data.summaryType === 'graph' ? (
+          {summaryType === 'box' && boxType === 'app' && (
+            <SummaryPanelAppBox
+              data={this.props.data}
+              namespaces={this.props.data.summaryTarget.namespaces}
+              graphType={this.props.graphType}
+              injectServiceNodes={this.props.injectServiceNodes}
+              queryTime={this.props.queryTime}
+              duration={this.props.duration}
+              step={this.props.step}
+              rateInterval={this.props.rateInterval}
+            />
+          )}
+          {summaryType === 'box' && boxType === 'cluster' && (
+            <SummaryPanelClusterBox
+              data={this.props.data}
+              namespaces={this.props.data.summaryTarget.namespaces}
+              graphType={this.props.graphType}
+              injectServiceNodes={this.props.injectServiceNodes}
+              queryTime={this.props.queryTime}
+              duration={this.props.duration}
+              step={this.props.step}
+              rateInterval={this.props.rateInterval}
+            />
+          )}
+          {summaryType === 'box' && boxType === 'namespace' && (
+            <SummaryPanelNamespaceBox
+              data={this.props.data}
+              namespaces={this.props.data.summaryTarget.namespaces}
+              graphType={this.props.graphType}
+              injectServiceNodes={this.props.injectServiceNodes}
+              queryTime={this.props.queryTime}
+              duration={this.props.duration}
+              step={this.props.step}
+              rateInterval={this.props.rateInterval}
+            />
+          )}
+          {summaryType === 'edge' && <SummaryPanelEdge {...this.props} />}
+          {summaryType === 'graph' && (
             <SummaryPanelGraph
               data={this.props.data}
               namespaces={this.props.namespaces}
@@ -108,20 +151,8 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
               step={this.props.step}
               rateInterval={this.props.rateInterval}
             />
-          ) : null}
-          {this.props.data.summaryType === 'group' ? (
-            <SummaryPanelGroup
-              data={this.props.data}
-              namespaces={this.props.data.summaryTarget.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              queryTime={this.props.queryTime}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
-          ) : null}
-          {this.props.data.summaryType === 'node' ? (
+          )}
+          {this.props.data.summaryType === 'node' && (
             <SummaryPanelNodeContainer
               data={this.props.data}
               queryTime={this.props.queryTime}
@@ -132,7 +163,7 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
               step={this.props.step}
               rateInterval={this.props.rateInterval}
             />
-          ) : null}
+          )}
         </div>
         {this.props.jaegerState.selectedTrace && this.state.isVisible && (
           <div className={`panel panel-default ${summaryPanelBottomSplit}`}>

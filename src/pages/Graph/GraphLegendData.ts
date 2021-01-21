@@ -26,6 +26,7 @@ import trafficTcpImage from '../../assets/img/legend/traffic-tcp.svg';
 // Badges
 import badgeCircuitBreakerImage from '../../assets/img/legend/node-badge-circuit-breaker.svg';
 import badgeMissingSidecarImage from '../../assets/img/legend/node-badge-missing-sidecar.svg';
+import badgeTrafficSourceImage from '../../assets/img/legend/node-badge-traffic-source.svg';
 import badgeVirtualServicesImage from '../../assets/img/legend/node-badge-virtual-services.svg';
 
 export interface GraphLegendItem {
@@ -89,7 +90,8 @@ const legendData: GraphLegendItem[] = [
     data: [
       { label: 'Circuit Breaker', icon: badgeCircuitBreakerImage },
       { label: 'Missing Sidecar', icon: badgeMissingSidecarImage },
-      { label: 'Virtual Services', icon: badgeVirtualServicesImage }
+      { label: 'Traffic Source', icon: badgeTrafficSourceImage },
+      { label: 'Virtual Service', icon: badgeVirtualServicesImage }
     ]
   }
 ];

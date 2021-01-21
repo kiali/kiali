@@ -23,7 +23,7 @@ import { decoratedNodeData, CyNode } from 'components/CytoscapeGraph/CytoscapeGr
 import { Dropdown, DropdownPosition, DropdownItem, KebabToggle, DropdownGroup } from '@patternfly/react-core';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 
-type SummaryPanelGroupMetricsState = {
+type SummaryPanelAppBoxMetricsState = {
   requestCountIn: Datapoint[];
   requestCountOut: Datapoint[];
   errorCountIn: Datapoint[];
@@ -34,14 +34,14 @@ type SummaryPanelGroupMetricsState = {
   tcpReceivedOut: Datapoint[];
 };
 
-type SummaryPanelGroupState = SummaryPanelGroupMetricsState & {
-  group: any;
+type SummaryPanelAppBoxState = SummaryPanelAppBoxMetricsState & {
+  appBox: any;
   isOpen: boolean;
   loading: boolean;
   metricsLoadError: string | null;
 };
 
-const defaultMetricsState: SummaryPanelGroupMetricsState = {
+const defaultMetricsState: SummaryPanelAppBoxMetricsState = {
   requestCountIn: [],
   requestCountOut: [],
   errorCountIn: [],
@@ -52,15 +52,15 @@ const defaultMetricsState: SummaryPanelGroupMetricsState = {
   tcpReceivedOut: []
 };
 
-const defaultState: SummaryPanelGroupState = {
-  group: null,
+const defaultState: SummaryPanelAppBoxState = {
+  appBox: null,
   isOpen: false,
   loading: false,
   metricsLoadError: null,
   ...defaultMetricsState
 };
 
-export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
+export default class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, SummaryPanelAppBoxState> {
   private metricsPromise?: CancelablePromise<Response<IstioMetricsMap>[]>;
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -71,11 +71,11 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
-  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelGroupState) {
-    // if the summaryTarget (i.e. selected group) has changed, then init the state and set to loading. The loading
+  static getDerivedStateFromProps(props: SummaryPanelPropType, state: SummaryPanelAppBoxState) {
+    // if the summaryTarget (i.e. selected appBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.data.summaryTarget !== state.group
-      ? { group: props.data.summaryTarget, loading: true, ...defaultMetricsState }
+    return props.data.summaryTarget !== state.appBox
+      ? { appBox: props.data.summaryTarget, loading: true, ...defaultMetricsState }
       : null;
   }
 
@@ -101,15 +101,15 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   render() {
-    const group = this.props.data.summaryTarget;
-    const nodeData = decoratedNodeData(group);
-    const serviceList = this.renderServiceList(group);
-    const workloadList = this.renderWorkloadList(group);
+    const appBox = this.props.data.summaryTarget;
+    const nodeData = decoratedNodeData(appBox);
+    const serviceList = this.renderServiceList(appBox);
+    const workloadList = this.renderWorkloadList(appBox);
 
     const actions = [
       <DropdownGroup
         label="Show"
-        className="kiali-group-menu"
+        className="kiali-appbox-menu"
         children={getOptions(nodeData).map(o => {
           return (
             <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
@@ -126,42 +126,42 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           <div>
             {renderBadgedLink(nodeData)}
             <Dropdown
-              id="summary-group-actions"
+              id="summary-appbox-actions"
               isPlain={true}
               style={{ float: 'right' }}
               dropdownItems={actions}
               isOpen={this.state.isOpen}
               position={DropdownPosition.right}
-              toggle={<KebabToggle id="summary-group-kebab" onToggle={this.onToggleActions} />}
+              toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
               isGrouped={true}
             />
           </div>
           <div>{renderHealth(nodeData.health)}</div>
           <div>
-            {this.renderBadgeSummary(group)}
+            {this.renderBadgeSummary(appBox)}
             {serviceList.length > 0 && <div>{serviceList}</div>}
             {workloadList.length > 0 && <div> {workloadList}</div>}
           </div>
         </div>
         <div className="panel-body">
-          {this.hasGrpcTraffic(group) && (
+          {this.hasGrpcTraffic(appBox) && (
             <>
-              {this.renderGrpcRates(group)}
+              {this.renderGrpcRates(appBox)}
               {hr()}
             </>
           )}
-          {this.hasHttpTraffic(group) && (
+          {this.hasHttpTraffic(appBox) && (
             <>
-              {this.renderHttpRates(group)}
+              {this.renderHttpRates(appBox)}
               {hr()}
             </>
           )}
           <div>
-            {this.renderSparklines(group)}
+            {this.renderSparklines(appBox)}
             {hr()}
           </div>
-          {!this.hasGrpcTraffic(group) && renderNoTraffic('GRPC')}
-          {!this.hasHttpTraffic(group) && renderNoTraffic('HTTP')}
+          {!this.hasGrpcTraffic(appBox) && renderNoTraffic('GRPC')}
+          {!this.hasHttpTraffic(appBox) && renderNoTraffic('HTTP')}
         </div>
       </div>
     );
@@ -212,7 +212,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.debug('SummaryPanelGroup: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelAppBox: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
@@ -226,11 +226,11 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private renderBadgeSummary = group => {
-    let hasCB: boolean = group.data(CyNode.hasCB) === true;
-    let hasVS: boolean = group.data(CyNode.hasVS) === true;
+  private renderBadgeSummary = appBox => {
+    let hasCB: boolean = appBox.data(CyNode.hasCB) === true;
+    let hasVS: boolean = appBox.data(CyNode.hasVS) === true;
 
-    group
+    appBox
       .children(`node[${CyNode.hasCB}],[${CyNode.hasVS}]`)
       .nodes()
       .forEach(n => {
@@ -256,9 +256,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderGrpcRates = group => {
+  private renderGrpcRates = appBox => {
     // only consider the physical children to avoid inflated rates
-    const validChildren = group.children(
+    const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
     const incoming = getAccumulatedTrafficRateGrpc(validChildren.incomers('edge'));
@@ -279,9 +279,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderHttpRates = group => {
+  private renderHttpRates = appBox => {
     // only consider the physical children to avoid inflated rates
-    const validChildren = group.children(
+    const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
     const incoming = getAccumulatedTrafficRateHttp(validChildren.incomers('edge'));
@@ -306,7 +306,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderSparklines = group => {
+  private renderSparklines = appBox => {
     if (this.state.loading) {
       return <strong>Loading charts...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -319,7 +319,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
 
     let tcpCharts, httpCharts;
-    if (this.hasHttpTraffic(group)) {
+    if (this.hasHttpTraffic(appBox)) {
       httpCharts = (
         <>
           <RpsChart
@@ -338,7 +338,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       );
     }
 
-    if (this.hasTcpTraffic(group)) {
+    if (this.hasTcpTraffic(appBox)) {
       tcpCharts = (
         <>
           <TcpChart
@@ -365,14 +365,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderServiceList = (group): any[] => {
+  private renderServiceList = (appBox): any[] => {
     // likely 0 or 1 but support N in case of unanticipated labeling
     const serviceList: any[] = [];
 
-    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(serviceNode => {
+    appBox.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach(serviceNode => {
       const serviceNodeData = decoratedNodeData(serviceNode);
       serviceList.push(renderBadgedLink(serviceNodeData, NodeType.SERVICE));
-      const aggregates = group.children(
+      const aggregates = appBox.children(
         `node[nodeType = "${NodeType.AGGREGATE}"][service = "${serviceNodeData.service}"]`
       );
       if (!!aggregates && aggregates.length > 0) {
@@ -388,10 +388,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return serviceList;
   };
 
-  private renderWorkloadList = (group): any[] => {
+  private renderWorkloadList = (appBox): any[] => {
     const workloadList: any[] = [];
 
-    group.children('node[workload]').forEach(node => {
+    appBox.children('node[workload]').forEach(node => {
       const nodeData = decoratedNodeData(node);
       workloadList.push(renderBadgedLink(nodeData, NodeType.WORKLOAD));
     });
@@ -399,22 +399,22 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return workloadList;
   };
 
-  private hasGrpcTraffic = (group): boolean => {
-    if (group.children().filter('[grpcIn > 0],[grpcOut > 0]').size() > 0) {
+  private hasGrpcTraffic = (appBox): boolean => {
+    if (appBox.children().filter('[grpcIn > 0],[grpcOut > 0]').size() > 0) {
       return true;
     }
     return false;
   };
 
-  private hasHttpTraffic = (group): boolean => {
-    if (group.children().filter('[httpIn > 0],[httpOut > 0]').size() > 0) {
+  private hasHttpTraffic = (appBox): boolean => {
+    if (appBox.children().filter('[httpIn > 0],[httpOut > 0]').size() > 0) {
       return true;
     }
     return false;
   };
 
-  private hasTcpTraffic = (group): boolean => {
-    if (group.children().filter('[tcpIn > 0],[tcpOut > 0]').size() > 0) {
+  private hasTcpTraffic = (appBox): boolean => {
+    if (appBox.children().filter('[tcpIn > 0],[tcpOut > 0]').size() > 0) {
       return true;
     }
     return false;

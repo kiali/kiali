@@ -14,7 +14,7 @@ const containerGray = style({ background: PfColors.Black150 });
 class RenderPage extends React.Component<{ isGraph: boolean }> {
   renderPaths(paths: Path[]) {
     return paths.map((item, index) => {
-      return <Route key={index} path={item.path} component={item.component} />;
+      return <Route key={index} path={item.path} component={item.component} render={item.render} />;
     });
   }
 

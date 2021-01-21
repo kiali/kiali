@@ -8,6 +8,7 @@ export enum Paths {
   ISTIO = 'istio',
   ITER8 = 'iter8',
   JAEGER = 'jaeger',
+  MESH = 'mesh',
   SERVICES = 'services',
   SERVICEENTRIES = 'istio/serviceentries',
   WORKLOADS = 'workloads'

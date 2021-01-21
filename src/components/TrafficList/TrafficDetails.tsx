@@ -253,12 +253,12 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
 
     // Index nodes by id and find the node of the queried item
     const nodes: { [key: string]: GraphNodeData } = {};
-    let myNode: GraphNodeData = { id: '', nodeType: NodeType.UNKNOWN, namespace: '' };
+    let myNode: GraphNodeData = { id: '', nodeType: NodeType.UNKNOWN, cluster: '', namespace: '' };
 
     traffic.elements.nodes.forEach(element => {
-      // Ignore group nodes. They are not relevant for the traffic list because we
+      // Ignore box nodes. They are not relevant for the traffic list because we
       // are interested in the actual apps.
-      if (!element.data.isGroup) {
+      if (!element.data.isBox) {
         nodes['id-' + element.data.id] = element.data;
         if (element.data.namespace) {
           const isMyWorkload =

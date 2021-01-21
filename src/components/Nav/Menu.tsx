@@ -55,6 +55,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
         // Extensions Nav Menu Items are conditionally rendered
         if (item.title === 'Iter8 Experiments') {
           return serverConfig.extensions!.iter8!.enabled;
+        } else if (item.title === 'Mesh') {
+          return serverConfig.clusterInfo?.name !== undefined;
         }
         return true;
       })

@@ -7,8 +7,7 @@ import { DimClass, HoveredClass, HighlightClass } from './GraphStyles';
 // When no node or edge is selected, hovering on a node or edge will highlight it and its neighborhood. Other
 // nodes and edges are dimmed.
 //
-// When an app box element is selected, we will highlight the contained nodes and their related nodes
-// (including edges).
+// When a box is selected, we will highlight the contained nodes and their related nodes (including edges).
 export class GraphHighlighter {
   cy: any;
   selected: CytoscapeClickEvent;
@@ -51,7 +50,7 @@ export class GraphHighlighter {
   onMouseIn = (event: CytoscapeMouseInEvent) => {
     // only highlight on hover when the graph is currently selected, otherwise leave the
     // selected element highlighted
-    if (this.selected.summaryType === 'graph' && ['node', 'edge', 'group'].indexOf(event.summaryType) !== -1) {
+    if (this.selected.summaryType === 'graph' && ['node', 'edge', 'box'].indexOf(event.summaryType) !== -1) {
       this.hovered = event;
       this.hovered.summaryTarget.addClass(HoveredClass);
       this.refresh();
@@ -93,8 +92,8 @@ export class GraphHighlighter {
           return this.getNodeHighlight(event.summaryTarget, isHover);
         case 'edge':
           return this.getEdgeHighlight(event.summaryTarget, isHover);
-        case 'group':
-          return this.getAppBoxHighlight(event.summaryTarget, isHover);
+        case 'box':
+          return this.getBoxHighlight(event.summaryTarget, isHover);
         default:
         // fall through
       }
@@ -102,11 +101,11 @@ export class GraphHighlighter {
     return undefined;
   }
 
-  includeParentNodes(nodes: any) {
+  includeAncestorNodes(nodes: any) {
     return nodes.reduce((all, current) => {
       all = all.add(current);
       if (current.isChild()) {
-        all = all.add(current.parent());
+        all = all.add(current.ancestors());
       }
       return all;
     }, this.cy.collection());
@@ -114,7 +113,7 @@ export class GraphHighlighter {
 
   getNodeHighlight(node: any, isHover: boolean) {
     const elems = isHover ? node.closedNeighborhood() : node.predecessors().add(node.successors());
-    return this.includeParentNodes(elems.add(node));
+    return this.includeAncestorNodes(elems.add(node));
   }
 
   getEdgeHighlight(edge: any, isHover: boolean) {
@@ -126,19 +125,19 @@ export class GraphHighlighter {
       const target = edge.target();
       elems = source.add(target).add(source.predecessors()).add(target.successors());
     }
-    return this.includeParentNodes(elems.add(edge));
+    return this.includeAncestorNodes(elems.add(edge));
   }
 
-  getAppBoxHighlight(appBox: any, isHover: boolean) {
+  getBoxHighlight(box: any, isHover: boolean) {
     let elems;
     if (isHover) {
-      elems = appBox.children().reduce((prev, child) => {
+      elems = box.descendants().reduce((prev, child) => {
         return prev.add(child.closedNeighborhood());
       }, this.cy.collection());
     } else {
-      const children = appBox.children();
+      const children = box.descendants();
       elems = children.add(children.predecessors()).add(children.successors());
     }
-    return this.includeParentNodes(elems);
+    return this.includeAncestorNodes(elems);
   }
 }

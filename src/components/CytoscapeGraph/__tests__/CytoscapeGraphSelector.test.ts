@@ -1,5 +1,5 @@
 import { CytoscapeGraphSelectorBuilder } from '../CytoscapeGraphSelector';
-import { NodeType } from '../../../types/Graph';
+import { NodeType, BoxByType } from '../../../types/Graph';
 
 describe('CytoscapeGraphSelector test', () => {
   it('Generates selector for app', () => {
@@ -37,14 +37,14 @@ describe('CytoscapeGraphSelector test', () => {
     expect(selector).toEqual('node[workload="myworkload"]');
   });
 
-  it('Generates selector for isGroup', () => {
-    const selector = new CytoscapeGraphSelectorBuilder().isGroup('mygroup').build();
-    expect(selector).toEqual('node[isGroup="mygroup"]');
+  it('Generates selector for isBox', () => {
+    const selector = new CytoscapeGraphSelectorBuilder().isBox(BoxByType.APP).build();
+    expect(selector).toEqual('node[isBox="app"]');
   });
 
-  it('Generates falsy selector for isGroup', () => {
-    const selector = new CytoscapeGraphSelectorBuilder().isGroup(null).build();
-    expect(selector).toEqual('node[!isGroup]');
+  it('Generates falsy selector for isBox', () => {
+    const selector = new CytoscapeGraphSelectorBuilder().isBox(null).build();
+    expect(selector).toEqual('node[!isBox]');
   });
 
   it('Generates selector for two properties', () => {

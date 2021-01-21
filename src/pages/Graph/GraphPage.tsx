@@ -21,7 +21,8 @@ import {
   NodeParamsType,
   NodeType,
   SummaryData,
-  UNKNOWN
+  UNKNOWN,
+  BoxByType
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as AlertUtils from '../../utils/AlertUtils';
@@ -76,6 +77,8 @@ type GraphURLPathProps = {
 type ReduxProps = {
   activeNamespaces: Namespace[];
   activeTour?: TourInfo;
+  boxByCluster: boolean;
+  boxByNamespace: boolean;
   compressOnHide: boolean;
   duration: DurationInSeconds; // current duration (dropdown) setting
   edgeLabelMode: EdgeLabelMode;
@@ -101,7 +104,6 @@ type ReduxProps = {
   showIdleNodes: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;
-  showNodeLabels: boolean;
   showOperationNodes: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
@@ -277,6 +279,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         isLoading: true,
         fetchParams: {
           namespaces: props.node ? [props.node.namespace] : props.activeNamespaces,
+          boxByCluster: props.boxByCluster,
+          boxByNamespace: props.boxByNamespace,
           duration: props.duration,
           edgeLabelMode: props.edgeLabelMode,
           graphType: props.graphType,
@@ -328,6 +332,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
     if (
       activeNamespacesChanged ||
+      prev.boxByCluster !== curr.boxByCluster ||
+      prev.boxByNamespace !== curr.boxByNamespace ||
       prev.duration !== curr.duration ||
       (prev.edgeLabelMode !== curr.edgeLabelMode &&
         curr.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
@@ -512,7 +518,11 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   };
 
   private handleDoubleTap = (event: GraphNodeDoubleTapEvent) => {
-    if (event.isInaccessible || event.isServiceEntry) {
+    if (
+      event.isInaccessible ||
+      event.isServiceEntry ||
+      (event.nodeType === NodeType.BOX && event.isBox !== BoxByType.APP)
+    ) {
       return;
     }
 
@@ -553,6 +563,10 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           sameNode = sameNode && node.app === event.app;
           sameNode = sameNode && node.version === event.version;
           break;
+        case NodeType.BOX:
+          // we only support node graphs on app boxes, so assume app box
+          sameNode = sameNode && node.app === event.app;
+          break;
         case NodeType.SERVICE:
           sameNode = sameNode && node.service === event.service;
           break;
@@ -575,7 +589,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       return;
     }
 
-    // In case user didn't dounble-tapped the same node, or if graph is in
+    // In case user didn't double-tapped the same node, or if graph is in
     // full graph mode, redirect to the drilled-down graph of the chosen node.
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.state.graphData.fetchParams.namespaces,
@@ -640,18 +654,20 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       : undefined;
 
     this.graphDataSource.fetchGraphData({
-      namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
+      boxByCluster: this.props.boxByCluster,
+      boxByNamespace: this.props.boxByNamespace,
       duration: this.props.duration,
+      edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
       includeHealth: true,
       injectServiceNodes: this.props.showServiceNodes,
-      edgeLabelMode: this.props.edgeLabelMode,
+      namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
+      node: this.props.node,
+      queryTime: queryTime,
       showIdleEdges: this.props.showIdleEdges,
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,
-      showSecurity: this.props.showSecurity,
-      node: this.props.node,
-      queryTime: queryTime
+      showSecurity: this.props.showSecurity
     });
   };
 
@@ -670,6 +686,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   activeTour: state.tourState.activeTour,
+  boxByCluster: state.graph.toolbarState.boxByCluster,
+  boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
@@ -687,7 +705,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showLegend: state.graph.toolbarState.showLegend,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
-  showNodeLabels: state.graph.toolbarState.showNodeLabels,
   showOperationNodes: state.graph.toolbarState.showOperationNodes,
   showSecurity: state.graph.toolbarState.showSecurity,
   showServiceNodes: state.graph.toolbarState.showServiceNodes,
