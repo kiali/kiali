@@ -17,6 +17,7 @@ export enum URLParam {
   AGGREGATOR = 'aggregator',
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
+  DISPLAY_MODE = 'displayMode',
   DURATION = 'duration',
   FOCUS_SELECTOR = 'focusSelector',
   FROM = 'from',

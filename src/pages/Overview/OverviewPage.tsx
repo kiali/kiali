@@ -56,7 +56,7 @@ import { Paths, serverConfig } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
-import history from '../../app/History';
+import history, { HistoryManager, URLParam } from '../../app/History';
 import {
   buildGraphAuthorizationPolicy,
   buildNamespaceInjectionPatch
@@ -145,14 +145,14 @@ type OverviewProps = ReduxProps & {};
 export class OverviewPage extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
   private promises = new PromisesRegistry();
-  private displayModeSet = false;
 
   constructor(props: OverviewProps) {
     super(props);
+    const display = HistoryManager.getParam(URLParam.DISPLAY_MODE);
     this.state = {
       namespaces: [],
       type: OverviewToolbar.currentOverviewType(),
-      displayMode: OverviewDisplayMode.EXPAND,
+      displayMode: display ? Number(display) : OverviewDisplayMode.EXPAND,
       permissions: {},
       showConfirmModal: false,
       nsTarget: '',
@@ -180,6 +180,17 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     return Sorts.sortFields;
   }
 
+  getStartDisplayMode = (isCompact: boolean) => {
+    // Check if there is a displayMode option
+    const historyDisplayMode = HistoryManager.getParam(URLParam.DISPLAY_MODE);
+    if (historyDisplayMode) {
+      return Number(historyDisplayMode);
+    }
+
+    // In this case is the first time that we are loading Overview Page, calculate the best view
+    return isCompact ? OverviewDisplayMode.COMPACT : OverviewDisplayMode.EXPAND;
+  };
+
   load = () => {
     this.promises.cancelAll();
     this.promises
@@ -204,11 +215,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         const isAscending = FilterHelper.isCurrentSortAscending();
         const sortField = FilterHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
-        const displayMode = this.displayModeSet
-          ? this.state.displayMode
-          : allNamespaces.length > 16
-          ? OverviewDisplayMode.COMPACT
-          : OverviewDisplayMode.EXPAND;
+        const displayMode = this.getStartDisplayMode(allNamespaces.length > 16);
+
         // Set state before actually fetching health
         this.setState(
           prevState => {
@@ -425,8 +433,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   setDisplayMode = (mode: OverviewDisplayMode) => {
-    this.displayModeSet = true;
     this.setState({ displayMode: mode });
+    HistoryManager.setParam(URLParam.DISPLAY_MODE, String(mode));
     if (mode === OverviewDisplayMode.EXPAND) {
       // Load metrics
       this.fetchMetrics();
