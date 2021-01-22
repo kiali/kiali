@@ -285,8 +285,10 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         onChange: toggleIdleNodes,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            Idle nodes are orphan nodes, for defined services, that have never received traffic. Disabled by default to
-            provide cleaner graphs. Enable to help locate unused, misconfigured or obsolete services.
+            With "Idle Edges" enabled this displays nodes for defined services that have *never* received traffic. With
+            "Idle Edges" disabled this displays nodes for defined services that have not received traffic during the
+            current time period. Disabled by default to provide cleaner graphs. Enable to help locate unused,
+            misconfigured or obsolete services.
           </div>
         )
       },
