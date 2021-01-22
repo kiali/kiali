@@ -312,7 +312,7 @@ type Rate struct {
 	Namespace string      `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Kind      string      `yaml:"kind,omitempty" json:"kind,omitempty"`
 	Name      string      `yaml:"name,omitempty" json:"name,omitempty"`
-	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
+	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerancePR"`
 }
 
 // HealthConfig
@@ -493,13 +493,13 @@ func (conf *Config) AddHealthDefault() {
 			{
 				Tolerance: []Tolerance{
 					{
-						Code:      "^5\\d\\d$",
+						Code:      "5XX",
 						Protocol:  "http",
 						Direction: ".*",
 						Failure:   10,
 					},
 					{
-						Code:      "^4\\d\\d$",
+						Code:      "4XX",
 						Protocol:  "http",
 						Direction: ".*",
 						Degraded:  10,
