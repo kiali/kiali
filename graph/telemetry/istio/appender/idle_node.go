@@ -31,6 +31,7 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 
 	services := []models.ServiceDetails{}
 	workloads := []models.WorkloadListItem{}
+	clusterName := graph.Unknown
 
 	if a.GraphType != graph.GraphTypeService {
 		if getWorkloadList(namespaceInfo) == nil {
@@ -50,11 +51,21 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		services = getServiceDefinitionList(namespaceInfo).ServiceDefinitions
 	}
 
-	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, services, workloads)
+	isMeshConfigured, err := globalInfo.Business.Mesh.IsMeshConfigured()
+	graph.CheckError(err)
+	if isMeshConfigured {
+		cluster, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster()
+		graph.CheckError(err)
+		if cluster != nil {
+			clusterName = cluster.Name
+		}
+	}
+
+	a.addIdleNodes(trafficMap, clusterName, namespaceInfo.Namespace, services, workloads)
 }
 
-func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
-	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, services, workloads)
+func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
+	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, cluster, namespace, services, workloads)
 
 	// Integrate the idle nodes into the existing traffic map
 	for id, idleNode := range idleNodeTrafficMap {
@@ -62,11 +73,11 @@ func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace st
 	}
 }
 
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) graph.TrafficMap {
+func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) graph.TrafficMap {
 	idleNodeTrafficMap := graph.NewTrafficMap()
 
 	for _, s := range services {
-		id, nodeType := graph.Id(graph.Unknown, namespace, s.Service.Name, "", "", "", "", a.GraphType)
+		id, nodeType := graph.Id(cluster, namespace, s.Service.Name, "", "", "", "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for service [%s]", s.Service.Name)
@@ -91,7 +102,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 		if v, ok := labels[versionLabel]; ok {
 			version = v
 		}
-		id, nodeType := graph.Id(graph.Unknown, "", "", namespace, w.Name, app, version, a.GraphType)
+		id, nodeType := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)

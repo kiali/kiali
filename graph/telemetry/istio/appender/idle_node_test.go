@@ -26,7 +26,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	services := mockServices(a)
 	workloads := mockWorkloads(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, graph.Unknown, "testNamespace", services, workloads)
 	assert.Equal(7, len(trafficMap))
 
 	id, _ := graph.Id(graph.Unknown, "testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
@@ -98,7 +98,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	services := mockServices(a)
 	workloads := mockWorkloads(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, graph.Unknown, "testNamespace", services, workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -155,7 +155,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	services := mockServices(a)
 	workloads := mockWorkloads(a)
 
-	a.addIdleNodes(trafficMap, "testNamespace", services, workloads)
+	a.addIdleNodes(trafficMap, graph.Unknown, "testNamespace", services, workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.Unknown, graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
