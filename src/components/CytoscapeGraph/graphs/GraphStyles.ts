@@ -249,6 +249,9 @@ export class GraphStyles {
       case NodeType.SERVICE:
         label.unshift(service);
         break;
+      case NodeType.UNKNOWN:
+        label.unshift(UNKNOWN);
+        break;
       case NodeType.WORKLOAD:
         label.unshift(workload);
         break;
