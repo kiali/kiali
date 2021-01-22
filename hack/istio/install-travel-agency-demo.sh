@@ -6,6 +6,7 @@
 : ${NAMESPACE_AGENCY:=travel-agency}
 : ${NAMESPACE_PORTAL:=travel-portal}
 : ${NAMESPACE_CONTROL:=travel-control}
+: ${ENABLE_INJECTION:=true}
 : ${ENABLE_OPERATION_METRICS:=false}
 : ${DELETE_DEMO:=false}
 : ${SHOW_GUI:=false}
@@ -21,6 +22,10 @@ while [ $# -gt 0 ]; do
       DELETE_DEMO="$2"
       shift;shift
       ;;
+    -ei|--enable-injection)
+      ENABLE_INJECTION="$2"
+      shift;shift
+      ;;
     -eo|--enable-operation-metrics)
       ENABLE_OPERATION_METRICS="$2"
       shift;shift
@@ -34,6 +39,7 @@ while [ $# -gt 0 ]; do
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
+  -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.8 installed in istio-system.
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
@@ -60,7 +66,9 @@ echo CLIENT_EXE=${CLIENT_EXE}
 echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
+echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
+
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
@@ -88,7 +96,9 @@ fi
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_AGENCY}
-  ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
+    ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
+  fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
     ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
     ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
@@ -103,7 +113,9 @@ fi
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_PORTAL}
-  ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
+    ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
+  fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
     ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
     ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
@@ -118,7 +130,9 @@ fi
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_CONTROL} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_CONTROL}
-  ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
+    ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
+  fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
     ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_CONTROL}
     ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_CONTROL}
