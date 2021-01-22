@@ -26,6 +26,7 @@ MESH_ID="mesh-default"
 MTLS="true"
 NAMESPACE="istio-system"
 NETWORK="network-default"
+IMAGE_HUB="gcr.io/istio-release"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -75,6 +76,10 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --istio-egressgateway-enabled flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -ih|--image-hub)
+      IMAGE_HUB="$2"
       shift;shift
       ;;
     -mid|--mesh-id)
@@ -135,6 +140,11 @@ Valid command line arguments:
   -iee|--istio-egressgateway-enabled (true|false)
        When set to true, istio-egressgateway will be installed.
        Default: true
+  -ih|--image-hub <hub id>
+       The hub where the Istio images will be pulled from.
+       You can set this to "default" in order to use the default hub that the Istio charts use but
+       this may be using docker.io and docker hub rate limiting may cause the installation to fail.
+       Default: gcr.io/istio-release
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: false
@@ -231,8 +241,12 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   fi
 fi
 
+if [ "${IMAGE_HUB}" != "default" ]; then
+  IMAGE_HUB_OPTION="--set hub=${IMAGE_HUB}"
+fi
+
 for s in \
-   "--set hub=gcr.io/istio-release" \
+   "${IMAGE_HUB_OPTION}" \
    "${MTLS_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "--set values.global.meshID=${MESH_ID}" \
