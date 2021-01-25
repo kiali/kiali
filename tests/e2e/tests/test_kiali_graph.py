@@ -24,7 +24,7 @@ WORKLOAD_REQUESTS_PER_SECOND    = {'graphType':'workload', 'edges':'requestsPerS
 WORKLOAD_REQUESTS_PERCENTAGE    = {'graphType':'workload', 'edges':'requestsPercentage', 'duration':'21600s'}
 WORKLOAD_REQUESTS_RESPONCE_TIME = {'graphType':'workload', 'edges':'responseTime', 'duration':'21600s'}
 
-GROUP_BY_LIST = {'version', 'none', 'app'}
+GROUP_BY_LIST = {'cluster', 'namespace', 'app'}
 
 
 def test_app_no_labels(kiali_client):
@@ -106,7 +106,7 @@ def test_workload_app_group_by(kiali_client):
 
 def test_group_by_negative(kiali_client):
     params = APP_BASE
-    params['groupBy'] = 'junk'
+    params['boxBy'] = 'junk'
     response = get_response(kiali_client, params)
     assert response.status_code == 400
     assert 'Invalid groupBy' in response.text
