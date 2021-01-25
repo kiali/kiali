@@ -43,8 +43,8 @@ def test_app_requests_responce_time(kiali_client):
     json = get_graph_json(client = kiali_client, params = APP_REQUESTS_RESPONCE_TIME)
     validate_responce(json, APP_REQUESTS_RESPONCE_TIME)
 
-def test_app_group_by(kiali_client):
-    validate_group_by(kiali_client, params = APP_BASE)
+def test_app_box_by(kiali_client):
+    validate_box_by(kiali_client, params = APP_BASE)
 
 def test_service_no_labels(kiali_client):
     json = get_graph_json(client = kiali_client, params = SERVICE_NO_LABELS)
@@ -62,8 +62,8 @@ def test_service_requests_responce_time(kiali_client):
     json = get_graph_json(client = kiali_client, params = SERVICE_REQUESTS_RESPONCE_TIME)
     validate_responce(json, SERVICE_REQUESTS_RESPONCE_TIME)
 
-def test_service_group_by(kiali_client):
-    validate_group_by(kiali_client, params = SERVICE_BASE)
+def test_service_box_by(kiali_client):
+    validate_box_by(kiali_client, params = SERVICE_BASE)
 
 def test_versioned_app_no_labels(kiali_client):
     json = get_graph_json(client = kiali_client, params = VERSIONED_APP_NO_LABELS)
@@ -81,8 +81,8 @@ def test_versioned_app_requests_responce_time(kiali_client):
     json = get_graph_json(client = kiali_client, params = VERSIONED_APP_REQUESTS_RESPONCE_TIME)
     validate_responce(json, VERSIONED_APP_REQUESTS_RESPONCE_TIME)
 
-def test_versioned_app_group_by(kiali_client):
-    validate_group_by(kiali_client, params = VERSIONED_APP_BASE)
+def test_versioned_app_box_by(kiali_client):
+    validate_box_by(kiali_client, params = VERSIONED_APP_BASE)
 
 def test_workload_no_labels(kiali_client):
     json = get_graph_json(client = kiali_client, params = WORKLOAD_NO_LABELS)
@@ -100,16 +100,16 @@ def test_workload_requests_responce_time(kiali_client):
     json = get_graph_json(client = kiali_client, params = WORKLOAD_REQUESTS_RESPONCE_TIME)
     validate_responce(json, WORKLOAD_REQUESTS_RESPONCE_TIME)
 
-def test_workload_app_group_by(kiali_client):
-    validate_group_by(kiali_client, params = WORKLOAD_BASE)
+def test_workload_app_box_by(kiali_client):
+    validate_box_by(kiali_client, params = WORKLOAD_BASE)
 
 
-def test_group_by_negative(kiali_client):
+def test_box_by_negative(kiali_client):
     params = APP_BASE
     params['boxBy'] = 'junk'
     response = get_response(kiali_client, params)
     assert response.status_code == 400
-    assert 'Invalid groupBy' in response.text
+    assert 'Invalid boxBy' in response.text
 
 def test_graph_type_negative(kiali_client):
     params = APP_BASE
@@ -137,9 +137,9 @@ def validate_responce(json, params):
     assert len(json.get('elements').get('nodes')) > 0
     assert len(json.get('elements').get('edges')) > 0
 
-def validate_group_by(kiali_client, params):
-    for value in GROUP_BY_LIST:
-        # print("Validating \"groupBy:{}\"".format(value))
-        params['groupBy'] = value
+def validate_box_by(kiali_client, params):
+    for value in BOX_BY_LIST:
+        # print("Validating \"boxBy:{}\"".format(value))
+        params['boxBy'] = value
         json = get_graph_json(client=kiali_client, params=params)
         validate_responce(json, params)
