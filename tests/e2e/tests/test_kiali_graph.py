@@ -24,7 +24,7 @@ WORKLOAD_REQUESTS_PER_SECOND    = {'graphType':'workload', 'edges':'requestsPerS
 WORKLOAD_REQUESTS_PERCENTAGE    = {'graphType':'workload', 'edges':'requestsPercentage', 'duration':'21600s'}
 WORKLOAD_REQUESTS_RESPONCE_TIME = {'graphType':'workload', 'edges':'responseTime', 'duration':'21600s'}
 
-GROUP_BY_LIST = {'cluster', 'namespace', 'app'}
+BOX_BY_LIST = {'cluster', 'namespace', 'app'}
 
 
 def test_app_no_labels(kiali_client):
