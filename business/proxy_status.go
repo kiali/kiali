@@ -9,7 +9,8 @@ import (
 )
 
 type ProxyStatus struct {
-	k8s kubernetes.ClientInterface
+	k8s           kubernetes.ClientInterface
+	businessLayer *Layer
 }
 
 func (in *ProxyStatus) GetPodProxyStatus(ns, pod string) (*kubernetes.ProxyStatus, error) {
@@ -100,12 +101,23 @@ func (in *ProxyStatus) GetConfigDumpResourceEntries(namespace, pod, resource str
 		return nil, err
 	}
 
-	return buildDump(dump, resource)
+	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
+	if err != nil {
+		return nil, err
+	}
+
+	return buildDump(dump, resource, namespaces)
 }
 
-func buildDump(dump *kubernetes.ConfigDump, resource string) (*models.EnvoyProxyDump, error) {
+func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace) (*models.EnvoyProxyDump, error) {
 	response := &models.EnvoyProxyDump{}
 	var err error
+
+	nss := make([]string, len(namespaces))
+	for _, ns := range namespaces {
+		nss = append(nss, ns.Name)
+	}
+
 	switch resource {
 	case "clusters":
 		summary := &models.Clusters{}
@@ -113,7 +125,7 @@ func buildDump(dump *kubernetes.ConfigDump, resource string) (*models.EnvoyProxy
 		response.Clusters = summary
 	case "routes":
 		summary := &models.Routes{}
-		err = summary.Parse(dump)
+		err = summary.Parse(dump, nss)
 		response.Routes = summary
 	case "bootstrap":
 		summary := &models.Bootstrap{}
