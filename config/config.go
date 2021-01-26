@@ -295,8 +295,18 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
+// Feature flags available from the CR
 type KialiFeatureFlags struct {
-	IstioInjectionAction bool `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioInjectionAction bool       `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	UIDefaults           UIDefaults `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+}
+
+// Describe default settings for the UI, like the default selected namespace or
+// auto refresh interval.
+type UIDefaults struct {
+	Namespaces          []string `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
+	MetricsPerRefresh   string   `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	AutoRefreshInterval string   `yaml:"auto_refresh_interval,omitempty" json:"autoRefreshInterval,omitempty"`
 }
 
 // ToleranceConfig
@@ -454,6 +464,11 @@ func NewConfig() (c *Config) {
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
+			UIDefaults: UIDefaults{
+				Namespaces:          make([]string, 0),
+				MetricsPerRefresh:   "1m",
+				AutoRefreshInterval: "",
+			},
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
