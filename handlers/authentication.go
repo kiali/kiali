@@ -409,18 +409,18 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 		return http.StatusUnauthorized, errors.New("Already logged out")
 	}
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %s", err.Error())
+		log.Warningf("Token is invalid: %v", err)
 		return http.StatusInternalServerError, err
 	} else {
 		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
-			log.Warning("Could not get the business layer : ", err)
+			log.Warningf("Could not get the business layer: %v", err)
 			return http.StatusInternalServerError, err
 		}
 
 		err = business.OpenshiftOAuth.Logout(claims.SessionId)
 		if err != nil {
-			log.Warning("Could not log out of OpenShift: ", err)
+			log.Warningf("Could not log out of OpenShift: %v", err)
 			return http.StatusInternalServerError, err
 		}
 
@@ -431,7 +431,7 @@ func performOpenshiftLogout(r *http.Request) (int, error) {
 func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %s", err.Error())
+		log.Warningf("Token is invalid! : %v", err)
 	} else {
 		// Session ID claim must be present
 		if len(claims.SessionId) == 0 {
@@ -441,7 +441,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 
 		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
-			log.Warning("Could not get the business layer : ", err)
+			log.Warningf("Could not get the business layer!: %v", err)
 			return http.StatusInternalServerError, ""
 		}
 
@@ -452,7 +452,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 			return http.StatusOK, claims.SessionId
 		}
 
-		log.Warning("Token error: ", err)
+		log.Warningf("Token error: %v", err)
 	}
 
 	return http.StatusUnauthorized, ""
@@ -466,7 +466,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	if len(tokenString) != 0 {
 		var err error = nil
 		if claims, err = config.GetTokenClaimsIfValid(tokenString); err != nil {
-			log.Warningf("Token is invalid: %s", err.Error())
+			log.Warningf("Token is invalid!!: %v", err)
 			return http.StatusUnauthorized, ""
 		}
 	} else {
@@ -474,11 +474,11 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		var err error = nil
 		claims, err = business.GetOpenIdAesSession(r)
 		if err != nil {
-			log.Warningf("There was an error when decoding the session: %s", err.Error())
+			log.Warningf("There was an error when decoding the session: %v", err)
 			return http.StatusUnauthorized, ""
 		}
 		if claims == nil {
-			log.Warningf("User seems to not be logged in")
+			log.Warning("User seems to not be logged in")
 			return http.StatusUnauthorized, ""
 		}
 	}
@@ -491,14 +491,14 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 
 	business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 	if err != nil {
-		log.Warning("Could not get the business layer : ", err)
+		log.Warningf("Could not get the business layer!!: %v", err)
 		return http.StatusInternalServerError, ""
 	}
 
 	// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
 	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
 	if err != nil {
-		log.Warning("Cannot parse sid claim of the Kiali token : ", err)
+		log.Warningf("Cannot parse sid claim of the Kiali token!: %v", err)
 		return http.StatusInternalServerError, ""
 	}
 	if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
@@ -510,7 +510,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		// If RBAC is ENABLED, check that the user has privilges on the cluster.
 		_, err = business.Namespace.GetNamespaces()
 		if err != nil {
-			log.Warning("Token error: ", err)
+			log.Warningf("Token error!: %v", err)
 			return http.StatusUnauthorized, ""
 		}
 	}
@@ -523,7 +523,7 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-		log.Warningf("Token is invalid: %s", err.Error())
+		log.Warningf("Token is invalid!!!: %v", err)
 	} else {
 		// Session ID claim must be present
 		if len(claims.SessionId) == 0 {
@@ -533,7 +533,7 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 
 		business, err := business.Get(&api.AuthInfo{Token: claims.SessionId})
 		if err != nil {
-			log.Warning("Could not get the business layer : ", err)
+			log.Warningf("Could not get the business layer!!!: %v", err)
 			return http.StatusInternalServerError, ""
 		}
 
@@ -544,7 +544,7 @@ func checkTokenSession(w http.ResponseWriter, r *http.Request) (int, string) {
 			return http.StatusOK, claims.SessionId
 		}
 
-		log.Warning("Token error: ", err)
+		log.Warningf("Token error!!: %v", err)
 	}
 
 	return http.StatusUnauthorized, ""
@@ -602,7 +602,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case http.StatusOK:
 			if authInfo == nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				log.Error("No authInfo", http.StatusBadRequest)
+				log.Errorf("No authInfo: %v", http.StatusBadRequest)
 			}
 			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
