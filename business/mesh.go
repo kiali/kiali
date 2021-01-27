@@ -94,7 +94,7 @@ func (in *MeshService) IsMeshConfigured() (isEnabled bool, returnErr error) {
 	isEnabled = false
 	cfg := config.Get()
 
-	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, config.IstioConfigMapName)
+	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
 		returnErr = err
 		return
