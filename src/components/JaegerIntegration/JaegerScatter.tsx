@@ -17,11 +17,13 @@ import ChartWithLegend from 'components/Charts/ChartWithLegend';
 import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
+import { averageSpanDuration } from 'utils/tracing/TraceStats';
 
 interface JaegerScatterProps {
   duration: number;
   traces: JaegerTrace[];
   fixedTime: boolean;
+  showSpansAverage: boolean;
   errorTraces?: boolean;
   errorFetchTraces?: JaegerError[];
   setTraceId: (traceId?: string) => void;
@@ -67,9 +69,10 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     traces.forEach(trace => {
       const isSelected = this.props.selectedTrace && trace.traceID === this.props.selectedTrace.traceID;
       const traceError = trace.spans.filter(sp => sp.tags.some(isErrorTag)).length > 0;
+      const value = this.props.showSpansAverage ? averageSpanDuration(trace) || 0 : trace.duration;
       const traceItem = {
         x: new Date(trace.startTime / 1000),
-        y: Number(trace.duration / ONE_MILLISECOND),
+        y: value / ONE_MILLISECOND,
         name: `${trace.traceName !== '' ? trace.traceName : '<trace-without-root-span>'} (${trace.traceID.slice(
           0,
           7
