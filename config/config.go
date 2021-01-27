@@ -312,7 +312,7 @@ type Rate struct {
 	Namespace string      `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Kind      string      `yaml:"kind,omitempty" json:"kind,omitempty"`
 	Name      string      `yaml:"name,omitempty" json:"name,omitempty"`
-	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerancePR"`
+	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
 // HealthConfig
