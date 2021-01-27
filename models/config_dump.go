@@ -354,7 +354,8 @@ func bestDomainMatch(domains []string, namespaces []string) kubernetes.Host {
 			continue
 		}
 
-		if domain[0] <= '9' {
+		firstChar := domain[0]
+		if firstChar >= '1' && firstChar <= '9' {
 			continue
 		}
 
