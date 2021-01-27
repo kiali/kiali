@@ -4,7 +4,13 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { style } from 'typestyle';
 import { Tooltip, Button, ButtonVariant, pluralize, SelectOption } from '@patternfly/react-core';
-import { CloseIcon, ExternalLinkAltIcon, ExclamationCircleIcon, MapMarkerIcon } from '@patternfly/react-icons';
+import {
+  InfoAltIcon,
+  CloseIcon,
+  ExternalLinkAltIcon,
+  ExclamationCircleIcon,
+  MapMarkerIcon
+} from '@patternfly/react-icons';
 
 import { URLParam } from '../../app/History';
 import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/JaegerInfo';
@@ -22,6 +28,7 @@ import SimplerSelect from 'components/SimplerSelect';
 import { summaryFont } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType } from 'types/Graph';
 import { bindActionCreators } from 'redux';
+import responseFlags from 'utils/ResponseFlags';
 
 type Props = {
   trace: JaegerTrace;
@@ -275,6 +282,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     const info = span.info as OpenTracingHTTPInfo | EnvoySpanInfo;
     const rqLabel =
       info.direction === 'inbound' ? 'Inbound request' : info.direction === 'outbound' ? 'Outbound request' : 'Request';
+    const flag = (info as EnvoySpanInfo).responseFlags;
     return (
       <>
         <div>
@@ -284,8 +292,13 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
         <div>
           <strong>Response: </strong>
           code {info.statusCode || 'unknown'}
-          {(info as EnvoySpanInfo).responseFlags && ', flags ' + (info as EnvoySpanInfo).responseFlags}
+          {flag && ', flags ' + flag}
         </div>
+        {flag && (
+          <div>
+            <InfoAltIcon /> {responseFlags[flag]?.help || 'Unknown flag'}
+          </div>
+        )}
       </>
     );
   }
