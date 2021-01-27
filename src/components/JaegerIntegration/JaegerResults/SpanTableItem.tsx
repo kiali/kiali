@@ -11,6 +11,7 @@ import { renderMetricsComparison } from './StatsComparison';
 import { MetricsStats } from 'types/Metrics';
 import { CellProps, createListeners, Expandable, renderExpandArrow } from 'components/Expandable';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
+import responseFlags from 'utils/ResponseFlags';
 
 const dangerErrorStyle = style({
   borderLeft: '3px solid var(--pf-global--danger-color--100)'
@@ -53,7 +54,7 @@ export const buildRow = (props: RowProps) => {
         title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={OriginCell} />
       },
       {
-        title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={SummaryCell} />
+        title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={SummaryCell} />
       },
       { title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={StatsCell} /> },
       { title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={LinksCell} /> }
@@ -83,6 +84,7 @@ const OriginCell = (props: CellProps<RowProps>) => {
 };
 
 const SummaryCell = (props: CellProps<RowProps>) => {
+  const flag = (props.info as EnvoySpanInfo).responseFlags;
   return (
     <>
       {props.info.hasError && (
@@ -92,7 +94,13 @@ const SummaryCell = (props: CellProps<RowProps>) => {
       )}
       <div>
         <strong>Operation: </strong>
-        {props.operationName}
+        {flag ? (
+          <>
+            {props.operationName} ({flag} <ExclamationCircleIcon color={PFAlertColor.Danger} />)
+          </>
+        ) : (
+          <>{props.operationName}</>
+        )}
       </div>
       <div>
         <strong>Component: </strong>
@@ -135,8 +143,10 @@ const renderEnvoySummary = (props: CellProps<RowProps>) => {
   if (info.statusCode) {
     rsDetails.push(String(info.statusCode));
   }
+  let flagInfo: string | undefined = undefined;
   if (info.responseFlags) {
     rsDetails.push(info.responseFlags);
+    flagInfo = responseFlags[info.responseFlags]?.help || 'Unknown flag';
   }
 
   return (
@@ -152,6 +162,7 @@ const renderEnvoySummary = (props: CellProps<RowProps>) => {
         <strong>Response status: </strong>
         {rsDetails.join(', ')}
       </div>
+      {flagInfo}
     </>
   );
 };
