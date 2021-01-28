@@ -683,7 +683,7 @@ func buildAggregateNodeTrafficMap(namespace string, n graph.Node, o graph.Teleme
 	if n.Service != "" {
 		serviceFragment = fmt.Sprintf(`,destination_service_name="%s"`, n.Service)
 	}
-	groupBy := "source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags"
+	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags"
 	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
