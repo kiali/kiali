@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/prometheus/common/model"
+	"github.com/kiali/kiali/log"
 )
 
 // NamespaceAppHealth is an alias of map of app name x health
@@ -25,7 +26,12 @@ type AppHealth struct {
 }
 
 func NewEmptyRequestHealth() RequestHealth {
-	return RequestHealth{Inbound: make(map[string]map[string]float64), Outbound: make(map[string]map[string]float64)}
+	return RequestHealth{
+		Inbound: make(map[string]map[string]float64),
+		Outbound: make(map[string]map[string]float64),
+		inboundSource: make(map[string]map[string]float64),
+		inboundDestination: make(map[string]map[string]float64),
+	}
 }
 
 // EmptyAppHealth create an empty AppHealth
@@ -87,18 +93,70 @@ type ProxyStatus struct {
 // - Inbound//Outbound are the rates of requests by protocol and status_code.
 //   Example:   Inbound: { "http": {"200": 1.5, "400": 2.3}, "grpc": {"1": 1.2} }
 type RequestHealth struct {
-	Inbound  map[string]map[string]float64 `json:"inbound"`
-	Outbound map[string]map[string]float64 `json:"outbound"`
+	Inbound  			map[string]map[string]float64 `json:"inbound"`
+	Outbound 			map[string]map[string]float64 `json:"outbound"`
+
+	inboundSource 		map[string]map[string]float64
+	inboundDestination 	map[string]map[string]float64
 }
 
 // AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios
 func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
-	aggregate(sample, in.Inbound)
+	// Samples need to be aggregated by source or destination reporter, but not accumulated both
+	reporter := string(sample.Metric[model.LabelName("reporter")])
+	switch reporter {
+	case "source":
+		aggregate(sample, in.inboundSource)
+	case "destination":
+		aggregate(sample, in.inboundDestination)
+	default:
+		log.Tracef("Inbound metric without reporter %v ", sample)
+		aggregate(sample, in.Inbound)
+	}
 }
 
 // AggregateOutbound adds the provided metric sample to internal outbound counters and updates error ratios
 func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
-	aggregate(sample, in.Outbound)
+	// Outbound traffic will be aggregated per source reporter
+	reporter := string(sample.Metric[model.LabelName("reporter")])
+	if reporter == "source" {
+		aggregate(sample, in.Outbound)
+	}
+}
+
+// RequestHealth interanlly stores Inbound rate separated by reporter
+// There were duplicated values that should exist in both reports
+// but there may exist values that only are present in one or another reporter,
+// those should be consolidated into a single result
+func (in *RequestHealth) CombineReporters() {
+	// Inbound
+	// Init Inbound with data from source reporter
+	for isProtocol, isCodes := range in.inboundSource {
+		if _, ok := in.Inbound[isProtocol]; !ok {
+			in.Inbound[isProtocol] = make(map[string]float64)
+		}
+		for isCode, isValue := range isCodes {
+			in.Inbound[isProtocol][isCode] = isValue
+		}
+	}
+	// Combine data from destination and source reporters for Inbound rate
+	for idProtocol, idCodes := range in.inboundDestination {
+		if _, ok := in.Inbound[idProtocol]; !ok {
+			in.Inbound[idProtocol] = make(map[string]float64)
+		}
+		for idCode, idValue := range idCodes {
+			// If an Inbound -> protocol -> value is reported by destination but not by source reporter, we add it
+			if _, ok := in.Inbound[idProtocol][idCode]; !ok {
+				in.Inbound[idProtocol][idCode] = idValue
+			} else {
+				// If the value provided by destination is higher than the source we replace it
+				// i.e. destination reports errors but not from source
+				if idValue >in.Inbound[idProtocol][idCode] {
+					in.Inbound[idProtocol][idCode] = idValue
+				}
+			}
+		}
+	}
 }
 
 func aggregate(sample *model.Sample, requests map[string]map[string]float64) {

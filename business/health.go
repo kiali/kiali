@@ -201,7 +201,9 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 			health.Requests.AggregateInbound(sample)
 		}
 	}
-
+	for _, health := range allHealth {
+		health.Requests.CombineReporters()
+	}
 	return allHealth
 }
 
@@ -259,6 +261,9 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 			health.Requests.AggregateOutbound(sample)
 		}
 	}
+	for _, health := range allHealth {
+		health.Requests.CombineReporters()
+	}
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
@@ -275,6 +280,9 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 			health.Requests.AggregateOutbound(sample)
 		}
 	}
+	for _, health := range allHealth {
+		health.Requests.CombineReporters()
+	}
 }
 
 func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
@@ -283,6 +291,7 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
+	rqHealth.CombineReporters()
 	return rqHealth, err
 }
 
@@ -295,6 +304,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
+	rqHealth.CombineReporters()
 	return rqHealth, err
 }
 
@@ -307,5 +317,6 @@ func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInte
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
+	rqHealth.CombineReporters()
 	return rqHealth, err
 }
