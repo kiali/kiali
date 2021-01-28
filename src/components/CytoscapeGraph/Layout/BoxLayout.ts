@@ -19,10 +19,10 @@
 
   1. For every box type (working inner to outer)
        2. For every box node:
-          a. Get the resulting bounding box of the compound node, set the width and height of the node
-             using `cy.style`, so that the real layout honors the size when doing the layout.
-          b. The box layout is run for every box and its relative positions (to the parent)
+          a. The box layout is run for every box and its relative positions (to the parent)
              are saved for later use.
+          b. Get the resulting bounding box of the compound node, set the width and height of the node
+             using `cy.style`, so that the real layout honors the size when doing the layout.
           c. For every edge that goes to a child (or comes from a child), create a synthetic edge
             that goes to (or comes from) the compound node and remove the original
             edge. We can cull away repeated edges as they are not needed.
@@ -38,6 +38,7 @@
 
 import { CyNode } from '../CytoscapeGraphUtils';
 import { BoxByType } from 'types/Graph';
+import { getLayoutByName } from '../graphs/LayoutDictionary';
 
 export const BOX_NODE_CLASS = '__boxNodeClass';
 
@@ -60,15 +61,16 @@ type LayoutBoxTypeResult = {
 };
 
 /**
- * Synthetic edge generator takes care of creating edges without repeating the same edge (targetA -> targetB) twice
+ * Synthetic edge generator replaces edges to and from boxed nodes with edges to/from their boxes. Care is
+ * taken to not generate duplicate edges when sourceA has multiple real edges into the same box.
  */
 class SyntheticEdgeGenerator {
   private nextId = 0;
   private generatedMap = {};
 
-  public getEdge(source: any, target: any) {
-    const sourceId = this.normalizeToParent(source).id();
-    const targetId = this.normalizeToParent(target).id();
+  public getEdge(parentBoxType: BoxByType, source: any, target: any) {
+    const sourceId = this.normalizeToParent(parentBoxType, source).id();
+    const targetId = this.normalizeToParent(parentBoxType, target).id();
 
     if (sourceId === targetId) {
       return false;
@@ -92,9 +94,10 @@ class SyntheticEdgeGenerator {
     };
   }
 
-  // Returns the parent if any or the element itself.
-  private normalizeToParent(element: any) {
-    return element.isChild() ? element.parent() : element;
+  // Returns the element's parent if it exists and is also of the correct boxType.
+  private normalizeToParent(parentBoxType: BoxByType, element: any) {
+    const parent = element.parent();
+    return parent && parent.data(CyNode.isBox) === parentBoxType ? parent : element;
   }
 }
 
@@ -102,15 +105,21 @@ class SyntheticEdgeGenerator {
  * Main class for the BoxLayout, used to bridge with cytoscape to make it easier to integrate with current code
  */
 export default class BoxLayout {
-  readonly options;
+  readonly appBoxLayout;
+  readonly clusterBoxLayout;
+  readonly defaultLayout;
+  readonly namespaceBoxLayout;
   readonly cy;
   readonly elements;
   readonly syntheticEdgeGenerator;
 
   constructor(options: any) {
-    this.options = { ...options };
-    this.cy = this.options.cy;
-    this.elements = this.options.eles;
+    this.appBoxLayout = options.appBoxLayout || options.defaultLayout;
+    this.clusterBoxLayout = options.clusterBoxLayout || options.defaultLayout;
+    this.defaultLayout = options.defaultLayout;
+    this.namespaceBoxLayout = options.namespaceBoxLayout || options.defaultLayout;
+    this.cy = options.cy;
+    this.elements = options.eles;
     this.syntheticEdgeGenerator = new SyntheticEdgeGenerator();
   }
 
@@ -127,7 +136,6 @@ export default class BoxLayout {
   // this code is complicated with a variety of async handling.  Note that because namespace or cluster
   // boxes may comprise large portions of the graph, we need to be flexible with the layout support (in
   // other words, we can't force dagre like we do for app boxes).
-
   async runAsync(): Promise<any> {
     let allBoxNodes = this.cy.collection();
     let removedElements = this.cy.collection();
@@ -154,22 +162,17 @@ export default class BoxLayout {
 
     // (3) perform the final layout...
 
-    // Ensure we only touch the requested elements and not the whole graph.
-    const layoutElements = this.cy.collection().add(this.elements).subtract(removedElements).add(syntheticEdges);
-
     // Before running the layout, reset the elements positions.
     // This is not absolutely necessary, but without this we have seen some problems with
     //  `cola` + firefox + a particular mesh
+    // Ensure we only touch the requested elements and not the whole graph.
+    const layoutElements = this.cy.collection().add(this.elements).subtract(removedElements).add(syntheticEdges);
     layoutElements.position({ x: 0, y: 0 });
 
     const layout = this.cy.layout({
       // Create a new layout
-      ...this.options.defaultLayout, // Sharing the main options
-      eles: this.cy.elements(), // and the current elements
-      appBoxLayout: undefined, // undefine the unwanted options...
-      clusterBoxLayout: undefined,
-      defaultLayout: undefined,
-      namespaceBoxLayout: undefined
+      ...getLayoutByName(this.defaultLayout), // Sharing the main options
+      eles: this.cy.elements() // and the current elements
     });
 
     // Add a one-time callback to be fired when the layout stops
@@ -212,26 +215,21 @@ export default class BoxLayout {
 
   async layoutBoxType(boxByType: BoxByType): Promise<LayoutBoxTypeResult> {
     return new Promise((resolve, _reject) => {
-      const { appBoxLayout, clusterBoxLayout, defaultLayout, namespaceBoxLayout } = this.options;
       const boxNodes = this.getBoxNodes(boxByType);
 
-      let boxLayoutOptions = defaultLayout;
+      let boxLayoutOptions;
       switch (boxByType) {
         case BoxByType.APP:
-          if (appBoxLayout) {
-            boxLayoutOptions = appBoxLayout;
-          }
+          boxLayoutOptions = getLayoutByName(this.appBoxLayout);
           break;
         case BoxByType.CLUSTER:
-          if (clusterBoxLayout) {
-            boxLayoutOptions = clusterBoxLayout;
-          }
+          boxLayoutOptions = getLayoutByName(this.clusterBoxLayout);
           break;
         case BoxByType.NAMESPACE:
-          if (namespaceBoxLayout) {
-            boxLayoutOptions = namespaceBoxLayout;
-          }
+          boxLayoutOptions = getLayoutByName(this.namespaceBoxLayout);
           break;
+        default:
+          boxLayoutOptions = getLayoutByName(this.defaultLayout);
       }
 
       // Before completing work for the box type we must wait for all individual box work to complete
@@ -245,9 +243,9 @@ export default class BoxLayout {
 
         boxNodePromises.push(
           new Promise((resolve, _reject) => {
-            // This promise resolves when the layout actually stops.
+            // (2.a) This promise resolves when the layout actually stops.
             this.runLayout(boxLayoutOptions.name, boxLayout).then(_response => {
-              // (2.a) get the bounding box
+              // (2.b) get the bounding box
               // see https://github.com/cytoscape/cytoscape.js/issues/2402
               const boundingBox = boxNode.boundingBox();
 
@@ -272,7 +270,6 @@ export default class BoxLayout {
               boxNode.scratch(STYLES_KEY, backupStyles);
               boxNode.addClass(BOX_NODE_CLASS);
 
-              // (2.b) Set the size
               boxNode.style(newStyles);
 
               resolve(true);
@@ -289,7 +286,10 @@ export default class BoxLayout {
         const boxedNodes = boxNodes.children();
         for (const boxedNode of boxedNodes) {
           for (const edge of boxedNode.connectedEdges()) {
-            const syntheticEdge = this.syntheticEdgeGenerator.getEdge(edge.source(), edge.target());
+            if (edge.source().id() === edge.target().parent().id()) {
+              console.log(`${edge.source().id()} === ${edge.target().parent().id()}`);
+            }
+            const syntheticEdge = this.syntheticEdgeGenerator.getEdge(boxByType, edge.source(), edge.target());
             if (syntheticEdge) {
               syntheticEdges = syntheticEdges.add(this.cy.add(syntheticEdge));
             }

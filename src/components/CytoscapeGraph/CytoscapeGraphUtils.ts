@@ -1,6 +1,5 @@
 import * as LayoutDictionary from './graphs/LayoutDictionary';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData, Layout } from '../../types/Graph';
-import { DagreGraph } from './graphs/DagreGraph';
 import * as Cy from 'cytoscape';
 
 export const CyEdge = {
@@ -97,8 +96,8 @@ export const runLayout = (cy: Cy.Core, layout: Layout) => {
     cy.layout({
       ...layoutOptions,
       name: 'box-layout',
-      appBoxLayout: LayoutDictionary.getLayout(DagreGraph.getLayout()),
-      defaultLayout: layout
+      appBoxLayout: 'dagre',
+      defaultLayout: layout.name
     }).run();
   } else {
     cy.layout(layoutOptions).run();
