@@ -77,10 +77,20 @@ declare header=${pieces[0]}
 declare payload=${pieces[1]}
 declare signature=${pieces[2]}
 
+# the payload may have different base64 strings separated with dash characters
+IFS='-' read -ra payload_pieces <<< "$payload"
+
 echo "Header"
 echo "${header}" | base64_decode | jq
 echo "Payload"
-echo "${payload}" | base64_decode | jq
+for (( i=0; i<${#payload_pieces[@]}; i++ ));
+do
+  if [ "$i" -gt "0" ]; then
+    payload_decoded="${payload_decoded}~" # OpenShift OAuth access tokens want "~" character
+  fi
+  payload_decoded="${payload_decoded}$(echo -n "${payload_pieces[$i]}" | base64_decode)"
+done
+echo "${payload_decoded}" | jq
 
 verify_signature "${header}.${payload}" "${signature}"
 
