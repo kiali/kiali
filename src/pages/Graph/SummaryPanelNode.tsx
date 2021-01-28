@@ -64,26 +64,22 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
       this.props.jaegerState.info.enabled &&
       this.props.jaegerState.info.integration;
 
-    const actions = [
-      <DropdownGroup
-        label="Show"
-        className="kiali-group-menu"
-        children={getOptions(nodeData).map(o => {
-          return (
-            <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-              {o.text}
-            </DropdownItem>
-          );
-        })}
-      />
-    ];
+    const options = getOptions(nodeData, this.props.jaegerState.info).map(o => {
+      return (
+        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
+          {o.text}
+        </DropdownItem>
+      );
+    });
+    const actions =
+      options.length > 0 ? [<DropdownGroup label="Show" className="kiali-group-menu" children={options} />] : undefined;
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
           <div>
             {renderBadgedLink(nodeData)}
-            {!(nodeData.isInaccessible || nodeType === NodeType.AGGREGATE) && (
+            {actions && (
               <Dropdown
                 id="summary-node-actions"
                 style={{ float: 'right' }}

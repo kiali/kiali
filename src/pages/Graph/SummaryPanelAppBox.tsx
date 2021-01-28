@@ -106,35 +106,35 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const serviceList = this.renderServiceList(appBox);
     const workloadList = this.renderWorkloadList(appBox);
 
-    const actions = [
-      <DropdownGroup
-        label="Show"
-        className="kiali-appbox-menu"
-        children={getOptions(nodeData).map(o => {
-          return (
-            <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-              {o.text}
-            </DropdownItem>
-          );
-        })}
-      />
-    ];
+    const options = getOptions(nodeData).map(o => {
+      return (
+        <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
+          {o.text}
+        </DropdownItem>
+      );
+    });
+    const actions =
+      options.length > 0
+        ? [<DropdownGroup label="Show" className="kiali-appbox-menu" children={options} />]
+        : undefined;
 
     return (
       <div ref={this.mainDivRef} className={`panel panel-default ${summaryPanel}`}>
         <div className="panel-heading" style={summaryHeader}>
           <div>
             {renderBadgedLink(nodeData)}
-            <Dropdown
-              id="summary-appbox-actions"
-              isPlain={true}
-              style={{ float: 'right' }}
-              dropdownItems={actions}
-              isOpen={this.state.isOpen}
-              position={DropdownPosition.right}
-              toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
-              isGrouped={true}
-            />
+            {actions && (
+              <Dropdown
+                id="summary-appbox-actions"
+                isPlain={true}
+                style={{ float: 'right' }}
+                dropdownItems={actions}
+                isOpen={this.state.isOpen}
+                position={DropdownPosition.right}
+                toggle={<KebabToggle id="summary-appbox-kebab" onToggle={this.onToggleActions} />}
+                isGrouped={true}
+              />
+            )}
           </div>
           <div>{renderHealth(nodeData.health)}</div>
           <div>
