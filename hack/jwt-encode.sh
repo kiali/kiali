@@ -161,7 +161,7 @@ signature=$(echo "${header_payload}" | hmacsha256_sign | base64_encode)
 jwt_token="${header_payload}.${signature}"
 echo "${jwt_token}"
 
-if [ ! -z "${url}" ]; then
+if [ ! -z "${url:-}" ]; then
   echo "=================SUBMITING REQUEST:"
   echo "URL:     ${url}"
   echo "SECRET:  ${secret}"
