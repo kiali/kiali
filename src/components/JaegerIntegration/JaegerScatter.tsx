@@ -22,7 +22,6 @@ import { averageSpanDuration } from 'utils/tracing/TraceStats';
 interface JaegerScatterProps {
   duration: number;
   traces: JaegerTrace[];
-  fixedTime: boolean;
   showSpansAverage: boolean;
   errorTraces?: boolean;
   errorFetchTraces?: JaegerError[];
@@ -109,7 +108,6 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
         fill={true}
         unit="seconds"
         seriesComponent={<ChartScatter />}
-        timeWindow={this.props.fixedTime ? timeWindow : undefined}
         onClick={dp => this.props.setTraceId(dp.trace.traceID)}
         labelComponent={<TraceTooltip />}
       />

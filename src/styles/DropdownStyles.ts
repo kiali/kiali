@@ -1,5 +1,6 @@
 import { PfColors } from 'components/Pf/PfColors';
 import { style } from 'typestyle';
+import { NestedCSSProperties } from 'typestyle/lib/types';
 
 export const containerStyle = style({
   overflow: 'auto'
@@ -24,31 +25,30 @@ export const titleStyle = style({
   color: PfColors.Black600
 });
 
-// this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
-export const itemStyleWithoutInfo = style({
+const itemStyle: NestedCSSProperties = {
   alignItems: 'center',
   whiteSpace: 'nowrap',
   margin: 0,
-  padding: '6px 16px'
-});
+  padding: '6px 16px',
+  $nest: {
+    '& > div > input.pf-c-radio__input': {
+      margin: 0
+    },
+    '& > div > input.pf-c-check__input': {
+      margin: 0
+    }
+  }
+};
+
+// this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
+export const itemStyleWithoutInfo = style(itemStyle);
 
 // this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
 export const itemStyleWithInfo = style({
-  alignItems: 'center',
-  whiteSpace: 'nowrap',
-  margin: 0,
+  ...itemStyle,
   padding: '6px 0px 6px 16px'
 });
 
 export const infoStyle = style({
-  margin: '0px 16px 2px 4px'
+  margin: '0px 5px 2px 4px'
 });
-
-// this emulates Select component .pf-c-select__menu-item but with less vertical padding to conserve space
-export const itemStyle = (hasInfo: boolean) =>
-  style({
-    alignItems: 'center',
-    whiteSpace: 'nowrap',
-    margin: 0,
-    padding: hasInfo ? '6px 0px 6px 16px' : '6px 16px'
-  });

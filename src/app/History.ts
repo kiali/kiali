@@ -31,7 +31,6 @@ export enum URLParam {
   JAEGER_LIMIT_TRACES = 'limit',
   JAEGER_PERCENTILE = 'percentile',
   JAEGER_SHOW_SPANS_AVG = 'showSpansAvg',
-  JAEGER_TIME_FITS_DATA = 'timeFitsData',
   JAEGER_TRACE_ID = 'traceId',
   NAMESPACES = 'namespaces',
   OPERATION_NODES = 'operationNodes',

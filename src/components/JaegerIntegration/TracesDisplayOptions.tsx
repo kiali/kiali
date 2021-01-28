@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Checkbox, Dropdown, DropdownToggle, Radio } from '@patternfly/react-core';
+import { Checkbox, Dropdown, DropdownToggle, Radio, Tooltip } from '@patternfly/react-core';
+import { InfoAltIcon } from '@patternfly/react-icons';
 
 import { itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
@@ -11,13 +12,20 @@ export interface QuerySettings {
 }
 
 export interface DisplaySettings {
-  fitToData: boolean;
   showSpansAverage: boolean;
 }
+
+export const percentilesOptions: DisplayOptionType[] = [
+  { id: 'all', labelText: 'All' },
+  { id: '0.75', labelText: 'p75' },
+  { id: '0.9', labelText: 'p90' },
+  { id: '0.99', labelText: 'p99' }
+];
 
 interface Props {
   onQuerySettingsChanged: (settings: QuerySettings) => void;
   onDisplaySettingsChanged: (settings: DisplaySettings) => void;
+  percentilesPromise: Promise<Map<string, string>>;
 }
 
 type State = QuerySettings &
@@ -31,26 +39,22 @@ interface DisplayOptionType {
 }
 
 export class TracesDisplayOptions extends React.Component<Props, State> {
+  private computedPercentiles: Map<string, string> | undefined;
+
   constructor(props: Props) {
     super(props);
     const displaySettings = TracesDisplayOptions.retrieveDisplaySettings();
     const querySettings = TracesDisplayOptions.retrieveQuerySettings();
     this.state = { ...displaySettings, ...querySettings, isOpen: false };
+    props.percentilesPromise.then(p => (this.computedPercentiles = p));
   }
 
-  componentDidUpdate() {}
-
   public static retrieveDisplaySettings(): DisplaySettings {
-    const fitToData =
-      HistoryManager.getParam(URLParam.JAEGER_TIME_FITS_DATA) ||
-      sessionStorage.getItem(URLParam.JAEGER_TIME_FITS_DATA) ||
-      'false';
     const spansAverage =
       HistoryManager.getParam(URLParam.JAEGER_SHOW_SPANS_AVG) ||
       sessionStorage.getItem(URLParam.JAEGER_SHOW_SPANS_AVG) ||
       'false';
     return {
-      fitToData: fitToData === 'true',
       showSpansAverage: spansAverage === 'true'
     };
   }
@@ -96,30 +100,42 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
   }
 
   private getPopoverContent() {
-    const percentiles: DisplayOptionType[] = [
-      { id: 'all', labelText: 'All' },
-      { id: '0.75', labelText: 'p75 and above' },
-      { id: '0.9', labelText: 'p90 and above' },
-      { id: '0.99', labelText: 'p99 and above' }
-    ];
-
     return (
       <div id="traces-display-menu" className={menuStyle}>
-        <div className={titleStyle}>Filter by percentile</div>
-        {percentiles.map(item => (
-          <div key={item.id}>
-            <label key={item.id} className={itemStyleWithoutInfo}>
-              <Radio
-                id={item.id}
-                name={'percentiles' + item.id}
-                isChecked={item.id === this.state.percentile || (item.id === 'all' && !this.state.percentile)}
-                label={item.labelText}
-                onChange={checked => this.onPercentileChanged(item.id, checked)}
-                value={item.id}
-              />
-            </label>
+        <Tooltip
+          content={`
+          These percentiles are computed from metrics. To refresh them, reload the page.
+          The filter applies on span durations.
+          Thus, the filtered traces are the ones where at least one span for the service satisfies the duration criteria.
+        `}
+        >
+          <div className={titleStyle}>
+            Filter by percentile <InfoAltIcon />
           </div>
-        ))}
+        </Tooltip>
+        {percentilesOptions.map(item => {
+          let label = item.labelText;
+          if (this.computedPercentiles) {
+            const val = this.computedPercentiles!.get(item.id);
+            if (val) {
+              label += ` (${val}+)`;
+            }
+          }
+          return (
+            <div key={item.id}>
+              <label key={item.id} className={itemStyleWithoutInfo}>
+                <Radio
+                  id={item.id}
+                  name={'percentiles' + item.id}
+                  isChecked={item.id === this.state.percentile || (item.id === 'all' && !this.state.percentile)}
+                  label={label}
+                  onChange={checked => this.onPercentileChanged(item.id, checked)}
+                  value={item.id}
+                />
+              </label>
+            </div>
+          );
+        })}
         <div className={titleStyle}>Errors</div>
         <div>
           <label className={itemStyleWithoutInfo}>
@@ -148,31 +164,6 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             </label>
           </div>
         ))}
-        <div className={titleStyle}>Time axis</div>
-        <div>
-          <label className={itemStyleWithoutInfo}>
-            <Radio
-              id="xaxis-fit-data"
-              name="xaxis-fit-data"
-              isChecked={this.state.fitToData}
-              label="Fit to data"
-              onChange={() => this.onTimeAxisChanged(true)}
-              value="xaxis-fit-data"
-            />
-          </label>
-        </div>
-        <div>
-          <label className={itemStyleWithoutInfo}>
-            <Radio
-              id="xaxis-fit-time"
-              name="xaxis-fit-time"
-              isChecked={!this.state.fitToData}
-              label="Fit to selected interval"
-              onChange={() => this.onTimeAxisChanged(false)}
-              value="xaxis-fit-time"
-            />
-          </label>
-        </div>
         <div className={titleStyle}>Value axis</div>
         <div>
           <label className={itemStyleWithoutInfo}>
@@ -219,11 +210,6 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
       this.saveValue(URLParam.JAEGER_LIMIT_TRACES, String(limit));
       this.setState({ limit: limit }, () => this.props.onQuerySettingsChanged(this.state));
     }
-  };
-
-  private onTimeAxisChanged = (fitToData: boolean) => {
-    this.saveValue(URLParam.JAEGER_TIME_FITS_DATA, String(fitToData));
-    this.setState({ fitToData: fitToData }, () => this.props.onDisplaySettingsChanged(this.state));
   };
 
   private onValueAxisChanged = (showSpansAverage: boolean) => {

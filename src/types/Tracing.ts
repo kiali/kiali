@@ -3,6 +3,7 @@ export type TracingQuery = {
   endMicros?: number;
   tags?: string;
   limit?: number;
+  minDuration?: string;
 };
 
 export type Span = {

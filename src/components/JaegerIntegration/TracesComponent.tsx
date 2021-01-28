@@ -14,17 +14,21 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
+import * as API from 'services/Api';
+import * as AlertUtils from 'utils/AlertUtils';
 import { RenderComponentScroll, RenderHeader } from '../Nav/Page';
-import { KialiAppState } from '../../store/Store';
-import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
+import { KialiAppState } from 'store/Store';
+import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
 import TraceDetails from './JaegerResults/TraceDetails';
 import JaegerScatter from './JaegerScatter';
-import { TracesFetcher } from './TracesFetcher';
+import { TracesFetcher, FetchOptions } from './TracesFetcher';
 import { SpanDetails } from './JaegerResults/SpanDetails';
 import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
-import { timeRangeSelector } from '../../store/Selectors';
+import { timeRangeSelector } from 'store/Selectors';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
-import { TracesDisplayOptions, QuerySettings, DisplaySettings } from './TracesDisplayOptions';
+import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOptions } from './TracesDisplayOptions';
+import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
+import { MetricsStatsResult } from 'types/Metrics';
 
 interface TracesProps {
   namespace: string;
@@ -53,6 +57,7 @@ const spansDetailsTab = 1;
 
 class TracesComponent extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
+  private percentilesPromise: Promise<Map<string, string>>;
 
   constructor(props: TracesProps) {
     super(props);
@@ -71,6 +76,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       activeTab: traceDetailsTab
     };
     this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => this.setState({ jaegerErrors: errors }));
+    this.percentilesPromise = this.fetchPercentiles();
   }
 
   componentDidMount() {
@@ -100,20 +106,87 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   }
 
   private getTags = () => {
-    return this.state.querySettings.errorsOnly ? '{"error": "true"}' : '';
+    return this.state.querySettings.errorsOnly ? '{"error":"true"}' : '';
   };
 
-  private fetchTraces = () => {
-    this.fetcher.fetch(
-      {
+  private fetchTraces = async () => {
+    const options: FetchOptions = {
+      namespace: this.props.namespace,
+      target: this.props.target,
+      targetKind: this.props.targetKind,
+      spanLimit: this.state.querySettings.limit,
+      tags: this.getTags()
+    };
+    if (this.state.querySettings.percentile && this.state.querySettings.percentile !== 'all') {
+      // Fetching traces above a percentile
+      // Percentiles (99th, 90th, 75th) are pre-computed from metrics bound to this app/workload/service object.
+      try {
+        const percentiles = await this.percentilesPromise;
+        options.minDuration = percentiles.get(this.state.querySettings.percentile);
+        if (!options.minDuration) {
+          AlertUtils.addWarning('Cannot perform query above the requested percentile (value unknown).');
+        }
+      } catch (err) {
+        AlertUtils.addError('Could not fetch percentiles.', err);
+      }
+    }
+    this.fetcher.fetch(options, this.state.traces);
+  };
+
+  private fetchPercentiles = (): Promise<Map<string, string>> => {
+    // We'll fetch percentiles on a large enough interval (unrelated to the selected interval)
+    // in order to have stable values and avoid constantly fetching again
+    const query: MetricsStatsQuery = {
+      queryTime: Math.floor(Date.now() / 1000),
+      target: {
         namespace: this.props.namespace,
-        target: this.props.target,
-        targetKind: this.props.targetKind,
-        spanLimit: this.state.querySettings.limit,
-        tags: this.getTags()
+        name: this.props.target,
+        kind: this.props.targetKind
       },
-      this.state.traces
-    );
+      interval: '1h',
+      direction: 'inbound',
+      avg: false,
+      quantiles: percentilesOptions.map(p => p.id).filter(id => id !== 'all')
+    };
+    const queries: MetricsStatsQuery[] =
+      this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
+    return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
+  };
+
+  private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, string> => {
+    if (r.warnings) {
+      AlertUtils.addWarning(r.warnings.join(', '));
+    }
+    const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
+      const map = new Map<string, number>();
+      const key = genStatsKey(q.target, undefined, dir, q.interval);
+      if (key) {
+        const statsForKey = r.stats[key];
+        if (statsForKey) {
+          statsForKey.responseTimes.forEach(rt => {
+            if (q.quantiles.includes(rt.name)) {
+              map.set(rt.name, rt.value);
+            }
+          });
+        }
+      }
+      return map;
+    });
+    // Merge the two maps; if a value exists in both of them, take the mean
+    const minDurations = new Map<string, string>();
+    mapInbound.forEach((v1, k) => {
+      const v2 = mapOutbound.get(k);
+      if (v2) {
+        minDurations.set(k, ((v1 + v2) / 2).toFixed(2) + 'ms');
+        mapOutbound.delete(k);
+      } else {
+        minDurations.set(k, v1.toFixed(2) + 'ms');
+      }
+    });
+    mapOutbound.forEach((v, k) => {
+      minDurations.set(k, v.toFixed(2) + 'ms');
+    });
+    return minDurations;
   };
 
   private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
@@ -142,13 +215,11 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   };
 
   private onQuerySettingsChanged = (settings: QuerySettings) => {
-    console.log(settings);
     this.fetcher.resetLastFetchTime();
     this.setState({ querySettings: settings }, this.fetchTraces);
   };
 
   private onDisplaySettingsChanged = (settings: DisplaySettings) => {
-    console.log(settings);
     this.setState({ displaySettings: settings });
   };
 
@@ -168,6 +239,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                           <TracesDisplayOptions
                             onDisplaySettingsChanged={this.onDisplaySettingsChanged}
                             onQuerySettingsChanged={this.onQuerySettingsChanged}
+                            percentilesPromise={this.percentilesPromise}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
@@ -190,7 +262,6 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                     </Toolbar>
                   </RenderHeader>
                   <JaegerScatter
-                    fixedTime={!this.state.displaySettings.fitToData}
                     showSpansAverage={this.state.displaySettings.showSpansAverage}
                     traces={this.state.traces}
                     errorFetchTraces={this.state.jaegerErrors}
