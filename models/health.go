@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/prometheus/common/model"
+
 	"github.com/kiali/kiali/log"
 )
 
@@ -27,9 +28,9 @@ type AppHealth struct {
 
 func NewEmptyRequestHealth() RequestHealth {
 	return RequestHealth{
-		Inbound: make(map[string]map[string]float64),
-		Outbound: make(map[string]map[string]float64),
-		inboundSource: make(map[string]map[string]float64),
+		Inbound:            make(map[string]map[string]float64),
+		Outbound:           make(map[string]map[string]float64),
+		inboundSource:      make(map[string]map[string]float64),
 		inboundDestination: make(map[string]map[string]float64),
 	}
 }
@@ -93,11 +94,10 @@ type ProxyStatus struct {
 // - Inbound//Outbound are the rates of requests by protocol and status_code.
 //   Example:   Inbound: { "http": {"200": 1.5, "400": 2.3}, "grpc": {"1": 1.2} }
 type RequestHealth struct {
-	Inbound  			map[string]map[string]float64 `json:"inbound"`
-	Outbound 			map[string]map[string]float64 `json:"outbound"`
-
-	inboundSource 		map[string]map[string]float64
-	inboundDestination 	map[string]map[string]float64
+	Inbound            map[string]map[string]float64 `json:"inbound"`
+	Outbound           map[string]map[string]float64 `json:"outbound"`
+	inboundSource      map[string]map[string]float64
+	inboundDestination map[string]map[string]float64
 }
 
 // AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios
@@ -151,7 +151,7 @@ func (in *RequestHealth) CombineReporters() {
 			} else {
 				// If the value provided by destination is higher than the source we replace it
 				// i.e. destination reports errors but not from source
-				if idValue >in.Inbound[idProtocol][idCode] {
+				if idValue > in.Inbound[idProtocol][idCode] {
 					in.Inbound[idProtocol][idCode] = idValue
 				}
 			}
