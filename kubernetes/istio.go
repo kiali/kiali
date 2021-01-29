@@ -229,22 +229,23 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		}
 		healthyIstiods = healthyIstiods + 1
 
-		go func() {
+		go func(name, namespace string) {
 			defer wg.Done()
-			res, err := in.k8s.CoreV1().RESTClient().Get().
-				Namespace(istiod.Namespace).
-				Resource("pods").
-				SubResource("proxy").
-				Name(istiod.Name).
-				Suffix("/debug/syncz").
+			res, err := in.k8s.CoreV1().Pods(namespace).
+				ProxyGet(
+					"http",
+					name,
+					"8080",
+					"/debug/syncz",
+					map[string]string{}).
 				DoRaw(in.ctx)
 
 			if err != nil {
-				errChan <- errors.New(fmt.Sprintf("Error fetching the proxy-status from %s pod: %s", istiod.Name, err.Error()))
+				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {
-				syncChan <- map[string][]byte{ istiod.Name: res }
+				syncChan <- map[string][]byte{name: res}
 			}
-		}()
+		}(istiod.Name, istiod.Namespace)
 	}
 
 	wg.Wait()
