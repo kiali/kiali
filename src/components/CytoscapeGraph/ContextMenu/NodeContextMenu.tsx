@@ -49,17 +49,16 @@ const graphContextMenuItemLinkStyle = style({
 });
 
 type Props = NodeContextMenuProps & ReduxProps;
+type LinkParams = { namespace: string; name: string; type: string };
 
 export class NodeContextMenu extends React.PureComponent<Props> {
-  static derivedValuesFromProps(node: DecoratedGraphNodeData) {
+  static derivedValuesFromProps(node: DecoratedGraphNodeData): LinkParams | undefined {
     const namespace: string = node.namespace;
-    let name: string | undefined = '';
-    let type = '';
+    let name: string | undefined = undefined;
+    let type: string | undefined = undefined;
     switch (node.nodeType) {
-      case 'aggregate':
-        name = node.aggregateValue!;
-        break;
-      case 'app':
+      case NodeType.APP:
+      case NodeType.BOX: // we only support app box node graphs, so treat like app
         // Prefer workload type for nodes backed by a workload
         if (node.workload && node.parent) {
           name = node.workload;
@@ -69,18 +68,17 @@ export class NodeContextMenu extends React.PureComponent<Props> {
           name = node.app;
         }
         break;
-      case 'service':
+      case NodeType.SERVICE:
         type = node.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
         name = node.service;
         break;
-      case 'workload':
+      case NodeType.WORKLOAD:
         name = node.workload;
         type = Paths.WORKLOADS;
         break;
-      default:
     }
 
-    return { namespace, type, name };
+    return type && name ? { namespace, type, name } : undefined;
   }
 
   createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
@@ -103,19 +101,20 @@ export class NodeContextMenu extends React.PureComponent<Props> {
   }
 
   render() {
+    const linkParams = NodeContextMenu.derivedValuesFromProps(this.props);
+
     // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
-    if (this.props.nodeType === NodeType.AGGREGATE || this.props.isInaccessible) {
+    if (!linkParams || this.props.isInaccessible) {
       this.props.contextMenu.disable();
       return null;
     }
 
-    const { name } = NodeContextMenu.derivedValuesFromProps(this.props);
-    const options: ContextMenuOption[] = getOptions(this.props, this.props.jaegerInfo);
+    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
 
     return (
       <div className={graphContextMenuContainerStyle}>
         <div className={graphContextMenuTitleStyle}>
-          <strong>{name}</strong>
+          <strong>{linkParams.name}</strong>
         </div>
         <div className={graphContextMenuSubTitleStyle}>Show</div>
         {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
@@ -127,11 +126,6 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     this.props.contextMenu.hide(0);
   };
 }
-
-// @todo: We need take care of this at global app level
-const makeDetailsPageUrl = (namespace: string, type: string, name?: string): string => {
-  return `/namespaces/${namespace}/${type}/${name}`;
-};
 
 const getJaegerURL = (namespace: string, namespaceSelector: boolean, jaegerURL: string, name?: string): string => {
   return `${jaegerURL}/search?service=${name}${namespaceSelector ? `.${namespace}` : ''}`;
@@ -153,9 +147,17 @@ export const clickHandler = (o: ContextMenuOption) => {
 };
 
 export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
-  const { namespace, type, name } = NodeContextMenu.derivedValuesFromProps(node);
-  const detailsPageUrl = makeDetailsPageUrl(namespace, type, name);
+  const linkParams = NodeContextMenu.derivedValuesFromProps(node);
+  if (!linkParams) {
+    return [];
+  }
+  return getOptionsFromLinkParams(linkParams, jaegerInfo);
+};
+
+const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
   const options: ContextMenuOption[] = [];
+  const { namespace, type, name } = linkParams;
+  const detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
 
   options.push({ text: 'Details', url: detailsPageUrl });
   if (type !== Paths.SERVICEENTRIES) {
