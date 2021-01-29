@@ -111,6 +111,10 @@ func buildIstioAggregations(local, remote string) []Aggregation {
 			Label:       fmt.Sprintf("%s_canonical_revision", local),
 			DisplayName: "Local version",
 		},
+		{
+			Label:       fmt.Sprintf("%s_workload_namespace", remote),
+			DisplayName: "Remote namespace",
+		},
 	}
 	if remote == "destination" {
 		aggs = append(aggs, Aggregation{
