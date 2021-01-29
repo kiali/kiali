@@ -1,8 +1,10 @@
 package business
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -203,8 +205,33 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 		return fmt.Errorf("could not connect to Openshift: %v", err)
 	}
 
-	// Delete the access token from the API server
-	_, err = request("DELETE", fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken)
+	// https://github.com/kiali/kiali/issues/3595
+	// OpenShift 4.6+ changed the format of the OAuthAccessToken.
+	// In pre-4.6, the access_token given to the client is the same name as the OAuthAccessToken resource.
+	// In 4.6+, that is not true anymore - you have to encode the access_token to obtain the OAuthAccessToken resource name.
+	// The code below will attempt to delete the access token using the new 4.6+ format.
+	// If this first delete attempt fails, an attempt will immediately be made to delete using the old pre-4.6 name.
+	// This will allow for supporting running Kiali in pre-4.6 OpenShift.
+
+	// convert the access token to the corresponding oauthaccesstoken resource name
+	// see: https://github.com/openshift/console/blob/9f352ba49f82ad693a72d0d35709961428b43b93/pkg/server/server.go#L609-L613
+	sha256Prefix := "sha256~"
+	h := sha256.Sum256([]byte(strings.TrimPrefix(token, sha256Prefix)))
+	oauthTokenName := sha256Prefix + base64.RawURLEncoding.EncodeToString(h[0:])
+	log.Debugf("Logging out by deleting OAuth access token [%v] which was converted from access token [%v]", oauthTokenName, token)
+
+	// Delete the access token from the API server using OpenShift 4.6+ access token name
+	_, err = request("DELETE", fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &conf.BearerToken)
+
+	if err != nil {
+		// Try to delete the access token from the API server using the pre-4.6 access token name.
+		// If this also fails, we'll send back the err from the first attempt.
+		// If this succeeds, set err to nil to indicate a successful logout.
+		_, err2 := request("DELETE", fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken)
+		if err2 == nil {
+			err = nil
+		}
+	}
 
 	if err != nil {
 		return err
