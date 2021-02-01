@@ -124,7 +124,7 @@ func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
 	}
 }
 
-// RequestHealth interanlly stores Inbound rate separated by reporter
+// RequestHealth internally stores Inbound rate separated by reporter
 // There were duplicated values that should exist in both reports
 // but there may exist values that only are present in one or another reporter,
 // those should be consolidated into a single result
