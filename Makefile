@@ -67,12 +67,8 @@ GO_BUILD_ENVVARS = \
 	GOARCH=$(GOARCH) \
 	CGO_ENABLED=0 \
 
-# Environment variables to shift between base images.
-ifeq ($(GOARCH),amd64)
-KIALI_DOCKER_FILE ?= Dockerfile-ubi7-minimal
-else
+# Determine which Dockerfile is used to build the server container
 KIALI_DOCKER_FILE ?= Dockerfile-ubi8-minimal
-endif
 
 # Determine if we should use Docker OR Podman - value must be one of "docker" or "podman"
 DORP ?= docker
