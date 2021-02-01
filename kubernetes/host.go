@@ -13,13 +13,13 @@ import (
 
 // Host represents the FQDN format for Istio hostnames
 type Host struct {
-	Service   string
-	Namespace string
-	Cluster   string
+	Service   string `json:"service"`
+	Namespace string `json:"namespace"`
+	Cluster   string `json:"cluster"`
 	// CompleteInput is true when Service, Namespace and Cluster fields are present.
 	// It is true for simple service names and FQDN services.
 	// It is false for service.namespace format and service entries.
-	CompleteInput bool
+	CompleteInput bool `json:"complete_input"`
 }
 
 // ParseHost takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct

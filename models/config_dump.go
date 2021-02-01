@@ -26,20 +26,20 @@ type Listener struct {
 
 type Clusters []*Cluster
 type Cluster struct {
-	ServiceFQDN     string `json:"service_fqdn"`
-	Port            int    `json:"port"`
-	Subset          string `json:"subset"`
-	Direction       string `json:"direction"`
-	Type            string `json:"type"`
-	DestinationRule string `json:"destination_rule"`
+	ServiceFQDN     kubernetes.Host `json:"service_fqdn"`
+	Port            int             `json:"port"`
+	Subset          string          `json:"subset"`
+	Direction       string          `json:"direction"`
+	Type            string          `json:"type"`
+	DestinationRule string          `json:"destination_rule"`
 }
 
 type Routes []*Route
 type Route struct {
-	Name           string `json:"name"`
-	Domains        string `json:"domains"`
-	Match          string `json:"match"`
-	VirtualService string `json:"virtual_service"`
+	Name           string          `json:"name"`
+	Domains        kubernetes.Host `json:"domains"`
+	Match          string          `json:"match"`
+	VirtualService string          `json:"virtual_service"`
 }
 
 type Bootstrap struct {
@@ -264,16 +264,16 @@ func (css *Clusters) Parse(dump *kubernetes.ConfigDump) error {
 }
 
 func (cs *Cluster) Parse(cluster kubernetes.EnvoyCluster) {
-	cs.ServiceFQDN = cluster.Name
+	cs.ServiceFQDN = kubernetes.Host{Service: cluster.Name}
 	cs.Type = cluster.Type
 	cs.Port = 0
 	cs.Subset = ""
 	cs.Direction = ""
 	cs.DestinationRule = ""
 
-	parts := strings.Split(cs.ServiceFQDN, "|")
+	parts := strings.Split(cluster.Name, "|")
 	if len(parts) > 3 {
-		cs.ServiceFQDN = parts[3]
+		cs.ServiceFQDN = kubernetes.ParseHost(parts[3], "", "")
 		cs.Port, _ = strconv.Atoi(strings.TrimSuffix(parts[1], "_"))
 		cs.Subset = parts[2]
 		cs.Direction = strings.TrimSuffix(parts[0], "_")
@@ -281,7 +281,7 @@ func (cs *Cluster) Parse(cluster kubernetes.EnvoyCluster) {
 	}
 }
 
-func (rs *Routes) Parse(dump *kubernetes.ConfigDump) error {
+func (rs *Routes) Parse(dump *kubernetes.ConfigDump, namespaces []string) error {
 	routesDump, err := dump.GetRoutes()
 	if err != nil {
 		return err
@@ -296,7 +296,7 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) error {
 					if r.Route != nil && r.Route.Cluster != "PassthroughCluster" {
 						*rs = append(*rs, &Route{
 							Name:           rc.Name,
-							Domains:        bestDomainMatch(vhs.Domains),
+							Domains:        bestDomainMatch(vhs.Domains, namespaces),
 							Match:          matchSummary(r.Match),
 							VirtualService: istioMetadata(r.Metadata),
 						})
@@ -306,7 +306,7 @@ func (rs *Routes) Parse(dump *kubernetes.ConfigDump) error {
 				if len(vhs.Routes) == 0 {
 					*rs = append(*rs, &Route{
 						Name:           rc.Name,
-						Domains:        bestDomainMatch(vhs.Domains),
+						Domains:        bestDomainMatch(vhs.Domains, namespaces),
 						Match:          "/*",
 						VirtualService: "404",
 					})
@@ -339,13 +339,13 @@ func matchSummary(match map[string]interface{}) string {
 	return strings.Join(conds, " ")
 }
 
-func bestDomainMatch(domains []string) string {
+func bestDomainMatch(domains []string, namespaces []string) kubernetes.Host {
 	if len(domains) == 0 {
-		return ""
+		return kubernetes.Host{Service: ""}
 	}
 
 	if len(domains) == 1 {
-		return domains[0]
+		return kubernetes.GetHost(domains[0], "", "", namespaces)
 	}
 
 	bestMatch := domains[0]
@@ -354,7 +354,8 @@ func bestDomainMatch(domains []string) string {
 			continue
 		}
 
-		if domain[0] <= '9' {
+		firstChar := domain[0]
+		if firstChar >= '1' && firstChar <= '9' {
 			continue
 		}
 
@@ -362,7 +363,7 @@ func bestDomainMatch(domains []string) string {
 			bestMatch = domain
 		}
 	}
-	return bestMatch
+	return kubernetes.GetHost(bestMatch, "", "", namespaces)
 }
 
 func istioMetadata(metadata *kubernetes.EnvoyMetadata) string {
