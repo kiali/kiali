@@ -55,12 +55,11 @@ const getHeaders = () => {
   return { ...loginHeaders };
 };
 
-
 /** Create content type correctly for a given request type */
-const getHeadersWithMethod = (method) => {
+const getHeadersWithMethod = method => {
   var allHeaders = getHeaders();
   if (method === HTTP_VERBS.PATCH) {
-    allHeaders["Content-Type"] = "application/json";
+    allHeaders['Content-Type'] = 'application/json';
   }
 
   return allHeaders;

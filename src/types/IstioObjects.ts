@@ -162,8 +162,10 @@ export interface EnvoyConfigDump {
   configs: any[];
 }
 
+export type EnvoySummary = ClusterSummary | RouteSummary | ListenerSummary;
+
 export interface ClusterSummary {
-  service_fqdn: string;
+  service_fqdn: Host;
   port: number;
   subset: string;
   direction: string;
@@ -180,7 +182,7 @@ export interface ListenerSummary {
 
 export interface RouteSummary {
   name: string;
-  domains: string;
+  domains: Host;
   match: string;
   virtual_service: string;
 }

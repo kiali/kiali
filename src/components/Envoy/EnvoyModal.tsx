@@ -28,6 +28,10 @@ import { SummaryTableBuilder } from './tables/BaseTable';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { ISortBy, SortByDirection } from '@patternfly/react-table';
+import Namespace from '../../types/Namespace';
+import { KialiAppState } from '../../store/Store';
+import { namespaceItemsSelector } from '../../store/Selectors';
+import { connect } from 'react-redux';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
@@ -42,7 +46,11 @@ const toolbarSpace = style({
   marginLeft: '1em'
 });
 
-type EnvoyDetailProps = {
+type ReduxProps = {
+  namespaces: Namespace[];
+};
+
+type EnvoyDetailProps = ReduxProps & {
   show: boolean;
   namespace: string;
   workload: Workload;
@@ -205,7 +213,13 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
   };
 
   render() {
-    const builder = SummaryTableBuilder(this.state.resource, this.state.config, this.state.tableSortBy);
+    const builder = SummaryTableBuilder(
+      this.state.resource,
+      this.state.config,
+      this.state.tableSortBy,
+      this.props.namespaces,
+      this.props.namespace
+    );
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
 
@@ -293,4 +307,9 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
   }
 }
 
-export default EnvoyDetailsModal;
+const mapStateToProps = (state: KialiAppState) => ({
+  namespaces: namespaceItemsSelector(state)!
+});
+
+const EnvoyDetailsModalConnected = connect(mapStateToProps)(EnvoyDetailsModal);
+export default EnvoyDetailsModalConnected;
