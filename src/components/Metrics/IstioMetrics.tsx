@@ -1,36 +1,35 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
-import { RenderComponentScroll } from '../../components/Nav/Page';
-import * as API from '../../services/Api';
-import { KialiAppState } from '../../store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
-import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOptions';
-import * as AlertUtils from '../../utils/AlertUtils';
+import { RenderComponentScroll } from 'components/Nav/Page';
+import * as API from 'services/Api';
+import { KialiAppState } from 'store/Store';
+import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from 'types/Common';
+import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
+import * as AlertUtils from 'utils/AlertUtils';
 
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
-import history, { URLParam } from '../../app/History';
-import { MetricsObjectTypes } from '../../types/Metrics';
-import { GrafanaInfo } from '../../types/GrafanaInfo';
-import { MessageType } from '../../types/MessageCenter';
+import history, { URLParam } from 'app/History';
+import { MetricsObjectTypes } from 'types/Metrics';
+import { GrafanaInfo } from 'types/GrafanaInfo';
+import { MessageType } from 'types/MessageCenter';
 import { GrafanaLinks } from './GrafanaLinks';
 import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-
 import { DashboardModel, ExternalLink } from 'types/Dashboards';
 import { Overlay } from 'types/Overlay';
 import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { timeRangeSelector } from '../../store/Selectors';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { bindActionCreators } from 'redux';
+import { timeRangeSelector } from 'store/Selectors';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { UserSettingsActions } from 'actions/UserSettingsActions';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -82,7 +81,8 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       direction: this.props.direction
     };
     const defaultLabels = [
-      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service'
+      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service',
+      this.props.direction === 'inbound' ? 'source_workload_namespace' : 'destination_workload_namespace'
     ];
     MetricsHelper.settingsToOptions(settings, options, defaultLabels);
     return options;
