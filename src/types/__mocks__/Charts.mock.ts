@@ -10,7 +10,7 @@ const increment = 60;
 export const biggerTimeWindow: [Date, Date] = [new Date((t0 - 10 * 60) * 1000), new Date((t0 + 10 * 60) * 1000)];
 type Def = { name: string; stat?: string; labels?: Labels };
 
-const genSeries = (defs: Def[]): Metric[] => {
+export const genSeries = (defs: Def[]): Metric[] => {
   return defs.map(def => ({ datapoints: genSingle(0, 50), name: def.name, stat: def.stat, labels: def.labels || {} }));
 };
 
