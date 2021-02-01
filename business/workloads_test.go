@@ -610,6 +610,28 @@ func TestGetPodLogsTailLinesAndDurations(t *testing.T) {
 	assert.Equal("#4 Log error Message", podLogs.Entries[0].Message)
 }
 
+func TestGetPodLogsProxy(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsProxy(), nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	svc := setupWorkloadService(k8s)
+
+	tailLines := int64(2)
+	duration, _ := time.ParseDuration("2h")
+	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "details", TailLines: &tailLines}})
+	assert.Equal(1, len(podLogs.Entries))
+	entry := podLogs.Entries[0]
+	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
+	assert.Equal("2021-02-01T21:34:35.533Z", entry.AccessLogEntry.Timestamp)
+	assert.Equal(int64(1612215275), entry.AccessLogEntry.TimestampUnix)
+}
+
 func TestDuplicatedControllers(t *testing.T) {
 	assert := assert.New(t)
 

@@ -38,17 +38,25 @@ type PodLog struct {
 	Entries []LogEntry `json:"entries,omitempty"`
 }
 
-// LogEntry holds a single log entry
-type LogEntry struct {
-	Message       string `json:"message,omitempty"`
-	Severity      string `json:"severity,omitempty"`
+// AccessLogEntry provides parsed info from a single proxy access log entry
+type AccessLogEntry struct {
 	Timestamp     string `json:"timestamp,omitempty"`
 	TimestampUnix int64  `json:"timestampUnix,omitempty"`
+}
+
+// LogEntry holds a single log entry
+type LogEntry struct {
+	Message        string         `json:"message,omitempty"`
+	Severity       string         `json:"severity,omitempty"`
+	Timestamp      string         `json:"timestamp,omitempty"`
+	TimestampUnix  int64          `json:"timestampUnix,omitempty"`
+	AccessLogEntry AccessLogEntry `json:"accessLogEntry,omitempty"`
 }
 
 // LogOptions holds query parameter values
 type LogOptions struct {
 	Duration *time.Duration
+	IsProxy  bool // fetching logs for Istio Proxy (Envoy access log)
 	core_v1.PodLogOptions
 }
 
@@ -195,7 +203,7 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration string, sinceTime string, tailLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, sinceTime, tailLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
@@ -212,6 +220,8 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container string, duration st
 
 		opts.Duration = &duration
 	}
+
+	opts.IsProxy = isProxy == "true"
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -316,6 +326,16 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 		severity := severityRegexp.FindString(line)
 		if severity != "" {
 			entry.Severity = strings.ToUpper(severity)
+		}
+
+		if opts.IsProxy {
+			tokens := strings.SplitN(entry.Message, " ", 2)
+			timestamp := strings.Trim(tokens[0], "[]")
+			parsed, err := time.Parse(time.RFC3339, timestamp)
+			if err == nil {
+				entry.AccessLogEntry.Timestamp = timestamp
+				entry.AccessLogEntry.TimestampUnix = parsed.Unix()
+			}
 		}
 
 		entries = append(entries, entry)
