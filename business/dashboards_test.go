@@ -209,6 +209,29 @@ func TestDiscoveryMatcherWithComposition(t *testing.T) {
 	assert.Equal("dashboard2", runtimes[0].DashboardRefs[0].Template)
 }
 
+func TestGetCustomDashboardRefs(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	service, k8s, prom := setupService()
+	d1 := fakeDashboard("1")
+	d2 := fakeDashboard("2")
+	k8s.On("GetDashboards", "my-namespace").Return([]v1alpha1.MonitoringDashboard{}, nil)
+	k8s.On("GetDashboards", "istio-system").Return([]v1alpha1.MonitoringDashboard{*d1, *d2}, nil)
+	prom.MockMetricsForLabels([]string{"my_metric_1_1", "request_count", "tcp_received", "tcp_sent"})
+	pods := []*models.Pod{}
+
+	runtimes := service.GetCustomDashboardRefs("my-namespace", "app", "", pods)
+
+	k8s.AssertNumberOfCalls(t, "GetDashboards", 2)
+	prom.AssertNumberOfCalls(t, "GetMetricsForLabels", 1)
+	assert.Len(runtimes, 1)
+	assert.Equal("Runtime 1", runtimes[0].Name)
+	assert.Len(runtimes[0].DashboardRefs, 1)
+	assert.Equal("dashboard1", runtimes[0].DashboardRefs[0].Template)
+	assert.Equal("Dashboard 1", runtimes[0].DashboardRefs[0].Title)
+}
+
 func fakeDashboard(id string) *v1alpha1.MonitoringDashboard {
 	return &v1alpha1.MonitoringDashboard{
 		ObjectMeta: v1.ObjectMeta{
