@@ -67,6 +67,8 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
+  aggregate: string;
+  aggregateValue: string;
   app: string;
   namespace: string;
   service: string;
@@ -199,22 +201,29 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private graphDataSource: GraphDataSource;
 
   static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
+    const aggregate = props.match.params.aggregate;
+    const aggregateOk = aggregate && aggregate !== UNKNOWN;
+    const aggregateValue = props.match.params.aggregateValue;
+    const aggregateValueOk = aggregateValue && aggregateValue !== UNKNOWN;
     const app = props.match.params.app;
-    const appOk = app && app !== UNKNOWN && app !== 'undefined';
+    const appOk = app && app !== UNKNOWN;
     const namespace = props.match.params.namespace;
-    const namespaceOk = namespace && namespace !== UNKNOWN && namespace !== 'undefined';
+    const namespaceOk = namespace && namespace !== UNKNOWN;
     const service = props.match.params.service;
-    const serviceOk = service && service !== UNKNOWN && service !== 'undefined';
+    const serviceOk = service && service !== UNKNOWN;
     const workload = props.match.params.workload;
-    const workloadOk = workload && workload !== UNKNOWN && workload !== 'undefined';
-    if (!appOk && !namespaceOk && !serviceOk && !workloadOk) {
+    const workloadOk = workload && workload !== UNKNOWN;
+    if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
       // @ts-ignore
       return;
     }
 
-    let nodeType;
-    let version;
-    if (appOk || workloadOk) {
+    let nodeType: NodeType;
+    let version: string | undefined;
+    if (aggregateOk) {
+      nodeType = NodeType.AGGREGATE;
+      version = '';
+    } else if (appOk || workloadOk) {
       nodeType = appOk ? NodeType.APP : NodeType.WORKLOAD;
       version = props.match.params.version;
     } else {
@@ -222,6 +231,8 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       version = '';
     }
     return {
+      aggregate: aggregate!,
+      aggregateValue: aggregateValue!,
       app: app!,
       namespace: { name: namespace! },
       nodeType: nodeType,
@@ -607,9 +618,6 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
     // To ensure updated components get the updated URL, update the URL first and then the state
     history.push(makeNodeGraphUrlFromParams(urlParams));
-    if (this.props.setNode) {
-      this.props.setNode(targetNode);
-    }
   };
 
   // This allows us to navigate to the service details page when zoomed in on nodes
