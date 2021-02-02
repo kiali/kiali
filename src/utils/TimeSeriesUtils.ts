@@ -45,12 +45,13 @@ const renameMetrics = (metrics: Metric[], labelPrettifier?: KVMapper): Metric[] 
     const firstName = metrics[0].name;
     hasSeveralFamilyNames = metrics.some(s => s.name !== firstName);
   }
+  const multipleValuesLabels = getMultipleValuesLabels(metrics);
   return metrics.map(m => {
     const name = m.name;
     const stat = mapStatForDisplay(m.stat);
-    const otherLabels = Object.entries(m.labels).map(e => {
-      return labelPrettifier ? labelPrettifier(e[0], e[1]) : e[1];
-    });
+    const otherLabels = Object.entries(m.labels)
+      .filter(e => multipleValuesLabels.has(e[0]))
+      .map(e => (labelPrettifier ? labelPrettifier(e[0], e[1]) : e[1]));
     const labels = (stat ? [stat] : []).concat(otherLabels).join(',');
     let finalName = '';
     if (labels === '') {
@@ -69,6 +70,26 @@ const renameMetrics = (metrics: Metric[], labelPrettifier?: KVMapper): Metric[] 
       name: finalName
     };
   });
+};
+
+const getMultipleValuesLabels = (metrics: Metric[]): Set<string> => {
+  const singleValueLabels = new Map<string, string>();
+  const multipleValuesLabels = new Set<string>();
+  metrics.forEach(m => {
+    Object.entries(m.labels).forEach(e => {
+      if (multipleValuesLabels.has(e[0])) {
+        return;
+      }
+      const value = singleValueLabels.get(e[0]);
+      if (value === undefined) {
+        singleValueLabels.set(e[0], e[1]);
+      } else if (value !== e[1]) {
+        singleValueLabels.delete(e[0]);
+        multipleValuesLabels.add(e[0]);
+      }
+    });
+  });
+  return multipleValuesLabels;
 };
 
 export const generateKey = (metrics: Metric[], chartName: string): string => {
