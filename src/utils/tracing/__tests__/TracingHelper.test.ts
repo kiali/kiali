@@ -1,15 +1,8 @@
-import { buildTags, findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
+import { findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
 import { Span, KeyValuePair, SpanData } from 'types/JaegerInfo';
 import transformTraceData from '../TraceTransform';
 
 describe('TracingHelper', () => {
-  it('should build tags', () => {
-    expect(buildTags(true, '404')).toEqual('{"error":"true","http.status_code":"404"}');
-    expect(buildTags(true, 'none')).toEqual('{"error":"true"}');
-    expect(buildTags(false, '500')).toEqual('{"http.status_code":"500"}');
-    expect(buildTags(false, 'none')).toEqual('');
-  });
-
   it('should get workload from span', () => {
     const span = {
       tags: [

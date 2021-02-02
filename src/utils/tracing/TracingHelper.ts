@@ -1,6 +1,5 @@
 import _round from 'lodash/round';
 import moment from 'moment';
-import logfmtParser from 'logfmt/lib/logfmt_parser';
 import {
   EnvoySpanInfo,
   JaegerTrace,
@@ -16,32 +15,7 @@ import { spansSort } from './TraceTransform';
 
 export const defaultTracingDuration: DurationInSeconds = 600;
 
-export const buildTags = (showErrors: boolean, statusCode: string): string => {
-  let tags = '';
-  if (showErrors) {
-    tags += 'error=true';
-  }
-  if (statusCode !== 'none') {
-    tags += ' http.status_code=' + statusCode;
-  }
-  return convTagsLogfmt(tags);
-};
-
 export const isErrorTag = ({ key, value }: KeyValuePair) => key === 'error' && (value === true || value === 'true');
-
-const convTagsLogfmt = (tags: string) => {
-  if (!tags) {
-    return '';
-  }
-  const data = logfmtParser.parse(tags);
-  Object.keys(data).forEach(key => {
-    const value = data[key];
-    if (typeof value !== 'string') {
-      data[key] = String(value);
-    }
-  });
-  return JSON.stringify(data);
-};
 
 export const getTimeRangeMicros = () => {
   const range = retrieveTimeRange();
