@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -214,26 +215,64 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		return nil, errors.New("unable to find any Pilot instances")
 	}
 
+	wg := sync.WaitGroup{}
+	wg.Add(len(istiods))
+	errChan := make(chan error, len(istiods))
+	syncChan := make(chan map[string][]byte, len(istiods))
+
+	healthyIstiods := 0
 	result := map[string][]byte{}
 	for _, istiod := range istiods {
-		res, err := in.k8s.CoreV1().RESTClient().Get().
-			Namespace(istiod.Namespace).
-			Resource("pods").
-			SubResource("proxy").
-			Name(istiod.Name).
-			Suffix("/debug/syncz").
-			DoRaw(in.ctx)
-
-		if err != nil {
-			return nil, err
+		if istiod.Status.Phase != "Running" {
+			wg.Add(-1)
+			continue
 		}
+		healthyIstiods = healthyIstiods + 1
 
-		if len(res) > 0 {
-			result[istiod.Name] = res
+		go func(name, namespace string) {
+			defer wg.Done()
+			res, err := in.k8s.CoreV1().Pods(namespace).
+				ProxyGet(
+					"http",
+					name,
+					"8080",
+					"/debug/syncz",
+					map[string]string{}).
+				DoRaw(in.ctx)
+
+			if err != nil {
+				errChan <- fmt.Errorf("%s: %s", name, err.Error())
+			} else {
+				syncChan <- map[string][]byte{name: res}
+			}
+		}(istiod.Name, istiod.Namespace)
+	}
+
+	wg.Wait()
+	close(errChan)
+	close(syncChan)
+
+	errs := ""
+	for err := range errChan {
+		if errs != "" {
+			errs = errs + "; "
+		}
+		errs = errs + err.Error()
+	}
+	errs = "Error fetching the proxy-status in the following pods: " + errs
+
+	for status := range syncChan {
+		for pilot, sync := range status {
+			result[pilot] = sync
 		}
 	}
 
-	return getStatus(result)
+	// If there is one sync, we consider it as valid
+	if len(result) > 0 {
+		return getStatus(result)
+	}
+
+	return nil, errors.New(errs)
 }
 
 func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
