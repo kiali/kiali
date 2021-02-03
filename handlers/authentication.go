@@ -152,6 +152,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 	user, err := business.OpenshiftOAuth.GetUserInfo(token)
 	if err != nil {
+		deleteTokenCookies(w, r)
 		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired.", err.Error())
 		return false
 	}
@@ -209,6 +210,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Parse the received id_token from the IdP and check nonce code
 	if err := business.ParseOpenIdToken(openIdParams); err != nil {
+		deleteTokenCookies(w, r)
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return false
 	}
@@ -258,6 +260,7 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	authInfo := getTokenStringFromHeader(r)
 
 	if authInfo == nil || authInfo.Token == "" {
+		deleteTokenCookies(w, r)
 		RespondWithError(w, http.StatusUnauthorized, "Token is missing")
 		return false
 	}
@@ -352,12 +355,14 @@ func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// anonymous access, so it's not feasible to use the version API for token verification.
 	nsList, err := business.Namespace.GetNamespaces()
 	if err != nil {
+		deleteTokenCookies(w, r)
 		RespondWithDetailedError(w, http.StatusUnauthorized, "Token is not valid or is expired", err.Error())
 		return false
 	}
 
 	// If namespace list is empty, return unauthorized error
 	if len(nsList) == 0 {
+		deleteTokenCookies(w, r)
 		RespondWithError(w, http.StatusUnauthorized, "Not enough privileges to login")
 		return false
 	}
@@ -607,6 +612,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			context := context.WithValue(r.Context(), "authInfo", authInfo)
 			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
+			deleteTokenCookies(w, r)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
@@ -689,30 +695,10 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	conf := config.Get()
-
-	cookiesToDrop := []string{
-		config.TokenCookieName,
-		config.TokenCookieName + "-aes",
-	}
-	for _, cookieName := range cookiesToDrop {
-		_, err := r.Cookie(cookieName)
-
-		if err != http.ErrNoCookie {
-			tokenCookie := http.Cookie{
-				Name:     cookieName,
-				Value:    "",
-				Expires:  time.Unix(0, 0),
-				HttpOnly: true,
-				MaxAge:   -1,
-				Path:     conf.Server.WebRoot,
-				SameSite: http.SameSiteStrictMode,
-			}
-			http.SetCookie(w, &tokenCookie)
-		}
-	}
+	deleteTokenCookies(w, r)
 
 	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
+	conf := config.Get()
 	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
 		code, err := performOpenshiftLogout(r)
 		if err != nil {
@@ -837,6 +823,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	if err := business.ParseOpenIdToken(openIdParams); err != nil {
+		deleteTokenCookies(w, r)
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return true
 	}
@@ -923,4 +910,27 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 
 	return true
+}
+
+func deleteTokenCookies(w http.ResponseWriter, r *http.Request) {
+	conf := config.Get()
+	cookiesToDrop := []string{
+		config.TokenCookieName,
+		config.TokenCookieName + "-aes",
+	}
+	for _, cookieName := range cookiesToDrop {
+		_, err := r.Cookie(cookieName)
+		if err != http.ErrNoCookie {
+			tokenCookie := http.Cookie{
+				Name:     cookieName,
+				Value:    "",
+				Expires:  time.Unix(0, 0),
+				HttpOnly: true,
+				MaxAge:   -1,
+				Path:     conf.Server.WebRoot,
+				SameSite: http.SameSiteStrictMode,
+			}
+			http.SetCookie(w, &tokenCookie)
+		}
+	}
 }
