@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -84,9 +85,17 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 	}
 
 	// make a copy of the prometheus DefaultRoundTripper to avoid race condition (issue #3518)
-	defaultRoundTripper := *api.DefaultRoundTripper.(*http.Transport)
+	// Do not copy the struct itself, it contains a lock. Re-create it from scratch instead.
+	roundTripper := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
 
-	transportConfig, err := httputil.CreateTransport(&auth, &defaultRoundTripper, httputil.DefaultTimeout)
+	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, httputil.DefaultTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -275,6 +284,7 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
 	end := time.Now()
 	start := end.Add(-time.Hour)
+	log.Tracef("[Prom] GetMetricsForLabels: %v", labels)
 	results, warnings, err := in.api.Series(in.ctx, labels, start, end)
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("GetMetricsForLabels. Prometheus Warnings: [%s]", strings.Join(warnings, ","))

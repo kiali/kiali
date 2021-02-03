@@ -261,6 +261,11 @@ func (o *PromClientMock) MockWorkloadRequestRates(namespace, wkld string, in, ou
 	o.On("GetWorkloadRequestRates", namespace, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
 }
 
+// MockMetricsForLabels mocks GetMetricsForLabels
+func (o *PromClientMock) MockMetricsForLabels(metrics []string) {
+	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string")).Return(metrics, nil)
+}
+
 func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
