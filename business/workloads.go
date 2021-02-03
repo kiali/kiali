@@ -46,11 +46,11 @@ type AccessLogEntry struct {
 
 // LogEntry holds a single log entry
 type LogEntry struct {
-	Message        string         `json:"message,omitempty"`
-	Severity       string         `json:"severity,omitempty"`
-	Timestamp      string         `json:"timestamp,omitempty"`
-	TimestampUnix  int64          `json:"timestampUnix,omitempty"`
-	AccessLogEntry AccessLogEntry `json:"accessLogEntry,omitempty"`
+	Message        string          `json:"message,omitempty"`
+	Severity       string          `json:"severity,omitempty"`
+	Timestamp      string          `json:"timestamp,omitempty"`
+	TimestampUnix  int64           `json:"timestampUnix,omitempty"`
+	AccessLogEntry *AccessLogEntry `json:"accessLogEntry,omitempty"`
 }
 
 // LogOptions holds query parameter values
@@ -333,8 +333,10 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 			timestamp := strings.Trim(tokens[0], "[]")
 			parsed, err := time.Parse(time.RFC3339, timestamp)
 			if err == nil {
-				entry.AccessLogEntry.Timestamp = timestamp
-				entry.AccessLogEntry.TimestampUnix = parsed.Unix()
+				entry.AccessLogEntry = &AccessLogEntry{
+					Timestamp:     timestamp,
+					TimestampUnix: parsed.Unix(),
+				}
 			}
 		}
 
