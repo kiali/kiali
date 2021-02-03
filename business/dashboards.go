@@ -569,14 +569,19 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 
 	if len(runtimes) == 0 {
 		cfg := config.Get()
-		filters := make(map[string]string)
-		if app != "" {
-			filters[cfg.IstioLabels.AppLabelName] = app
+		discoveryEnabled := cfg.ExternalServices.CustomDashboards.DiscoveryEnabled
+		if discoveryEnabled == config.DashboardsDiscoveryEnabled ||
+			(discoveryEnabled == config.DashboardsDiscoveryAuto &&
+				len(pods) <= cfg.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
+			filters := make(map[string]string)
+			if app != "" {
+				filters[cfg.IstioLabels.AppLabelName] = app
+			}
+			if version != "" {
+				filters[cfg.IstioLabels.VersionLabelName] = version
+			}
+			runtimes = in.discoverDashboards(namespace, filters)
 		}
-		if version != "" {
-			filters[cfg.IstioLabels.VersionLabelName] = version
-		}
-		runtimes = in.discoverDashboards(namespace, filters)
 	}
 	return runtimes
 }
