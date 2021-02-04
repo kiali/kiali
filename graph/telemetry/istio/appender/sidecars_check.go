@@ -1,6 +1,8 @@
 package appender
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
@@ -10,7 +12,9 @@ const SidecarsCheckAppenderName = "sidecarsCheck"
 // SidecarsCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
 // a node with no backing workloads is not flagged.
 // Name: sidecarsCheck
-type SidecarsCheckAppender struct{}
+type SidecarsCheckAppender struct {
+	AccessibleNamespaces map[string]time.Time
+}
 
 // Name implements Appender
 func (a SidecarsCheckAppender) Name() string {
@@ -23,19 +27,20 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 		return
 	}
 
-	if getWorkloadList(namespaceInfo) == nil {
-		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		namespaceInfo.Vendor[workloadListKey] = &workloadList
-	}
-
-	a.applySidecarsChecks(trafficMap, namespaceInfo)
+	a.applySidecarsChecks(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
-		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
-		if n.Namespace != namespaceInfo.Namespace {
+		// skip if we already determined there is a missing sidecar. we can process the same
+		// node multiple times because to ensure we check every node (missing sidecars indicate missing
+		// telemetry so we need to check nodes when we can, regardless of namespace)
+		if n.Metadata[graph.HasMissingSC] == true {
+			continue
+		}
+
+		// skip if the node's namespace is outside of the accessible namespaces
+		if !a.namespaceOK(n.Namespace, namespaceInfo) {
 			continue
 		}
 
@@ -55,11 +60,11 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		hasIstioSidecar := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Workload, namespaceInfo); found {
+			if workload, found := getWorkload(n.Namespace, n.Workload, globalInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
 			}
 		case graph.NodeTypeApp:
-			workloads := getAppWorkloads(n.App, n.Version, namespaceInfo)
+			workloads := getAppWorkloads(n.Namespace, n.App, n.Version, globalInfo)
 			if len(workloads) > 0 {
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {
@@ -76,4 +81,17 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 			n.Metadata[graph.HasMissingSC] = true
 		}
 	}
+}
+
+// namespaceOk returns true if the namespace in question is the current appender namespace or any of the graph namespaces
+func (a *SidecarsCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+	if namespace != namespaceInfo.Namespace {
+		return true
+	}
+	for ns := range a.AccessibleNamespaces {
+		if namespace == ns {
+			return true
+		}
+	}
+	return false
 }

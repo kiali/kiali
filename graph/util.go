@@ -43,3 +43,9 @@ func CheckError(err error) {
 func IsOK(telemetryVal string) bool {
 	return telemetryVal != "" && telemetryVal != Unknown
 }
+
+// IsOKVersion does standard validation and also rejects "latest", which is equivalent to "unknown"
+// when using canonical_revision
+func IsOKVersion(telemetryVal string) bool {
+	return telemetryVal != "" && telemetryVal != Unknown && telemetryVal != "latest"
+}

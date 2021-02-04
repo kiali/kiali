@@ -5744,10 +5744,6 @@
           "type": "boolean",
           "x-go-name": "IsInaccessible"
         },
-        "isMisconfigured": {
-          "type": "string",
-          "x-go-name": "IsMisconfigured"
-        },
         "isOutside": {
           "type": "boolean",
           "x-go-name": "IsOutside"

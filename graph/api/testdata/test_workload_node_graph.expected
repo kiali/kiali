@@ -178,6 +178,7 @@
           "namespace": "istio-system",
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
+          "version": "latest",
           "traffic": [
             {
               "protocol": "http",

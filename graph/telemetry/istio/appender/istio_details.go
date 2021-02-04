@@ -27,12 +27,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 		return
 	}
 
-	if getServiceDefinitionList(namespaceInfo) == nil {
-		sdl, err := globalInfo.Business.Svc.GetServiceDefinitionList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		namespaceInfo.Vendor[serviceDefinitionListKey] = sdl
-	}
-	sdl := getServiceDefinitionList(namespaceInfo)
+	sdl := getServiceDefinitionList(namespaceInfo.Namespace, globalInfo)
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
 	addLabels(trafficMap, globalInfo, sdl)

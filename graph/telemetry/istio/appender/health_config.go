@@ -22,22 +22,10 @@ func (a HealthConfigAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	if getWorkloadList(namespaceInfo) == nil {
-		sdl, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		namespaceInfo.Vendor[workloadListKey] = &sdl
-	}
-
-	if getServiceDefinitionList(namespaceInfo) == nil {
-		sdl, err := globalInfo.Business.Svc.GetServiceDefinitionList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		namespaceInfo.Vendor[serviceDefinitionListKey] = sdl
-	}
-
-	a.applyHealthConfigPresence(trafficMap, namespaceInfo)
+	a.applyHealthConfigPresence(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *HealthConfigAppender) applyHealthConfigPresence(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *HealthConfigAppender) applyHealthConfigPresence(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		if n.Namespace != namespaceInfo.Namespace {
 			continue
@@ -45,11 +33,11 @@ func (a *HealthConfigAppender) applyHealthConfigPresence(trafficMap graph.Traffi
 		// get the workload for the node and check to see if they have health configuration.
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Workload, namespaceInfo); found {
+			if workload, found := getWorkload(namespaceInfo.Namespace, n.Workload, globalInfo); found {
 				n.Metadata[graph.HasHealthConfig] = models.GetHealthAnnotation(workload.HealthAnnotations, models.GetHealthConfigAnnotation())
 			}
 		case graph.NodeTypeService:
-			if srv, found := getService(n.Service, namespaceInfo); found {
+			if srv, found := getServiceDefinition(namespaceInfo.Namespace, n.Service, globalInfo); found {
 				n.Metadata[graph.HasHealthConfig] = models.GetHealthAnnotation(srv.HealthAnnotations, models.GetHealthConfigAnnotation())
 			}
 		default:

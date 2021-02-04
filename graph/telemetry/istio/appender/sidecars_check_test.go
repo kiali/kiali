@@ -29,7 +29,9 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -47,7 +49,9 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -66,7 +70,9 @@ func TestAppNoPodsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -84,7 +90,9 @@ func TestAppSidecarsPasses(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -102,7 +110,9 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
@@ -120,7 +130,9 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := SidecarsCheckAppender{}
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {

@@ -44,7 +44,7 @@
           "namespace": "istio-system",
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
-          "version": "unknown",
+          "version": "latest",
           "traffic": [
             {
               "protocol": "http",
@@ -60,7 +60,6 @@
             }
           ],
           "isInaccessible": true,
-          "isMisconfigured": "labels=[canonical_revision]",
           "isOutside": true,
           "isRoot": true
         }

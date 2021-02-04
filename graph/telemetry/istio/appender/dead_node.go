@@ -28,10 +28,11 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		return
 	}
 
-	if getWorkloadList(namespaceInfo) == nil {
-		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		namespaceInfo.Vendor[workloadListKey] = &workloadList
+	if globalInfo.HomeCluster == "" {
+		globalInfo.HomeCluster = "unknown"
+		if c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil); c != nil && err == nil {
+			globalInfo.HomeCluster = c.Name
+		}
 	}
 
 	// Apply dead node removal iteratively until no dead nodes are found.  Removal of dead nodes may
@@ -70,6 +71,11 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			continue
 		}
 
+		// a node from a remote cluster is not considered dead, assume the best for it
+		if n.Cluster != globalInfo.HomeCluster {
+			continue
+		}
+
 		switch n.NodeType {
 		case graph.NodeTypeAggregate:
 			// am aggregate node is never dead
@@ -103,7 +109,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
-			if workload, found := getWorkload(n.Workload, namespaceInfo); !found {
+			if workload, found := getWorkload(namespaceInfo.Namespace, n.Workload, globalInfo); !found {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {
