@@ -59,6 +59,12 @@ const (
 	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
+const (
+	DashboardsDiscoveryEnabled  = "true"
+	DashboardsDiscoveryDisabled = "false"
+	DashboardsDiscoveryAuto     = "auto"
+)
+
 // Global configuration for the application.
 var configuration Config
 var rwMutex sync.RWMutex
@@ -112,10 +118,12 @@ type PrometheusConfig struct {
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	Enabled         bool             `yaml:"enabled,omitempty"`
-	IsCoreComponent bool             `yaml:"is_core_component,omitempty"`
-	NamespaceLabel  string           `yaml:"namespace_label,omitempty"`
-	Prometheus      PrometheusConfig `yaml:"prometheus,omitempty"`
+	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
+	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
+	Enabled                bool             `yaml:"enabled,omitempty"`
+	IsCoreComponent        bool             `yaml:"is_core_component,omitempty"`
+	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
+	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -388,8 +396,10 @@ func NewConfig() (c *Config) {
 		},
 		ExternalServices: ExternalServices{
 			CustomDashboards: CustomDashboardsConfig{
-				Enabled:        true,
-				NamespaceLabel: "kubernetes_namespace",
+				DiscoveryEnabled:       DashboardsDiscoveryAuto,
+				DiscoveryAutoThreshold: 10,
+				Enabled:                true,
+				NamespaceLabel:         "kubernetes_namespace",
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
