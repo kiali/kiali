@@ -23,7 +23,7 @@ type HealthService struct {
 }
 
 // Annotation Filter for Health
-var HealthAnnotation = []models.AnotationKey{models.RateHealthAnnotation}
+var HealthAnnotation = []models.AnnotationKey{models.RateHealthAnnotation}
 
 // GetServiceHealth returns a service health (service request error rate)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (models.ServiceHealth, error) {

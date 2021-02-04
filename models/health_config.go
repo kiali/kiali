@@ -1,18 +1,18 @@
 package models
 
 // Annotationkey is a mnemonic type name for string
-type AnotationKey string
+type AnnotationKey string
 
 const (
-	AllHealthAnnotation  AnotationKey = ".*"
-	RateHealthAnnotation AnotationKey = "health.kiali.io/rate"
+	AllHealthAnnotation  AnnotationKey = ".*"
+	RateHealthAnnotation AnnotationKey = "health.kiali.io/rate"
 )
 
-func GetHealthConfigAnnotation() []AnotationKey {
-	return []AnotationKey{RateHealthAnnotation}
+func GetHealthConfigAnnotation() []AnnotationKey {
+	return []AnnotationKey{RateHealthAnnotation}
 }
 
-func GetHealthAnnotation(annotations map[string]string, filters []AnotationKey) interface{} {
+func GetHealthAnnotation(annotations map[string]string, filters []AnnotationKey) interface{} {
 	var result = map[string]string{}
 	for _, filter := range filters {
 		if filter == AllHealthAnnotation {

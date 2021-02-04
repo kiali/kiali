@@ -7,8 +7,7 @@ import (
 
 const HealthConfigAppenderName = "healthConfig"
 
-// HealthConfigAppenderis responsible for adding healtch configuration annotion to the graph.
-// the appender currently add only mutual_tls security although is written in a generic way.
+// HealthConfigAppenderis responsible for adding health configuration annotation to the graph.
 // Name: healthConfig
 type HealthConfigAppender struct{}
 
