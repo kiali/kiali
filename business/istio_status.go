@@ -69,12 +69,22 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 
 func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	ds, error := iss.getComponentNamespacesWorkloads()
-	if error != nil {
-		return IstioComponentStatus{}, error
+	ds, err := iss.getComponentNamespacesWorkloads()
+	if err != nil {
+		return IstioComponentStatus{}, err
 	}
 
-	return iss.getStatusOf(ds)
+	deploymentStatus, err := iss.getStatusOf(ds)
+	if err != nil {
+		return IstioComponentStatus{}, err
+	}
+
+	istiodStatus, err := iss.getIstiodReachingCheck()
+	if err != nil {
+		return IstioComponentStatus{}, err
+	}
+
+	return deploymentStatus.merge(istiodStatus), nil
 }
 
 func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Deployment, error) {
@@ -249,6 +259,30 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	}
 
 	return ics
+}
+
+func (iss *IstioStatusService) getIstiodReachingCheck() (IstioComponentStatus, error) {
+	cfg := config.Get()
+	ics := IstioComponentStatus{}
+
+	istiods, err := iss.k8s.GetPods(cfg.IstioNamespace, labels.Set(map[string]string{"app": "istiod"}).String())
+	if err != nil {
+		return ics, err
+	}
+
+	for _, istiod := range istiods {
+		_, err := iss.k8s.GetPodProxy(istiod.Namespace, istiod.Name, "/ready")
+		if err != nil {
+			ics.merge([]ComponentStatus{
+				{
+					Name:   istiod.Name,
+					Status: Unreachable,
+					IsCore: true,
+				},
+			})
+		}
+	}
+	return ics, nil
 }
 
 func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {

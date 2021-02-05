@@ -65,6 +65,7 @@ type K8SClientInterface interface {
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
+	GetPodProxy(namespace, name, path string) ([]byte, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)

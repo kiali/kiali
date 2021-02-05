@@ -224,7 +224,7 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 
 	// Check if the kube-api has proxy access to pods in the istio-system
 	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
-	_, err = in.GetPodProxyUrl(istiods[0].Name, c.IstioNamespace, "/ready", 5*time.Second)
+	_, err = in.GetPodProxy(c.IstioNamespace, istiods[0].Name, "/ready")
 	if err != nil {
 		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
 			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
@@ -240,7 +240,7 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		go func(name, namespace string) {
 			defer wg.Done()
 
-			res, err := in.GetPodProxyUrl(name, namespace, "/debug/syncz", 10*time.Second)
+			res, err := in.GetPodProxy(namespace, name, "/debug/syncz")
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {
@@ -274,17 +274,6 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 	}
 
 	return nil, errors.New(errs)
-}
-
-func (in *K8SClient) GetPodProxyUrl(name, namespace, path string, timeout time.Duration) ([]byte, error) {
-	return in.k8s.CoreV1().RESTClient().Get().
-		Timeout(timeout).
-		Namespace(namespace).
-		Resource("pods").
-		SubResource("proxy").
-		Name(name).
-		Suffix(path).
-		DoRaw(in.ctx)
 }
 
 func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {

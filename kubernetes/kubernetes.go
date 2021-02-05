@@ -4,6 +4,7 @@ import (
 	"bytes"
 	goerrors "errors"
 	"fmt"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -287,6 +288,17 @@ func (in *K8SClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOpti
 	}
 
 	return &PodLogs{Logs: buf.String()}, nil
+}
+
+func (in *K8SClient) GetPodProxy(namespace, name, path string) ([]byte, error) {
+	return in.k8s.CoreV1().RESTClient().Get().
+		Timeout(10 * time.Second).
+		Namespace(namespace).
+		Resource("pods").
+		SubResource("proxy").
+		Name(name).
+		Suffix(path).
+		DoRaw(in.ctx)
 }
 
 func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
