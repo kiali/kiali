@@ -271,6 +271,10 @@ func (iss *IstioStatusService) getIstiodReachingCheck() (IstioComponentStatus, e
 	}
 
 	for _, istiod := range istiods {
+		// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
+		// By proxying one Istiod, we ensure that the following connection is allowed:
+		// Kiali -> K8s API (proxy) -> istiod
+		// This scenario is no obvious for private clusters (like GKE private cluster)
 		_, err := iss.k8s.GetPodProxy(istiod.Namespace, istiod.Name, "/ready")
 		if err != nil {
 			ics.merge([]ComponentStatus{
