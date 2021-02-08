@@ -13,6 +13,8 @@ import { KialiAppState } from 'store/Store';
 import SummaryPanelClusterBox from './SummaryPanelClusterBox';
 import SummaryPanelNamespaceBox from './SummaryPanelNamespaceBox';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
+import TourStopContainer from 'components/Tour/TourStop';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -90,94 +92,96 @@ class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPane
         : expandedStyle
       : collapsedStyle;
     return (
-      <div id="graph-side-panel" className={mainStyle}>
-        <div className={mainTopStyle}>
-          <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
-            {this.state.isVisible ? (
-              <>
-                <KialiIcon.AngleDoubleDown /> Hide
-              </>
-            ) : (
-              <>
-                <KialiIcon.AngleDoubleUp /> Show
-              </>
+      <TourStopContainer info={[GraphTourStops.Graph, GraphTourStops.ContextualMenu, GraphTourStops.SidePanel]}>
+        <div id="graph-side-panel" className={mainStyle}>
+          <div className={mainTopStyle}>
+            <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
+              {this.state.isVisible ? (
+                <>
+                  <KialiIcon.AngleDoubleDown /> Hide
+                </>
+              ) : (
+                <>
+                  <KialiIcon.AngleDoubleUp /> Show
+                </>
+              )}
+            </div>
+            {summaryType === 'box' && boxType === 'app' && (
+              <SummaryPanelAppBox
+                data={this.props.data}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                queryTime={this.props.queryTime}
+                duration={this.props.duration}
+                step={this.props.step}
+                rateInterval={this.props.rateInterval}
+              />
+            )}
+            {summaryType === 'box' && boxType === 'cluster' && (
+              <SummaryPanelClusterBox
+                data={this.props.data}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                queryTime={this.props.queryTime}
+                duration={this.props.duration}
+                step={this.props.step}
+                rateInterval={this.props.rateInterval}
+              />
+            )}
+            {summaryType === 'box' && boxType === 'namespace' && (
+              <SummaryPanelNamespaceBox
+                data={this.props.data}
+                namespaces={this.props.data.summaryTarget.namespaces}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                queryTime={this.props.queryTime}
+                duration={this.props.duration}
+                step={this.props.step}
+                rateInterval={this.props.rateInterval}
+              />
+            )}
+            {summaryType === 'edge' && <SummaryPanelEdge {...this.props} />}
+            {summaryType === 'graph' && (
+              <SummaryPanelGraph
+                data={this.props.data}
+                namespaces={this.props.namespaces}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                queryTime={this.props.queryTime}
+                duration={this.props.duration}
+                step={this.props.step}
+                rateInterval={this.props.rateInterval}
+              />
+            )}
+            {this.props.data.summaryType === 'node' && (
+              <SummaryPanelNodeContainer
+                data={this.props.data}
+                queryTime={this.props.queryTime}
+                namespaces={this.props.namespaces}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
+                duration={this.props.duration}
+                step={this.props.step}
+                rateInterval={this.props.rateInterval}
+              />
             )}
           </div>
-          {summaryType === 'box' && boxType === 'app' && (
-            <SummaryPanelAppBox
-              data={this.props.data}
-              namespaces={this.props.data.summaryTarget.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              queryTime={this.props.queryTime}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
-          )}
-          {summaryType === 'box' && boxType === 'cluster' && (
-            <SummaryPanelClusterBox
-              data={this.props.data}
-              namespaces={this.props.data.summaryTarget.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              queryTime={this.props.queryTime}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
-          )}
-          {summaryType === 'box' && boxType === 'namespace' && (
-            <SummaryPanelNamespaceBox
-              data={this.props.data}
-              namespaces={this.props.data.summaryTarget.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              queryTime={this.props.queryTime}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
-          )}
-          {summaryType === 'edge' && <SummaryPanelEdge {...this.props} />}
-          {summaryType === 'graph' && (
-            <SummaryPanelGraph
-              data={this.props.data}
-              namespaces={this.props.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              queryTime={this.props.queryTime}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
-          )}
-          {this.props.data.summaryType === 'node' && (
-            <SummaryPanelNodeContainer
-              data={this.props.data}
-              queryTime={this.props.queryTime}
-              namespaces={this.props.namespaces}
-              graphType={this.props.graphType}
-              injectServiceNodes={this.props.injectServiceNodes}
-              duration={this.props.duration}
-              step={this.props.step}
-              rateInterval={this.props.rateInterval}
-            />
+          {this.props.jaegerState.selectedTrace && this.state.isVisible && (
+            <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
+              <div className="panel-body">
+                <SummaryPanelTraceDetailsContainer
+                  trace={this.props.jaegerState.selectedTrace}
+                  node={this.props.data.summaryTarget}
+                  graphType={this.props.graphType}
+                  jaegerURL={this.props.jaegerState.info?.url}
+                />
+              </div>
+            </div>
           )}
         </div>
-        {this.props.jaegerState.selectedTrace && this.state.isVisible && (
-          <div className={`panel panel-default ${summaryPanelBottomSplit}`}>
-            <div className="panel-body">
-              <SummaryPanelTraceDetailsContainer
-                trace={this.props.jaegerState.selectedTrace}
-                node={this.props.data.summaryTarget}
-                graphType={this.props.graphType}
-                jaegerURL={this.props.jaegerState.info?.url}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      </TourStopContainer>
     );
   }
 

@@ -52,10 +52,8 @@ import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
-import TourStopContainer, { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'utils/SearchParamUtils';
-import GraphTour, { GraphTourStops } from './GraphHelpTour';
 import { Badge, Chip } from '@patternfly/react-core';
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
@@ -64,6 +62,8 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
+import GraphTour from 'pages/Graph/GraphHelpTour';
+import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -431,22 +431,18 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 </Chip>
               )}
               {(!this.props.replayActive || isReplayReady) && (
-                <TourStopContainer info={GraphTourStops.Graph}>
-                  <TourStopContainer info={GraphTourStops.ContextualMenu}>
-                    <CytoscapeGraph
-                      containerClassName={cytoscapeGraphContainerStyle}
-                      contextMenuGroupComponent={NodeContextMenuContainer}
-                      contextMenuNodeComponent={NodeContextMenuContainer}
-                      focusSelector={this.focusSelector}
-                      graphData={this.state.graphData}
-                      isMTLSEnabled={this.props.mtlsEnabled}
-                      onEmptyGraphAction={this.handleEmptyGraphAction}
-                      onNodeDoubleTap={this.handleDoubleTap}
-                      ref={refInstance => this.setCytoscapeGraph(refInstance)}
-                      {...this.props}
-                    />
-                  </TourStopContainer>
-                </TourStopContainer>
+                <CytoscapeGraph
+                  containerClassName={cytoscapeGraphContainerStyle}
+                  contextMenuGroupComponent={NodeContextMenuContainer}
+                  contextMenuNodeComponent={NodeContextMenuContainer}
+                  focusSelector={this.focusSelector}
+                  graphData={this.state.graphData}
+                  isMTLSEnabled={this.props.mtlsEnabled}
+                  onEmptyGraphAction={this.handleEmptyGraphAction}
+                  onNodeDoubleTap={this.handleDoubleTap}
+                  ref={refInstance => this.setCytoscapeGraph(refInstance)}
+                  {...this.props}
+                />
               )}
               {isReady && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>

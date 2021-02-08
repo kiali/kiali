@@ -42,7 +42,7 @@ type ReduxProps = {
 
 type TourStopProps = ReduxProps & {
   children?: React.ReactNode;
-  info: TourStopInfo;
+  info: TourStopInfo | TourStopInfo[];
 };
 
 export function getNextTourStop(
@@ -67,12 +67,12 @@ export function getNextTourStop(
 }
 
 class TourStop extends React.PureComponent<TourStopProps> {
-  tourStopInfo: TourStopInfo;
+  tourStopInfo: TourStopInfo[];
 
   constructor(props: TourStopProps) {
     super(props);
 
-    this.tourStopInfo = props.info;
+    this.tourStopInfo = Array.isArray(props.info) ? props.info : [props.info];
   }
 
   private getStop = (direction: 'back' | 'forward'): number | undefined => {
@@ -117,23 +117,28 @@ class TourStop extends React.PureComponent<TourStopProps> {
     );
   };
 
-  private isVisible = (): boolean => {
-    const name = this.props.info.name;
-    const isVisible: boolean =
-      this.props.activeTour !== undefined && name === this.props.activeTour.stops[this.props.activeStop!].name;
-    return isVisible;
+  private activeInfo = (): TourStopInfo | undefined => {
+    for (const tsi of this.tourStopInfo) {
+      const name = tsi.name;
+      const isActive =
+        this.props.activeTour !== undefined && name === this.props.activeTour.stops[this.props.activeStop!].name;
+      if (isActive) {
+        return tsi;
+      }
+    }
+    return undefined;
   };
 
   // This is here to workaround what seems to be a bug.  As far as I know when isVisible is set then outside clicks should not hide
   // the Popover, but it seems to be happening in certain scenarios. So, if the Popover is still valid, unhide it immediately.
   private onHidden = () => {
-    if (this.isVisible()) {
+    if (this.activeInfo()) {
       this.forceUpdate();
     }
   };
 
   private onResize = () => {
-    if (this.isVisible()) {
+    if (this.activeInfo()) {
       this.forceUpdate();
     }
   };
@@ -142,20 +147,23 @@ class TourStop extends React.PureComponent<TourStopProps> {
     this.props.endTour();
   };
 
+  componentDidMount() {
+    this.tourStopInfo.forEach(ti => (ti.isValid = true));
+  }
+
   componentWillUnmount() {
-    this.tourStopInfo.isValid = false;
+    this.tourStopInfo.forEach(ti => (ti.isValid = false));
   }
 
   render() {
-    const offset: string = this.props.info.offset ? this.props.info.offset : '0, 0';
+    const info = this.activeInfo();
+    const offset = info && info.offset ? info.offset : '0, 0';
     const tippyProps: Partial<any> = { offset: offset };
-    const isVisible = this.isVisible();
-    this.tourStopInfo.isValid = true;
     const children = this.props.children;
 
     return (
       <>
-        {isVisible ? (
+        {info ? (
           <>
             <ReactResizeDetector
               refreshMode={'debounce'}
@@ -169,15 +177,15 @@ class TourStop extends React.PureComponent<TourStopProps> {
               isVisible={true}
               shouldClose={this.shouldClose}
               onHidden={this.onHidden}
-              position={this.props.info.position}
+              position={info.position}
               tippyProps={tippyProps}
               headerContent={
                 <div>
                   <span className={stopNumberStyle}>{this.props.activeStop! + 1}</span>
-                  <span>{this.props.info.name}</span>
+                  <span>{info.name}</span>
                 </div>
               }
-              bodyContent={this.props.info.description}
+              bodyContent={info.description}
               footerContent={
                 <div>
                   {this.backButton()}

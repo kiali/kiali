@@ -2,6 +2,13 @@ import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
+  ContextualMenu: {
+    name: 'Contextual Menu',
+    description:
+      'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
+    position: PopoverPosition.left,
+    offset: '0, 250'
+  },
   Display: {
     name: 'Display',
     description:
@@ -15,16 +22,9 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   Graph: {
     name: 'Graph',
     description:
-      "Click on a node to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label.",
-    position: PopoverPosition.auto,
-    offset: '0, -350'
-  },
-  ContextualMenu: {
-    name: 'Contextual Menu',
-    description:
-      'Right-click a node or an edge to see the contextual menu with links to details, traffic and inbound/outbound metrics for the node or edge.',
-    position: PopoverPosition.auto,
-    offset: '0, -350'
+      "Click on a node or edge to see its summary and emphasize its end-to-end paths. Double-click a node to see a graph focused on that node.\nDouble-click an 'external namespace' node to navigate directly to the namespace in the node's text label. Shift-Drag to quickly zoom in.",
+    position: PopoverPosition.left,
+    offset: '0, 250'
   },
   GraphType: {
     name: 'Graph Type',
@@ -47,6 +47,11 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     description: 'Select the namespaces you want to see in the graph.',
     position: PopoverPosition.bottom
   },
+  SidePanel: {
+    name: 'Side Panel',
+    description: 'The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.',
+    position: PopoverPosition.left
+  },
   TimeRange: {
     name: 'Time Range & Replay',
     description:
@@ -65,6 +70,7 @@ const GraphTour: TourInfo = {
     GraphTourStops.TimeRange,
     GraphTourStops.Graph,
     GraphTourStops.ContextualMenu,
+    GraphTourStops.SidePanel,
     GraphTourStops.Layout,
     GraphTourStops.Legend
   ]
