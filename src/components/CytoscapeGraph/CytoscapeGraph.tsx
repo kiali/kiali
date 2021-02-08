@@ -112,6 +112,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private nodeChanged: boolean;
   private resetSelection: boolean = false;
   private trafficRenderer?: TrafficRender;
+  private userBoxSelected?: Cy.Collection;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
@@ -288,6 +289,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       return;
     }
     this.cy = cy;
+    this.cy.boxSelectionEnabled(true);
 
     this.contextMenuRef!.current!.connectCy(this.cy);
 
@@ -371,6 +373,36 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
         }, CytoscapeGraph.doubleTapMs);
       }
     });
+
+    // Note that at the time of writing (on my chrome) the order of box events:
+    // 1) boxstart
+    // 2) boxend
+    // 3) box, a separate event for each boxselected element
+    // The boxselect event never seems to fire. boxend does not seem to supply the boxselected collection (why?).
+    // So, boxend seems not useful. I don't see a way to do this other than to 'fit' each time we add an elem.
+    cy.on('boxstart', (evt: Cy.EventObject) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent) {
+        this.userBoxSelected = cy.collection();
+      }
+    });
+
+    cy.on('box', (evt: Cy.EventObject) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent) {
+        const elements: Cy.Collection = evt.target;
+        if (elements) {
+          elements.forEach(e => {
+            if (e.data(CyNode.nodeType) !== NodeType.BOX) {
+              this.userBoxSelected = this.userBoxSelected?.add(elements);
+            }
+          });
+          CytoscapeGraphUtils.safeFit(cy, this.userBoxSelected);
+          this.customViewport = true;
+        }
+      }
+    });
+
     cy.on('mouseover', 'node,edge', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent) {
