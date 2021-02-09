@@ -74,7 +74,7 @@ type NodeData struct {
 	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
 	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
 	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
-	HasHealthConfig HealthConfig        `json:"HasHealthConfig,omitempty"` // set to the health config override
+	HasHealthConfig HealthConfig        `json:"hasHealthConfig,omitempty"` // set to the health config override
 	HasMissingSC    bool                `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
 	IsBox           string              `json:"isBox,omitempty"`           // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
