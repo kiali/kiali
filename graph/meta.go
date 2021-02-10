@@ -18,6 +18,7 @@ const (
 	DestPrincipal   MetadataKey = "destPrincipal"
 	DestServices    MetadataKey = "destServices"
 	HasCB           MetadataKey = "hasCB"
+	HasHealthConfig MetadataKey = "hasHealthConfig"
 	HasMissingSC    MetadataKey = "hasMissingSC"
 	HasVS           MetadataKey = "hasVS"
 	IsDead          MetadataKey = "isDead"

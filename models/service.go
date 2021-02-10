@@ -23,7 +23,8 @@ type ServiceOverview struct {
 	// example: rest
 	// required: false
 	AdditionalDetailSample *AdditionalItem `json:"additionalDetailSample"`
-
+	// Annotations of the service
+	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
 }
@@ -54,16 +55,17 @@ type ServiceDetails struct {
 
 type Services []*Service
 type Service struct {
-	Name            string            `json:"name"`
-	CreatedAt       string            `json:"createdAt"`
-	ResourceVersion string            `json:"resourceVersion"`
-	Namespace       Namespace         `json:"namespace"`
-	Labels          map[string]string `json:"labels"`
-	Selectors       map[string]string `json:"selectors"`
-	Type            string            `json:"type"`
-	Ip              string            `json:"ip"`
-	Ports           Ports             `json:"ports"`
-	ExternalName    string            `json:"externalName"`
+	Name              string            `json:"name"`
+	CreatedAt         string            `json:"createdAt"`
+	ResourceVersion   string            `json:"resourceVersion"`
+	Namespace         Namespace         `json:"namespace"`
+	Labels            map[string]string `json:"labels"`
+	Selectors         map[string]string `json:"selectors"`
+	Type              string            `json:"type"`
+	Ip                string            `json:"ip"`
+	Ports             Ports             `json:"ports"`
+	ExternalName      string            `json:"externalName"`
+	HealthAnnotations map[string]string `json:"healthAnnotations"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -89,6 +91,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.ExternalName = service.Spec.ExternalName
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
+		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
 		(&s.Ports).Parse(service.Spec.Ports)
 	}
 }

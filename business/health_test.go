@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -33,6 +34,7 @@ func TestGetServiceHealth(t *testing.T) {
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
 
 	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
 
@@ -119,7 +121,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "", "1m", queryTime)
 
-	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
+	k8s.AssertNumberOfCalls(t, "GetDeployment", 2)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
 	var result = map[string]map[string]float64{
 		"http": {
@@ -181,6 +183,7 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
+	k8s.On("GetWorkload", "ns", "wk", "", false).Return(&models.Workload{}, nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)

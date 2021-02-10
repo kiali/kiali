@@ -326,15 +326,15 @@ type Tolerance struct {
 
 // Rate config
 type Rate struct {
-	Namespace string      `yaml:"namespace,omitempty" json:"namespace"`
-	Kind      string      `yaml:"kind,omitempty" json:"kind"`
-	Name      string      `yaml:"name,omitempty" json:"name"`
+	Namespace string      `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Kind      string      `yaml:"kind,omitempty" json:"kind,omitempty"`
+	Name      string      `yaml:"name,omitempty" json:"name,omitempty"`
 	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
 // HealthConfig rates
 type HealthConfig struct {
-	Rate []Rate `yaml:"rate,omitempty" json:"rate"`
+	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
 // Config defines full YAML configuration.
@@ -345,7 +345,7 @@ type Config struct {
 	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
 	Extensions               Extensions               `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig             `yaml:"health_config,omitempty" json:"healthConfig"`
+	HealthConfig             HealthConfig             `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity        `yaml:",omitempty"`
 	InCluster                bool                     `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
@@ -515,18 +515,15 @@ func (conf *Config) AddHealthDefault() {
 	healthConfig := HealthConfig{
 		Rate: []Rate{
 			{
-				Namespace: ".*",
-				Kind:      ".*",
-				Name:      ".*",
 				Tolerance: []Tolerance{
 					{
-						Code:      "^5\\d\\d$",
+						Code:      "5XX",
 						Protocol:  "http",
 						Direction: ".*",
 						Failure:   10,
 					},
 					{
-						Code:      "^4\\d\\d$",
+						Code:      "4XX",
 						Protocol:  "http",
 						Direction: ".*",
 						Degraded:  10,

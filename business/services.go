@@ -123,6 +123,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			IstioSidecar:           hasSidecar,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
+			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
 		}
 	}
@@ -275,6 +276,26 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	return &s, nil
 }
 
+func (in *SvcService) UpdateService(namespace, service string, interval string, queryTime time.Time, jsonPatch string) (*models.ServiceDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
+	defer promtimer.ObserveNow(&err)
+
+	// Identify controller and apply patch to workload
+	err = updateService(in.businessLayer, namespace, service, jsonPatch)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache is stopped after a Create/Update/Delete operation to force a refresh
+	if kialiCache != nil && err == nil {
+		kialiCache.RefreshNamespace(namespace)
+	}
+
+	// After the update we fetch the whole workload
+	return in.GetService(namespace, service, interval, queryTime)
+}
+
 // GetServiceDefinition returns a single service definition (the service object and endpoints), no istio or runtime information
 func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.ServiceDetails, error) {
 	var err error
@@ -411,4 +432,14 @@ func (in *SvcService) GetServiceAppName(namespace, service string) (string, erro
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	app := svc.Spec.Selector[appLabelName]
 	return app, nil
+}
+
+func updateService(layer *Layer, namespace string, service string, jsonPatch string) error {
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+		return err
+	}
+
+	return layer.k8s.UpdateService(namespace, service, jsonPatch)
 }

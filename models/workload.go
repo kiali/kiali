@@ -78,6 +78,10 @@ type WorkloadListItem struct {
 	// required: true
 	// example: 1
 	PodCount int `json:"podCount"`
+
+	// HealthAnnotations
+	// required: false
+	HealthAnnotations map[string]string `json:"healthAnnotations"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -126,6 +130,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
+	workload.HealthAnnotations = w.HealthAnnotations
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
@@ -167,6 +172,7 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	}
 	workload.CurrentReplicas = d.Status.Replicas
 	workload.AvailableReplicas = d.Status.AvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(d.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
@@ -191,6 +197,7 @@ func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadN
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(r.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
@@ -201,6 +208,7 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 	}
 	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(r.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
@@ -209,6 +217,7 @@ func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) 
 	workload.DesiredReplicas = dc.Spec.Replicas
 	workload.CurrentReplicas = dc.Status.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(dc.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
@@ -219,6 +228,7 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	}
 	workload.CurrentReplicas = s.Status.Replicas
 	workload.AvailableReplicas = s.Status.ReadyReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(s.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParsePod(pod *core_v1.Pod) {
@@ -243,6 +253,7 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 	// Pod has not concept of replica
 	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = podAvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(pod.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseJob(job *batch_v1.Job) {
@@ -253,6 +264,7 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 	workload.DesiredReplicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
 	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = job.Status.Active + job.Status.Succeeded
+	workload.HealthAnnotations = GetHealthAnnotation(job.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
@@ -277,6 +289,7 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
 	workload.DesiredReplicas = podReplicas
 	workload.DesiredReplicas = workload.CurrentReplicas
 	workload.AvailableReplicas = podAvailableReplicas
+	workload.HealthAnnotations = GetHealthAnnotation(cnjb.Annotations, GetHealthConfigAnnotation())
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []core_v1.Pod) {

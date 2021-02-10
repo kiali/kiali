@@ -22,6 +22,9 @@ type HealthService struct {
 	businessLayer *Layer
 }
 
+// Annotation Filter for Health
+var HealthAnnotation = []models.AnnotationKey{models.RateHealthAnnotation}
+
 // GetServiceHealth returns a service health (service request error rate)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (models.ServiceHealth, error) {
 	var err error
@@ -188,6 +191,7 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 	// Prepare all data (note that it's important to provide data for all services, even those which may not have any health, for overview cards)
 	for _, service := range services {
 		h := models.EmptyServiceHealth()
+		h.Requests.HealthAnnotations = models.GetHealthAnnotation(service.Annotations, HealthAnnotation)
 		allHealth[service.Name] = &h
 	}
 
@@ -228,6 +232,7 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
 		allHealth[w.Name] = models.EmptyWorkloadHealth()
+		allHealth[w.Name].Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
 		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
 		if w.IstioSidecar {
 			hasSidecar = true
@@ -288,9 +293,17 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
+	if err != nil {
+		return rqHealth, err
+	}
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
+	svc, err := in.businessLayer.Svc.getService(namespace, service)
+	if err != nil {
+		return rqHealth, err
+	}
+	rqHealth.HealthAnnotations = models.GetHealthAnnotation(svc.Annotations, HealthAnnotation)
 	rqHealth.CombineReporters()
 	return rqHealth, err
 }
@@ -311,11 +324,21 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
 	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
+	if err != nil {
+		return rqHealth, err
+	}
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
+	}
+	w, err := in.businessLayer.Workload.GetWorkload(namespace, workload, "", false)
+	if err != nil {
+		return rqHealth, err
+	}
+	if len(w.Pods) > 0 {
+		rqHealth.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
 	}
 	rqHealth.CombineReporters()
 	return rqHealth, err

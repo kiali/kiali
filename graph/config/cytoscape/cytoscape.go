@@ -54,6 +54,9 @@ type ProtocolTraffic struct {
 	Responses Responses         `json:"responses,omitempty"` // see comment above
 }
 
+// HealthConfig maps annotations information for health
+type HealthConfig map[string]string
+
 type NodeData struct {
 	// Cytoscape Fields
 	ID     string `json:"id"`               // unique internal node ID (n0, n1...)
@@ -71,6 +74,7 @@ type NodeData struct {
 	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
 	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
 	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
+	HasHealthConfig HealthConfig        `json:"hasHealthConfig,omitempty"` // set to the health config override
 	HasMissingSC    bool                `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
 	IsBox           string              `json:"isBox,omitempty"`           // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
@@ -213,6 +217,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		addNodeTelemetry(n, nd)
+
+		// set annotations, if available
+		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
+			nd.HasHealthConfig = val.(map[string]string)
+		}
 
 		// node may have deployment but no pods running)
 		if val, ok := n.Metadata[graph.IsDead]; ok {
