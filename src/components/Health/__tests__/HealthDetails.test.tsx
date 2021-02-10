@@ -5,7 +5,7 @@ import { shallowToJson } from 'enzyme-to-json';
 import { HealthDetails } from '../HealthDetails';
 import { ServiceHealth } from '../../../types/Health';
 import { setServerConfig } from '../../../config/ServerConfig';
-import { serverRateConfig } from '../../../types/__testData__/ErrorRateConfig';
+import { serverRateConfig } from '../../../types/ErrorRate/__testData__/ErrorRateConfig';
 
 describe('HealthDetails', () => {
   beforeAll(() => {
@@ -15,7 +15,7 @@ describe('HealthDetails', () => {
     const health = new ServiceHealth(
       'bookinfo',
       'reviews',
-      { inbound: {}, outbound: {} },
+      { inbound: {}, outbound: {}, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true }
     );
 
@@ -27,7 +27,7 @@ describe('HealthDetails', () => {
     const health = new ServiceHealth(
       'bookinfo',
       'reviews',
-      { inbound: {}, outbound: {} },
+      { inbound: {}, outbound: {}, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true }
     );
 

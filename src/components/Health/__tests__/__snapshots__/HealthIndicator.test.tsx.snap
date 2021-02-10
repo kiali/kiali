@@ -96,6 +96,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
               },
             },
             "requests": Object {
+              "healthAnnotations": Object {},
               "inbound": Object {},
               "outbound": Object {},
             },
@@ -240,6 +241,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 2`]
           },
         },
         "requests": Object {
+          "healthAnnotations": Object {},
           "inbound": Object {},
           "outbound": Object {},
         },

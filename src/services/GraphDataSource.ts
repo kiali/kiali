@@ -176,7 +176,7 @@ export default class GraphDataSource {
     }
 
     // Some appenders are expensive so only specify an appender if needed.
-    let appenders: AppenderString = 'deadNode,sidecarsCheck,serviceEntry,istio';
+    let appenders: AppenderString = 'deadNode,sidecarsCheck,serviceEntry,istio,healthConfig';
 
     if (fetchParams.showOperationNodes) {
       appenders += ',aggregateNode';

@@ -1,6 +1,7 @@
 import Namespace from './Namespace';
 import { DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
+import { HealthAnnotationType } from './HealthAnnotation';
 
 export interface Layout {
   name: string;
@@ -183,6 +184,7 @@ export interface GraphNodeData {
   hasCB?: boolean;
   hasMissingSC?: boolean;
   hasVS?: boolean;
+  hasHealthConfig?: HealthAnnotationType;
   isBox?: string;
   isDead?: boolean;
   isIdle?: boolean;

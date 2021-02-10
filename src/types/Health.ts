@@ -11,6 +11,7 @@ import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
 import { calculateErrorRate } from './ErrorRate';
 import { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
+import { HealthAnnotationType } from './HealthAnnotation';
 
 interface HealthConfig {
   items: HealthItem[];
@@ -64,6 +65,7 @@ export interface RequestType {
 export interface RequestHealth {
   inbound: RequestType;
   outbound: RequestType;
+  healthAnnotations: HealthAnnotationType;
 }
 
 export interface Status {
@@ -508,7 +510,13 @@ export class WorkloadHealth extends Health {
 }
 
 export const healthNotAvailable = (): AppHealth => {
-  return new AppHealth('', '', [], { inbound: {}, outbound: {} }, { rateInterval: 60, hasSidecar: true });
+  return new AppHealth(
+    '',
+    '',
+    [],
+    { inbound: {}, outbound: {}, healthAnnotations: {} },
+    { rateInterval: 60, hasSidecar: true }
+  );
 };
 
 export type NamespaceAppHealth = { [app: string]: AppHealth };

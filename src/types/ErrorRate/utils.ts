@@ -5,6 +5,7 @@ import { RequestHealth, RequestType } from '../Health';
 import { Rate, RequestTolerance } from './types';
 import { generateRateForTolerance } from './ErrorRate';
 import { generateRateForGraphTolerance } from './GraphEdgeStatus';
+import { HealthAnnotationType, HealthAnnotationConfig } from '../HealthAnnotation';
 
 export const emptyRate = (): Rate => {
   return { requestRate: 0, errorRate: 0, errorRatio: 0 };
@@ -15,7 +16,7 @@ export const DEFAULTCONF = {
   grpc: new RegExp('^[1-9]$|^1[0-6]$')
 };
 
-const requestsErrorRateCode = (requests: RequestType): number => {
+export const requestsErrorRateCode = (requests: RequestType): number => {
   const rate: Rate = emptyRate();
   for (let [protocol, req] of Object.entries(requests)) {
     for (let [code, value] of Object.entries(req)) {
@@ -26,6 +27,12 @@ const requestsErrorRateCode = (requests: RequestType): number => {
     }
   }
   return rate.requestRate === 0 ? -1 : (rate.errorRate / rate.requestRate) * 100;
+};
+
+export const getHealthRateAnnotation = (config?: HealthAnnotationType): string | undefined => {
+  return config && HealthAnnotationConfig.HEALTH_RATE in config
+    ? config[HealthAnnotationConfig.HEALTH_RATE]
+    : undefined;
 };
 
 export const getErrorCodeRate = (requests: RequestHealth): { inbound: number; outbound: number } => {
@@ -75,10 +82,9 @@ export const transformEdgeResponses = (requests: Responses, protocol: string): R
   const prot: { [key: string]: number } = {};
   const result: RequestType = {};
   result[protocol] = prot;
-
   for (let [code, responseDetail] of Object.entries(requests)) {
-    const percentRate = Object.values((responseDetail as ResponseDetail).flags).reduce(
-      (acc, value) => acc + Number(value)
+    const percentRate = Object.values((responseDetail as ResponseDetail).flags).reduce((acc, value) =>
+      String(Number(acc) + Number(value))
     );
     result[protocol][code] = Number(percentRate);
   }

@@ -1,23 +1,11 @@
-import * as E from '../ErrorRate';
-import { Rate } from '../ErrorRate/types';
-import { serverConfig, setServerConfig } from '../../config/ServerConfig';
+import * as E from '../';
+import { setServerConfig } from '../../../config/ServerConfig';
 import { serverRateConfig } from '../__testData__/ErrorRateConfig';
-import * as H from '../../types/Health';
+import * as H from '../../Health';
 
 describe('getRateHealthConfig', () => {
   beforeAll(() => {
     setServerConfig(serverRateConfig);
-  });
-  describe('getRateHealthConfig', () => {
-    it('should return rate object or undefined', () => {
-      expect(E.getRateHealthConfigTEST('bookinfo', 'reviews', 'app')).toBeDefined();
-      expect(typeof E.getRateHealthConfigTEST('bookinfo', 'reviews', 'app')).toBe('object');
-      expect(E.getRateHealthConfigTEST('bookinfo', 'reviews', 'app')).toBe(serverConfig.healthConfig!.rate[0]);
-
-      expect(E.getRateHealthConfigTEST('bookinfo', 'error-rev-iews', 'app')).toBe(serverConfig.healthConfig!.rate[1]);
-      expect(E.getRateHealthConfigTEST('bookinfo', 'reviews', 'workloadss')).toBe(serverConfig.healthConfig!.rate[1]);
-      expect(E.getRateHealthConfigTEST('istio-system', 'reviews', 'workload')).toBe(serverConfig.healthConfig!.rate[1]);
-    });
   });
   describe('sumRequests', () => {
     it('should aggregate the requests', () => {
@@ -134,61 +122,6 @@ describe('getRateHealthConfig', () => {
         },
         toleranceConfig: requestsPriority0.tolerance
       });
-    });
-  });
-  describe('aggregate', () => {
-    it('should aggregate the requests', () => {
-      const requests = {
-        http: {
-          '501': 3,
-          '404': 2,
-          '200': 4,
-          '100': 1
-        },
-        grpc: {
-          '1': 3,
-          '16': 2
-        }
-      };
-
-      let result = E.aggregateTEST(requests, serverRateConfig.healthConfig.rate[1].tolerance);
-      let requestsResult = result[0].requests;
-      expect((requestsResult['http'] as Rate).requestRate).toBe(10);
-      expect((requestsResult['http'] as Rate).errorRate).toBe(3);
-      requestsResult = result[1].requests;
-      expect((requestsResult['grpc'] as Rate).requestRate).toBe(5);
-      expect((requestsResult['grpc'] as Rate).errorRate).toBe(5);
-
-      result = E.aggregateTEST(requests, [
-        {
-          code: new RegExp('200'),
-          protocol: new RegExp('http'),
-          direction: new RegExp('inbound'),
-          failure: 2,
-          degraded: 1
-        },
-        {
-          code: new RegExp('16'),
-          protocol: new RegExp('grpc'),
-          direction: new RegExp('inbound'),
-          failure: 2,
-          degraded: 1
-        }
-      ]);
-
-      const requestsTolerance1 = result[0].requests;
-
-      expect((requestsTolerance1['http'] as Rate).requestRate).toBe(10);
-      expect((requestsTolerance1['http'] as Rate).errorRate).toBe(4);
-
-      expect(requestsTolerance1['grpc']).toBeUndefined();
-
-      const requestsTolerance2 = result[1].requests;
-
-      expect(requestsTolerance2['http']).toBeUndefined();
-
-      expect((requestsTolerance2['grpc'] as Rate).requestRate).toBe(5);
-      expect((requestsTolerance2['grpc'] as Rate).errorRate).toBe(2);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { allMatchTEST, getExprTEST } from '../HealthConfig';
+import { allMatchTEST, getExprTEST, replaceXCodeTEST } from '../HealthConfig';
 
 describe('#getExprTEST', () => {
   it('getExprTEST should return allMatch if undefined value', () => {
@@ -23,6 +23,28 @@ describe('#getExprTEST', () => {
 
   it('Check that default backend is converted correctly', () => {
     const backendGo = '^[4-5]\\d\\d$';
-    expect(getExprTEST(backendGo)).toStrictEqual(/^[4-5]\d\d$/);
+    expect(getExprTEST(backendGo, true)).toStrictEqual(/^[4-5]\d\d$/);
+  });
+
+  it('Check that X is converted correctly', () => {
+    const backendGo = '[45]XX';
+    expect(getExprTEST(backendGo, true)).toStrictEqual(/[45]\d\d/);
+  });
+
+  it('Check that x is converted correctly', () => {
+    const backendGo = '[45]xx';
+    const expr = getExprTEST(backendGo, true);
+    expect(expr).toStrictEqual(/[45]\d\d/);
+    expect(expr.test('404')).toBeTruthy();
+    expect(expr.test('501')).toBeTruthy();
+    expect(expr.test('603')).toBeFalsy();
+  });
+
+  it('Check that replaceXCode convert correctly', () => {
+    var backendGo = '[45]XX';
+    expect(replaceXCodeTEST(backendGo)).toStrictEqual('[45]\\d\\d');
+
+    backendGo = '[45]xx';
+    expect(replaceXCodeTEST(backendGo)).toStrictEqual('[45]\\d\\d');
   });
 });

@@ -19,6 +19,7 @@ import * as TrafficListFilters from './FiltersAndSorts';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
+import { HealthAnnotationType } from '../../types/HealthAnnotation';
 
 export interface AppNode {
   id: string;
@@ -35,6 +36,7 @@ export interface WorkloadNode {
   namespace: string;
   name: string;
   isInaccessible: boolean;
+  healthAnnotation?: HealthAnnotationType;
 }
 
 export interface ServiceNode {
@@ -45,6 +47,7 @@ export interface ServiceNode {
   isServiceEntry?: string;
   isInaccessible: boolean;
   destServices?: DestService[];
+  healthAnnotation?: HealthAnnotationType;
 }
 
 export type TrafficNode = AppNode | ServiceNode | WorkloadNode;
@@ -196,7 +199,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
-          destServices: node.destServices
+          destServices: node.destServices,
+          healthAnnotation: node.hasHealthConfig
         };
       default:
         return {
@@ -204,7 +208,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           type: NodeType.WORKLOAD,
           namespace: node.namespace,
           name: node.workload || 'unknown',
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
+          healthAnnotation: node.hasHealthConfig
         };
     }
   };
