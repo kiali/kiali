@@ -34,7 +34,7 @@ type ReduxProps = {
   namespaces: Namespace[];
   refresh: () => void;
   setFilter: (filter: string) => void;
-  setNamespaces: (namespaces: Namespace[]) => void;
+  setActiveNamespaces: (namespaces: Namespace[]) => void;
 };
 
 type NamespaceDropdownProps = ReduxProps & {
@@ -96,7 +96,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
     ) {
       // We must change the props of namespaces
       const items = urlNamespaces.map(ns => ({ name: ns } as Namespace));
-      this.props.setNamespaces(items);
+      this.props.setActiveNamespaces(items);
     } else if (urlNamespaces.length === 0 && this.props.activeNamespaces.length !== 0) {
       HistoryManager.setParam(URLParam.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
     }
@@ -240,7 +240,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
     if (isOpen) {
       this.props.refresh();
     } else {
-      this.props.setNamespaces(this.state.selectedNamespaces);
+      this.props.setActiveNamespaces(this.state.selectedNamespaces);
       this.clearFilter();
     }
     this.setState({
@@ -301,7 +301,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     clearAll: () => {
       dispatch(NamespaceActions.setActiveNamespaces([]));
     },
-    setNamespaces: (namespaces: Namespace[]) => {
+    setActiveNamespaces: (namespaces: Namespace[]) => {
       dispatch(NamespaceActions.setActiveNamespaces(namespaces));
     },
     setFilter: (filter: string) => {

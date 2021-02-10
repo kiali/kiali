@@ -20,8 +20,15 @@ interface IstioAnnotations {
   istioInjectionAnnotation: string;
 }
 
+interface UIDefaults {
+  metricsPerRefresh?: string;
+  namespaces?: string[];
+  refreshInterval?: string;
+}
+
 interface KialiFeatureFlags {
   istioInjectionAction: boolean;
+  uiDefaults?: UIDefaults;
 }
 
 /*

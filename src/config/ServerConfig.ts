@@ -1,5 +1,4 @@
 import _ from 'lodash';
-
 import { ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 
@@ -9,8 +8,8 @@ export type ComputedServerConfig = ServerConfig & {
   durations: Durations;
 };
 
-export const humanDurations = (config: ComputedServerConfig, prefix?: string, suffix?: string) =>
-  _.mapValues(config.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
+export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string) =>
+  _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
   const obj = {};
@@ -91,14 +90,12 @@ export const toValidDuration = (duration: number): number => {
   return durationsTuples[0][0];
 };
 
-export const setServerConfig = (svcConfig: ServerConfig) => {
+export const setServerConfig = (cfg: ServerConfig) => {
   serverConfig = {
-    ...svcConfig,
+    ...cfg,
     durations: {}
   };
-  serverConfig.healthConfig = svcConfig.healthConfig
-    ? parseHealthConfig(svcConfig.healthConfig)
-    : serverConfig.healthConfig;
+  serverConfig.healthConfig = cfg.healthConfig ? parseHealthConfig(cfg.healthConfig) : serverConfig.healthConfig;
 
   computeValidDurations(serverConfig);
 };
