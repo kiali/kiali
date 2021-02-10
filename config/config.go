@@ -302,11 +302,20 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
-type KialiFeatureFlags struct {
-	IstioInjectionAction bool `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+// UIDefaults defines default settings configured for the UI
+type UIDefaults struct {
+	MetricsPerRefresh string   `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	Namespaces        []string `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
+	RefreshInterval   string   `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
 
-// ToleranceConfig
+// KialiFeatureFlags available from the CR
+type KialiFeatureFlags struct {
+	IstioInjectionAction bool       `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	UIDefaults           UIDefaults `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+}
+
+// Tolerance config
 type Tolerance struct {
 	Code      string  `yaml:"code,omitempty" json:"code"`
 	Degraded  float32 `yaml:"degraded,omitempty" json:"degraded"`
@@ -315,7 +324,7 @@ type Tolerance struct {
 	Direction string  `yaml:"direction,omitempty" json:"direction"`
 }
 
-// RateConfig
+// Rate config
 type Rate struct {
 	Namespace string      `yaml:"namespace,omitempty" json:"namespace"`
 	Kind      string      `yaml:"kind,omitempty" json:"kind"`
@@ -323,7 +332,7 @@ type Rate struct {
 	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
-// HealthConfig
+// HealthConfig rates
 type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate"`
 }
@@ -463,6 +472,11 @@ func NewConfig() (c *Config) {
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
+			UIDefaults: UIDefaults{
+				MetricsPerRefresh: "1m",
+				Namespaces:        make([]string, 0),
+				RefreshInterval:   "15s",
+			},
 		},
 		KubernetesConfig: KubernetesConfig{
 			Burst:                       200,
