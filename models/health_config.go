@@ -12,7 +12,7 @@ func GetHealthConfigAnnotation() []AnnotationKey {
 	return []AnnotationKey{RateHealthAnnotation}
 }
 
-func GetHealthAnnotation(annotations map[string]string, filters []AnnotationKey) interface{} {
+func GetHealthAnnotation(annotations map[string]string, filters []AnnotationKey) map[string]string {
 	var result = map[string]string{}
 	for _, filter := range filters {
 		if filter == AllHealthAnnotation {

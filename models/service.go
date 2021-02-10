@@ -91,7 +91,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.ExternalName = service.Spec.ExternalName
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
-		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation()).(map[string]string)
+		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
 		(&s.Ports).Parse(service.Spec.Ports)
 	}
 }
