@@ -96,7 +96,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   }
 
   render() {
-    const findLabels = typeof this.props.labels !== 'undefined' && this.props.labels.length > 0;
+    const findLabels = this.props.labels !== undefined && this.props.labels.length > 0;
 
     const objectList = this.buildList(this.props.name, this.props.detail, findLabels, 0);
     return <div>{objectList}</div>;

@@ -85,7 +85,7 @@ export class ValidationSummary extends React.PureComponent<Props> {
   }
 
   tooltipContent() {
-    if (typeof this.props.objectCount !== undefined) {
+    if (this.props.objectCount !== undefined) {
       if (this.props.objectCount === 0) {
         return this.tooltipNA();
       } else {
@@ -97,7 +97,7 @@ export class ValidationSummary extends React.PureComponent<Props> {
   }
 
   tooltipBase() {
-    return typeof this.props.objectCount === 'undefined' || this.props.objectCount > 0 ? (
+    return this.props.objectCount === undefined || this.props.objectCount > 0 ? (
       <Validation iconStyle={this.props.style} severity={this.severity()} />
     ) : (
       <div style={{ display: 'inline-block', marginLeft: '5px' }}>N/A</div>
