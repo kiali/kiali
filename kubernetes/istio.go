@@ -211,35 +211,36 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 		return nil, err
 	}
 
-	if len(istiods) == 0 {
-		return nil, errors.New("unable to find any Pilot instances")
+	healthyIstiods := make([]*core_v1.Pod, 0, len(istiods))
+	for _, istiod := range istiods {
+		if istiod.Status.Phase == "Running" {
+			healthyIstiods = append(healthyIstiods, &istiod)
+		}
+	}
+
+	if len(healthyIstiods) == 0 {
+		return nil, errors.New("unable to find any healthy Pilot instance")
+	}
+
+	// Check if the kube-api has proxy access to pods in the istio-system
+	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
+	_, err = in.GetPodProxy(c.IstioNamespace, istiods[0].Name, "/ready")
+	if err != nil {
+		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
+			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(istiods))
-	errChan := make(chan error, len(istiods))
-	syncChan := make(chan map[string][]byte, len(istiods))
+	wg.Add(len(healthyIstiods))
+	errChan := make(chan error, len(healthyIstiods))
+	syncChan := make(chan map[string][]byte, len(healthyIstiods))
 
-	healthyIstiods := 0
 	result := map[string][]byte{}
-	for _, istiod := range istiods {
-		if istiod.Status.Phase != "Running" {
-			wg.Add(-1)
-			continue
-		}
-		healthyIstiods = healthyIstiods + 1
-
+	for _, istiod := range healthyIstiods {
 		go func(name, namespace string) {
 			defer wg.Done()
-			res, err := in.k8s.CoreV1().Pods(namespace).
-				ProxyGet(
-					"http",
-					name,
-					"8080",
-					"/debug/syncz",
-					map[string]string{}).
-				DoRaw(in.ctx)
 
+			res, err := in.GetPodProxy(namespace, name, "/debug/syncz")
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {

@@ -70,6 +70,11 @@ func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *core_v1.PodLogO
 	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
 }
 
+func (o *K8SClientMock) GetPodProxy(namespace, name, path string) ([]byte, error) {
+	args := o.Called(namespace, name, path)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
 func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]core_v1.ReplicationController), args.Error(1)

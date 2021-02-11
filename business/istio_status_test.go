@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -92,12 +93,12 @@ func TestComponentNamespaces(t *testing.T) {
 	a.Len(nss, 4)
 }
 
-func mockAddOnsCalls(ds []apps_v1.Deployment) (*kubetest.K8SClientMock, *httptest.Server, *int, *int, *int) {
+func mockAddOnsCalls(ds []apps_v1.Deployment, pods []v1.Pod, isIstioReachable bool) (*kubetest.K8SClientMock, *httptest.Server, *int, *int, *int) {
 	// Prepare the Call counts for each Addon
 	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
 
 	// Mock k8s api calls
-	k8s := mockDeploymentCall(ds)
+	k8s := mockDeploymentCall(ds, pods, isIstioReachable)
 	routes := mockAddOnCalls(defaultAddOnCalls(&jaegerCalls, &grafanaCalls, &prometheusCalls))
 	httpServer := mockServer(routes)
 
@@ -108,7 +109,7 @@ func mockAddOnsCalls(ds []apps_v1.Deployment) (*kubetest.K8SClientMock, *httptes
 	return k8s, httpServer, &jaegerCalls, &grafanaCalls, &prometheusCalls
 }
 
-func sampleIstioComponent() []apps_v1.Deployment {
+func sampleIstioComponent() ([]apps_v1.Deployment, []v1.Pod, bool) {
 	return []apps_v1.Deployment{
 		fakeDeploymentWithStatus(
 			"istio-egressgateway",
@@ -118,7 +119,30 @@ func sampleIstioComponent() []apps_v1.Deployment {
 				AvailableReplicas:   2,
 				UnavailableReplicas: 0,
 			}),
+	}, healthyIstiods(), true
+}
+
+func healthyIstiods() []v1.Pod {
+	return []v1.Pod{
+		fakePod("istiod-x3v1kn0l-running", "istio-system", "istiod", "Running"),
+		fakePod("istiod-x3v1kn0l-terminating", "istio-system", "istiod", "Terminating"),
 	}
+}
+
+func fakePod(name, namespace, appLabel, phase string) v1.Pod {
+	return v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": appLabel,
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPhase(phase),
+		},
+	}
+
 }
 
 func TestGrafanaWorking(t *testing.T) {
@@ -238,7 +262,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 func TestNoIstioComponentFoundError(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{})
+	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{}, []v1.Pod{}, true)
 	defer httpServ.Close()
 
 	iss := IstioStatusService{k8s: k8s}
@@ -249,12 +273,12 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 func TestDefaults(t *testing.T) {
 	assert := assert.New(t)
 
-	pods := []apps_v1.Deployment{
+	depl := []apps_v1.Deployment{
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depl, healthyIstiods(), true)
 	defer httpServer.Close()
 
 	iss := IstioStatusService{k8s: k8s}
@@ -284,7 +308,7 @@ func TestNonDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), true)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -317,9 +341,9 @@ func TestNonDefaults(t *testing.T) {
 	assert.Equal(1, *promCalls)
 }
 
-// Istio deployments only have the "app" app_label.
-// Users can't customize this one. They can only customize it for their own deployments.
-func TestCustomizedAppLabel(t *testing.T) {
+// Istiod pods are not reachable from kiali
+// Kiali should notify that in the Istio Component Status
+func TestIstiodUnreachable(t *testing.T) {
 	assert := assert.New(t)
 
 	pods := []apps_v1.Deployment{
@@ -327,7 +351,53 @@ func TestCustomizedAppLabel(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false)
+	defer httpServer.Close()
+
+	c := config.Get()
+	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+		Enabled: true,
+		Components: []config.ComponentStatus{
+			{AppLabel: "istiod", IsCore: true},
+			{AppLabel: "istio-egressgateway", IsCore: false},
+			{AppLabel: "istio-ingressgateway", IsCore: false},
+		},
+	}
+	config.Set(c)
+
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", Unreachable, true)
+	assertComponent(assert, icsl, "istiod-x3v1kn0l-terminating", Unreachable, true)
+
+	// Don't return healthy deployments
+	assertNotPresent(assert, icsl, "grafana")
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "jaeger")
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
+	assert.Equal(1, *jaegerCalls)
+	assert.Equal(1, *promCalls)
+
+}
+
+// Istio deployments only have the "app" app_label.
+// Users can't customize this one. They can only customize it for their own deployments.
+func TestCustomizedAppLabel(t *testing.T) {
+	assert := assert.New(t)
+
+	depls := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+	}
+
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, healthyIstiods(), true)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -385,9 +455,16 @@ func assertNotPresent(assert *assert.Assertions, icsl IstioComponentStatus, name
 }
 
 // Setup K8S api call to fetch Pods
-func mockDeploymentCall(deployments []apps_v1.Deployment) *kubetest.K8SClientMock {
+func mockDeploymentCall(deployments []apps_v1.Deployment, pods []v1.Pod, isIstioReachable bool) *kubetest.K8SClientMock {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(deployments, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
+
+	var err error
+	if !isIstioReachable {
+		err = fmt.Errorf("the Istio pods are unreachable")
+	}
+	k8s.On("GetPodProxy", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]byte{}, err)
 
 	return k8s
 }

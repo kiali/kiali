@@ -69,12 +69,22 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 
 func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	ds, error := iss.getComponentNamespacesWorkloads()
-	if error != nil {
-		return IstioComponentStatus{}, error
+	ds, err := iss.getComponentNamespacesWorkloads()
+	if err != nil {
+		return IstioComponentStatus{}, err
 	}
 
-	return iss.getStatusOf(ds)
+	deploymentStatus, err := iss.getStatusOf(ds)
+	if err != nil {
+		return IstioComponentStatus{}, err
+	}
+
+	istiodStatus, err := iss.getIstiodReachingCheck()
+	if err != nil {
+		return IstioComponentStatus{}, err
+	}
+
+	return deploymentStatus.merge(istiodStatus), nil
 }
 
 func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Deployment, error) {
@@ -249,6 +259,34 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	}
 
 	return ics
+}
+
+func (iss *IstioStatusService) getIstiodReachingCheck() (IstioComponentStatus, error) {
+	cfg := config.Get()
+	ics := IstioComponentStatus{}
+
+	istiods, err := iss.k8s.GetPods(cfg.IstioNamespace, labels.Set(map[string]string{"app": "istiod"}).String())
+	if err != nil {
+		return ics, err
+	}
+
+	for _, istiod := range istiods {
+		// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
+		// By proxying one Istiod, we ensure that the following connection is allowed:
+		// Kiali -> K8s API (proxy) -> istiod
+		// This scenario is no obvious for private clusters (like GKE private cluster)
+		_, err := iss.k8s.GetPodProxy(istiod.Namespace, istiod.Name, "/ready")
+		if err != nil {
+			ics.merge([]ComponentStatus{
+				{
+					Name:   istiod.Name,
+					Status: Unreachable,
+					IsCore: true,
+				},
+			})
+		}
+	}
+	return ics, nil
 }
 
 func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {

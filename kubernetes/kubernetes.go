@@ -22,6 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/kiali/kiali/util/httputil"
 )
 
 // GetConfigMap fetches and returns the specified ConfigMap definition
@@ -287,6 +289,17 @@ func (in *K8SClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOpti
 	}
 
 	return &PodLogs{Logs: buf.String()}, nil
+}
+
+func (in *K8SClient) GetPodProxy(namespace, name, path string) ([]byte, error) {
+	return in.k8s.CoreV1().RESTClient().Get().
+		Timeout(httputil.DefaultTimeout).
+		Namespace(namespace).
+		Resource("pods").
+		SubResource("proxy").
+		Name(name).
+		Suffix(path).
+		DoRaw(in.ctx)
 }
 
 func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
