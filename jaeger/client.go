@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/grpcutil"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -35,6 +37,8 @@ type ClientInterface interface {
 type Client struct {
 	ClientInterface
 	grpcClient api_v2.QueryServiceClient
+	httpClient http.Client
+	baseURL    *url.URL
 	ctx        context.Context
 }
 
@@ -50,13 +54,6 @@ func NewClient(token string) (*Client, error) {
 			auth.Token = token
 		}
 		ctx := context.Background()
-		// TODO: make sure this isn't required in case of token auth; if so, remove these lines
-		// if auth.Token != "" {
-		// 	requestMetadata := metadata.New(map[string]string{
-		// 		spanstore.BearerTokenKey: auth.Token,
-		// 	})
-		// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
-		// }
 
 		u, errParse := url.Parse(cfgTracing.InClusterURL)
 		if !cfg.InCluster {
@@ -67,32 +64,59 @@ func NewClient(token string) (*Client, error) {
 			return nil, errParse
 		}
 
-		// GRPC client
-		port := u.Port()
-		if port == "" {
-			p, _ := net.LookupPort("tcp", u.Scheme)
-			port = strconv.Itoa(p)
-		}
-		opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
-		if err != nil {
-			log.Errorf("Error while building GRPC dial options: %v", err)
-			return nil, err
-		}
-		address := fmt.Sprintf("%s:%s", u.Hostname(), port)
-		log.Tracef("Jaeger GRPC client info: address=%s, auth.type=%s", address, auth.Type)
-		conn, err := grpc.Dial(address, opts...)
-		if err != nil {
-			log.Errorf("Error while establishing GRPC connection: %v", err)
-			return nil, err
-		}
-		client := api_v2.NewQueryServiceClient(conn)
+		if cfgTracing.UseGRPC {
+			// GRPC client
 
-		return &Client{grpcClient: client, ctx: ctx}, nil
+			// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).
+			// When using the GRPC client, if a proxy is used it has to support GRPC.
+			// Basic and Token auth are in theory implemented for the GRPC client (see package grpcutil) but were not tested because openshift's oauth-proxy doesn't support GRPC at the time.
+			// Leaving some commented-out code below -- perhaps useful, perhaps not -- to consider when testing secured GRPC.
+			// if auth.Token != "" {
+			// 	requestMetadata := metadata.New(map[string]string{
+			// 		spanstore.BearerTokenKey: auth.Token,
+			// 	})
+			// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
+			// }
+
+			port := u.Port()
+			if port == "" {
+				p, _ := net.LookupPort("tcp", u.Scheme)
+				port = strconv.Itoa(p)
+			}
+			opts, err := grpcutil.GetAuthDialOptions(u.Scheme == "https", &auth)
+			if err != nil {
+				log.Errorf("Error while building GRPC dial options: %v", err)
+				return nil, err
+			}
+			address := fmt.Sprintf("%s:%s", u.Hostname(), port)
+			log.Tracef("Jaeger GRPC client info: address=%s, auth.type=%s", address, auth.Type)
+			conn, err := grpc.Dial(address, opts...)
+			if err != nil {
+				log.Errorf("Error while establishing GRPC connection: %v", err)
+				return nil, err
+			}
+			client := api_v2.NewQueryServiceClient(conn)
+
+			return &Client{grpcClient: client, ctx: ctx}, nil
+		} else {
+			// Legacy HTTP client
+			log.Tracef("Using legacy HTTP client for Jaeger: url=%v, auth.type=%s", u, auth.Type)
+			timeout := time.Duration(5000 * time.Millisecond)
+			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout)
+			if err != nil {
+				return nil, err
+			}
+			client := http.Client{Transport: transport, Timeout: timeout}
+			return &Client{httpClient: client, baseURL: u, ctx: ctx}, nil
+		}
 	}
 }
 
 // GetAppTraces fetches traces of an app
 func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*JaegerResponse, error) {
+	if in.grpcClient == nil {
+		return getAppTracesHTTP(in.httpClient, in.baseURL, namespace, app, q)
+	}
 	jaegerServiceName := buildJaegerServiceName(namespace, app)
 	findTracesRQ := &api_v2.FindTracesRequest{
 		Query: &api_v2.TraceQueryParameters{
@@ -109,7 +133,9 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*J
 
 	stream, err := in.grpcClient.FindTraces(ctx, findTracesRQ)
 	if err != nil {
-		return nil, fmt.Errorf("GetAppTraces, Jaeger GRPC client error: %v", err)
+		err = fmt.Errorf("GetAppTraces, Jaeger GRPC client error: %v", err)
+		log.Error(err.Error())
+		return nil, err
 	}
 
 	tracesMap, err := readSpansStream(stream)
@@ -130,6 +156,9 @@ func (in *Client) GetAppTraces(namespace, app string, q models.TracingQuery) (*J
 
 // GetTraceDetail fetches a specific trace from its ID
 func (in *Client) GetTraceDetail(strTraceID string) (*JaegerSingleTrace, error) {
+	if in.grpcClient == nil {
+		return getTraceDetailHTTP(in.httpClient, in.baseURL, strTraceID)
+	}
 	traceID, err := model.TraceIDFromString(strTraceID)
 	if err != nil {
 		return nil, fmt.Errorf("GetTraceDetail, invalid trace ID: %v", err)
@@ -157,6 +186,7 @@ func (in *Client) GetTraceDetail(strTraceID string) (*JaegerSingleTrace, error) 
 
 // GetErrorTraces fetches number of traces in error for the given app
 func (in *Client) GetErrorTraces(ns, app string, duration time.Duration) (int, error) {
+	// Note: grpc vs http switch is performed in subsequent call 'GetAppTraces'
 	now := time.Now()
 	query := models.TracingQuery{
 		Start: now.Add(-duration),

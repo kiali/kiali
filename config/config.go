@@ -157,6 +157,7 @@ type TracingConfig struct {
 	IsCoreComponent      bool     `yaml:"is_core_component"`
 	NamespaceSelector    bool     `yaml:"namespace_selector"`
 	URL                  string   `yaml:"url"`
+	UseGRPC              bool     `yaml:"use_grpc"`
 	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
 }
 
@@ -462,6 +463,7 @@ func NewConfig() (c *Config) {
 				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system/jaeger",
 				URL:                  "",
+				UseGRPC:              false,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},

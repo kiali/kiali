@@ -13,15 +13,16 @@ import (
 
 // Implements google.golang.org/grpc/credentials.PerRPCCredentials
 type perRPCCredentials struct {
-	auth string
+	auth            string
+	requireSecurity bool
 }
 
 func (c perRPCCredentials) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
 	return map[string]string{"authorization": c.auth}, nil
 }
 
-func (perRPCCredentials) RequireTransportSecurity() bool {
-	return true
+func (c perRPCCredentials) RequireTransportSecurity() bool {
+	return c.requireSecurity
 }
 
 func GetAuthDialOptions(tls bool, auth *config.Auth) ([]grpc.DialOption, error) {
@@ -40,9 +41,9 @@ func GetAuthDialOptions(tls bool, auth *config.Auth) ([]grpc.DialOption, error) 
 	}
 	if auth.Type == config.AuthTypeBasic {
 		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
-		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Basic " + encoded}))
+		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Basic " + encoded, requireSecurity: !auth.InsecureSkipVerify}))
 	} else if auth.Type == config.AuthTypeBearer {
-		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Bearer " + auth.Token}))
+		opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: "Bearer " + auth.Token, requireSecurity: !auth.InsecureSkipVerify}))
 	}
 	if len(opts) == 0 {
 		opts = append(opts, grpc.WithInsecure())
