@@ -1,0 +1,36 @@
+name: Snyk scan
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - master
+jobs:
+  security:
+    if: ${{ github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test for vulnerabilities
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: snyk/actions/golang@master
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: --org=kiali --prune-repeated-subdependencies
+      - name: Take Snyk snapshot
+        if: ${{ github.event_name == 'push' }}
+        uses: snyk/actions/golang@master
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor
+          args: --org=kiali --prune-repeated-subdependencies

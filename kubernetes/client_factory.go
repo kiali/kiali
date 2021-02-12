@@ -212,7 +212,15 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 	}
 
 	h := md5.New()
-	h.Write([]byte(tokenData))
+	_, err := h.Write([]byte(tokenData))
+	if err != nil {
+		// errcheck linter want us to check for the error returned by h.Write.
+		// However, docs of md5 say that this Writer never returns an error.
+		// See: https://golang.org/pkg/hash/#Hash
+		// So, let's check the error, and panic. Per the docs, this panic should
+		// never be reached.
+		panic("md5.Write returned error.")
+	}
 	return string(h.Sum(nil))
 
 }

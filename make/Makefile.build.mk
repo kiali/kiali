@@ -113,8 +113,8 @@ swagger-gen:
 swagger-serve: swagger-validate
 	@swagger serve ./swagger.json
 
-## swagger-travis: Check that swagger.json is the correct one
-swagger-travis: swagger-validate
+## swagger-ci: Check that swagger.json is the correct one
+swagger-ci: swagger-validate
 	@swagger generate spec -o ./swagger_copy.json
 	@cmp -s swagger.json swagger_copy.json; \
 	RETVAL=$$?; \

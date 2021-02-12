@@ -4124,11 +4124,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "CauseType": {
-      "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
-      "type": "string",
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
     "Chart": {
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
       "type": "object",
@@ -4479,31 +4474,22 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "Fields": {
-      "description": "To understand how this is used, see: https://github.com/kubernetes-sigs/structured-merge-diff",
+    "FieldsV1": {
+      "description": "Each key is either a '.' representing the field itself, and will always map to an empty set,\nor a string representing a sub-field or item. The string will follow one of these four formats:\n'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map\n'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item\n'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list\n'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values\nIf a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff\n+protobuf.options.(gogoproto.goproto_stringer)=false",
       "type": "object",
-      "title": "Fields stores a set of fields in a data structure like a Trie.",
-      "properties": {
-        "Map": {
-          "description": "Map stores a set of fields in a data structure like a Trie.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set,\nor a string representing a sub-field or item. The string will follow one of these four formats:\n'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map\n'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item\n'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list\n'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values\nIf a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in k8s.io/apiserver/pkg/endpoints/handlers/fieldmanager/internal",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/Fields"
-          }
-        }
-      },
+      "title": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.",
       "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Gateway": {
       "type": "object",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -4597,35 +4583,29 @@
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
-    "Initializer": {
+    "Host": {
+      "description": "Host represents the FQDN format for Istio hostnames",
       "type": "object",
-      "title": "Initializer is information about an initializer that has not yet completed.",
       "properties": {
-        "name": {
-          "description": "name of the process that is responsible for initializing this object.",
+        "cluster": {
           "type": "string",
-          "x-go-name": "Name"
-        }
-      },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "Initializers": {
-      "type": "object",
-      "title": "Initializers tracks the progress of initialization.",
-      "properties": {
-        "pending": {
-          "description": "Pending is a list of initializers that must execute in order before this object is visible.\nWhen the last pending initializer is removed, and no failing result is set, the initializers\nstruct will be set to nil and the object is considered as initialized and visible to all\nclients.\n+patchMergeKey=name\n+patchStrategy=merge",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Initializer"
-          },
-          "x-go-name": "Pending"
+          "x-go-name": "Cluster"
         },
-        "result": {
-          "$ref": "#/definitions/Status"
+        "complete_input": {
+          "description": "CompleteInput is true when Service, Namespace and Cluster fields are present.\nIt is true for simple service names and FQDN services.\nIt is false for service.namespace format and service entries.",
+          "type": "boolean",
+          "x-go-name": "CompleteInput"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "service": {
+          "type": "string",
+          "x-go-name": "Service"
         }
       },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
+      "x-go-package": "github.com/kiali/kiali/kubernetes"
     },
     "IstioCheck": {
       "type": "object",
@@ -5486,8 +5466,13 @@
           "type": "string",
           "x-go-name": "APIVersion"
         },
-        "fields": {
-          "$ref": "#/definitions/Fields"
+        "fieldsType": {
+          "description": "FieldsType is the discriminator for the different fields format and version.\nThere is currently only one possible value: \"FieldsV1\"",
+          "type": "string",
+          "x-go-name": "FieldsType"
+        },
+        "fieldsV1": {
+          "$ref": "#/definitions/FieldsV1"
         },
         "manager": {
           "description": "Manager is an identifier of the workflow managing these fields.",
@@ -5664,9 +5649,6 @@
     "NodeData": {
       "type": "object",
       "properties": {
-        "HasHealthConfig": {
-          "$ref": "#/definitions/HealthConfig"
-        },
         "aggregate": {
           "type": "string",
           "x-go-name": "Aggregate"
@@ -5689,6 +5671,9 @@
         "hasCB": {
           "type": "boolean",
           "x-go-name": "HasCB"
+        },
+        "hasHealthConfig": {
+          "$ref": "#/definitions/HealthConfig"
         },
         "hasMissingSC": {
           "type": "boolean",
@@ -5809,7 +5794,7 @@
           "$ref": "#/definitions/Time"
         },
         "finalizers": {
-          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\n+optional\n+patchStrategy=merge",
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\nFinalizers may be processed and removed in any order.  Order is NOT enforced\nbecause it introduces significant risk of stuck finalizers.\nfinalizers is a shared field, any actor with permission can reorder it.\nIf the finalizer list is processed in order, then this can lead to a situation\nin which the component responsible for the first finalizer in the list is\nwaiting for a signal (field value, external system, or other) produced by a\ncomponent responsible for a finalizer later in the list, resulting in a deadlock.\nWithout enforced ordering finalizers are free to order amongst themselves and\nare not vulnerable to ordering changes in the list.\n+optional\n+patchStrategy=merge",
           "type": "array",
           "items": {
             "type": "string"
@@ -5817,7 +5802,7 @@
           "x-go-name": "Finalizers"
         },
         "generateName": {
-          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#idempotency\n+optional",
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency\n+optional",
           "type": "string",
           "x-go-name": "GenerateName"
         },
@@ -5826,9 +5811,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "Generation"
-        },
-        "initializers": {
-          "$ref": "#/definitions/Initializers"
         },
         "labels": {
           "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
@@ -5839,7 +5821,7 @@
           "x-go-name": "Labels"
         },
         "managedFields": {
-          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\nThis field is alpha and can be changed or removed without notice.\n\n+optional",
+          "description": "ManagedFields maps workflow-id and version to the set of fields\nthat are managed by that workflow. This is mostly for internal\nhousekeeping, and users typically shouldn't need to set or\nunderstand this field. A workflow can be the user's name, a\ncontroller's name, or the name of a specific apply path like\n\"ci-cd\". The set of fields is always in the version that the\nworkflow used when modifying the object.\n\n+optional",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ManagedFieldsEntry"
@@ -5852,7 +5834,7 @@
           "x-go-name": "Name"
         },
         "namespace": {
-          "description": "Namespace defines the space within each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
           "type": "string",
           "x-go-name": "Namespace"
         },
@@ -5865,12 +5847,12 @@
           "x-go-name": "OwnerReferences"
         },
         "resourceVersion": {
-          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency\n+optional",
           "type": "string",
           "x-go-name": "ResourceVersion"
         },
         "selfLink": {
-          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n\nDEPRECATED\nKubernetes will stop propagating this field in 1.20 release and the field is planned\nto be removed in 1.21 release.\n+optional",
           "type": "string",
           "x-go-name": "SelfLink"
         },
@@ -5900,7 +5882,7 @@
           "x-go-name": "Controller"
         },
         "kind": {
-          "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+          "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -6220,8 +6202,7 @@
       "type": "object",
       "properties": {
         "domains": {
-          "type": "string",
-          "x-go-name": "Domains"
+          "$ref": "#/definitions/Host"
         },
         "match": {
           "type": "string",
@@ -6372,12 +6353,12 @@
       "type": "object",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -6546,12 +6527,12 @@
       "type": "object",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -6691,119 +6672,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "Status": {
-      "type": "object",
-      "title": "Status is a return value for calls that don't return other objects.",
-      "properties": {
-        "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
-          "type": "string",
-          "x-go-name": "APIVersion"
-        },
-        "code": {
-          "description": "Suggested HTTP return code for this status, 0 if not set.\n+optional",
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "Code"
-        },
-        "continue": {
-          "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nconsistent list may not be possible if the server configuration has changed or more than a few\nminutes have passed. The resourceVersion field returned when using this continue value will be\nidentical to the value in the first response, unless you have received this token from an error\nmessage.",
-          "type": "string",
-          "x-go-name": "Continue"
-        },
-        "details": {
-          "$ref": "#/definitions/StatusDetails"
-        },
-        "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "message": {
-          "description": "A human-readable description of the status of this operation.\n+optional",
-          "type": "string",
-          "x-go-name": "Message"
-        },
-        "reason": {
-          "$ref": "#/definitions/StatusReason"
-        },
-        "resourceVersion": {
-          "description": "String that identifies the server's internal version of this object that\ncan be used by clients to determine when objects have changed.\nValue must be treated as opaque by clients and passed unmodified back to the server.\nPopulated by the system.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "selfLink": {
-          "description": "selfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
-          "type": "string",
-          "x-go-name": "SelfLink"
-        },
-        "status": {
-          "description": "Status of the operation.\nOne of: \"Success\" or \"Failure\".\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status\n+optional",
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "StatusCause": {
-      "description": "StatusCause provides more information about an api.Status failure, including\ncases when multiple errors are encountered.",
-      "type": "object",
-      "properties": {
-        "field": {
-          "description": "The field of the resource that has caused this error, as named by its JSON\nserialization. May include dot and postfix notation for nested attributes.\nArrays are zero-indexed.  Fields may appear more than once in an array of\ncauses due to fields having multiple errors.\nOptional.\n\nExamples:\n\"name\" - the field \"name\" on the current resource\n\"items[0].name\" - the field \"name\" on the first array entry in \"items\"\n+optional",
-          "type": "string",
-          "x-go-name": "Field"
-        },
-        "message": {
-          "description": "A human-readable description of the cause of the error.  This field may be\npresented as-is to a reader.\n+optional",
-          "type": "string",
-          "x-go-name": "Message"
-        },
-        "reason": {
-          "$ref": "#/definitions/CauseType"
-        }
-      },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
-    "StatusDetails": {
-      "description": "StatusDetails is a set of additional properties that MAY be set by the\nserver to provide additional information about a response. The Reason\nfield of a Status object defines what attributes will be set. Clients\nmust ignore fields that do not match the defined type of each attribute,\nand should assume that any attribute may be empty, invalid, or under\ndefined.",
-      "type": "object",
-      "properties": {
-        "causes": {
-          "description": "The Causes array includes more details associated with the StatusReason\nfailure. Not all StatusReasons may provide detailed causes.\n+optional",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/StatusCause"
-          },
-          "x-go-name": "Causes"
-        },
-        "group": {
-          "description": "The group attribute of the resource associated with the status StatusReason.\n+optional",
-          "type": "string",
-          "x-go-name": "Group"
-        },
-        "kind": {
-          "description": "The kind attribute of the resource associated with the status StatusReason.\nOn some operations may differ from the requested resource Kind.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
-          "type": "string",
-          "x-go-name": "Kind"
-        },
-        "name": {
-          "description": "The name attribute of the resource associated with the status StatusReason\n(when there is a single name which can be described).\n+optional",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "retryAfterSeconds": {
-          "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate\nthe client must take an alternate action - for those errors this field may indicate how long to wait\nbefore taking the alternate action.\n+optional",
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "RetryAfterSeconds"
-        },
-        "uid": {
-          "$ref": "#/definitions/UID"
-        }
-      },
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
-    },
     "StatusInfo": {
       "description": "This is used for returning a response of Kiali Status",
       "type": "object",
@@ -6840,11 +6708,6 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
-    },
-    "StatusReason": {
-      "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
-      "type": "string",
-      "x-go-package": "k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "Target": {
       "type": "object",
@@ -7280,12 +7143,12 @@
       "title": "AuthorizationPolicy authorizationPolicy",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7327,12 +7190,12 @@
       "title": "DestinationRule destinationRule",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7397,12 +7260,12 @@
       "title": "EnvoyFilter envoyFilter",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7505,12 +7368,12 @@
       "title": "PeerAuthentication peerAuthentication",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7562,12 +7425,12 @@
       "title": "RequestAuthentication requestAuthentication",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7615,12 +7478,12 @@
       "title": "VirtualService virtualService",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },
@@ -7703,12 +7566,12 @@
       "title": "WorkloadEntry workloadEntry",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
           "type": "string",
           "x-go-name": "APIVersion"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
           "type": "string",
           "x-go-name": "Kind"
         },

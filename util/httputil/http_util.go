@@ -77,7 +77,7 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed. If DialContext is not set, Dial is used, we only create a new one
 	// if neither is defined.
-	if transportConfig.DialContext == nil && transportConfig.Dial == nil {
+	if transportConfig.DialContext == nil {
 		transportConfig.DialContext = (&net.Dialer{
 			Timeout: timeout,
 		}).DialContext
