@@ -33,9 +33,15 @@ jobs:
           if [ ! -z "$(gofmt -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -l ${GO_FILES})";echo "Diff files:"; gofmt -d ${GO_FILES}; exit 1; fi # Gofmt Linter
           echo "Done gofmt"
 
+      - name: Verify code linting
+        run: make lint
+
+      - name: Verify swagger file
+        run: make swagger-ci
+
       - name: Build
         run: make clean build
 
       - name: Test
-        run: make test
+        run: make test-race
 
