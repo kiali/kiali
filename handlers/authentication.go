@@ -469,14 +469,14 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 
 	tokenString := getTokenStringFromRequest(r)
 	if len(tokenString) != 0 {
-		var err error = nil
+		var err error
 		if claims, err = config.GetTokenClaimsIfValid(tokenString); err != nil {
 			log.Warningf("Token is invalid!!: %v", err)
 			return http.StatusUnauthorized, ""
 		}
 	} else {
 		// If not present, check presence of a session for the "authorization code" flow
-		var err error = nil
+		var err error
 		claims, err = business.GetOpenIdAesSession(r)
 		if err != nil {
 			log.Warningf("There was an error when decoding the session: %v", err)
