@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type JaegerInfo struct {
 	Enabled              bool     `json:"enabled"`
 	Integration          bool     `json:"integration"`
@@ -9,9 +11,9 @@ type JaegerInfo struct {
 }
 
 type TracingQuery struct {
-	StartMicros int64  `json:"startMicros"`
-	EndMicros   int64  `json:"endMicros"`
-	Tags        string `json:"tags"`
-	MinDuration string `json:"minDuration"`
-	Limit       int    `json:"limit"`
+	Start       time.Time
+	End         time.Time
+	Tags        map[string]string
+	MinDuration time.Duration
+	Limit       int
 }
