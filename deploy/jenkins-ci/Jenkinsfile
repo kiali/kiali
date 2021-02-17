@@ -139,7 +139,7 @@ node('kiali-build && fedora') {
     }
 
     buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
-    buildHelm = params.SKIP_HELM_RELEASE != "y" && releaseType == "minor"
+    buildHelm = params.SKIP_HELM_RELEASE != "y" && (releaseType == "minor" || releaseType == "patch")
     echo "Resolved release type: ${releaseType}"
     echo "Will build Helm charts? ${buildHelm}"
     echo "Will build operator? ${buildOperator}"
