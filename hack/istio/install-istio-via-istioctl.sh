@@ -272,7 +272,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   done
 
   echo Deleting Core Istio
-  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} delete -n ${NAMESPACE} -f -
+  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} delete -f -
   # THIS IS HOW IT SHOULD BE IMPLEMENTED BUT WE CANNOT USE THIS UNTIL THIS IS FIXED: https://github.com/istio/istio/issues/30897
   #${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -n ${NAMESPACE} -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
@@ -288,7 +288,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -
+  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -f -
   # THIS IS HOW IT SHOULD BE IMPLEMENTED BUT WE CANNOT USE THIS UNTIL THIS IS FIXED: https://github.com/istio/istio/issues/30897
   # ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   if [ "$?" != "0" ]; then
