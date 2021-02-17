@@ -268,11 +268,11 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   echo Deleting Addons
   for addon in $(ls -1 ${ISTIO_DIR}/samples/addons/*.yaml); do
     echo "Deleting addon [${addon}]"
-    ${CLIENT_EXE} delete --ignore-not-found=true -f ${addon}
+    cat ${addon} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} delete --ignore-not-found=true -n ${NAMESPACE} -f -
   done
 
   echo Deleting Core Istio
-  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
+  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -n ${NAMESPACE} -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands to remove previously created policies:"
@@ -286,7 +286,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
+  ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} --set namespace=${NAMESPACE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
   if [ "$?" != "0" ]; then
     echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
     exit 1
@@ -295,7 +295,7 @@ else
   echo "Installing Addons: [${ADDONS}]"
   for addon in ${ADDONS}; do
     echo "Installing addon: [${addon}]"
-    ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/${addon}.yaml
+    cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -
   done
 
   # Do some OpenShift specific things
