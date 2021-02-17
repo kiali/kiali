@@ -29,8 +29,9 @@ DEFAULT_INSECURE_REGISTRY_IP="192.168.99.100"
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="virtualbox"
-DEFAULT_K8S_MEMORY="16g"
+DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
+DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
 DEFAULT_MINIKUBE_EXEC="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 DEFAULT_MINIKUBE_START_FLAGS=""
@@ -282,7 +283,6 @@ spec:
     k8s-app: oauth2-proxy
 EOF
 
-  
   # Install dex
   echo "Deploying dex..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
@@ -346,6 +346,15 @@ EOF
   fi
 }
 
+determine_full_lb_range() {
+  local host_ip=$(${MINIKUBE_EXEC_WITH_PROFILE} ip)
+  local subnet=$(echo ${host_ip} | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1/')
+  local first_ip="${subnet}.$(echo "${LB_ADDRESSES}" | cut -d '-' -f 1)"
+  local last_ip="${subnet}.$(echo "${LB_ADDRESSES}" | cut -d '-' -f 2)"
+  LB_ADDRESSES="'${first_ip}-${last_ip}'"
+  echo "Full Load Balancer addresses: ${LB_ADDRESSES}"
+}
+
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -385,6 +394,7 @@ while [[ $# -gt 0 ]]; do
     -kdr|--kubernetes-driver) K8S_DRIVER="$2"; shift;shift ;;
     -km|--kubernetes-memory) K8S_MEMORY="$2"; shift;shift ;;
     -kv|--kubernetes-version) K8S_VERSION="$2"; shift;shift ;;
+    -lba|--load-balancer-addrs) LB_ADDRESSES="$2"; shift;shift ;;
     -me|--minikube-exec) MINIKUBE_EXEC="$2"; shift;shift ;;
     -mf|--minikube-flags) MINIKUBE_START_FLAGS="$2"; shift;shift ;;
     -mp|--minikube-profile) MINIKUBE_PROFILE="$2"; shift;shift ;;
@@ -448,6 +458,13 @@ Valid options:
       The version of Kubernetes to start.
       Only used for the 'start' command.
       Default: ${DEFAULT_K8S_VERSION}
+  -lba|--load-balancer-addrs
+      When specified, the "metallb" addon is enabled and these are the load balancer addresses it uses.
+      The format for this value is simply two numbers, dash-separated such as "70-84". This means the
+      load balancer will use IPs in that range, using the subnet determined by "minikube ip". So if
+      the "minikube ip" is 192.168.99.100, the load balancer addrs will be "192.168.99.70-192.168.99.84".
+      Only used for the 'start' command.
+      Default: ${DEFAULT_LB_ADDRESSES}
   -me|--minikube-exec
       The minikube executable.
       Default: ${DEFAULT_MINIKUBE_EXEC}
@@ -503,6 +520,7 @@ done
 : ${K8S_DRIVER:=${DEFAULT_K8S_DRIVER}}
 : ${K8S_VERSION:=${DEFAULT_K8S_VERSION}}
 : ${K8S_MEMORY:=${DEFAULT_K8S_MEMORY}}
+: ${LB_ADDRESSES:=${DEFAULT_LB_ADDRESSES}}
 : ${MINIKUBE_EXEC:=${DEFAULT_MINIKUBE_EXEC}}
 : ${MINIKUBE_START_FLAGS:=${DEFAULT_MINIKUBE_START_FLAGS}}
 : ${MINIKUBE_PROFILE:=${DEFAULT_MINIKUBE_PROFILE}}
@@ -520,6 +538,7 @@ debug "K8S_DISK=$K8S_DISK"
 debug "K8S_DRIVER=$K8S_DRIVER"
 debug "K8S_MEMORY=$K8S_MEMORY"
 debug "K8S_VERSION=$K8S_VERSION"
+debug "LB_ADDRESSES=$LB_ADDRESSES"
 debug "MINIKUBE_EXEC=$MINIKUBE_EXEC"
 debug "MINIKUBE_START_FLAGS=$MINIKUBE_START_FLAGS"
 debug "MINIKUBE_PROFILE=$MINIKUBE_PROFILE"
@@ -548,6 +567,24 @@ if [ "$_CMD" = "start" ]; then
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable ingress
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
+  if [ ! -z "${LB_ADDRESSES}" ]; then
+    echo 'Enabling the metallb load balancer'
+    ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metallb
+    determine_full_lb_range
+    cat <<LBCONFIGMAP | ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses: [${LB_ADDRESSES}]
+LBCONFIGMAP
+  fi
 
   if [ "${DEX_ENABLED}" == "true" ]; then
     install_dex
@@ -576,7 +613,7 @@ elif [ "$_CMD" = "dashboard" ]; then
 elif [ "$_CMD" = "port-forward" ]; then
   ensure_minikube_is_running
   echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
-  echo 'To access Kiali, point your browser to https://localhost:20001/kiali/console'
+  echo 'To access Kiali, point your browser to http://localhost:20001/kiali/console'
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward $(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then

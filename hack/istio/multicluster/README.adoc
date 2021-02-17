@@ -1,0 +1,23 @@
+= MultiCluster Install Hack Scripts
+
+These hack scripts can be used to install a 2-cluster multi-primary Istio installation.
+
+It utilizes the hack scripts located in link:..[the hack/istio directory].
+
+These should work on either OpenShift or Kubernetes environments. If you have both `kubectl` and `oc` in your PATH, you can specify which one to use (and hence which environment you want to use) via the `-c` option to the scripts.
+
+== Install
+
+Use the link:./install-everything.sh[install-everything.sh script]. See `--help` for options.
+
+== Uninstall
+
+You can uninstall everything from both clusters using the link:./uninstall-everything.sh[uninstall-everything.sh script]. Or you can individually uninstall things - see below.
+
+=== Istio
+
+To uninstall Istio, you can use link:../install-istio-via-istioctl.sh[install-istio-via-istioctl.sh]. Simply connect to your cluster and run that script with the `-di true` option to uninstall Istio from that cluster. Switch to the second cluster and do the same to uninstall Istio from there.
+
+=== Bookinfo
+
+If you used these scripts to install bookinfo, you can use link:../install-bookinfo-demo.sh[install-bookinfo-demo.sh] to uninstall it. Simply connect to your cluster and run that script with the `-db true` option to uninstall the bookinfo from that cluster. Switch to the second cluster and do the same to uninstall bookinfo from there.

@@ -28,6 +28,7 @@ MTLS="true"
 NAMESPACE="istio-system"
 NETWORK="network-default"
 IMAGE_HUB="gcr.io/istio-release"
+IMAGE_TAG="default"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -90,6 +91,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ih|--image-hub)
       IMAGE_HUB="$2"
+      shift;shift
+      ;;
+    -it|--image-tag)
+      IMAGE_TAG="$2"
       shift;shift
       ;;
     -mid|--mesh-id)
@@ -158,6 +163,11 @@ Valid command line arguments:
        You can set this to "default" in order to use the default hub that the Istio charts use but
        this may be using docker.io and docker hub rate limiting may cause the installation to fail.
        Default: gcr.io/istio-release
+  -it|--image-tag <tag>
+       The tag of the Istio images. Leave this as "default" (which means the default images are pulled)
+       unless you know the image tag you are pulling is compatible with the charts in the istioctl installer.
+       You will need this if you have a dev version of istioctl but want to pull a released version of the images.
+       Default: "default"
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: false
@@ -245,17 +255,28 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   #   https://istio.io/latest/docs/setup/platform-setup/openshift/
   echo Creating the control plane namespace: ${NAMESPACE}
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-    ${CLIENT_EXE} new-project ${NAMESPACE}
+    if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
+      ${CLIENT_EXE} new-project ${NAMESPACE}
+    fi
 
     echo Performing additional commands for OpenShift
     ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
   else
-    ${CLIENT_EXE} create namespace ${NAMESPACE}
+    if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
+      ${CLIENT_EXE} create namespace ${NAMESPACE}
+    fi
   fi
+
+  echo "Labeling namespace with network name [${NETWORK}]"
+  ${CLIENT_EXE} label --overwrite namespace ${NAMESPACE} topology.istio.io/network=${NETWORK}
 fi
 
 if [ "${IMAGE_HUB}" != "default" ]; then
   IMAGE_HUB_OPTION="--set hub=${IMAGE_HUB}"
+fi
+
+if [ "${IMAGE_TAG}" != "default" ]; then
+  IMAGE_TAG_OPTION="--set tag=${IMAGE_TAG}"
 fi
 
 if [ "${NAMESPACE}" != "istio-system" ]; then
@@ -269,6 +290,7 @@ fi
 
 for s in \
    "${IMAGE_HUB_OPTION}" \
+   "${IMAGE_TAG_OPTION}" \
    "${MTLS_OPTIONS}" \
    "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
