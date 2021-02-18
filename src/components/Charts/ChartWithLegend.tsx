@@ -43,6 +43,7 @@ const overlayName = 'overlay';
 class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
+  mouseOnLegend = false;
 
   constructor(props: Props<T, O>) {
     super(props);
@@ -143,7 +144,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
           width={this.state.width}
           padding={padding}
           events={events}
-          containerComponent={newBrushVoronoiContainer(labelComponent, this.props.brushHandlers)}
+          containerComponent={newBrushVoronoiContainer(
+            labelComponent,
+            this.props.brushHandlers,
+            () => this.mouseOnLegend
+          )}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time' }}
           // Hack: 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
           domainPadding={{ y: 1, x: this.props.xAxis === 'series' ? 50 : undefined }}
@@ -220,6 +225,8 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               data: { cursor: 'pointer' },
               labels: { cursor: 'pointer' }
             }}
+            borderPadding={{ top: 10 }}
+            symbolSpacer={5}
           />
         </Chart>
       </div>
@@ -312,9 +319,14 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
       idx: idx,
       serieID: serieID,
       onMouseOver: props => {
+        this.mouseOnLegend = true;
         return {
           style: { ...props.style, strokeWidth: 4, fillOpacity: 0 }
         };
+      },
+      onMouseOut: () => {
+        this.mouseOnLegend = false;
+        return null;
       },
       onClick: () => {
         if (!this.state.hiddenSeries.delete(serieName)) {
