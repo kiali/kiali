@@ -246,8 +246,12 @@ if [ "${IMAGE_HUB}" != "default" ]; then
 fi
 
 if [ "${NAMESPACE}" != "istio-system" ]; then
-  # see https://github.com/istio/istio/issues/30897 for why values.global.istioNamespace is needed
-  CUSTOM_NAMESPACE_OPTIONS="--set namespace=${NAMESPACE} --set values.global.istioNamespace=${NAMESPACE}"
+  # see https://github.com/istio/istio/issues/30897 for these settings
+  CUSTOM_NAMESPACE_OPTIONS="--set namespace=${NAMESPACE}"
+  CUSTOM_NAMESPACE_OPTIONS="${CUSTOM_NAMESPACE_OPTIONS} --set values.global.istioNamespace=${NAMESPACE}"
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.excludeNamespaces[0]=${NAMESPACE}"
+  fi
 fi
 
 for s in \
@@ -292,16 +296,31 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
-  if [ "$?" != "0" ]; then
-    echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
-    exit 1
+  # There is a bug in istioctl manifest install - it wants to always create the CR in istio-system.
+  # If we are not installing in istio-system, we cannot use 'install' but must generate the yaml and apply it ourselves.
+  # See https://github.com/istio/istio/issues/30897#issuecomment-781141490
+  if [ "${NAMESPACE}" == "istio-system" ]; then
+    while ! (${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY})
+    do
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+      sleep 10
+    done
+  else
+    while ! (${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} apply -f -)
+    do
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+      sleep 10
+    done
   fi
 
   echo "Installing Addons: [${ADDONS}]"
   for addon in ${ADDONS}; do
     echo "Installing addon: [${addon}]"
-    cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -
+    while ! (cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -)
+    do
+      echo "Failed to install addon [${addon}] - will retry in 10 seconds..."
+      sleep 10
+    done
   done
 
   # Do some OpenShift specific things
