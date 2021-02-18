@@ -22,6 +22,7 @@ DELETE_ISTIO="false"
 ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
+ISTIO_INGRESSGATEWAY_ENABLED="true"
 MESH_ID="mesh-default"
 MTLS="true"
 NAMESPACE="istio-system"
@@ -74,6 +75,15 @@ while [[ $# -gt 0 ]]; do
         ISTIO_EGRESSGATEWAY_ENABLED="$2"
       else
         echo "ERROR: The --istio-egressgateway-enabled flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -iie|--istio-ingressgateway-enabled)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        ISTIO_INGRESSGATEWAY_ENABLED="$2"
+      else
+        echo "ERROR: The --istio-ingressgateway-enabled flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -139,6 +149,9 @@ Valid command line arguments:
        Where Istio has already been downloaded. If not found, this script aborts.
   -iee|--istio-egressgateway-enabled (true|false)
        When set to true, istio-egressgateway will be installed.
+       Default: true
+  -iie|--istio-ingressgateway-enabled (true|false)
+       When set to true, istio-ingressgateway will be installed.
        Default: true
   -ih|--image-hub <hub id>
        The hub where the Istio images will be pulled from.
@@ -259,6 +272,7 @@ for s in \
    "${MTLS_OPTIONS}" \
    "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
+   "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
    "--set values.global.meshID=${MESH_ID}" \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
@@ -282,7 +296,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   done
 
   echo Deleting Core Istio
-  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -n ${NAMESPACE} -f -
+  ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands to remove previously created policies:"
@@ -325,7 +339,11 @@ else
 
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
+    if [ "${ISTIO_INGRESSGATEWAY_ENABLED}" == "true" ]; then
+      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
+    else
+      echo "Ingressgateway is disabled - the OpenShift Route will not be created"
+    fi
 
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands so sidecar injection works:"
