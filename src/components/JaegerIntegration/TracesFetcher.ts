@@ -68,6 +68,7 @@ export class TracesFetcher {
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch traces.', error);
+        this.onErrors([{ msg: String(error) }]);
       });
   };
 

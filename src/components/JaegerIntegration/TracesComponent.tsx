@@ -50,6 +50,7 @@ interface TracesState {
   jaegerErrors: JaegerError[];
   targetApp?: string;
   activeTab: number;
+  toolbarDisabled: boolean;
 }
 
 const traceDetailsTab = 0;
@@ -73,9 +74,17 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       traces: [],
       jaegerErrors: [],
       targetApp: targetApp,
-      activeTab: traceDetailsTab
+      activeTab: traceDetailsTab,
+      toolbarDisabled: false
     };
-    this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => this.setState({ jaegerErrors: errors }));
+    this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => {
+      // If there was traces displayed already, do not hide them so that the user can still interact with them
+      // (consider it's probably a temporary failure)
+      // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
+      if (this.state.traces.length === 0) {
+        this.setState({ jaegerErrors: errors, toolbarDisabled: true });
+      }
+    });
     this.percentilesPromise = this.fetchPercentiles();
   }
 
@@ -188,7 +197,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
   };
 
   private onTracesUpdated = (traces: JaegerTrace[], jaegerServiceName: string) => {
-    const newState: Partial<TracesState> = { traces: traces };
+    const newState: Partial<TracesState> = { traces: traces, jaegerErrors: undefined, toolbarDisabled: false };
     if (this.state.targetApp === undefined && jaegerServiceName) {
       newState.targetApp = jaegerServiceName;
     }
@@ -238,6 +247,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
                             onDisplaySettingsChanged={this.onDisplaySettingsChanged}
                             onQuerySettingsChanged={this.onQuerySettingsChanged}
                             percentilesPromise={this.percentilesPromise}
+                            disabled={this.state.toolbarDisabled}
                           />
                         </ToolbarItem>
                       </ToolbarGroup>
