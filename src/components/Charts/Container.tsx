@@ -23,10 +23,14 @@ const formatValue = (label: string, datum: RichDataPoint, value: number) => {
   return label + ': ' + getFormatter(d3Format, datum.unit!)(value / (datum.scaleFactor || 1));
 };
 
-export const newBrushVoronoiContainer = (labelComponent: JSX.Element, handlers?: BrushHandlers) => {
+export const newBrushVoronoiContainer = (
+  labelComponent: JSX.Element,
+  handlers: BrushHandlers | undefined,
+  hideTooltip: () => boolean
+) => {
   const voronoiProps = {
     labels: obj => {
-      if (obj.datum.hideLabel) {
+      if (obj.datum.hideLabel || hideTooltip()) {
         return '';
       }
       if (obj.datum._median !== undefined) {

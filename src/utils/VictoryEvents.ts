@@ -6,6 +6,7 @@ interface EventItem {
   serieID: string;
   onClick?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   onMouseOver?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
+  onMouseOut?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
 }
 
 export type VCEvent = {
@@ -64,7 +65,7 @@ export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
           childName: [item.serieID],
           target: 'data',
           eventKey: 'all',
-          mutation: () => null
+          mutation: props => (item.onMouseOut ? item.onMouseOut(props) : null)
         }
       ];
     };
