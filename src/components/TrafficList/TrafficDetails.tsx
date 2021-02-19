@@ -7,7 +7,8 @@ import {
   GraphNodeData,
   NodeType,
   DestService,
-  ProtocolTraffic
+  ProtocolTraffic,
+  SEInfo
 } from '../../types/Graph';
 import { RenderComponentScroll } from '../Nav/Page';
 import { MetricsObjectTypes } from '../../types/Metrics';
@@ -44,8 +45,8 @@ export interface ServiceNode {
   type: NodeType.SERVICE;
   namespace: string;
   name: string;
-  isServiceEntry?: string;
   isInaccessible: boolean;
+  isServiceEntry?: SEInfo;
   destServices?: DestService[];
   healthAnnotation?: HealthAnnotationType;
 }
