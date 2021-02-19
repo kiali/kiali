@@ -214,7 +214,10 @@ func TestServiceEntry(t *testing.T) {
 	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	externalHosts := externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Hosts
+	assert.Equal("host1.external.com", externalHosts[0])
+	assert.Equal("host2.external.com", externalHosts[1])
 	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	externalHostXServiceID, _ = graph.Id(graph.Unknown, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -227,7 +230,10 @@ func TestServiceEntry(t *testing.T) {
 	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
 	assert.Equal(true, found5)
 	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	internalHosts := externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Hosts
+	assert.Equal("host1.external.com", internalHosts[0])
+	assert.Equal("host2.external.com", internalHosts[1])
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -321,7 +327,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	externalHostXServiceID, _ = graph.Id(graph.Unknown, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -334,7 +340,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
 	assert.Equal(true, found5)
 	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -428,7 +434,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	externalHostXServiceID, _ = graph.Id(graph.Unknown, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -441,7 +447,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
 	assert.Equal(true, found5)
 	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -535,7 +541,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	externalHostXServiceID, _ = graph.Id(graph.Unknown, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -548,7 +554,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
 	assert.Equal(true, found5)
 	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -652,7 +658,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
 	assert.Equal(true, found5)
 	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
-	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -727,7 +733,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	for _, n := range trafficMap {
 		if n.Service == "externalSE" {
 			numMatches++
-			assert.Equal("MESH_INTERNAL", n.Metadata[graph.IsServiceEntry])
+			assert.Equal("MESH_INTERNAL", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 		}
 	}
 	assert.Equal(1, numMatches)
@@ -862,7 +868,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	SE2Node, found2 := trafficMap[SE2ID]
 	assert.Equal(true, found2)
 	assert.Equal(0, len(SE2Node.Edges))
-	assert.Equal("MESH_EXTERNAL", SE2Node.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", SE2Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(2, len(SE2Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -990,7 +996,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	SE1Node, found2 := trafficMap[SE1ID]
 	assert.Equal(true, found2)
 	assert.Equal(0, len(SE1Node.Edges))
-	assert.Equal("MESH_EXTERNAL", SE1Node.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
 	assert.Equal(1, len(SE1Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	notSEHost2ServiceID, _ = graph.Id(graph.Unknown, "testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
@@ -998,5 +1004,4 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(true, found3)
 	assert.Equal(0, len(notSEHost2ServiceNode.Edges))
 	assert.Equal(nil, notSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
-
 }

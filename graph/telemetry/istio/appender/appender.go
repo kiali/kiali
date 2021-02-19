@@ -145,6 +145,7 @@ const (
 
 type serviceEntry struct {
 	exportTo  interface{}
+	hosts     []string
 	location  string
 	name      string // serviceEntry name
 	namespace string // namespace in which the service entry is defined
@@ -169,6 +170,7 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 	} else {
 		seh[host] = seArr
 	}
+	se.hosts = append(se.hosts, host)
 }
 
 func getServiceDefinitionList(ni *graph.AppenderNamespaceInfo) *models.ServiceDefinitionList {

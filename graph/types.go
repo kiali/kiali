@@ -62,6 +62,12 @@ type ServiceName struct {
 	Name      string `json:"name"`
 }
 
+// SEInfo provides static information about the service entry
+type SEInfo struct {
+	Location string   `json:"location"` // e.g. MESH_EXTERNAL, MESH_INTERNAL
+	Hosts    []string `json:"hosts"`    // configured list of hosts
+}
+
 func (s *ServiceName) Key() string {
 	return fmt.Sprintf("%s %s %s", s.Cluster, s.Namespace, s.Name)
 }
