@@ -212,9 +212,9 @@ func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
 	}
 
 	healthyIstiods := make([]*core_v1.Pod, 0, len(istiods))
-	for _, istiod := range istiods {
+	for i, istiod := range istiods {
 		if istiod.Status.Phase == "Running" {
-			healthyIstiods = append(healthyIstiods, &istiod)
+			healthyIstiods = append(healthyIstiods, &istiods[i])
 		}
 	}
 
