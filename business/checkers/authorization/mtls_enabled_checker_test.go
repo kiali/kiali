@@ -120,6 +120,15 @@ func TestAuthozDisabled(t *testing.T) {
 	testMtlsCheckerPresent("mtls_enabled_checker_17.yaml", t)
 }
 
+// Context: AutoMtls enabled
+// Context: Authorization Policy found
+// Context: Namespace-level mtls permissive
+// Context: Workload-level mtls strict
+// It doesn't return any validation
+func TestMTLSEnabledWorkloadLevel(t *testing.T) {
+	testNoMtlsChecker("mtls_enabled_checker_18.yaml", t)
+}
+
 func TestNeedsIdentities(t *testing.T) {
 	loader := yamlFixtureLoaderFor("authz_policy_requires_mtls.yaml")
 	err := loader.Load()

@@ -1,6 +1,9 @@
 package mtls
 
 import (
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -15,6 +18,7 @@ type MtlsStatus struct {
 	Namespace           string
 	PeerAuthentications []kubernetes.IstioObject
 	DestinationRules    []kubernetes.IstioObject
+	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
 }
@@ -43,6 +47,39 @@ func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS() string {
 	}
 
 	return ""
+}
+
+func (m MtlsStatus) WorkloadMtlsStatus() string {
+	// Given a set of labels (m.MatchingLabels)
+	// Find whether there is PeerAuthn + DR enabling mTLS
+	// to the set of labels
+
+	for _, pa := range m.PeerAuthentications {
+		selector := common.GetSelectorLabels(pa)
+		if selector == nil {
+			continue
+		}
+
+		match := labels.Set(selector).AsSelector().Matches(m.MatchingLabels)
+		if !match {
+			continue
+		}
+
+		_, mode := kubernetes.PeerAuthnMTLSMode(pa)
+		if mode == "STRICT" {
+			return MTLSEnabled
+		} else if mode == "DISABLE" {
+			return MTLSDisabled
+		} else if mode == "PERMISSIVE" {
+			if len(m.DestinationRules) == 0 {
+				return MTLSNotEnabled
+			} else {
+				return "UNKNOWN"
+			}
+		}
+	}
+
+	return MTLSNotEnabled
 }
 
 func (m MtlsStatus) NamespaceMtlsStatus() TlsStatus {

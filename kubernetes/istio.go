@@ -572,7 +572,10 @@ func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 	if peerAuthn.HasMatchLabelsSelector() {
 		return false, ""
 	}
+	return PeerAuthnMTLSMode(peerAuthn)
+}
 
+func PeerAuthnMTLSMode(peerAuthn IstioObject) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
 	if mtls, mtlsPresent := peerAuthn.GetSpec()["mtls"]; mtlsPresent {
 		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
