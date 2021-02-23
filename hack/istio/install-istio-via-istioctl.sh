@@ -22,6 +22,7 @@ DELETE_ISTIO="false"
 ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
+ISTIO_INGRESSGATEWAY_ENABLED="true"
 MESH_ID="mesh-default"
 MTLS="true"
 NAMESPACE="istio-system"
@@ -74,6 +75,15 @@ while [[ $# -gt 0 ]]; do
         ISTIO_EGRESSGATEWAY_ENABLED="$2"
       else
         echo "ERROR: The --istio-egressgateway-enabled flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -iie|--istio-ingressgateway-enabled)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        ISTIO_INGRESSGATEWAY_ENABLED="$2"
+      else
+        echo "ERROR: The --istio-ingressgateway-enabled flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -139,6 +149,9 @@ Valid command line arguments:
        Where Istio has already been downloaded. If not found, this script aborts.
   -iee|--istio-egressgateway-enabled (true|false)
        When set to true, istio-egressgateway will be installed.
+       Default: true
+  -iie|--istio-ingressgateway-enabled (true|false)
+       When set to true, istio-ingressgateway will be installed.
        Default: true
   -ih|--image-hub <hub id>
        The hub where the Istio images will be pulled from.
@@ -245,10 +258,21 @@ if [ "${IMAGE_HUB}" != "default" ]; then
   IMAGE_HUB_OPTION="--set hub=${IMAGE_HUB}"
 fi
 
+if [ "${NAMESPACE}" != "istio-system" ]; then
+  # see https://github.com/istio/istio/issues/30897 for these settings
+  CUSTOM_NAMESPACE_OPTIONS="--set namespace=${NAMESPACE}"
+  CUSTOM_NAMESPACE_OPTIONS="${CUSTOM_NAMESPACE_OPTIONS} --set values.global.istioNamespace=${NAMESPACE}"
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.excludeNamespaces[0]=${NAMESPACE}"
+  fi
+fi
+
 for s in \
    "${IMAGE_HUB_OPTION}" \
    "${MTLS_OPTIONS}" \
+   "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
+   "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
    "--set values.global.meshID=${MESH_ID}" \
    "--set values.global.multiCluster.clusterName=${CLUSTER_NAME}" \
    "--set values.global.network=${NETWORK}" \
@@ -268,7 +292,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   echo Deleting Addons
   for addon in $(ls -1 ${ISTIO_DIR}/samples/addons/*.yaml); do
     echo "Deleting addon [${addon}]"
-    ${CLIENT_EXE} delete --ignore-not-found=true -f ${addon}
+    cat ${addon} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} delete --ignore-not-found=true -n ${NAMESPACE} -f -
   done
 
   echo Deleting Core Istio
@@ -286,21 +310,40 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
-  ${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}
-  if [ "$?" != "0" ]; then
-    echo "Failed to install Istio with profile [${CONFIG_PROFILE}]"
-    exit 1
+  # There is a bug in istioctl manifest install - it wants to always create the CR in istio-system.
+  # If we are not installing in istio-system, we cannot use 'install' but must generate the yaml and apply it ourselves.
+  # See https://github.com/istio/istio/issues/30897#issuecomment-781141490
+  if [ "${NAMESPACE}" == "istio-system" ]; then
+    while ! (${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY})
+    do
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+      sleep 10
+    done
+  else
+    while ! (${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} apply -f -)
+    do
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+      sleep 10
+    done
   fi
 
   echo "Installing Addons: [${ADDONS}]"
   for addon in ${ADDONS}; do
     echo "Installing addon: [${addon}]"
-    ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/${addon}.yaml
+    while ! (cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -)
+    do
+      echo "Failed to install addon [${addon}] - will retry in 10 seconds..."
+      sleep 10
+    done
   done
 
   # Do some OpenShift specific things
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
+    if [ "${ISTIO_INGRESSGATEWAY_ENABLED}" == "true" ]; then
+      ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=http2
+    else
+      echo "Ingressgateway is disabled - the OpenShift Route will not be created"
+    fi
 
     echo "===== IMPORTANT ====="
     echo "For each namespace in the mesh, run these commands so sidecar injection works:"
