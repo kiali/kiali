@@ -2,7 +2,12 @@ import pytest
 import tests.conftest as conftest
 from utils.command_exec import command_exec
 from utils.timeout import timeout
+import calendar
 import time
+
+gmt = time.gmtime
+
+
 
 BOOKINFO_EXPECTED_SERVICES = 4
 BOOKINFO_EXPECTED_SERVICES_MONGODB = 5
@@ -235,7 +240,9 @@ def test_service_spans(kiali_client):
 
     for service in services:
         name = service.get('name')
-        spansList = kiali_client.request(method_name='appSpans', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        spansList = kiali_client.request(method_name='appSpans', path={'namespace': bookinfo_namespace, 'service': name}, params={'startMicros': calendar.timegm(gmt())}).json()
+        assert spansList != None
+        
         for span in spansList:
             assert span.get('traceID') != None
             assert span.get('spanID') != None
@@ -252,7 +259,7 @@ def test_service_traces_detail(kiali_client):
 
     for service in services:
         name = service.get('name')
-        tracesDetailsList = kiali_client.request(method_name='appTraces', path={'namespace': bookinfo_namespace, 'service': name}).json()
+        tracesDetailsList = kiali_client.request(method_name='appTraces', path={'namespace': bookinfo_namespace, 'service': name}, params={'startMicros': calendar.timegm(gmt())}).json()
         assert tracesDetailsList != None
 
         for tracesDetail in tracesDetailsList.get('data'):
