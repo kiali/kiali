@@ -84,7 +84,7 @@ type NodeData struct {
 	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
-	IsServiceEntry  string              `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
+	IsServiceEntry  *graph.SEInfo       `json:"isServiceEntry,omitempty"`  // set static service entry information
 }
 
 type EdgeData struct {
@@ -276,9 +276,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			}
 		}
 
-		// node may be a service entry
+		// node may have service entry static info
 		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
-			nd.IsServiceEntry = val.(string)
+			nd.IsServiceEntry = val.(*graph.SEInfo)
 		}
 
 		// node may be an aggregate

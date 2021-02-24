@@ -5717,8 +5717,7 @@
           "x-go-name": "IsRoot"
         },
         "isServiceEntry": {
-          "type": "string",
-          "x-go-name": "IsServiceEntry"
+          "$ref": "#/definitions/SEInfo"
         },
         "namespace": {
           "type": "string",
@@ -6243,6 +6242,24 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "SEInfo": {
+      "description": "SEInfo provides static information about the service entry",
+      "type": "object",
+      "properties": {
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Hosts"
+        },
+        "location": {
+          "type": "string",
+          "x-go-name": "Location"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph"
     },
     "Service": {
       "type": "object",

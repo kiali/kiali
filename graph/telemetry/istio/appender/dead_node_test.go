@@ -193,7 +193,9 @@ func testTrafficMap() map[string]*graph.Node {
 
 	n9 := graph.NewNode(graph.Unknown, "testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n9.Metadata["httpIn"] = 0.8
-	n9.Metadata[graph.IsServiceEntry] = "MESH_EXTERNAL"
+	n9.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
+		Location: "MESH_EXTERNAL",
+	}
 
 	n10 := graph.NewNode(graph.Unknown, "testNamespace", "egress.not.defined", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n10.Metadata["httpIn"] = 0.8
