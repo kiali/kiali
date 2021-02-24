@@ -1,6 +1,7 @@
 package mtls
 
 import (
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers/common"
@@ -19,6 +20,7 @@ type MtlsStatus struct {
 	PeerAuthentications []kubernetes.IstioObject
 	DestinationRules    []kubernetes.IstioObject
 	MatchingLabels      labels.Labels
+	Services            []v1.Service
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool
 }
@@ -49,18 +51,16 @@ func (m MtlsStatus) hasDesinationRuleEnablingNamespacemTLS() string {
 	return ""
 }
 
+// Returns the mTLS status at workload level (matching the m.MatchingLabels)
 func (m MtlsStatus) WorkloadMtlsStatus() string {
-	// Given a set of labels (m.MatchingLabels)
-	// Find whether there is PeerAuthn + DR enabling mTLS
-	// to the set of labels
-
 	for _, pa := range m.PeerAuthentications {
-		selector := common.GetSelectorLabels(pa)
-		if selector == nil {
+		selectorLabels := common.GetSelectorLabels(pa)
+		if selectorLabels == nil {
 			continue
 		}
 
-		match := labels.Set(selector).AsSelector().Matches(m.MatchingLabels)
+		selector := labels.Set(selectorLabels).AsSelector()
+		match := selector.Matches(m.MatchingLabels)
 		if !match {
 			continue
 		}
@@ -74,7 +74,22 @@ func (m MtlsStatus) WorkloadMtlsStatus() string {
 			if len(m.DestinationRules) == 0 {
 				return MTLSNotEnabled
 			} else {
-				return "UNKNOWN"
+				// Filter DR that applies to the Services matching with the selector
+				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
+				// Filter Svc and extract its workloads selectors
+				filteredSvcs := kubernetes.FilterServicesForSelector(selector, m.Services)
+				for _, svc := range filteredSvcs {
+					filteredDrs := kubernetes.FilterDestinationRules(m.DestinationRules, svc.Namespace, svc.Name)
+					for _, dr := range filteredDrs {
+						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
+						if enabled || mode == "MUTUAL" {
+							return MTLSEnabled
+						} else if mode == "DISABLE" {
+							return MTLSDisabled
+						}
+					}
+				}
+				return MTLSNotEnabled
 			}
 		}
 	}

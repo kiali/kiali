@@ -612,7 +612,10 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 	if !hostPresent || host != expectedHost {
 		return false, ""
 	}
+	return DestinationRuleHasMTLSEnabled(destinationRule)
+}
 
+func DestinationRuleHasMTLSEnabled(destinationRule IstioObject) (bool, string) {
 	if trafficPolicy, trafficPresent := destinationRule.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if tls, found := trafficCasted["tls"]; found {

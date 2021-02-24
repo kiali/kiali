@@ -3,6 +3,7 @@ package authorization
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers/common"
@@ -17,6 +18,8 @@ type MtlsEnabledChecker struct {
 	Namespace             string
 	AuthorizationPolicies []kubernetes.IstioObject
 	MtlsDetails           kubernetes.MTLSDetails
+	Services              []v1.Service
+	ServiceEntries        []kubernetes.IstioObject
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
@@ -159,6 +162,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set) bool {
 		MatchingLabels:      labels,
 		Namespace:           c.Namespace,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
+		Services:            c.Services,
 	}.WorkloadMtlsStatus()
 
 	if workloadmTlsStatus == mtls.MTLSEnabled {
@@ -168,9 +172,6 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set) bool {
 	} else if workloadmTlsStatus == mtls.MTLSNotEnabled {
 		// need to check with ns-level and mesh-level status
 		return mtlsEnabledNamespaceLevel
-	} else if workloadmTlsStatus == "UNKNOWN" {
-		// Scenario: Permissive PeerAuthnentication
-		return false
 	}
 
 	return false
