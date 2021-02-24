@@ -57,7 +57,7 @@ const spansDetailsTab = 1;
 
 class TracesComponent extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
-  private percentilesPromise: Promise<Map<string, string>>;
+  private percentilesPromise: Promise<Map<string, number>>;
 
   constructor(props: TracesProps) {
     super(props);
@@ -133,7 +133,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     this.fetcher.fetch(options, this.state.traces);
   };
 
-  private fetchPercentiles = (): Promise<Map<string, string>> => {
+  private fetchPercentiles = (): Promise<Map<string, number>> => {
     // We'll fetch percentiles on a large enough interval (unrelated to the selected interval)
     // in order to have stable values and avoid constantly fetching again
     const query: MetricsStatsQuery = {
@@ -153,7 +153,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
   };
 
-  private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, string> => {
+  private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {
     if (r.warnings) {
       AlertUtils.addWarning(r.warnings.join(', '));
     }
@@ -173,19 +173,17 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       return map;
     });
     // Merge the two maps; if a value exists in both of them, take the mean
-    const minDurations = new Map<string, string>();
+    const minDurations = new Map<string, number>();
     mapInbound.forEach((v1, k) => {
       const v2 = mapOutbound.get(k);
       if (v2) {
-        minDurations.set(k, ((v1 + v2) / 2).toFixed(2) + 'ms');
+        minDurations.set(k, (v1 + v2) / 2);
         mapOutbound.delete(k);
       } else {
-        minDurations.set(k, v1.toFixed(2) + 'ms');
+        minDurations.set(k, v1);
       }
     });
-    mapOutbound.forEach((v, k) => {
-      minDurations.set(k, v.toFixed(2) + 'ms');
-    });
+    mapOutbound.forEach((v, k) => minDurations.set(k, v));
     return minDurations;
   };
 

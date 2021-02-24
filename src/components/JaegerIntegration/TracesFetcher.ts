@@ -12,7 +12,7 @@ export type FetchOptions = {
   targetKind: TargetKind;
   spanLimit: number;
   tags: string;
-  minDuration?: string;
+  minDuration?: number;
 };
 
 export class TracesFetcher {
@@ -37,7 +37,7 @@ export class TracesFetcher {
       endMicros: range.to,
       tags: o.tags,
       limit: o.spanLimit,
-      minDuration: o.minDuration
+      minDuration: o.minDuration ? Math.floor(1000 * o.minDuration) : undefined
     };
     const apiCall =
       o.targetKind === 'app'

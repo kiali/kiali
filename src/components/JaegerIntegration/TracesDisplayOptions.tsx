@@ -25,7 +25,7 @@ export const percentilesOptions: DisplayOptionType[] = [
 interface Props {
   onQuerySettingsChanged: (settings: QuerySettings) => void;
   onDisplaySettingsChanged: (settings: DisplaySettings) => void;
-  percentilesPromise: Promise<Map<string, string>>;
+  percentilesPromise: Promise<Map<string, number>>;
 }
 
 type State = QuerySettings &
@@ -39,7 +39,7 @@ interface DisplayOptionType {
 }
 
 export class TracesDisplayOptions extends React.Component<Props, State> {
-  private computedPercentiles: Map<string, string> | undefined;
+  private computedPercentiles: Map<string, number> | undefined;
 
   constructor(props: Props) {
     super(props);
@@ -118,7 +118,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           if (this.computedPercentiles) {
             const val = this.computedPercentiles!.get(item.id);
             if (val) {
-              label += ` (${val}+)`;
+              label += ` (${val.toFixed(2)}ms+)`;
             }
           }
           return (
