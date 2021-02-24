@@ -123,6 +123,9 @@ func (in *K8SClient) IsOpenShift() bool {
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.
+// NOTE: The selectorLabels argument is NOT to find services matching the given labels. Assume selectorLabels are
+// the labels of a Deployment. If this imaginary Deployment is selected by the Service (because of its Selector), then
+// that service is returned; else it's omitted.
 func (in *K8SClient) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	var allServices []core_v1.Service
 
@@ -143,6 +146,15 @@ func (in *K8SClient) GetServices(namespace string, selectorLabels map[string]str
 		}
 	}
 	return services, nil
+}
+
+func (in *K8SClient) GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error) {
+	selector := meta_v1.ListOptions{LabelSelector: labelsSelector}
+	if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(in.ctx, selector); err == nil {
+		return allServicesList.Items, nil
+	} else {
+		return []core_v1.Service{}, err
+	}
 }
 
 // GetDeployment returns the definition of a specific deployment.

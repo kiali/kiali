@@ -105,6 +105,11 @@ func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]
 	return args.Get(0).([]core_v1.Service), args.Error(1)
 }
 
+func (o *K8SClientMock) GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error) {
+	args := o.Called(namespace, labelsSelector)
+	return args.Get(0).([]core_v1.Service), args.Error(1)
+}
+
 func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
 	args := o.Called(namespace, statefulsetName)
 	return args.Get(0).(*apps_v1.StatefulSet), args.Error(1)

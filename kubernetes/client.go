@@ -73,6 +73,7 @@ type K8SClientInterface interface {
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*core_v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+	GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)

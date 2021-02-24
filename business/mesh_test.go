@@ -59,7 +59,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 
 	meshSvc := NewMeshService(k8s, nil)
 
-	a, err := meshSvc.GetClusters()
+	a, err := meshSvc.GetClusters(nil)
 	check.Nil(err, "GetClusters returned error: %v", err)
 
 	check.NotNil(a, "GetClusters returned nil")
@@ -133,7 +133,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 
 	meshSvc := NewMeshService(k8s, newRemoteClient)
 
-	a, err := meshSvc.GetClusters()
+	a, err := meshSvc.GetClusters(nil)
 	check.Nil(err, "GetClusters returned error: %v", err)
 
 	check.NotNil(a, "GetClusters returned nil")
