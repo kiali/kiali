@@ -166,6 +166,11 @@ export interface DestService {
   name: string;
 }
 
+export interface SEInfo {
+  location: string;
+  hosts: string[];
+}
+
 // Node data expected from server
 export interface GraphNodeData {
   id: string;
@@ -192,7 +197,7 @@ export interface GraphNodeData {
   isMisconfigured?: string;
   isOutside?: boolean;
   isRoot?: boolean;
-  isServiceEntry?: string;
+  isServiceEntry?: SEInfo;
 }
 
 // Edge data expected from server

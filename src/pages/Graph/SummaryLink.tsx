@@ -53,7 +53,11 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
         <Tooltip
           position={TooltipPosition.auto}
           content={
-            <>{nodeData.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry'}</>
+            <>
+              {nodeData.isServiceEntry.location === 'MESH_EXTERNAL'
+                ? 'External Service Entry'
+                : 'Internal Service Entry'}
+            </>
           }
         >
           <Badge className="virtualitem_badge_definition">SE</Badge>

@@ -1,7 +1,7 @@
 import * as Cy from 'cytoscape';
 import { CyNode } from './CytoscapeGraphUtils';
 import { JaegerTrace, Span } from 'types/JaegerInfo';
-import { NodeType, DestService, GraphType } from 'types/Graph';
+import { NodeType, GraphType, SEInfo } from 'types/Graph';
 import {
   getAppFromSpan,
   getWorkloadFromSpan,
@@ -164,10 +164,10 @@ const findServiceEntry = (span: Span, cy: Cy.Core): Cy.NodeCollection | undefine
 
 const findSEHost = (hostname: string, cy: Cy.Core): Cy.NodeCollection | undefined => {
   return cy.elements(`[${CyNode.nodeType}="${NodeType.SERVICE}"]`).filter(ele => {
-    const destServices: DestService[] | undefined = ele.data(CyNode.destServices);
-    if (destServices) {
+    const seInfo: SEInfo | undefined = ele.data(CyNode.isServiceEntry);
+    if (seInfo) {
       // TODO: improve host matching, as "startsWith" allows false-positives
-      if (destServices.some(s => s.name.startsWith(hostname))) {
+      if (seInfo.hosts.some(h => h.startsWith(hostname))) {
         return true;
       }
     }
