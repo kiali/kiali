@@ -101,7 +101,7 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     };
 
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
-      this.renderFetchEmtpy('Error fetching Traces in Tracing tool', this.props.errorFetchTraces![0].msg)
+      this.renderFetchEmtpy('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
       <ChartWithLegend<Datapoint, JaegerLineInfo>
         data={[successTraces, errorTraces]}

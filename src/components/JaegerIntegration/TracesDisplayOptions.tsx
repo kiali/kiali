@@ -23,6 +23,7 @@ export const percentilesOptions: DisplayOptionType[] = [
 ];
 
 interface Props {
+  disabled: boolean;
   onQuerySettingsChanged: (settings: QuerySettings) => void;
   onDisplaySettingsChanged: (settings: DisplaySettings) => void;
   percentilesPromise: Promise<Map<string, number>>;
@@ -88,7 +89,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id={'traces-display-settings'} onToggle={this.onToggle}>
+          <DropdownToggle id={'traces-display-settings'} isDisabled={this.props.disabled} onToggle={this.onToggle}>
             Display
           </DropdownToggle>
         }
