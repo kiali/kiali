@@ -6,6 +6,7 @@ import (
 	"time"
 
 	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -263,29 +264,48 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 
 func (iss *IstioStatusService) getIstiodReachingCheck() (IstioComponentStatus, error) {
 	cfg := config.Get()
-	ics := IstioComponentStatus{}
 
 	istiods, err := iss.k8s.GetPods(cfg.IstioNamespace, labels.Set(map[string]string{"app": "istiod"}).String())
 	if err != nil {
-		return ics, err
+		return nil, err
 	}
 
-	for _, istiod := range istiods {
-		// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
-		// By proxying one Istiod, we ensure that the following connection is allowed:
-		// Kiali -> K8s API (proxy) -> istiod
-		// This scenario is no obvious for private clusters (like GKE private cluster)
-		_, err := iss.k8s.GetPodProxy(istiod.Namespace, istiod.Name, "/ready")
-		if err != nil {
-			ics.merge([]ComponentStatus{
-				{
-					Name:   istiod.Name,
-					Status: Unreachable,
-					IsCore: true,
-				},
-			})
+	healthyIstiods := make([]*core_v1.Pod, 0, len(istiods))
+	for i, istiod := range istiods {
+		if istiod.Status.Phase == "Running" {
+			healthyIstiods = append(healthyIstiods, &istiods[i])
 		}
 	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(healthyIstiods))
+	syncChan := make(chan ComponentStatus, len(healthyIstiods))
+
+	for _, istiod := range healthyIstiods {
+		go func(name, namespace string) {
+			defer wg.Done()
+			// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
+			// By proxying one Istiod, we ensure that the following connection is allowed:
+			// Kiali -> K8s API (proxy) -> istiod
+			// This scenario is no obvious for private clusters (like GKE private cluster)
+			_, err := iss.k8s.GetPodProxy(namespace, name, "/ready")
+			if err != nil {
+				syncChan <- ComponentStatus{
+					Name:   name,
+					Status: Unreachable,
+					IsCore: true,
+				}
+			}
+		}(istiod.Name, istiod.Namespace)
+	}
+
+	wg.Wait()
+	close(syncChan)
+	ics := IstioComponentStatus{}
+	for componentStatus := range syncChan {
+		ics.merge(IstioComponentStatus{componentStatus})
+	}
+
 	return ics, nil
 }
 

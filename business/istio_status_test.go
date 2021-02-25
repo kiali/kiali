@@ -125,7 +125,9 @@ func sampleIstioComponent() ([]apps_v1.Deployment, []v1.Pod, bool) {
 func healthyIstiods() []v1.Pod {
 	return []v1.Pod{
 		fakePod("istiod-x3v1kn0l-running", "istio-system", "istiod", "Running"),
+		fakePod("istiod-x3v1kn1l-running", "istio-system", "istiod", "Running"),
 		fakePod("istiod-x3v1kn0l-terminating", "istio-system", "istiod", "Terminating"),
+		fakePod("istiod-x3v1kn1l-terminating", "istio-system", "istiod", "Terminating"),
 	}
 }
 
@@ -373,12 +375,14 @@ func TestIstiodUnreachable(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
 	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", Unreachable, true)
-	assertComponent(assert, icsl, "istiod-x3v1kn0l-terminating", Unreachable, true)
+	assertComponent(assert, icsl, "istiod-x3v1kn1l-running", Unreachable, true)
 
 	// Don't return healthy deployments
 	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
+	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
