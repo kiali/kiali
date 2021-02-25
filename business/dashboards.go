@@ -424,7 +424,7 @@ func (in *DashboardsService) buildLabels(namespace string, labelsFilters map[str
 	}
 	labels := fmt.Sprintf(`{%s="%s"`, namespaceLabel, namespace)
 	for k, v := range labelsFilters {
-		labels += fmt.Sprintf(`,%s="%s"`, k, v)
+		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(k), v)
 	}
 	labels += "}"
 	return labels
@@ -551,8 +551,8 @@ func (in *DashboardsService) BuildIstioDashboard(metrics models.MetricsMap, dire
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
 func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []models.Runtime {
-	if !in.CustomEnabled {
-		// Custom dashboards are disabled
+	if !in.CustomEnabled || app == "" {
+		// Custom dashboards are disabled or the app label is not configured
 		return []models.Runtime{}
 	}
 
@@ -574,9 +574,7 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 			(discoveryEnabled == config.DashboardsDiscoveryAuto &&
 				len(pods) <= cfg.ExternalServices.CustomDashboards.DiscoveryAutoThreshold) {
 			filters := make(map[string]string)
-			if app != "" {
-				filters[cfg.IstioLabels.AppLabelName] = app
-			}
+			filters[cfg.IstioLabels.AppLabelName] = app
 			if version != "" {
 				filters[cfg.IstioLabels.VersionLabelName] = version
 			}
