@@ -4191,6 +4191,14 @@
           "type": "boolean",
           "x-go-name": "IsKialiHome"
         },
+        "kialiInstances": {
+          "description": "KialiInstances is the list of Kialis discovered in the cluster.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KialiInstance"
+          },
+          "x-go-name": "KialiInstances"
+        },
         "name": {
           "description": "Name specifies the CLUSTER_ID as known by the Control Plane",
           "type": "string",
@@ -5391,6 +5399,38 @@
         }
       },
       "x-go-package": "github.com/jaegertracing/jaeger/model/json"
+    },
+    "KialiInstance": {
+      "description": "KialiInstance represents a Kiali installation. It holds some data about\nwhere and how Kiali was deployed.",
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "description": "Namespace is the name of the namespace where is Kiali installed on.",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "operatorResource": {
+          "description": "OperatorResource contains the namespace and the name of the Kiali CR that the user\ncreated to install Kiali via the operator. This can be blank if the operator wasn't used\nto install Kiali. This resource is populated from annotations in the Service. It has\nthe format \"namespace/resource_name\".",
+          "type": "string",
+          "x-go-name": "OperatorResource"
+        },
+        "serviceName": {
+          "description": "ServiceName is the name of the Kubernetes service associated to the Kiali installation. The Kiali Service is the\nentity that is looked for in order to determine if a Kiali instance is available.",
+          "type": "string",
+          "x-go-name": "ServiceName"
+        },
+        "url": {
+          "description": "Url is the URI that can be used to access Kiali.",
+          "type": "string",
+          "x-go-name": "Url"
+        },
+        "version": {
+          "description": "Version is the Kiali version as reported by annotations in the Service.",
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/business"
     },
     "Listener": {
       "type": "object",
