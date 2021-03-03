@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +18,10 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util/httputil"
+)
+
+var (
+	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -299,4 +304,10 @@ func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
 		}
 	}
 	return names, nil
+}
+
+// SanitizeLabelName replaces anything that doesn't match invalidLabelCharRE with an underscore.
+// Copied from https://github.com/prometheus/prometheus/blob/df80dc4d3970121f2f76cba79050983ffb3cdbb0/util/strutil/strconv.go
+func SanitizeLabelName(name string) string {
+	return invalidLabelCharRE.ReplaceAllString(name, "_")
 }
