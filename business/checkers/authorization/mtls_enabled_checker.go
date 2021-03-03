@@ -3,6 +3,10 @@ package authorization
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/mtls"
@@ -14,14 +18,17 @@ type MtlsEnabledChecker struct {
 	Namespace             string
 	AuthorizationPolicies []kubernetes.IstioObject
 	MtlsDetails           kubernetes.MTLSDetails
+	Services              []v1.Service
+	ServiceEntries        []kubernetes.IstioObject
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
 func (c MtlsEnabledChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	if mode := c.hasMtlsEnabledForNamespace(); mode != mtls.MTLSEnabled {
-		for _, ap := range c.AuthorizationPolicies {
+	for _, ap := range c.AuthorizationPolicies {
+		receiveMtlsTraffic := c.IsMtlsEnabledFor(common.GetSelectorLabels(ap))
+		if !receiveMtlsTraffic {
 			if need, paths := needsMtls(ap); need {
 				checks := make([]*models.IstioCheck, 0)
 				key := models.BuildKey(objectType, ap.GetObjectMeta().Name, ap.GetObjectMeta().Namespace)
@@ -141,6 +148,33 @@ func hasValues(definition map[string]interface{}, key string) bool {
 	}
 
 	return len(v) > 0
+}
+
+func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set) bool {
+	mtlsEnabledNamespaceLevel := c.hasMtlsEnabledForNamespace() == mtls.MTLSEnabled
+	if labels == nil {
+		return mtlsEnabledNamespaceLevel
+	}
+
+	workloadmTlsStatus := mtls.MtlsStatus{
+		AutoMtlsEnabled:     c.MtlsDetails.EnabledAutoMtls,
+		DestinationRules:    c.MtlsDetails.DestinationRules,
+		MatchingLabels:      labels,
+		Namespace:           c.Namespace,
+		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
+		Services:            c.Services,
+	}.WorkloadMtlsStatus()
+
+	if workloadmTlsStatus == mtls.MTLSEnabled {
+		return true
+	} else if workloadmTlsStatus == mtls.MTLSDisabled {
+		return false
+	} else if workloadmTlsStatus == mtls.MTLSNotEnabled {
+		// need to check with ns-level and mesh-level status
+		return mtlsEnabledNamespaceLevel
+	}
+
+	return false
 }
 
 func (c MtlsEnabledChecker) hasMtlsEnabledForNamespace() string {

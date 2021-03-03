@@ -16,7 +16,8 @@ import (
 // Context: PeerAuthentication not found
 // It doesn't return any validation
 func TestAutoAuthzNoConfig(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_1.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_1.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_1.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -24,8 +25,10 @@ func TestAutoAuthzNoConfig(t *testing.T) {
 // Context: PeerAuthentication STRICT/PERMISSIVE
 // It doesn't return any validation
 func TestAutoAuthzPeerAuthnValid(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_2.yaml", t)
-	testNoMtlsChecker("mtls_enabled_checker_3.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_2.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_3.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_2.yaml", t, false)
+	testMtlsCheckerPresent("mtls_enabled_checker_3.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -34,8 +37,10 @@ func TestAutoAuthzPeerAuthnValid(t *testing.T) {
 // Context: DestinationRule ISTIO_MUTUAL
 // It doesn't return any validation
 func TestAutoAuthzPeerAuthnValidDestRuleValid(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_4.yaml", t)
-	testNoMtlsChecker("mtls_enabled_checker_5.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_4.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_5.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_4.yaml", t, false)
+	testNoMtlsChecker("mtls_enabled_checker_5.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -44,7 +49,8 @@ func TestAutoAuthzPeerAuthnValidDestRuleValid(t *testing.T) {
 // Context: DestinationRule ISTIO_MUTUAL
 // It doesn't return a validation
 func TestPeerAuthnNotFoundDestRuleIstioMutual(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_6.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_6.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_6.yaml", t, false)
 }
 
 // Context: AutoMtls enabled/disabled
@@ -52,9 +58,12 @@ func TestPeerAuthnNotFoundDestRuleIstioMutual(t *testing.T) {
 // Context: PeerAuthentication DISABLE
 // It returns a validation
 func TestAutoAuthzPeerAuthnDisable(t *testing.T) {
-	testMtlsCheckerPresent("mtls_enabled_checker_7.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_7.yaml", t, true)
 	// If the AP doesn't have principals
-	testNoMtlsChecker("mtls_enabled_checker_71.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_71.yaml", t, true)
+
+	testMtlsCheckerPresent("mtls_enabled_checker_7.yaml", t, false)
+	testNoMtlsChecker("mtls_enabled_checker_71.yaml", t, false)
 }
 
 // Context: AutoMtls enabled/disabled
@@ -62,7 +71,8 @@ func TestAutoAuthzPeerAuthnDisable(t *testing.T) {
 // Context: DestinationRule DISABLE
 // It returns a validation
 func TestAutoAuthzDestRuleDisable(t *testing.T) {
-	testMtlsCheckerPresent("mtls_enabled_checker_8.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_8.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_8.yaml", t, false)
 }
 
 // Context: AutoMtls enabled/disabled
@@ -70,7 +80,8 @@ func TestAutoAuthzDestRuleDisable(t *testing.T) {
 // Context: Mesh-wide PeerAuthentication DISABLE
 // It returns a validation
 func TestAutoAuthzMeshPeerAuthnDisable(t *testing.T) {
-	testMtlsCheckerPresent("mtls_enabled_checker_9.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_9.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_9.yaml", t, false)
 }
 
 // Context: AutoMtls enabled/disabled
@@ -78,9 +89,12 @@ func TestAutoAuthzMeshPeerAuthnDisable(t *testing.T) {
 // Context: Mesh-wide DestinationRule DISABLE
 // It returns a validation
 func TestAutoAuthzMeshDestRuleDisable(t *testing.T) {
-	testMtlsCheckerPresent("mtls_enabled_checker_10.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_10.yaml", t, true)
 	// If the AP doesn't have principals
-	testNoMtlsChecker("mtls_enabled_checker_101.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_101.yaml", t, true)
+
+	testMtlsCheckerPresent("mtls_enabled_checker_10.yaml", t, false)
+	testNoMtlsChecker("mtls_enabled_checker_101.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -88,7 +102,8 @@ func TestAutoAuthzMeshDestRuleDisable(t *testing.T) {
 // Context: Mesh-wide PeerAuthentication STRICT/PERMISSIVE
 // It doesn't return any validation / AutoMtls=false It returns a validation
 func TestAutoAuthzMeshPeerAuthnEnabled(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_11.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_11.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_11.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -96,7 +111,8 @@ func TestAutoAuthzMeshPeerAuthnEnabled(t *testing.T) {
 // Context: Mesh-wide DestinationRule ISTIO_MUTUAL
 // It doesn't return any validation / Auto=false It returns a validation
 func TestAutoAuthzMeshDestRuleEnabled(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_12.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_12.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_12.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
@@ -105,19 +121,66 @@ func TestAutoAuthzMeshDestRuleEnabled(t *testing.T) {
 // Context: Mesh-wide DestinationRule ISTIO_MUTUAL
 // It doesn't return any validation
 func TestAutoAuthzMeshMTLSEnabled(t *testing.T) {
-	testNoMtlsChecker("mtls_enabled_checker_13.yaml", t)
-	testNoMtlsChecker("mtls_enabled_checker_14.yaml", t)
+	testNoMtlsChecker("mtls_enabled_checker_13.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_14.yaml", t, true)
+
+	testNoMtlsChecker("mtls_enabled_checker_13.yaml", t, false)
+	testNoMtlsChecker("mtls_enabled_checker_14.yaml", t, false)
 }
 
 // Context: AutoMtls enabled
 // Context: Authorization Policy found
 // Context: Mesh-wide mTLS enabled
 // Context: Namespace-wide mTLS disabled
-// It doesn't return any validation
+// It returns a validation
 func TestAuthozDisabled(t *testing.T) {
-	testMtlsCheckerPresent("mtls_enabled_checker_15.yaml", t)
-	testMtlsCheckerPresent("mtls_enabled_checker_16.yaml", t)
-	testMtlsCheckerPresent("mtls_enabled_checker_17.yaml", t)
+	testMtlsCheckerPresent("mtls_enabled_checker_15.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_16.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_17.yaml", t, true)
+
+	testMtlsCheckerPresent("mtls_enabled_checker_15.yaml", t, false)
+	testMtlsCheckerPresent("mtls_enabled_checker_16.yaml", t, false)
+	testMtlsCheckerPresent("mtls_enabled_checker_17.yaml", t, false)
+}
+
+// Context: AutoMtls enabled
+// Context: Authorization Policy found
+// Context: Namespace-level mtls permissive
+// Context: Workload-level mtls strict
+// It doesn't return any validation
+func TestMTLSEnabledWorkloadLevel(t *testing.T) {
+	testNoMtlsChecker("mtls_enabled_checker_18.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_18.yaml", t, false)
+}
+
+// Context: AutoMtls enabled/disabled
+// Context: Authorization Policy found
+// Context: Namespace-level mtls STRICT
+// Context: Workload-level mtls DISABLE
+// It returns a validation
+func TestMTLSDisabledWorkloadLevel(t *testing.T) {
+	testMtlsCheckerPresent("mtls_enabled_checker_19.yaml", t, false)
+	testMtlsCheckerPresent("mtls_enabled_checker_20.yaml", t, true)
+}
+
+// Context: AutoMtls enabled/disabled
+// Context: Authorization Policy found
+// Context: Namespace-level mtls STRICT
+// Context: Workload-level mtls PERMISSIVE/ENABLED
+// It doesn't return a validation
+func TestMTLSPermissiveWorkloadLevel(t *testing.T) {
+	testNoMtlsChecker("mtls_enabled_checker_21.yaml", t, true)
+	testNoMtlsChecker("mtls_enabled_checker_21.yaml", t, false)
+}
+
+// Context: AutoMtls enabled/disabled
+// Context: Authorization Policy found
+// Context: Namespace-level mtls STRICT
+// Context: Workload-level mtls PERMISSIVE/DISABLE
+// It returns a validation
+func TestMTLSPermissiveDisabledWorkloadLevel(t *testing.T) {
+	testMtlsCheckerPresent("mtls_enabled_checker_22.yaml", t, true)
+	testMtlsCheckerPresent("mtls_enabled_checker_22.yaml", t, false)
 }
 
 func TestNeedsIdentities(t *testing.T) {
@@ -181,6 +244,7 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	validations := MtlsEnabledChecker{
 		Namespace:             "bookinfo",
 		AuthorizationPolicies: loader.GetResources("AuthorizationPolicy"),
+		Services:              fakeServices([]string{"ratings"}),
 		MtlsDetails: kubernetes.MTLSDetails{
 			DestinationRules:        loader.GetResources("DestinationRule"),
 			MeshPeerAuthentications: loader.GetResourcesIn("PeerAuthentication", "istio-system"),
@@ -192,14 +256,14 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	return validations
 }
 
-func testNoMtlsChecker(scenario string, t *testing.T) {
-	vals := mtlsCheckerTestPrep(scenario, true, t)
+func testNoMtlsChecker(scenario string, t *testing.T, autoMtls bool) {
+	vals := mtlsCheckerTestPrep(scenario, autoMtls, t)
 	ta := validations.ValidationsTestAsserter{T: t, Validations: vals}
 	ta.AssertNoValidations()
 }
 
-func testMtlsCheckerPresent(scenario string, t *testing.T) {
-	vals := mtlsCheckerTestPrep(scenario, true, t)
+func testMtlsCheckerPresent(scenario string, t *testing.T, autoMtls bool) {
+	vals := mtlsCheckerTestPrep(scenario, autoMtls, t)
 	ta := validations.ValidationsTestAsserter{T: t, Validations: vals}
 	ta.AssertValidationsPresent(1)
 	ta.AssertValidationAt(models.IstioValidationKey{

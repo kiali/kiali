@@ -572,7 +572,10 @@ func PeerAuthnHasMTLSEnabled(peerAuthn IstioObject) (bool, string) {
 	if peerAuthn.HasMatchLabelsSelector() {
 		return false, ""
 	}
+	return PeerAuthnMTLSMode(peerAuthn)
+}
 
+func PeerAuthnMTLSMode(peerAuthn IstioObject) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
 	if mtls, mtlsPresent := peerAuthn.GetSpec()["mtls"]; mtlsPresent {
 		if mtlsMap, ok := mtls.(map[string]interface{}); ok {
@@ -609,7 +612,10 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 	if !hostPresent || host != expectedHost {
 		return false, ""
 	}
+	return DestinationRuleHasMTLSEnabled(destinationRule)
+}
 
+func DestinationRuleHasMTLSEnabled(destinationRule IstioObject) (bool, string) {
 	if trafficPolicy, trafficPresent := destinationRule.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if tls, found := trafficCasted["tls"]; found {
