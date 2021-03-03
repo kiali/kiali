@@ -113,7 +113,10 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
       : ns.status
       ? (showInError && ns.status.inError.length > 0) ||
         (showInWarning && ns.status.inWarning.length > 0) ||
-        (showInSuccess && ns.status.inSuccess.length > 0)
+        (showInSuccess &&
+          ns.status.inSuccess.length > 0 &&
+          ns.status.inError.length === 0 &&
+          ns.status.inWarning.length === 0)
       : false;
   }
 };
