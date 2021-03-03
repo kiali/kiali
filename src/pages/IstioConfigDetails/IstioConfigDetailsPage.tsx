@@ -206,8 +206,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       // tslint:disable-next-line
       editor.onChangeAnnotation();
 
-      // Fold Status field
-      const { startRow, endRow } = this.getStatusRange(this.fetchYaml());
+      // Fold status and/or managedFields fields
+      const { startRow, endRow } = this.getFoldRanges(this.fetchYaml());
       if (!this.state.isModified) {
         editor.session.foldAll(startRow, endRow, 0);
       }
@@ -391,7 +391,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioValidations.references || ([] as ObjectReference[]);
   };
 
-  getStatusRange = (yaml: string | undefined): any => {
+  // Aux function to calculate rows for 'status' and 'managedFields' which are typically folded
+  getFoldRanges = (yaml: string | undefined): any => {
     let range = {
       startRow: -1,
       endRow: -1
@@ -400,8 +401,13 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (!!yaml) {
       const ylines = yaml.split('\n');
       ylines.forEach((line: string, i: number) => {
-        if (line.startsWith('status:')) {
-          range.startRow = i;
+        // Counting spaces to check managedFields, yaml is always processed with that structure so this is safe
+        if (line.startsWith('status:') || line.startsWith('  managedFields:')) {
+          if (range.startRow === -1) {
+            range.startRow = i;
+          } else if (range.startRow > i) {
+            range.startRow = i;
+          }
         }
         if (line.startsWith('spec:') && range.startRow !== -1) {
           range.endRow = i;
