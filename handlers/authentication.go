@@ -180,7 +180,16 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	if !conf.Auth.OpenId.DisableRBAC {
+	if conf.Auth.OpenId.DisableRBAC {
+		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
+		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
+		// Since the configuration indicates RBAC is off, we do the validations:
+		err = business.ValidateOpenTokenInHouse(openIdParams)
+		if err != nil {
+			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
+			return true
+		}
+	} else {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
 		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
