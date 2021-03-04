@@ -4,7 +4,7 @@ import { shallowToJson } from 'enzyme-to-json';
 
 import { HealthIndicator, DisplayMode } from '../HealthIndicator';
 import { createIcon } from '../../../components/Health/Helper';
-import { AppHealth, DEGRADED, FAILURE, HEALTHY, IDLE } from '../../../types/Health';
+import { AppHealth, DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../../types/Health';
 import { PFAlertColor } from 'components/Pf/PfColors';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
@@ -86,7 +86,7 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain(shallow(createIcon(IDLE, 'sm')).html());
+    expect(html).toContain(shallow(createIcon(NOT_READY, 'sm')).html());
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
@@ -110,7 +110,7 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = mount(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain(mount(createIcon(IDLE, 'sm')).html());
+    expect(html).toContain(mount(createIcon(NOT_READY, 'sm')).html());
 
     // LARGE
     wrapper = mount(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);

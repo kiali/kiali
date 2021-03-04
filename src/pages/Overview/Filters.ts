@@ -1,5 +1,5 @@
 import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterTypes, RunnableFilter, FilterValue } from '../../types/Filters';
-import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
@@ -60,6 +60,7 @@ export const labelFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 const healthValues: FilterValue[] = [
+  { id: NOT_READY.name, title: NOT_READY.name },
   { id: FAILURE.name, title: FAILURE.name },
   { id: DEGRADED.name, title: DEGRADED.name },
   { id: HEALTHY.name, title: HEALTHY.name }
@@ -69,16 +70,21 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
   if (healthFilters.filters.length === 0) {
     return {
       noFilter: true,
+      showInNotReady: true,
       showInError: true,
       showInWarning: true,
       showInSuccess: true
     };
   }
-  let showInError = false,
+  let showInNotReady = false,
+    showInError = false,
     showInWarning = false,
     showInSuccess = false;
   healthFilters.filters.forEach(f => {
     switch (f.value) {
+      case NOT_READY.name:
+        showInNotReady = true;
+        break;
       case FAILURE.name:
         showInError = true;
         break;
@@ -93,6 +99,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
   });
   return {
     noFilter: false,
+    showInNotReady: showInNotReady,
     showInError: showInError,
     showInWarning: showInWarning,
     showInSuccess: showInSuccess
@@ -107,11 +114,12 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
-    const { showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
+    const { showInNotReady, showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
     return noFilter
       ? true
       : ns.status
-      ? (showInError && ns.status.inError.length > 0) ||
+      ? (showInNotReady && ns.status.inNotReady.length > 0) ||
+        (showInError && ns.status.inError.length > 0) ||
         (showInWarning && ns.status.inWarning.length > 0) ||
         (showInSuccess &&
           ns.status.inSuccess.length > 0 &&

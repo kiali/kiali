@@ -14,7 +14,7 @@ export type NamespaceInfo = {
 };
 
 export type NamespaceStatus = {
-  inIdle: string[];
+  inNotReady: string[];
   inError: string[];
   inWarning: string[];
   inSuccess: string[];

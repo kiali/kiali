@@ -97,8 +97,8 @@ export const DEGRADED: Status = {
   icon: ExclamationTriangleIcon,
   class: 'icon-degraded'
 };
-export const IDLE: Status = {
-  name: 'Idle',
+export const NOT_READY: Status = {
+  name: 'Not Ready',
   color: PFAlertColor.InfoBackground,
   priority: 2,
   icon: MinusCircleIcon,
@@ -143,11 +143,11 @@ export const ratioCheck = (
   syncedProxies: number
 ): Status => {
   /*
-    IDLE STATE
+    NOT READY STATE
  */
   // User has scaled down a workload, then desired replicas will be 0 and it's not an error condition
   if (desiredReplicas === 0) {
-    return IDLE;
+    return NOT_READY;
   }
 
   /*

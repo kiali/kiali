@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DEGRADED, FAILURE, HEALTHY, IDLE } from '../../types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
@@ -44,7 +44,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
       status.inWarning.length +
       status.inSuccess.length +
       status.notAvailable.length +
-      status.inIdle.length;
+      status.inNotReady.length;
     let text: string;
     if (nbItems === 1) {
       text = switchType(this.props.type, '1 Application', '1 Service', '1 Workload');
@@ -68,12 +68,12 @@ class OverviewCardContentExpanded extends React.Component<Props> {
           <span>
             {mainLink}
             <div style={{ display: 'inline-block' }}>
-              {status.inIdle.length > 0 && (
+              {status.inNotReady.length > 0 && (
                 <OverviewStatus
-                  id={name + '-iddle'}
+                  id={name + '-not-ready'}
                   namespace={name}
-                  status={IDLE}
-                  items={status.inIdle}
+                  status={NOT_READY}
+                  items={status.inNotReady}
                   targetPage={targetPage}
                 />
               )}

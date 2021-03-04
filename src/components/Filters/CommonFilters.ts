@@ -6,7 +6,7 @@ import {
   ActiveFiltersInfo,
   FilterTypes
 } from '../../types/Filters';
-import { HEALTHY, DEGRADED, FAILURE, NA, Health } from '../../types/Health';
+import { HEALTHY, DEGRADED, FAILURE, NA, NOT_READY, Health } from '../../types/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
 
 export const presenceValues: FilterValue[] = [
@@ -47,6 +47,10 @@ export const healthFilter: FilterType = {
     {
       id: FAILURE.name,
       title: FAILURE.name
+    },
+    {
+      id: NOT_READY.name,
+      title: NOT_READY.name
     },
     {
       id: 'na',

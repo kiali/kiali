@@ -24,7 +24,7 @@ describe('Health', () => {
     expect(H.ratioCheck(3, 3, 3, 3)).toEqual(H.HEALTHY);
   });
   it('should check ratio with no item', () => {
-    expect(H.ratioCheck(0, 0, 0, 0)).toEqual(H.IDLE);
+    expect(H.ratioCheck(0, 0, 0, 0)).toEqual(H.NOT_READY);
   });
   it('should check ratio pending Pods', () => {
     // 3 Pods with problems
