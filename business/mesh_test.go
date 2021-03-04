@@ -1,6 +1,7 @@
 package business
 
 import (
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 
@@ -49,17 +51,41 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 		},
 	}
 
+	kialiNs := core_v1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: "foo"},
+	}
+
+	kialiSvc := []core_v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{
+					"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
+				},
+				Labels: map[string]string{
+					"app.kubernetes.io/version": "v1.25",
+				},
+				Name:      "kiali-service",
+				Namespace: "foo",
+			},
+		},
+	}
+
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, "istiod").Return(&istioDeploymentMock, nil)
 	k8s.On("GetConfigMap", conf.IstioNamespace, "istio-sidecar-injector").Return(&sidecarConfigMapMock, nil)
 
+	k8s.On("GetNamespace", "foo").Return(&kialiNs, nil)
+	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
+
 	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
+	os.Setenv("ACTIVE_NAMESPACE", "foo")
 
 	meshSvc := NewMeshService(k8s, nil)
 
-	a, err := meshSvc.GetClusters()
+	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
+	a, err := meshSvc.GetClusters(r)
 	check.Nil(err, "GetClusters returned error: %v", err)
 
 	check.NotNil(a, "GetClusters returned nil")
@@ -69,6 +95,13 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 	check.Len(a[0].SecretName, 0)
 	check.Equal("kialiNetwork", a[0].Network)
+
+	check.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
+	check.Equal("foo", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
+	check.Equal("kiali-operator/myKialiCR", a[0].KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
+	check.Equal("http://kiali.url.local/", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
+	check.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
+	check.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
 }
 
 func TestGetClustersResolvesRemoteClusters(t *testing.T) {
@@ -123,17 +156,44 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		remoteNs := &core_v1.Namespace{
 			ObjectMeta: v1.ObjectMeta{
 				Labels: map[string]string{"topology.istio.io/network": "TheRemoteNetwork"},
+				Name:   conf.IstioNamespace,
 			},
 		}
 
+		kialiSvc := []core_v1.Service{
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
+					},
+					Labels: map[string]string{
+						"app.kubernetes.io/version": "v1.25",
+					},
+					Name:      "kiali-service",
+					Namespace: conf.IstioNamespace,
+				},
+			},
+		}
+
+		getNsErr := errors.StatusError{
+			ErrStatus: v1.Status{
+				Reason: v1.StatusReasonNotFound,
+			},
+		}
+		var nilNs *core_v1.Namespace
+
+		os.Setenv("ACTIVE_NAMESPACE", "foo")
+
 		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
+		remoteClient.On("GetNamespace", "foo").Return(nilNs, &getNsErr)
+		remoteClient.On("GetServicesByLabels", conf.IstioNamespace, "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
 
 		return remoteClient, nil
 	}
 
 	meshSvc := NewMeshService(k8s, newRemoteClient)
 
-	a, err := meshSvc.GetClusters()
+	a, err := meshSvc.GetClusters(nil)
 	check.Nil(err, "GetClusters returned error: %v", err)
 
 	check.NotNil(a, "GetClusters returned nil")
@@ -143,4 +203,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("https://192.168.144.17:123", a[0].ApiEndpoint)
 	check.Equal("TheRemoteSecret", a[0].SecretName)
 	check.Equal("TheRemoteNetwork", a[0].Network)
+
+	check.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the remote Kiali instance")
+	check.Equal(conf.IstioNamespace, a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
+	check.Equal("kiali-operator/myKialiCR", a[0].KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
+	check.Equal("", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
+	check.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
+	check.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
 }

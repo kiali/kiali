@@ -54,7 +54,7 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	isMeshConfigured, err := globalInfo.Business.Mesh.IsMeshConfigured()
 	graph.CheckError(err)
 	if isMeshConfigured {
-		cluster, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster()
+		cluster, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
 		graph.CheckError(err)
 		if cluster != nil {
 			clusterName = cluster.Name

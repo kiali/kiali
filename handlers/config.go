@@ -103,7 +103,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		if getLayerErr == nil {
 			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
 			if isMeshIdSet {
-				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster()
+				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster(nil)
 				if cluster != nil {
 					publicConfig.ClusterInfo = ClusterInfo{
 						Name:    cluster.Name,
