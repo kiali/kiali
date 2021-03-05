@@ -51,7 +51,6 @@ import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
-import { Link } from 'react-router-dom';
 import { Paths, serverConfig } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
@@ -64,9 +63,10 @@ import {
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import GraphDataSource from '../../services/GraphDataSource';
-import { AuthorizationPolicy } from '../../types/IstioObjects';
+import { AuthorizationPolicy, ValidationStatus } from '../../types/IstioObjects';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
 import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
+import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -906,24 +906,26 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
-    let status: any = <div style={{ marginLeft: '5px' }}>N/A</div>;
-    if (ns.validations) {
-      const summary = (
+    let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+    if (!!ns.validations) {
+      validations = ns.validations;
+    }
+
+    return (
+      <ValidationSummaryLink
+        namespace={ns.name}
+        objectCount={validations.objectCount}
+        errors={validations.errors}
+        warnings={validations.warnings}
+      >
         <ValidationSummary
           id={'ns-val-' + ns.name}
-          errors={ns.validations.errors}
-          warnings={ns.validations.warnings}
-          objectCount={ns.validations.objectCount}
+          errors={validations.errors}
+          warnings={validations.warnings}
+          objectCount={validations.objectCount}
         />
-      );
-      status =
-        ns.validations.objectCount && ns.validations.objectCount > 0 ? (
-          <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>{summary}</Link>
-        ) : (
-          summary
-        );
-    }
-    return status;
+      </ValidationSummaryLink>
+    );
   }
 }
 

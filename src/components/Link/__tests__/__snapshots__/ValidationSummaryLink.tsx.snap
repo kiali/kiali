@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ValidationSummaryLink when there are no objects is a N/A non-linked component 1`] = `
+<div
+  style={
+    Object {
+      "display": "inline-block",
+      "marginLeft": "5px",
+    }
+  }
+>
+  N/A
+</div>
+`;
+
+exports[`ValidationSummaryLink when there are objects and has both errors and warnings points to IstioConfig list with both warnings and errors filter 1`] = `
+<IstioConfigListLink
+  errors={true}
+  namespaces={
+    Array [
+      "bookinfo",
+    ]
+  }
+  warnings={true}
+>
+  Summary Link
+</IstioConfigListLink>
+`;
+
+exports[`ValidationSummaryLink when there are objects and only has errors points to IstioConfig list with errors filter 1`] = `
+<IstioConfigListLink
+  errors={true}
+  namespaces={
+    Array [
+      "bookinfo",
+    ]
+  }
+  warnings={false}
+>
+  Summary Link
+</IstioConfigListLink>
+`;
+
+exports[`ValidationSummaryLink when there are objects and only has warnings points to IstioConfig list with warnings filter 1`] = `
+<IstioConfigListLink
+  errors={false}
+  namespaces={
+    Array [
+      "bookinfo",
+    ]
+  }
+  warnings={true}
+>
+  Summary Link
+</IstioConfigListLink>
+`;

@@ -25,6 +25,7 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
 import { PfColors } from '../../components/Pf/PfColors';
 import ValidationSummary from 'components/Validations/ValidationSummary';
+import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   errRates: Datapoint[];
@@ -276,13 +277,20 @@ export default class SummaryPanelNamespaceBox extends React.Component<
           </Tooltip>
           {ns}{' '}
           {!!validation && (
-            <ValidationSummary
-              id={'ns-val-' + ns}
+            <ValidationSummaryLink
+              namespace={ns}
+              objectCount={validation.objectCount}
               errors={validation.errors}
               warnings={validation.warnings}
-              objectCount={validation.objectCount}
-              style={{ marginLeft: '5px' }}
-            />
+            >
+              <ValidationSummary
+                id={'ns-val-' + ns}
+                errors={validation.errors}
+                warnings={validation.warnings}
+                objectCount={validation.objectCount}
+                style={{ marginLeft: '5px' }}
+              />
+            </ValidationSummaryLink>
           )}
         </span>
         <br />

@@ -18,7 +18,6 @@ import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
 import NamespaceMTLSStatusContainer from '../MTls/NamespaceMTLSStatus';
-import { Paths } from '../../config';
 import ValidationSummary from '../Validations/ValidationSummary';
 import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardContentExpanded';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
@@ -26,6 +25,7 @@ import { StatefulFilters } from '../Filters/StatefulFilters';
 import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
+import ValidationSummaryLink from '../Link/ValidationSummaryLink';
 
 // Links
 
@@ -111,7 +111,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   if (ns.validations) {
     status = (
       <td role="gridcell" key={'VirtuaItem_IstioConfig_' + ns.name} style={{ verticalAlign: 'middle' }}>
-        <Link to={`/${Paths.ISTIO}?namespaces=${ns.name}`}>
+        <ValidationSummaryLink namespace={ns.name} warnings={ns.validations.warnings} errors={ns.validations.errors}>
           <ValidationSummary
             id={'ns-val-' + ns.name}
             errors={ns.validations.errors}
@@ -119,7 +119,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
             objectCount={ns.validations.objectCount}
             style={{ marginLeft: '5px' }}
           />
-        </Link>
+        </ValidationSummaryLink>
       </td>
     );
   }

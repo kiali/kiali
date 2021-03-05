@@ -24,6 +24,7 @@ export class ValidationObjectSummary extends React.PureComponent<Props> {
     return (
       <ValidationSummary
         id={this.props.id}
+        objectCount={1}
         errors={this.numberOfChecks(ValidationTypes.Error)}
         warnings={this.numberOfChecks(ValidationTypes.Warning)}
         style={this.props.style}

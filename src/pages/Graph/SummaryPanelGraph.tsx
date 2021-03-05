@@ -1,23 +1,23 @@
 import * as React from 'react';
-import { Tab, Tooltip, TooltipPosition, Badge } from '@patternfly/react-core';
+import { Badge, Tab, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType, NodeType } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import {
-  shouldRefreshData,
-  getFirstDatapoints,
-  mergeMetricsResponses,
-  summaryFont,
-  summaryHeader,
-  summaryBodyTabs,
-  hr
-} from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
-import { IstioMetricsMap, Datapoint } from '../../types/Metrics';
+import {
+  getFirstDatapoints,
+  hr,
+  mergeMetricsResponses,
+  shouldRefreshData,
+  summaryBodyTabs,
+  summaryFont,
+  summaryHeader
+} from './SummaryPanelCommon';
+import { Datapoint, IstioMetricsMap } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -27,6 +27,7 @@ import { ValidationStatus } from 'types/IstioObjects';
 import Namespace from 'types/Namespace';
 import ValidationSummary from 'components/Validations/ValidationSummary';
 import { PfColors } from '../../components/Pf/PfColors';
+import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 
 type SummaryPanelGraphMetricsState = {
   reqRates: Datapoint[];
@@ -273,8 +274,30 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return this.props.namespaces.map(namespace => this.renderNamespace(namespace.name));
   };
 
+  private renderValidations = (ns: string) => {
+    const validation: ValidationStatus = this.state.validationsMap[ns];
+    if (!validation) {
+      return undefined;
+    }
+    return (
+      <ValidationSummaryLink
+        namespace={ns}
+        objectCount={validation.objectCount}
+        errors={validation.errors}
+        warnings={validation.warnings}
+      >
+        <ValidationSummary
+          id={'ns-val-' + ns}
+          errors={validation.errors}
+          warnings={validation.warnings}
+          objectCount={validation.objectCount}
+          style={{ marginLeft: '5px' }}
+        />
+      </ValidationSummaryLink>
+    );
+  };
+
   private renderNamespace = (ns: string) => {
-    const validation = this.state.validationsMap[ns];
     return (
       <React.Fragment key={ns}>
         <span>
@@ -283,16 +306,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
               NS
             </Badge>
           </Tooltip>
-          {ns}{' '}
-          {!!validation && (
-            <ValidationSummary
-              id={'ns-val-' + ns}
-              errors={validation.errors}
-              warnings={validation.warnings}
-              objectCount={validation.objectCount}
-              style={{ marginLeft: '5px' }}
-            />
-          )}
+          {ns} {this.renderValidations(ns)}
         </span>
         <br />
       </React.Fragment>
