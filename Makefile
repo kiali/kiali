@@ -10,7 +10,7 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.29.1
+VERSION ?= v1.29.2
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
