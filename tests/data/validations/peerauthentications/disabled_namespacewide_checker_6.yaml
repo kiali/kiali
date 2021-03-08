@@ -10,7 +10,7 @@ spec:
 apiVersion: "security.istio.io/v1beta1"
 kind: "PeerAuthentication"
 metadata:
-  name: "disable-mtls-bookinfo"
+  name: "mtls-mesh"
   namespace: "istio-system"
 spec:
   mtls:
@@ -30,10 +30,10 @@ spec:
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
-  name: "details-disable-mtls"
+  name: "bookinfo-disable-mtls"
   namespace: "bookinfo"
 spec:
-  host: "details"
+  host: "*.bookinfo.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: DISABLE
