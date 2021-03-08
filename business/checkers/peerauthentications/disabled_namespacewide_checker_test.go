@@ -47,6 +47,14 @@ func TestPeerAuthnDisabledNoDestRule(t *testing.T) {
 	testNoDisabledNsValidations("disabled_namespacewide_checker_5.yaml", t)
 }
 
+// Context: PeerAuthn disabled at namespace
+// Context: DR disabled at namespace
+// Context: mTLS strict at mesh-level (PeerAuthn + DestRule)
+// It doesn't return any validation
+func TestPeerAuthnDisabledNamespaceMtlsMeshWideEnabled(t *testing.T) {
+	testNoDisabledNsValidations("disabled_namespacewide_checker_6.yaml", t)
+}
+
 func disabledNamespacetestPrep(scenario string, t *testing.T) ([]*models.IstioCheck, bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
