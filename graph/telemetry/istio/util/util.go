@@ -16,6 +16,8 @@ var badServiceMatcher = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+(:\d+)?$`)
 var egressHost string
 
 // HandleClusters just sets source an dest cluster to unknown if it is not supplied on the telemetry
+// TODO: Starting in Istio 1.9 source_cluster and destination_cluster are always reported.  So, this
+//       function can be removed when the Kiali version can assume Istio 1.9 or later.
 func HandleClusters(lSourceCluster model.LabelValue, sourceClusterOk bool, lDestCluster model.LabelValue, destClusterOk bool) (sourceCluster, destCluster string) {
 	if sourceClusterOk {
 		sourceCluster = string(lSourceCluster)
@@ -41,8 +43,19 @@ func HandleDestination(sourceCluster, sourceWlNs, sourceWl, destCluster, destSvc
 
 	if destSvc == egressHost && destSvc == destSvcName {
 		istioNs := config.Get().IstioNamespace
-		log.Infof("Massage: destCluster=%s, destSvcNs=%s", sourceCluster, istioNs)
+		log.Debugf("HandleDestination: destCluster=%s, destSvcNs=%s", sourceCluster, istioNs)
 		return sourceCluster, istioNs, "istio-egressgateway", istioNs, "istio-egressgateway", "istio-egressgateway", "latest", true
+	}
+
+	// TODO: Below we are adding best-effort handling for https://github.com/istio/istio/issues/29373. That
+	//       bug can cause destination_cluster to be incorrectly reported as "unknown".  In that situation
+	//       we are ASSUMING the destination_cluster is the same as the source_cluster.  This is invalid
+	//       if the request is for a different cluster AND the reporting is wrong, but leaving it as "unknown"
+	//       causes strange graph behavior in the more typical, same-cluster, case.  The bug is scheduled to
+	//       be fixed in Istio 1.10.0. Remove handling when bug s resolved for all supported Istio versions.
+	if !graph.IsOK(destCluster) && graph.IsOK(sourceCluster) && graph.IsOK(destSvcNs) {
+		log.Debugf("Handling Istio#29373, resetting destination_cluster from [%s] to [%s]", destCluster, sourceCluster)
+		destCluster = sourceCluster
 	}
 
 	return destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, false

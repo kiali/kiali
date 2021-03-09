@@ -81,7 +81,6 @@ type NodeData struct {
 	IsDead          bool                `json:"isDead,omitempty"`          // true (has no pods) | false
 	IsIdle          bool                `json:"isIdle,omitempty"`          // true | false
 	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
-	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
 	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
 	IsServiceEntry  *graph.SEInfo       `json:"isServiceEntry,omitempty"`  // set static service entry information
@@ -256,11 +255,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set sidecars checks, if available
 		if val, ok := n.Metadata[graph.HasMissingSC]; ok {
 			nd.HasMissingSC = val.(bool)
-		}
-
-		// check if node is misconfigured
-		if val, ok := n.Metadata[graph.IsMisconfigured]; ok {
-			nd.IsMisconfigured = val.(string)
 		}
 
 		// check if node is on another namespace

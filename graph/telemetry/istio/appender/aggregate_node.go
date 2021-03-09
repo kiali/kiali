@@ -58,7 +58,7 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 
 	// query prometheus for aggregate info in two queries (assume aggregation is typically request classification, so use dest telemetry):
 	//   note1: we want to only match the aggregate when it is set and not "unknown".  But in Prometheus a negative test on an unset label
-	//      matches everything, so using %s!=unknown mneans we still have to filter out unset time-series below...
+	//      matches everything, so using %s!=unknown means we still have to filter out unset time-series below...
 	//   note2: for now we will filter out aggregates with no traffic on the assumption that users probably don't want to
 	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
 	// 1) query for requests originating from a workload outside the namespace.

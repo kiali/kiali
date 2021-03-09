@@ -25,7 +25,6 @@ const (
 	IsEgressCluster MetadataKey = "isEgressCluster" // PassthroughCluster or BlackHoleCluster
 	IsIdle          MetadataKey = "isIdle"
 	IsInaccessible  MetadataKey = "isInaccessible"
-	IsMisconfigured MetadataKey = "isMisconfigured"
 	IsMTLS          MetadataKey = "isMTLS"
 	IsOutside       MetadataKey = "isOutside"
 	IsRoot          MetadataKey = "isRoot"

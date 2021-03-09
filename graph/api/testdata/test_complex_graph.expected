@@ -48,7 +48,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpIn": "50.00"
+                "httpIn": "100.00"
               }
             }
           ]
@@ -72,6 +72,32 @@
             }
           ],
           "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "8bbc8f3d471e91e447a9a2ff5033ba3c",
+          "nodeType": "app",
+          "cluster": "cluster-tutorial",
+          "namespace": "bookinfo",
+          "workload": "reviews-v1",
+          "app": "reviews",
+          "version": "v1",
+          "destServices": [
+            {
+              "cluster": "cluster-tutorial",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "700.00"
+              }
+            }
+          ]
         }
       },
       {
@@ -110,6 +136,28 @@
       },
       {
         "data": {
+          "id": "c86e8ec8a41fcdafe296a22f7d55491b",
+          "nodeType": "app",
+          "cluster": "cluster-tutorial",
+          "namespace": "outsider",
+          "workload": "outsider-ingress",
+          "app": "outsider-ingress",
+          "version": "latest",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpOut": "50.00"
+              }
+            }
+          ],
+          "isInaccessible": true,
+          "isOutside": true,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
           "id": "11de61605e36ab80a0b85d03f8d48a48",
           "nodeType": "app",
           "cluster": "cluster-tutorial",
@@ -135,7 +183,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "1250.00"
+                "httpOut": "1950.00"
               }
             }
           ]
@@ -160,6 +208,32 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "400.00"
+              }
+            }
+          ],
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "c800c2f5f6e1100ae3ebd8b63c91a0ed",
+          "nodeType": "service",
+          "cluster": "unknown",
+          "namespace": "unknown",
+          "service": "reviews",
+          "destServices": [
+            {
+              "cluster": "unknown",
+              "namespace": "unknown",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "50.00",
+                "httpIn5xx": "50.00"
               }
             }
           ],
@@ -232,7 +306,7 @@
               "http": "900.00",
               "httpNoResponse": "500.00",
               "httpPercentErr": "55.6",
-              "httpPercentReq": "72.0"
+              "httpPercentReq": "46.2"
             },
             "responses": {
               "-": {
@@ -257,6 +331,30 @@
       },
       {
         "data": {
+          "id": "8c8f6139911ba272dc8c4b654d09c747",
+          "source": "11de61605e36ab80a0b85d03f8d48a48",
+          "target": "8bbc8f3d471e91e447a9a2ff5033ba3c",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "700.00",
+              "httpPercentReq": "35.9"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "94e90d3a3a2fa9f92042e6c4bac9a584",
           "source": "11de61605e36ab80a0b85d03f8d48a48",
           "target": "c2fbd34235fb33d25809469e43f19344",
@@ -264,7 +362,7 @@
             "protocol": "http",
             "rates": {
               "http": "300.00",
-              "httpPercentReq": "24.0"
+              "httpPercentReq": "15.4"
             },
             "responses": {
               "200": {
@@ -288,7 +386,7 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "4.0"
+              "httpPercentReq": "2.6"
             },
             "responses": {
               "200": {
@@ -345,6 +443,32 @@
                 },
                 "hosts": {
                   "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "37cfe4a58ce96755179559c08fdda7d9",
+          "source": "c86e8ec8a41fcdafe296a22f7d55491b",
+          "target": "c800c2f5f6e1100ae3ebd8b63c91a0ed",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "http5xx": "50.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "503": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
                 }
               }
             }

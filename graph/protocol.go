@@ -368,6 +368,10 @@ func addToResponses(md Metadata, k MetadataKey, responses Responses) {
 }
 
 func addToMetadataResponses(md Metadata, k MetadataKey, code, flags, host string, v float64) {
+	if md == nil {
+		return
+	}
+
 	var responses Responses
 	var responseDetail *ResponseDetail
 	var ok bool

@@ -202,7 +202,7 @@ func Id(cluster, serviceNamespace, service, workloadNamespace, workload, app, ve
 	}
 
 	// handle app and versionedApp graphs
-	versionOk := IsOK(version)
+	versionOk := IsOKVersion(version)
 	if appOk {
 		// For a versionedApp graph use workload as the Id, if available. It allows us some protection
 		// against labeling anti-patterns. It won't be there in a few cases like:

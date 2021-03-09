@@ -34,21 +34,11 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 	clusterName := graph.Unknown
 
 	if a.GraphType != graph.GraphTypeService {
-		if getWorkloadList(namespaceInfo) == nil {
-			workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-			graph.CheckError(err)
-			namespaceInfo.Vendor[workloadListKey] = &workloadList
-		}
-		workloads = getWorkloadList(namespaceInfo).Workloads
+		workloads = getWorkloadList(namespaceInfo.Namespace, globalInfo).Workloads
 	}
 
 	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
-		if getServiceDefinitionList(namespaceInfo) == nil {
-			sdl, err := globalInfo.Business.Svc.GetServiceDefinitionList(namespaceInfo.Namespace)
-			graph.CheckError(err)
-			namespaceInfo.Vendor[serviceDefinitionListKey] = sdl
-		}
-		services = getServiceDefinitionList(namespaceInfo).ServiceDefinitions
+		services = getServiceDefinitionList(namespaceInfo.Namespace, globalInfo).ServiceDefinitions
 	}
 
 	isMeshConfigured, err := globalInfo.Business.Mesh.IsMeshConfigured()

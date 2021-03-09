@@ -26,6 +26,7 @@ func setupWorkloads() *business.Layer {
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return((*apps_v1.Deployment)(nil), nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
