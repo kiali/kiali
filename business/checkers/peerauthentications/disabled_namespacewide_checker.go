@@ -18,17 +18,31 @@ func (c DisabledNamespaceWideChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
+	nsDisableDRFound := false
+	meshEnabledDRFound := false
 	for _, dr := range c.DestinationRules {
 		// If ns-wide Destination Rule enabling mtls found, error found
-		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.GetObjectMeta().Namespace, dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
+		_, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(c.PeerAuthn.GetObjectMeta().Namespace, dr)
+		if mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
 			check := models.Build("peerauthentications.mtls.disabledestinationrulemissing", "spec/mtls")
 			return append(validations, &check), false
+		} else if mode == "DISABLE" {
+			nsDisableDRFound = true
+			break
 		}
 
 		if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "ISTIO_MUTUAL" || mode == "MUTUAL" {
-			check := models.Build("peerauthentications.mtls.disabledestinationrulemissing", "spec/mtls")
-			return append(validations, &check), false
+			meshEnabledDRFound = true
 		}
+	}
+
+	if nsDisableDRFound {
+		return validations, true
+	}
+
+	if meshEnabledDRFound {
+		check := models.Build("peerauthentications.mtls.disabledestinationrulemissing", "spec/mtls")
+		return append(validations, &check), false
 	}
 
 	return validations, true

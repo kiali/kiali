@@ -154,6 +154,28 @@ func TestDRNonTLSRelated(t *testing.T) {
 	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
+// Context: mTLS is strict at MESH-level
+// Context: mTLS is disabled at namespace-level
+// It doesn't return any validation
+func TestMtlsStrictNsDisable(t *testing.T) {
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("bookinfo", "dr-mtls-disabled", "*.bookinfo.svc.cluster.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{
+		MeshPeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
+		},
+		PeerAuthentications: []kubernetes.IstioObject{
+			data.CreateEmptyPeerAuthentication("disable-bookinfo", "bookinfo", data.CreateMTLS("DISABLE")),
+		},
+		DestinationRules: []kubernetes.IstioObject{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local")),
+		},
+	}
+
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, false)
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
+}
+
 func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
