@@ -11,6 +11,7 @@ import { buildLegendInfo, toBuckets } from 'utils/VictoryChartsUtils';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 import { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
+import { INTERPOTALION_STRATEGY } from './SparklineChart';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
   chartHeight?: number;
@@ -247,7 +248,8 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
               {
                 key: 'serie-' + idx,
                 name: 'serie-' + idx,
-                data: serie.datapoints
+                data: serie.datapoints,
+                interpolation: INTERPOTALION_STRATEGY
               },
               serie.color
             )

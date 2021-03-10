@@ -18,6 +18,8 @@ type State = {
   hiddenSeries: Set<number>;
 };
 
+export const INTERPOTALION_STRATEGY = 'monotoneX';
+
 export class SparklineChart extends React.Component<Props, State> {
   containerRef?: React.RefObject<HTMLDivElement>;
 
@@ -144,6 +146,7 @@ export class SparklineChart extends React.Component<Props, State> {
                   strokeWidth: 2
                 }
               }}
+              interpolation={INTERPOTALION_STRATEGY}
             />
           );
         })}
