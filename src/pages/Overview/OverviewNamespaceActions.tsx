@@ -8,11 +8,13 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 export type OverviewNamespaceAction = {
   isGroup: boolean;
   isSeparator: boolean;
   isDisabled: boolean;
+  isExternal?: boolean;
   title?: string;
   children?: OverviewNamespaceAction[];
   action?: (namespace: string) => void;
@@ -97,7 +99,7 @@ export class OverviewNamespaceActions extends React.Component<Props, State> {
             isDisabled={action.isDisabled}
             onClick={() => (action.action ? action.action(this.props.namespace) : undefined)}
           >
-            {action.title}
+            {action.title} {!!action.isExternal ? <ExternalLinkAltIcon /> : undefined}
           </DropdownItem>
         );
         return action.isDisabled

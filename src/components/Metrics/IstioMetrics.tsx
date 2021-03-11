@@ -277,7 +277,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
             <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
           </ToolbarItem>
         </ToolbarGroup>
-        <ToolbarGroup>
+        <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
           <GrafanaLinks
             links={this.state.grafanaLinks}
             namespace={this.props.namespace}

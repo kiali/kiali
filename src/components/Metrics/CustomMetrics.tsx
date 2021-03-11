@@ -223,7 +223,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
             <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
           </ToolbarItem>
         </ToolbarGroup>
-        <ToolbarGroup>
+        <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
           <GrafanaLinks
             links={this.state.grafanaLinks}
             namespace={this.props.namespace}

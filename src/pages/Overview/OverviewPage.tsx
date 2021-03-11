@@ -67,6 +67,8 @@ import { AuthorizationPolicy, ValidationStatus } from '../../types/IstioObjects'
 import { IstioPermissions } from '../../types/IstioConfigDetails';
 import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
 import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
+import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
+import { ExternalLink } from '../../types/Dashboards';
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -131,6 +133,7 @@ type State = {
   showConfirmModal: boolean;
   nsTarget: string;
   opTarget: string;
+  grafanaLinks: ExternalLink[];
 };
 
 type ReduxProps = {
@@ -145,6 +148,8 @@ type OverviewProps = ReduxProps & {};
 export class OverviewPage extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
   private promises = new PromisesRegistry();
+  // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
+  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
   constructor(props: OverviewProps) {
     super(props);
@@ -156,7 +161,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       permissions: {},
       showConfirmModal: false,
       nsTarget: '',
-      opTarget: ''
+      opTarget: '',
+      grafanaLinks: []
     };
   }
 
@@ -169,6 +175,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   componentDidMount() {
+    this.fetchGrafanaInfo();
     this.load();
   }
 
@@ -263,6 +270,36 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           });
         });
     });
+  }
+
+  fetchGrafanaInfo() {
+    if (!OverviewPage.grafanaInfoPromise) {
+      OverviewPage.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+        if (response.status === 204) {
+          return undefined;
+        }
+        return response.data;
+      });
+    }
+    OverviewPage.grafanaInfoPromise
+      .then(grafanaInfo => {
+        if (grafanaInfo) {
+          // For Overview Page only Performance and Wasm Extension dashboard are interesting
+          this.setState({
+            grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+          });
+        } else {
+          this.setState({ grafanaLinks: [] });
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractAxiosError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
   }
 
   fetchHealthChunk(chunk: NamespaceInfo[], duration: number, type: OverviewType) {
@@ -537,81 +574,105 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       canWrite = resourcePermission.create && resourcePermission.update && resourcePermission.delete;
     }
 
-    if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
+    if (serverConfig.istioNamespace !== nsInfo.name) {
+      if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true,
+          isDisabled: false
+        });
+        const enableAction = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: !canWrite,
+          title: 'Enable Auto Injection',
+          action: (ns: string) => this.onAddRemoveAutoInjection(ns, true, false)
+        };
+        const disableAction = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: !canWrite,
+          title: 'Disable Auto Injection',
+          action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, false)
+        };
+        const removeAction = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: !canWrite,
+          title: 'Remove Auto Injection',
+          action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, true)
+        };
+        if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'
+        ) {
+          namespaceActions.push(disableAction);
+          namespaceActions.push(removeAction);
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
+        ) {
+          namespaceActions.push(enableAction);
+          namespaceActions.push(removeAction);
+        } else {
+          namespaceActions.push(enableAction);
+        }
+      }
       namespaceActions.push({
         isGroup: false,
         isSeparator: true,
         isDisabled: false
       });
-      const enableAction = {
+      const aps = nsInfo.istioConfig?.authorizationPolicies || [];
+      const addAuthorizationAction = {
         isGroup: false,
         isSeparator: false,
         isDisabled: !canWrite,
-        title: 'Enable Auto Injection',
-        action: (ns: string) => this.onAddRemoveAutoInjection(ns, true, false)
-      };
-      const disableAction = {
-        isGroup: false,
-        isSeparator: false,
-        isDisabled: !canWrite,
-        title: 'Disable Auto Injection',
-        action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, false)
-      };
-      const removeAction = {
-        isGroup: false,
-        isSeparator: false,
-        isDisabled: !canWrite,
-        title: 'Remove Auto Injection',
-        action: (ns: string) => this.onAddRemoveAutoInjection(ns, false, true)
-      };
-      if (
-        nsInfo.labels &&
-        nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-        nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'
-      ) {
-        namespaceActions.push(disableAction);
-        namespaceActions.push(removeAction);
-      } else if (
-        nsInfo.labels &&
-        nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-        nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
-      ) {
-        namespaceActions.push(enableAction);
-        namespaceActions.push(removeAction);
-      } else {
-        namespaceActions.push(enableAction);
-      }
-    }
-    namespaceActions.push({
-      isGroup: false,
-      isSeparator: true,
-      isDisabled: false
-    });
-    const aps = nsInfo.istioConfig?.authorizationPolicies || [];
-    const addAuthorizationAction = {
-      isGroup: false,
-      isSeparator: false,
-      isDisabled: !canWrite,
-      title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
-      action: (ns: string) => {
-        if (aps.length === 0) {
-          this.onCreateTrafficPolicies(ns);
-        } else {
-          this.onUpdateTrafficPolicies(ns);
+        title: (aps.length === 0 ? 'Create ' : 'Update') + ' Traffic Policies',
+        action: (ns: string) => {
+          if (aps.length === 0) {
+            this.onCreateTrafficPolicies(ns);
+          } else {
+            this.onUpdateTrafficPolicies(ns);
+          }
         }
+      };
+      const removeAuthorizationAction = {
+        isGroup: false,
+        isSeparator: false,
+        isDisabled: !canWrite,
+        title: 'Delete Traffic Policies',
+        action: (ns: string) => this.onDeleteTrafficPolicies(ns)
+      };
+      namespaceActions.push(addAuthorizationAction);
+      if (aps.length > 0) {
+        namespaceActions.push(removeAuthorizationAction);
       }
-    };
-    const removeAuthorizationAction = {
-      isGroup: false,
-      isSeparator: false,
-      isDisabled: !canWrite,
-      title: 'Delete Traffic Policies',
-      action: (ns: string) => this.onDeleteTrafficPolicies(ns)
-    };
-    namespaceActions.push(addAuthorizationAction);
-    if (aps.length > 0) {
-      namespaceActions.push(removeAuthorizationAction);
+    } else if (this.state.grafanaLinks.length > 0) {
+      // Istio namespace will render external Grafana dashboards
+      namespaceActions.push({
+        isGroup: false,
+        isSeparator: true,
+        isDisabled: false
+      });
+      this.state.grafanaLinks.forEach(link => {
+        const grafanaDashboard = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: false,
+          isExternal: true,
+          title: link.name,
+          action: (_ns: string) => {
+            window.open(link.url, '_blank');
+            this.load();
+          }
+        };
+        namespaceActions.push(grafanaDashboard);
+      });
     }
+
     return namespaceActions;
   };
 
