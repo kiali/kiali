@@ -25,6 +25,12 @@ type addOnsSetup struct {
 	CallCount  *int
 }
 
+var notReadyStatus = apps_v1.DeploymentStatus{
+	Replicas:            0,
+	AvailableReplicas:   0,
+	UnavailableReplicas: 0,
+}
+
 var healthyStatus = apps_v1.DeploymentStatus{
 	Replicas:            2,
 	AvailableReplicas:   2,
@@ -341,6 +347,53 @@ func TestNonDefaults(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *jaegerCalls)
 	assert.Equal(1, *promCalls)
+}
+
+// Istiod replicas is downscaled to 0
+// Kiali should notify that in the Istio Component Status
+func TestIstiodNotReady(t *testing.T) {
+	assert := assert.New(t)
+
+	pods := []apps_v1.Deployment{
+		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, notReadyStatus),
+	}
+
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false)
+	defer httpServer.Close()
+
+	c := config.Get()
+	c.IstioLabels.AppLabelName = "app.kubernetes.io/name"
+	c.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
+		Enabled: true,
+		Components: []config.ComponentStatus{
+			{AppLabel: "istiod", IsCore: true},
+			{AppLabel: "istio-egressgateway", IsCore: false},
+			{AppLabel: "istio-ingressgateway", IsCore: false},
+		},
+	}
+	config.Set(c)
+
+	iss := IstioStatusService{k8s: k8s}
+
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istio-ingressgateway", NotFound, false)
+	assertComponent(assert, icsl, "istio-egressgateway", Unhealthy, false)
+	assertComponent(assert, icsl, "istiod", NotReady, true)
+
+	// Don't return healthy deployments
+	assertNotPresent(assert, icsl, "grafana")
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
+	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
+	assert.Equal(1, *jaegerCalls)
+	assert.Equal(1, *promCalls)
+
 }
 
 // Istiod pods are not reachable from kiali

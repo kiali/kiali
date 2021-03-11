@@ -51,7 +51,7 @@ func (ics *IstioComponentStatus) merge(cs IstioComponentStatus) IstioComponentSt
 const (
 	Healthy     string = "Healthy"
 	NotFound    string = "NotFound"
-	NotReady   	string = "NotReady"
+	NotReady    string = "NotReady"
 	Unhealthy   string = "Unhealthy"
 	Unreachable string = "Unreachable"
 )
