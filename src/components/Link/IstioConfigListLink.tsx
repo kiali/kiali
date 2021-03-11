@@ -39,8 +39,11 @@ class IstioConfigListLink extends React.Component<Props> {
     return params;
   };
 
-  render() {
+  cleanFilters = () => {
     FilterSelected.resetFilters();
+  };
+
+  render() {
     let params: string = this.namespacesToParams();
     const validationParams: string = this.validationToParams();
     if (params !== '' && validationParams !== '') {
@@ -48,7 +51,11 @@ class IstioConfigListLink extends React.Component<Props> {
     }
     params += validationParams;
 
-    return <Link to={`/${Paths.ISTIO}?${params}`}>{this.props.children}</Link>;
+    return (
+      <Link to={`/${Paths.ISTIO}?${params}`} onClick={this.cleanFilters}>
+        {this.props.children}
+      </Link>
+    );
   }
 }
 

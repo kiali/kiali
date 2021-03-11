@@ -2,30 +2,35 @@
 
 exports[`Link with only namespaces and more than one renders the link with only one namespace 1`] = `
 <Link
+  onClick={[Function]}
   to="/istio?namespaces=bookinfo,istio-system,runtimes"
 />
 `;
 
 exports[`Link with only namespaces but only one namespace renders the link with only one namespace 1`] = `
 <Link
+  onClick={[Function]}
   to="/istio?namespaces=bookinfo"
 />
 `;
 
 exports[`Link with validation filters and both errors and warnings renders link with namespaces and only errors filters 1`] = `
 <Link
+  onClick={[Function]}
   to="/istio?namespaces=bookinfo,runtimes&configvalidation=Warning&configvalidation=Not+Valid"
 />
 `;
 
 exports[`Link with validation filters and only errors renders link with namespaces and only errors filters 1`] = `
 <Link
+  onClick={[Function]}
   to="/istio?namespaces=bookinfo,runtimes&configvalidation=Not+Valid"
 />
 `;
 
 exports[`Link with validation filters and only warnings renders link with namespaces and only warning filters 1`] = `
 <Link
+  onClick={[Function]}
   to="/istio?namespaces=bookinfo&configvalidation=Warning"
 />
 `;

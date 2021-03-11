@@ -60,16 +60,23 @@ export const sortFields: SortField<NamespaceInfo>[] = [
       if (a.validations && b.validations) {
         if (a.validations.errors === b.validations.errors) {
           if (a.validations.warnings === b.validations.warnings) {
-            return a.name.localeCompare(b.name);
-          } else if (a.validations.warnings > b.validations.warnings) {
-            return -1;
+            if (a.validations.objectCount && b.validations.objectCount) {
+              if (a.validations.objectCount === b.validations.objectCount) {
+                // If all equal, use name for sorting
+                return a.name.localeCompare(b.name);
+              } else {
+                return a.validations.objectCount > b.validations.objectCount ? -1 : 1;
+              }
+            } else if (a.validations.objectCount) {
+              return -1;
+            } else if (b.validations.objectCount) {
+              return 1;
+            }
           } else {
-            return 1;
+            return a.validations.warnings > b.validations.warnings ? -1 : 1;
           }
-        } else if (a.validations.errors > b.validations.errors) {
-          return -1;
         } else {
-          return 1;
+          return a.validations.errors > b.validations.errors ? -1 : 1;
         }
       } else if (a.validations) {
         return -1;

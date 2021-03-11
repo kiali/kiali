@@ -26,6 +26,7 @@ import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 import ValidationSummaryLink from '../Link/ValidationSummaryLink';
+import { ValidationStatus } from '../../types/IstioObjects';
 
 // Links
 
@@ -107,22 +108,27 @@ export const tls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 };
 
 export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  let status: any = <small style={{ fontSize: '65%', marginLeft: '5px' }}>N/A</small>;
-  if (ns.validations) {
-    status = (
-      <td role="gridcell" key={'VirtuaItem_IstioConfig_' + ns.name} style={{ verticalAlign: 'middle' }}>
-        <ValidationSummaryLink namespace={ns.name} warnings={ns.validations.warnings} errors={ns.validations.errors}>
-          <ValidationSummary
-            id={'ns-val-' + ns.name}
-            errors={ns.validations.errors}
-            warnings={ns.validations.warnings}
-            objectCount={ns.validations.objectCount}
-            style={{ marginLeft: '5px' }}
-          />
-        </ValidationSummaryLink>
-      </td>
-    );
+  let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+  if (!!ns.validations) {
+    validations = ns.validations;
   }
+  const status = (
+    <td role="gridcell" key={'VirtuaItem_IstioConfig_' + ns.name} style={{ verticalAlign: 'middle' }}>
+      <ValidationSummaryLink
+        namespace={ns.name}
+        objectCount={validations.objectCount}
+        errors={validations.errors}
+        warnings={validations.warnings}
+      >
+        <ValidationSummary
+          id={'ns-val-' + ns.name}
+          errors={validations.errors}
+          warnings={validations.warnings}
+          objectCount={validations.objectCount}
+        />
+      </ValidationSummaryLink>
+    </td>
+  );
   return status;
 };
 
