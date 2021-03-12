@@ -200,7 +200,12 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	// Discover ourselves
 	kialiInstances := findKialiInNamespace(os.Getenv("ACTIVE_NAMESPACE"), myClusterName, in.k8s)
 	if len(kialiInstances) > 0 && r != nil {
-		kialiInstances[0].Url = httputil.GuessKialiURL(r)
+		for i := range kialiInstances {
+			// If URL is already populated (because of an annotation), trust that because it's user configuration.
+			if len(kialiInstances[i].Url) == 0 {
+				kialiInstances[i].Url = httputil.GuessKialiURL(r)
+			}
+		}
 	}
 
 	return &Cluster{
@@ -239,6 +244,7 @@ func findKialiInNamespace(namespace string, clusterName string, clientSet kubern
 				instances[i].Namespace = d.Namespace
 				instances[i].OperatorResource = d.Annotations["operator-sdk/primary-resource"]
 				instances[i].Version = d.Labels["app.kubernetes.io/version"]
+				instances[i].Url = d.Annotations["kiali.io/external-url"]
 			}
 		}
 	}
