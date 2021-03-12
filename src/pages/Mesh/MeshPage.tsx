@@ -1,15 +1,22 @@
 import * as React from 'react';
-import { Alert, EmptyState, EmptyStateBody, EmptyStateVariant, Title } from '@patternfly/react-core';
+import {
+  Alert,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Title,
+  Tooltip
+} from '@patternfly/react-core';
 import { StarIcon } from '@patternfly/react-icons';
 import { cellWidth, sortable, SortByDirection, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
 
+import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { RenderContent } from '../../components/Nav/Page';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { getClusters } from '../../services/Api';
 import { MeshClusters } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
-import DefaultSecondaryMasthead from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import RefreshButtonContainer from 'components/Refresh/RefreshButton';
 
 const MeshPage: React.FunctionComponent = () => {
   const [meshClustersList, setMeshClustersList] = React.useState(null as MeshClusters | null);
@@ -19,11 +26,15 @@ const MeshPage: React.FunctionComponent = () => {
   const columns = [
     {
       title: 'Cluster Name',
-      transforms: [sortable, cellWidth(30)]
+      transforms: [sortable, cellWidth(20)]
     },
     {
       title: 'Network',
-      transforms: [sortable, cellWidth(20)]
+      transforms: [sortable, cellWidth(10)]
+    },
+    {
+      title: 'Kiali',
+      transforms: [cellWidth(20)]
     },
     {
       title: 'API Endpoint',
@@ -34,6 +45,36 @@ const MeshPage: React.FunctionComponent = () => {
       transforms: [sortable, cellWidth(30)]
     }
   ];
+
+  function buildKialiInstancesColumn(cluster): React.ReactNode {
+    if (!cluster.kialiInstances || cluster.kialiInstances.length === 0) {
+      return 'N / A';
+    }
+
+    return cluster.kialiInstances.map(instance => {
+      if (instance.url.length !== 0) {
+        return (
+          <Tooltip content={`Go to this Kiali instance: ${instance.url}`}>
+            <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
+              <img alt='kiali-icon' src='kiali_icon_lightbkg_16px.png' />
+              {' '}
+              <a href={instance.url} target='_blank' rel='noopener noreferrer'>
+                {instance.namespace} {' / '} {instance.serviceName}
+              </a>
+            </p>
+          </Tooltip>
+        );
+      } else {
+        return (
+          <p key={cluster.name + '/' + instance.namespace + '/' + instance.serviceName}>
+            <img alt='kiali-icon' src='kiali_icon_lightbkg_16px.png' />
+            {' '}
+            {`${instance.namespace} / ${instance.serviceName}`}
+          </p>
+        );
+      }
+    });
+  }
 
   function buildTableRows() {
     if (meshClustersList === null) {
@@ -52,6 +93,7 @@ const MeshPage: React.FunctionComponent = () => {
           {cluster.isKialiHome ? <StarIcon /> : null} {cluster.name}
         </>,
         cluster.network,
+        <>{buildKialiInstancesColumn(cluster)}</>,
         cluster.apiEndpoint,
         cluster.secretName
       ]
