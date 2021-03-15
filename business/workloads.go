@@ -861,9 +861,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	var conjbs []batch_v1beta1.CronJob
 
 	wl := &models.Workload{
-		Pods:     models.Pods{},
-		Services: models.Services{},
-		Runtimes: []models.Runtime{},
+		Pods:              models.Pods{},
+		Services:          models.Services{},
+		Runtimes:          []models.Runtime{},
 		AdditionalDetails: []models.AdditionalItem{},
 	}
 
@@ -1183,9 +1183,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 
 	if _, exist := controllers[workloadName]; exist {
 		w := models.Workload{
-			Pods:     models.Pods{},
-			Services: models.Services{},
-			Runtimes: []models.Runtime{},
+			Pods:              models.Pods{},
+			Services:          models.Services{},
+			Runtimes:          []models.Runtime{},
 			AdditionalDetails: []models.AdditionalItem{},
 		}
 		ctype := controllers[workloadName]
