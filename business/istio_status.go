@@ -50,8 +50,9 @@ func (ics *IstioComponentStatus) merge(cs IstioComponentStatus) IstioComponentSt
 
 const (
 	Healthy     string = "Healthy"
-	Unhealthy   string = "Unhealthy"
 	NotFound    string = "NotFound"
+	NotReady    string = "NotReady"
+	Unhealthy   string = "Unhealthy"
 	Unreachable string = "Unreachable"
 )
 
@@ -227,7 +228,9 @@ func GetDeploymentStatus(d apps_v1.Deployment) string {
 	status := Unhealthy
 	wl := &models.Workload{}
 	wl.ParseDeployment(&d)
-	if wl.DesiredReplicas == wl.AvailableReplicas && wl.DesiredReplicas == wl.CurrentReplicas {
+	if wl.DesiredReplicas == 0 {
+		status = NotReady
+	} else if wl.DesiredReplicas == wl.AvailableReplicas && wl.DesiredReplicas == wl.CurrentReplicas {
 		status = Healthy
 	}
 	return status
