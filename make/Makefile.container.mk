@@ -23,7 +23,7 @@ endif
 ## container-build-operator: Build Kiali operator container image.
 container-build-operator: .ensure-operator-repo-exists
 	@echo Building container image for Kiali operator
-	$(MAKE) -C "${ROOTDIR}/operator" build
+	$(MAKE) -C "${ROOTDIR}/operator" -e "OPERATOR_QUAY_TAG=${OPERATOR_QUAY_TAG}" build
 
 ## container-build: Build Kiali and Kiali operator container images
 # On x86_64 machine, build both kiali and operator images.
