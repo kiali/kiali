@@ -30,7 +30,7 @@ for exe in oc kubectl ; do
 done
 
 if [ "$CLIENT_EXE" == "" ]; then
-  echo "You must have one of these in your PATH: kubectl, oc, istiooc"
+  echo "You must have one of these in your PATH: kubectl, oc"
   exit 1
 fi
 
