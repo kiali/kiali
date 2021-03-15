@@ -263,7 +263,7 @@ metadata:
 spec:
 ...
     external_services:
-      jaeger:
+      tracing:
         url: http://jaeger-query-istio-system.127.0.0.1.nip.io
 ...
 ----

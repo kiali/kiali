@@ -22,7 +22,7 @@ external_services:
   # Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
   # Default is "svc.cluster.local" (which matches Istio's default)
   # istio_identity_domain: svc.cluster.local
-  jaeger:
+  tracing:
     url: http://jaeger-query-istio-system.127.0.0.1.nip.io
   grafana:
     url: http://grafana-istio-system.127.0.0.1.nip.io
