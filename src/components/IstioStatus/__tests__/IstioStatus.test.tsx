@@ -82,23 +82,136 @@ describe('When addon component has a problem', () => {
 });
 
 describe('When both core and addon component have problems', () => {
-  it('the Icon shows is displayed in red', () => {
-    const wrapper = mockIcon([
-      {
-        name: 'grafana',
-        status: Status.Unhealthy,
-        is_core: false
-      },
-      {
-        name: 'istio-egressgateway',
-        status: Status.Unhealthy,
-        is_core: true
-      }
-    ]);
+  describe('any component is in not ready', () => {
+    it('the Icon shows is displayed in red', () => {
+      const wrapper = mockIcon([
+        {
+          name: 'grafana',
+          status: Status.Unhealthy,
+          is_core: false
+        },
+        {
+          name: 'istio-egressgateway',
+          status: Status.Unhealthy,
+          is_core: true
+        }
+      ]);
 
-    testSnapshot(wrapper);
-    testTooltip(wrapper);
-    testIcon(wrapper, PFAlertColor.Danger);
+      testSnapshot(wrapper);
+      testTooltip(wrapper);
+      testIcon(wrapper, PFAlertColor.Danger);
+    });
+  });
+});
+
+describe('When there are not-ready components', () => {
+  describe('mixed with other not healthy components', () => {
+    describe('in core', () => {
+      it('the Icon is displayed in red', () => {
+        const wrapper = mockIcon([
+          {
+            name: 'istio-egressgateway',
+            status: Status.Unhealthy,
+            is_core: true
+          },
+          {
+            name: 'istio-ingressgateway',
+            status: Status.NotReady,
+            is_core: true
+          }
+        ]);
+
+        testSnapshot(wrapper);
+        testTooltip(wrapper);
+        testIcon(wrapper, PFAlertColor.Danger);
+      });
+    });
+
+    describe('in addons', () => {
+      it('the Icon is displayed in orange', () => {
+        const wrapper = mockIcon([
+          {
+            name: 'grafana',
+            status: Status.Unhealthy,
+            is_core: false
+          },
+          {
+            name: 'jaeger',
+            status: Status.NotReady,
+            is_core: false
+          }
+        ]);
+
+        testSnapshot(wrapper);
+        testTooltip(wrapper);
+        testIcon(wrapper, PFAlertColor.Warning);
+      });
+    });
+
+    describe('in both', () => {
+      it('the Icon shows is displayed in red', () => {
+        const wrapper = mockIcon([
+          {
+            name: 'grafana',
+            status: Status.Unhealthy,
+            is_core: false
+          },
+          {
+            name: 'jaeger',
+            status: Status.NotReady,
+            is_core: false
+          },
+          {
+            name: 'istio-egressgateway',
+            status: Status.Unhealthy,
+            is_core: true
+          },
+          {
+            name: 'istio-ingressgateway',
+            status: Status.NotReady,
+            is_core: true
+          }
+        ]);
+
+        testSnapshot(wrapper);
+        testTooltip(wrapper);
+        testIcon(wrapper, PFAlertColor.Danger);
+      });
+    });
+  });
+
+  describe('not mixed with other unhealthy components', () => {
+    describe('in core', () => {
+      it('renders the Icon in blue', () => {
+        const wrapper = mockIcon([
+          {
+            name: 'jaeger',
+            status: Status.NotReady,
+            is_core: false
+          }
+        ]);
+
+        testSnapshot(wrapper);
+        testTooltip(wrapper);
+        testIcon(wrapper, PFAlertColor.Info);
+      });
+    });
+
+    describe('in addons', () => {
+      it('renders the Icon in blue', () => {
+        const wrapper = mockIcon([
+          {
+            name: 'istiod',
+            status: Status.NotReady,
+            is_core: true
+          }
+        ]);
+
+        testSnapshot(wrapper);
+        testTooltip(wrapper);
+        testIcon(wrapper, PFAlertColor.Info);
+      });
+    });
   });
 });
 

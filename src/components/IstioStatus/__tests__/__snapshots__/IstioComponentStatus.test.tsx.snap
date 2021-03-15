@@ -60,6 +60,66 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 </Split>
 `;
 
+exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-addon"
+>
+  <SplitItem>
+    <MinusCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--info-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    addon
+  </SplitItem>
+  <SplitItem>
+    Not ready
+  </SplitItem>
+</Split>
+`;
+
+exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
+<Split
+  gutter="md"
+  key="cell-status-icon-core"
+>
+  <SplitItem>
+    <MinusCircleIcon
+      color="currentColor"
+      noVerticalAlign={false}
+      size="sm"
+      style={
+        Object {
+          "color": "var(--pf-global--info-color--100)",
+          "marginTop": 5,
+        }
+      }
+      title={null}
+    />
+  </SplitItem>
+  <SplitItem
+    isFilled={true}
+  >
+    core
+  </SplitItem>
+  <SplitItem>
+    Not ready
+  </SplitItem>
+</Split>
+`;
+
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
 <Split
   gutter="md"

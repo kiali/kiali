@@ -64,7 +64,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 </Tooltip>
 `;
 
-exports[`When both core and addon component have problems the Icon shows is displayed in red 1`] = `
+exports[`When both core and addon component have problems any component is in not ready the Icon shows is displayed in red 1`] = `
 <Tooltip
   appendTo={[Function]}
   aria="describedby"
@@ -179,6 +179,326 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 >
   <ResourcesFullIcon
     color="var(--pf-global--danger-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When there are not-ready components mixed with other not healthy components in addons the Icon is displayed in orange 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "grafana",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": false,
+            "name": "jaeger",
+            "status": "NotReady",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--warning-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When there are not-ready components mixed with other not healthy components in both the Icon shows is displayed in red 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "grafana",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": false,
+            "name": "jaeger",
+            "status": "NotReady",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-egressgateway",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-ingressgateway",
+            "status": "NotReady",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--danger-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When there are not-ready components mixed with other not healthy components in core the Icon is displayed in red 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": true,
+            "name": "istio-egressgateway",
+            "status": "Unhealthy",
+          },
+          Object {
+            "is_core": true,
+            "name": "istio-ingressgateway",
+            "status": "NotReady",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--danger-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When there are not-ready components not mixed with other unhealthy components in addons renders the Icon in blue 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": true,
+            "name": "istiod",
+            "status": "NotReady",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--info-color--100)"
+    noVerticalAlign={false}
+    size="sm"
+    style={
+      Object {
+        "marginRight": 8,
+        "verticalAlign": "-0.3em",
+      }
+    }
+    title={null}
+  />
+</Tooltip>
+`;
+
+exports[`When there are not-ready components not mixed with other unhealthy components in core renders the Icon in blue 1`] = `
+<Tooltip
+  appendTo={[Function]}
+  aria="describedby"
+  boundary="window"
+  className=""
+  content={
+    <IstioStatusList
+      status={
+        Array [
+          Object {
+            "is_core": false,
+            "name": "jaeger",
+            "status": "NotReady",
+          },
+        ]
+      }
+    />
+  }
+  distance={15}
+  enableFlip={true}
+  entryDelay={500}
+  exitDelay={500}
+  flipBehavior={
+    Array [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
+    ]
+  }
+  id=""
+  isAppLauncher={false}
+  isContentLeftAligned={false}
+  isVisible={false}
+  maxWidth="25rem"
+  position="left"
+  tippyProps={Object {}}
+  trigger="mouseenter focus"
+  zIndex={9999}
+>
+  <ResourcesFullIcon
+    color="var(--pf-global--info-color--100)"
     noVerticalAlign={false}
     size="sm"
     style={

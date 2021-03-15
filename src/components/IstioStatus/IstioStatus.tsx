@@ -30,10 +30,14 @@ type ReduxProps = {
 type Props = ReduxProps & {};
 
 const ValidToColor = {
-  'false-false': PFAlertColor.Danger,
-  'false-true': PFAlertColor.Danger,
-  'true-false': PFAlertColor.Warning,
-  'true-true': PFAlertColor.Success
+  'true-true-true': PFAlertColor.Danger,
+  'true-true-false': PFAlertColor.Danger,
+  'true-false-true': PFAlertColor.Danger,
+  'true-false-false': PFAlertColor.Danger,
+  'false-true-true': PFAlertColor.Warning,
+  'false-true-false': PFAlertColor.Warning,
+  'false-false-true': PFAlertColor.Info,
+  'false-false-false': PFAlertColor.Success
 };
 
 export class IstioStatus extends React.Component<Props> {
@@ -69,21 +73,25 @@ export class IstioStatus extends React.Component<Props> {
   };
 
   tooltipColor = () => {
-    let coreHealthy: boolean = true;
-    let addonHealthy: boolean = true;
+    let coreUnhealthy: boolean = false;
+    let addonUnhealthy: boolean = false;
+    let notReady: boolean = false;
 
     Object.keys(this.props.status || {}).forEach((compKey: string) => {
       const { status, is_core } = this.props.status[compKey];
-      const isHealthy: boolean = status === Status.Healthy;
+      const isNotReady: boolean = status === Status.NotReady;
+      const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
 
       if (is_core) {
-        coreHealthy = coreHealthy && isHealthy;
+        coreUnhealthy = coreUnhealthy || isUnhealthy;
       } else {
-        addonHealthy = addonHealthy && isHealthy;
+        addonUnhealthy = addonUnhealthy || isUnhealthy;
       }
+
+      notReady = notReady || isNotReady;
     });
 
-    return ValidToColor[`${coreHealthy}-${addonHealthy}`];
+    return ValidToColor[`${coreUnhealthy}-${addonUnhealthy}-${notReady}`];
   };
 
   healthyComponents = () => {

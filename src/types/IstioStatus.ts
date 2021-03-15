@@ -2,7 +2,8 @@ export enum Status {
   Healthy = 'Healthy',
   Unhealthy = 'Unhealthy',
   Unreachable = 'Unreachable',
-  NotFound = 'NotFound'
+  NotFound = 'NotFound',
+  NotReady = 'NotReady'
 }
 
 export interface ComponentStatus {
