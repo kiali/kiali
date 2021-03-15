@@ -16,7 +16,7 @@ type (
 	}
 )
 
-func (c *kialiCacheImpl) CheckProxyStatus() bool {
+func (c *kialiMeshCacheImpl) CheckProxyStatus() bool {
 	defer c.proxyStatusLock.RUnlock()
 	c.proxyStatusLock.RLock()
 	if c.proxyStatusCreated == nil {
@@ -28,7 +28,7 @@ func (c *kialiCacheImpl) CheckProxyStatus() bool {
 	return true
 }
 
-func (c *kialiCacheImpl) GetPodProxyStatus(namespace, pod string) *kubernetes.ProxyStatus {
+func (c *kialiMeshCacheImpl) GetPodProxyStatus(namespace, pod string) *kubernetes.ProxyStatus {
 	defer c.proxyStatusLock.RUnlock()
 	c.proxyStatusLock.RLock()
 	if nsProxyStatus, ok := c.proxyStatusNamespaces[namespace]; ok {
@@ -39,7 +39,7 @@ func (c *kialiCacheImpl) GetPodProxyStatus(namespace, pod string) *kubernetes.Pr
 	return nil
 }
 
-func (c *kialiCacheImpl) SetProxyStatus(proxyStatus []*kubernetes.ProxyStatus) {
+func (c *kialiMeshCacheImpl) SetProxyStatus(proxyStatus []*kubernetes.ProxyStatus) {
 	defer c.proxyStatusLock.Unlock()
 	c.proxyStatusLock.Lock()
 	if len(proxyStatus) > 0 {
@@ -67,7 +67,7 @@ func (c *kialiCacheImpl) SetProxyStatus(proxyStatus []*kubernetes.ProxyStatus) {
 	}
 }
 
-func (c *kialiCacheImpl) RefreshProxyStatus() {
+func (c *kialiMeshCacheImpl) RefreshProxyStatus() {
 	defer c.proxyStatusLock.Unlock()
 	c.proxyStatusLock.Lock()
 	c.proxyStatusNamespaces = make(map[string]map[string]podProxyStatus)

@@ -100,7 +100,7 @@ func NewClientForConfig(cfg config.PrometheusConfig) (*Client, error) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, httputil.DefaultTimeout)
+	transportConfig, err := httputil.CreateTransport(&auth, roundTripper, kubernetes.GetTimeout())
 	if err != nil {
 		return nil, err
 	}

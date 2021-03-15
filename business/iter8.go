@@ -19,7 +19,7 @@ import (
 )
 
 type Iter8Service struct {
-	k8s           kubernetes.ClientInterface
+	k8s           kubernetes.KubeClientInterface
 	businessLayer *Layer
 }
 
@@ -36,7 +36,7 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 	// It will be considered enabled if the extension is present in the Kiali configuration and the CRD is enabled on the cluster
 	if conf.Extensions.Iter8.Enabled && in.k8s.IsIter8Api() {
 		if IsNamespaceCached(conf.Extensions.Iter8.Namespace) {
-			ps, err = kialiCache.GetPods(conf.Extensions.Iter8.Namespace, "")
+			ps, err = kialiKubeCache.GetPods(conf.Extensions.Iter8.Namespace, "")
 		} else {
 			ps, err = in.k8s.GetPods(conf.Extensions.Iter8.Namespace, "")
 		}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/kiali/kubernetes"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -36,7 +37,7 @@ func TestAppMetricsDefault(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
-	delta := 15 * time.Second
+	delta := kubernetes.GetK8sTimeout()
 	var gaugeSentinel uint32
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
@@ -172,7 +173,8 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	ts := httptest.NewServer(mr)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, prom)
 
 	return ts, xapi, k8s
 }
@@ -185,7 +187,8 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 	prom := new(prometheustest.PromClientMock)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(

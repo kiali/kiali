@@ -201,7 +201,7 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 
 func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
-
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
@@ -213,6 +213,6 @@ func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	return businessLayer
 }

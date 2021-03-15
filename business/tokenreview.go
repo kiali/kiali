@@ -7,7 +7,7 @@ import (
 )
 
 type TokenReviewService struct {
-	k8s kubernetes.ClientInterface
+	k8s kubernetes.KubeClientInterface
 }
 
 type AccessibleTokenReviewError struct {
@@ -18,7 +18,7 @@ func (in *AccessibleTokenReviewError) Error() string {
 	return in.msg
 }
 
-func NewTokenReview(k8s kubernetes.ClientInterface) TokenReviewService {
+func NewTokenReview(k8s kubernetes.KubeClientInterface) TokenReviewService {
 
 	return TokenReviewService{
 		k8s: k8s,

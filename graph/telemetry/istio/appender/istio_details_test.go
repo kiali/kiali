@@ -49,6 +49,7 @@ func TestCBAll(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 	dRule := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "dRule-1",
@@ -59,14 +60,14 @@ func TestCBAll(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -106,6 +107,7 @@ func TestCBSubset(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 	dRule := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "dRule-1",
@@ -121,14 +123,14 @@ func TestCBSubset(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
@@ -168,6 +170,7 @@ func TestVS(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 	vService := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "vService-1",
@@ -190,14 +193,14 @@ func TestVS(t *testing.T) {
 		},
 	}
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{{}}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return([]kubernetes.IstioObject{
 		vService.DeepCopyIstioObject(),
 	}, nil)
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))

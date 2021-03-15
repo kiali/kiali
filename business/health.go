@@ -18,7 +18,7 @@ import (
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
+	k8s           kubernetes.KubeClientInterface
 	businessLayer *Layer
 }
 
@@ -175,7 +175,7 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 
 	// Check if namespace is cached
 	if IsNamespaceCached(namespace) {
-		services, err = kialiCache.GetServices(namespace, nil)
+		services, err = kialiKubeCache.GetServices(namespace, nil)
 	} else {
 		services, err = in.k8s.GetServices(namespace, nil)
 	}

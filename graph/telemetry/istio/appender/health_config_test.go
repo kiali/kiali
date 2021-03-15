@@ -132,7 +132,7 @@ func buildFakePodsHealth(rate string) []core_v1.Pod {
 
 func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
-
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
@@ -145,6 +145,6 @@ func setupHealthConfig(services []core_v1.Service, deployments []apps_v1.Deploym
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return(services, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	return businessLayer
 }

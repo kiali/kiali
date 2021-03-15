@@ -300,7 +300,7 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 	)
 
 	product := ExternalServiceInfo{}
-	k8sConfig, err = kubernetes.ConfigClient()
+	k8sConfig, err = kubernetes.ConfigClient(kubernetes.Remote)
 	if err == nil {
 		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
 		k8sConfig.Burst = config.Get().KubernetesConfig.Burst

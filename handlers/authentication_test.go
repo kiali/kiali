@@ -577,7 +577,8 @@ func mockK8s(reject bool) {
 	prom := new(prometheustest.PromClientMock)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, prom)
 
 	if reject {
 		k8s.On("GetProjects", mock.AnythingOfType("string")).Return([]osproject_v1.Project{}, fmt.Errorf("Rejecting"))

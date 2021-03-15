@@ -12,7 +12,8 @@ import (
 )
 
 type TLSService struct {
-	k8s             kubernetes.ClientInterface
+	kubeK8s         kubernetes.KubeClientInterface
+	meshK8s         kubernetes.MeshClientInterface
 	businessLayer   *Layer
 	enabledAutoMtls *bool
 }
@@ -52,9 +53,9 @@ func (in *TLSService) getMeshPeerAuthentications() ([]kubernetes.IstioObject, er
 	var err error
 	controlPlaneNs := config.Get().IstioNamespace
 	if IsResourceCached(controlPlaneNs, kubernetes.PeerAuthentications) {
-		mps, err = kialiCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+		mps, err = kialiMeshCache.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 	} else {
-		mps, err = in.k8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
+		mps, err = in.meshK8s.GetIstioObjects(controlPlaneNs, kubernetes.PeerAuthentications, "")
 	}
 	return mps, err
 }
@@ -74,9 +75,9 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 			// Check if namespace is cached
 			// Namespace access is checked in the upper call
 			if IsResourceCached(ns, kubernetes.DestinationRules) {
-				drs, err = kialiCache.GetIstioObjects(ns, kubernetes.DestinationRules, "")
+				drs, err = kialiMeshCache.GetIstioObjects(ns, kubernetes.DestinationRules, "")
 			} else {
-				drs, err = in.k8s.GetIstioObjects(ns, kubernetes.DestinationRules, "")
+				drs, err = in.meshK8s.GetIstioObjects(ns, kubernetes.DestinationRules, "")
 			}
 			if err != nil {
 				errChan <- err
@@ -139,9 +140,9 @@ func (in TLSService) getPeerAuthentications(namespace string) ([]kubernetes.Isti
 		return []kubernetes.IstioObject{}, nil
 	}
 	if IsResourceCached(namespace, kubernetes.PeerAuthentications) {
-		return kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+		return kialiMeshCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 	} else {
-		return in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+		return in.meshK8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 	}
 }
 
@@ -168,9 +169,9 @@ func (in *TLSService) hasAutoMTLSEnabled() bool {
 	var istioConfig *core_v1.ConfigMap
 	var err error
 	if IsNamespaceCached(cfg.IstioNamespace) {
-		istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+		istioConfig, err = kialiKubeCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	} else {
-		istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+		istioConfig, err = in.kubeK8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	}
 	if err != nil {
 		return true

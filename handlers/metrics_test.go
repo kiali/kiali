@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/kiali/kubernetes"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
@@ -154,7 +155,7 @@ func TestAggregateMetricsDefault(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/aggregates/my_aggregate/my_aggregate_value/metrics"
 	now := time.Now()
-	delta := 15 * time.Second
+	delta := kubernetes.GetK8sTimeout()
 	var gaugeSentinel uint32
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
@@ -335,7 +336,8 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	ts := httptest.NewServer(mr)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, prom)
 
 	return ts, xapi, k8s
 }

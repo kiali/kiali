@@ -21,6 +21,7 @@ import (
 
 func setupWorkloads() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -102,7 +103,7 @@ func setupWorkloads() *business.Layer {
 	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	return businessLayer
 }
 

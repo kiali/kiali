@@ -375,7 +375,7 @@ type Iter8ClientInterface interface {
 	Iter8MetricMap() ([]string, error)
 }
 
-func (in *K8SClient) IsIter8Api() bool {
+func (in *KubeK8SClient) IsIter8Api() bool {
 	if in.isIter8Api == nil {
 		isIter8Api := false
 		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/iter8.tools").Do(in.ctx).Raw()
@@ -388,7 +388,7 @@ func (in *K8SClient) IsIter8Api() bool {
 	return *in.isIter8Api
 }
 
-func (in *K8SClient) Iter8MetricMap() ([]string, error) {
+func (in *KubeK8SClient) Iter8MetricMap() ([]string, error) {
 	conf := config.Get()
 	mnames := make([]string, 0)
 	var result = &core_v1.ConfigMap{}
@@ -407,7 +407,7 @@ func (in *K8SClient) Iter8MetricMap() ([]string, error) {
 	return mnames, err
 }
 
-func (in *K8SClient) CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error) {
+func (in *KubeK8SClient) CreateIter8Experiment(namespace string, json string) (Iter8Experiment, error) {
 	var result runtime.Object
 	var err error
 	byteJson := []byte(json)
@@ -424,7 +424,7 @@ func (in *K8SClient) CreateIter8Experiment(namespace string, json string) (Iter8
 	return i8, nil
 }
 
-func (in *K8SClient) UpdateIter8Experiment(namespace string, name string, json string) (Iter8Experiment, error) {
+func (in *KubeK8SClient) UpdateIter8Experiment(namespace string, name string, json string) (Iter8Experiment, error) {
 	var result runtime.Object
 	var err error
 	byteJson := []byte(json)
@@ -441,7 +441,7 @@ func (in *K8SClient) UpdateIter8Experiment(namespace string, name string, json s
 	return i8, nil
 }
 
-func (in *K8SClient) GetIter8Experiment(namespace string, name string) (Iter8Experiment, error) {
+func (in *KubeK8SClient) GetIter8Experiment(namespace string, name string) (Iter8Experiment, error) {
 	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).SubResource(name).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
@@ -455,7 +455,7 @@ func (in *K8SClient) GetIter8Experiment(namespace string, name string) (Iter8Exp
 	return i8, nil
 }
 
-func (in *K8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, error) {
+func (in *KubeK8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, error) {
 	result, err := in.iter8Api.Get().Namespace(namespace).Resource(Iter8Experiments).Do(in.ctx).Get()
 	if err != nil {
 		return nil, err
@@ -473,7 +473,7 @@ func (in *K8SClient) GetIter8Experiments(namespace string) ([]Iter8Experiment, e
 	return iter8Experiments, nil
 }
 
-func (in *K8SClient) DeleteIter8Experiment(namespace string, name string) error {
+func (in *KubeK8SClient) DeleteIter8Experiment(namespace string, name string) error {
 	var err error
 	_, err = in.iter8Api.Delete().Namespace(namespace).Resource(Iter8Experiments).Name(name).Do(in.ctx).Get()
 	return err

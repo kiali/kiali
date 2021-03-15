@@ -29,7 +29,7 @@ import (
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
+	k8s           kubernetes.KubeClientInterface
 	businessLayer *Layer
 }
 
@@ -120,7 +120,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 		if IsNamespaceCached(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
 			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-				services, err = kialiCache.GetServices(namespace, workload.Labels)
+				services, err = kialiKubeCache.GetServices(namespace, workload.Labels)
 			}
 		} else {
 			services, err = in.k8s.GetServices(namespace, workload.Labels)
@@ -149,8 +149,8 @@ func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string,
 	}
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
+	if kialiKubeCache != nil && err == nil {
+		kialiKubeCache.RefreshNamespace(namespace)
 	}
 
 	// After the update we fetch the whole workload
@@ -167,7 +167,7 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	if IsNamespaceCached(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
 		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-			ps, err = kialiCache.GetPods(namespace, labelSelector)
+			ps, err = kialiKubeCache.GetPods(namespace, labelSelector)
 		}
 	} else {
 		ps, err = in.k8s.GetPods(namespace, labelSelector)
@@ -365,7 +365,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, labelSelector)
+			pods, err = kialiKubeCache.GetPods(namespace, labelSelector)
 		} else {
 			pods, err = layer.k8s.GetPods(namespace, labelSelector)
 		}
@@ -381,7 +381,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if IsNamespaceCached(namespace) {
-			dep, err = kialiCache.GetDeployments(namespace)
+			dep, err = kialiKubeCache.GetDeployments(namespace)
 		} else {
 			dep, err = layer.k8s.GetDeployments(namespace)
 		}
@@ -397,7 +397,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			repset, err = kialiKubeCache.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
@@ -436,7 +436,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
 			if IsNamespaceCached(namespace) {
-				fulset, err = kialiCache.GetStatefulSets(namespace)
+				fulset, err = kialiKubeCache.GetStatefulSets(namespace)
 			} else {
 				fulset, err = layer.k8s.GetStatefulSets(namespace)
 			}
@@ -887,7 +887,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, "")
+			pods, err = kialiKubeCache.GetPods(namespace, "")
 		} else {
 			pods, err = layer.k8s.GetPods(namespace, "")
 		}
@@ -907,7 +907,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			dep, err = kialiCache.GetDeployment(namespace, workloadName)
+			dep, err = kialiKubeCache.GetDeployment(namespace, workloadName)
 		} else {
 			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
 		}
@@ -932,7 +932,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			repset, err = kialiKubeCache.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
@@ -982,7 +982,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		var err error
 		if isWorkloadIncluded(kubernetes.StatefulSetType) {
 			if IsNamespaceCached(namespace) {
-				fulset, err = kialiCache.GetStatefulSet(namespace, workloadName)
+				fulset, err = kialiKubeCache.GetStatefulSet(namespace, workloadName)
 			} else {
 				fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
 			}

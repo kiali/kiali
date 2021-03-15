@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/kiali/kubernetes"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,7 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/metrics"
 	now := time.Now()
-	delta := 15 * time.Second
+	delta := kubernetes.GetK8sTimeout()
 	var gaugeSentinel uint32
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
@@ -208,8 +209,9 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	}
 	client.Inject(api)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
+	mockKubeClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockKubeClientFactory, mockMeshClientFactory, nil)
 
 	return client, api, k8s, nil
 }

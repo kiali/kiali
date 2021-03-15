@@ -19,7 +19,7 @@ import (
 )
 
 type OpenshiftOAuthService struct {
-	k8s kubernetes.ClientInterface
+	k8s kubernetes.KubeClientInterface
 }
 
 type OAuthMetadata struct {
@@ -168,7 +168,7 @@ func getKialiRoutePath(routeName string) (*string, error) {
 		return nil, fmt.Errorf("cannot read Kiali's Namespace: %v", err)
 	}
 
-	conf, err := kubernetes.ConfigClient()
+	conf, err := kubernetes.ConfigClient(kubernetes.Remote)
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not get openshift config client: %v", err)
@@ -198,7 +198,7 @@ func getKialiRoutePath(routeName string) (*string, error) {
 }
 
 func (in *OpenshiftOAuthService) Logout(token string) error {
-	conf, err := kubernetes.ConfigClient()
+	conf, err := kubernetes.ConfigClient(kubernetes.Remote)
 
 	if err != nil {
 		log.Error(err)

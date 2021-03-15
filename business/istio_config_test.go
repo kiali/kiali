@@ -180,20 +180,21 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 func mockGetIstioConfigList() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "gateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return(fakeGetVirtualServices(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return(fakeGetDestinationRules(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(fakeGetServiceEntries(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "rules", "").Return(fakeGetIstioRules(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "adapters", "").Return(fakeGetAdapters(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "templates", "").Return(fakeGetTemplates(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecs", "").Return(fakeGetQuotaSpecs(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecbindings", "").Return(fakeGetQuotaSpecBindings(), nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "policies", "").Return(fakeGetPolicies(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "gateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "virtualservices", "").Return(fakeGetVirtualServices(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "destinationrules", "").Return(fakeGetDestinationRules(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return(fakeGetServiceEntries(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "rules", "").Return(fakeGetIstioRules(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "adapters", "").Return(fakeGetAdapters(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "templates", "").Return(fakeGetTemplates(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecs", "").Return(fakeGetQuotaSpecs(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "quotaspecbindings", "").Return(fakeGetQuotaSpecBindings(), nil)
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "policies", "").Return(fakeGetPolicies(), nil)
 
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	return IstioConfigService{kubeK8s: k8s, meshK8s: meshK8s, businessLayer: NewWithBackends(k8s, meshK8s, nil, nil)}
 }
 
 func fakeGetGateways() []kubernetes.IstioObject {
@@ -500,20 +501,21 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 
 func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObject", "test", "gateways", "gw-1").Return(fakeGetGateways()[0], nil)
-	k8s.On("GetIstioObject", "test", "virtualservices", "reviews").Return(fakeGetVirtualServices()[0], nil)
-	k8s.On("GetIstioObject", "test", "destinationrules", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
-	k8s.On("GetIstioObject", "test", "serviceentries", "googleapis").Return(fakeGetServiceEntries()[0], nil)
-	k8s.On("GetIstioObject", "test", "rules", "checkfromcustomer").Return(fakeCheckFromCustomerRule(), nil)
-	k8s.On("GetIstioObject", "test", "adapters", "preferencewhitelist").Return(fakeGetAdapters()[0], nil)
-	k8s.On("GetIstioObject", "test", "templates", "preferencesource").Return(fakeGetTemplates()[0], nil)
-	k8s.On("GetIstioObject", "test", "quotaspecs", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
-	k8s.On("GetIstioObject", "test", "quotaspecbindings", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "gateways", "gw-1").Return(fakeGetGateways()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "virtualservices", "reviews").Return(fakeGetVirtualServices()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "destinationrules", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "serviceentries", "googleapis").Return(fakeGetServiceEntries()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "rules", "checkfromcustomer").Return(fakeCheckFromCustomerRule(), nil)
+	meshK8s.On("GetIstioObject", "test", "adapters", "preferencewhitelist").Return(fakeGetAdapters()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "templates", "preferencesource").Return(fakeGetTemplates()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "quotaspecs", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
+	meshK8s.On("GetIstioObject", "test", "quotaspecbindings", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
-	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	return IstioConfigService{kubeK8s: k8s, meshK8s: meshK8s, businessLayer: NewWithBackends(k8s, meshK8s, nil, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {
@@ -659,10 +661,10 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 }
 
 func mockDeleteIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
-	k8s.On("DeleteIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-delete").Return(nil)
-	k8s.On("DeleteIstioObject", "config.istio.io", "test", "templates", "listchecker-to-delete").Return(nil)
-	return IstioConfigService{k8s: k8s}
+	meshK8s := new(kubetest.K8SClientMock)
+	meshK8s.On("DeleteIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-delete").Return(nil)
+	meshK8s.On("DeleteIstioObject", "config.istio.io", "test", "templates", "listchecker-to-delete").Return(nil)
+	return IstioConfigService{meshK8s: meshK8s}
 }
 
 func TestUpdateIstioConfigDetails(t *testing.T) {
@@ -678,6 +680,7 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 
 func mockUpdateIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	var updatedVirtualService, updatedTemplate kubernetes.IstioObject
 
 	updatedVirtualService = &kubernetes.GenericIstioObject{
@@ -692,14 +695,14 @@ func mockUpdateIstioConfigDetails() IstioConfigService {
 			Namespace: "test",
 		},
 	}
-	k8s.On("UpdateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(updatedVirtualService, nil)
-	k8s.On("UpdateIstioObject", "config.istio.io", "test", "templates", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
-	return IstioConfigService{k8s: k8s}
+	meshK8s.On("UpdateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(updatedVirtualService, nil)
+	meshK8s.On("UpdateIstioObject", "config.istio.io", "test", "templates", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
+	return IstioConfigService{kubeK8s: k8s, meshK8s: meshK8s}
 }
 
 // mockCreateIstioConfigDetails to verify the behavior of API calls is the same for create and update
 func mockCreateIstioConfigDetails() IstioConfigService {
-	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	var createdVirtualService, createdTemplate kubernetes.IstioObject
 
 	createdVirtualService = &kubernetes.GenericIstioObject{
@@ -714,9 +717,9 @@ func mockCreateIstioConfigDetails() IstioConfigService {
 			Namespace: "test",
 		},
 	}
-	k8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
-	k8s.On("CreateIstioObject", "config.istio.io", "test", "templates", mock.AnythingOfType("string")).Return(createdTemplate, nil)
-	return IstioConfigService{k8s: k8s}
+	meshK8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
+	meshK8s.On("CreateIstioObject", "config.istio.io", "test", "templates", mock.AnythingOfType("string")).Return(createdTemplate, nil)
+	return IstioConfigService{meshK8s: meshK8s}
 }
 
 func TestCreateIstioConfigDetails(t *testing.T) {

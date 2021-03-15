@@ -55,7 +55,7 @@ func GetRemoteSecret(path string) (*RemoteSecret, error) {
 // GetSecrets returns a list of secrets for a given namespace.
 // If selectorLabels is defined, the list will only contain services matching
 // the specified label selector.
-func (in *K8SClient) GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error) {
+func (in *KubeK8SClient) GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error) {
 	listOptions := emptyListOptions
 	if len(labelSelector) > 0 {
 		listOptions = meta_v1.ListOptions{LabelSelector: labelSelector}

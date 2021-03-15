@@ -11,7 +11,7 @@ import (
 // TestClientExpiry Verify that clients expire
 func TestClientExpiry(t *testing.T) {
 	istioConfig := rest.Config{}
-	clientFactory, _ := getClientFactory(&istioConfig, time.Millisecond*100)
+	clientFactory, _ := getKubeClientFactory(&istioConfig, time.Millisecond*100)
 
 	clientEntries := clientFactory.clientEntries
 	// Make sure we are starting off with an empty set of clients
@@ -21,7 +21,7 @@ func TestClientExpiry(t *testing.T) {
 
 	mutex.Lock()
 	// Create a single initial test client
-	clientEntries["foo"] = &clientEntry{
+	clientEntries["foo"] = &kubeClientEntry{
 		created: time.Now(),
 	}
 	mutex.Unlock()
@@ -36,7 +36,7 @@ func TestClientExpiry(t *testing.T) {
 	// Sleep for a bit and add another client
 	time.Sleep(time.Millisecond * 25)
 	mutex.Lock()
-	clientEntries["bar"] = &clientEntry{
+	clientEntries["bar"] = &kubeClientEntry{
 		created: time.Now(),
 	}
 	mutex.Unlock()

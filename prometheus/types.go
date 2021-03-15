@@ -3,6 +3,7 @@ package prometheus
 import (
 	"time"
 
+	"github.com/kiali/kiali/kubernetes"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
@@ -21,7 +22,7 @@ type RangeQuery struct {
 func (q *RangeQuery) FillDefaults() {
 	q.End = time.Now()
 	q.Start = q.End.Add(-30 * time.Minute)
-	q.Step = 15 * time.Second
+	q.Step = kubernetes.GetK8sTimeout()
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
 	q.Avg = true

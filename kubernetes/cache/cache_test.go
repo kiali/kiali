@@ -11,8 +11,8 @@ import (
 func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCacheImpl := kialiCacheImpl{
-		istioClient:     kubernetes.K8SClient{},
+	kialiCacheImpl := kialiKubeCacheImpl{
+		istioClient:     kubernetes.KubeK8SClient{},
 		refreshDuration: 0,
 		cacheNamespaces: []string{"bookinfo", "a.*", "galicia"},
 		stopChan:        nil,

@@ -39,7 +39,8 @@ func utilSetupMocks(t *testing.T) (promClientSupplier, *prometheustest.PromAPIMo
 	prom.Inject(promAPI)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, nil)
 	return func() (*prometheus.Client, error) { return prom, nil }, promAPI, k8s
 }
 

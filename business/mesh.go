@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,12 +20,12 @@ import (
 // when Istio is installed with multi-cluster enabled. Prefer initializing this
 // type via the NewMeshService function.
 type MeshService struct {
-	k8s kubernetes.ClientInterface
+	k8s kubernetes.KubeClientInterface
 
 	// newRemoteClient is a helper variable holding a function that should return an
 	// initialized kubernetes client using the specified config argument. This was created,
 	// mainly, for tests to set a function returning a mock of the kuberentes client.
-	newRemoteClient func(config *rest.Config) (kubernetes.ClientInterface, error)
+	newRemoteClient func(config *rest.Config) (kubernetes.KubeClientInterface, error)
 }
 
 // Cluster holds some metadata about a cluster that is
@@ -83,10 +82,10 @@ type meshIdConfig struct {
 // NewMeshService initializes a new MeshService structure with the given k8s client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
-func NewMeshService(k8s kubernetes.ClientInterface, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
+func NewMeshService(k8s kubernetes.KubeClientInterface, newRemoteClientFunc func(config *rest.Config) (kubernetes.KubeClientInterface, error)) MeshService {
 	if newRemoteClientFunc == nil {
-		newRemoteClientFunc = func(config *rest.Config) (kubernetes.ClientInterface, error) {
-			return kubernetes.NewClientFromConfig(config)
+		newRemoteClientFunc = func(config *rest.Config) (kubernetes.KubeClientInterface, error) {
+			return kubernetes.NewKubeClientFromConfig(config)
 		}
 	}
 
@@ -187,7 +186,7 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	// Since this is dealing with the "home" cluster, we assume that the API Endpoint
 	// is the one that we are querying. So we get the client configuration and we
 	// extract the host, which is our API endpoint.
-	restConfig, err := kubernetes.ConfigClient()
+	restConfig, err := kubernetes.ConfigClient(kubernetes.Primary)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +216,7 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 // The clientSet argument should be an already initialized REST client to the API server of the
 // cluster. The namespace argument specifies the namespace where a Kiali instance will be looked for.
 // The clusterName argument is for logging purposes only.
-func findKialiInNamespace(namespace string, clusterName string, clientSet kubernetes.ClientInterface) (instances []KialiInstance) {
+func findKialiInNamespace(namespace string, clusterName string, clientSet kubernetes.KubeClientInterface) (instances []KialiInstance) {
 	kialiNs, getNsErr := clientSet.GetNamespace(namespace)
 	if getNsErr != nil && !errors.IsNotFound(getNsErr) {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, getNsErr.Error())
@@ -259,7 +258,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 		return nil
 	}
 
-	restConfig.Timeout = 15 * time.Second
+	restConfig.Timeout = kubernetes.GetK8sTimeout()
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
 	clientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
@@ -443,7 +442,7 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 		return ""
 	}
 
-	restConfig.Timeout = 15 * time.Second
+	restConfig.Timeout = kubernetes.GetK8sTimeout()
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
 	clientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {

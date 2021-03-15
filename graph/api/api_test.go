@@ -78,7 +78,8 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	client.Inject(api)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, nil)
 
 	return client, api, k8s, nil
 }
@@ -151,7 +152,8 @@ func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheust
 	client.Inject(api)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, nil)
 
 	return client, api, k8s, nil
 }

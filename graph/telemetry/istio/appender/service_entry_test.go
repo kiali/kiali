@@ -18,6 +18,7 @@ import (
 
 func setupServiceEntries(exportTo interface{}) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 
 	externalSE := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -46,13 +47,13 @@ func setupServiceEntries(exportTo interface{}) *business.Layer {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&externalSE,
 		&internalSE},
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 	return businessLayer
 }
 
@@ -670,6 +671,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 
 	// Mock the k8s client with a "global" ServiceEntry
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 
 	remoteSE := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -683,12 +685,12 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&remoteSE},
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)
@@ -741,6 +743,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 
 func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 
 	SE1 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -771,13 +774,13 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&SE1,
 		&SE2},
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 
 	assert := assert.New(t)
 
@@ -874,6 +877,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 
 func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
+	meshK8s := kubetest.NewK8SClientMock()
 
 	SE1 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -904,13 +908,13 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	}
 
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
-	k8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
+	meshK8s.On("GetIstioObjects", mock.AnythingOfType("string"), "serviceentries", "").Return([]kubernetes.IstioObject{
 		&SE1,
 		&SE2},
 		nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.NewWithBackends(k8s, nil, nil)
+	businessLayer := business.NewWithBackends(k8s, meshK8s, nil, nil)
 
 	assert := assert.New(t)
 

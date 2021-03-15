@@ -2,20 +2,19 @@ package kubernetes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -29,8 +28,126 @@ var (
 	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
 
+type MeshK8SClient struct {
+	MeshClientInterface
+	token              string
+	k8s                *kube.Clientset
+	istioNetworkingApi *rest.RESTClient
+	istioSecurityApi   *rest.RESTClient
+	iter8Api           *rest.RESTClient
+	// Used in REST queries after bump to client-go v0.20.x
+	ctx context.Context
+	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
+	// It is represented as a pointer to include the initialization phase.
+	// See kubernetes_service.go#IsOpenShift() for more details.
+	isOpenShift *bool
+
+	// isIter8Api private variable will check if extension Iter8 API is present.
+	// It is represented as a pointer to include the initialization phase.
+	// See iter8.go#IsIter8Api() for more details
+	isIter8Api *bool
+
+	// networkingResources private variable will check which resources kiali has access to from networking.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasNetworkingResource() for more details.
+	networkingResources *map[string]bool
+
+	// securityResources private variable will check which resources kiali has access to from security.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#hasSecurityResource() for more details.
+	securityResources *map[string]bool
+}
+
+// GetK8sApi returns the clientset referencing all K8s rest clients
+func (client *MeshK8SClient) GetK8sApi() *kube.Clientset {
+	return client.k8s
+}
+
+// GetIstioNetworkingApi returns the istio config rest client
+func (client *MeshK8SClient) GetIstioNetworkingApi() *rest.RESTClient {
+	return client.istioNetworkingApi
+}
+
+// GetIstioSecurityApi returns the istio security rest client
+func (client *MeshK8SClient) GetIstioSecurityApi() *rest.RESTClient {
+	return client.istioSecurityApi
+}
+
+// GetToken returns the BearerToken used from the config
+func (client *MeshK8SClient) GetToken() string {
+	return client.token
+}
+
+func NewMeshClientFromConfig(config *rest.Config) (*MeshK8SClient, error) {
+	client := MeshK8SClient{
+		token: config.BearerToken,
+	}
+
+	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
+
+	k8s, err := kube.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	client.k8s = k8s
+
+	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
+	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
+	types := runtime.NewScheme()
+	schemeBuilder := runtime.NewSchemeBuilder(
+		func(scheme *runtime.Scheme) error {
+			// Register networking types
+			for _, nt := range networkingTypes {
+				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
+			}
+			for _, rt := range securityTypes {
+				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(SecurityGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
+			}
+			// Register Extension (iter8) types
+			for _, rt := range iter8Types {
+				// We will use a Iter8ExperimentObject which only contains metadata and spec with interfaces
+				// model objects will be responsible to parse it
+				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.objectKind), &Iter8ExperimentObject{})
+				scheme.AddKnownTypeWithName(Iter8GroupVersion.WithKind(rt.collectionKind), &Iter8ExperimentObjectList{})
+			}
+
+			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, SecurityGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, Iter8GroupVersion)
+			return nil
+		})
+
+	err = schemeBuilder.AddToScheme(types)
+	if err != nil {
+		return nil, err
+	}
+
+	istioNetworkingAPI, err := newClientForAPI(config, NetworkingGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
+	istioSecurityApi, err := newClientForAPI(config, SecurityGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
+	iter8Api, err := newClientForAPI(config, Iter8GroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
+	client.istioNetworkingApi = istioNetworkingAPI
+	client.istioSecurityApi = istioSecurityApi
+	client.iter8Api = iter8Api
+	client.ctx = context.Background()
+	return &client, nil
+}
+
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
-func (in *K8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
+func (in *MeshK8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
 	if apiGroup == NetworkingGroupVersion.Group {
 		return in.istioNetworkingApi, ApiNetworkingVersion
 	} else if apiGroup == SecurityGroupVersion.Group {
@@ -40,7 +157,7 @@ func (in *K8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, str
 }
 
 // CreateIstioObject creates an Istio object
-func (in *K8SClient) CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error) {
+func (in *MeshK8SClient) CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error) {
 	var result runtime.Object
 	var err error
 
@@ -71,7 +188,7 @@ func (in *K8SClient) CreateIstioObject(api, namespace, resourceType, json string
 }
 
 // DeleteIstioObject deletes an Istio object from either config api or networking api
-func (in *K8SClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
+func (in *MeshK8SClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
 	log.Debugf("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var err error
 	apiClient, _ := in.getApiClientVersion(api)
@@ -83,7 +200,7 @@ func (in *K8SClient) DeleteIstioObject(api, namespace, resourceType, name string
 }
 
 // UpdateIstioObject updates an Istio object from either config api or networking api
-func (in *K8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
+func (in *MeshK8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
 	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var result runtime.Object
 	var err error
@@ -111,7 +228,7 @@ func (in *K8SClient) UpdateIstioObject(api, namespace, resourceType, name, jsonP
 	return istioObject, err
 }
 
-func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error) {
+func (in *MeshK8SClient) GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error) {
 	var apiClient *rest.RESTClient
 	var apiGroup, apiVersion string
 	var ok bool
@@ -152,7 +269,7 @@ func (in *K8SClient) GetIstioObjects(namespace, resourceType, labelSelector stri
 	return list, nil
 }
 
-func (in *K8SClient) GetIstioObject(namespace, resourceType, name string) (IstioObject, error) {
+func (in *MeshK8SClient) GetIstioObject(namespace, resourceType, name string) (IstioObject, error) {
 	var apiClient *rest.RESTClient
 	var apiGroup, apiVersion string
 	var ok bool
@@ -201,79 +318,8 @@ type SyncStatus struct {
 	EndpointAcked string `json:"endpoint_acked,omitempty"`
 }
 
-func (in *K8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
-	c := config.Get()
-	istiods, err := in.GetPods(c.IstioNamespace, labels.Set(map[string]string{
-		"app": "istiod",
-	}).String())
-
-	if err != nil {
-		return nil, err
-	}
-
-	healthyIstiods := make([]*core_v1.Pod, 0, len(istiods))
-	for i, istiod := range istiods {
-		if istiod.Status.Phase == "Running" {
-			healthyIstiods = append(healthyIstiods, &istiods[i])
-		}
-	}
-
-	if len(healthyIstiods) == 0 {
-		return nil, errors.New("unable to find any healthy Pilot instance")
-	}
-
-	// Check if the kube-api has proxy access to pods in the istio-system
-	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
-	_, err = in.GetPodProxy(c.IstioNamespace, istiods[0].Name, "/ready")
-	if err != nil {
-		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
-			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(healthyIstiods))
-	errChan := make(chan error, len(healthyIstiods))
-	syncChan := make(chan map[string][]byte, len(healthyIstiods))
-
-	result := map[string][]byte{}
-	for _, istiod := range healthyIstiods {
-		go func(name, namespace string) {
-			defer wg.Done()
-
-			res, err := in.GetPodProxy(namespace, name, "/debug/syncz")
-			if err != nil {
-				errChan <- fmt.Errorf("%s: %s", name, err.Error())
-			} else {
-				syncChan <- map[string][]byte{name: res}
-			}
-		}(istiod.Name, istiod.Namespace)
-	}
-
-	wg.Wait()
-	close(errChan)
-	close(syncChan)
-
-	errs := ""
-	for err := range errChan {
-		if errs != "" {
-			errs = errs + "; "
-		}
-		errs = errs + err.Error()
-	}
-	errs = "Error fetching the proxy-status in the following pods: " + errs
-
-	for status := range syncChan {
-		for pilot, sync := range status {
-			result[pilot] = sync
-		}
-	}
-
-	// If there is one sync, we consider it as valid
-	if len(result) > 0 {
-		return getStatus(result)
-	}
-
-	return nil, errors.New(errs)
+func (in *KubeK8SClient) GetProxyStatus() ([]*ProxyStatus, error) {
+	return []*ProxyStatus{}, nil
 }
 
 func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
@@ -292,7 +338,7 @@ func getStatus(statuses map[string][]byte) ([]*ProxyStatus, error) {
 	return fullStatus, nil
 }
 
-func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
+func (in *KubeK8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
 	// Fetching the config_dump data, raw.
 	resp, err := in.EnvoyForward(namespace, podName, "/config_dump")
 	if err != nil {
@@ -309,10 +355,10 @@ func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, erro
 	return cd, err
 }
 
-func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
+func (in *KubeK8SClient) EnvoyForward(namespace, podName, path string) ([]byte, error) {
 	writer := new(bytes.Buffer)
 
-	clientConfig, err := ConfigClient()
+	clientConfig, err := ConfigClient(Remote)
 	if err != nil {
 		log.Errorf("Error getting Kubernetes Client config: %v", err)
 		return nil, err
@@ -353,11 +399,11 @@ func (in *K8SClient) EnvoyForward(namespace, podName, path string) ([]byte, erro
 	return resp, err
 }
 
-func (in *K8SClient) hasNetworkingResource(resource string) bool {
+func (in *MeshK8SClient) hasNetworkingResource(resource string) bool {
 	return in.getNetworkingResources()[resource]
 }
 
-func (in *K8SClient) getNetworkingResources() map[string]bool {
+func (in *MeshK8SClient) getNetworkingResources() map[string]bool {
 	if in.networkingResources != nil {
 		return *in.networkingResources
 	}
@@ -378,11 +424,11 @@ func (in *K8SClient) getNetworkingResources() map[string]bool {
 	return *in.networkingResources
 }
 
-func (in *K8SClient) hasSecurityResource(resource string) bool {
+func (in *MeshK8SClient) hasSecurityResource(resource string) bool {
 	return in.getSecurityResources()[resource]
 }
 
-func (in *K8SClient) getSecurityResources() map[string]bool {
+func (in *MeshK8SClient) getSecurityResources() map[string]bool {
 	if in.securityResources != nil {
 		return *in.securityResources
 	}

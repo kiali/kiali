@@ -17,9 +17,9 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupAppService(k8s *kubetest.K8SClientMock) AppService {
+func setupAppService(k8s *kubetest.K8SClientMock, meshK8s *kubetest.K8SClientMock) AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := NewWithBackends(k8s, prom, nil)
+	layer := NewWithBackends(k8s, meshK8s, prom, nil)
 	return AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
 
@@ -30,6 +30,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
 	k8s.On("IsOpenShift").Return(true)
 	// Not needed a result, just to not send an error to test this usecase
@@ -43,7 +44,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
-	svc := setupAppService(k8s)
+	svc := setupAppService(k8s, meshK8s)
 
 	appList, _ := svc.GetAppList("Namespace")
 
@@ -60,6 +61,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
@@ -71,7 +73,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
-	svc := setupAppService(k8s)
+	svc := setupAppService(k8s, meshK8s)
 
 	appDetails, _ := svc.GetApp("Namespace", "httpbin")
 
@@ -92,6 +94,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
@@ -104,7 +107,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
-	svc := setupAppService(k8s)
+	svc := setupAppService(k8s, meshK8s)
 
 	appList, _ := svc.GetAppList("Namespace")
 
@@ -121,6 +124,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -132,7 +136,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(FakeServices(), nil)
-	svc := setupAppService(k8s)
+	svc := setupAppService(k8s, meshK8s)
 
 	appDetails, _ := svc.GetApp("Namespace", "httpbin")
 

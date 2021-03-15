@@ -3,6 +3,7 @@ package monitoringdashboards
 import (
 	"context"
 
+	"github.com/kiali/kiali/kubernetes"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -28,7 +29,7 @@ type Client struct {
 
 // NewClient creates a new client able to fetch Kiali Monitoring API.
 func NewClient() (*Client, error) {
-	config, err := rest.InClusterConfig()
+	config, err := kubernetes.ConfigClient(kubernetes.Remote)
 	if err != nil {
 		return nil, err
 	}

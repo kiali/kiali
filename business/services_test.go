@@ -16,13 +16,14 @@ func TestServiceListParsing(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.MockServices("Namespace", []string{"reviews", "httpbin"})
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	conf := config.NewConfig()
 	config.Set(conf)
-	svc := SvcService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil, nil)}
+	svc := SvcService{kubeK8s: k8s, meshK8s: k8s, businessLayer: NewWithBackends(k8s, meshK8s, nil, nil)}
 
 	serviceList, _ := svc.GetServiceList("Namespace")
 

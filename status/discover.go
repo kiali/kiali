@@ -12,23 +12,23 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-var clientFactory kubernetes.ClientFactory
+var clientFactory kubernetes.KubeClientFactory
 
-func getClient() (kubernetes.ClientInterface, error) {
+func getClient() (kubernetes.KubeClientInterface, error) {
 	saToken, err := kubernetes.GetKialiToken()
 	if err != nil {
 		return nil, err
 	}
 
 	if clientFactory == nil {
-		userClientFactory, err := kubernetes.GetClientFactory()
+		userClientFactory, err := kubernetes.GetKubeClientFactory()
 		if err != nil {
 			return nil, err
 		}
 		clientFactory = userClientFactory
 	}
 
-	client, err := clientFactory.GetClient(&api.AuthInfo{Token: saToken})
+	client, err := clientFactory.GetKubeClient(&api.AuthInfo{Token: saToken})
 	if err != nil {
 		return nil, err
 	}

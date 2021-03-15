@@ -18,7 +18,7 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	k8s kubernetes.ClientInterface
+	k8s kubernetes.KubeClientInterface
 }
 
 type ComponentStatus struct {
@@ -109,7 +109,7 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 				var ds []apps_v1.Deployment
 				var err error
 				if IsNamespaceCached(n) {
-					ds, err = kialiCache.GetDeployments(n)
+					ds, err = kialiKubeCache.GetDeployments(n)
 				} else {
 					// Adding a warning to enable cache for fetching Istio Status.
 					// It should use cache, as it's an intensive operation but we won't fail otherwise

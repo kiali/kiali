@@ -20,7 +20,7 @@ import (
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
 type AppService struct {
 	prom          prometheus.ClientInterface
-	k8s           kubernetes.ClientInterface
+	k8s           kubernetes.KubeClientInterface
 	businessLayer *Layer
 }
 
@@ -195,7 +195,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		var err error
 		// Check if namespace is cached
 		if IsNamespaceCached(namespace) {
-			services, err = kialiCache.GetServices(namespace, nil)
+			services, err = kialiKubeCache.GetServices(namespace, nil)
 		} else {
 			services, err = layer.k8s.GetServices(namespace, nil)
 		}

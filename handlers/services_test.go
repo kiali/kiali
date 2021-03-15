@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/kiali/kubernetes"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 	q.Add("direction", "inbound")
 	req.URL.RawQuery = q.Encode()
 	now := time.Now()
-	delta := 15 * time.Second
+	delta := kubernetes.GetK8sTimeout()
 	var gaugeSentinel uint32
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
@@ -356,7 +357,8 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 	ts := httptest.NewServer(mr)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	mockMeshClientFactory := kubetest.NewMeshClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, mockMeshClientFactory, prom)
 
 	return ts, xapi, k8s
 }

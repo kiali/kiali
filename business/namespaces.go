@@ -17,7 +17,7 @@ import (
 
 // Namespace deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	k8s                    kubernetes.ClientInterface
+	k8s                    kubernetes.KubeClientInterface
 	hasProjects            bool
 	isAccessibleNamespaces map[string]bool
 }
@@ -35,7 +35,7 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(k8s kubernetes.ClientInterface) NamespaceService {
+func NewNamespaceService(k8s kubernetes.KubeClientInterface) NamespaceService {
 
 	var hasProjects bool
 
@@ -64,8 +64,8 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespaces")
 	defer promtimer.ObserveNow(&err)
 
-	if kialiCache != nil {
-		if ns := kialiCache.GetNamespaces(in.k8s.GetToken()); ns != nil {
+	if kialiKubeCache != nil {
+		if ns := kialiKubeCache.GetNamespaces(in.k8s.GetToken()); ns != nil {
 			return ns, nil
 		}
 	}
@@ -147,8 +147,8 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 		}
 	}
 
-	if kialiCache != nil {
-		kialiCache.SetNamespaces(in.k8s.GetToken(), result)
+	if kialiKubeCache != nil {
+		kialiKubeCache.SetNamespaces(in.k8s.GetToken(), result)
 	}
 
 	return result, nil
@@ -183,8 +183,8 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	defer promtimer.ObserveNow(&err)
 
 	// Cache already has included/excluded namespaces applied
-	if kialiCache != nil {
-		if ns := kialiCache.GetNamespace(in.k8s.GetToken(), namespace); ns != nil {
+	if kialiKubeCache != nil {
+		if ns := kialiKubeCache.GetNamespace(in.k8s.GetToken(), namespace); ns != nil {
 			return ns, nil
 		}
 	}
@@ -214,7 +214,7 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 		result = models.CastNamespace(*ns)
 	}
 	// Refresh cache in case of cache expiration
-	if kialiCache != nil {
+	if kialiKubeCache != nil {
 		if _, err = in.GetNamespaces(); err != nil {
 			return nil, err
 		}
@@ -239,9 +239,9 @@ func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) 
 	}
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	if kialiCache != nil && err == nil {
-		kialiCache.RefreshNamespace(namespace)
-		kialiCache.RefreshTokenNamespaces()
+	if kialiKubeCache != nil && err == nil {
+		kialiKubeCache.RefreshNamespace(namespace)
+		kialiKubeCache.RefreshTokenNamespaces()
 	}
 	// Call GetNamespace to update the caching
 	return in.GetNamespace(namespace)
@@ -279,7 +279,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(labelSelector string, forw
 }
 
 func getNamespacesForKialiSA(labelSelector string) ([]core_v1.Namespace, error) {
-	clientFactory, err := kubernetes.GetClientFactory()
+	clientFactory, err := kubernetes.GetKubeClientFactory()
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func getNamespacesForKialiSA(labelSelector string) ([]core_v1.Namespace, error) 
 		return nil, err
 	}
 
-	k8s, err := clientFactory.GetClient(&api.AuthInfo{Token: kialiToken})
+	k8s, err := clientFactory.GetKubeClient(&api.AuthInfo{Token: kialiToken})
 	if err != nil {
 		return nil, err
 	}

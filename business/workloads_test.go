@@ -22,9 +22,9 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {
+func setupWorkloadService(k8s *kubetest.K8SClientMock, meshK8s *kubetest.K8SClientMock) WorkloadService {
 	prom := new(prometheustest.PromClientMock)
-	return WorkloadService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom, nil)}
+	return WorkloadService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, meshK8s, prom, nil)}
 }
 
 func TestGetWorkloadListFromDeployments(t *testing.T) {
@@ -34,6 +34,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
@@ -47,7 +48,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(core_v1.Pod{}, nil)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
@@ -76,6 +77,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -89,7 +91,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(core_v1.Pod{}, nil)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(&kubernetes.PodLogs{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
@@ -116,6 +118,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -127,7 +130,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
@@ -157,6 +160,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -168,7 +172,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
@@ -198,6 +202,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -209,7 +214,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
@@ -239,6 +244,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
@@ -250,7 +256,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsSyncedWithDeployments(), nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
@@ -271,6 +277,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -282,7 +289,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsNoController(), nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
@@ -303,6 +310,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
@@ -314,7 +322,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsFromDaemonSet(), nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
@@ -341,6 +349,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	}
 	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
+	meshK8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
@@ -352,7 +361,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workload, _ := svc.GetWorkload("Namespace", "details-v1", "", false)
 
@@ -384,7 +393,8 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsFromDaemonSet(), nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workload, _ := svc.GetWorkload("Namespace", "daemon-controller", "", false)
 
@@ -403,8 +413,8 @@ func TestGetPods(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	pods, _ := svc.GetPods("Namespace", "app=httpbin")
 
@@ -421,8 +431,8 @@ func TestGetPod(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	pod, _ := svc.GetPod("Namespace", "details-v1-3618568057-dnkjp")
 
@@ -438,8 +448,8 @@ func TestGetPodLogs(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
@@ -475,8 +485,8 @@ func TestGetPodLogsTailLines(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	tailLines := int64(2)
 	duration, _ := time.ParseDuration("6h") // still need a duration to force manual tailLines handling
@@ -496,8 +506,8 @@ func TestGetPodLogsDuration(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	duration, _ := time.ParseDuration("59m")
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
@@ -527,8 +537,8 @@ func TestGetPodLogsTailLinesAndDurations(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	tailLines := int64(2)
 	duration, _ := time.ParseDuration("2h")
@@ -574,8 +584,8 @@ func TestDuplicatedControllers(t *testing.T) {
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDuplicatedDeployments()[0], nil)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osapps_v1.DeploymentConfig{}, notfound)
 	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDuplicatedStatefulSets()[0], nil)
-
-	svc := setupWorkloadService(k8s)
+	meshK8s := new(kubetest.K8SClientMock)
+	svc := setupWorkloadService(k8s, meshK8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads

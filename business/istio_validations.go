@@ -17,7 +17,8 @@ import (
 )
 
 type IstioValidationsService struct {
-	k8s           kubernetes.ClientInterface
+	kubeK8s       kubernetes.KubeClientInterface
+	meshK8s       kubernetes.MeshClientInterface
 	businessLayer *Layer
 }
 
@@ -246,11 +247,11 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 			// businessLayer.Namespace.GetNamespaces() is invoked before, so, namespace used are under the user's view
 			if IsResourceCached(ns.Name, kubernetes.Gateways) {
 				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
-					return kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
+					return kialiMeshCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
 				}
 			} else {
 				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
-					return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+					return in.meshK8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
 				}
 			}
 			go fetchIstioObjects(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
@@ -301,9 +302,9 @@ func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, name
 		// Check if namespace is cached
 		// Namespace access is checked in the upper caller
 		if IsNamespaceCached(namespace) {
-			services, err = kialiCache.GetServices(namespace, nil)
+			services, err = kialiKubeCache.GetServices(namespace, nil)
 		} else {
-			services, err = in.k8s.GetServices(namespace, nil)
+			services, err = in.kubeK8s.GetServices(namespace, nil)
 		}
 		if err != nil {
 			select {
@@ -325,9 +326,9 @@ func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment
 		// Check if namespace is cached
 		// Namespace access is checked in the upper GetValidations
 		if IsNamespaceCached(namespace) {
-			deployments, err = kialiCache.GetDeployments(namespace)
+			deployments, err = kialiKubeCache.GetDeployments(namespace)
 		} else {
-			deployments, err = in.k8s.GetDeployments(namespace)
+			deployments, err = in.kubeK8s.GetDeployments(namespace)
 		}
 		if err != nil {
 			select {
@@ -348,9 +349,9 @@ func (in *IstioValidationsService) fetchPods(rValue *[]core_v1.Pod, namespace st
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			pods, err = kialiCache.GetPods(namespace, "")
+			pods, err = kialiKubeCache.GetPods(namespace, "")
 		} else {
-			pods, err = in.k8s.GetPods(namespace, "")
+			pods, err = in.kubeK8s.GetPods(namespace, "")
 		}
 		if err != nil {
 			select {
@@ -412,56 +413,56 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 		istioDetails := kubernetes.IstioDetails{}
 
 		if IsResourceCached(namespace, kubernetes.VirtualServices) {
-			istioDetails.VirtualServices, err = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+			istioDetails.VirtualServices, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 		} else {
 			wg2.Add(1)
 			getVirtualServices := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			}
 			go fetchIstioObjects(&istioDetails.VirtualServices, namespace, getVirtualServices, &wg2, errChan2)
 		}
 		if IsResourceCached(namespace, kubernetes.DestinationRules) {
-			istioDetails.DestinationRules, err = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+			istioDetails.DestinationRules, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 		} else {
 			wg2.Add(1)
 			getDestinationRules := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			}
 			go fetchIstioObjects(&istioDetails.DestinationRules, namespace, getDestinationRules, &wg2, errChan2)
 		}
 		if IsResourceCached(namespace, kubernetes.ServiceEntries) {
-			istioDetails.ServiceEntries, err = kialiCache.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
+			istioDetails.ServiceEntries, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
 		} else {
 			wg2.Add(1)
 			getServiceEntries := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.ServiceEntries, "")
 			}
 			go fetchIstioObjects(&istioDetails.ServiceEntries, namespace, getServiceEntries, &wg2, errChan2)
 		}
 		if IsResourceCached(namespace, kubernetes.Gateways) {
-			istioDetails.Gateways, err = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
+			istioDetails.Gateways, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
 		} else {
 			wg2.Add(1)
 			getGateways := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
 			}
 			go fetchIstioObjects(&istioDetails.Gateways, namespace, getGateways, &wg2, errChan2)
 		}
 		if IsResourceCached(namespace, kubernetes.Sidecars) {
-			istioDetails.Sidecars, err = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+			istioDetails.Sidecars, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 		} else {
 			wg2.Add(1)
 			getSidecars := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 			}
 			go fetchIstioObjects(&istioDetails.Sidecars, namespace, getSidecars, &wg2, errChan2)
 		}
 		if IsResourceCached(namespace, kubernetes.RequestAuthentications) {
-			istioDetails.RequestAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+			istioDetails.RequestAuthentications, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
 		} else {
 			wg2.Add(1)
 			getRequestAuthentications := func(namespace string) ([]kubernetes.IstioObject, error) {
-				return in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+				return in.meshK8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
 			}
 			go fetchIstioObjects(&istioDetails.RequestAuthentications, namespace, getRequestAuthentications, &wg2, errChan2)
 		}
@@ -497,12 +498,12 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		var meshpeerauths []kubernetes.IstioObject
 		var iErr error
 		if IsResourceCached(config.Get().IstioNamespace, kubernetes.PeerAuthentications) {
-			if meshpeerauths, iErr = kialiCache.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+			if meshpeerauths, iErr = kialiMeshCache.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
 				details.MeshPeerAuthentications = meshpeerauths
 			} else {
 				errChan <- iErr
 			}
-		} else if meshpeerauths, iErr = in.k8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
+		} else if meshpeerauths, iErr = in.meshK8s.GetIstioObjects(config.Get().IstioNamespace, kubernetes.PeerAuthentications, ""); iErr == nil {
 			details.MeshPeerAuthentications = meshpeerauths
 		} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
 			errChan <- iErr
@@ -515,9 +516,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		var peerAuthns []kubernetes.IstioObject
 		var err error
 		if IsResourceCached(namespace, kubernetes.PeerAuthentications) {
-			peerAuthns, err = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+			peerAuthns, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 		} else {
-			peerAuthns, err = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+			peerAuthns, err = in.meshK8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 		}
 		if err != nil {
 			errChan <- err
@@ -533,9 +534,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		var istioConfig *core_v1.ConfigMap
 		var err error
 		if IsNamespaceCached(cfg.IstioNamespace) {
-			istioConfig, err = kialiCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+			istioConfig, err = kialiKubeCache.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 		} else {
-			istioConfig, err = in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
+			istioConfig, err = in.kubeK8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 		}
 		if err != nil {
 			errChan <- err
@@ -582,9 +583,9 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 			defer wg.Done()
 			var err error
 			if IsResourceCached(namespace, kubernetes.AuthorizationPolicies) {
-				authDetails.AuthorizationPolicies, err = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+				authDetails.AuthorizationPolicies, err = kialiMeshCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
 			} else {
-				authDetails.AuthorizationPolicies, err = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+				authDetails.AuthorizationPolicies, err = in.meshK8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
 			}
 			if err != nil {
 				errChan <- err

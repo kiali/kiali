@@ -21,18 +21,33 @@ import (
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	k8s kubernetes.ClientInterface
+	k8s kubernetes.KubeClientInterface
+}
+
+type MeshClientFactoryMock struct {
+	mock.Mock
+	k8s kubernetes.MeshClientInterface
 }
 
 // Constructor
-func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
+func NewK8SClientFactoryMock(k8s kubernetes.KubeClientInterface) *K8SClientFactoryMock {
 	k8sClientFactory := new(K8SClientFactoryMock)
 	k8sClientFactory.k8s = k8s
 	return k8sClientFactory
 }
 
+func NewMeshClientFactoryMock(k8s kubernetes.MeshClientInterface) *MeshClientFactoryMock {
+	k8sClientFactory := new(MeshClientFactoryMock)
+	k8sClientFactory.k8s = k8s
+	return k8sClientFactory
+}
+
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetKubeClient(authInfo *api.AuthInfo) (kubernetes.KubeClientInterface, error) {
+	return o.k8s, nil
+}
+
+func (o *MeshClientFactoryMock) GetMeshClient(authInfo *api.AuthInfo) (kubernetes.MeshClientInterface, error) {
 	return o.k8s, nil
 }
 
