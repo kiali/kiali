@@ -392,6 +392,8 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	assert.Equal("DaemonSet", workload.Type)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
+	assert.Equal(0, len(workload.Runtimes))
+	assert.Equal(0, len(workload.AdditionalDetails))
 }
 
 func TestGetPods(t *testing.T) {

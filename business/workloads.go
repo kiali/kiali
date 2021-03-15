@@ -863,6 +863,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	wl := &models.Workload{
 		Pods:     models.Pods{},
 		Services: models.Services{},
+		Runtimes: []models.Runtime{},
+		AdditionalDetails: []models.AdditionalItem{},
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -1183,6 +1185,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		w := models.Workload{
 			Pods:     models.Pods{},
 			Services: models.Services{},
+			Runtimes: []models.Runtime{},
+			AdditionalDetails: []models.AdditionalItem{},
 		}
 		ctype := controllers[workloadName]
 		// Flag to add a controller if it is found
