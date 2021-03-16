@@ -151,8 +151,6 @@ fi
 if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
   if [[ "$CLIENT_EXE" = *"oc" ]]; then
-    $CLIENT_EXE adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE}
-    $CLIENT_EXE adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE}
     $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
     $CLIENT_EXE delete project ${NAMESPACE}
   else
@@ -165,8 +163,6 @@ fi
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE new-project ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
 fi

@@ -50,12 +50,7 @@ echo ENABLE_INJECTION=${ENABLE_INJECTION}
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Error Rates Demo (the envoy filters, if previously created, will remain)"
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_ALPHA}
-    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_ALPHA}
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_ALPHA}
-
-    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_BETA}
-    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_BETA}
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_BETA}
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_ALPHA}
@@ -71,8 +66,6 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_ALPHA} 2>/dev/null; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled
   fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_ALPHA}
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_ALPHA}
     cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_ALPHA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -88,8 +81,6 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_BETA} 2>/dev/null; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
   fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_BETA}
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_BETA}
     cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_BETA} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
