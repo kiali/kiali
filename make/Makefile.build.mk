@@ -86,7 +86,7 @@ test-e2e:
 ## run: Run kiali binary
 run:
 	@echo Running...
-	@LOG_LEVEL="debug" ${GOPATH}/bin/kiali -config config.yaml
+	@LOG_LEVEL="debug" ${GOPATH}/bin/kiali
 
 #
 # Swagger Documentation
