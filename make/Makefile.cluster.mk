@@ -163,8 +163,13 @@ endif
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
 cluster-build-operator: .ensure-operator-repo-exists .prepare-cluster container-build-operator
-	@echo Building container image for Kiali operator using operator-sdk tagged for a remote cluster
-	cd "${ROOTDIR}/operator" && "${OP_SDK}" build --image-builder ${DORP} --image-build-args "--pull" "${CLUSTER_OPERATOR_TAG}"
+ifeq ($(DORP),docker)
+	@echo Re-tag the already built Kiali operator container image for a remote cluster using docker
+	docker tag ${OPERATOR_QUAY_TAG} ${CLUSTER_OPERATOR_TAG}
+else
+	@echo Re-tag the already built Kiali operator container image for a remote cluster using podman
+	podman tag ${OPERATOR_QUAY_TAG} ${CLUSTER_OPERATOR_TAG}
+endif
 
 ## cluster-build-kiali: Builds the Kiali image for development with a remote cluster
 cluster-build-kiali: .prepare-cluster container-build-kiali

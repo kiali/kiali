@@ -30,7 +30,7 @@ for exe in oc kubectl ; do
 done
 
 if [ "$CLIENT_EXE" == "" ]; then
-  echo "You must have one of these in your PATH: kubectl, oc, istiooc"
+  echo "You must have one of these in your PATH: kubectl, oc"
   exit 1
 fi
 
@@ -45,19 +45,13 @@ else
   _ABORT="true"
 fi
 
-KIALI_OPERATOR_HTTP_ROUTE=$(${CLIENT_EXE} get route kiali-operator-metrics-http -n ${OPERATOR_NAMESPACE} -o jsonpath='{.spec.host}')
+KIALI_OPERATOR_ROUTE=$(${CLIENT_EXE} get route kiali-operator-metrics -n ${OPERATOR_NAMESPACE} -o jsonpath='{.spec.host}')
 if [ "$?" == "0" ]; then
-  echo "Kiali operator HTTP metrics route endpoint is found here: http://${KIALI_OPERATOR_HTTP_ROUTE}/metrics"
+  echo "Kiali operator metrics route endpoint is found here: http://${KIALI_OPERATOR_ROUTE}/metrics"
 else
-  _CMD2="$CLIENT_EXE expose service kiali-operator-metrics -n ${OPERATOR_NAMESPACE} --name=kiali-operator-metrics-http --port=http-metrics"
-  _ABORT="true"
-fi
-
-KIALI_OPERATOR_CR_ROUTE=$(${CLIENT_EXE} get route kiali-operator-metrics-cr -n ${OPERATOR_NAMESPACE} -o jsonpath='{.spec.host}')
-if [ "$?" == "0" ]; then
-  echo "Kiali operator CR metrics route endpoint is found here: http://${KIALI_OPERATOR_CR_ROUTE}/metrics"
-else
-  _CMD3="$CLIENT_EXE expose service kiali-operator-metrics -n ${OPERATOR_NAMESPACE} --name=kiali-operator-metrics-cr --port=cr-metrics"
+  _CMD2="$CLIENT_EXE expose \$($CLIENT_EXE get pod -n ${OPERATOR_NAMESPACE} -l app=kiali-operator -o name) -n ${OPERATOR_NAMESPACE} --name=kiali-operator-metrics --target-port=http-metrics"
+  _CMD2="${_CMD2} ; $CLIENT_EXE expose service kiali-operator-metrics -n ${OPERATOR_NAMESPACE} --name=kiali-operator-metrics --port=http-metrics"
+  _CMD2="${_CMD2} ; $CLIENT_EXE patch service kiali-operator-metrics -n ${OPERATOR_NAMESPACE} -p '{\"spec\":{\"ports\":[{\"port\":8080,\"name\":\"http-metrics\"}]}}'"
   _ABORT="true"
 fi
 
@@ -68,7 +62,6 @@ if [ ! -z "${_ABORT}" ]; then
   echo "====="
   if [ ! -z "$_CMD1" ]; then echo ${_CMD1}; fi
   if [ ! -z "$_CMD2" ]; then echo ${_CMD2}; fi
-  if [ ! -z "$_CMD3" ]; then echo ${_CMD3}; fi
   echo "====="
   exit 1
 fi
@@ -84,16 +77,15 @@ scrape_configs:
   tls_config:
     insecure_skip_verify: true
   static_configs:
-  - targets: ['${KIALI_ROUTE}', '${KIALI_OPERATOR_HTTP_ROUTE}', '${KIALI_OPERATOR_CR_ROUTE}']
+  - targets: ['${KIALI_ROUTE}', '${KIALI_OPERATOR_ROUTE}']
 EOF
 
 # Run Prometheus
 
 KIALI_HOST_ENT="${KIALI_ROUTE}:$(getent hosts ${KIALI_ROUTE} | head -n1 | awk '{print $1}')"
-KIALI_OPERATOR_HTTP_HOST_ENT="${KIALI_OPERATOR_HTTP_ROUTE}:$(getent hosts ${KIALI_OPERATOR_HTTP_ROUTE} | head -n1 | awk '{print $1}')"
-KIALI_OPERATOR_CR_HOST_ENT="${KIALI_OPERATOR_CR_ROUTE}:$(getent hosts ${KIALI_OPERATOR_CR_ROUTE} | head -n1 | awk '{print $1}')"
+KIALI_OPERATOR_HOST_ENT="${KIALI_OPERATOR_ROUTE}:$(getent hosts ${KIALI_OPERATOR_ROUTE} | head -n1 | awk '{print $1}')"
 
-docker run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HTTP_HOST_ENT}" --add-host="${KIALI_OPERATOR_CR_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml prom/prometheus &
+docker run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml prom/prometheus &
 DOCKER_PID=$!
 
 echo "Docker started (pid: ${DOCKER_PID})"
