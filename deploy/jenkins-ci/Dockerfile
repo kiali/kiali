@@ -25,7 +25,7 @@ COPY bin/entrypoint.sh /usr/local/bin/
 
 RUN set -eux; \
     # Install golang \
-    curl -fsSL https://golang.org/dl/go1.14.7.linux-amd64.tar.gz -o go.tar.gz; \
+    curl -fsSL https://golang.org/dl/go1.16.2.linux-amd64.tar.gz -o go.tar.gz; \
     tar -C /usr/local -zxf go.tar.gz; \
     rm go.tar.gz; \
     # Add Yarn repository \

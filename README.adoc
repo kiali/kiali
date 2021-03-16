@@ -70,7 +70,7 @@ See the link:./LICENSE[LICENSE file].
 These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language], (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman] , (4) link:https://nodejs.org[NPM], and (5) make. If you are using `podman` instead of `docker`, pass the environment variable `DORP=podman` when executing `make`. To run Kiali in a cluster after you build it, it is assumed you have a running OpenShift or Minikube environment available to you.
 
 [NOTE]
-Currently, Kiali releases are built using Go 1.14. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.14 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
+Currently, Kiali releases are built using Go 1.16. Although Kiali may build correctly using other versions of Go, it's suggested to use version 1.16.2 for development to ensure replicatable builds. Makefiles will require this minimum version of Go.
 
 To build Kiali:
 
