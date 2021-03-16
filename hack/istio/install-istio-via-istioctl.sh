@@ -246,6 +246,9 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   echo Creating the control plane namespace: ${NAMESPACE}
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} new-project ${NAMESPACE}
+
+    echo Performing additional commands for OpenShift
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
