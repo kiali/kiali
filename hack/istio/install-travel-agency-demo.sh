@@ -74,16 +74,8 @@ echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Travel Agency Demo (the envoy filters, if previously created, will remain)"
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
-    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_AGENCY}
-
-    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
-    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_PORTAL}
-
-    ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts:${NAMESPACE_CONTROL}
-    ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts:${NAMESPACE_CONTROL}
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n ${NAMESPACE_CONTROL}
   fi
   ${CLIENT_EXE} delete namespace ${NAMESPACE_AGENCY}
@@ -100,8 +92,6 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
   fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_AGENCY}
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_AGENCY}
     cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_AGENCY} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -117,8 +107,6 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
   fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_PORTAL}
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_PORTAL}
     cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_PORTAL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -134,8 +122,6 @@ if ! ${CLIENT_EXE} get namespace ${NAMESPACE_CONTROL} 2>/dev/null; then
     ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
   fi
   if [ "${CLIENT_EXE}" == "oc" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts:${NAMESPACE_CONTROL}
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE_CONTROL}
     cat <<EOF | ${CLIENT_EXE} -n ${NAMESPACE_CONTROL} create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition

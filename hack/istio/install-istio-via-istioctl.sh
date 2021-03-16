@@ -242,13 +242,10 @@ fi
 if [ "${DELETE_ISTIO}" != "true" ]; then
   # Create the istio-system namespace
   # If OpenShift, we need to do some additional things - see:
-  #   https://istio.io/docs/setup/kubernetes/platform-setup/openshift/
+  #   https://istio.io/latest/docs/setup/platform-setup/openshift/
   echo Creating the control plane namespace: ${NAMESPACE}
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} new-project ${NAMESPACE}
-
-    echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
@@ -299,9 +296,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} delete -f -
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     echo "===== IMPORTANT ====="
-    echo "For each namespace in the mesh, run these commands to remove previously created policies:"
-    echo "  oc adm policy remove-scc-from-group privileged system:serviceaccounts:<target-namespace>"
-    echo "  oc adm policy remove-scc-from-group anyuid system:serviceaccounts:<target-namespace>"
+    echo "For each namespace in the mesh, run these commands to remove previously created resources:"
     echo "  oc -n <target-namespace> delete network-attachment-definition istio-cni"
     echo "===== IMPORTANT ====="
   fi
@@ -346,9 +341,7 @@ else
     fi
 
     echo "===== IMPORTANT ====="
-    echo "For each namespace in the mesh, run these commands so sidecar injection works:"
-    echo "  oc adm policy add-scc-to-group privileged system:serviceaccounts:<target-namespace>"
-    echo "  oc adm policy add-scc-to-group anyuid system:serviceaccounts:<target-namespace>"
+    echo "For each namespace in the mesh, run these commands to create the necessary resources:"
     cat <<NAD
   cat <<EOF | oc -n <target-namespace> create -f -
 apiVersion: "k8s.cni.cncf.io/v1"
