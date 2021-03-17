@@ -83,11 +83,6 @@ test-e2e:
 	@echo Running E2E tests
 	cd tests/e2e && source .kiali-e2e/bin/activate && pytest -s tests/
 
-## run: Run kiali binary
-run:
-	@echo Running...
-	@LOG_LEVEL="debug" ${GOPATH}/bin/kiali -config config.yaml
-
 #
 # Swagger Documentation
 #

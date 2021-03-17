@@ -211,7 +211,7 @@ make operator-delete
 [NOTE]
 After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator again.
 
-=== Running Standalone
+=== Running Standalone(WIP)
 
 Rarely, you may want to run Kiali outside of any cluster environment, perhaps for debugging purposes. To do this, run:
 
@@ -263,7 +263,7 @@ metadata:
 spec:
 ...
     external_services:
-      jaeger:
+      tracing:
         url: http://jaeger-query-istio-system.127.0.0.1.nip.io
 ...
 ----
