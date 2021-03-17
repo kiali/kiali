@@ -1,0 +1,51 @@
+###################################################################
+# run-kiali-config-template.yaml
+#
+# This is intended to be used as a template configuration file
+# for the developer tool 'run-kiali.sh'.
+#
+# This file is not intended to be used by Kiali other than when
+# launched locally via 'run-kiali.sh'.
+#
+# If you want to know what settings Kiali supports, please see
+# the spec field in the example Kiali CR found here:
+# https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml
+#
+###################################################################
+
+istio_namespace: "${ISTIO_NAMESPACE}"
+
+auth:
+  strategy: "anonymous"
+
+deployment:
+  accessible_namespaces: ['**']
+
+external_services:
+  custom_dashboards:
+    enabled: false
+
+  grafana:
+    enabled: true
+    in_cluster_url: "${GRAFANA_URL}"
+    url: "${GRAFANA_URL}"
+
+  prometheus:
+    url: "${PROMETHEUS_URL}"
+
+  tracing:
+    enabled: true
+    in_cluster_url: "${TRACING_URL}"
+    url: "${TRACING_URL}"
+
+kubernetes_config:
+  cache_enabled: true
+
+login_token:
+   signing_key: "notsecure"
+
+server:
+  static_content_root_directory: "${UI_CONSOLE_DIR}"
+
+# in_cluster must be false - do not change
+in_cluster: false
