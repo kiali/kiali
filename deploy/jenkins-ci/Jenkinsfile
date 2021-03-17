@@ -7,24 +7,16 @@
  *      defaultValue: auto
  *      description: Valid values are: auto, minor, snapshot.0, snapshot.1, edge. When "auto" is
  *                   specified, the type of the release will be determined based on the current date.
- *   - BACKEND_RELEASING_BRANCH
+ *   - RELEASING_BRANCHES
  *      defaultValue: refs/heads/master
- *      description: Branch of the backend to release
- *   - UI_RELEASING_BRANCH
- *      defaultValue: refs/heads/master
- *      description: Branch of the UI to release
- *   - SITE_RELEASING_BRANCH
- *      defaultValue: refs/heads/master
- *      description: Branch of the website to release
- *   - OPERATOR_RELEASING_BRANCH
- *      defaultValue: refs/heads/master
- *      description: Branch of the operator to release
- *   - BACKEND_GITHUB_URI
- *      defaultValue: git@github.com:kiali/kiali.git
- *      description: SSH Url of the kiali-backend GitHub repository
- *   - UI_GITHUB_URI
- *      defaultValue: git@github.com:kiali/kiali-ui.git
- *      description: SSH Url of the kiali-ui GitHub repository
+ *      description: Name of branch of all repositories to checkout and run the release. The only
+ *                   exception is the website which is always run on the `master` branch.
+ *   - BACKEND_REPO
+ *      defaultValue: kiali/kiali
+ *      description: The GitHub repo of the back-end sources, in owner/repo format.
+ *   - UI_REPO
+ *      defaultValue: kiali/kiali-ui
+ *      description: The GitHub repo of the front-end sources, in owner/repo format.
  *   - OPERATOR_REPO
  *      defaultValue: kiali/kiali-operator
  *      description: The GitHub repo of the kiali-operator sources, in owner/repo format.
@@ -40,12 +32,6 @@
  *   - QUAY_OPERATOR_NAME
  *      defaultValue: quay.io/kiali/kiali-operator
  *      description: The name of the Quay repository to push the operator release
- *   - BACKEND_PULL_URI
- *      defaultValue: https://api.github.com/repos/kiali/kiali/pulls
- *      description: The URL of the GitHub API to use to create pull requests for the back-end (changes to prepare for next version)
- *   - UI_PULL_URI
- *      defaultValue: https://api.github.com/repos/kiali/kiali-ui/pulls
- *      description: The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
@@ -70,14 +56,17 @@
  *                    unset to use the version present in the main Makefile (e.g. leave unset for patch releases)
  *   - NPM_CONFIG_REGISTRY
  *       defaultValue: ''
- *       description: Registry to use for fetching packages. This is not used for publishing releases.
+ *       description: NPM registry to use for fetching packages. This is not used for publishing releases.
  *                    Do not include the trailing slash.
  */
 
 node('kiali-build && fedora') {
-  def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
-  def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
-  def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
+  def backendDir = 'src/github.com/kiali/kiali'
+  def backendMakefile = 'deploy/jenkins-ci/Makefile'
+
+  def uiDir = 'src/github.com/kiali/kiali-ui'
+  def uiMakefile = 'Makefile.jenkins'
+
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def buildBackend = params.SKIP_BACKEND_RELEASE != "y"
   def buildOperator = params.SKIP_OPERATOR_RELEASE != "y"
@@ -97,7 +86,7 @@ node('kiali-build && fedora') {
       if ( buildBackend || buildOperator || buildHelm || buildSite ) {
         checkout([
           $class: 'GitSCM',
-          branches: [[name: params.BACKEND_RELEASING_BRANCH]],
+          branches: [[name: params.RELEASING_BRANCHES]],
           doGenerateSubmoduleConfigurations: false,
           extensions: [
             [$class: 'RelativeTargetDirectory', relativeTargetDir: backendDir]
@@ -114,7 +103,7 @@ node('kiali-build && fedora') {
       if ( buildUi ) {
         checkout([
           $class: 'GitSCM',
-          branches: [[name: params.UI_RELEASING_BRANCH]],
+          branches: [[name: params.RELEASING_BRANCHES]],
           doGenerateSubmoduleConfigurations: false,
           extensions: [
             [$class: 'RelativeTargetDirectory', relativeTargetDir: uiDir]
@@ -141,14 +130,20 @@ node('kiali-build && fedora') {
     buildSite = params.SKIP_SITE_RELEASE != "y" && releaseType == "minor"
     buildHelm = params.SKIP_HELM_RELEASE != "y" && (releaseType == "minor" || releaseType == "patch")
     echo "Resolved release type: ${releaseType}"
-    echo "Will build Helm charts? ${buildHelm}"
+    echo "Will build back-end? ${buildBackend}"
+    echo "Will build front-end? ${buildUi}"
     echo "Will build operator? ${buildOperator}"
+    echo "Will build Helm charts? ${buildHelm}"
     echo "Will build site? ${buildSite}"
 
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
-            "BACKEND_FORK_URI=${backendForkUri}",
-            "UI_FORK_URI=${uiForkUri}",
+            "BACKEND_GITHUB_URI=git@github.com:${params.BACKEND_REPO}.git",
+            "BACKEND_FORK_URI=git@github.com:kiali-bot/kiali.git",
+            "BACKEND_PULL_URI=https://api.github.com/repos/${params.BACKEND_REPO}/pulls",
+            "UI_GITHUB_URI=git@github.com:${params.UI_REPO}.git",
+            "UI_FORK_URI=git@github.com:kiali-bot/kiali-ui.git",
+            "UI_PULL_URI=https://api.github.com/repos/${params.UI_REPO}/pulls",
             "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
@@ -222,16 +217,22 @@ node('kiali-build && fedora') {
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
               [$class: 'StringParameterValue', value: params.OPERATOR_REPO, name: 'OPERATOR_REPO'],
-              [$class: 'StringParameterValue', value: params.OPERATOR_RELEASING_BRANCH, name: 'OPERATOR_RELEASING_BRANCH'],
+              [$class: 'StringParameterValue', value: params.RELEASING_BRANCHES, name: 'OPERATOR_RELEASING_BRANCH'],
               [$class: 'StringParameterValue', value: params.QUAY_OPERATOR_NAME, name: 'QUAY_OPERATOR_NAME']
               ], wait: false
               )
         }
         if ( buildSite ) {
+          // Although the `kiali-website-release` can receive the "releasing branch",
+          // don't pass it and let it use the default `refs/heads/master`. It's unused at the moment.
+          // The website is "released" only on minor and major releases and it's only tagged. No "version branch"
+          // is created. This is because versioned docs are simple folders within the repository
+          // that are in the `master` branch. So, if a previous version of the doc needs to be
+          // updated, that's done manually. Docs tend to not change for patch releases and also
+          // tend to be fixed regardless if there is (or not) a patch release.
           build(job: 'kiali-website-release',
               parameters: [
-              [$class: 'StringParameterValue', value: params.SITE_REPO, name: 'SITE_REPO'],
-              [$class: 'StringParameterValue', value: params.SITE_RELEASING_BRANCH, name: 'SITE_RELEASING_BRANCH']
+              [$class: 'StringParameterValue', value: params.SITE_REPO, name: 'SITE_REPO']
               ], wait: false
               )
         }
@@ -240,6 +241,7 @@ node('kiali-build && fedora') {
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
               [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO']
+              [$class: 'StringParameterValue', value: params.RELEASING_BRANCHES, name: 'HELM_RELEASING_BRANCH']
               ], wait: false
               )
         }
