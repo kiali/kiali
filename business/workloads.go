@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -46,11 +47,11 @@ type AccessLogEntry struct {
 
 // LogEntry holds a single log entry
 type LogEntry struct {
-	Message        string          `json:"message,omitempty"`
-	Severity       string          `json:"severity,omitempty"`
-	Timestamp      string          `json:"timestamp,omitempty"`
-	TimestampUnix  int64           `json:"timestampUnix,omitempty"`
-	AccessLogEntry *AccessLogEntry `json:"accessLogEntry,omitempty"`
+	Message       string            `json:"message,omitempty"`
+	Severity      string            `json:"severity,omitempty"`
+	Timestamp     string            `json:"timestamp,omitempty"`
+	TimestampUnix int64             `json:"timestampUnix,omitempty"`
+	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
 }
 
 // LogOptions holds query parameter values
@@ -300,24 +301,23 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 			continue
 		}
 
-		parsed, err := time.Parse(time.RFC3339, entry.Timestamp)
+		// If we are past the requested time window then stop processing
+		parsedTimestamp, err := time.Parse(time.RFC3339, entry.Timestamp)
 		if err == nil {
 			if startTime == nil {
-				startTime = &parsed
+				startTime = &parsedTimestamp
 			}
 
 			if isBounded {
 				if endTime == nil {
-					end := parsed.Add(*opts.Duration)
+					end := parsedTimestamp.Add(*opts.Duration)
 					endTime = &end
 				}
 
-				if parsed.After(*endTime) {
+				if parsedTimestamp.After(*endTime) {
 					break
 				}
 			}
-
-			entry.TimestampUnix = parsed.Unix()
 		} else {
 			log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
 			continue
@@ -328,17 +328,40 @@ func (in *WorkloadService) getParsedLogs(namespace, name string, opts *LogOption
 			entry.Severity = strings.ToUpper(severity)
 		}
 
+		// If this is an istio access log, then parse it out. Prefer the access log time over the k8s time
+		// as it is the actual time as opposed to the k8s store time.
 		if opts.IsProxy {
-			tokens := strings.SplitN(entry.Message, " ", 2)
-			timestamp := strings.Trim(tokens[0], "[]")
-			parsed, err := time.Parse(time.RFC3339, timestamp)
+			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
+			al, err := engardeParser.Parse(entry.Message)
 			if err == nil {
-				entry.AccessLogEntry = &AccessLogEntry{
-					Timestamp:     timestamp,
-					TimestampUnix: parsed.Unix(),
+				entry.AccessLog = al
+				t, err := time.Parse(time.RFC3339, al.Timestamp)
+				if err == nil {
+					parsedTimestamp = t
+				}
+
+				// clear accessLog fields we don't need in the returned JSON
+				entry.AccessLog.MixerStatus = ""
+				entry.AccessLog.OriginalMessage = ""
+				entry.AccessLog.ParseError = ""
+			} else {
+				log.Debugf("AccessLog parse failure: %s", err.Error())
+				// try to parse out the time manually
+				tokens := strings.SplitN(entry.Message, " ", 2)
+				timestampToken := strings.Trim(tokens[0], "[]")
+				t, err := time.Parse(time.RFC3339, timestampToken)
+				if err == nil {
+					parsedTimestamp = t
 				}
 			}
 		}
+
+		// override the timestamp with a simpler format
+		timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d",
+			parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
+			parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second())
+		entry.Timestamp = timestamp
+		entry.TimestampUnix = parsedTimestamp.Unix()
 
 		entries = append(entries, entry)
 	}
