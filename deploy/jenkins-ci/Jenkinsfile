@@ -259,6 +259,14 @@ node('kiali-build && fedora') {
         }
       }
     }
+  } catch (e) {
+    emailext(
+        to: 'kiali-internal@redhat.com',
+        subject: 'Kiali build failure',
+        body: '${JELLY_SCRIPT,template="html"}',
+        attachLog: true,
+        mimeType: 'text/html'
+    )
   } finally {
     cleanWs()
   }
