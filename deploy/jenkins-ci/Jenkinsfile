@@ -97,7 +97,7 @@ node('kiali-build && fedora') {
           submoduleCfg: [],
           userRemoteConfigs: [[
             credentialsId: 'kiali-bot-gh-ssh',
-            url: params.BACKEND_GITHUB_URI]]
+            url: "git@github.com:${params.BACKEND_REPO}.git"]]
         ])
 
         sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
@@ -114,7 +114,7 @@ node('kiali-build && fedora') {
           submoduleCfg: [],
           userRemoteConfigs: [[
             credentialsId: 'kiali-bot-gh-ssh',
-            url: params.UI_GITHUB_URI]]
+            url: "git@github.com:${params.UI_REPO}.git"]]
         ])
 
         sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
