@@ -21,9 +21,6 @@ USER root
 COPY bin/entrypoint.sh /usr/local/bin/
 
 RUN set -eux; \
-    # Install a requirement to un-tar nodejs.
-    apt-get -qq update; \
-    apt-get install --no-install-recommends -qq xz-utils; \
     # Install golang \
     curl -fsSL https://golang.org/dl/go1.14.7.linux-amd64.tar.gz -o go.tar.gz; \
     tar -C /usr/local -zxf go.tar.gz; \
@@ -32,10 +29,10 @@ RUN set -eux; \
     # curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -; \
     # echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list; \
     # Install NodeJs \
-    curl -fsSL https://nodejs.org/dist/v10.19.0/node-v10.19.0-linux-x64.tar.xz -o node.tar.xz; \
+    curl -fsSL https://nodejs.org/dist/v14.16.0/node-v14.16.0-linux-x64.tar.gz -o node.tar.gz; \
     mkdir -p /usr/local/lib/nodejs; \
-    tar -xJf node.tar.xz -C /usr/local/lib/nodejs; \
-    rm node.tar.xz; \
+    tar -xzf node.tar.gz -C /usr/local/lib/nodejs; \
+    rm node.tar.gz; \
     # Install Yarn \
     curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --import; \
     curl -fsSL https://yarnpkg.com/downloads/1.22.4/yarn-v1.22.4.tar.gz.asc -o yarn.tar.gz.asc; \
@@ -58,6 +55,8 @@ RUN set -eux; \
     apt-get install --no-install-recommends -qq build-essential gosu docker-ce-cli; \
     # Install some things to support generating operator all-in-one yaml (gettext-base has 'envsubst') \
     apt-get -qq install gettext-base; \
+    # Install python2, required to build the UI \
+    apt-get -qq --no-install-recommends install python; \
     # Create Docker group \
     groupadd -r docker; \
     usermod -aG docker jenkins; \
@@ -73,7 +72,7 @@ COPY jenkins_ref /usr/share/jenkins/ref/
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Adjust PATH to include tools: golang, nodejs, yarn
-ENV PATH "/usr/local/lib/nodejs/node-v10.19.0-linux-x64/bin:/usr/local/yarn-v1.22.4/bin:/usr/local/go/bin:$PATH"
+ENV PATH "/usr/local/lib/nodejs/node-v14.16.0-linux-x64/bin:/usr/local/yarn-v1.22.4/bin:/usr/local/go/bin:$PATH"
 
 # Skip Jenkins setup wizard
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
