@@ -505,22 +505,22 @@ func TestGetPodLogs(t *testing.T) {
 
 	assert.Equal(len(podLogs.Entries), 4)
 
-	assert.Equal("2018-01-02T03:34:28+00:00", podLogs.Entries[0].Timestamp)
+	assert.Equal("2018-01-02 03:34:28", podLogs.Entries[0].Timestamp)
 	assert.Equal(int64(1514864068), podLogs.Entries[0].TimestampUnix)
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("INFO", podLogs.Entries[0].Severity)
 
-	assert.Equal("2018-01-02T04:34:28+00:00", podLogs.Entries[1].Timestamp)
+	assert.Equal("2018-01-02 04:34:28", podLogs.Entries[1].Timestamp)
 	assert.Equal(int64(1514867668), podLogs.Entries[1].TimestampUnix)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
 	assert.Equal("WARN", podLogs.Entries[1].Severity)
 
-	assert.Equal("2018-01-02T05:34:28+00:00", podLogs.Entries[2].Timestamp)
+	assert.Equal("2018-01-02 05:34:28", podLogs.Entries[2].Timestamp)
 	assert.Equal(int64(1514871268), podLogs.Entries[2].TimestampUnix)
 	assert.Equal("#3 Log Message", podLogs.Entries[2].Message)
 	assert.Equal("INFO", podLogs.Entries[2].Severity)
 
-	assert.Equal("2018-01-02T06:34:28+00:00", podLogs.Entries[3].Timestamp)
+	assert.Equal("2018-01-02 06:34:28", podLogs.Entries[3].Timestamp)
 	assert.Equal(int64(1514874868), podLogs.Entries[3].TimestampUnix)
 	assert.Equal("#4 Log error Message", podLogs.Entries[3].Message)
 	assert.Equal("ERROR", podLogs.Entries[3].Severity)
@@ -628,8 +628,12 @@ func TestGetPodLogsProxy(t *testing.T) {
 	assert.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
-	assert.Equal("2021-02-01T21:34:35.533Z", entry.AccessLogEntry.Timestamp)
-	assert.Equal(int64(1612215275), entry.AccessLogEntry.TimestampUnix)
+	assert.Equal("2021-02-01 21:34:35", entry.Timestamp)
+	assert.NotNil(entry.AccessLog)
+	assert.Equal("GET", entry.AccessLog.Method)
+	assert.Equal("200", entry.AccessLog.StatusCode)
+	assert.Equal("2021-02-01T21:34:35.533Z", entry.AccessLog.Timestamp)
+	assert.Equal(int64(1612215275), entry.TimestampUnix)
 }
 
 func TestDuplicatedControllers(t *testing.T) {
