@@ -1,18 +1,18 @@
 <?xml version='1.1' encoding='UTF-8'?>
-<flow-definition plugin="workflow-job@2.33">
+<flow-definition plugin="workflow-job@2.40">
   <actions>
-    <org.jenkinsci.plugins.workflow.multibranch.JobPropertyTrackerAction plugin="workflow-multibranch@2.21">
+    <org.jenkinsci.plugins.workflow.multibranch.JobPropertyTrackerAction plugin="workflow-multibranch@2.22">
       <jobPropertyDescriptors>
         <string>org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty</string>
         <string>hudson.model.ParametersDefinitionProperty</string>
       </jobPropertyDescriptors>
     </org.jenkinsci.plugins.workflow.multibranch.JobPropertyTrackerAction>
   </actions>
-  <description/>
+  <description></description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
-    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.31">
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.32">
       <autoRebuild>false</autoRebuild>
       <rebuildDisabled>false</rebuildDisabled>
     </com.sonyericsson.rebuild.RebuildSettings>
@@ -26,57 +26,39 @@ specified, the type of the release will be determined based on the current date.
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>BACKEND_RELEASING_BRANCH</name>
-          <description>Branch of the backend to release</description>
+          <name>RELEASING_BRANCHES</name>
+          <description>Name of branch of all repositories to checkout and run the release. The only exception is the website which is always run on the `master` branch.</description>
           <defaultValue>refs/heads/master</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>UI_RELEASING_BRANCH</name>
-          <description>Branch of the UI to release</description>
-          <defaultValue>refs/heads/master</defaultValue>
+          <name>BACKEND_REPO</name>
+          <description>The GitHub repo of the back-end sources, in owner/repo format.</description>
+          <defaultValue>kiali/kiali</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>SITE_RELEASING_BRANCH</name>
-          <description>Branch of the website to release</description>
-          <defaultValue>refs/heads/master</defaultValue>
+          <name>UI_REPO</name>
+          <description>The GitHub repo of the front-end sources, in owner/repo format.</description>
+          <defaultValue>kiali/kiali-ui</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>OPERATOR_RELEASING_BRANCH</name>
-          <description>Branch of the operator to release</description>
-          <defaultValue>refs/heads/master</defaultValue>
+          <name>OPERATOR_REPO</name>
+          <description>The GitHub repo of the kiali-operator sources, in owner/repo format.</description>
+          <defaultValue>kiali/kiali-operator</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>BACKEND_GITHUB_URI</name>
-          <description>SSH Url of the kiali-backend GitHub repository</description>
-          <defaultValue>git@github.com:kiali/kiali.git</defaultValue>
+          <name>SITE_REPO</name>
+          <description>The GitHub repo of the website sources, in owner/repo format.</description>
+          <defaultValue>kiali/kiali.io</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>UI_GITHUB_URI</name>
-          <description>SSH Url of the kiali-ui GitHub repository</description>
-          <defaultValue>git@github.com:kiali/kiali-ui.git</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>SITE_GITHUB_URI</name>
-          <description>SSH Url of the kiali.io GitHub repository</description>
-          <defaultValue>git@github.com:kiali/kiali.io.git</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>OPERATOR_GITHUB_URI</name>
-          <description>SSH Url of the kiali-operator GitHub repository</description>
-          <defaultValue>git@github.com:kiali/kiali-operator.git</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>HELM_GITHUB_URI</name>
-          <description>SSH Url of the helm-charts GitHub repository</description>
-          <defaultValue>git@github.com:kiali/helm-charts.git</defaultValue>
+          <name>HELM_REPO</name>
+          <description>The GitHub repo of the Helm charts sources, in owner/repo format.</description>
+          <defaultValue>kiali/helm-charts</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
@@ -92,55 +74,20 @@ specified, the type of the release will be determined based on the current date.
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>BACKEND_PULL_URI</name>
-          <description>The URL of the GitHub API to use to create pull requests for the
-back-end (changes to prepare for next version)</description>
-          <defaultValue>https://api.github.com/repos/kiali/kiali/pulls</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>UI_PULL_URI</name>
-          <description>The URL of the GitHub API to use to create pull requests for the
-UI (changes to prepare for next version)</description>
-          <defaultValue>https://api.github.com/repos/kiali/kiali-ui/pulls</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>SITE_PULL_URI</name>
-          <description>The URL of the GitHub API to use to create pull requests for the
-UI (changes to prepare for next version)</description>
-          <defaultValue>https://api.github.com/repos/kiali/kiali.io/pulls</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>OPERATOR_PULL_URI</name>
-          <description>The URL of the GitHub API to use to create pull requests for the
-operator (changes to prepare for next version)</description>
-          <defaultValue>https://api.github.com/repos/kiali/kiali-operator/pulls</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>HELM_PULL_URI</name>
-          <description>The URL of the GitHub API to use to create pull requests for the
-helm-charts (changes to prepare for next version)</description>
-          <defaultValue>https://api.github.com/repos/kiali/helm-charts/pulls</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
           <name>NPM_DRY_RUN</name>
           <description>Set to &quot;y&quot; if you want to make a &quot;dry run&quot; of the front-end release process</description>
           <defaultValue>y</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>SKIP_UI_RELEASE</name>
-          <description>Set to &apos;y&apos; if you don&apos;t want to release the UI</description>
+          <name>SKIP_BACKEND_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the backend</description>
           <defaultValue>n</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>SKIP_BACKEND_RELEASE</name>
-          <description>Set to &apos;y&apos; if you don&apos;t want to release the backend</description>
+          <name>SKIP_UI_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the UI</description>
           <defaultValue>n</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
@@ -157,29 +104,29 @@ helm-charts (changes to prepare for next version)</description>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>SHOULD_RELEASE_SITE</name>
-          <description>Set to &apos;y&apos; to force release of the website</description>
-          <defaultValue>auto</defaultValue>
+          <name>SKIP_SITE_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the website</description>
+          <defaultValue>n</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>UI_VERSION</name>
           <description>If you are skipping UI release. Specify the UI version to package, or leave
 unset to use the version present in the main Makefile (e.g. leave unset for patch releases)</description>
-          <defaultValue/>
+          <defaultValue></defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>NPM_CONFIG_REGISTRY</name>
           <description>Registry to use for fetching packages. This is not used for publishing releases. Do not include the trailing slash.</description>
-          <defaultValue/>
+          <defaultValue></defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.70">
-    <scm class="hudson.plugins.git.GitSCM" plugin="git@3.10.0">
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.90">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.6.0">
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
@@ -193,7 +140,7 @@ unset to use the version present in the main Makefile (e.g. leave unset for patc
         </hudson.plugins.git.BranchSpec>
       </branches>
       <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-      <submoduleCfg class="list"/>
+      <submoduleCfg class="empty-list"/>
       <extensions/>
     </scm>
     <scriptPath>deploy/jenkins-ci/Jenkinsfile</scriptPath>

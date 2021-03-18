@@ -35,12 +35,12 @@
  *   - NPM_DRY_RUN
  *      defaultValue: n
  *      description: Set to "y" if you want to make a "dry run" of the front-end release process
- *   - SKIP_UI_RELEASE
- *      defaultValue: n
- *      description: Set to 'y' if you don't want to release the UI
  *   - SKIP_BACKEND_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the backend
+  *   - SKIP_UI_RELEASE
+  *      defaultValue: n
+  *      description: Set to 'y' if you don't want to release the UI
  *   - SKIP_OPERATOR_RELEASE
  *      defaultValue: n
  *      description: Set to 'y' if you don't want to release the operator
@@ -58,6 +58,9 @@
  *       defaultValue: ''
  *       description: NPM registry to use for fetching packages. This is not used for publishing releases.
  *                    Do not include the trailing slash.
+ *   - NOTIFICATIONS_EMAIL
+ *       defaultValue: ''
+ *       description: E-mail for sending build failure notifications.
  */
 
 node('kiali-build && fedora') {
@@ -240,7 +243,7 @@ node('kiali-build && fedora') {
           build(job: 'kiali-helm-release',
               parameters: [
               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
-              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO']
+              [$class: 'StringParameterValue', value: params.HELM_REPO, name: 'HELM_REPO'],
               [$class: 'StringParameterValue', value: params.RELEASING_BRANCHES, name: 'HELM_RELEASING_BRANCH']
               ], wait: false
               )
@@ -260,13 +263,17 @@ node('kiali-build && fedora') {
       }
     }
   } catch (e) {
-    emailext(
-        to: 'kiali-internal@redhat.com',
-        subject: 'Kiali build failure',
-        body: '${JELLY_SCRIPT,template="html"}',
-        attachLog: true,
-        mimeType: 'text/html'
-    )
+    echo e.toString()
+    if (params.NOTIFICATIONS_EMAIL.length() != 0) {
+        emailext(
+            to: params.NOTIFICATIONS_EMAIL,
+            subject: 'Kiali build failure',
+            body: '${JELLY_SCRIPT,template="html"}',
+            attachLog: true,
+            mimeType: 'text/html'
+        )
+    }
+    throw e
   } finally {
     cleanWs()
   }

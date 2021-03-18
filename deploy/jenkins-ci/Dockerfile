@@ -13,9 +13,6 @@ FROM jenkins/jenkins:lts
 RUN /usr/local/bin/install-plugins.sh credentials-binding email-ext git ssh-agent mailer \
         pipeline-stage-view rebuild timestamper workflow-aggregator ws-cleanup
 
-# Install setup script and preconfigured jobs
-COPY jenkins_ref /usr/share/jenkins/ref/
-
 ## Install tools
 #
 USER root
@@ -24,6 +21,9 @@ USER root
 COPY bin/entrypoint.sh /usr/local/bin/
 
 RUN set -eux; \
+    # Install a requirement to un-tar nodejs.
+    apt-get -qq update; \
+    apt-get install --no-install-recommends -qq xz-utils; \
     # Install golang \
     curl -fsSL https://golang.org/dl/go1.14.7.linux-amd64.tar.gz -o go.tar.gz; \
     tar -C /usr/local -zxf go.tar.gz; \
@@ -65,6 +65,9 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*; \
     # Set exec permissions to entrypoint; \
     chmod +x /usr/local/bin/entrypoint.sh;
+
+# Install setup script and preconfigured jobs
+COPY jenkins_ref /usr/share/jenkins/ref/
 
 # Overide entrypoint of the base image with our own
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
