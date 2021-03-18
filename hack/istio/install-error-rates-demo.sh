@@ -3,10 +3,11 @@
 # This deploys the travel agency demo
 
 : ${CLIENT_EXE:=oc}
+: ${DELETE_DEMO:=false}
+: ${ENABLE_INJECTION:=true}
 : ${NAMESPACE_ALPHA:=alpha}
 : ${NAMESPACE_BETA:=beta}
-: ${ENABLE_INJECTION:=true}
-: ${DELETE_DEMO:=false}
+: ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -30,8 +31,13 @@ Valid command line arguments:
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -h|--help: this text
+  -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
       exit 1
+      ;;
+    -s|--source)
+      SOURCE="$2"
+      shift;shift
       ;;
     *)
       echo "Unknown argument [$key]. Aborting."
@@ -42,9 +48,11 @@ done
 
 echo Will deploy Error Rates Demo using these settings:
 echo CLIENT_EXE=${CLIENT_EXE}
+echo DELETE_DEMO=${DELETE_DEMO}
+echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo NAMESPACE_ALPHA=${NAMESPACE_ALPHA}
 echo NAMESPACE_BETA=${NAMESPACE_BETA}
-echo ENABLE_INJECTION=${ENABLE_INJECTION}
+echo SOURCE=${SOURCE}
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
@@ -92,7 +100,7 @@ fi
 
 # Deploy the demo
 
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/error-rates/alpha.yaml) -n ${NAMESPACE_ALPHA}
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/error-rates/beta.yaml) -n ${NAMESPACE_BETA}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/alpha.yaml") -n ${NAMESPACE_ALPHA}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/error-rates/beta.yaml") -n ${NAMESPACE_BETA}
 
 

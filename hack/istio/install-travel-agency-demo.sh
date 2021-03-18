@@ -3,13 +3,14 @@
 # This deploys the travel agency demo
 
 : ${CLIENT_EXE:=oc}
-: ${NAMESPACE_AGENCY:=travel-agency}
-: ${NAMESPACE_PORTAL:=travel-portal}
-: ${NAMESPACE_CONTROL:=travel-control}
+: ${DELETE_DEMO:=false}
 : ${ENABLE_INJECTION:=true}
 : ${ENABLE_OPERATION_METRICS:=false}
-: ${DELETE_DEMO:=false}
+: ${NAMESPACE_AGENCY:=travel-agency}
+: ${NAMESPACE_CONTROL:=travel-control}
+: ${NAMESPACE_PORTAL:=travel-portal}
 : ${SHOW_GUI:=false}
+: ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -30,6 +31,10 @@ while [ $# -gt 0 ]; do
       ENABLE_OPERATION_METRICS="$2"
       shift;shift
       ;;
+    -s|--source)
+      SOURCE="$2"
+      shift;shift
+      ;;
     -sg|--show-gui)
       SHOW_GUI="$2"
       shift;shift
@@ -41,6 +46,7 @@ Valid command line arguments:
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
   -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
   -eo|--enable-operation-metrics: either 'true' or 'false' (default is false). Only works on Istio 1.9 installed in istio-system.
+  -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
 HELPMSG
@@ -63,11 +69,13 @@ fi
 
 echo Will deploy Travel Agency using these settings:
 echo CLIENT_EXE=${CLIENT_EXE}
-echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
-echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
-echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
+echo DELETE_DEMO=${DELETE_DEMO}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
 echo ENABLE_OPERATION_METRICS=${ENABLE_OPERATION_METRICS}
+echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
+echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
+echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
+echo SOURCE=${SOURCE}
 
 
 # If we are to delete, remove everything and exit immediately after
@@ -133,9 +141,9 @@ fi
 
 # Deploy the demo
 
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_agency.yaml) -n ${NAMESPACE_AGENCY}
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_portal.yaml) -n ${NAMESPACE_PORTAL}
-${CLIENT_EXE} apply -f <(curl -L https://raw.githubusercontent.com/kiali/demos/master/travels/travel_control.yaml) -n ${NAMESPACE_CONTROL}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NAMESPACE_AGENCY}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
+${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
 
 # Set up metric classification
 
