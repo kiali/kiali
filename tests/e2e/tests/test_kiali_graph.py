@@ -24,6 +24,14 @@ WORKLOAD_REQUESTS_PER_SECOND    = {'graphType':'workload', 'edges':'requestsPerS
 WORKLOAD_REQUESTS_PERCENTAGE    = {'graphType':'workload', 'edges':'requestsPercentage', 'duration':'21600s'}
 WORKLOAD_REQUESTS_RESPONCE_TIME = {'graphType':'workload', 'edges':'responseTime', 'duration':'21600s'}
 
+IDLE_EDGES = {'graphType':'versionedApp', 'duration':'300s', 'idleEdges':'true'}
+IDLE_NODES = {'graphType':'versionedApp', 'duration':'300s', 'idleNodes':'true'}
+
+OPERATION_NODES  = {'graphType':'versionedApp', 'duration':'300s', 'operationNodes':'true'}
+SERVICE_NODES = {'graphType':'versionedApp', 'duration':'300s', 'injectServiceNodes':'true'}
+
+REFRESH_RATE = {'graphType':'versionedApp', 'duration':'300s', 'refresh':'15000'}
+
 BOX_BY_LIST = {'cluster', 'namespace', 'app'}
 
 
@@ -117,6 +125,26 @@ def test_graph_type_negative(kiali_client):
     response = get_response(kiali_client, params)
     assert response.status_code == 400
     assert 'Invalid graphType' in response.text
+
+def test_display_idle_edges(kiali_client):
+    json = get_graph_json(client = kiali_client, params = IDLE_EDGES)
+    validate_responce(json, IDLE_EDGES)
+
+def test_display_idle_nodes(kiali_client):
+    json = get_graph_json(client = kiali_client, params = IDLE_NODES)
+    validate_responce(json, IDLE_NODES)
+
+def test_display_operation_nodes(kiali_client):
+    json = get_graph_json(client = kiali_client, params = OPERATION_NODES)
+    validate_responce(json, OPERATION_NODES)
+
+def test_display_operation_nodes(kiali_client):
+    json = get_graph_json(client = kiali_client, params = SERVICE_NODES)
+    validate_responce(json, SERVICE_NODES)
+
+def test_display_operation_nodes(kiali_client):
+    json = get_graph_json(client = kiali_client, params = REFRESH_RATE)
+    validate_responce(json, REFRESH_RATE)
 
 ##
 
