@@ -21,7 +21,7 @@ def before_all_tests(kiali_client):
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
                           'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion',
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
-                          'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
+                          'authenticationInfo', 'openshiftCheckToken', 'customDashboard', 'podDetails', 'podProxyDump', 'podProxyResource', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
                           'meshTls', 'namespaceValidations', 'appSpans', 'appTraces', 'serviceTraces', 'workloadSpans', 'workloadTraces', 'serviceSpans']
 
@@ -108,6 +108,14 @@ def test_namespace_tls(kiali_client):
 def test_pod_details(kiali_client):
     pod_id = get_pod_id(kiali_client, namespace=control_plane_namespace, pod_name='kiali')
     evaluate_response(kiali_client, method_name='podDetails', path={'namespace': control_plane_namespace, 'pod': pod_id})
+
+def test_pod_proxy_dump(kiali_client):
+    pod_id = get_pod_id(kiali_client, namespace='bookinfo', pod_name='productpage-v1')
+    evaluate_response(kiali_client, method_name='podProxyDump', path={'namespace': 'bookinfo', 'pod': pod_id, 'object': 'config_dump'})
+
+def test_pod_proxy_resource(kiali_client):
+    pod_id = get_pod_id(kiali_client, namespace='bookinfo', pod_name='productpage-v1')
+    evaluate_response(kiali_client, method_name='podProxyResource', path={'namespace': 'bookinfo', 'pod': pod_id, 'object': 'config_dump', 'resource': 'resource'})
 
 def test_pod_logs(kiali_client):
     pod_id = get_pod_id(kiali_client, namespace=control_plane_namespace, pod_name='kiali')
