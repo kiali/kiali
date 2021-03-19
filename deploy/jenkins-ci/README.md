@@ -22,40 +22,31 @@
 
 ## Directory contents
 
-This directory contains the Jenkins Pipeline used to release
+This directory contains the main Jenkins Pipeline used to release
 the Kiali project, support files used by the Pipeline during
 building, and support files to ease the development of the
 Pipeline.
 
 ### The Pipeline
 
-The [Jenkinsfile](Jenkinsfile) is the Pipeline. It is written
-using [scripted syntax](https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline)
-which is very similar to the [Groovy language](https://groovy-lang.org/).
-
-The Pipeline is more similar to an orchestrator where build
-stages are defined and the actual build implementation
-is delegated to Makefiles.
-
-This is the _entrypoint_, so this is the first file you should
-check if you want to modify the Pipeline.
+The [Jenkinsfile](Jenkinsfile) is the main Kiali Pipeline. Learn
+more in _[The Pipelines](#the-pipelines)_ section
 
 ### Support files
 
-The [bin/determine-release-type.sh](bin/determine-release-type.sh)
-is used to automatically resolve what kind of release needs to be
-build, assuming the Pipeline runs weekly. Read the script
-to learn more about how it works.
+The `kiali-release` pipeline uses some support files:
 
-The [bin/jq](https://stedolan.github.io/jq/) v1.6 and
-[bin/semver](https://github.com/fsaintjacques/semver-tool) v2.1.0
-are tools used to properly set version strings when building releases.
-
-The [Makefile](Makefile), [Makefile.operator.jenkins](Makefile.operator.jenkins), and [Makefile.helm.jenkins](Makefile.helm.jenkins) are repeatedly invoked by the Pipeline. They
-are analog and compliment the [Makefile.jenkins](https://github.com/kiali/kiali-ui/blob/master/Makefile.jenkins)
-of the kiali-ui repository. These are the files where the build
-steps are implemented. 
-
+* The [bin/determine-release-type.sh](bin/determine-release-type.sh)
+  is used to automatically resolve what kind of release needs to be
+  build, assuming the Pipeline runs weekly. Read the script
+  to learn more about how it works.
+* The [bin/jq](https://stedolan.github.io/jq/) v1.6 and
+  [bin/semver](https://github.com/fsaintjacques/semver-tool) v2.1.0
+  are tools used to properly set version strings when building releases.
+* The [Makefile](Makefile) is repeatedly invoked by the Pipeline. It's
+  analog and compliments the [Makefile.jenkins](https://github.com/kiali/kiali-ui/blob/master/Makefile.jenkins)
+  of the kiali-ui repository. These are the files where the build
+  steps are implemented.
 
 ### Development helper files
 
@@ -73,7 +64,36 @@ the Pipeline.
 The [README.md](README.md) file is what you are reading. The files
 under the `assets` directory are used in the [README.md](README.md).
 
-## Using the Pipeline
+## The Pipelines
+
+Kiali uses several pipelines to release the several Kiali artifacts. These
+are their names:
+
+* `kiali-release` is the main Pipeline used to release Kiali. It
+  contains the script to release the back-end and the front-end, and to build
+  and publish a container image to registry. It's [Jenkinsfile](Jenkinsfile)
+  is located in the kiali/kiai repository.
+* `kiali-operator-release` is the Pipeline that releases the operator. It's
+  [Jenkinsfile](https://github.com/kiali/kiali-operator/blob/master/Jenkinsfile)
+  is located in the kiali/kiai-operator repository.
+* `kiali-helm-release` is the Pipeline that releases the Helm charts. It's
+  [Jenkinsfile](https://github.com/kiali/helm-charts/blob/master/Jenkinsfile)
+  is located in the kiali/helm-charts repository.
+* `kiali-website-release` is the Pipeline that releases Kiali's website. It's
+  [Jenkinsfile](https://github.com/kiali/kiali.io/blob/master/Jenkinsfile) is
+  located in the kiali/kiali.io repository.
+
+All Pipelines are written using [Jenkins's scripted syntax](https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline)
+which is very similar to the [Groovy language](https://groovy-lang.org/).
+
+The `kiali-release` Pipeline is the main one. It invokes the other Pipelines
+and is one you should run most of the time. You can run the others if you need
+to do a release of the individual components.
+
+Most of this README is focused on the `kiali-release` Pipeline. However, what
+you read here can also be applied to the other pipelines.
+
+## Using the main Kiali Pipeline
 
 To run the Pipeline, open the _kiali-release_ job by clicking on it.
 On the job page, click the _Build with Parameters_ option of the
@@ -90,13 +110,13 @@ these defaults. If needed, change any parameter you need. Then, push
 the _Build_ button at the end of the form to run the Pipeline.
 
 As you can see, running the Pipeline is straightforward. The parameters
-have a short description to help you know adjust them, if needed.
+have a short description to help you know how to adjust them, if needed.
 
 Since parameters are already described, instead of explaining what
 each parameter does, the rest of this section is focused on showing
 _by example_ how to run a build of the different Kiali use-cases. 
-Unless pointed, it's assumed that you want build the back-end and
-the front-end and the operator.
+Unless pointed, it's assumed that you want build all artifacts (back-end,
+front-end, operator, helm charts and website)
 
 ### Automatically determine the release type and build it 
 
@@ -116,13 +136,11 @@ current date and the Kiali's Sprint start/end cycle:
 ### Building a minor release
 
 Set the RELEASE_TYPE parameter of the Pipeline to _minor_ value. This
-will publish a minor release of Kiali from the _master_ branches of the
-back-end and front-end and operator.
+will publish a minor release of Kiali from _master_ branches.
 
 ![Minor release param](assets/jk_minor_release_params.png)
 
-**Note:** Remember that minor releases are built automatically. Most
-likely, you would need this only for development purposes.
+**Note:** Remember that minor releases are usually built automatically.
 
 ### Building a patch release
 
@@ -134,16 +152,15 @@ from a version branch rather than the `master` branch. Set the Pipeline
 parameters as follows:
 
 * RELEASE_TYPE: Use `patch`.
-* BACKEND_RELEASING_BRANCH: The branch of the **back-end repository** to
-  generate the release from; e.g. `refs/heads/v0.20`.
-* UI_RELEASING_BRANCH: The branch of the **front-end repository** to
-  generate the release from; e.g. `refs/heads/v0.20`.
-* OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
-  generate the release from; e.g. `refs/heads/v0.20`.
+* RELEASING_BRANCHES: The branch name of the repositories to
+  generate the release from; e.g. `refs/heads/v0.20`. The build
+  assumes that all repositories have a branch with this name.
 
-Note that the Helm release always builds and pushes to the "master" branch because that is the branch that GitHub Pages gets the content for the Helm Chart Repository HTTP server.
+Note that the Helm release always builds and pushes to the "master" branch
+because that is the branch that GitHub Pages gets the content for the Helm
+Chart Repository HTTP server.
 
-### Building a patch release (back-end only)
+### Building a patch release omitting the front-end
 
 First, make sure that all fixes are properly committed to the
 back-end repository (don't change version numbers).
@@ -154,11 +171,10 @@ from a version branch rather than the `master` branch.
 Set the Pipeline parameters as follows:
 
 * RELEASE_TYPE: Use `patch`.
-* BACKEND_RELEASING_BRANCH: The branch of the **back-end repository** to
-  generate the release from; e.g. `refs/heads/v0.20`.
+* RELEASING_BRANCHES: The branch name of the repositories to
+  generate the release from; e.g. `refs/heads/v0.20`. The build
+  assumes that all repositories have a branch with this name.
 * SKIP_UI_RELEASE: Set to `y`.
-* SKIP_OPERATOR_RELEASE: Set to `y`.
-* SKIP_HELM_RELEASE: Set to `y`.
 
 The front-end that will be bundled in the container image will be the version
 specified in the main Makefile
@@ -184,14 +200,13 @@ Example commits of a preparation for a previous major release:
 Then, run Pipeline with the parameters as follows:
 
 * RELEASE_TYPE: Use `major`.
-* BACKEND_RELEASING_BRANCH: The branch of the **back-end repository** to
-  generate the release from; e.g. `refs/heads/v1.0`.
-* UI_RELEASING_BRANCH: The branch of the **front-end repository** to
-  generate the release from; e.g. `refs/heads/v1.0`.
-* OPERATOR_RELEASING_BRANCH: The branch of the **operator repository** to
-  generate the release from; e.g. `refs/heads/v1.0`.
+* RELEASING_BRANCHES: The branch name of the repositories to
+  generate the release from; e.g. `refs/heads/v1.0`. The build
+  assumes that all repositories have a branch with this name.
 
-Note that the Helm release always builds and pushes to the "master" branch because that is the branch that GitHub Pages gets the content for the Helm Chart Repository HTTP server.
+Note that the Helm release always builds and pushes to the "master" branch
+because that is the branch that GitHub Pages gets the content for the Helm
+Chart Repository HTTP server.
 
 ### Building a snapshot release
 
@@ -213,6 +228,27 @@ of the back-end and front-end and operator.
 commit in the master branches of both the back-end and front-end
 repositories.
 
+### Omitting artifacts
+
+There is a set of _SKIP\_*\_RELEASE_ parameters that allow individual control
+about what should and should not be built:
+
+* SKIP_BACKEND_RELEASE: Forces to omit the back-end build.
+* SKIP_UI_RELEASE: Forces to omit the front-end build.
+* SKIP_OPERATOR_RELEASE: Forces to omit the operator build.
+* SKIP_HELM_RELEASE: Forces to omit the helm charts build.
+* SKIP_SITE_RELEASE: Forces to omit the website build.
+
+Note that, although you can force to omit the build of a component, you cannot
+force building a component. Depending on the release type, some components can
+be anyway omitted; e.g. `edge` releases won't release the website.
+
+Note that, although you can use the `kiali-release` pipeline to build
+individual components, there are dedicated pipelines for the operator,
+the helm charts and the website. If you want to build only one of these
+mentioned components, it's probably better to use the dedicated
+pipeline of the component - it will be slightly faster.
+
 ## Recovering and troubleshooting a build
 
 The Pipeline is not idempotent, mainly because of all external systems
@@ -226,9 +262,10 @@ failure was caused by a network issue, you may retry it. Else, most likely
 something needs to be fixed manually (code, tests, credentials, etc.).
 Fix the cause of the failure and proceed to recover the build.
 
-For `edge` releases, you can just retry the build. Else, pass through the
-following checks (in order) to know how to proceed to recover the build. Do
-the suggested action of the first check that is not OK:
+For `edge` releases, you can just retry the build. For other kind of releases,
+first check if the `kiali-release` pipeline finished successfully. If it
+didn't, pass through the following checks (in order) to know how to proceed
+to recover the build. Do the suggested action of the first check that is not OK:
 
 1. Is the front-end release properly
    [published in NPM](https://www.npmjs.com/package/@kiali/kiali-ui?activeTab=versions)?
@@ -264,7 +301,15 @@ the suggested action of the first check that is not OK:
    * For snapshot releases this check doesn't apply.
    * Don't retry the build. Just update the Makefile manually.
 1. If all previous checks are OK, then the build failed at a post-build stage.
-   Most likely, all is OK and you don't need to retry it.
+   Most likely, you don't need to re-run the `kiali-release` pipeline, but other
+   pipelines may need to be run again. 
+   
+If the `kiali-release` pipeline looks good, then check the other pipelines:
+`kiali-oerator-release`, `kiali-helm-release` and `kiali-website-release`.
+If any of these failed, you need to check first if the associated repository
+was affected. If it wasn't affected, you should be able to, simply, re-run
+the pipeline to retry. If it was affected, you will need to fix the build
+manually.
    
 ## Making test builds
 
@@ -280,26 +325,18 @@ setup section to learn more.
 
 When running the build, set the following parameters:
 
-* BACKEND_GITHUB_URI: Use the SSH url of your Kiali's back-end fork; e.g.
-  `git@github.com:israel-hdez/swscore.git`.
-* UI_GITHUB_URI: Use the SSH url of your Kiali's front-end fork; e.g.
-  `git@github.com:israel-hdez/swsui.git`.
-* OPERATOR_GITHUB_URI: Use the SSH url of your Kiali operator fork; e.g.
-  `git@github.com:israel-hdez/kiali-operator.git`.
-* HELM_GITHUB_URI: Use the SSH url of your Kiali helm-charts fork; e.g.
-  `git@github.com:israel-hdez/helm-charts.git`.
+* BACKEND_REPO: Use your Kiali's back-end fork (in owner/repo format); e.g.
+  `israel-hdez/swscore`.
+* UI_REPO: Use your Kiali's front-end fork (in owner/repo format); e.g.
+  `israel-hdez/swsui`.
+* OPERATOR_REPO: Use your Kiali operator fork (in owner/repo format); e.g.
+  `israel-hdez/kiali-operator`.
+* HELM_REPO: Use your Kiali helm-charts fork (in owner/repo format); e.g.
+  `israel-hdez/helm-charts`.
 * QUAY_NAME: Use your own Quay.io repository for Kiali;
   e.g. `quay.io/edgarhz/kiali`.
 * QUAY_OPERATOR_NAME: Use your own Quay.io repository for the operator;
   e.g. `quay.io/edgarhz/kiali-operator`.
-* BACKEND_PULL_URI: Use the GitHub API base URL for your back-end fork;
-  e.g. `https://api.github.com/repos/israel-hdez/swscore/pulls`.
-* UI_PULL_URI: Use the GitHub API base URL for your front-end fork;
-  e.g. `https://api.github.com/repos/israel-hdez/swsui/pulls`.
-* OPERATOR_PULL_URI: Use the GitHub API base URL for your operator fork;
-  e.g. `https://api.github.com/repos/israel-hdez/kiali-operator/pulls`.
-* HELM_PULL_URI: Use the GitHub API base URL for your helm-charts fork;
-  e.g. `https://api.github.com/repos/israel-hdez/helm-charts/pulls`.
 * NPM_DRY_RUN: Set to `y`.
 
 Once you run the first test build, if you need to run more test builds,
@@ -319,16 +356,23 @@ some understanding about which files you need to change.
 The "hard" part is to test the Pipeline. You need a Jenkins instance
 with the tools to correctly build both Kiali's back-end and
 front-end and operator, and to deploy Kiali. Instead of going through all the
-steps to setup such Jenkins instance, a [preconfigured
-Docker image](https://hub.docker.com/r/edgarhz/kiali-jenkins) is
-available to start as fast as possible. Run it by invoking:
+steps to setup such Jenkins instance, a  [Dockerfile](Dockerfile) is provided
+to let you build a preconfigured container image. All required files
+are provided in the [/deploy/jenkins-ci](/deploy/jenkins-ci)
+directory of the repository. Inside that directory, simply run:
 
-```
+`docker build -t kiali-jenkins .`
+
+And run the generated image:
+
+```bash
 docker run \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -p 8080:8080 \
-  edgarhz/kiali-jenkins
+  kiali-jenkins
 ```
+
+Check the [Dockerfile](Dockerfile) to learn how Jenkins is set up.
 
 This command assumes that your Docker daemon's socket is in
 `/var/run/docker.sock`. The `-v` parameter is needed because
@@ -340,34 +384,10 @@ your machine.
 Once the container is running, use your browser to access Jenkins
 at http://localhost:8080. Username and password are both `admin`.
 
-**Note:** The `edgarhz/kiali-jenkins` image is updated now and then.
-So, you may find it is old. But it can work for testing.
-
-The image is preconfigured with two jobs:
-* **kiali-release:** It is the Pipeline you will be working with.
-* **kiali-release-notifier:** It does nothing. It's there because
-  the Pipeline invokes this job. In the real setup, it
-  does some QE tasks.
-
-### Building the Jenkins image
-
-If you need to build the Jenkins image (you will want to do this
-if you changed config.xml to add or modify parameters), all required files
-are provided in the [/deploy/jenkins-ci](/deploy/jenkins-ci)
-directory of the repository. Inside that directory, simply run:
-
-`docker build -t kiali-jenkins .`
-
-And run the generated image:
-
-```
-docker run \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -p 8080:8080 \
-  kiali-jenkins
-```
-
-Check the [Dockerfile](Dockerfile) to learn how Jenkins is set up.
+The image is preconfigured with all pipelines mentioned in
+_[The Pipelines](#the-pipelines)_ section. There is also an additional
+pipeline named `kiali-release-notifier` which does nothing. It's there because
+it's invoked by other jobs. In the real setup, it does some QE tasks.
 
 ### Setup Jenkins credentials
 
@@ -375,8 +395,13 @@ The only thing that is not setup in the preconfigured Jenkins
 image are _credentials_. I hope you can guess why :smile:.
 
 Before trying anything, you need to properly setup the credentials.
-Once you are logged into Jenkins, click _Credentials_ in the menu
-at the left, then click _(global)_ in the page that appears:
+You can either manually setup the credentials using the Jenkins UI,
+or you can pass some environment variables when running the docker
+image and credentials will be setup for you.
+
+If you prefer setting up the credentials via the Jenkins UI, login into
+Jenkins, click _Credentials_ in the menu at the left, then click _(global)_
+in the page that appears:
 
 ![Credentials Home](assets/jk_credentials_home.png)
 
@@ -401,11 +426,7 @@ at the left to add these five credentials:
   * Kind: Secret text
   * ID: kiali-bot-gh-token
   * Secret: A valid GitHub token
-* **NPM token**: Used to push the front-end release to NPM. For
-  development, use any arbitrary string.
-  * Kind: Secret text
-  * ID: kiali-npm
-  * Secret: An arbitrary string.
+* **NPM token**: This is already pre-configured with a random string.
 * **Quay credentials:** Used to push the Kiali image and the
   Kiali operator image to Quay.io. For development, use your
   Quay.io account (it will be safer if you use an account
@@ -415,6 +436,24 @@ at the left to add these five credentials:
   * Username: A valid Quay.io username
   * Password: A valid Quay.io password
   
+If you prefer to configure via environment variables, this is how you do the
+equivalent configuration:
+
+```bash
+export BOT_TOKEN=your_github_personal_access_token
+export QUAY_USERNAME=your_quay_username
+export QUAY_PASSWORD=your_quay_password
+export BOT_SSH_KEY="$(cat your_ssh_private_key_file)"
+docker run \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -p 8080:8080 \
+  -e BOT_TOKEN \
+  -e QUAY_USERNAME \
+  -e QUAY_PASSWORD \
+  -e BOT_SSH_KEY \
+  kiali-jenkins
+```
+
 Once you finish setting up credentials, the list should look similar
 to the following image and you are ready to start builds:
 
@@ -454,3 +493,6 @@ You have two options to re-configure:
    
 First option is better if you are only changing the [Jenkinsfile](Jenkinsfile).
 If you also need to change other support files, you can use either.
+
+If you need, you can do a similar re-configuration to the other
+[pipelines](#the-pipelines).
