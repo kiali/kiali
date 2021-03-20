@@ -538,68 +538,78 @@ fi
 
 start_port_forward_component() {
   local COMPONENT_NAME="${1}"            # e.g. "Prometheus"
-  local PORT_FORWARD_PID_VARNAME="${2}"  # e.g. "PORT_FORWARD_PID_PROMETHEUS"
+  local PORT_FORWARD_JOB_VARNAME="${2}"  # e.g. "PORT_FORWARD_JOB_PROMETHEUS"
   local PORT_FORWARD_DEPLOYMENT="${3}"   # e.g. ${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}
   local LOCAL_REMOTE_PORTS="${4}"        # e.g. "9091:9090"
   local EXPECTED_URL="${5}"              # e.g. ${PROMETHEUS_URL}
   local CMDLINE_OPT="${6}"               # e.g. "--prometheus-url"
 
   if [ ! -z "${PORT_FORWARD_DEPLOYMENT}" ]; then
-    startmsg "The port-forward to ${COMPONENT_NAME} is being started on [${EXPECTED_URL}]"
-    set -m
-    ${CLIENT_EXE} port-forward -n ${ISTIO_NAMESPACE} ${PORT_FORWARD_DEPLOYMENT} ${LOCAL_REMOTE_PORTS} > /dev/null &
-    set +m
-    printf -v "${PORT_FORWARD_PID_VARNAME}" "$!"
-    sleep 2 # wait for port-forward to start
-    if ! curl ${EXPECTED_URL} > /dev/null 2>&1; then
-      errormsg "Cannot port-forward to the ${COMPONENT_NAME} component. You must expose it and specify its URL via ${CMDLINE_OPT}"
-      restore_original_context
-      exit 1
+    local localport="$(echo ${LOCAL_REMOTE_PORTS} | cut -d ':' -f 1)"
+    if lsof -Pi :${localport} -sTCP:LISTEN -t > /dev/null 2>&1; then
+      warnmsg "There is something listening on port [${localport}] - will assume it is a port-forward already set up, so no port-forward will be started"
+      printf -v "${PORT_FORWARD_JOB_VARNAME}" ""
+      if ! curl ${EXPECTED_URL} > /dev/null 2>&1; then
+        errormsg "Cannot access the ${COMPONENT_NAME} URL. Make sure this is accessible: ${EXPECTED_URL}"
+        cleanup_and_exit 1
+      fi
+    else
+      startmsg "The port-forward to ${COMPONENT_NAME} is being started on [${EXPECTED_URL}]"
+      set -m
+      (while true; do ${CLIENT_EXE} port-forward -n ${ISTIO_NAMESPACE} ${PORT_FORWARD_DEPLOYMENT} --address=127.0.0.1 ${LOCAL_REMOTE_PORTS} > /dev/null; warnmsg "${COMPONENT_NAME} port-forward died - restarting on [${EXPECTED_URL}]"; sleep 1; done) &
+      set +m
+      local childpid="$!"
+      printf -v "${PORT_FORWARD_JOB_VARNAME}" "$(jobs -lr | grep "${childpid}" | sed 's/.*\[\([0-9]\+\)\].*/\1/')"
+      sleep 2 # wait for port-forward to start
+      infomsg "${COMPONENT_NAME} port-forward started (pid=${childpid}, job=${!PORT_FORWARD_JOB_VARNAME})"
+      if ! curl ${EXPECTED_URL} > /dev/null 2>&1; then
+        errormsg "Cannot port-forward to the ${COMPONENT_NAME} component. You must expose it and specify its URL via ${CMDLINE_OPT}"
+        cleanup_and_exit 1
+      fi
     fi
   else
-    printf -v "${PORT_FORWARD_PID_VARNAME}" ""
+    printf -v "${PORT_FORWARD_JOB_VARNAME}" ""
     if ! curl ${EXPECTED_URL} > /dev/null 2>&1; then
       errormsg "Cannot access the ${COMPONENT_NAME} URL. Make sure this is accessible: ${EXPECTED_URL}"
-      restore_original_context
-      exit 1
+      cleanup_and_exit 1
     fi
   fi
 }
 
 kill_port_forward_component() {
   local COMPONENT_NAME="${1}"            # e.g. "Prometheus"
-  local PORT_FORWARD_PID_VARNAME="${2}"  # e.g. "PORT_FORWARD_PID_PROMETHEUS"
+  local PORT_FORWARD_JOB_VARNAME="${2}"  # e.g. "PORT_FORWARD_JOB_PROMETHEUS"
 
-  if [ ! -z "${!PORT_FORWARD_PID_VARNAME:-}" ]; then
-    kill ${!PORT_FORWARD_PID_VARNAME}
-    wait ${!PORT_FORWARD_PID_VARNAME}
+  if [ ! -z "${!PORT_FORWARD_JOB_VARNAME:-}" ]; then
+    kill %${!PORT_FORWARD_JOB_VARNAME}
+    wait %${!PORT_FORWARD_JOB_VARNAME}
     killmsg "The port-forward to ${COMPONENT_NAME} has been killed"
-    printf -v "${PORT_FORWARD_PID_VARNAME}" ""
+    printf -v "${PORT_FORWARD_JOB_VARNAME}" ""
   fi
 }
 
 start_port_forward_prometheus() {
-  start_port_forward_component 'Prometheus' 'PORT_FORWARD_PID_PROMETHEUS' "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" "${LOCAL_REMOTE_PORTS_PROMETHEUS}"  "${PROMETHEUS_URL}" '--prometheus-url'
+  start_port_forward_component 'Prometheus' 'PORT_FORWARD_JOB_PROMETHEUS' "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" "${LOCAL_REMOTE_PORTS_PROMETHEUS}"  "${PROMETHEUS_URL}" '--prometheus-url'
 }
 
 kill_port_forward_prometheus() {
-  kill_port_forward_component 'Prometheus' 'PORT_FORWARD_PID_PROMETHEUS'
+  kill_port_forward_component 'Prometheus' 'PORT_FORWARD_JOB_PROMETHEUS'
 }
 
 start_port_forward_grafana() {
-  start_port_forward_component 'Grafana' 'PORT_FORWARD_PID_GRAFANA' "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" "${LOCAL_REMOTE_PORTS_GRAFANA}" "${GRAFANA_URL}" '--grafana-url'
+  start_port_forward_component 'Grafana' 'PORT_FORWARD_JOB_GRAFANA' "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" "${LOCAL_REMOTE_PORTS_GRAFANA}" "${GRAFANA_URL}" '--grafana-url'
 }
 
 kill_port_forward_grafana() {
-  kill_port_forward_component 'Grafana' 'PORT_FORWARD_PID_GRAFANA'
+  kill_port_forward_component 'Grafana' 'PORT_FORWARD_JOB_GRAFANA'
 }
 
 start_port_forward_tracing() {
-  start_port_forward_component 'Tracing' 'PORT_FORWARD_PID_TRACING' "${PORT_FORWARD_DEPLOYMENT_TRACING}" "${LOCAL_REMOTE_PORTS_TRACING}" "${TRACING_URL}" '--tracing-url'
+  start_port_forward_component 'Tracing' 'PORT_FORWARD_JOB_TRACING' "${PORT_FORWARD_DEPLOYMENT_TRACING}" "${LOCAL_REMOTE_PORTS_TRACING}" "${TRACING_URL}" '--tracing-url'
 }
 
 kill_port_forward_tracing() {
-  kill_port_forward_component 'Tracing' 'PORT_FORWARD_PID_TRACING'
+  kill_port_forward_component 'Tracing' 'PORT_FORWARD_JOB_TRACING'
 }
 
 # Functions that start and stop the proxy
@@ -617,7 +627,7 @@ start_proxy() {
 }
 
 kill_proxy() {
-  if [ ! -z "${PROXY_PID}" ]; then
+  if [ ! -z "${PROXY_PID:-}" ]; then
     kill ${PROXY_PID}
     wait ${PROXY_PID}
     killmsg "The proxy has been killed"
@@ -667,7 +677,7 @@ cleanup_and_exit() {
   restore_original_context
 
   exitmsg "Exiting"
-  exit 0
+  exit ${1:-0}
 }
 
 restore_original_context() {
