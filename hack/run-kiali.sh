@@ -692,6 +692,11 @@ restore_original_context() {
 }
 
 # Main - start the server (and optionally the proxy) and wait for user input to tell us what to do next
+if [ "${REBOOTABLE}" == "true" ]; then
+  infomsg "The server is rebootable. You can reboot the server via [kill $$]. You can kill this script via [kill -USR1 $$]"
+else
+  infomsg "The server is not rebootable. You can kill this script via either [kill $$] or [kill -USR1 $$]"
+fi
 
 start_port_forward_prometheus
 start_port_forward_grafana
@@ -706,6 +711,8 @@ if [ "${REBOOTABLE}" == "true" ]; then
 else
   trap "cleanup_and_exit" SIGINT SIGTERM # always kill everything immediately
 fi
+
+trap "warnmsg 'SIGUSR1 received - exiting immediately'; cleanup_and_exit" SIGUSR1 # backdoor kill - always kill everything immediately on SIGUSR1
 
 # Wait forever, waking up periodically to allow for the signal handlers to execute
 while true; do sleep 1; done
