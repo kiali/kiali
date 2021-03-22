@@ -294,6 +294,13 @@ if [ -z "${PROMETHEUS_URL:-}" ]; then
         exit 1
       else
         warnmsg "Cannot auto-discover Prometheus on OpenShift. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
+        prom_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.ports[0].targetPort}')"
+        if [ "$?" != "0" -o -z "${prom_remote_port}" ]; then
+          warnmsg "Cannot auto-discover Prometheus port on OpenShift. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
+        else
+          prom_local_port="$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
+          LOCAL_REMOTE_PORTS_PROMETHEUS="${prom_local_port}:${prom_remote_port}"
+        fi
         PROMETHEUS_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
       fi
     else
@@ -307,6 +314,13 @@ if [ -z "${PROMETHEUS_URL:-}" ]; then
       exit 1
     else
       warnmsg "Cannot auto-discover Prometheus on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
+      prom_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [ "$?" != "0" -o -z "${prom_remote_port}" ]; then
+        warnmsg "Cannot auto-discover Prometheus port on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
+      else
+        prom_local_port="$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
+        LOCAL_REMOTE_PORTS_PROMETHEUS="${prom_local_port}:${prom_remote_port}"
+      fi
       PROMETHEUS_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
     fi
   fi
@@ -325,6 +339,13 @@ if [ -z "${GRAFANA_URL:-}" ]; then
         exit 1
       else
         warnmsg "Cannot auto-discover Grafana on OpenShift. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
+        graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.ports[0].targetPort}')"
+        if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+          warnmsg "Cannot auto-discover Grafana port on OpenShift. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
+        else
+          graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
+          LOCAL_REMOTE_PORTS_GRAFANA="${graf_local_port}:${graf_remote_port}"
+        fi
         GRAFANA_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
       fi
     else
@@ -338,6 +359,13 @@ if [ -z "${GRAFANA_URL:-}" ]; then
       exit 1
     else
       warnmsg "Cannot auto-discover Grafana on Kubernetes. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
+      graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+        warnmsg "Cannot auto-discover Grafana port on Kubernetes. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
+      else
+        graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
+        LOCAL_REMOTE_PORTS_GRAFANA="${graf_local_port}:${graf_remote_port}"
+      fi
       GRAFANA_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
     fi
   fi
@@ -356,6 +384,13 @@ if [ -z "${TRACING_URL:-}" ]; then
         exit 1
       else
         warnmsg "Cannot auto-discover Tracing on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
+        trac_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.ports[0].targetPort}')"
+        if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
+          warnmsg "Cannot auto-discover Tracing port on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
+        else
+          trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
+          LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
+        fi
         TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
       fi
     else
@@ -369,6 +404,13 @@ if [ -z "${TRACING_URL:-}" ]; then
       exit 1
     else
       warnmsg "Cannot auto-discover Tracing on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
+      trac_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.ports[0].targetPort}')"
+      if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
+        warnmsg "Cannot auto-discover Tracing port on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
+      else
+        trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
+        LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
+      fi
       TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
     fi
   fi
