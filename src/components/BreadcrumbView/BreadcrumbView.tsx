@@ -31,8 +31,8 @@ const ItemNames = {
 
 const IstioName = 'Istio Config';
 const Iter8Name = 'Iter8 Experiments';
-const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-.]+))?(\/([a-z0-9-]+))?/;
-const extNamespaceRegex = /extensions\/namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-.]+))?(\/([a-z0-9-]+))?/;
+const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
+const extNamespaceRegex = /extensions\/namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
 
 export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCumbViewState> {
   static capitalize = (str: string) => {
