@@ -76,6 +76,7 @@ mkdir -p ${TMP_DIR}
 DEFAULT_API_PROXY_HOST="127.0.0.1"
 DEFAULT_API_PROXY_PORT="8001"
 DEFAULT_CLIENT_EXE="kubectl"
+DEFAULT_ENABLE_SERVER="true"
 DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_KIALI_CONFIG_TEMPLATE_FILE="${SCRIPT_DIR}/run-kiali-config-template.yaml"
 DEFAULT_KIALI_EXE="${GOPATH:-.}/bin/kiali"
@@ -96,6 +97,7 @@ while [[ $# -gt 0 ]]; do
     -app|--api-proxy-port)       API_PROXY_PORT="$2";                shift;shift ;;
     -c|--config)                 KIALI_CONFIG_TEMPLATE_FILE="$2";    shift;shift ;;
     -ce|--client-exe)            CLIENT_EXE="$2";                    shift;shift ;;
+    -es|--enable-server)         ENABLE_SERVER="$2";                 shift;shift ;;
     -gu|--grafana-url)           GRAFANA_URL="$2";                   shift;shift ;;
     -in|--istio-namespace)       ISTIO_NAMESPACE="$2";               shift;shift ;;
     -kah|--kubernetes-api-host)  KUBERNETES_API_HOST="$2";           shift;shift ;;
@@ -136,6 +138,14 @@ Valid options:
   -ce|--client-exe
       Cluster client executable - must refer to 'oc' or 'kubectl'.
       Default: ${DEFAULT_CLIENT_EXE}
+  -es|--enable-server
+      When 'true', this script will start the server and manage its lifecycle.
+      When 'false' this script will do nothing to start or stop the server.
+      The purpose of this setting is to allow for this script to work while debugging the server in
+      a debugging IDE. When 'false', this script will do everything else except start the server, which
+      will be the job of an external tool such as an IDE. When 'false' this script will print out a command
+      so you can know what that external tool should execute to start a properly configured server.
+      Default: ${DEFAULT_ENABLE_SERVER}
   -gu|--grafana-url
       The URL that can be used to query the exposed Grafana service. You must have exposed Grafana
       to external clients outside of the cluster - that external URL is what this value should be.
@@ -194,6 +204,7 @@ Valid options:
       If true, this script will reboot the Kiali Server when SIGTERM signal is sent to it and will
       prompt to reboot when Control-C is pressed. By setting this to 'false', the Kiali Server will
       be run in foreground and Control-C will kill it immediately without the ability to reboot it.
+      If --enabled-server is 'false', this setting is ignored and assumed 'false'.
       Default: ${DEFAULT_REBOOTABLE}
   -tu|--tracing-url
       The URL that can be used to query the exposed Tracing service. You must have exposed Tracing
@@ -230,6 +241,7 @@ done
 
 API_PROXY_HOST="${API_PROXY_HOST:-${DEFAULT_API_PROXY_HOST}}"
 API_PROXY_PORT="${API_PROXY_PORT:-${DEFAULT_API_PROXY_PORT}}"
+ENABLE_SERVER="${ENABLE_SERVER:-${DEFAULT_ENABLE_SERVER}}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-${DEFAULT_ISTIO_NAMESPACE}}"
 KIALI_CONFIG_TEMPLATE_FILE="${KIALI_CONFIG_TEMPLATE_FILE:-${DEFAULT_KIALI_CONFIG_TEMPLATE_FILE}}"
 KIALI_EXE="${KIALI_EXE:-${DEFAULT_KIALI_EXE}}"
@@ -431,6 +443,7 @@ infomsg "===== SETTINGS ====="
 echo "API_PROXY_HOST=$API_PROXY_HOST"
 echo "API_PROXY_PORT=$API_PROXY_PORT"
 echo "CLIENT_EXE=$CLIENT_EXE"
+echo "ENABLE_SERVER=$ENABLE_SERVER"
 echo "GRAFANA_URL=$GRAFANA_URL"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
 echo "KIALI_CONFIG_TEMPLATE_FILE=$KIALI_CONFIG_TEMPLATE_FILE"
@@ -460,6 +473,8 @@ if ! echo "${LOCAL_REMOTE_PORTS_PROMETHEUS}" | grep -qiE "^[0-9]+:[0-9]+$"; then
 if ! echo "${LOCAL_REMOTE_PORTS_TRACING}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Tracing local-remote ports specifer: ${LOCAL_REMOTE_PORTS_TRACING}"; exit 1; fi
 if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; then errormsg "Invalid log level: ${LOG_LEVEL}"; exit 1; fi
 [ "${REBOOTABLE}" != "true" -a "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
+[ "${ENABLE_SERVER}" != "true" -a "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
+[ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
 
 # Build the config file from the template
 
@@ -638,9 +653,14 @@ kill_proxy() {
 # Functions that start and stop the Kiali server
 
 start_server() {
-  startmsg "The Kiali server is being started with config: ${KIALI_CONFIG_FILE}"
-  "${KIALI_EXE}" -config "${KIALI_CONFIG_FILE}" &
-  SERVER_PID="$!"
+  if [ "${ENABLE_SERVER}" == "true" ]; then
+    startmsg "The Kiali server is being started with config: ${KIALI_CONFIG_FILE}"
+    "${KIALI_EXE}" -config "${KIALI_CONFIG_FILE}" &
+    SERVER_PID="$!"
+  else
+    warnmsg "Server has not been enabled; it will not be started."
+    SERVER_PID=""
+  fi
 }
 
 kill_server() {
@@ -702,8 +722,19 @@ start_port_forward_prometheus
 start_port_forward_grafana
 start_port_forward_tracing
 start_proxy
-export KUBERNETES_SERVICE_HOST KUBERNETES_SERVICE_PORT LOG_LEVEL
-start_server
+
+if [ "${ENABLE_SERVER}" == "true" ]; then
+  export KUBERNETES_SERVICE_HOST KUBERNETES_SERVICE_PORT LOG_LEVEL
+  start_server
+else
+  infomsg "The server has not been enabled - you must start it manually with the following environment variables and command:"
+  cat << STARTCMD
+export KUBERNETES_SERVICE_HOST="${KUBERNETES_SERVICE_HOST}"
+export KUBERNETES_SERVICE_PORT="${KUBERNETES_SERVICE_PORT}"
+export LOG_LEVEL="${LOG_LEVEL}"
+"${KIALI_EXE}" -config "${KIALI_CONFIG_FILE}"
+STARTCMD
+fi
 
 if [ "${REBOOTABLE}" == "true" ]; then
   trap "ask_to_restart_or_exit"    SIGINT  # control-c will prompt to restart the server
