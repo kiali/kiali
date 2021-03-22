@@ -41,6 +41,8 @@ func NewRouter() *mux.Router {
 			r.URL.Path = webRootWithSlash
 			rootRouter.ServeHTTP(w, r)
 		})
+	} else {
+		webRootWithSlash = "/"
 	}
 
 	appRouter = appRouter.StrictSlash(true)
