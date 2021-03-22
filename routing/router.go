@@ -69,7 +69,7 @@ func NewRouter() *mux.Router {
 	})
 
 	if conf.Auth.Strategy == config.AuthStrategyOpenId {
-		appRouter.Methods("GET").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rootRouter.Methods("GET").Path(webRootWithSlash).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !handlers.OpenIdCodeFlowHandler(w, r) {
 				// If the OpenID handler does not handle the request, pass the
 				// request to the file server.
@@ -78,7 +78,7 @@ func NewRouter() *mux.Router {
 		})
 	}
 
-	appRouter.PathPrefix("/").Handler(staticFileServer)
+	rootRouter.PathPrefix(webRootWithSlash).Handler(staticFileServer)
 
 	return rootRouter
 }
