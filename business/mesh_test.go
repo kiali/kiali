@@ -211,3 +211,107 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	check.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
 	check.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
 }
+
+// TestIsMeshConfiguredIsCached verifies that IsMeshConfigured is properly caching
+// it's findings and the cached value is being returned.
+func TestIsMeshConfiguredIsCached(t *testing.T) {
+	check := assert.New(t)
+
+	// TODO: Make sure cache is empty
+
+	// Prepare mocks for first time call.
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	conf.InCluster = false
+	conf.IstioNamespace = "foo"
+	conf.ExternalServices.Istio.ConfigMapName = "bar"
+	config.Set(conf)
+
+	istioConfigMapMock := core_v1.ConfigMap{
+		Data: map[string]string{
+			"mesh": "{ \"defaultConfig\": { \"meshId\": \"kialiMesh\" } }",
+		},
+	}
+
+	k8s.On("GetConfigMap", "foo", "bar").Return(&istioConfigMapMock, nil)
+
+	// Create a MeshService and invoke IsMeshConfigured
+	meshSvc := NewMeshService(k8s, nil)
+	result, err := meshSvc.IsMeshConfigured()
+	check.Nil(err, "IsMeshConfigured failed: %s", err)
+	check.True(result)
+
+	// Create a new MeshService with an empty mock. If cached value is properly used, the
+	// empty mock should never be called and we still should get a value.
+	k8s = new(kubetest.K8SClientMock)
+	meshSvc = NewMeshService(k8s, nil)
+	result, err = meshSvc.IsMeshConfigured()
+	check.Nil(err, "IsMeshConfigured failed: %s", err)
+	check.True(result)
+}
+
+// TestResolveKialiControlPlaneClusterIsCached verifies that ResolveKialiControlPlaneCluster
+// is properly caching it's findings and the cached value is being returned.
+func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
+	check := assert.New(t)
+
+	// TODO: Make sure cache is empty
+
+	// Prepare mocks for first time call.
+	k8s := new(kubetest.K8SClientMock)
+	conf := config.NewConfig()
+	conf.InCluster = false
+	conf.IstioNamespace = "foo"
+	conf.ExternalServices.Istio.IstiodDeploymentName = "bar"
+	config.Set(conf)
+
+	os.Setenv("ACTIVE_NAMESPACE", "foo")
+
+	istioDeploymentMock := apps_v1.Deployment{
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				Spec: core_v1.PodSpec{
+					Containers: []core_v1.Container{
+						{
+							Env: []core_v1.EnvVar{
+								{
+									Name:  "CLUSTER_ID",
+									Value: "KialiCluster",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	notFoundErr := errors.StatusError{
+		ErrStatus: v1.Status{
+			Reason: v1.StatusReasonNotFound,
+		},
+	}
+
+	var nilConfigMap *core_v1.ConfigMap
+	var nilNamespace *core_v1.Namespace
+
+	k8s.On("GetDeployment", "foo", "bar").Return(&istioDeploymentMock, nil)
+	k8s.On("GetConfigMap", "foo", "istio-sidecar-injector").Return(nilConfigMap, &notFoundErr)
+	k8s.On("GetNamespace", "foo").Return(nilNamespace, &notFoundErr)
+
+	// Create a MeshService and invoke IsMeshConfigured
+	meshSvc := NewMeshService(k8s, nil)
+	result, err := meshSvc.ResolveKialiControlPlaneCluster(nil)
+	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
+	check.NotNil(result)
+	check.Equal("KialiCluster", result.Name) // Sanity check. Rest of values are tested in TestGetClustersResolvesTheKialiCluster
+
+	// Create a new MeshService with an empty mock. If cached value is properly used, the
+	// empty mock should never be called and we still should get a value.
+	k8s = new(kubetest.K8SClientMock)
+	meshSvc = NewMeshService(k8s, nil)
+	result, err = meshSvc.ResolveKialiControlPlaneCluster(nil)
+	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
+	check.NotNil(result)
+	check.Equal("KialiCluster", result.Name)
+}
