@@ -72,9 +72,19 @@ apply_smcp() {
   infomsg "SMCP [${2}] has been successfully applied to namespace [${1}]."
 }
 
+version_less_than() {
+  [ "${1}" = "${2}" ] && return 1 || [ "${1}" = "$(echo -e "${1}\n${2}" | sort -V | head -n1)" ]
+}
+
 install_service_mesh() {
 
   OPENSHIFT_MAJOR_MINOR_VERSION="$(${OC} version | grep "Server" | sed 's/.*\([[:digit:]]\+\.[[:digit:]]\+\)\.[[:digit:]]\+/\1/')"
+
+  if version_less_than ${OPENSHIFT_MAJOR_MINOR_VERSION} "4.7"; then
+    ELASTICSEARCH_CHANNEL="${OPENSHIFT_MAJOR_MINOR_VERSION}"
+  else
+    ELASTICSEARCH_CHANNEL="4.6" # 4.7 clusters require the 4.6 channel for some reason
+  fi
 
   # START CODE THAT IS NECESSARY TO PULL CONTENT FROM PRIVATE MAISTRA QUAY REPO
   if [ "${USE_QUAY}" == "true" ]; then
@@ -137,7 +147,7 @@ metadata:
   name: elasticsearch-operator
   namespace: openshift-operators
 spec:
-  channel: "${OPENSHIFT_MAJOR_MINOR_VERSION}"
+  channel: "${ELASTICSEARCH_CHANNEL}"
   installPlanApproval: Automatic
   name: elasticsearch-operator
   source: $OPERATOR_SOURCE_NAME
