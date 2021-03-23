@@ -83,7 +83,6 @@ export type CytoscapeGlobalScratchData = {
   boxByNamespace: boolean;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
-  mtlsEnabled: boolean;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showSecurity: boolean;

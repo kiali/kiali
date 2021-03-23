@@ -597,7 +597,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       boxByNamespace: this.props.boxByNamespace,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphData.fetchParams.graphType,
-      mtlsEnabled: this.props.isMTLSEnabled,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,
       showSecurity: this.props.showSecurity,

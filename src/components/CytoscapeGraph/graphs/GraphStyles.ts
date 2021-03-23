@@ -35,7 +35,6 @@ let EdgeColorDegraded: PFColorVal;
 let EdgeColorFailure: PFColorVal;
 const EdgeColorTCPWithTraffic = PfColors.Blue600;
 const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
-const EdgeIconDisabledMTLS = icons.istio.disabledMtls.ascii; // broken lock
 const EdgeTextOutlineColor = PfColors.White;
 const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,pficon';
@@ -379,14 +378,8 @@ export class GraphStyles {
 
       const mtlsPercentage = edgeData.isMTLS;
       if (cyGlobal.showSecurity && edgeData.hasTraffic) {
-        if (cyGlobal.mtlsEnabled) {
-          if (!mtlsPercentage || mtlsPercentage < 100) {
-            content = `${EdgeIconDisabledMTLS} ${content}`;
-          }
-        } else {
-          if (mtlsPercentage && mtlsPercentage > 0) {
-            content = `${EdgeIconMTLS} ${content}`;
-          }
+        if (mtlsPercentage && mtlsPercentage > 0) {
+          content = `${EdgeIconMTLS} ${content}`;
         }
       }
 
