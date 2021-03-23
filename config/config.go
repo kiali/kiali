@@ -169,6 +169,7 @@ type IstioConfig struct {
 	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
 	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName     string            `yaml:"istiod_deployment_name,omitempty"`
 	UrlServiceVersion        string            `yaml:"url_service_version"`
 }
 
@@ -441,6 +442,7 @@ func NewConfig() (c *Config) {
 				IstioIdentityDomain:      "svc.cluster.local",
 				IstioInjectionAnnotation: "sidecar.istio.io/inject",
 				IstioSidecarAnnotation:   "sidecar.istio.io/status",
+				IstiodDeploymentName:     "istiod",
 				UrlServiceVersion:        "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
