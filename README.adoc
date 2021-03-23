@@ -211,24 +211,18 @@ make operator-delete
 [NOTE]
 After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator again.
 
-=== Running Standalone(WIP)
+=== Running Standalone
 
-Rarely, you may want to run Kiali outside of any cluster environment, perhaps for debugging purposes. To do this, run:
-
-[source,shell]
-----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make install
-make run
-----
-
-The "install" target installs the Kiali executable in your GOPATH /bin directory so you can run it outside of the Makefile:
+Rarely, you may want to run Kiali outside of any cluster environment, perhaps for debugging purposes. To do this, you
+will want to use the link:./hack/run-kiali.sh[run-kiali.sh hack script] located in the
+link:./hack[hack directory]. See the `--help` output for the options you can set.
+The default configuration it uses is found in the link:./hack/run-kiali-config-template.yaml[config template file]
+also located in the `hack` directory. Read the comments at the tops of both files for more details.
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/kiali
-make install
-${GOPATH}/bin/kiali -config <your-config-file>
+cd ${GOPATH}/src/github.com/kiali/kiali/hack
+./run-kiali.sh
 ----
 
 == Configuration
