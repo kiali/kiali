@@ -120,54 +120,78 @@ func (in *MeshService) GetClusters(r *http.Request) (clusters []Cluster, errVal 
 	return
 }
 
-func (in *MeshService) IsMeshConfigured() (isEnabled bool, returnErr error) {
-	isEnabled = false
+// IsMeshConfigured does not change and can be cached
+
+// isMeshConfiguredCached just indicates whether we have cached the value (because it may be false)
+var isMeshConfiguredCached bool
+
+// isMeshConfigured holds the cached value
+var isMeshConfigured bool
+
+func (in *MeshService) IsMeshConfigured() (bool, error) {
+	if isMeshConfiguredCached {
+		return isMeshConfigured, nil
+	}
+
 	cfg := config.Get()
 
 	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
-		returnErr = err
-		return
+		return false, err
 	}
 
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	if !ok {
 		log.Warning("Istio config not found when resolving if mesh-id is set. Falling back to mesh-id not configured.")
-		return
+		return false, nil
 	}
 
 	meshConfig := meshIdConfig{}
 	err = yaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
 	if err != nil {
-		returnErr = err
-		return
+		return false, err
 	}
 
 	if len(meshConfig.DefaultConfig.MeshId) > 0 {
-		isEnabled = true
+		isMeshConfigured = true
 	}
 
-	return
+	isMeshConfiguredCached = true
+	return isMeshConfigured, nil
 }
+
+// The Kiali Home Cluster does not change and can be cached
+
+// kialiControlPlaneClusterCached just indicates whether we have cached the home cluster (because it may be nil)
+var kialiControlPlaneClusterCached bool
+
+// kialiControlPlaneCluster holds the cached home cluster (it may be nil when mesh is not configured)
+var kialiControlPlaneCluster *Cluster
 
 // ResolveKialiControlPlaneCluster tries to resolve the metadata about the cluster where
 // Kiali is installed. This assumes that the mesh Control Plane is installed in the
 // same cluster as Kiali.
 func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluster, error) {
+	if kialiControlPlaneClusterCached {
+		return kialiControlPlaneCluster, nil
+	}
+
 	conf := config.Get()
 
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
 	istioDeployment, err := in.k8s.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
 	}
 
 	if istioDeployment == nil {
+		kialiControlPlaneClusterCached = true
 		return nil, nil
 	}
 
 	if len(istioDeployment.Spec.Template.Spec.Containers) == 0 {
+		kialiControlPlaneClusterCached = true
 		return nil, nil
 	}
 
@@ -180,7 +204,8 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	}
 
 	if len(myClusterName) == 0 {
-		// We didn't found it. This may mean that Istio is not setup with multi-cluster enabled.
+		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
+		kialiControlPlaneClusterCached = true
 		return nil, nil
 	}
 
@@ -208,14 +233,17 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 		}
 	}
 
-	return &Cluster{
+	kialiControlPlaneClusterCached = true
+	kialiControlPlaneCluster = &Cluster{
 		ApiEndpoint:    restConfig.Host,
 		IsKialiHome:    true,
 		KialiInstances: kialiInstances,
 		Name:           myClusterName,
 		Network:        kialiNetwork,
 		SecretName:     "",
-	}, nil
+	}
+
+	return kialiControlPlaneCluster, nil
 }
 
 // findKialiInNamespace tries to find a Kiali installation certain namespace of a cluster.
