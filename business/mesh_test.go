@@ -26,6 +26,13 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	conf.InCluster = false
 	config.Set(conf)
 
+	// As we are not interested in caches in this test, make sure
+	// there are no cached values
+	kialiControlPlaneClusterCached = false
+	kialiControlPlaneCluster = nil
+	isMeshConfiguredCached = false
+	isMeshConfigured = false
+
 	istioDeploymentMock := apps_v1.Deployment{
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
@@ -111,6 +118,13 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	conf := config.NewConfig()
 	conf.InCluster = false
 	config.Set(conf)
+
+	// As we are not interested in caches in this test, make sure
+	// there are no cached values
+	kialiControlPlaneClusterCached = false
+	kialiControlPlaneCluster = nil
+	isMeshConfiguredCached = false
+	isMeshConfigured = false
 
 	remoteSecretData := kubernetes.RemoteSecret{
 		Clusters: []kubernetes.RemoteSecretClusterListItem{
@@ -217,7 +231,11 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 func TestIsMeshConfiguredIsCached(t *testing.T) {
 	check := assert.New(t)
 
-	// TODO: Make sure cache is empty
+	// Make sure cache is empty
+	kialiControlPlaneClusterCached = false
+	kialiControlPlaneCluster = nil
+	isMeshConfiguredCached = false
+	isMeshConfigured = false
 
 	// Prepare mocks for first time call.
 	k8s := new(kubetest.K8SClientMock)
@@ -255,7 +273,11 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	check := assert.New(t)
 
-	// TODO: Make sure cache is empty
+	// Make sure cache is empty
+	kialiControlPlaneClusterCached = false
+	kialiControlPlaneCluster = nil
+	isMeshConfiguredCached = false
+	isMeshConfigured = false
 
 	// Prepare mocks for first time call.
 	k8s := new(kubetest.K8SClientMock)
