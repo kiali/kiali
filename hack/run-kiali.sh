@@ -378,6 +378,9 @@ if [ -z "${TRACING_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     trac_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} tracing -o jsonpath='{.spec.host}')"
     if [ "$?" != "0" -o -z "${trac_host}" ]; then
+      trac_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} jaeger -o jsonpath='{.spec.host}')"
+    fi
+    if [ "$?" != "0" -o -z "${trac_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} jaeger -o name)"
       if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
         errormsg "Cannot auto-discover Tracing on OpenShift. You must specify the Tracing URL via --tracing-url"
