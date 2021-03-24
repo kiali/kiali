@@ -106,7 +106,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	check.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
 	check.Equal("foo", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 	check.Equal("kiali-operator/myKialiCR", a[0].KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
-	check.Equal("http://kiali.url.local/", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
+	check.Equal("http://kiali.url.local", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
 	check.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
 	check.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
 }

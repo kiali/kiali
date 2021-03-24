@@ -185,5 +185,5 @@ func GuessKialiURL(r *http.Request) string {
 		guessedKialiURL = fmt.Sprintf("%s://%s:%s%s", schema, host, port, cfg.Server.WebRoot)
 	}
 
-	return guessedKialiURL
+	return strings.TrimRight(guessedKialiURL, "/")
 }
