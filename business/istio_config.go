@@ -72,6 +72,7 @@ var newIstioConfigTypes = []string{
 	kubernetes.Gateways,
 	kubernetes.PeerAuthentications,
 	kubernetes.RequestAuthentications,
+	kubernetes.ServiceEntries,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
