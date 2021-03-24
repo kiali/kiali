@@ -86,22 +86,27 @@ export const safeFit = (cy: Cy.Core, centerElements?: Cy.Collection) => {
   cy.emit('fit');
 };
 
-export const runLayout = (cy: Cy.Core, layout: Layout) => {
+export const runLayout = (cy: Cy.Core, layout: Layout): Promise<any> => {
   // Using an extension
   (cy as any).nodeHtmlLabel().updateNodeLabel(cy.nodes());
 
   const layoutOptions = LayoutDictionary.getLayout(layout);
+  let promise: Promise<any>;
+  let cyLayout: Cy.Layouts;
   if (cy.nodes('$node > node').length > 0) {
     // if there is any parent (i.e. box) node, run the box-layout
-    cy.layout({
+    cyLayout = cy.layout({
       ...layoutOptions,
       name: 'box-layout',
       appBoxLayout: 'dagre',
       defaultLayout: layout.name
-    }).run();
+    });
   } else {
-    cy.layout(layoutOptions).run();
+    cyLayout = cy.layout(layoutOptions);
   }
+  promise = cyLayout.promiseOn('layoutstop');
+  cyLayout.run();
+  return promise;
 };
 
 export const decoratedEdgeData = (ele: Cy.EdgeSingular): DecoratedGraphEdgeData => {

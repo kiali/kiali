@@ -237,14 +237,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="External Namespace"
+                alt="Unselected Namespace"
                 src="external-namespace.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              External Namespace
+              Unselected Namespace
             </span>
           </div>
           <div
@@ -253,14 +253,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="Restricted Namespace"
+                alt="Restricted / External"
                 src="restricted-namespace.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Restricted Namespace
+              Restricted / External
             </span>
           </div>
         </div>

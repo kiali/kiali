@@ -62,8 +62,8 @@ const legendData: GraphLegendItem[] = [
   {
     title: 'Node Background',
     data: [
-      { label: 'External Namespace', icon: externalNamespaceImage },
-      { label: 'Restricted Namespace', icon: restrictedNamespaceImage }
+      { label: 'Unselected Namespace', icon: externalNamespaceImage },
+      { label: 'Restricted / External', icon: restrictedNamespaceImage }
     ]
   },
   {

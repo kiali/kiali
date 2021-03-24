@@ -54,10 +54,10 @@ export default class FocusAnimation {
   // "this".
   processStep = () => {
     try {
-      if (this.startTimestamp === undefined) {
-        this.startTimestamp = Date.now();
-      }
       const current = Date.now();
+      if (this.startTimestamp === undefined) {
+        this.startTimestamp = current;
+      }
       const step = (current - this.startTimestamp) / ANIMATION_DURATION;
       this.layer.clear(this.context);
       this.layer.setTransform(this.context);

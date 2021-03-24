@@ -254,42 +254,42 @@ export default class TrafficRenderer {
   private trafficEdges: TrafficEdgeHash = {};
 
   private readonly layer;
-  private readonly canvas;
   private readonly context;
 
-  constructor(cy: any, edges: any) {
+  constructor(cy: any) {
     this.layer = cy.cyCanvas();
-    this.canvas = this.layer.getCanvas();
-    this.canvas.style['pointer-events'] = 'none';
-    this.context = this.canvas.getContext('2d');
-    this.setEdges(edges);
+    const canvas = this.layer.getCanvas();
+    canvas.style['pointer-events'] = 'none';
+    this.context = canvas.getContext('2d');
   }
 
   /**
    * Starts the rendering loop, discards any other rendering loop that was started
    */
-  start() {
-    this.stop();
+  start(edges: any) {
+    this.pause();
+    this.trafficEdges = this.processEdges(edges);
     this.animationTimer = window.setInterval(this.processStep, FRAME_RATE * 1000);
   }
 
   /**
    * Stops the rendering loop if any
    */
-  stop() {
-    if (this.animationTimer) {
+  pause() {
+    if (this.animationTimer !== undefined) {
       window.clearInterval(this.animationTimer);
+      this.layer.clear(this.context);
       this.animationTimer = undefined;
-      this.clear();
+      this.previousTimestamp = undefined;
     }
   }
 
-  setEdges(edges: any) {
-    this.trafficEdges = this.processEdges(edges);
-  }
-
-  clear() {
-    this.layer.clear(this.context);
+  /**
+   * Stops the rendering loop if any
+   */
+  stop() {
+    this.pause();
+    this.trafficEdges = {};
   }
 
   /**
@@ -298,10 +298,10 @@ export default class TrafficRenderer {
    */
   processStep = () => {
     try {
-      if (this.previousTimestamp === undefined) {
-        this.previousTimestamp = Date.now();
-      }
       const nextTimestamp = Date.now();
+      if (!this.previousTimestamp) {
+        this.previousTimestamp = nextTimestamp;
+      }
       const step = this.currentStep(nextTimestamp);
       this.layer.clear(this.context);
       this.layer.setTransform(this.context);

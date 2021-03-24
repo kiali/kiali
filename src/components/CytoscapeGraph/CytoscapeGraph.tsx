@@ -3,7 +3,6 @@ import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
-import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from './EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
@@ -31,6 +30,7 @@ import { Core } from 'cytoscape';
 import { GraphData } from 'pages/Graph/GraphPage';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { showTrace, hideTrace } from './CytoscapeTrace';
+import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
 
 type CytoscapeGraphProps = {
   boxByCluster: boolean;
@@ -112,7 +112,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
   private needsInitialLayout: boolean;
   private nodeChanged: boolean;
   private resetSelection: boolean = false;
-  private trafficRenderer?: TrafficRender;
+  private trafficRenderer?: TrafficRenderer;
   private userBoxSelected?: Cy.Collection;
 
   constructor(props: CytoscapeGraphProps) {
@@ -174,41 +174,42 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.needsInitialLayout = false;
     }
 
-    this.processGraphUpdate(cy, updateLayout);
+    this.processGraphUpdate(cy, updateLayout).then(_response => {
+      // pre-select node if provided
+      const node = this.props.graphData.fetchParams.node;
+      if (node && cy && cy.$(':selected').length === 0) {
+        let selector = "[nodeType = '" + node.nodeType + "']";
+        switch (node.nodeType) {
+          case NodeType.AGGREGATE:
+            selector =
+              selector + "[aggregate = '" + node.aggregate! + "'][aggregateValue = '" + node.aggregateValue! + "']";
+            break;
+          case NodeType.APP:
+          case NodeType.BOX: // we only support app box node graphs, treat like an app node
+            selector = selector + "[app = '" + node.app + "']";
+            if (node.version && node.version !== UNKNOWN) {
+              selector = selector + "[version = '" + node.version + "']";
+            }
+            break;
+          case NodeType.SERVICE:
+            selector = selector + "[service = '" + node.service + "']";
+            break;
+          default:
+            selector = selector + "[workload = '" + node.workload + "']";
+        }
 
-    // pre-select node if provided
-    const node = this.props.graphData.fetchParams.node;
-    if (node && cy && cy.$(':selected').length === 0) {
-      let selector = "[nodeType = '" + node.nodeType + "']";
-      switch (node.nodeType) {
-        case NodeType.AGGREGATE:
-          selector =
-            selector + "[aggregate = '" + node.aggregate! + "'][aggregateValue = '" + node.aggregateValue! + "']";
-          break;
-        case NodeType.APP:
-        case NodeType.BOX: // we only support app box node graphs, treat like an app node
-          selector = selector + "[app = '" + node.app + "']";
-          if (node.version && node.version !== UNKNOWN) {
-            selector = selector + "[version = '" + node.version + "']";
-          }
-          break;
-        case NodeType.SERVICE:
-          selector = selector + "[service = '" + node.service + "']";
-          break;
-        default:
-          selector = selector + "[workload = '" + node.workload + "']";
+        const eles = cy.nodes(selector);
+        if (eles.length > 0) {
+          this.selectTargetAndUpdateSummary(eles[0]);
+        }
       }
-      const eles = cy.nodes(selector);
-      if (eles.length > 0) {
-        this.selectTargetAndUpdateSummary(eles[0]);
-      }
-    }
 
-    if (this.props.trace) {
-      showTrace(cy, this.props.graphData.fetchParams.graphType, this.props.trace);
-    } else if (!this.props.trace && prevProps.trace) {
-      hideTrace(cy);
-    }
+      if (this.props.trace) {
+        showTrace(cy, this.props.graphData.fetchParams.graphType, this.props.trace);
+      } else if (!this.props.trace && prevProps.trace) {
+        hideTrace(cy);
+      }
+    });
   }
 
   render() {
@@ -298,7 +299,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     this.contextMenuRef!.current!.connectCy(this.cy);
 
     this.graphHighlighter = new GraphHighlighter(cy);
-    this.trafficRenderer = new TrafficRender(cy, cy.edges());
+    this.trafficRenderer = new TrafficRenderer(cy);
 
     const getCytoscapeBaseEvent = (event: Cy.EventObject): CytoscapeBaseEvent | null => {
       const target = event.target;
@@ -534,6 +535,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     cy.on('destroy', (_evt: Cy.EventObject) => {
       this.trafficRenderer!.stop();
+      this.trafficRenderer = undefined;
       this.cy = undefined;
       if (this.props.updateSummary) {
         this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
@@ -579,8 +581,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     CytoscapeGraphUtils.safeFit(cy);
   }
 
-  private processGraphUpdate(cy: Cy.Core, updateLayout: boolean) {
-    this.trafficRenderer!.stop();
+  private processGraphUpdate(cy: Cy.Core, updateLayout: boolean): Promise<void> {
+    this.trafficRenderer!.pause();
 
     const isTheGraphSelected = cy.$(':selected').length === 0;
     if (this.resetSelection) {
@@ -619,11 +621,22 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     cy.endBatch();
 
-    // Run layout and fit outside of the batch operation for it to take effect on the new nodes
+    // Run layout outside of the batch operation for it to take effect on the new nodes,
+    // Layouts can run async so wait until it completes to finish the graph update.
     if (updateLayout) {
-      CytoscapeGraphUtils.runLayout(cy, this.props.layout);
+      return new Promise((resolve, _reject) => {
+        CytoscapeGraphUtils.runLayout(cy, this.props.layout).then(_response => {
+          this.finishGraphUpdate(cy, isTheGraphSelected);
+          resolve();
+        });
+      });
+    } else {
+      this.finishGraphUpdate(cy, isTheGraphSelected);
+      return Promise.resolve();
     }
+  }
 
+  private finishGraphUpdate(cy: Cy.Core, isTheGraphSelected: boolean) {
     // We opt-in for manual selection to be able to control when to select a node/edge
     // https://github.com/cytoscape/cytoscape.js/issues/1145#issuecomment-153083828
     cy.nodes().unselectify();
@@ -634,10 +647,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.handleTap({ summaryType: 'graph', summaryTarget: cy });
     }
 
-    // Update TrafficRenderer
-    this.trafficRenderer!.setEdges(cy.edges());
     if (this.props.showTrafficAnimation) {
-      this.trafficRenderer!.start();
+      this.trafficRenderer!.start(cy.edges());
     }
 
     // notify that the graph has been updated
