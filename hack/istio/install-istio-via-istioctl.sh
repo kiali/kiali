@@ -304,6 +304,9 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
     echo "===== IMPORTANT ====="
   fi
 
+  echo "Deleting the istio-cni-node from kube-system namespace"
+  ${CLIENT_EXE} delete -n kube-system daemonset/istio-cni-node
+
   echo "Deleting the istio namespace [${NAMESPACE}]"
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
