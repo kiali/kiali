@@ -548,6 +548,7 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
   ${OC} delete mutatingwebhookconfigurations/istio-sidecar-injector
   debug "Clean up deamonsets"
   ${OC} delete -n openshift-operators daemonset/istio-node
+  ${OC} delete -n kube-system daemonset/istio-cni-node
   debug "Clean up some more clusterroles/bindings"
   ${OC} delete clusterrole/istio-admin clusterrole/istio-cni clusterrolebinding/istio-cni
   debug "Clean up some security related things from the operator"
