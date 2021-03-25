@@ -31,6 +31,7 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { showTrace, hideTrace } from './CytoscapeTrace';
 import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
+import { addInfo } from 'utils/AlertUtils';
 
 type CytoscapeGraphProps = {
   boxByCluster: boolean;
@@ -548,12 +549,19 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       return;
     }
 
-    let selected = cy.$(this.focusSelector);
-
     // only perform the focus one time
+    const focusSelector = this.focusSelector;
     this.focusSelector = undefined;
 
+    let selected = cy.$(focusSelector);
+
     if (!selected) {
+      addInfo(
+        'Could not focus on requested node. The node may be idle or hidden.',
+        true,
+        undefined,
+        `${focusSelector}`
+      );
       return;
     }
 

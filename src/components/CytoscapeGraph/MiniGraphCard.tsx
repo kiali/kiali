@@ -172,7 +172,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
         break;
     }
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&idleNodes=true&focusSelector=${encodeURI(
+    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&focusSelector=${encodeURI(
       cytoscapeGraph.build()
     )}`;
 

@@ -14,7 +14,7 @@ import {
   replayActiveSelector
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, NodeParamsType, EdgeLabelMode } from '../../../types/Graph';
+import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData } from '../../../types/Graph';
 import GraphFindContainer from './GraphFind';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../../app/History';
@@ -28,6 +28,7 @@ import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import ReplayContainer from 'components/Time/Replay';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import GraphSecondaryMasthead from './GraphSecondaryMasthead';
+import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -36,6 +37,7 @@ type ReduxProps = {
   node?: NodeParamsType;
   replayActive: boolean;
   showIdleNodes: boolean;
+  summaryData: SummaryData | null;
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
@@ -145,7 +147,14 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
 
   handleNamespaceReturn = () => {
     this.props.setNode(undefined);
-    history.push('/graph/namespaces');
+    if (
+      !this.props.summaryData ||
+      (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
+    ) {
+      history.push(`/graph/namespaces`);
+    }
+    const selector = `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
+    history.push(`/graph/namespaces?focusSelector=${encodeURI(selector)}`);
   };
 
   render() {
@@ -198,7 +207,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   graphType: graphTypeSelector(state),
   node: state.graph.node,
   replayActive: replayActiveSelector(state),
-  showIdleNodes: showIdleNodesSelector(state)
+  showIdleNodes: showIdleNodesSelector(state),
+  summaryData: state.graph.summaryData
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
