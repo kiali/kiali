@@ -616,17 +616,17 @@ func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
 
 func addonAddMockUrls(baseUrl string, conf *config.Config) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.IsCoreComponent = false
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
+	conf.ExternalServices.Grafana.ComponentStatus = config.AddonComponentStatus{IsCore: false}
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.IsCoreComponent = false
 	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
+	conf.ExternalServices.Tracing.ComponentStatus = config.AddonComponentStatus{IsCore: false}
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
 
 	conf.ExternalServices.CustomDashboards.Enabled = true
-	conf.ExternalServices.CustomDashboards.IsCoreComponent = false
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus-dashboards/mock"
+	conf.ExternalServices.CustomDashboards.ComponentStatus = config.AddonComponentStatus{IsCore: false}
 	return conf
 }

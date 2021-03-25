@@ -244,16 +244,16 @@ func (iss *IstioStatusService) getAddonComponentStatus() IstioComponentStatus {
 	extServices := config.Get().ExternalServices
 	ics := IstioComponentStatus{}
 
-	go getAddonStatus("prometheus", true, extServices.Prometheus.URL, &extServices.Prometheus.Auth, true, staChan, &wg)
-	go getAddonStatus("grafana", extServices.Grafana.Enabled, extServices.Grafana.InClusterURL, &extServices.Grafana.Auth, extServices.Grafana.IsCoreComponent, staChan, &wg)
-	go getAddonStatus("jaeger", extServices.Tracing.Enabled, extServices.Tracing.InClusterURL, &extServices.Tracing.Auth, extServices.Tracing.IsCoreComponent, staChan, &wg)
+	go getAddonStatus("prometheus", true, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.ComponentStatus, staChan, &wg)
+	go getAddonStatus("grafana", extServices.Grafana.Enabled, &extServices.Grafana.Auth, extServices.Grafana.InClusterURL, extServices.Grafana.ComponentStatus, staChan, &wg)
+	go getAddonStatus("jaeger", extServices.Tracing.Enabled, &extServices.Tracing.Auth, extServices.Tracing.InClusterURL, extServices.Tracing.ComponentStatus, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
 	if customProm.URL == "" {
 		customProm = extServices.Prometheus
 	}
-	go getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, customProm.URL, &customProm.Auth, extServices.CustomDashboards.IsCoreComponent, staChan, &wg)
+	go getAddonStatus("custom dashboards", extServices.CustomDashboards.Enabled, &customProm.Auth, customProm.URL, extServices.CustomDashboards.ComponentStatus, staChan, &wg)
 
 	wg.Wait()
 
@@ -312,8 +312,18 @@ func (iss *IstioStatusService) getIstiodReachingCheck() (IstioComponentStatus, e
 	return ics, nil
 }
 
-func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, isCore bool, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
+func getAddonStatus(name string, enabled bool, auth *config.Auth, url string, addonComponentStatus config.AddonComponentStatus, staChan chan<- IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	// When the addOn is disabled, don't perform any check
+	if !enabled {
+		return
+	}
+
+	// Take the alternative health check url if present
+	if addonComponentStatus.HealthCheckUrl != "" {
+		url = addonComponentStatus.HealthCheckUrl
+	}
 
 	if auth.UseKialiToken {
 		token, err := kubernetes.GetKialiToken()
@@ -323,11 +333,6 @@ func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, is
 		auth.Token = token
 	}
 
-	// When the addOn is disabled, don't perform any check
-	if !enabled {
-		return
-	}
-
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, err := httputil.HttpGet(url, auth, 10*time.Second)
 	if err != nil || statusCode > 399 {
@@ -335,7 +340,7 @@ func getAddonStatus(name string, enabled bool, url string, auth *config.Auth, is
 			ComponentStatus{
 				Name:   name,
 				Status: Unreachable,
-				IsCore: isCore,
+				IsCore: addonComponentStatus.IsCore,
 			},
 		}
 	}
