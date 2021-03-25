@@ -19,7 +19,6 @@ import { AceOptions } from 'react-ace/types';
 export interface IstioConfigId {
   namespace: string;
   objectType: string;
-  objectSubtype: string;
   object: string;
 }
 

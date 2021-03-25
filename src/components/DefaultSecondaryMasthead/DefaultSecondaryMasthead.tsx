@@ -43,11 +43,13 @@ export default class DefaultSecondaryMasthead extends React.Component<Props> {
   showTitle() {
     let path = window.location.pathname;
     path = path.substr(path.lastIndexOf('/console') + '/console'.length + 1);
-    if (titles.includes(path)) {
+    if (titles.some(t => path.startsWith(t))) {
       let title = path.charAt(0).toUpperCase() + path.slice(1);
       let disabled = false;
-      if (path === 'istio/new') {
-        title = 'Create New Istio Config';
+      if (path.startsWith('istio/new/')) {
+        // 'istio/new/'.length() == 10
+        const objectType = path.substring(10);
+        title = 'Create ' + objectType;
       } else if (path === 'istio') {
         title = 'Istio Config';
       } else if (path === 'extensions/iter8') {

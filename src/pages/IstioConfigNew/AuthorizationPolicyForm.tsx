@@ -176,7 +176,7 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
           </FormSelect>
         </FormGroup>
         {this.state.policy === RULES && (
-          <FormGroup label="Add Workload Selector" fieldId="workloadSelectorSwitch">
+          <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
             <Switch
               id="workloadSelectorSwitch"
               label={' '}
@@ -190,8 +190,8 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
           <FormGroup
             fieldId="workloadLabels"
             label="Labels"
-            helperText="One or more labels to select a workload where AuthorizationPolicy is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            helperTextInvalid="Invalid labels format: One or more labels to select a workload where AuthorizationPolicy is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
+            helperText="One or more labels to select a workload where the AuthorizationPolicy is applied."
+            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
             isValid={this.state.workloadSelectorValid}
           >
             <TextInput
@@ -215,7 +215,9 @@ class AuthorizationPolicyForm extends React.Component<Props, AuthorizationPolicy
         )}
         {this.state.policy === RULES && <RuleBuilder onAddRule={this.onAddRule} />}
         {this.state.policy === RULES && (
-          <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
+          <FormGroup label="Rule List" fieldId="apRuleList">
+            <RuleList action={this.state.action} ruleList={this.state.rules} onRemoveRule={this.onRemoveRule} />
+          </FormGroup>
         )}
       </>
     );

@@ -8,6 +8,7 @@ import ConditionBuilder, { Condition } from './When/ConditionBuilder';
 import ConditionList from './When/ConditionList';
 import { style } from 'typestyle';
 import { PfColors } from '../../../components/Pf/PfColors';
+import { PlusCircleIcon } from '@patternfly/react-icons';
 
 type Props = {
   onAddRule: (rule: Rule) => void;
@@ -32,6 +33,11 @@ const warningStyle = style({
   marginLeft: 25,
   color: PfColors.Red100,
   textAlign: 'center'
+});
+
+const addRuleStyle = style({
+  marginLeft: 0,
+  paddingLeft: 0
 });
 
 class RuleBuilder extends React.Component<Props, State> {
@@ -127,7 +133,7 @@ class RuleBuilder extends React.Component<Props, State> {
   render() {
     return (
       <>
-        <FormGroup label="Add From" fieldId="addFromSwitch">
+        <FormGroup label="From" fieldId="addFromSwitch">
           <Switch
             id="addFromSwitch"
             label={' '}
@@ -150,7 +156,7 @@ class RuleBuilder extends React.Component<Props, State> {
             </FormGroup>
           </>
         )}
-        <FormGroup label="Add To" fieldId="addToSwitch">
+        <FormGroup label="To" fieldId="addToSwitch">
           <Switch
             id="addToSwitch"
             label={' '}
@@ -173,7 +179,7 @@ class RuleBuilder extends React.Component<Props, State> {
             </FormGroup>
           </>
         )}
-        <FormGroup label="Add When" fieldId="addWhenSwitch">
+        <FormGroup label="When" fieldId="addWhenSwitch">
           <Switch
             id="addWhenSwitch"
             label={' '}
@@ -197,13 +203,17 @@ class RuleBuilder extends React.Component<Props, State> {
           </>
         )}
         <FormGroup fieldId="addRule">
-          <Button variant="secondary" onClick={this.onAddRule} isDisabled={!this.canAddRule()}>
-            Add Rule
+          <Button
+            variant="link"
+            icon={<PlusCircleIcon />}
+            onClick={this.onAddRule}
+            isDisabled={!this.canAddRule()}
+            className={addRuleStyle}
+          >
+            Add Rule to Rule List
           </Button>
           {!this.canAddRule() && (
-            <span className={warningStyle}>
-              A Rule needs at least an item in "Add From", "Add To" or "Add When" sections
-            </span>
+            <span className={warningStyle}>A Rule needs at least an item in "From", "To" or "When" sections</span>
           )}
         </FormGroup>
       </>

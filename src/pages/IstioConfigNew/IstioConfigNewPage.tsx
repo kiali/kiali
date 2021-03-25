@@ -3,7 +3,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import Namespace from '../../types/Namespace';
-import { ActionGroup, Button, Form, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { ActionGroup, Button, Form, FormGroup, TextInput } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { style } from 'typestyle';
 import GatewayForm, { GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
@@ -19,6 +19,7 @@ import {
   buildGateway,
   buildPeerAuthentication,
   buildRequestAuthentication,
+  buildServiceEntry,
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
 import { MessageType } from '../../types/MessageCenter';
@@ -45,48 +46,71 @@ import RequestAuthenticationForm, {
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { RouteComponentProps } from 'react-router-dom';
+import { PfColors } from '../../components/Pf/PfColors';
+import ServiceEntryForm, {
+  initServiceEntry,
+  isServiceEntryValid,
+  SERVICE_ENTRIES,
+  SERVICE_ENTRY,
+  ServiceEntryState
+} from './ServiceEntryForm';
 
-type Props = {
+export interface IstioConfigNewPageId {
+  objectType: string;
+}
+
+type Props = RouteComponentProps<IstioConfigNewPageId> & {
   activeNamespaces: Namespace[];
 };
 
 type State = {
-  istioResource: string;
   name: string;
   istioPermissions: IstioPermissions;
   authorizationPolicy: AuthorizationPolicyState;
   gateway: GatewayState;
   peerAuthentication: PeerAuthenticationState;
   requestAuthentication: RequestAuthenticationState;
+  serviceEntry: ServiceEntryState;
   sidecar: SidecarState;
 };
 
 const formPadding = style({ padding: '30px 20px 30px 20px' });
+
+const warningStyle = style({
+  marginLeft: 15,
+  paddingTop: 5,
+  color: PfColors.Red100,
+  textAlign: 'center'
+});
 
 const DIC = {
   AuthorizationPolicy: AUTHORIZATION_POLICIES,
   Gateway: GATEWAYS,
   PeerAuthentication: PEER_AUTHENTICATIONS,
   RequestAuthentication: REQUEST_AUTHENTICATIONS,
+  ServiceEntry: SERVICE_ENTRIES,
   Sidecar: SIDECARS
 };
 
-const istioResourceOptions = [
+// Used in the Istio Config list Actions
+export const NEW_ISTIO_RESOURCE = [
   { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
   { value: GATEWAY, label: GATEWAY, disabled: false },
   { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
   { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
+  { value: SERVICE_ENTRY, label: SERVICE_ENTRY, disabled: false },
   { value: SIDECAR, label: SIDECAR, disabled: false }
 ];
 
 const initState = (): State => ({
-  istioResource: istioResourceOptions[0].value,
   name: '',
   istioPermissions: {},
   authorizationPolicy: initAuthorizationPolicy(),
   gateway: initGateway(),
   peerAuthentication: initPeerAuthentication(),
   requestAuthentication: initRequestAuthentication(),
+  serviceEntry: initServiceEntry(),
   // Init with the istio-system/* for sidecar
   sidecar: initSidecar(serverConfig.istioNamespace + '/*')
 });
@@ -118,8 +142,8 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   canCreate = (namespace: string): boolean => {
     return (
       this.state.istioPermissions[namespace] &&
-      this.state.istioResource.length > 0 &&
-      this.state.istioPermissions[namespace][DIC[this.state.istioResource]].create
+      this.props.match.params.objectType.length > 0 &&
+      this.state.istioPermissions[namespace][DIC[this.props.match.params.objectType]].create
     );
   };
 
@@ -150,13 +174,6 @@ class IstioConfigNewPage extends React.Component<Props, State> {
     }
   };
 
-  onIstioResourceChange = (value, _) => {
-    this.setState({
-      istioResource: value,
-      name: ''
-    });
-  };
-
   onNameChange = (value, _) => {
     this.setState({
       name: value
@@ -166,7 +183,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   onIstioResourceCreate = () => {
     const jsonIstioObjects: { namespace: string; json: string }[] = [];
     this.props.activeNamespaces.forEach(ns => {
-      switch (this.state.istioResource) {
+      switch (this.props.match.params.objectType) {
         case AUTHORIZACION_POLICY:
           jsonIstioObjects.push({
             namespace: ns.name,
@@ -191,6 +208,12 @@ class IstioConfigNewPage extends React.Component<Props, State> {
             json: JSON.stringify(buildRequestAuthentication(this.state.name, ns.name, this.state.requestAuthentication))
           });
           break;
+        case SERVICE_ENTRY:
+          jsonIstioObjects.push({
+            namespace: ns.name,
+            json: JSON.stringify(buildServiceEntry(this.state.name, ns.name, this.state.serviceEntry))
+          });
+          break;
         case SIDECAR:
           jsonIstioObjects.push({
             namespace: ns.name,
@@ -202,17 +225,19 @@ class IstioConfigNewPage extends React.Component<Props, State> {
 
     this.promises
       .registerAll(
-        'Create ' + DIC[this.state.istioResource],
-        jsonIstioObjects.map(o => API.createIstioConfigDetail(o.namespace, DIC[this.state.istioResource], o.json))
+        'Create ' + DIC[this.props.match.params.objectType],
+        jsonIstioObjects.map(o =>
+          API.createIstioConfigDetail(o.namespace, DIC[this.props.match.params.objectType], o.json)
+        )
       )
       .then(results => {
         if (results.length > 0) {
-          AlertUtils.add('Istio ' + this.state.istioResource + ' created', 'default', MessageType.SUCCESS);
+          AlertUtils.add('Istio ' + this.props.match.params.objectType + ' created', 'default', MessageType.SUCCESS);
         }
         this.backToList();
       })
       .catch(error => {
-        AlertUtils.addError('Could not create Istio ' + this.state.istioResource + ' objects.', error);
+        AlertUtils.addError('Could not create Istio ' + this.props.match.params.objectType + ' objects.', error);
       });
   };
 
@@ -224,7 +249,7 @@ class IstioConfigNewPage extends React.Component<Props, State> {
   };
 
   isIstioFormValid = (): boolean => {
-    switch (this.state.istioResource) {
+    switch (this.props.match.params.objectType) {
       case AUTHORIZACION_POLICY:
         return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
       case GATEWAY:
@@ -233,6 +258,8 @@ class IstioConfigNewPage extends React.Component<Props, State> {
         return isPeerAuthenticationStateValid(this.state.peerAuthentication);
       case REQUEST_AUTHENTICATION:
         return isRequestAuthenticationStateValid(this.state.requestAuthentication);
+      case SERVICE_ENTRY:
+        return isServiceEntryValid(this.state.serviceEntry);
       case SIDECAR:
         return isSidecarStateValid(this.state.sidecar);
       default:
@@ -282,6 +309,15 @@ class IstioConfigNewPage extends React.Component<Props, State> {
     });
   };
 
+  onChangeServiceEntry = (serviceEntry: ServiceEntryState) => {
+    this.setState(prevState => {
+      Object.keys(prevState.serviceEntry).forEach(key => (prevState.serviceEntry[key] = serviceEntry[key]));
+      return {
+        serviceEntry: prevState.serviceEntry
+      };
+    });
+  };
+
   onChangeSidecar = (sidecar: SidecarState) => {
     this.setState(prevState => {
       Object.keys(prevState.sidecar).forEach(key => (prevState.sidecar[key] = sidecar[key]));
@@ -304,47 +340,10 @@ class IstioConfigNewPage extends React.Component<Props, State> {
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup
-              label="Namespaces"
-              isRequired={true}
-              fieldId="namespaces"
-              helperText={'Select namespace(s) where this configuration will be applied'}
-              helperTextInvalid={'At least one namespace should be selected'}
-              isValid={isNamespacesValid}
-            >
-              <TextInput
-                value={this.props.activeNamespaces.map(n => n.name).join(',')}
-                isRequired={true}
-                type="text"
-                id="namespaces"
-                aria-describedby="namespaces"
-                name="namespaces"
-                isDisabled={true}
-                isValid={isNamespacesValid}
-              />
-            </FormGroup>
-            <FormGroup label="Istio Resource" fieldId="istio-resource">
-              <FormSelect
-                value={this.state.istioResource}
-                onChange={this.onIstioResourceChange}
-                id="istio-resource"
-                name="istio-resource"
-              >
-                {istioResourceOptions.map((option, index) => (
-                  <FormSelectOption
-                    isDisabled={option.disabled}
-                    key={index}
-                    value={option.value}
-                    label={option.label}
-                  />
-                ))}
-              </FormSelect>
-            </FormGroup>
-            <FormGroup
               label="Name"
               isRequired={true}
               fieldId="name"
-              helperText={this.state.istioResource + ' name'}
-              helperTextInvalid={'A valid ' + this.state.istioResource + ' name is required'}
+              helperTextInvalid={'A valid ' + this.props.match.params.objectType + ' name is required'}
               isValid={isNameValid}
             >
               <TextInput
@@ -358,28 +357,31 @@ class IstioConfigNewPage extends React.Component<Props, State> {
                 isValid={isNameValid}
               />
             </FormGroup>
-            {this.state.istioResource === AUTHORIZACION_POLICY && (
+            {this.props.match.params.objectType === AUTHORIZACION_POLICY && (
               <AuthorizationPolicyForm
                 authorizationPolicy={this.state.authorizationPolicy}
                 onChange={this.onChangeAuthorizationPolicy}
               />
             )}
-            {this.state.istioResource === GATEWAY && (
+            {this.props.match.params.objectType === GATEWAY && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
             )}
-            {this.state.istioResource === PEER_AUTHENTICATION && (
+            {this.props.match.params.objectType === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
                 peerAuthentication={this.state.peerAuthentication}
                 onChange={this.onChangePeerAuthentication}
               />
             )}
-            {this.state.istioResource === REQUEST_AUTHENTICATION && (
+            {this.props.match.params.objectType === REQUEST_AUTHENTICATION && (
               <RequestAuthenticationForm
                 requestAuthentication={this.state.requestAuthentication}
                 onChange={this.onChangeRequestAuthentication}
               />
             )}
-            {this.state.istioResource === SIDECAR && (
+            {this.props.match.params.objectType === SERVICE_ENTRY && (
+              <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
+            )}
+            {this.props.match.params.objectType === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
             <ActionGroup>
@@ -389,6 +391,9 @@ class IstioConfigNewPage extends React.Component<Props, State> {
               <Button variant="secondary" onClick={() => this.backToList()}>
                 Cancel
               </Button>
+              {!isNamespacesValid && (
+                <span className={warningStyle}>An Istio Config resource needs at least a namespace selected</span>
+              )}
             </ActionGroup>
           </Form>
         </RenderContent>

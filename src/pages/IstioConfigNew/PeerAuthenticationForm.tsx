@@ -5,6 +5,7 @@ import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PfColors } from '../../components/Pf/PfColors';
+import { PlusCircleIcon } from '@patternfly/react-icons';
 
 const noPortMtlsStyle = style({
   marginTop: 15,
@@ -276,14 +277,13 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
             <>
               <Button
                 id="addServerBtn"
-                variant="secondary"
+                variant="link"
+                icon={<PlusCircleIcon />}
                 isDisabled={
                   this.state.addNewPortMtls.port.length === 0 || isNaN(Number(this.state.addNewPortMtls.port))
                 }
                 onClick={this.onAddPortMtls}
-              >
-                Add Port MTLS
-              </Button>
+              />
             </>
           ]
         }
@@ -293,7 +293,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
   render() {
     return (
       <>
-        <FormGroup label="Add Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -306,8 +306,8 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
           <FormGroup
             fieldId="workloadLabels"
             label="Labels"
-            helperText="One or more labels to select a workload where PeerAuthentication is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            helperTextInvalid="Invalid labels format: One or more labels to select a workload where AuthorizationPolicy is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
+            helperText="One or more labels to select a workload where the PeerAuthentication is applied."
+            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
             isValid={this.state.workloadSelectorValid}
           >
             <TextInput
@@ -327,7 +327,7 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
             ))}
           </FormSelect>
         </FormGroup>
-        <FormGroup label="Add Port MTLS" fieldId="addPortMtls">
+        <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
           <Switch
             id="addPortMtls"
             label={' '}
@@ -349,10 +349,10 @@ class PeerAuthenticationForm extends React.Component<Props, PeerAuthenticationSt
               <TableBody />
             </Table>
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
-              <div className={noPortMtlsStyle}>PeerAuthentication has no Ports MTLS defined</div>
+              <div className={noPortMtlsStyle}>PeerAuthentication has no Port Mutual TLS defined</div>
             )}
             {!this.state.addWorkloadSelector && (
-              <div className={noPortMtlsStyle}>Ports MTLS require a Workload Selector</div>
+              <div className={noPortMtlsStyle}>Port Mutual TLS requires a Workload Selector</div>
             )}
           </FormGroup>
         )}

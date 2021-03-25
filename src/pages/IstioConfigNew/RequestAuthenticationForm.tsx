@@ -145,7 +145,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
   render() {
     return (
       <>
-        <FormGroup label="Add Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -158,8 +158,8 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
           <FormGroup
             fieldId="workloadLabels"
             label="Labels"
-            helperText="One or more labels to select a workload where RequestAuthentication is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
-            helperTextInvalid="Invalid labels format: One or more labels to select a workload where AuthorizationPolicy is applied. Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
+            helperText="One or more labels to select a workload where the RequestAuthentication is applied."
+            helperTextInvalid="Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma."
             isValid={this.state.workloadSelectorValid}
           >
             <TextInput
@@ -172,7 +172,7 @@ class RequestAuthenticationForm extends React.Component<Props, RequestAuthentica
             />
           </FormGroup>
         )}
-        <FormGroup label="Add JWT Rules" fieldId="addJWTRules">
+        <FormGroup label="JWT Rules" fieldId="addJWTRules">
           <Switch
             id="addJWTRules"
             label={' '}

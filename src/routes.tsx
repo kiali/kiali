@@ -50,7 +50,7 @@ const navItems: MenuItem[] = [
   {
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
-    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'), new RegExp('/' + Paths.ISTIO + '/new/(.*)')]
   },
   {
     title: 'Distributed Tracing',
@@ -105,11 +105,6 @@ const pathRoutes: Path[] = [
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
     component: ServiceDetailsPageContainer
   },
-  // NOTE that order on routes is important
-  {
-    path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:objectSubtype/:object',
-    component: IstioConfigDetailsPage
-  },
   {
     path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:object',
     component: IstioConfigDetailsPage
@@ -135,7 +130,7 @@ const pathRoutes: Path[] = [
     component: WorkloadDetailsPage
   },
   {
-    path: '/' + Paths.ISTIO + '/new',
+    path: '/' + Paths.ISTIO + '/new/:objectType',
     component: IstioConfigNewPageContainer
   },
   {

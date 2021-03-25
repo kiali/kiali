@@ -121,6 +121,7 @@ export interface Port {
   number: number;
   protocol: string;
   name: string;
+  targetPort?: number;
 }
 
 export interface Pod {

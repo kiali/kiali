@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Dropdown, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownPosition, DropdownToggle } from '@patternfly/react-core';
 import history from '../../app/History';
+import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 
 type Props = {};
 
@@ -28,15 +29,22 @@ class IstioActionsNamespaceDropdown extends React.Component<Props, State> {
     });
   };
 
-  onClickCreate = () => {
-    history.push('/istio/new');
+  onClickCreate = (type: string) => {
+    history.push('/istio/new/' + type);
   };
 
   render() {
     const dropdownItems = [
-      <DropdownItem key="createIstioConfig" onClick={this.onClickCreate}>
-        Create New Istio Config
-      </DropdownItem>
+      <DropdownGroup
+        key={'group_create'}
+        label={'Create'}
+        className="kiali-group-menu"
+        children={NEW_ISTIO_RESOURCE.map(r => (
+          <DropdownItem key={'createIstioConfig_' + r.value} onClick={() => this.onClickCreate(r.value)}>
+            {r.label}
+          </DropdownItem>
+        ))}
+      />
     ];
     return (
       <Dropdown
