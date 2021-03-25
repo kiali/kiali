@@ -39,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_DESTROY_NEVER="$2"
       shift;shift
       ;;
+    -oi|--operator-installer)
+      MOLECULE_OPERATOR_INSTALLER="$2"
+      shift;shift
+      ;;
     -p|--profiler)
       MOLECULE_OPERATOR_PROFILER_ENABLED="$2"
       shift;shift
@@ -60,27 +64,31 @@ while [[ $# -gt 0 ]]; do
 
 $0 [option...] command
 
--at|--all-tests         Space-separated list of all the molecule tests to be run. Note that this list may not be the
-                        tests that are actually run - see --skip-tests.
-                        The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
--c|--color              True if you want color in the output. (default: true)
--ce|--client-exe        Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
--ct|--cluster-type      The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
--d|--debug              True if you want the molecule tests to output large amounts of debug messages. (default: true)
--hcr|--helm-charts-repo Location of the helm charts git repo. (default: ../helm-charts)
--ksh|--kiali_src-home   Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
--mp|--minikube-profile  If cluster type is 'minikube' you can specify the profile that is in use via this option.
--nd|--never-destroy     Do not have the molecule framework destroy the test scaffolding. Setting this to true
-                        will help test failures by allowing you to examine the operator logs after a test finished.
-                        Default is 'false' - the operator resources will be deleted after a test completes, no matter
-                        if the test succeeded or failed.
--p|--profiler           True if you want to enable the ansible profiler in the operator (default: true)
--st|--skip-tests        Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
--tld|--test-logs-dir    Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
--udi|--use-dev-images   If true, the tests will use locally built dev images of Kiali and the operator. When using dev
-                        images, you must have already pushed locally built dev images into your cluster.
-                        If false, the cluster will put the latest images found on quay.io.
-                        Default: false
+-at|--all-tests          Space-separated list of all the molecule tests to be run. Note that this list may not be the
+                         tests that are actually run - see --skip-tests.
+                         The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
+-c|--color               True if you want color in the output. (default: true)
+-ce|--client-exe         Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
+-ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
+-d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
+-hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
+-ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
+-nd|--never-destroy      Do not have the molecule framework destroy the test scaffolding. Setting this to true
+                         will help test failures by allowing you to examine the operator logs after a test finished.
+                         Default is 'false' - the operator resources will be deleted after a test completes, no matter
+                         if the test succeeded or failed.
+-oi|--operator-installer How the operator is to be installed by the molecule tests. It is either installed
+                         via helm or the installation is skipped entirely. Use "skip" if you installed the
+                         operator yourself (say, via OLM) and you want the molecule tests to use it rather
+                         than to install its own operator. Valid values: "helm" or "skip" (default: helm)
+-p|--profiler            True if you want to enable the ansible profiler in the operator (default: true)
+-st|--skip-tests         Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
+-tld|--test-logs-dir     Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
+-udi|--use-dev-images    If true, the tests will use locally built dev images of Kiali and the operator. When using dev
+                         images, you must have already pushed locally built dev images into your cluster.
+                         If false, the cluster will put the latest images found on quay.io.
+                         Default: false
 HELPMSG
       exit 1
       ;;
@@ -137,6 +145,9 @@ export MOLECULE_DESTROY_NEVER="${MOLECULE_DESTROY_NEVER:-false}"
 # This will dump profiler logs after each reconciliation run so will make the logs a little bigger.
 export MOLECULE_OPERATOR_PROFILER_ENABLED="${MOLECULE_OPERATOR_PROFILER_ENABLED:-true}"
 
+# Set this to helm if you want the molecule tests to install the operator via helm.
+export MOLECULE_OPERATOR_INSTALLER="${MOLECULE_OPERATOR_INSTALLER:-helm}"
+
 # The parent directory where all the test logs are going to be stored.
 TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_%H-%M-%S')}"
 
@@ -151,6 +162,7 @@ echo CLUSTER_TYPE="$CLUSTER_TYPE"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
+echo MOLECULE_OPERATOR_INSTALLER="$MOLECULE_OPERATOR_INSTALLER"
 echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
@@ -263,7 +275,11 @@ echo "=== BUILD HELM CHARTS ==="
 echo "========================="
 echo
 
-make -C ${HELM_CHARTS_REPO} build-helm-charts
+if [ "${MOLECULE_OPERATOR_INSTALLER}" == "helm" ]; then
+  make -C ${HELM_CHARTS_REPO} build-helm-charts
+else
+  echo "Skipping helm - will use the operator that is already installed"
+fi
 
 # Run the tests
 echo

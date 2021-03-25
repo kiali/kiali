@@ -116,6 +116,13 @@ Options:
     If 'oc' is in your PATH, you can pass the option as '-oc \$(which oc)'
     Default: /root/ocp4_setup_ocp4/oc
 
+-oi|--operator-installer <helm|skip>
+    How the operator is to be installed by the molecule tests. It is either installed
+    via helm or the installation is skipped entirely. Use "skip" if you installed the
+    operator yourself (say, via OLM) and you want the molecule tests to use it rather
+    than to install its own operator.
+    Default: helm
+
 -sd|--src-dir <directory>
     Where the git source repositories will be cloned.
     Default: /tmp/KIALI-GIT
@@ -167,6 +174,7 @@ while [[ $# -gt 0 ]]; do
     -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2";     shift;shift; ;;
     -oapi|--openshift-api)        OPENSHIFT_API="$2";         shift;shift; ;;
     -oc)                          OC="$2";                    shift;shift; ;;
+    -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
     -udi|--use-dev-images)        USE_DEV_IMAGES="$2";        shift;shift; ;;
@@ -257,6 +265,7 @@ LOGS_LOCAL_RESULTS=$LOGS_LOCAL_RESULTS
 LOGS_LOCAL_SUBDIR=$LOGS_LOCAL_SUBDIR
 LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
 OC=$OC
+OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 SKIP_TESTS=$SKIP_TESTS
 SRC=$SRC
 UPLOAD_LOGS=$UPLOAD_LOGS
@@ -369,7 +378,7 @@ FORCE_MOLECULE_BUILD="true" DORP=${DORP} make molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" > "${LOGS_LOCAL_RESULTS}"
+eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
