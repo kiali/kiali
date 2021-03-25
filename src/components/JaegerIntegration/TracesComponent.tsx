@@ -29,6 +29,7 @@ import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOptions } from './TracesDisplayOptions';
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
+import { getSpanId } from 'utils/SearchParamUtils';
 
 interface TracesProps {
   namespace: string;
@@ -74,7 +75,7 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
       traces: [],
       jaegerErrors: [],
       targetApp: targetApp,
-      activeTab: traceDetailsTab,
+      activeTab: getSpanId() ? spansDetailsTab : traceDetailsTab,
       toolbarDisabled: false
     };
     this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => {

@@ -32,6 +32,7 @@ export enum URLParam {
   JAEGER_PERCENTILE = 'percentile',
   JAEGER_SHOW_SPANS_AVG = 'showSpansAvg',
   JAEGER_TRACE_ID = 'traceId',
+  JAEGER_SPAN_ID = 'spanId',
   NAMESPACES = 'namespaces',
   OPERATION_NODES = 'operationNodes',
   OVERVIEW_TYPE = 'otype',

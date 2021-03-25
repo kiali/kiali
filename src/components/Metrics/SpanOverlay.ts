@@ -10,7 +10,7 @@ import { Overlay, OverlayInfo } from 'types/Overlay';
 import { toOverlay } from 'utils/VictoryChartsUtils';
 import { defaultMetricsDuration } from './Helper';
 
-export type JaegerLineInfo = LineInfo & { traceId?: string };
+export type JaegerLineInfo = LineInfo & { traceId?: string; spanId?: string };
 
 type FetchOptions = {
   namespace: string;
@@ -80,14 +80,17 @@ export class SpanOverlay {
       };
       const dps = this.spans.map(span => {
         const hasError = span.tags.some(tag => tag.key === 'error' && tag.value);
+        const methodTags = span.tags.filter(tag => tag.key === 'http.method');
+        const method = methodTags.length > 0 ? methodTags[0].value : undefined;
         return {
-          name: span.operationName,
+          name: `${method && `[${method}] `}${span.operationName}`,
           x: new Date(span.startTime / 1000),
           y: Number(span.duration / 1000000),
           error: hasError,
           color: hasError ? PFAlertColor.Danger : PfColors.Cyan300,
           size: 4,
-          traceId: span.traceID
+          traceId: span.traceID,
+          spanId: span.spanID
         };
       });
       return toOverlay(info, dps);

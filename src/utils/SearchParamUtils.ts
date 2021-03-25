@@ -25,6 +25,10 @@ export const hasExperimentalFlag = (flag: string): boolean => {
   return getExperimentalFlags().includes(flag);
 };
 
+export const getSpanId = () => {
+  return new URLSearchParams(window.location.search).get(URLParam.JAEGER_SPAN_ID) || undefined;
+};
+
 export const getTraceId = () => {
   return new URLSearchParams(window.location.search).get(URLParam.JAEGER_TRACE_ID) || undefined;
 };

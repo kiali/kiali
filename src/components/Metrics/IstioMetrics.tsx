@@ -203,6 +203,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       this.onDomainChange([datum.start as Date, datum.end as Date]);
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
+      const spanId = datum.spanId;
       const domain =
         this.props.objectType === MetricsObjectTypes.APP
           ? 'applications'
@@ -210,7 +211,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
           ? 'services'
           : 'workloads';
       history.push(
-        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
       );
     }
   };

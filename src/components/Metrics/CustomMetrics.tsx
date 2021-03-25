@@ -154,8 +154,9 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
       this.onDomainChange([datum.start as Date, datum.end as Date]);
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
+      const spanId = datum.spanId;
       history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}`
+        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
       );
     }
   };

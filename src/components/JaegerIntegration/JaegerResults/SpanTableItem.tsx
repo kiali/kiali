@@ -12,9 +12,19 @@ import { MetricsStats } from 'types/Metrics';
 import { CellProps, createListeners, Expandable, renderExpandArrow } from 'components/Expandable';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 import responseFlags from 'utils/ResponseFlags';
+import { getSpanId } from '../../../utils/SearchParamUtils';
 
 const dangerErrorStyle = style({
   borderLeft: '3px solid var(--pf-global--danger-color--100)'
+});
+
+const selectedErrorStyle = style({
+  borderRight: '3px solid var(--pf-global--info-color--100)',
+  borderLeft: '3px solid var(--pf-global--danger-color--100)'
+});
+
+const selectedStyle = style({
+  borderRight: '3px solid var(--pf-global--info-color--100)'
 });
 
 const kebabDropwdownStyle = style({
@@ -36,28 +46,70 @@ type RowProps = RichSpanData & {
   isExpanded: boolean;
 };
 
+const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
+  return isSpan ? (isError ? selectedErrorStyle : selectedStyle) : isError ? dangerErrorStyle : undefined;
+};
+
 export const buildRow = (props: RowProps) => {
   const expandListeners = createListeners();
+  const isSpan = props.spanID === getSpanId();
   expandListeners.push(props.onExpand);
+  const isExpandable = getSpanId() ? isSpan : props.isExpanded;
   return {
-    className: props.tags.some(isErrorTag) ? dangerErrorStyle : undefined,
+    className: getClassName(props.tags.some(isErrorTag), isSpan),
     isOpen: false,
     cells: [
       {
         title: (
           <>
-            {renderExpandArrow(expandListeners, props.isExpanded)} {formatDuration(props.relativeStartTime)}
+            {renderExpandArrow(expandListeners, isExpandable)} {formatDuration(props.relativeStartTime)}
           </>
         )
       },
       {
-        title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={OriginCell} />
+        title: (
+          <Expandable
+            {...props}
+            clickToExpand={false}
+            isExpanded={isExpandable}
+            listeners={expandListeners}
+            innerComponent={OriginCell}
+          />
+        )
       },
       {
-        title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={SummaryCell} />
+        title: (
+          <Expandable
+            {...props}
+            clickToExpand={true}
+            isExpanded={isExpandable}
+            listeners={expandListeners}
+            innerComponent={SummaryCell}
+          />
+        )
       },
-      { title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={StatsCell} /> },
-      { title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={LinksCell} /> }
+      {
+        title: (
+          <Expandable
+            {...props}
+            clickToExpand={true}
+            isExpanded={isExpandable}
+            listeners={expandListeners}
+            innerComponent={StatsCell}
+          />
+        )
+      },
+      {
+        title: (
+          <Expandable
+            {...props}
+            clickToExpand={false}
+            isExpanded={isExpandable}
+            listeners={expandListeners}
+            innerComponent={LinksCell}
+          />
+        )
+      }
     ],
     spanID: props.spanID
   };

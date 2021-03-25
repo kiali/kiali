@@ -190,7 +190,21 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
     );
   }
 
+  private spanViewLink(span: RichSpanData): string | undefined {
+    const node = decoratedNodeData(this.props.node);
+    return node.namespace
+      ? `/namespaces/${node.namespace}` +
+          (node.workload
+            ? `/workloads/${node.workload}`
+            : node.service
+            ? `/services/${node.service}`
+            : `/applications/${node.app!}`) +
+          `?tab=traces&${URLParam.JAEGER_TRACE_ID}=${this.props.trace.traceID}&${URLParam.JAEGER_SPAN_ID}=${span.spanID}`
+      : undefined;
+  }
+
   private renderSpan(span: RichSpanData) {
+    const spanURL = this.spanViewLink(span);
     return (
       <>
         <div>
@@ -207,6 +221,11 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           <strong>Related: </strong>
           {this.renderRelatedSpans(span)}
         </div>
+        {spanURL && (
+          <div>
+            <Link to={spanURL}>Show span</Link>
+          </div>
+        )}
       </>
     );
   }
