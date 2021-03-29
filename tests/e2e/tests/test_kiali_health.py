@@ -4,6 +4,15 @@ import tests.conftest as conftest
 bookinfo_namespace = conftest.get_bookinfo_namespace()
 
 INVALID_PARAMS_NAMESPACE_HEALTH = {'namespace':'invalid'}
+INVALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT = {'namespace':'invalid', 'workload':'invalid'}
+INVALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT = {'type':'invalid', 'rateInterval':'invalid'}
+INVALID_NAMESPACE_WORKLOAD_HEALTH_DEPLOYMENT = {'namespace':'invalid', 'workload':'details-v1'}
+INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD = {'namespace':bookinfo_namespace, 'workload':'invalid'}
+VALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT = {'namespace':bookinfo_namespace, 'workload':'details-v1'}
+VALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT = {'type':'Deployment', 'rateInterval':'60s'}
+INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT = {'type':'invalid', 'rateInterval':'60s'}
+INVALID_RATE_INTERVAL_WORKLOAD_HEALTH_DEPLOYMENT = {'type':'Deployment', 'rateInterval':'invalid'}
+
 
 
 def test_workload_health_deployment(kiali_client):
@@ -124,6 +133,65 @@ def test_workload_health_invalid_replicaset_negative(kiali_client):
     workload_name = 'details-v1'
     response = get_response(kiali_client, method_name='workloadHealth', path={'namespace':bookinfo_namespace, 'workload':workload_name}, params={'type':workload_type, 'rateInterval':'60s'},status_code_expected=502)
 
+def test_workload_health_deployment_invalid_namespace_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_NAMESPACE_WORKLOAD_HEALTH_DEPLOYMENT, params=VALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_workload_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD, params=VALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=404)
+
+def test_workload_health_deployment_invalid_type_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=VALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=502)
+
+def test_workload_health_deployment_invalid_rateinterval_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=VALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_RATE_INTERVAL_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=500)
+
+def test_workload_health_deployment_invalid_type_invalid_rateinterval_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=VALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=500)
+
+def test_workload_health_deployment_invalid_workload_invalid_type_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD, params=INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=404)
+
+def test_workload_health_deployment_invalid_namespace_invalid_workload_negative(kiali_client):
+        
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=VALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_namespace_invalid_rateinterval_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_NAMESPACE_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_RATE_INTERVAL_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_namespace_invalid_type_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_NAMESPACE_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_workload_invalid_rateinterval_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD, params=INVALID_RATE_INTERVAL_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=500)
+
+def test_workload_health_deployment_invalid_workload_invalid_query_param_negative(kiali_client):
+
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD, params=INVALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=500)
+
+def test_workload_health_deployment_invalid_path_invalid_type_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_namespace_invalid_query_param_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_NAMESPACE_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_path_invalid_rateinterval_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_RATE_INTERVAL_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
+
+def test_workload_health_deployment_invalid_path_invalid_query_param_negative(kiali_client):
+   
+    response = get_response(kiali_client, method_name='workloadHealth', path=INVALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=403)
 
 #############
 
