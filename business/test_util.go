@@ -475,7 +475,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			Status: apps_v1.DaemonSetStatus{
 				DesiredNumberScheduled: 1,
 				CurrentNumberScheduled: 1,
-				NumberAvailable: 1,
+				NumberAvailable:        1,
 			},
 		},
 		{
@@ -496,7 +496,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			Status: apps_v1.DaemonSetStatus{
 				DesiredNumberScheduled: 2,
 				CurrentNumberScheduled: 1,
-				NumberAvailable: 1,
+				NumberAvailable:        1,
 			},
 		},
 		{
@@ -517,7 +517,7 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 			Status: apps_v1.DaemonSetStatus{
 				DesiredNumberScheduled: 2,
 				CurrentNumberScheduled: 2,
-				NumberAvailable: 2,
+				NumberAvailable:        2,
 			},
 		},
 	}
