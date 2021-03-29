@@ -346,6 +346,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	var fulset []apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
+	var daeset []apps_v1.DaemonSet
 
 	ws := models.Workloads{}
 
@@ -356,8 +357,8 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(8)
-	errChan := make(chan error, 8)
+	wg.Add(9)
+	errChan := make(chan error, 9)
 
 	go func() {
 		defer wg.Done()
@@ -467,6 +468,21 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		if isWorkloadIncluded(kubernetes.DaemonSetType) {
+			if IsNamespaceCached(namespace) {
+				daeset, err = kialiCache.GetDaemonSets(namespace)
+			} else {
+				daeset, err = layer.k8s.GetDaemonSets(namespace)
+			}
+			if err != nil {
+				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
 			}
 		}
 	}()
@@ -651,6 +667,15 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 			controllers[fs.Name] = "StatefulSet"
 		}
 	}
+	for _, ds := range daeset {
+		selectorCheck := true
+		if selector != nil {
+			selectorCheck = selector.Matches(labels.Set(ds.Spec.Template.Labels))
+		}
+		if _, exist := controllers[ds.Name]; !exist && selectorCheck {
+			controllers[ds.Name] = "DaemonSet"
+		}
+	}
 
 	// Build workloads from controllers
 	var cnames []string
@@ -810,6 +835,24 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", cname)
 				cnFound = false
 			}
+		case kubernetes.DaemonSetType:
+			found := false
+			iFound := -1
+			for i, ds := range daeset {
+				if ds.Name == cname {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(daeset[iFound].Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseDaemonSet(&daeset[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as Deployment", cname)
+				cnFound = false
+			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			childType := ctype
@@ -859,6 +902,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	var fulset *apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
+	var ds *apps_v1.DaemonSet
 
 	wl := &models.Workload{
 		Pods:              models.Pods{},
@@ -879,8 +923,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 	_, knownWorkloadType := controllerOrder[workloadType]
 
 	wg := sync.WaitGroup{}
-	wg.Add(8)
-	errChan := make(chan error, 8)
+	wg.Add(9)
+	errChan := make(chan error, 9)
 
 	// Pods are always fetched for all workload types
 	go func() {
@@ -1022,6 +1066,21 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		// Check if workloadType is passed
+		if workloadType != "" && workloadType != kubernetes.DaemonSetType {
+			return
+		}
+		var err error
+		if isWorkloadIncluded(kubernetes.DaemonSetType) {
+			ds, err = layer.k8s.GetDaemonSet(namespace, workloadName)
+			if err != nil {
+				ds = nil
 			}
 		}
 	}()
@@ -1178,6 +1237,11 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			controllers[fulset.Name] = kubernetes.StatefulSetType
 		}
 	}
+	if ds != nil {
+		if _, exist := controllers[ds.Name]; !exist {
+			controllers[ds.Name] = kubernetes.DaemonSetType
+		}
+	}
 
 	// Build workload from controllers
 
@@ -1308,6 +1372,15 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", workloadName)
 				cnFound = false
 			}
+		case kubernetes.DaemonSetType:
+			if ds.Name == workloadName {
+				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseDaemonSet(ds)
+			} else {
+				log.Errorf("Workload %s is not found as DaemonSet", workloadName)
+				cnFound = false
+			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			childType := ctype
@@ -1364,6 +1437,7 @@ func updateWorkload(layer *Layer, namespace string, workloadName string, workloa
 		kubernetes.JobType,
 		kubernetes.CronJobType,
 		kubernetes.PodType,
+		kubernetes.DaemonSetType,
 	}
 
 	// workloadType is an optional parameter used to optimize the workload type fetch

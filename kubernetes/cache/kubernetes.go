@@ -16,6 +16,8 @@ import (
 type (
 	KubernetesCache interface {
 		GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
+		GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
+		GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error)
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 		GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
 		GetEndpoints(namespace, name string) (*core_v1.Endpoints, error)
@@ -33,6 +35,7 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 	(*informer)[kubernetes.DeploymentType] = sharedInformers.Apps().V1().Deployments().Informer()
 	(*informer)[kubernetes.StatefulSetType] = sharedInformers.Apps().V1().StatefulSets().Informer()
 	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
+	(*informer)[kubernetes.DaemonSetType] = sharedInformers.Apps().V1().DaemonSets().Informer()
 	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 	(*informer)[kubernetes.ConfigMapType] = sharedInformers.Core().V1().ConfigMaps().Informer()
@@ -45,6 +48,7 @@ func (c *kialiCacheImpl) isKubernetesSynced(namespace string) bool {
 		isSynced = nsCache[kubernetes.DeploymentType].HasSynced() &&
 			nsCache[kubernetes.StatefulSetType].HasSynced() &&
 			nsCache[kubernetes.ReplicaSetType].HasSynced() &&
+			nsCache[kubernetes.DaemonSetType].HasSynced() &&
 			nsCache[kubernetes.ServiceType].HasSynced() &&
 			nsCache[kubernetes.PodType].HasSynced() &&
 			nsCache[kubernetes.ConfigMapType].HasSynced() &&
@@ -70,6 +74,46 @@ func (c *kialiCacheImpl) GetConfigMap(namespace, name string) (*core_v1.ConfigMa
 			}
 			log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] [name: %s]", namespace, name)
 			return cm, nil
+		}
+	}
+	return nil, nil
+}
+
+func (c *kialiCacheImpl) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		daeset := nsCache[kubernetes.DaemonSetType].GetStore().List()
+		lenDaeSet := len(daeset)
+		if lenDaeSet > 0 {
+			_, ok := daeset[0].(*apps_v1.DaemonSet)
+			if !ok {
+				return nil, errors.New("bad DaemonSet type found in cache")
+			}
+			nsDaeSets := make([]apps_v1.DaemonSet, lenDaeSet)
+			for i, ds := range daeset {
+				nsDaeSets[i] = *(ds.(*apps_v1.DaemonSet))
+			}
+			log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] = %d", namespace, lenDaeSet)
+			return nsDaeSets, nil
+		}
+	}
+	return []apps_v1.DaemonSet{}, nil
+}
+
+func (c *kialiCacheImpl) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache[kubernetes.DaemonSetType].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			ds, ok := obj.(*apps_v1.DaemonSet)
+			if !ok {
+				return nil, errors.New("bad DaemonSet type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: DaemonSet] for [namespace: %s] [name: %s]", namespace, name)
+			return ds, nil
 		}
 	}
 	return nil, nil

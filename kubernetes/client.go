@@ -9,14 +9,6 @@ import (
 	"os"
 	"strings"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproject_v1 "github.com/openshift/api/project/v1"
-	osroutes_v1 "github.com/openshift/api/route/v1"
-	apps_v1 "k8s.io/api/apps/v1"
-	auth_v1 "k8s.io/api/authorization/v1"
-	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,54 +31,6 @@ var (
 
 type PodLogs struct {
 	Logs string `json:"logs,omitempty"`
-}
-
-type IstioClientInterface interface {
-	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
-	DeleteIstioObject(api, namespace, resourceType, name string) error
-	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
-	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
-	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
-	GetProxyStatus() ([]*ProxyStatus, error)
-	GetConfigDump(namespace, podName string) (*ConfigDump, error)
-}
-
-type K8SClientInterface interface {
-	GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error)
-	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
-	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
-	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
-	GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error)
-	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error)
-	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
-	GetEndpoints(namespace string, serviceName string) (*core_v1.Endpoints, error)
-	GetJobs(namespace string) ([]batch_v1.Job, error)
-	GetNamespace(namespace string) (*core_v1.Namespace, error)
-	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
-	GetPod(namespace, name string) (*core_v1.Pod, error)
-	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
-	GetPodProxy(namespace, name, path string) ([]byte, error)
-	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
-	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
-	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
-	GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error)
-	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
-	GetService(namespace string, serviceName string) (*core_v1.Service, error)
-	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
-	GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error)
-	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
-	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
-	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
-	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
-	UpdateService(namespace string, serviceName string, jsonPatch string) error
-	UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string) error
-}
-
-type OSClientInterface interface {
-	GetProject(project string) (*osproject_v1.Project, error)
-	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
-	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
-	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
 // ClientInterface for mocks (only mocked function are necessary here)

@@ -449,6 +449,80 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 	}
 }
 
+func FakeDaemonSets() []apps_v1.DaemonSet {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
+	config.Set(conf)
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []apps_v1.DaemonSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "DaemonSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "httpbin-v1",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "httpbin"},
+					},
+				},
+			},
+			Status: apps_v1.DaemonSetStatus{
+				DesiredNumberScheduled: 1,
+				CurrentNumberScheduled: 1,
+				NumberAvailable: 1,
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "DaemonSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "httpbin-v2",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
+					},
+				},
+			},
+			Status: apps_v1.DaemonSetStatus{
+				DesiredNumberScheduled: 2,
+				CurrentNumberScheduled: 1,
+				NumberAvailable: 1,
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "DaemonSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "httpbin-v3",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{},
+					},
+				},
+			},
+			Status: apps_v1.DaemonSetStatus{
+				DesiredNumberScheduled: 2,
+				CurrentNumberScheduled: 2,
+				NumberAvailable: 2,
+			},
+		},
+	}
+}
+
 func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -711,7 +785,7 @@ func FakePodsNoController() []core_v1.Pod {
 	}
 }
 
-func FakePodsFromDaemonSet() []core_v1.Pod {
+func FakePodsFromCustomController() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
@@ -721,13 +795,13 @@ func FakePodsFromDaemonSet() []core_v1.Pod {
 	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "daemon-pod",
+				Name:              "custom-controller-pod",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "DaemonSet",
-					Name:       "daemon-controller",
+					Kind:       "ReplicaSet",
+					Name:       "custom-controller-123",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
@@ -740,6 +814,43 @@ func FakePodsFromDaemonSet() []core_v1.Pod {
 					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
 					{Name: "enable-core-dump", Image: "alpine"},
 				},
+			},
+		},
+	}
+}
+
+func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
+	conf := config.NewConfig()
+	config.Set(conf)
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	return []apps_v1.ReplicaSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "ReplicaSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "custom-controller-123",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				OwnerReferences: []meta_v1.OwnerReference{{
+					Controller: &controller,
+					Kind:       "CustomController",
+					Name:       "custom-controller",
+				}},
+			},
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "details", versionLabel: "v1"},
+					},
+				},
+			},
+			Status: apps_v1.ReplicaSetStatus{
+				Replicas:          1,
+				AvailableReplicas: 1,
+				ReadyReplicas:     0,
 			},
 		},
 	}
