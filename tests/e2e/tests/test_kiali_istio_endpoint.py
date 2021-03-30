@@ -40,3 +40,23 @@ def test_istio_object_istio_validations(kiali_client):
     assert istio_validations.get('validation') != None
     assert OBJECT in istio_validations.get('validation').get('name')
     assert OBJECT_TYPE_SINGLE in istio_validations.get('validation').get('objectType')
+
+def test_istio_config_authorization_policies(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+    istio_policies = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'objects': 'authorizationpolicies'}).json()
+
+    assert istio_policies != None
+    assert "virtualServices" in istio_policies
+    assert istio_policies.get('virtualServices') != None
+    assert bookinfo_namespace in istio_policies.get('namespace').get('name')
+
+def test_istio_permissions_namespaces(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+    istio_namespace = kiali_client.request(method_name='getPermissions', params={'namespaces': bookinfo_namespace}).json()
+    
+    assert istio_namespace != None
+    assert "bookinfo" in istio_namespace
+    assert istio_namespace.get('bookinfo') != None
+    gateway = istio_namespace.get('bookinfo').get('authorizationpolicies')
+    assert gateway != None
+
