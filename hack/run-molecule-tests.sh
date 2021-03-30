@@ -23,6 +23,10 @@ while [[ $# -gt 0 ]]; do
       MOLECULE_DEBUG="$2"
       shift;shift
       ;;
+    -dorp|--docker-or-podman)
+      DORP="$2"
+      shift;shift
+      ;;
     -hcr|--helm-charts-repo)
       HELM_CHARTS_REPO="$2"
       shift;shift
@@ -71,6 +75,7 @@ $0 [option...] command
 -ce|--client-exe         Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
 -ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
 -d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
+-dorp|--docker-or-podman What should be used - "docker" or "podman"
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
 -mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
@@ -155,6 +160,7 @@ TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_
 COLOR=${COLOR:-true}
 
 echo "========== SETTINGS =========="
+echo DORP="$DORP"
 echo KIALI_SRC_HOME="$KIALI_SRC_HOME"
 echo ALL_TESTS="$ALL_TESTS"
 echo SKIP_TESTS="$SKIP_TESTS"
@@ -255,15 +261,20 @@ if [ ! -z "${TEST_CLIENT_EXE}" ]; then
   export OC="${TEST_CLIENT_EXE}"
 fi
 
-# if we need to use podman, we have to explicitly tell the makefile
-if ! which docker > /dev/null 2>&1; then
-  if which podman > /dev/null 2>&1; then
-    export DORP="podman"
+# we have to explicitly tell the makefile about the DORP value
+if [ -z "${DORP}" ]; then
+  if ! which docker > /dev/null 2>&1; then
+    if which podman > /dev/null 2>&1; then
+      DORP="podman"
+    else
+      echo "You do not have 'docker' or 'podman' in PATH - aborting."
+      exit 1
+    fi
   else
-    echo "You do not have 'docker' or 'podman' in PATH - aborting."
-    exit 1
+    DORP="docker"
   fi
 fi
+export DORP
 
 # the user may have specified a specific minikube profile to use - export this so make knows about it
 export MINIKUBE_PROFILE
