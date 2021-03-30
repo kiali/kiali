@@ -344,13 +344,13 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   infomsg "Dev images are to be tested. Will prepare them now."
 
   infomsg "Building dev image..."
-  OC="${OC}" DORP="${DORP}" make clean build test
+  make -e OC="${OC}" -e DORP="${DORP}" clean build test
 
   infomsg "Logging into the image registry..."
-  eval $(OC="${OC}" DORP="${DORP}" make cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   infomsg "Pushing the images into the cluster..."
-  OC="${OC}" DORP="${DORP}" make cluster-push
+  make -e OC="${OC}" -e DORP="${DORP}" cluster-push
 else
   infomsg "Will test the latest published images"
 fi
@@ -378,11 +378,11 @@ else
 fi
 
 infomsg "Building the Molecule test docker image using [${DORP}]"
-FORCE_MOLECULE_BUILD="true" DORP=${DORP} make molecule-build
+make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
