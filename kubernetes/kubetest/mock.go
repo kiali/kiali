@@ -60,6 +60,7 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)
 	o.On("GetDeploymentConfigs", namespace).Return([]osapps_v1.DeploymentConfig{}, nil)
 	o.On("GetStatefulSets", namespace).Return([]apps_v1.StatefulSet{}, nil)
+	o.On("GetDaemonSets", namespace).Return([]apps_v1.DaemonSet{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
 	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
 }
@@ -73,6 +74,7 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 	notfound := errors.NewNotFound(gr, "not found")
 	o.On("GetDeployment", namespace, workload).Return(&apps_v1.Deployment{}, notfound)
 	o.On("GetStatefulSet", namespace, workload).Return(&apps_v1.StatefulSet{}, notfound)
+	o.On("GetDaemonSet", namespace, workload).Return(&apps_v1.DaemonSet{}, notfound)
 	o.On("GetDeploymentConfig", namespace, workload).Return(&osapps_v1.DeploymentConfig{}, notfound)
 	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
 	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)

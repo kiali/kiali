@@ -292,6 +292,18 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
 	workload.HealthAnnotations = GetHealthAnnotation(cnjb.Annotations, GetHealthConfigAnnotation())
 }
 
+func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
+	workload.Type = "DaemonSet"
+	workload.parseObjectMeta(&ds.ObjectMeta, &ds.Spec.Template.ObjectMeta)
+	// This is a cornercase for DaemonSet controllers
+	// Desired is the number of desired nodes in a cluster that are running a DaemonSet Pod
+	// We are not going to change that terminology in the backend model yet, but probably add a note in the UI in the future
+	workload.DesiredReplicas = ds.Status.DesiredNumberScheduled
+	workload.CurrentReplicas = ds.Status.CurrentNumberScheduled
+	workload.AvailableReplicas = ds.Status.NumberAvailable
+	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
+}
+
 func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []core_v1.Pod) {
 	conf := config.Get()
 	workload.Name = controllerName

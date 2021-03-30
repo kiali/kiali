@@ -13,6 +13,7 @@ const (
 	// Kubernetes Controllers
 	ConfigMapType             = "ConfigMap"
 	CronJobType               = "CronJob"
+	DaemonSetType             = "DaemonSet"
 	DeploymentType            = "Deployment"
 	DeploymentConfigType      = "DeploymentConfig"
 	EndpointsType             = "Endpoints"

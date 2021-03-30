@@ -11,8 +11,8 @@ func (o *K8SClientMock) GetRoute(namespace, name string) (*osroutes_v1.Route, er
 	return args.Get(0).(*osroutes_v1.Route), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osapps_v1.DeploymentConfig, error) {
-	args := o.Called(namespace, deploymentName)
+func (o *K8SClientMock) GetDeploymentConfig(namespace string, name string) (*osapps_v1.DeploymentConfig, error) {
+	args := o.Called(namespace, name)
 	return args.Get(0).(*osapps_v1.DeploymentConfig), args.Error(1)
 }
 

@@ -29,6 +29,16 @@ var (
 	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp", "mysql"}
 )
 
+type IstioClientInterface interface {
+	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
+	DeleteIstioObject(api, namespace, resourceType, name string) error
+	GetIstioObject(namespace, resourceType, name string) (IstioObject, error)
+	GetIstioObjects(namespace, resourceType, labelSelector string) ([]IstioObject, error)
+	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	GetProxyStatus() ([]*ProxyStatus, error)
+	GetConfigDump(namespace, podName string) (*ConfigDump, error)
+}
+
 // Aux method to fetch proper (RESTClient, APIVersion) per API group
 func (in *K8SClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
 	if apiGroup == NetworkingGroupVersion.Group {

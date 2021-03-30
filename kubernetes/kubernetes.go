@@ -26,10 +26,49 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+type K8SClientInterface interface {
+	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
+	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
+	GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error)
+	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
+	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
+	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+	GetDeploymentConfig(namespace string, name string) (*osapps_v1.DeploymentConfig, error)
+	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
+	GetEndpoints(namespace string, name string) (*core_v1.Endpoints, error)
+	GetJobs(namespace string) ([]batch_v1.Job, error)
+	GetNamespace(namespace string) (*core_v1.Namespace, error)
+	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
+	GetPod(namespace, name string) (*core_v1.Pod, error)
+	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
+	GetPodProxy(namespace, name, path string) ([]byte, error)
+	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
+	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
+	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
+	GetSecrets(namespace string, labelSelector string) ([]core_v1.Secret, error)
+	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
+	GetService(namespace string, name string) (*core_v1.Service, error)
+	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+	GetServicesByLabels(namespace string, labelsSelector string) ([]core_v1.Service, error)
+	GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
+	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
+	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
+	UpdateService(namespace string, name string, jsonPatch string) error
+	UpdateWorkload(namespace string, name string, workloadType string, jsonPatch string) error
+}
+
+type OSClientInterface interface {
+	GetProject(project string) (*osproject_v1.Project, error)
+	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
+	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
+	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
+}
+
 // GetConfigMap fetches and returns the specified ConfigMap definition
 // from the cluster
-func (in *K8SClient) GetConfigMap(namespace, configName string) (*core_v1.ConfigMap, error) {
-	configMap, err := in.k8s.CoreV1().ConfigMaps(namespace).Get(in.ctx, configName, emptyGetOptions)
+func (in *K8SClient) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {
+	configMap, err := in.k8s.CoreV1().ConfigMaps(namespace).Get(in.ctx, name, emptyGetOptions)
 	if err != nil {
 		return &core_v1.ConfigMap{}, err
 	}
@@ -157,10 +196,22 @@ func (in *K8SClient) GetServicesByLabels(namespace string, labelsSelector string
 	}
 }
 
+func (in *K8SClient) GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error) {
+	return in.k8s.AppsV1().DaemonSets(namespace).Get(in.ctx, name, emptyGetOptions)
+}
+
+func (in *K8SClient) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
+	if daeList, err := in.k8s.AppsV1().DaemonSets(namespace).List(in.ctx, emptyListOptions); err == nil {
+		return daeList.Items, nil
+	} else {
+		return []apps_v1.DaemonSet{}, err
+	}
+}
+
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
-func (in *K8SClient) GetDeployment(namespace, deploymentName string) (*apps_v1.Deployment, error) {
-	return in.k8s.AppsV1().Deployments(namespace).Get(in.ctx, deploymentName, emptyGetOptions)
+func (in *K8SClient) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
+	return in.k8s.AppsV1().Deployments(namespace).Get(in.ctx, name, emptyGetOptions)
 }
 
 // GetRoute returns the external URL endpoint of a specific route name.
@@ -184,23 +235,11 @@ func (in *K8SClient) GetDeployments(namespace string) ([]apps_v1.Deployment, err
 	}
 }
 
-// GetDeployments returns an array of deployments for a given namespace and a set of labels.
-// An empty labelSelector will fetch all Deployments for a namespace.
-// It returns an error on any problem.
-func (in *K8SClient) GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
-	listOptions := meta_v1.ListOptions{LabelSelector: labelSelector}
-	if depList, err := in.k8s.AppsV1().Deployments(namespace).List(in.ctx, listOptions); err == nil {
-		return depList.Items, nil
-	} else {
-		return []apps_v1.Deployment{}, err
-	}
-}
-
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
-func (in *K8SClient) GetDeploymentConfig(namespace, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error) {
+func (in *K8SClient) GetDeploymentConfig(namespace, name string) (*osapps_v1.DeploymentConfig, error) {
 	result := &osapps_v1.DeploymentConfig{}
-	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(deploymentconfigName).Do(in.ctx).Into(result)
+	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(name).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
@@ -227,8 +266,8 @@ func (in *K8SClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, err
 	}
 }
 
-func (in *K8SClient) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
-	return in.k8s.AppsV1().StatefulSets(namespace).Get(in.ctx, statefulsetName, emptyGetOptions)
+func (in *K8SClient) GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error) {
+	return in.k8s.AppsV1().StatefulSets(namespace).Get(in.ctx, name, emptyGetOptions)
 }
 
 func (in *K8SClient) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
@@ -249,14 +288,14 @@ func (in *K8SClient) GetReplicationControllers(namespace string) ([]core_v1.Repl
 
 // GetService returns the definition of a specific service.
 // It returns an error on any problem.
-func (in *K8SClient) GetService(namespace, serviceName string) (*core_v1.Service, error) {
-	return in.k8s.CoreV1().Services(namespace).Get(in.ctx, serviceName, emptyGetOptions)
+func (in *K8SClient) GetService(namespace, name string) (*core_v1.Service, error) {
+	return in.k8s.CoreV1().Services(namespace).Get(in.ctx, name, emptyGetOptions)
 }
 
 // GetEndpoints return the list of endpoint of a specific service.
 // It returns an error on any problem.
-func (in *K8SClient) GetEndpoints(namespace, serviceName string) (*core_v1.Endpoints, error) {
-	return in.k8s.CoreV1().Endpoints(namespace).Get(in.ctx, serviceName, emptyGetOptions)
+func (in *K8SClient) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
+	return in.k8s.CoreV1().Endpoints(namespace).Get(in.ctx, name, emptyGetOptions)
 }
 
 // GetPods returns the pods definitions for a given set of labels.
@@ -398,17 +437,19 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 		_, err = in.k8s.BatchV1beta1().CronJobs(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	case PodType:
 		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
+	case DaemonSetType:
+		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, types.MergePatchType, bytePatch, emptyPatchOptions)
 	default:
 		err = fmt.Errorf("Workload type %s not found", workloadType)
 	}
 	return err
 }
 
-func (in *K8SClient) UpdateService(namespace string, serviceName string, jsonPatch string) error {
+func (in *K8SClient) UpdateService(namespace string, name string, jsonPatch string) error {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
 	var err error
-	_, err = in.k8s.CoreV1().Services(namespace).Patch(in.ctx, serviceName, types.MergePatchType, bytePatch, emptyPatchOptions)
+	_, err = in.k8s.CoreV1().Services(namespace).Patch(in.ctx, name, types.MergePatchType, bytePatch, emptyPatchOptions)
 	return err
 }
 
@@ -423,10 +464,10 @@ func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_
 	return ns, nil
 }
 
-func (in *K8SClient) UpdateProject(name string, jsonPatch string) (*osproject_v1.Project, error) {
+func (in *K8SClient) UpdateProject(namespace string, jsonPatch string) (*osproject_v1.Project, error) {
 	result := &osproject_v1.Project{}
 	bytePatch := []byte(jsonPatch)
-	err := in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", name).Body(bytePatch).Do(in.ctx).Into(result)
+	err := in.k8s.RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", namespace).Body(bytePatch).Do(in.ctx).Into(result)
 	if err != nil {
 		return nil, err
 	}
