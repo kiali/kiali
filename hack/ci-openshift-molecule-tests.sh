@@ -355,8 +355,12 @@ else
   infomsg "Will test the latest published images"
 fi
 
-infomsg "Cleaning any residual Kiali installs that might be hanging around"
-hack/purge-kiali-from-cluster.sh --client-exe "$OC"
+if [ "${OPERATOR_INSTALLER}" != "skip" ]; then
+  infomsg "Cleaning any residual Kiali installs that might be hanging around"
+  hack/purge-kiali-from-cluster.sh --client-exe "$OC"
+else
+  infomsg "Operator installation is being skipped so it is assumed you already have Kiali operator installed. No cleanup of residual Kiali installs will be performed. Make sure you do not have a Kiali CR installed - only the operator should be installed."
+fi
 
 if ! $OC get namespace istio-system > /dev/null; then
   if [ "${INSTALL_ISTIO}" == "true" ]; then
