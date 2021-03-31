@@ -67,7 +67,7 @@ class TrafficControlInfo extends React.Component<TrafficControlInfoProps, State>
 
   getRows = (): IRow[] => {
     let rows: IRow[] = [];
-    this.props.trafficControl?.match.http?.map((matchRule, idx) => {
+    this.props.trafficControl?.match?.http?.map((matchRule, idx) => {
       const matchString: string[] = [];
       matchRule.headers?.map(h => {
         matchString.push('headers [' + h.key + '] ' + h.match + ' ' + h.stringMatch + ' ');

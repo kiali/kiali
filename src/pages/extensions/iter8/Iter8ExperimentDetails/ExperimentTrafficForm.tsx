@@ -1,79 +1,75 @@
-import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, wrappable } from '@patternfly/react-table';
-import { Criteria, HeaderMatch, Host, HttpMatch, initCriteria } from '../../../../types/Iter8';
+import { Criteria, HeaderMatch, Host, HttpMatch, initCriteria, URIMatch } from '../../../../types/Iter8';
 import * as React from 'react';
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  Divider,
-  FormGroup,
-  FormSelect,
-  FormSelectOption,
-  Grid,
-  GridItem,
-  TextInput,
-  ButtonVariant
-} from '@patternfly/react-core';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { Button } from '@patternfly/react-core';
+import Matches from './../../../../components/IstioWizards/RequestRouting/Matches';
+import ExperimentMatchBuilder, { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX, URI } from './ExperimentMatchBuilder';
+import { style } from 'typestyle';
+import { PfColors } from './../../../../components/Pf/PfColors';
+import ExperimentRules, { MOVE_TYPE, Rule } from './ExperimentRules';
+import { OnRemoveFromListOptions } from './ExperimentCreatePage';
 
-const MatchOptions = [
-  { value: '', label: '--- select ---' },
-  { value: 'exact', label: 'exact string match' },
-  { value: 'prefix', label: 'prefix-based match' },
-  { value: 'regex', label: 'ECMAscript style regex-based match' }
-];
+const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
+const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
+const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
 
-const headerCells: ICell[] = [
-  {
-    title: 'header keys',
-    transforms: [wrappable, cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: 'match',
-    transforms: [cellWidth(35) as any],
-    props: {}
-  },
-  {
-    title: 'string match',
-    transforms: [cellWidth(20) as any],
-    props: {}
-  },
-  {
-    title: '',
-    props: {}
-  }
-];
+const addRuleStyle = style({
+  width: '100%',
+  textAlign: 'right'
+});
+
+const validationStyle = style({
+  marginRight: 20,
+  color: PfColors.Red100,
+  display: 'inline'
+});
 
 type Props = {
   matches: HttpMatch[];
-  onRemove: (type: string, index: number) => void;
+
+  onRemove: (type: OnRemoveFromListOptions, index: number) => void;
   onAdd: (criteria: Criteria, host: Host, match: any) => void;
+  onMoveMatchRule: (index: number, move: MOVE_TYPE) => void;
+};
+
+type URIMatchState = {
+  uriMatchString?: string;
+  uriMatch?: URIMatch;
 };
 
 export type TrafficState = {
-  addMatch: HttpMatch;
-  addHeader: HeaderMatch;
+  uriMatchString?: string;
+  uriMatch?: URIMatch;
+  matchStringToHeaderMatch: { [matchString: string]: HeaderMatch };
+
   focusElementName: string;
   validName: boolean;
+
+  validationMsg: string;
+
+  // Match state
+  // MatchBuilder props
+  category: string;
+  operator: string;
+  headerName: string;
+  matchValue: string;
+  isValid: boolean;
 };
 
 export const initMatch = (): TrafficState => ({
-  addMatch: {
-    uri: {
-      match: '',
-      stringMatch: ''
-    },
-    headers: []
-  },
-  addHeader: {
-    key: '',
-    match: '',
-    stringMatch: ''
-  },
+  matchStringToHeaderMatch: {},
+
   focusElementName: 'Unknown',
-  validName: false
+  validName: false,
+
+  validationMsg: '',
+
+  // Match state
+  // MatchBuilder props
+  category: URI,
+  operator: EXACT,
+  headerName: '',
+  matchValue: '',
+  isValid: true
 });
 
 // Create Success Criteria, can be multiple with same metric, but different sampleSize, etc...
@@ -83,21 +79,7 @@ class ExperimentTrafficForm extends React.Component<Props, TrafficState> {
     this.state = initMatch();
   }
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
-    const removeAction = {
-      title: 'Remove Header',
-      // @ts-ignore
-      onClick: (event, rowIndex) => {
-        this.onHeaderRemove(rowIndex);
-      }
-    };
-    if (rowIndex < this.state.addMatch.headers.length) {
-      return [removeAction];
-    }
-    return [];
-  };
-
+  // TODO: Is this necessary?
   componentDidUpdate() {
     if (this.state.focusElementName !== '') {
       const focusElement = document.getElementById(this.state.focusElementName);
@@ -107,281 +89,243 @@ class ExperimentTrafficForm extends React.Component<Props, TrafficState> {
     }
   }
 
-  onAddMatch = (value: string, _) => {
-    this.setState(prevState => ({
-      addMatch: {
-        uri: {
-          match: value.trim(),
-          stringMatch: prevState.addMatch.uri.stringMatch
-        },
-        headers: prevState.addMatch.headers
-      },
-      focusElementName: 'Unknow',
-      validName: true
-    }));
-  };
-
-  onAddUriMatch = (value: string) => {
-    this.setState(prevState => ({
-      addMatch: {
-        uri: {
-          match: value.trim(),
-          stringMatch: prevState.addMatch.uri.stringMatch
-        },
-        headers: prevState.addMatch.headers
-      },
-      focusElementName: 'Unknow',
-      validName: true
-    }));
-  };
-
-  onAddUriMatchString = (value: string) => {
-    this.setState(prevState => ({
-      addMatch: {
-        uri: {
-          match: prevState.addMatch.uri.match,
-          stringMatch: value.trim()
-        },
-        headers: prevState.addMatch.headers
-      },
-      focusElementName: 'Unknow',
-      validName: true
-    }));
-  };
-
-  onAddHeader = () => {
-    this.setState(prevState => ({
-      addMatch: {
-        uri: {
-          match: prevState.addMatch.uri.match,
-          stringMatch: prevState.addMatch.uri.stringMatch
-        },
-        headers: prevState.addMatch.headers.concat(this.state.addHeader)
-      },
-      addHeader: {
-        key: '',
-        match: '',
-        stringMatch: ''
-      },
-      focusElementName: 'Unknown'
-    }));
-  };
-
-  onHeaderRemove = (index: number) => {
-    this.setState(prevState => {
-      prevState.addMatch.headers.splice(index, 1);
-      return {
-        addMatch: prevState.addMatch,
-        addHeader: prevState.addHeader,
-        focusElementName: 'UNknown'
-      };
+  isMatchesIncluded = (rules: Rule[], newRule: Rule) => {
+    return rules.some(rule => {
+      return (
+        rule.matches.length === newRule.matches.length && rule.matches.every(match => newRule.matches.includes(match))
+      );
     });
   };
 
-  onAddHeaderValue = (field: string, value: string) => {
-    this.setState(prevState => {
-      const headerInfo = prevState.addHeader;
-      switch (field) {
-        case 'addNewHeaderKey':
-          headerInfo.key = value.trim();
-          break;
-        case 'addNewHeaderMatch':
-          headerInfo.match = value.trim();
-          break;
-        case 'addNewHeaderStringMatch':
-          headerInfo.stringMatch = value.trim();
-          break;
-        default:
-      }
-      return {
-        addMatch: prevState.addMatch,
-        addHeader: headerInfo,
-        focusElementName: field
-      };
-    });
-  };
-
-  onAddMatchRules = () => {
-    this.props.onAdd(initCriteria(), { name: '', gateway: '' }, this.state.addMatch);
+  onHeaderNameChange = (headerName: string) => {
+    let validationMsg = '';
+    if (this.state.matchValue !== '' && headerName === '') {
+      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+    }
+    if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
+      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+    }
     this.setState({
-      addMatch: {
-        uri: {
-          match: '',
-          stringMatch: ''
-        },
-        headers: []
-      },
-      addHeader: {
-        key: '',
-        match: '',
-        stringMatch: ''
-      },
-      focusElementName: 'Unknown',
-      validName: false
+      headerName: headerName,
+      validationMsg: validationMsg
     });
   };
 
-  rows = (): IRow[] => {
-    return this.state.addMatch.headers
-      .map((header, i) => ({
-        key: 'header' + i,
-        cells: [<>{header.key}</>, <>{header.match}</>, <>{header.stringMatch}</>]
-      }))
-      .concat([
-        {
-          key: 'Header',
-          cells: [
-            <>
-              <TextInput
-                id="addNewHeaderKey"
-                placeholder="Key"
-                value={this.state.addHeader.key}
-                onChange={value => this.onAddHeaderValue('addNewHeaderKey', value)}
-              />
-            </>,
-            <>
-              <FormSelect
-                id="addNewHeaderMatch"
-                onChange={value => this.onAddHeaderValue('addNewHeaderMatch', value)}
-                value={this.state.addHeader.match}
-              >
-                {MatchOptions.map((mt, index) => (
-                  <FormSelectOption label={mt.label} key={'mt' + index} value={mt.value} />
-                ))}
-              </FormSelect>
-            </>,
-            <FormGroup fieldId="faddNewHeaderStringMatch" isValid={this.state.addHeader.stringMatch.length > 0}>
-              <TextInput
-                id="addNewHeaderStringMatch"
-                placeholder="match string"
-                onChange={value => this.onAddHeaderValue('addNewHeaderStringMatch', value)}
-                value={this.state.addHeader.stringMatch}
-              />
-            </FormGroup>,
-            <>
-              <Button
-                id="addHostBtn"
-                aria-label="slider-text"
-                variant="secondary"
-                isDisabled={
-                  this.state.addHeader.key === '' ||
-                  this.state.addHeader.match === '' ||
-                  this.state.addHeader.stringMatch === ''
-                }
-                onClick={this.onAddHeader}
-              >
-                Add this Header
-              </Button>
-            </>
-          ]
-        }
-      ]);
+  onMatchValueChange = (matchValue: string) => {
+    let validationMsg = '';
+    if (this.state.category === HEADERS) {
+      if (this.state.headerName === '' && matchValue !== '') {
+        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      }
+      if (this.state.headerName !== '' && matchValue === '') {
+        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      }
+    }
+    if (matchValue === '') {
+      validationMsg = '';
+    }
+
+    // Setting match state
+    this.setState({
+      matchValue: matchValue,
+      validationMsg: validationMsg
+    });
   };
 
-  matchrows(match) {
-    return match.headers.map((header, i) => ({
-      key: 'uri' + i,
-      cells: [<>{header.key}</>, <>{header.match}</>, <>{header.stringMatch}</>, '']
-    }));
-  }
+  // Simply for converting between HttpMatch and Rule types
+  // Only supports URI and HEADERS
+  httpMatchesToRules = (matches: HttpMatch[]): Rule[] => {
+    return matches.map(match => {
+      let rule: Rule = {
+        matches: [],
+        workloadWeights: []
+      };
+
+      // URI and header matches are added separately
+      if (match.uri && match.uri.match && match.uri.stringMatch) {
+        rule.matches.push(this.matchToIstioMatchString(URI, match.uri.match, match.uri.stringMatch));
+      }
+
+      if (match.headers) {
+        match.headers.forEach(header => {
+          rule.matches.push(this.matchToIstioMatchString(HEADERS, header.match, header.stringMatch, header.key));
+        });
+      }
+
+      return rule;
+    });
+  };
+
+  matchToIstioMatchString = (
+    matchOption: string,
+    operator: string,
+    stringMatch: string,
+    headerName?: string
+  ): string => {
+    if (stringMatch !== '') {
+      return matchOption + (matchOption === HEADERS ? ' [' + headerName + '] ' : ' ') + operator + ' ' + stringMatch;
+    } else {
+      return matchOption + ' [' + headerName + '] ' + REGEX + ' ' + ANYTHING;
+    }
+  };
+
+  getIstioMatchStrings = () => {
+    const matches = Object.keys(this.state.matchStringToHeaderMatch);
+    if (this.state.uriMatchString) {
+      matches.push(this.state.uriMatchString);
+    }
+
+    return matches;
+  };
+
+  onAddMatch = () => {
+    this.setState(prevState => {
+      const istioMatchString = this.matchToIstioMatchString(
+        prevState.category,
+        prevState.operator,
+        prevState.matchValue,
+        prevState.headerName
+      );
+
+      const uriMatchState: URIMatchState = {};
+
+      if (prevState.category === URI && prevState.matchValue.length > 0) {
+        uriMatchState.uriMatchString = istioMatchString;
+        uriMatchState.uriMatch = {
+          match: prevState.operator,
+          stringMatch: prevState.matchValue
+        };
+      } else if (prevState.category === HEADERS) {
+        const httpMatch: HeaderMatch = {
+          key: prevState.headerName,
+          match: prevState.operator,
+          stringMatch: prevState.matchValue
+        };
+
+        prevState.matchStringToHeaderMatch[istioMatchString] = httpMatch;
+      }
+
+      return {
+        /**
+         * URIMatchState just sets the uriMatchString and the uriMatch in the
+         * state.
+         *
+         * By using the destructure statement, we can avoid calling setState()
+         * multiple times.
+         */
+        ...uriMatchState,
+
+        matchStringToHeaderMatch: prevState.matchStringToHeaderMatch,
+
+        // Reset headerName and matchValue for next match
+        headerName: '',
+        matchValue: ''
+      };
+    });
+  };
+
+  onRemoveMatch = (matchToRemove: string) => {
+    this.setState(prevState => {
+      const uriMatchState: URIMatchState = {};
+
+      if (prevState.uriMatchString) {
+        uriMatchState.uriMatchString = undefined;
+        uriMatchState.uriMatch = undefined;
+      } else if (matchToRemove in prevState.matchStringToHeaderMatch) {
+        delete prevState.matchStringToHeaderMatch[matchToRemove];
+      }
+
+      return {
+        /**
+         * URIMatchState just sets the uriMatchString and the uriMatch in the
+         * state.
+         *
+         * By using the destructure statement, we can avoid calling setState()
+         * multiple times.
+         */
+        ...uriMatchState,
+
+        matchStringToHeaderMatch: prevState.matchStringToHeaderMatch,
+        validationMsg: prevState.validationMsg === MSG_SAME_MATCHING ? '' : prevState.validationMsg
+      };
+    });
+  };
+
+  onAddRule = (rules: Rule[]) => {
+    if (this.state.uriMatch?.match && this.state.uriMatch?.stringMatch) {
+      const matches = this.getIstioMatchStrings();
+
+      const rule: Rule = {
+        matches,
+        workloadWeights: []
+      };
+
+      const httpMatch: HttpMatch = {
+        uri: {
+          match: this.state.uriMatch.match,
+          stringMatch: this.state.uriMatch.stringMatch
+        },
+        headers: Object.values(this.state.matchStringToHeaderMatch)
+      };
+
+      if (!this.isMatchesIncluded(rules, rule)) {
+        this.props.onAdd(initCriteria(), { name: '', gateway: '' }, httpMatch);
+      }
+    }
+  };
 
   render() {
-    return this.props.matches
-      .map((match, i) => (
-        <>
-          <Card style={{ backgroundColor: i % 2 === 0 ? PfColors.GrayBackground : PfColors.White }}>
-            <CardHeader>
-              HTTP Match Request {i + 1}
-              <span style={{ float: 'right', paddingRight: '5px' }}>
-                <Button variant={ButtonVariant.secondary} onClick={() => this.props.onRemove('Match', i)}>
-                  Remove
-                </Button>
-              </span>
-            </CardHeader>
-            <CardBody>
-              <Grid gutter="md">
-                <GridItem span={6}>
-                  <FormGroup fieldId="matchSelect" label="URI Match criterion">
-                    <FormSelect id="match" value={match.uri.match} isDisabled>
-                      {MatchOptions.map((mt, index) => (
-                        <FormSelectOption label={mt.label} key={'gateway' + index} value={mt.value} />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={6}>
-                  <FormGroup fieldId="stringMatch" label="URI Match">
-                    <TextInput isDisabled id={'stringMatch'} placeholder="match string" value={match.uri.stringMatch} />
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={12}>
-                  <Table aria-label="HTTP Match Requests" cells={headerCells} rows={this.matchrows(match)}>
-                    <TableHeader />
-                    <TableBody />
-                  </Table>
-                </GridItem>
-              </Grid>
-            </CardBody>
-          </Card>
-          <Divider />
-        </>
-      ))
-      .concat(
-        <>
-          <Card>
-            <CardHeader>
-              New HTTP Match Request
-              <span style={{ float: 'right', paddingRight: '5px' }}>
-                <Button
-                  variant={ButtonVariant.secondary}
-                  isDisabled={
-                    (this.state.addMatch.uri.match.length === 0 || this.state.addMatch.uri.stringMatch.length === 0) &&
-                    this.state.addMatch.headers.length === 0
-                  }
-                  onClick={() => this.onAddMatchRules()}
-                >
-                  Add Match Rule
-                </Button>
-              </span>
-            </CardHeader>
-            <CardBody>
-              <Grid gutter="md">
-                <GridItem span={6}>
-                  <FormGroup fieldId="matchSelect" label="URI Match criterion">
-                    <FormSelect id="match" value={this.state.addMatch.uri.match} onChange={this.onAddUriMatch}>
-                      {MatchOptions.map((mt, index) => (
-                        <FormSelectOption label={mt.label} key={'gateway' + index} value={mt.value} />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={6}>
-                  <FormGroup fieldId="stringMatch" label="Match String">
-                    <TextInput
-                      id={'stringMatch'}
-                      placeholder="match string"
-                      value={this.state.addMatch.uri.stringMatch}
-                      onChange={value => this.onAddUriMatchString(value)}
-                    />
-                  </FormGroup>
-                </GridItem>
-                <GridItem span={12}>
-                  <Table
-                    aria-label="HTTP Match Requests"
-                    cells={headerCells}
-                    rows={this.rows()}
-                    // @ts-ignore
-                    actionResolver={this.actionResolver}
-                  >
-                    <TableHeader />
-                    <TableBody />
-                  </Table>
-                </GridItem>
-              </Grid>
-            </CardBody>
-          </Card>
-        </>
-      );
+    const rules = this.httpMatchesToRules(this.props.matches);
+    const matches = this.getIstioMatchStrings();
+
+    return (
+      <>
+        <div style={{ marginTop: '20px' }}>
+          <ExperimentMatchBuilder
+            category={this.state.category}
+            operator={this.state.operator}
+            headerName={this.state.headerName}
+            matchValue={this.state.matchValue}
+            isValid={this.state.validationMsg === ''}
+            onSelectCategory={(category: string) => {
+              this.setState(prevState => {
+                // PRESENCE operator only applies to HEADERS
+                return {
+                  category: category,
+                  operator: prevState.operator === PRESENCE && category !== HEADERS ? EXACT : prevState.operator
+                };
+              });
+            }}
+            onHeaderNameChange={this.onHeaderNameChange}
+            onSelectOperator={(operator: string) => this.setState({ operator: operator })}
+            onMatchValueChange={this.onMatchValueChange}
+            onAddMatch={this.onAddMatch}
+          />
+          <Matches matches={matches} onRemoveMatch={this.onRemoveMatch} />
+        </div>
+        <div className={addRuleStyle}>
+          <span>
+            {this.state.validationMsg.length > 0 && <div className={validationStyle}>{this.state.validationMsg}</div>}
+            <Button
+              variant="secondary"
+              isDisabled={!this.state.isValid}
+              onClick={() => {
+                this.onAddRule(rules);
+              }}
+            >
+              Add Rule
+            </Button>
+          </span>
+        </div>
+        <ExperimentRules
+          rules={rules}
+          onRemoveRule={index => {
+            this.props.onRemove(OnRemoveFromListOptions.Match, index);
+          }}
+          onMoveRule={this.props.onMoveMatchRule}
+        />
+      </>
+    );
   }
 }
 

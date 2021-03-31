@@ -711,21 +711,21 @@ export const getInitWeights = (
           });
         }
       });
-    }
 
-    // Convention: we place the mirror routes as last position
-    if ((route as HTTPRoute).mirror) {
-      const httpRoute = route as HTTPRoute;
-      // Check mirror on HTTP Route
-      if (httpRoute.mirror && httpRoute.mirror.subset && wkdVersionName[httpRoute.mirror.subset]) {
-        const mirrorPercentage = httpRoute.mirrorPercentage ? httpRoute.mirrorPercentage.value : 100;
-        wkdWeights.push({
-          name: wkdVersionName[httpRoute.mirror.subset],
-          weight: mirrorPercentage,
-          locked: false,
-          maxWeight: 100,
-          mirrored: true
-        });
+      // Convention: we place the mirror routes as last position
+      if ((route as HTTPRoute).mirror) {
+        const httpRoute = route as HTTPRoute;
+        // Check mirror on HTTP Route
+        if (httpRoute.mirror && httpRoute.mirror.subset && wkdVersionName[httpRoute.mirror.subset]) {
+          const mirrorPercentage = httpRoute.mirrorPercentage ? httpRoute.mirrorPercentage.value : 100;
+          wkdWeights.push({
+            name: wkdVersionName[httpRoute.mirror.subset],
+            weight: mirrorPercentage,
+            locked: false,
+            maxWeight: 100,
+            mirrored: true
+          });
+        }
       }
     }
   }

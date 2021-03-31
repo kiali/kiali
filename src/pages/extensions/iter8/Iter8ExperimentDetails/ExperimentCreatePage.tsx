@@ -32,6 +32,7 @@ import { connect } from 'react-redux';
 import { PfColors } from '../../../../components/Pf/PfColors';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { MOVE_TYPE } from './ExperimentRules';
 
 interface Props {
   serviceName: string;
@@ -59,6 +60,12 @@ interface State {
   addHostGateway: boolean;
   showTrafficControl: boolean;
   showDurationControl: boolean;
+}
+
+export enum OnRemoveFromListOptions {
+  Criteria,
+  Host,
+  Match
 }
 
 // Style constants
@@ -821,7 +828,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
           </GridItem>
           <GridItem span={12}>
             <Text component={TextVariants.a}>
-              Number of Match Rules : {this.state.experiment.trafficControl.match.http.length}
+              Number of Match Rules: {this.state.experiment.trafficControl.match.http.length}
               <Popover
                 position={'right'}
                 hideOnOutsideClick={true}
@@ -853,6 +860,7 @@ class ExperimentCreatePage extends React.Component<Props, State> {
               matches={this.state.experiment.trafficControl.match.http}
               onRemove={this.onRemoveFromList}
               onAdd={this.onAddToList}
+              onMoveMatchRule={this.onMoveMatchRule}
             />
           </GridItem>
         </Grid>
@@ -860,13 +868,13 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     );
   }
 
-  onRemoveFromList = (type: string, index: number) => {
+  onRemoveFromList = (type: OnRemoveFromListOptions, index: number) => {
     this.setState(prevState => {
-      if (type === 'Criteria') {
+      if (type === OnRemoveFromListOptions.Criteria) {
         prevState.experiment.criterias.splice(index, 1);
-      } else if (type === 'Host') {
+      } else if (type === OnRemoveFromListOptions.Host) {
         prevState.experiment.hosts.splice(index, 1);
-      } else if (type === 'Match') {
+      } else if (type === OnRemoveFromListOptions.Match) {
         prevState.experiment.trafficControl.match.http.splice(index, 1);
       }
 
@@ -890,10 +898,24 @@ class ExperimentCreatePage extends React.Component<Props, State> {
     });
   };
 
+  onMoveMatchRule = (index: number, move: MOVE_TYPE) => {
+    this.setState(prevState => {
+      const sourceRules = prevState.experiment.trafficControl.match.http;
+      const sourceRule = sourceRules[index];
+      const targetIndex = move === MOVE_TYPE.UP ? index - 1 : index + 1;
+      const targetRule = sourceRules[targetIndex];
+      sourceRules[targetIndex] = sourceRule;
+      sourceRules[index] = targetRule;
+      return {
+        ...prevState
+      };
+    });
+  };
+
   renderCriteria() {
     return (
       <>
-        Assesstment Criteria:
+        Assessment Criteria:
         <ExperimentCriteriaForm
           iter8Info={this.state.iter8Info}
           criterias={this.state.experiment.criterias}

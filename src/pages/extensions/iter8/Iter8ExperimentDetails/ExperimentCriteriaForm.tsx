@@ -13,6 +13,7 @@ import {
 import { style } from 'typestyle';
 import { PfColors } from '../../../../components/Pf/PfColors';
 import history from '../../../../app/History';
+import { OnRemoveFromListOptions } from './ExperimentCreatePage';
 
 const headerCells: ICell[] = [
   {
@@ -69,7 +70,7 @@ type Props = {
   criterias: Criteria[];
   metricNames: string[];
   onAdd: (criteria: Criteria, host: Host, match: any) => void;
-  onRemove: (type: string, index: number) => void;
+  onRemove: (type: OnRemoveFromListOptions, index: number) => void;
 };
 
 type State = {
@@ -92,7 +93,7 @@ class ExperimentCriteriaForm extends React.Component<Props, State> {
     const removeAction = {
       title: 'Remove Criteria',
       onClick: (_, rowIndex) => {
-        this.props.onRemove('Criteria', rowIndex);
+        this.props.onRemove(OnRemoveFromListOptions.Criteria, rowIndex);
       }
     };
     if (rowIndex < this.props.criterias.length) {

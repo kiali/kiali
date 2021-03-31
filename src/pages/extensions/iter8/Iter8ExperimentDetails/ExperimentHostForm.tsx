@@ -2,6 +2,7 @@ import { ICell, Table, TableBody, TableHeader, wrappable } from '@patternfly/rea
 import { Criteria, Host, initCriteria } from '../../../../types/Iter8';
 import * as React from 'react';
 import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { OnRemoveFromListOptions } from './ExperimentCreatePage';
 
 const headerCells: ICell[] = [
   {
@@ -25,7 +26,7 @@ type Props = {
   hostsOfGateway: Host[];
   gateways: string[];
   onAdd: (criteria: Criteria, host: Host, match: any) => void;
-  onRemove: (type: string, index: number) => void;
+  onRemove: (type: OnRemoveFromListOptions, index: number) => void;
 };
 
 export type HostState = {
@@ -52,13 +53,11 @@ class ExperimentHostForm extends React.Component<Props, HostState> {
     }
   }
 
-  // @ts-ignore
-  actionResolver = (rowData, { rowIndex }) => {
+  actionResolver = (_, { rowIndex }) => {
     const removeAction = {
       title: 'Remove Host',
-      // @ts-ignore
-      onClick: (event, rowIndex) => {
-        this.props.onRemove('Host', rowIndex);
+      onClick: (_, rowIndex) => {
+        this.props.onRemove(OnRemoveFromListOptions.Host, rowIndex);
       }
     };
     if (rowIndex < this.props.hosts.length) {
