@@ -191,7 +191,7 @@ type Iter8Config struct {
 }
 
 // Extensions struct describes configuration for Kiali add-ons (extensions)
-// New add-on/extension configuration should create a specif config and be located under this
+// New add-on/extension configuration should create a specific config and be located under this
 type Extensions struct {
 	Iter8 Iter8Config `yaml:"iter_8,omitempty"`
 }

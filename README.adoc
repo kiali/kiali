@@ -352,7 +352,7 @@ server:
 
 === Running the UI Outside the Core
 
-When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The prefered approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/kiali-ui#developing[here].
+When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The preferred approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/kiali-ui#developing[here].
 
 To connect with the backend and avoid the javascript prompt requesting authentication you need to send the requests with a specific header.
 [source]
@@ -406,7 +406,7 @@ In the provided Kubernetes templates, SSL is turned on by default. If you want t
 
 == Exposing Kiali to External Clients Using Istio Gateway
 
-The operator will create a Route or Ingress by default (see the Kiali CR setting "deployment.ingress_enabled"). If you want to expose Kiali via Istio itself, you can create Gateway, Virtual Service, and Destination Rule resources similiar to below:
+The operator will create a Route or Ingress by default (see the Kiali CR setting "deployment.ingress_enabled"). If you want to expose Kiali via Istio itself, you can create Gateway, Virtual Service, and Destination Rule resources similar to below:
 
 [source,yaml]
 ----
