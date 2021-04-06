@@ -76,8 +76,10 @@ DORP ?= docker
 # Set this to 'minikube' if you want images to be tagged/pushed for minikube as opposed to OpenShift/AWS. Set to 'local' if the image should not be pushed to any remote cluster (requires the cluster to be able to pull from your local image repository).
 CLUSTER_TYPE ?= openshift
 
-# Find the client executable (either oc or kubectl). If minikube, only look for kubectl.
+# Find the client executable (either oc or kubectl). If minikube or kind, only look for kubectl (though we might not need be so strict)
 ifeq ($(CLUSTER_TYPE),minikube)
+OC ?= $(shell which kubectl 2>/dev/null || echo "MISSING-KUBECTL-FROM-PATH")
+else ifeq ($(CLUSTER_TYPE),kind)
 OC ?= $(shell which kubectl 2>/dev/null || echo "MISSING-KUBECTL-FROM-PATH")
 else
 OC ?= $(shell which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
@@ -87,8 +89,16 @@ endif
 MINIKUBE ?= $(shell which minikube 2>/dev/null || echo "MISSING-MINIKUBE-FROM-PATH")
 MINIKUBE_PROFILE ?= minikube
 
+# Find the kind executable (this is optional - if not using kind we won't need this)
+KIND ?= $(shell which kind 2>/dev/null || echo "MISSING-KIND-FROM-PATH")
+KIND_NAME ?= kind
+
 # Details about the Kiali operator image used when deploying to remote cluster
+ifeq ($(CLUSTER_TYPE),kind)
+OPERATOR_IMAGE_PULL_POLICY ?= IfNotPresent
+else
 OPERATOR_IMAGE_PULL_POLICY ?= Always
+endif
 OPERATOR_NAMESPACE ?= kiali-operator
 OPERATOR_PROFILER_ENABLED ?= false
 OPERATOR_WATCH_NAMESPACE ?= \"\"
@@ -108,7 +118,11 @@ AUTH_STRATEGY ?= anonymous
 else
 AUTH_STRATEGY ?= openshift
 endif
+ifeq ($(CLUSTER_TYPE),kind)
+KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
+else
 KIALI_IMAGE_PULL_POLICY ?= Always
+endif
 SERVICE_TYPE ?= ClusterIP
 KIALI_CR_SPEC_VERSION ?= default
 
@@ -172,6 +186,11 @@ git-init:
 .ensure-minikube-exists:
 	@if [ ! -x "${MINIKUBE}" ]; then \
 	  echo "Missing 'minikube'"; exit 1; \
+	fi
+
+.ensure-kind-exists:
+	@if [ ! -x "${KIND}" ]; then \
+	  echo "Missing 'kind'"; exit 1; \
 	fi
 
 .ensure-operator-repo-exists:
