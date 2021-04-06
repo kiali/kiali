@@ -195,8 +195,15 @@ cluster-build: cluster-build-operator cluster-build-kiali
 ## cluster-push-operator: Pushes Kiali operator container image to a remote cluster
 cluster-push-operator: cluster-build-operator
 ifeq ($(CLUSTER_TYPE),kind)
-	@echo Pushing Kiali operator image to kind cluster: ${CLUSTER_OPERATOR_TAG}
+ifeq ($(DORP),docker)
+	@echo Pushing Kiali operator image via docker to kind cluster: ${CLUSTER_OPERATOR_TAG}
 	${KIND} load docker-image --name ${KIND_NAME} ${CLUSTER_OPERATOR_TAG}
+else
+	@echo Pushing Kiali operator image via podman to kind cluster: ${CLUSTER_OPERATOR_TAG}
+	@rm -f /tmp/kiali-cluster-push-operator.tar
+	podman save -o /tmp/kiali-cluster-push-operator.tar ${CLUSTER_OPERATOR_TAG}
+	${KIND} load image-archive /tmp/kiali-cluster-push-operator.tar --name ${KIND_NAME}
+endif
 else
 ifeq ($(DORP),docker)
 	@echo Pushing Kiali operator image to remote cluster using docker: ${CLUSTER_OPERATOR_TAG}
@@ -210,8 +217,15 @@ endif
 ## cluster-push-kiali: Pushes Kiali image to a remote cluster
 cluster-push-kiali: cluster-build-kiali
 ifeq ($(CLUSTER_TYPE),kind)
-	@echo Pushing Kiali image to kind cluster: ${CLUSTER_KIALI_TAG}
+ifeq ($(DORP),docker)
+	@echo Pushing Kiali image via docker to kind cluster: ${CLUSTER_KIALI_TAG}
 	${KIND} load docker-image --name ${KIND_NAME} ${CLUSTER_KIALI_TAG}
+else
+	@echo Pushing Kiali image via podman to kind cluster: ${CLUSTER_KIALI_TAG}
+	@rm -f /tmp/kiali-cluster-push-kiali.tar
+	podman save -o /tmp/kiali-cluster-push-kiali.tar ${CLUSTER_KIALI_TAG}
+	${KIND} load image-archive /tmp/kiali-cluster-push-kiali.tar --name ${KIND_NAME}
+endif
 else
 ifeq ($(DORP),docker)
 	@echo Pushing Kiali image to remote cluster using docker: ${CLUSTER_KIALI_TAG}
