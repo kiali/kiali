@@ -112,9 +112,6 @@ endif
 
 ## molecule-test: Runs Molecule tests using the Molecule docker image
 molecule-test: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists .prepare-add-host-args molecule-build
-ifeq ($(CLUSTER_TYPE),kind)
-	@echo "Cannot run molecule tests on kind cluster"; exit 1
-endif
 ifeq ($(DORP),docker)
 	for msn in ${MOLECULE_SCENARIO}; do docker run --rm ${MOLECULE_DOCKER_TERM_ARGS} --env MOLECULE_HELM_CHARTS_REPO=/tmp/helm-charts-repo -v "${HELM_CHARTS_REPO}":/tmp/helm-charts-repo:ro -v "${ROOTDIR}/operator":/tmp/operator:ro -v "${MOLECULE_KUBECONFIG}":/root/.kube/config:ro -v /var/run/docker.sock:/var/run/docker.sock ${MOLECULE_MINIKUBE_VOL_ARG} ${MOLECULE_MINIKUBE_ENV_ARGS} -w /tmp/operator --network="host" ${MOLECULE_ADD_HOST_ARGS} --add-host="api.crc.testing:192.168.130.11" --add-host="kiali-istio-system.apps-crc.testing:192.168.130.11" --add-host="prometheus-istio-system.apps-crc.testing:192.168.130.11" --env DORP=${DORP} ${MOLECULE_IMAGE_ENV_ARGS} ${MOLECULE_OPERATOR_PROFILER_ENABLED_ENV_VAR} ${MOLECULE_OPERATOR_INSTALLER_ENV_VAR} ${MOLECULE_DUMP_LOGS_ON_ERROR_ENV_VAR} ${MOLECULE_IMAGE_PULL_POLICY_ENV_ARGS} ${MOLECULE_WAIT_RETRIES_ARG} kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name $${msn}; if [ "$$?" != "0" ]; then echo "Molecule test failed: $${msn}"; exit 1; fi; done
 else
