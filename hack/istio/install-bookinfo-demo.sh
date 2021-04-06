@@ -228,20 +228,24 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
-    # for now, we only support minikube k8s environments
+    # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
     if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
       INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
       INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
       echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
     else
-      echo "Failed to get minikube status. Make sure minikube is up and your profile is defined properly (--minikube-profile option)"
+      echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
+      echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
+      INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+      INGRESS_PORT="80"
+      INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
     fi
   fi
 
   if [ "${INGRESS_ROUTE}" != "" ] ; then
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
-    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}"  envsubst | $CLIENT_EXE create -n ${NAMESPACE} -f -
+    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE create -n ${NAMESPACE} -f -
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE create --validate=false -n ${NAMESPACE} -f -
   fi
 fi
