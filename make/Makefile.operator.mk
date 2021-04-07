@@ -31,6 +31,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --helm-chart                    "$(shell ls -dt1 ${HELM_CHARTS_REPO}/_output/charts/kiali-operator*.tgz | head -n 1)" \
     --helm-exe                      "${HELM}" \
     --helm-set                      "debug.enableProfiler=${OPERATOR_PROFILER_ENABLED}" \
+    --helm-set                      "allowAdHocKialiNamespace=${OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE}" \
     --operator-cluster-role-creator "true" \
     --operator-image-name           "${CLUSTER_OPERATOR_INTERNAL_NAME}" \
     --operator-image-pull-policy    "${OPERATOR_IMAGE_PULL_POLICY}" \
