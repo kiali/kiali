@@ -105,6 +105,7 @@ OPERATOR_WATCH_NAMESPACE ?= \"\"
 
 # When deploying the Kiali operator via make, this indicates if it should install Kiali also and where to put the CR
 OPERATOR_INSTALL_KIALI ?= false
+OPERATOR_ALLOW_AD_HOC_KIALI_NAMESPACE ?= true
 ifeq ($(OPERATOR_WATCH_NAMESPACE),\"\")
 OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_NAMESPACE}
 else
