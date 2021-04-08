@@ -24,6 +24,7 @@ import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 import { RichSpanData } from 'types/JaegerInfo';
 import { sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
+import { getSpanId } from '../../../utils/SearchParamUtils';
 
 type SortableCell<T> = ICell & {
   compare?: (a: T, b: T) => number;
@@ -47,7 +48,10 @@ interface State {
 class SpanTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, expandedSpans: new Map() };
+    const mapExpandedSpans = new Map();
+    const isSpan = getSpanId();
+    isSpan && mapExpandedSpans.set(isSpan, true);
+    this.state = { sortIndex: 0, sortDirection: SortByDirection.asc, expandedSpans: mapExpandedSpans };
   }
 
   componentDidMount() {

@@ -54,7 +54,6 @@ export const buildRow = (props: RowProps) => {
   const expandListeners = createListeners();
   const isSpan = props.spanID === getSpanId();
   expandListeners.push(props.onExpand);
-  const isExpandable = getSpanId() ? isSpan : props.isExpanded;
   return {
     className: getClassName(props.tags.some(isErrorTag), isSpan),
     isOpen: false,
@@ -62,53 +61,21 @@ export const buildRow = (props: RowProps) => {
       {
         title: (
           <>
-            {renderExpandArrow(expandListeners, isExpandable)} {formatDuration(props.relativeStartTime)}
+            {renderExpandArrow(expandListeners, props.isExpanded)} {formatDuration(props.relativeStartTime)}
           </>
         )
       },
       {
-        title: (
-          <Expandable
-            {...props}
-            clickToExpand={false}
-            isExpanded={isExpandable}
-            listeners={expandListeners}
-            innerComponent={OriginCell}
-          />
-        )
+        title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={OriginCell} />
       },
       {
-        title: (
-          <Expandable
-            {...props}
-            clickToExpand={true}
-            isExpanded={isExpandable}
-            listeners={expandListeners}
-            innerComponent={SummaryCell}
-          />
-        )
+        title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={SummaryCell} />
       },
       {
-        title: (
-          <Expandable
-            {...props}
-            clickToExpand={true}
-            isExpanded={isExpandable}
-            listeners={expandListeners}
-            innerComponent={StatsCell}
-          />
-        )
+        title: <Expandable {...props} clickToExpand={true} listeners={expandListeners} innerComponent={StatsCell} />
       },
       {
-        title: (
-          <Expandable
-            {...props}
-            clickToExpand={false}
-            isExpanded={isExpandable}
-            listeners={expandListeners}
-            innerComponent={LinksCell}
-          />
-        )
+        title: <Expandable {...props} clickToExpand={false} listeners={expandListeners} innerComponent={LinksCell} />
       }
     ],
     spanID: props.spanID
