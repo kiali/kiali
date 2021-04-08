@@ -55,6 +55,10 @@ while [[ $# -gt 0 ]]; do
       SKIP_TESTS="$2"
       shift;shift
       ;;
+    -sv|--spec-version)
+      MOLECULE_KIALI_CR_SPEC_VERSION="$2"
+      shift;shift
+      ;;
     -tld|--test-logs-dir)
       TEST_LOGS_DIR="$2"
       shift;shift
@@ -89,6 +93,7 @@ $0 [option...] command
                          than to install its own operator. Valid values: "helm" or "skip" (default: helm)
 -p|--profiler            True if you want to enable the ansible profiler in the operator (default: true)
 -st|--skip-tests         Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
+-sv|--spec-version       The Kiali CR spec.version to test. (default: default)
 -tld|--test-logs-dir     Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
 -udi|--use-dev-images    If true, the tests will use locally built dev images of Kiali and the operator. When using dev
                          images, you must have already pushed locally built dev images into your cluster.
@@ -153,6 +158,9 @@ export MOLECULE_OPERATOR_PROFILER_ENABLED="${MOLECULE_OPERATOR_PROFILER_ENABLED:
 # Set this to helm if you want the molecule tests to install the operator via helm.
 export MOLECULE_OPERATOR_INSTALLER="${MOLECULE_OPERATOR_INSTALLER:-helm}"
 
+# When the tests create Kiali CR resources, this is its spec.version value.
+export MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION:-default}"
+
 # The parent directory where all the test logs are going to be stored.
 TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_%H-%M-%S')}"
 
@@ -168,6 +176,7 @@ echo CLUSTER_TYPE="$CLUSTER_TYPE"
 echo MOLECULE_USE_DEV_IMAGES="$MOLECULE_USE_DEV_IMAGES"
 echo MOLECULE_DEBUG="$MOLECULE_DEBUG"
 echo MOLECULE_DESTROY_NEVER="$MOLECULE_DESTROY_NEVER"
+echo MOLECULE_KIALI_CR_SPEC_VERSION="${MOLECULE_KIALI_CR_SPEC_VERSION}"
 echo MOLECULE_OPERATOR_INSTALLER="$MOLECULE_OPERATOR_INSTALLER"
 echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
