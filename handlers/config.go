@@ -121,11 +121,10 @@ func Config(w http.ResponseWriter, r *http.Request) {
 				// Fetch the list of all clusters in the mesh
 				// One usage of this data is to cross-link Kiali instances, when possible.
 				clusters, resolveAllClustersErr := layer.Mesh.GetClusters(r)
-				if clusters != nil {
-					for _, c := range clusters {
-						publicConfig.Clusters[c.Name] = c
-					}
-				} else if resolveAllClustersErr != nil {
+				for _, c := range clusters {
+					publicConfig.Clusters[c.Name] = c
+				}
+				if resolveAllClustersErr != nil {
 					log.Warningf("Failure while listing clusters in the mesh: %s", resolveAllClustersErr.Error())
 				}
 			} else if mcErr != nil {
