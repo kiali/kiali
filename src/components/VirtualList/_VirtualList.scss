@@ -51,7 +51,7 @@
 }
 
 .virtualitem_badge_definition {
-  background-color: rgb(115, 188, 247);
+  background-color: var(--pf-global--palette--blue-200); //should match PFColors.Badge
   border-radius: 30em;
   margin-right: 10px;
 }

@@ -3,7 +3,7 @@ import { style } from 'typestyle';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
 
 import { SparklineChart } from 'components/Charts/SparklineChart';
-import { PfColors, PFAlertColor } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
 import { toVCLine } from 'utils/VictoryChartsUtils';
@@ -82,8 +82,8 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const rpsLine = toVCLine(this.props.dataRps, 'RPS', PFAlertColor.Info);
-    const errLine = toVCLine(this.props.dataErrors, 'Error', PFAlertColor.Danger);
+    const rpsLine = toVCLine(this.props.dataRps, 'RPS', PFColors.Info);
+    const errLine = toVCLine(this.props.dataErrors, 'Error', PFColors.Danger);
     if (thereIsTrafficData(rpsLine)) {
       return (
         <>
@@ -143,8 +143,8 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const sentLine = toVCLine(this.props.sentRates, 'Sent', PfColors.Blue);
-    const receivedLine = toVCLine(this.props.receivedRates, 'Received', PfColors.Green);
+    const sentLine = toVCLine(this.props.sentRates, 'Sent', PFColors.Blue400);
+    const receivedLine = toVCLine(this.props.receivedRates, 'Received', PFColors.Green400);
     if (thereIsTrafficData(sentLine) || thereIsTrafficData(receivedLine)) {
       return (
         <>
@@ -179,9 +179,9 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
 
     return (
       <div>
-        <SquareFullIcon style={{ color: PfColors.Blue }} /> Sent: {this.formatMinMaxStats(minSent, maxSent)}
+        <SquareFullIcon style={{ color: PFColors.Blue400 }} /> Sent: {this.formatMinMaxStats(minSent, maxSent)}
         <br />
-        <SquareFullIcon style={{ color: PfColors.Green }} /> Received:{' '}
+        <SquareFullIcon style={{ color: PFColors.Green400 }} /> Received:{' '}
         {this.formatMinMaxStats(minReceived, maxReceived)}
       </div>
     );

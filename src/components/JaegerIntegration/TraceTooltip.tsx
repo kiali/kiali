@@ -20,7 +20,7 @@ import MetricsStatsThunkActions from 'actions/MetricsStatsThunkActions';
 import { JaegerLineInfo } from './JaegerScatter';
 import { JaegerTrace } from 'types/JaegerInfo';
 import { renderTraceHeatMap } from './JaegerResults/StatsComparison';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 
@@ -31,7 +31,7 @@ const innerWidth = flyoutWidth - 2 * flyoutMargin;
 const innerHeight = flyoutHeight - 2 * flyoutMargin;
 
 const tooltipStyle = style({
-  color: PfColors.Black100,
+  color: PFColors.Black100,
   width: innerWidth,
   height: innerHeight
 });

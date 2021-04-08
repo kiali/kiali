@@ -18,7 +18,7 @@ import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import { GraphActions } from 'actions/GraphActions';
-import { PFAlertColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingHelper';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -139,7 +139,7 @@ class SummaryPanelTraceDetails extends React.Component<Props, State> {
           <div>
             {info.numErrors !== 0 && (
               <>
-                <ExclamationCircleIcon color={PFAlertColor.Danger} />{' '}
+                <ExclamationCircleIcon color={PFColors.Danger} />{' '}
                 <strong>This trace has {pluralize(info.numErrors, 'error')}.</strong>
               </>
             )}

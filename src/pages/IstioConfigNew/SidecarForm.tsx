@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 // Use TextInputBase like workaround while PF4 team work in https://github.com/patternfly/patternfly-react/issues/4072
 import { Button, FormGroup, Switch, TextInputBase as TextInput } from '@patternfly/react-core';
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
@@ -21,7 +21,7 @@ const headerCells: ICell[] = [
 
 const noEgressHostsStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const hostsHelperText = 'Enter a valid namespace/FQDN Egress host.';

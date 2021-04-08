@@ -3,7 +3,7 @@ import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import './Health.css';
-import { PfColors } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 
 interface Props {
   health: H.Health;
@@ -26,7 +26,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
       <div key={idx}>
         <strong>
           {' ' + item.title + (item.text && item.text.length > 0 ? ': ' : '')}{' '}
-          {config && <InfoAltIcon color={PfColors.Gray} />}
+          {config && <InfoAltIcon color={PFColors.Black600} />}
         </strong>
         {item.text}
         {item.children && (

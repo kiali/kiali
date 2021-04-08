@@ -50,7 +50,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
-import { PfColors, PFKialiColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, unsetFocusSelector, getTraceId } from 'utils/SearchParamUtils';
@@ -148,7 +148,7 @@ const kioskContainerStyle = style({
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PfColors.GrayBackground });
+const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PFColors.Black150 });
 const cytoscapeToolbarWrapperDivStyle = style({
   position: 'absolute',
   bottom: '5px',
@@ -162,15 +162,15 @@ const graphTimeRangeDivStyle = style({
   left: '10px',
   width: 'auto',
   zIndex: 2,
-  backgroundColor: PfColors.White
+  backgroundColor: PFColors.White
 });
 
 const whiteBackground = style({
-  backgroundColor: PfColors.White
+  backgroundColor: PFColors.White
 });
 
 const replayBackground = style({
-  backgroundColor: PFKialiColor.Replay
+  backgroundColor: PFColors.Replay
 });
 
 const graphLegendStyle = style({

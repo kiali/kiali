@@ -2,14 +2,14 @@ import * as React from 'react';
 import { isProxyStatusComponentSynced, isProxyStatusSynced, ProxyStatus } from '../../../types/Health';
 import { Stack, StackItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { PfColors } from '../../../components/Pf/PfColors';
+import { PFColors } from '../../../components/Pf/PfColors';
 
 type Props = {
   status?: ProxyStatus;
 };
 
-const smallStyle = style({ fontSize: '70%', color: PfColors.White });
-const colorStyle = style({ fontSize: '1.1rem', color: PfColors.White });
+const smallStyle = style({ fontSize: '70%', color: PFColors.White });
+const colorStyle = style({ fontSize: '1.1rem', color: PFColors.White });
 
 class ProxyStatusList extends React.Component<Props> {
   statusList = () => {

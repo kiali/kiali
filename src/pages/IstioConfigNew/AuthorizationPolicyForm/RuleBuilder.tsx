@@ -7,8 +7,8 @@ import OperationList from './To/OperationList';
 import ConditionBuilder, { Condition } from './When/ConditionBuilder';
 import ConditionList from './When/ConditionList';
 import { style } from 'typestyle';
-import { PfColors } from '../../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
+import { PFColors } from '../../../components/Pf/PfColors';
 
 type Props = {
   onAddRule: (rule: Rule) => void;
@@ -31,7 +31,7 @@ type State = {
 
 const warningStyle = style({
   marginLeft: 25,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'center'
 });
 

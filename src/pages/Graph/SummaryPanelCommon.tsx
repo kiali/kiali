@@ -6,7 +6,7 @@ import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 
 export enum NodeMetricType {
@@ -23,7 +23,7 @@ export const summaryBodyTabs = style({
 });
 
 export const summaryHeader: React.CSSProperties = {
-  backgroundColor: PfColors.White
+  backgroundColor: PFColors.White
 };
 
 export const summaryPanel = style({
@@ -31,7 +31,7 @@ export const summaryPanel = style({
   margin: 0,
   minWidth: '25em',
   overflowY: 'scroll',
-  backgroundColor: PfColors.White,
+  backgroundColor: PFColors.White,
   width: '25em',
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: 0,

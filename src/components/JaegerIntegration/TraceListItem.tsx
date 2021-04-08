@@ -3,7 +3,7 @@ import { style } from 'typestyle';
 import { pluralize, Tooltip } from '@patternfly/react-core';
 
 import { JaegerTrace } from '../../types/JaegerInfo';
-import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { FormattedTraceInfo, shortIDStyle } from './JaegerResults/FormattedTraceInfo';
 
 interface Props {
@@ -24,15 +24,15 @@ const nameStyle = style({
 });
 
 const errorStyle = style({
-  color: PFAlertColor.Danger
+  color: PFColors.Danger
 });
 
 const secondaryLeftStyle = style({
-  color: PfColors.Black600
+  color: PFColors.Black600
 });
 
 const secondaryRightStyle = style({
-  color: PfColors.Black600,
+  color: PFColors.Black600,
   float: 'right'
 });
 

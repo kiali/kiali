@@ -11,7 +11,7 @@ import {
   TextInputBase as TextInput
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 import history from '../../../../app/History';
 import { OnRemoveFromListOptions } from './ExperimentCreatePage';
 
@@ -61,7 +61,7 @@ const toleranceType: NameValuePair[] = [
 const noCriteriaStyle = style({
   marginTop: 15,
   marginBottom: 15,
-  color: PfColors.Blue400,
+  color: PFColors.Blue400,
   fontSize: '1.2em'
 });
 

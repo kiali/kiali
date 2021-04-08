@@ -5,7 +5,7 @@ import { ChartScatter } from '@patternfly/react-charts';
 import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
-import { PfColors } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 
 import jaegerIcon from '../../assets/img/jaeger-icon.svg';
 import { evalTimeRange } from 'types/Common';
@@ -76,13 +76,13 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
           0,
           7
         )})`,
-        color: isSelected ? PfColors.Blue500 : PfColors.Blue200,
+        color: isSelected ? PFColors.Blue500 : PFColors.Blue200,
         unit: 'seconds',
         trace: trace,
         size: Math.min(MAXIMAL_SIZE, trace.spans.length + MINIMAL_SIZE)
       };
       if (traceError) {
-        traceItem.color = isSelected ? PfColors.Red500 : PfColors.Red200;
+        traceItem.color = isSelected ? PFColors.Red500 : PFColors.Red200;
         tracesError.push(traceItem);
       } else {
         tracesRaw.push(traceItem);
@@ -91,13 +91,13 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     const successTraces = {
       datapoints: tracesRaw,
       color: (({ datum }) => datum.color) as any,
-      legendItem: makeLegend('Traces', PfColors.Blue200)
+      legendItem: makeLegend('Traces', PFColors.Blue200)
     };
 
     const errorTraces = {
       datapoints: tracesError,
       color: (({ datum }) => datum.color) as any,
-      legendItem: makeLegend('Error Traces', PfColors.Red200)
+      legendItem: makeLegend('Error Traces', PFColors.Red200)
     };
 
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (

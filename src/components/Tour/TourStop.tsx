@@ -9,7 +9,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { TourActions } from 'actions/TourActions';
 import { style } from 'typestyle';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 
 export interface TourStopInfo {
   name: string; // displayed in the tour stop header.
@@ -26,10 +26,10 @@ export interface TourInfo {
 
 const stopNumberStyle = style({
   borderRadius: '20px',
-  backgroundColor: PfColors.Blue300,
+  backgroundColor: PFColors.Blue300,
   padding: '2px 6px',
   marginRight: '10px',
-  color: PfColors.White
+  color: PFColors.White
 });
 
 type ReduxProps = {

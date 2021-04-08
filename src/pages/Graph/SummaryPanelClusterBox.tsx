@@ -8,7 +8,7 @@ import { summaryFont, summaryHeader, summaryBodyTabs } from './SummaryPanelCommo
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import SimpleTabs from 'components/Tab/SimpleTabs';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -28,7 +28,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     margin: 0,
     minWidth: '25em',
     overflowY: 'auto' as 'auto',
-    backgroundColor: PfColors.White,
+    backgroundColor: PFColors.White,
     width: '25em'
   };
 

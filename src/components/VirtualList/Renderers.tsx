@@ -13,7 +13,7 @@ import { IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
 import { ActiveFilter } from '../../types/Filters';
-import { PfColors } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
 import NamespaceInfo from '../../pages/Overview/NamespaceInfo';
@@ -246,7 +246,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               key={`labelbadge_${key}_${value}_${item.name}`}
               isRead={true}
               style={{
-                backgroundColor: labelAct ? PfColors.Blue200 : undefined,
+                backgroundColor: labelAct ? PFColors.Blue200 : undefined,
                 cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed'
               }}
               onClick={() =>

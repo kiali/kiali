@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import { PfColors } from '../../Pf/PfColors';
+import { PFColors } from '../../Pf/PfColors';
 import {
   Badge,
   EmptyState,
@@ -36,12 +36,12 @@ type Props = {
 
 const validationStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const noRulesStyle = style({
   marginTop: 15,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'center',
   width: '100%'
 });

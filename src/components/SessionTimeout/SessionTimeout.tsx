@@ -4,7 +4,7 @@ import { WarningTriangleIcon } from '@patternfly/react-icons';
 import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
 import authenticationConfig from '../../config/AuthenticationConfig';
-import { PFAlertColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 
 type SessionTimeoutProps = {
   onLogout: () => void;
@@ -28,7 +28,7 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     return (
       <Modal isOpen={this.props.show} onClose={defaultAction} actions={buttons} title={'Session Timeout'} width={'40%'}>
         <span>
-          <WarningTriangleIcon size={'xl'} color={PFAlertColor.Warning} />
+          <WarningTriangleIcon size={'xl'} color={PFColors.Warning} />
         </span>
         <span style={{ float: 'right', width: '80%' }} className={'lead'}>
           {this.textForAuthStrategy(authenticationConfig.strategy)}

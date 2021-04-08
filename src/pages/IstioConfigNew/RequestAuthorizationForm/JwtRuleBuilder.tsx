@@ -5,7 +5,7 @@ import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
 import { style } from 'typestyle';
-import { PfColors } from '../../../components/Pf/PfColors';
+import { PFColors } from '../../../components/Pf/PfColors';
 import { isValidUrl } from '../../../utils/IstioConfigUtils';
 
 type Props = {
@@ -48,12 +48,12 @@ const headerCells: ICell[] = [
 ];
 
 const noValidStyle = style({
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const warningStyle = style({
   marginLeft: 25,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'center'
 });
 

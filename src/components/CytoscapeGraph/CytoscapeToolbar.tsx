@@ -13,7 +13,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
-import { PfColors, PFKialiColor } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { Layout } from '../../types/Graph';
 import { ColaGraph } from './graphs/ColaGraph';
@@ -44,11 +44,11 @@ type CytoscapeToolbarState = {
 };
 
 const buttonStyle = style({
-  backgroundColor: PfColors.White,
+  backgroundColor: PFColors.White,
   marginRight: '1px'
 });
 const activeButtonStyle = style({
-  color: PFKialiColor.Active
+  color: PFColors.Active
 });
 const cytoscapeToolbarStyle = style({
   padding: '7px 10px'

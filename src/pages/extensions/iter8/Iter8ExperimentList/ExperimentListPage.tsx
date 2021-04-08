@@ -40,7 +40,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 import { KialiIcon } from '../../../../config/KialiIcon';
 import { OkIcon, PowerOffIcon } from '@patternfly/react-icons';
 import { Link } from 'react-router-dom';
@@ -303,7 +303,7 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
       }
     }
     return (
-      <TextContent style={{ color: PfColors.White }}>
+      <TextContent style={{ color: PFColors.White }}>
         <Text>
           <h2>Phase: </h2> {phase}
         </Text>

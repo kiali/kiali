@@ -47,7 +47,7 @@ import RequestAuthenticationForm, {
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { RouteComponentProps } from 'react-router-dom';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import ServiceEntryForm, {
   initServiceEntry,
   isServiceEntryValid,
@@ -80,7 +80,7 @@ const formPadding = style({ padding: '30px 20px 30px 20px' });
 const warningStyle = style({
   marginLeft: 15,
   paddingTop: 5,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'center'
 });
 

@@ -29,7 +29,7 @@ import { PromisesRegistry } from '../../../../utils/CancelablePromises';
 import { KialiAppState } from '../../../../store/Store';
 import { activeNamespacesSelector } from '../../../../store/Selectors';
 import { connect } from 'react-redux';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { MOVE_TYPE } from './ExperimentRules';
@@ -75,7 +75,7 @@ const formPadding = style({ padding: '30px 20px 30px 20px' });
 
 const durationTimeStyle = style({
   paddingTop: 8,
-  color: PfColors.Blue400
+  color: PFColors.Blue400
 });
 const algorithms = ['progressive', 'top_2', 'uniform'];
 const onTermination = ['to_winner', 'to_baseline', 'keep_last'];

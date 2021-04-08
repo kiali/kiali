@@ -7,7 +7,7 @@ import {
 } from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { getName } from '../utils/RateIntervals';
-import { PFAlertColor, PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { calculateErrorRate } from './ErrorRate';
 import { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
@@ -85,35 +85,35 @@ export interface ProxyStatus {
 
 export const FAILURE: Status = {
   name: 'Failure',
-  color: PFAlertColor.Danger,
+  color: PFColors.Danger,
   priority: 4,
   icon: ExclamationCircleIcon,
   class: 'icon-failure'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
-  color: PFAlertColor.Warning,
+  color: PFColors.Warning,
   priority: 3,
   icon: ExclamationTriangleIcon,
   class: 'icon-degraded'
 };
 export const NOT_READY: Status = {
   name: 'Not Ready',
-  color: PFAlertColor.InfoBackground,
+  color: PFColors.InfoBackground,
   priority: 2,
   icon: MinusCircleIcon,
   class: 'icon-idle'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
-  color: PFAlertColor.Success,
+  color: PFColors.Success,
   priority: 1,
   icon: CheckCircleIcon,
   class: 'icon-healthy'
 };
 export const NA: Status = {
   name: 'No health information',
-  color: PfColors.Gray,
+  color: PFColors.Black600,
   priority: 0,
   icon: UnknownIcon,
   class: 'icon-na'

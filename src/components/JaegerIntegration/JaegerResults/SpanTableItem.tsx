@@ -5,7 +5,7 @@ import { Dropdown, DropdownGroup, DropdownItem, KebabToggle } from '@patternfly/
 import { ExternalLinkAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
-import { PFAlertColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/JaegerInfo';
 import { renderMetricsComparison } from './StatsComparison';
 import { MetricsStats } from 'types/Metrics';
@@ -108,14 +108,14 @@ const SummaryCell = (props: CellProps<RowProps>) => {
     <>
       {props.info.hasError && (
         <div>
-          <ExclamationCircleIcon color={PFAlertColor.Danger} /> <strong>This span reported an error</strong>
+          <ExclamationCircleIcon color={PFColors.Danger} /> <strong>This span reported an error</strong>
         </div>
       )}
       <div>
         <strong>Operation: </strong>
         {flag ? (
           <>
-            {props.operationName} ({flag} <ExclamationCircleIcon color={PFAlertColor.Danger} />)
+            {props.operationName} ({flag} <ExclamationCircleIcon color={PFColors.Danger} />)
           </>
         ) : (
           <>{props.operationName}</>

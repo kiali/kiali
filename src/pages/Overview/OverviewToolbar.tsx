@@ -19,7 +19,7 @@ import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { style } from 'typestyle';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
 
 type ReduxProps = {
@@ -60,7 +60,7 @@ const sortTypes = (function () {
 })();
 
 const containerPadding = style({
-  backgroundColor: PfColors.White,
+  backgroundColor: PFColors.White,
   padding: '0px 20px 0px 20px'
 });
 

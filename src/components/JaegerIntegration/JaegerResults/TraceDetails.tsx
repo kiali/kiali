@@ -10,7 +10,7 @@ import { JaegerTraceTitle } from './JaegerTraceTitle';
 import { CytoscapeGraphSelectorBuilder } from 'components/CytoscapeGraph/CytoscapeGraphSelector';
 import { GraphType, NodeType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { JaegerThunkActions } from 'actions/JaegerThunkActions';
@@ -150,7 +150,7 @@ class TraceDetails extends React.Component<Props, State> {
         displayMode={'large'}
         colorMap={HeatMap.HealthColorMap}
         dataRange={{ from: -10, to: 10 }}
-        colorUndefined={PfColors.Black200}
+        colorUndefined={PFColors.Black200}
         valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
         tooltip={(x, _, v) => {
           // Build explanation tooltip

@@ -4,7 +4,7 @@ import { Button } from '@patternfly/react-core';
 import Matches from './../../../../components/IstioWizards/RequestRouting/Matches';
 import ExperimentMatchBuilder, { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX, URI } from './ExperimentMatchBuilder';
 import { style } from 'typestyle';
-import { PfColors } from './../../../../components/Pf/PfColors';
+import { PFColors } from './../../../../components/Pf/PfColors';
 import ExperimentRules, { MOVE_TYPE, Rule } from './ExperimentRules';
 import { OnRemoveFromListOptions } from './ExperimentCreatePage';
 
@@ -19,7 +19,7 @@ const addRuleStyle = style({
 
 const validationStyle = style({
   marginRight: 20,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   display: 'inline'
 });
 

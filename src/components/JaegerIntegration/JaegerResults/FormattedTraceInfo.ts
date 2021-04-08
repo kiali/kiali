@@ -1,17 +1,17 @@
 import { JaegerTrace } from '../../../types/JaegerInfo';
 import moment from 'moment';
 import { style } from 'typestyle';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { formatDuration, formatRelativeDate, isErrorTag } from 'utils/tracing/TracingHelper';
 
 export const shortIDStyle = style({
-  color: PfColors.Black600,
+  color: PFColors.Black600,
   padding: 4,
   fontSize: 12
 });
 
 export const fullIDStyle = style({
-  color: PfColors.Black600,
+  color: PFColors.Black600,
   paddingLeft: 10,
   fontSize: 14
 });

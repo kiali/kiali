@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
-import { PFAlertColor } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -20,22 +20,22 @@ export type ComponentIcon = {
 };
 
 const ErrorCoreComponent: ComponentIcon = {
-  color: PFAlertColor.Danger,
+  color: PFColors.Danger,
   icon: ExclamationCircleIcon
 };
 
 const ErrorAddonComponent: ComponentIcon = {
-  color: PFAlertColor.Warning,
+  color: PFColors.Warning,
   icon: ExclamationTriangleIcon
 };
 
 const NotReadyComponent: ComponentIcon = {
-  color: PFAlertColor.Info,
+  color: PFColors.Info,
   icon: MinusCircleIcon
 };
 
 const SuccessComponent: ComponentIcon = {
-  color: PFAlertColor.Success,
+  color: PFColors.Success,
   icon: CheckCircleIcon
 };
 

@@ -23,7 +23,7 @@ import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import SimpleTabs from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import ValidationSummary from 'components/Validations/ValidationSummary';
 import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 
@@ -69,7 +69,7 @@ export default class SummaryPanelNamespaceBox extends React.Component<
     margin: 0,
     minWidth: '25em',
     overflowY: 'auto' as 'auto',
-    backgroundColor: PfColors.White,
+    backgroundColor: PFColors.White,
     width: '25em'
   };
 

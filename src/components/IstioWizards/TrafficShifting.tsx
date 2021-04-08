@@ -3,7 +3,7 @@ import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/rea
 import Slider from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
-import { PfColors } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { EqualizerIcon } from '@patternfly/react-icons';
 import { getDefaultWeights } from './WizardActions';
@@ -30,7 +30,7 @@ type State = {
 
 const validationStyle = style({
   marginBottom: 10,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'right'
 });
 

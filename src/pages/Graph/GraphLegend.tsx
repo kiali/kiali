@@ -3,7 +3,7 @@ import { style } from 'typestyle';
 import legendData, { GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 
 export interface GraphLegendProps {
   closeLegend: () => void;
@@ -22,7 +22,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
       overflow: 'hidden',
       overflowX: 'auto',
       overflowY: 'auto',
-      backgroundColor: PfColors.White,
+      backgroundColor: PFColors.White,
       zIndex: 3
     });
 

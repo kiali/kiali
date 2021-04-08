@@ -1,7 +1,7 @@
 // A heatmap implementation tailored for Kiali design
 // (inspired from https://github.com/arunghosh/react-grid-heatmap (MIT), credits to @arunghosh)
 
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
 import { style } from 'typestyle';
 
@@ -72,7 +72,7 @@ export class HeatMap extends React.Component<Props> {
     const g = Math.floor((colorHigh.g - colorLow.g) * remains + colorLow.g);
     const b = Math.floor((colorHigh.b - colorLow.b) * remains + colorLow.b);
     const brightness = 0.21 * r + 0.72 * g + 0.07 * b; // https://www.johndcook.com/blog/2009/08/24/algorithms-convert-color-grayscale/
-    const textColor = brightness > 128 ? PfColors.Black1000 : PfColors.Black100;
+    const textColor = brightness > 128 ? PFColors.Black1000 : PFColors.Black100;
     return {
       color: textColor,
       backgroundColor: `rgb(${r},${g},${b})`
@@ -114,7 +114,7 @@ export class HeatMap extends React.Component<Props> {
                   <div
                     key={`heatmap_${x}-${y}`}
                     className={cellStyle}
-                    style={{ backgroundColor: this.props.colorUndefined, color: PfColors.Black1000 }}
+                    style={{ backgroundColor: this.props.colorUndefined, color: PFColors.Black1000 }}
                   >
                     {!isCompact && 'n/a'}
                   </div>

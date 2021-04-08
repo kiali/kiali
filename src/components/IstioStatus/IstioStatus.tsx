@@ -12,7 +12,7 @@ import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import IstioStatusList from './IstioStatusList';
-import { PFAlertColor } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 import './IstioStatus.css';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
 import { ThunkDispatch } from 'redux-thunk';
@@ -30,14 +30,14 @@ type ReduxProps = {
 type Props = ReduxProps & {};
 
 const ValidToColor = {
-  'true-true-true': PFAlertColor.Danger,
-  'true-true-false': PFAlertColor.Danger,
-  'true-false-true': PFAlertColor.Danger,
-  'true-false-false': PFAlertColor.Danger,
-  'false-true-true': PFAlertColor.Warning,
-  'false-true-false': PFAlertColor.Warning,
-  'false-false-true': PFAlertColor.Info,
-  'false-false-false': PFAlertColor.Success
+  'true-true-true': PFColors.Danger,
+  'true-true-false': PFColors.Danger,
+  'true-false-true': PFColors.Danger,
+  'true-false-false': PFColors.Danger,
+  'false-true-true': PFColors.Warning,
+  'false-true-false': PFColors.Warning,
+  'false-false-true': PFColors.Info,
+  'false-false-false': PFColors.Success
 };
 
 export class IstioStatus extends React.Component<Props> {

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { CopyIcon } from '@patternfly/react-icons';
 import { KeyValuePair } from '../../../types/JaegerInfo';
-import { PfColors } from '../../Pf/PfColors';
+import { PFColors } from '../../Pf/PfColors';
 
 interface SpanDetailProps {
   tags: KeyValuePair[];
@@ -25,9 +25,9 @@ export class SpanTags extends React.Component<SpanDetailProps> {
     switch (tag.type) {
       case 'bool':
         if (tag.key === 'error') {
-          return <span style={{ color: tag.value ? PfColors.Red200 : PfColors.Blue200 }}>{String(tag.value)}</span>;
+          return <span style={{ color: tag.value ? PFColors.Red200 : PFColors.Blue200 }}>{String(tag.value)}</span>;
         }
-        return <span style={{ color: tag.value ? PfColors.Blue200 : PfColors.Red200 }}>{String(tag.value)}</span>;
+        return <span style={{ color: tag.value ? PFColors.Blue200 : PFColors.Red200 }}>{String(tag.value)}</span>;
       case 'string':
         return `"${tag.value}"`;
       default:
@@ -42,10 +42,10 @@ export class SpanTags extends React.Component<SpanDetailProps> {
           {this.props.tags.map((tag, i) => (
             <tr
               key={`tag_${tag}_index_${i}`}
-              style={{ backgroundColor: i % 2 === 0 ? PfColors.White : PfColors.GrayBackground }}
+              style={{ backgroundColor: i % 2 === 0 ? PFColors.White : PFColors.Black150 }}
             >
-              <td style={{ color: PfColors.Gray, width: '30%' }}>{tag.key}</td>
-              <td style={{ color: isNaN(tag.value) ? PfColors.Green500 : PfColors.Blue500 }}>{this.printValue(tag)}</td>
+              <td style={{ color: PFColors.Black600, width: '30%' }}>{tag.key}</td>
+              <td style={{ color: isNaN(tag.value) ? PFColors.Green500 : PFColors.Blue500 }}>{this.printValue(tag)}</td>
               <td>
                 <Tooltip content={<>Copy {`{key": "${tag.key}", "type": "string", "value": "${tag.value}"}`}</>}>
                   <Button variant="plain" aria-label="Action" onClick={() => this.copiedText(tag)}>

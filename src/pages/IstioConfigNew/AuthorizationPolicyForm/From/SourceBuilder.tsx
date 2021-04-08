@@ -5,7 +5,7 @@ import { Button, FormSelect, FormSelectOption, TextInputBase as TextInput } from
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 
 type Props = {
   onAddFrom: (source: { [key: string]: string[] }) => void;
@@ -32,7 +32,7 @@ const INIT_SOURCE_FIELDS = [
 ].sort();
 
 const noSourceStyle = style({
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const headerCells: ICell[] = [

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import { Datapoint } from '../../types/Metrics';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 
@@ -33,10 +33,10 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
   render() {
     const scaler = this.props.unit === 's' ? this.toMillis : a => a;
     const series = [
-      toVCLine(scaler(this.props.rtAvg), 'avg', PfColors.Black),
-      toVCLine(scaler(this.props.rtMed), 'p50', PfColors.Green400),
-      toVCLine(scaler(this.props.rt95), 'p95', PfColors.Blue),
-      toVCLine(scaler(this.props.rt99), 'p99', PfColors.Orange400)
+      toVCLine(scaler(this.props.rtAvg), 'avg', PFColors.Black1000),
+      toVCLine(scaler(this.props.rtMed), 'p50', PFColors.Green400),
+      toVCLine(scaler(this.props.rt95), 'p95', PFColors.Blue400),
+      toVCLine(scaler(this.props.rt99), 'p99', PFColors.Orange400)
     ];
 
     return (

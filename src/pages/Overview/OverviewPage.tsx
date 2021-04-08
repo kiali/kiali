@@ -52,7 +52,7 @@ import * as Filters from './Filters';
 import ValidationSummary from '../../components/Validations/ValidationSummary';
 import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Paths, serverConfig } from '../../config';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import VirtualList from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
 import history, { HistoryManager, URLParam } from '../../app/History';
@@ -918,7 +918,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
     const labelContent = ns.labels ? (
       <div
-        style={{ color: PfColors.Blue400, textAlign: 'left', cursor: 'pointer' }}
+        style={{ color: PFColors.Blue400, textAlign: 'left', cursor: 'pointer' }}
         onClick={() => this.setDisplayMode(OverviewDisplayMode.LIST)}
       >
         <Tooltip

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Condition } from './ConditionBuilder';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 
 type Props = {
   conditionList: Condition[];
@@ -23,7 +23,7 @@ const headerCells: ICell[] = [
 
 const noConditionsStyle = style({
   marginTop: 10,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   textAlign: 'center',
   width: '100%'
 });

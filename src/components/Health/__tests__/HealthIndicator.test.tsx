@@ -5,7 +5,7 @@ import { shallowToJson } from 'enzyme-to-json';
 import { HealthIndicator, DisplayMode } from '../HealthIndicator';
 import { createIcon } from '../../../components/Health/Helper';
 import { AppHealth, DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../../types/Health';
-import { PFAlertColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
 
@@ -44,7 +44,7 @@ describe('HealthIndicator', () => {
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Success);
+    expect(html).toContain(PFColors.Success);
   });
 
   it('renders workloads degraded', () => {
@@ -67,7 +67,7 @@ describe('HealthIndicator', () => {
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Warning);
+    expect(html).toContain(PFColors.Warning);
     expect(html).toContain('1 / 10');
   });
 
@@ -91,7 +91,7 @@ describe('HealthIndicator', () => {
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.InfoBackground);
+    expect(html).toContain(PFColors.InfoBackground);
     expect(html).toContain('0 / 0');
   });
 
@@ -115,7 +115,7 @@ describe('HealthIndicator', () => {
     // LARGE
     wrapper = mount(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.InfoBackground);
+    expect(html).toContain(PFColors.InfoBackground);
   });
 
   it('renders error rate failure', () => {
@@ -139,7 +139,7 @@ describe('HealthIndicator', () => {
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain(PFAlertColor.Danger);
+    expect(html).toContain(PFColors.Danger);
     expect(html).toContain('Outbound: 16.67%');
     expect(html).toContain('Inbound: 50.00%');
   });

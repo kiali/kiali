@@ -2,7 +2,7 @@ import * as React from 'react';
 import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import IstioComponentStatus from './IstioComponentStatus';
-import { PfColors } from '../Pf/PfColors';
+import { PFColors } from '../Pf/PfColors';
 
 type Props = {
   status: ComponentStatus[];
@@ -40,7 +40,7 @@ class IstioStatusList extends React.Component<Props> {
 
   render() {
     return (
-      <TextContent style={{ color: PfColors.White }}>
+      <TextContent style={{ color: PFColors.White }}>
         <Text component={TextVariants.h4}>Istio Components Status</Text>
         <List id="istio-status" aria-label="Istio Component List">
           {this.renderComponentList()}

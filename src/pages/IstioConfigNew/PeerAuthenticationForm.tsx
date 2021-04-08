@@ -4,12 +4,12 @@ import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/compo
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 
 const noPortMtlsStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const headerCells: ICell[] = [

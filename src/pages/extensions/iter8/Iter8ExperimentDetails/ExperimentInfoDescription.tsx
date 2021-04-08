@@ -43,7 +43,7 @@ import { style } from 'typestyle';
 import equal from 'fast-deep-equal';
 import TrafficControlInfo from './TrafficControlInfo';
 import ErrorBoundaryWithMessage from '../../../../components/ErrorBoundary/ErrorBoundaryWithMessage';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 
 interface ExperimentInfoDescriptionProps {
   target: string;
@@ -460,7 +460,7 @@ class ExperimentInfoDescription extends React.Component<ExperimentInfoDescriptio
             </GridItem>
             <GridItem span={12}>
               <Tabs isFilled={false} activeKey={0}>
-                <Tab title={'Traffic Control'} eventKey={0} style={{ backgroundColor: PfColors.White }}>
+                <Tab title={'Traffic Control'} eventKey={0} style={{ backgroundColor: PFColors.White }}>
                   <ErrorBoundaryWithMessage message={'Something went wrong'}>
                     <TrafficControlInfo trafficControl={this.props.experimentDetails.trafficControl} />
                   </ErrorBoundaryWithMessage>

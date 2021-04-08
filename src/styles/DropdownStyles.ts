@@ -1,4 +1,4 @@
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { style } from 'typestyle';
 import { NestedCSSProperties } from 'typestyle/lib/types';
 
@@ -22,7 +22,7 @@ export const menuEntryStyle = style({
 export const titleStyle = style({
   padding: '8px 16px 2px 16px',
   fontWeight: 700,
-  color: PfColors.Black600
+  color: PFColors.Black600
 });
 
 const itemStyle: NestedCSSProperties = {

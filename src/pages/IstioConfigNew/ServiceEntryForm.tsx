@@ -6,7 +6,7 @@ import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { cellWidth, ICell, Table, TableBody, TableHeader } from '@patternfly/react-table';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -53,7 +53,7 @@ const headerCells: ICell[] = [
 
 const noPortsStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 type Props = {

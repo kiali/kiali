@@ -26,7 +26,7 @@ import SimpleTabs from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
 import Namespace from 'types/Namespace';
 import ValidationSummary from 'components/Validations/ValidationSummary';
-import { PfColors } from '../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
 
 type SummaryPanelGraphMetricsState = {
@@ -71,7 +71,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     margin: 0,
     minWidth: '25em',
     overflowY: 'auto' as 'auto',
-    backgroundColor: PfColors.White,
+    backgroundColor: PFColors.White,
     width: '25em'
   };
 

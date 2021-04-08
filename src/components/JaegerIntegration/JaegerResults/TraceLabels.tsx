@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Label, pluralize } from '@patternfly/react-core';
 
-import { PFAlertColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { Span } from 'types/JaegerInfo';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 
@@ -36,11 +36,9 @@ export const TraceLabels = (p: Props) => {
       </Label>
       {!p.oneline && <br />}
       {errors === 0 ? (
-        <Label style={{ margin: 10, backgroundColor: PFAlertColor.Success }}>0 Spans with error</Label>
+        <Label style={{ margin: 10, backgroundColor: PFColors.Success }}>0 Spans with error</Label>
       ) : (
-        <Label
-          style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFAlertColor.Warning : PFAlertColor.Danger }}
-        >
+        <Label style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}>
           {p.filteredSpans && `${filteredErrors} / `}
           {pluralize(errors, 'Span')} with error
         </Label>

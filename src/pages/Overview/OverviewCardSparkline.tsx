@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DurationInSeconds } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { toVCLines } from 'utils/VictoryChartsUtils';
 
@@ -17,7 +17,7 @@ type Props = {
 class OverviewCardSparkline extends React.Component<Props, {}> {
   render() {
     if (this.props.metrics && this.props.metrics.length > 0) {
-      const data = toVCLines(this.props.metrics, 'rps', [PfColors.Blue], 'time');
+      const data = toVCLines(this.props.metrics, 'rps', [PFColors.Blue400], 'time');
 
       return (
         <>

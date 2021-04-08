@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatus } from '../IstioStatus';
 import { shallowToJson } from 'enzyme-to-json';
-import { PFAlertColor } from '../../Pf/PfColors';
+import { PFColors } from '../../Pf/PfColors';
 
 const mockIcon = (componentList: ComponentStatus[]) => {
   return shallow(
@@ -56,7 +56,7 @@ describe('When core component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, PFAlertColor.Danger);
+    testIcon(wrapper, PFColors.Danger);
   });
 });
 
@@ -77,7 +77,7 @@ describe('When addon component has a problem', () => {
 
     testSnapshot(wrapper);
     testTooltip(wrapper);
-    testIcon(wrapper, PFAlertColor.Warning);
+    testIcon(wrapper, PFColors.Warning);
   });
 });
 
@@ -99,7 +99,7 @@ describe('When both core and addon component have problems', () => {
 
       testSnapshot(wrapper);
       testTooltip(wrapper);
-      testIcon(wrapper, PFAlertColor.Danger);
+      testIcon(wrapper, PFColors.Danger);
     });
   });
 });
@@ -123,7 +123,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFAlertColor.Danger);
+        testIcon(wrapper, PFColors.Danger);
       });
     });
 
@@ -144,7 +144,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFAlertColor.Warning);
+        testIcon(wrapper, PFColors.Warning);
       });
     });
 
@@ -175,7 +175,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFAlertColor.Danger);
+        testIcon(wrapper, PFColors.Danger);
       });
     });
   });
@@ -193,7 +193,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFAlertColor.Info);
+        testIcon(wrapper, PFColors.Info);
       });
     });
 
@@ -209,7 +209,7 @@ describe('When there are not-ready components', () => {
 
         testSnapshot(wrapper);
         testTooltip(wrapper);
-        testIcon(wrapper, PFAlertColor.Info);
+        testIcon(wrapper, PFColors.Info);
       });
     });
   });

@@ -4,7 +4,7 @@ import _round from 'lodash/round';
 
 import { HeatMap } from 'components/HeatMap/HeatMap';
 import { MetricsStats } from 'types/Metrics';
-import { PfColors } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { EnvoySpanInfo, RichSpanData } from 'types/JaegerInfo';
 import {
@@ -43,7 +43,7 @@ const renderHeatMap = (
       displayMode={compactMode ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
-      colorUndefined={PfColors.Black200}
+      colorUndefined={PFColors.Black200}
       valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
       tooltip={(x, y, v) => {
         // Build explanation tooltip
@@ -107,7 +107,7 @@ export const renderTraceHeatMap = (matrix: StatsMatrix, intervals: string[], com
       displayMode={compactMode ? 'compact' : 'normal'}
       colorMap={HeatMap.HealthColorMap}
       dataRange={{ from: -10, to: 10 }}
-      colorUndefined={PfColors.Black200}
+      colorUndefined={PFColors.Black200}
       valueFormat={v => (v > 0 ? '+' : '') + _round(v, 1)}
       tooltip={(x, y, v) => {
         // Build explanation tooltip

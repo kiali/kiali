@@ -6,6 +6,7 @@ import { LoginSession } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
 import InitializingScreen from './InitializingScreen';
 import authenticationConfig from '../config/AuthenticationConfig';
+import { setPFColorVals } from 'components/Pf/PfColors';
 
 interface InitializerComponentProps {
   setInitialAuthentication: (session: LoginSession) => void;
@@ -25,6 +26,7 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
 
   componentDidMount() {
     this.fetchAuthenticationConfig();
+    setPFColorVals(document.documentElement);
   }
 
   render() {

@@ -4,7 +4,7 @@ exports[`lists all the components grouped 1`] = `
 <TextContent
   style={
     Object {
-      "color": "#fff",
+      "color": "var(--pf-global--palette--white)",
     }
   }
 >

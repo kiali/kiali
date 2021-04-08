@@ -14,7 +14,7 @@ import { KialiIcon, defaultIconStyle } from 'config/KialiIcon';
 import { style } from 'typestyle';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
-import { PFKialiColor } from 'components/Pf/PfColors';
+import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
 import _ from 'lodash';
 
@@ -48,7 +48,7 @@ type ReplaySpeed = {
 };
 
 export const replayBorder = style({
-  borderLeft: `solid 5px ${PFKialiColor.Replay}`
+  borderLeft: `solid 5px ${PFColors.Replay}`
 });
 
 // key represents replay interval in milliseconds
@@ -95,7 +95,7 @@ const isCustomStyle = style({
 });
 
 const isCustomActiveStyle = style({
-  color: PFKialiColor.Active
+  color: PFColors.Active
 });
 
 const replayStyle = style({
@@ -117,7 +117,7 @@ const speedStyle = style({
 });
 
 const speedActiveStyle = style({
-  color: PFKialiColor.ActiveText,
+  color: PFColors.ActiveText,
   fontWeight: 'bolder'
 });
 

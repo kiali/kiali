@@ -5,7 +5,7 @@ import { Button, TextInputBase as TextInput } from '@patternfly/react-core';
 import { PlusCircleIcon } from '@patternfly/react-icons';
 import { isValidRequestHeaderName } from '../../../../helpers/ValidationHelpers';
 import { style } from 'typestyle';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 
 export type Condition = {
@@ -41,7 +41,7 @@ const headerCells: ICell[] = [
 ];
 
 const noValidKeyStyle = style({
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 const conditionFixedKeys = [

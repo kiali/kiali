@@ -1,4 +1,5 @@
-import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../../../types/Graph';
+import { BoxByType, CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../../../types/Graph';
+import { CyNode } from '../CytoscapeGraphUtils';
 import { DimClass, HoveredClass, HighlightClass } from './GraphStyles';
 
 // When a node or edge is selected we highlight the end-to-end paths (nodes and edges) for which the
@@ -70,35 +71,37 @@ export class GraphHighlighter {
   };
 
   refresh = () => {
-    const toHighlight = this.getHighlighted();
-    if (!toHighlight) {
+    const highlighted = this.getHighlighted();
+    if (!highlighted.toHighlight) {
       return;
     }
 
-    toHighlight.addClass(HighlightClass);
+    highlighted.toHighlight.addClass(HighlightClass);
 
-    this.cy.elements().difference(toHighlight).addClass(DimClass);
+    if (highlighted.dimOthers) {
+      this.cy.elements().difference(highlighted.toHighlight).addClass(DimClass);
+    }
   };
 
   // Returns the nodes to highlight. Highlighting for a hovered element
   // is limited to its neighborhood.  Highlighting for a selected element
   // is extended to full incoming and outgoing paths.
-  getHighlighted() {
+  getHighlighted(): { toHighlight: any; dimOthers: boolean } {
     const isHover = this.selected.summaryType === 'graph';
     const event = isHover ? this.hovered : this.selected;
     if (event) {
       switch (event.summaryType) {
         case 'node':
-          return this.getNodeHighlight(event.summaryTarget, isHover);
+          return { toHighlight: this.getNodeHighlight(event.summaryTarget, isHover), dimOthers: true };
         case 'edge':
-          return this.getEdgeHighlight(event.summaryTarget, isHover);
+          return { toHighlight: this.getEdgeHighlight(event.summaryTarget, isHover), dimOthers: true };
         case 'box':
           return this.getBoxHighlight(event.summaryTarget, isHover);
         default:
         // fall through
       }
     }
-    return undefined;
+    return { toHighlight: undefined, dimOthers: false };
   }
 
   includeAncestorNodes(nodes: any) {
@@ -128,16 +131,21 @@ export class GraphHighlighter {
     return this.includeAncestorNodes(elems.add(edge));
   }
 
-  getBoxHighlight(box: any, isHover: boolean) {
-    let elems;
-    if (isHover) {
-      elems = box.descendants().reduce((prev, child) => {
-        return prev.add(child.closedNeighborhood());
-      }, this.cy.collection());
-    } else {
-      const children = box.descendants();
-      elems = children.add(children.predecessors()).add(children.successors());
+  getBoxHighlight(box: any, isHover: boolean): { toHighlight: any; dimOthers: boolean } {
+    // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
+    // boxes highlight themselves and there anscestors.
+    if (box.data(CyNode.isBox) === BoxByType.APP) {
+      let elems;
+      if (isHover) {
+        elems = box.descendants().reduce((prev, child) => {
+          return prev.add(child.closedNeighborhood());
+        }, this.cy.collection());
+      } else {
+        const children = box.descendants();
+        elems = children.add(children.predecessors()).add(children.successors());
+      }
+      return { toHighlight: this.includeAncestorNodes(elems), dimOthers: true };
     }
-    return this.includeAncestorNodes(elems);
+    return { toHighlight: this.includeAncestorNodes(box), dimOthers: false };
   }
 }

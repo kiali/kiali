@@ -24,7 +24,7 @@ import { jsYaml, parseYamlValidations } from '../../../../types/AceValidations';
 import AceEditor from 'react-ace';
 import { aceOptions } from '../../../../types/IstioConfigDetails';
 import { TextInputBase as TextInput } from '@patternfly/react-core/dist/js/components/TextInput/TextInput';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import { PFColors } from '../../../../components/Pf/PfColors';
 import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 interface Props {
@@ -249,7 +249,7 @@ class ExperimentCreateFromFile extends React.Component<Props, State> {
             {this.props.activeNamespaces.length === 1 ? (
               <Text>Experiment will be created at namespace: {namespacesToString(this.props.activeNamespaces)}</Text>
             ) : (
-              <Text style={{ color: PfColors.Red }}>namespace missing</Text>
+              <Text style={{ color: PFColors.Red100 }}>namespace missing</Text>
             )}
           </GridItem>
           <GridItem span={3}>

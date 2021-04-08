@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { style } from 'typestyle';
-import { PfColors } from './../../../../components/Pf/PfColors';
+import { PFColors } from './../../../../components/Pf/PfColors';
 import { Badge, EmptyState, EmptyStateVariant, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { WorkloadWeight } from './../../../../components/IstioWizards/TrafficShifting';
 import { Abort, Delay, HTTPRetry } from './../../../../types/IstioObjects';
@@ -30,7 +30,7 @@ type Props = {
 
 const validationStyle = style({
   marginTop: 15,
-  color: PfColors.Red100
+  color: PFColors.Red100
 });
 
 class ExperimentRules extends React.Component<Props> {

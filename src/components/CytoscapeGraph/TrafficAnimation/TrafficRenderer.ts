@@ -1,6 +1,6 @@
 import { Point, clamp, quadraticBezier, linearInterpolation, distance, bezierLength } from '../../../utils/MathUtils';
 import { DimClass, HoveredClass } from '../graphs/GraphStyles';
-import { PfColors, getPFAlertColorVals } from '../../Pf/PfColors';
+import { PFColorVals } from '../../Pf/PfColors';
 import {
   TrafficPointCircleRenderer,
   TrafficPointConcentricDiamondRenderer,
@@ -44,10 +44,9 @@ enum TrafficEdgeType {
  * @returns {TrafficPointRenderer}
  */
 const getTrafficPointRendererForRpsError: (edge: any) => TrafficPointRenderer = (_edge: any) => {
-  const colorVals = getPFAlertColorVals();
   return new TrafficPointConcentricDiamondRenderer(
-    new Diamond(5, PfColors.White, colorVals.Danger, 1.0),
-    new Diamond(2, colorVals.Danger, colorVals.Danger, 1.0)
+    new Diamond(5, PFColorVals.White, PFColorVals.Danger, 1.0),
+    new Diamond(2, PFColorVals.Danger, PFColorVals.Danger, 1.0)
   );
 };
 
@@ -57,7 +56,7 @@ const getTrafficPointRendererForRpsError: (edge: any) => TrafficPointRenderer = 
  * @returns {TrafficPointRenderer}
  */
 const getTrafficPointRendererForRpsSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
-  return new TrafficPointCircleRenderer(2, PfColors.White, edge.style('line-color'), 2);
+  return new TrafficPointCircleRenderer(2, PFColorVals.White, edge.style('line-color'), 2);
 };
 
 /**
@@ -66,7 +65,7 @@ const getTrafficPointRendererForRpsSuccess: (edge: any) => TrafficPointRenderer 
  * @returns {TrafficPointCircleRenderer}
  */
 const getTrafficPointRendererForTcp: (edge: any) => TrafficPointRenderer = (_edge: any) => {
-  return new TrafficPointCircleRenderer(1.6, PfColors.Black100, PfColors.Black500, 1);
+  return new TrafficPointCircleRenderer(1.6, PFColorVals.Black100, PFColorVals.Black500, 1);
 };
 
 /**

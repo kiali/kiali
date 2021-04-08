@@ -6,7 +6,7 @@ import { style } from 'typestyle';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
 import TrafficShifting, { WorkloadWeight } from '../TrafficShifting';
 import FaultInjection, { FaultInjectionRoute } from '../FaultInjection';
-import { PfColors } from '../../Pf/PfColors';
+import { PFColors } from '../../Pf/PfColors';
 import RequestTimeouts, { TimeoutRetryRoute } from '../RequestTimeouts';
 
 type Props = {
@@ -53,7 +53,7 @@ const addRuleStyle = style({
 
 const validationStyle = style({
   marginRight: 20,
-  color: PfColors.Red100,
+  color: PFColors.Red100,
   display: 'inline'
 });
 
