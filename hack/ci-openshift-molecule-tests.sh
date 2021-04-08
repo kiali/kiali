@@ -131,6 +131,11 @@ Options:
     Space-separated list of all the molecule tests to be skipped.
     Default: <tests that are unable to be run on OpenShift>
 
+-sv|--spec-version <version>
+    When the molecule tests create Kiali CR resources, this will be the value of
+    the spec.version field. This effectively is how you can test different
+    playbooks in the operator.
+
 -udi|--use-dev-images <true|false>
     If true, the tests will use locally built dev images of Kiali and the operator.
     When using dev images, this script will attempt to build and push dev images
@@ -177,6 +182,7 @@ while [[ $# -gt 0 ]]; do
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
+    -sv|--spec-version)           SPEC_VERSION="$2";          shift;shift; ;;
     -udi|--use-dev-images)        USE_DEV_IMAGES="$2";        shift;shift; ;;
     -ul|--upload-logs)            UPLOAD_LOGS="$2";           shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
@@ -241,6 +247,9 @@ INSTALL_ISTIO="${INSTALL_ISTIO:-true}"
 # Determines if we should build and push dev images
 USE_DEV_IMAGES="${USE_DEV_IMAGES:-false}"
 
+# Determines what Kiali CR spec.version the tests should use
+SPEC_VERSION="${SPEC_VERSION:-default}"
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
@@ -267,6 +276,7 @@ LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
 OC=$OC
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 SKIP_TESTS=$SKIP_TESTS
+SPEC_VERSION=$SPEC_VERSION
 SRC=$SRC
 UPLOAD_LOGS=$UPLOAD_LOGS
 USE_DEV_IMAGES=$USE_DEV_IMAGES
@@ -382,7 +392,7 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
 
 cd ${LOGS_LOCAL_SUBDIR_ABS}
 
