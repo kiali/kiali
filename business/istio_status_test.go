@@ -640,29 +640,29 @@ func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
 func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
-	conf.ExternalServices.Grafana.ComponentStatus = config.AddonComponentStatus{IsCore: false}
+	conf.ExternalServices.Grafana.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
-	conf.ExternalServices.Tracing.ComponentStatus = config.AddonComponentStatus{IsCore: false}
+	conf.ExternalServices.Tracing.IsCore = false
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
 
 	conf.ExternalServices.CustomDashboards.Enabled = true
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus-dashboards/mock"
-	conf.ExternalServices.CustomDashboards.ComponentStatus = config.AddonComponentStatus{IsCore: false}
+	conf.ExternalServices.CustomDashboards.IsCore = false
 
 	if overrideUrl {
-		conf.ExternalServices.Grafana.ComponentStatus.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
+		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
 		conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/wrong"
 
-		conf.ExternalServices.Tracing.ComponentStatus.HealthCheckUrl = conf.ExternalServices.Tracing.InClusterURL
+		conf.ExternalServices.Tracing.HealthCheckUrl = conf.ExternalServices.Tracing.InClusterURL
 		conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/wrong"
 
-		conf.ExternalServices.Prometheus.ComponentStatus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
+		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"
 
-		conf.ExternalServices.CustomDashboards.ComponentStatus.HealthCheckUrl = conf.ExternalServices.CustomDashboards.Prometheus.URL
+		conf.ExternalServices.CustomDashboards.Prometheus.HealthCheckUrl = conf.ExternalServices.CustomDashboards.Prometheus.URL
 		conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus/wrong"
 
 	}

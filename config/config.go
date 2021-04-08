@@ -104,11 +104,6 @@ func (a *Auth) Obfuscate() {
 	a.CAFile = "xxx"
 }
 
-type AddonComponentStatus struct {
-	IsCore         bool   `yaml:"is_core,omitempty"`
-	HealthCheckUrl string `yaml:"health_check_url,omitempty"`
-}
-
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
 	Auth Auth `yaml:"auth,omitempty"`
@@ -117,29 +112,31 @@ type PrometheusConfig struct {
 	// Enable cache for Prometheus queries
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int                  `yaml:"cache_expiration,omitempty"`
-	ComponentStatus AddonComponentStatus `yaml:"component_status,omitempty"`
-	URL             string               `yaml:"url,omitempty"`
+	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
+	HealthCheckUrl  string `yaml:"health_check_url,omitempty"`
+	IsCore          bool   `yaml:"is_core,omitempty"`
+	URL             string `yaml:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
 type CustomDashboardsConfig struct {
-	DiscoveryEnabled       string               `yaml:"discovery_enabled,omitempty"`
-	DiscoveryAutoThreshold int                  `yaml:"discovery_auto_threshold,omitempty"`
-	Enabled                bool                 `yaml:"enabled,omitempty"`
-	ComponentStatus        AddonComponentStatus `yaml:"component_status,omitempty"`
-	NamespaceLabel         string               `yaml:"namespace_label,omitempty"`
-	Prometheus             PrometheusConfig     `yaml:"prometheus,omitempty"`
+	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
+	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
+	Enabled                bool             `yaml:"enabled,omitempty"`
+	IsCore                 bool             `yaml:"is_core,omitempty"`
+	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
+	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth            Auth                     `yaml:"auth"`
-	ComponentStatus AddonComponentStatus     `yaml:"component_status,omitempty"`
-	Dashboards      []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled         bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	InClusterURL    string                   `yaml:"in_cluster_url"`
-	URL             string                   `yaml:"url"`
+	Auth           Auth                     `yaml:"auth"`
+	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled        bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
+	InClusterURL   string                   `yaml:"in_cluster_url"`
+	IsCore         bool                     `yaml:"is_core,omitempty"`
+	URL            string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -157,14 +154,15 @@ type GrafanaVariablesConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                 Auth                 `yaml:"auth"`
-	ComponentStatus      AddonComponentStatus `yaml:"component_status,omitempty"`
-	Enabled              bool                 `yaml:"enabled"` // Enable Jaeger in Kiali
-	InClusterURL         string               `yaml:"in_cluster_url"`
-	NamespaceSelector    bool                 `yaml:"namespace_selector"`
-	URL                  string               `yaml:"url"`
-	UseGRPC              bool                 `yaml:"use_grpc"`
-	WhiteListIstioSystem []string             `yaml:"whitelist_istio_system"`
+	Auth                 Auth     `yaml:"auth"`
+	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
+	HealthCheckUrl       string   `yaml:"health_check_url,omitempty"`
+	InClusterURL         string   `yaml:"in_cluster_url"`
+	IsCore               bool     `yaml:"is_core,omitempty"`
+	NamespaceSelector    bool     `yaml:"namespace_selector"`
+	URL                  string   `yaml:"url"`
+	UseGRPC              bool     `yaml:"use_grpc"`
+	WhiteListIstioSystem []string `yaml:"whitelist_istio_system"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -416,19 +414,15 @@ func NewConfig() (c *Config) {
 				DiscoveryEnabled:       DashboardsDiscoveryAuto,
 				DiscoveryAutoThreshold: 10,
 				Enabled:                true,
+				IsCore:                 false,
 				NamespaceLabel:         "kubernetes_namespace",
-				ComponentStatus: AddonComponentStatus{
-					IsCore: false,
-				},
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
 				Enabled: true,
-				ComponentStatus: AddonComponentStatus{
-					IsCore: false,
-				},
+				IsCore:  false,
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
@@ -471,12 +465,10 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				ComponentStatus: AddonComponentStatus{
-					IsCore: false,
-				},
 				Enabled:              true,
 				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system/jaeger",
+				IsCore:               false,
 				URL:                  "",
 				UseGRPC:              false,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
