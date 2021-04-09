@@ -22,4 +22,3 @@ def test_jaeger_url_endpoint(kiali_client):
         assert url != None and ('jaeger' in url or 'tracing' in url)
     elif response.status_code == 503:
         pytest.skip()
-
