@@ -15,11 +15,20 @@ MOLECULE_KIALI_CR_SPEC_VERSION ?= default
 # Note that you can use your own image names/versions if you set MOLECULE_IMAGE_ENV_ARGS appropriately.
 # This is useful if you want to test a specific released version or images found in a different repo.
 # If the x_IMAGE_NAME env vars are set to 'dev' then the molecule tests will use the internal OpenShift registry location.
+#
+# If MOLECULE_USE_DEV_IMAGES is not set, but MOLECULE_KIALI_CR_SPEC_VERSION is set to something other than 'default'
+# we will ensure we override the image version to be that spec version. We need to do this because the molecule ansible
+# scripts will always set the spec.deployment.image_version override field, so we have to make sure we set it correctly,
+# otherwise it will default to "latest" and that is not what we want when setting the spec.version to a non-default value.
+ifndef MOLECULE_IMAGE_ENV_ARGS
 ifeq ($(MOLECULE_USE_DEV_IMAGES),true)
 ifeq ($(CLUSTER_TYPE),openshift)
 MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=dev --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=dev --env MOLECULE_KIALI_IMAGE_NAME=dev --env MOLECULE_KIALI_IMAGE_VERSION=dev
 else ifeq ($(CLUSTER_TYPE),minikube)
 MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_OPERATOR_IMAGE_NAME=localhost:5000/kiali/kiali-operator --env MOLECULE_KIALI_OPERATOR_IMAGE_VERSION=dev --env MOLECULE_KIALI_IMAGE_NAME=localhost:5000/kiali/kiali --env MOLECULE_KIALI_IMAGE_VERSION=dev
+endif
+else ifneq ($(MOLECULE_KIALI_CR_SPEC_VERSION),default)
+MOLECULE_IMAGE_ENV_ARGS = --env MOLECULE_KIALI_IMAGE_VERSION=${MOLECULE_KIALI_CR_SPEC_VERSION}
 endif
 endif
 
