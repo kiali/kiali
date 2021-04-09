@@ -69,7 +69,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                     icon={[Function]}
                     namespace="my-namespace"
                     text="Missing Sidecar"
-                    textTooltip="Missing Sidecar"
+                    textTooltip="Istio sidecar container not found in Pod(s). Check if the istio-injection label/annotation is correctly set on the namespace/workload."
                     tooltip={false}
                   />
                 </span>
