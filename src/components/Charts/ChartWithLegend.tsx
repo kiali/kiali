@@ -322,9 +322,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
       serieID: serieID,
       onMouseOver: props => {
         this.mouseOnLegend = true;
-        return {
-          style: { ...props.style, strokeWidth: 4, fillOpacity: 0 }
-        };
+        return serieName === 'overlay'
+          ? null
+          : {
+              style: { ...props.style, strokeWidth: 4, fillOpacity: 0 }
+            };
       },
       onMouseOut: () => {
         this.mouseOnLegend = false;
