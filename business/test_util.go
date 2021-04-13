@@ -696,6 +696,12 @@ func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
 	}
 }
 
+func FakePodLogsProxy() *kubernetes.PodLogs {
+	return &kubernetes.PodLogs{
+		Logs: `2021-02-01T21:34:35+00:00 [2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`,
+	}
+}
+
 func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
