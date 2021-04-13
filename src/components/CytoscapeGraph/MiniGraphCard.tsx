@@ -17,6 +17,8 @@ import { DecoratedGraphElements, EdgeLabelMode, GraphType, NodeType } from '../.
 import CytoscapeGraph, { GraphNodeDoubleTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { DagreGraph } from './graphs/DagreGraph';
+import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
+import { store } from 'store/ConfigStore';
 
 const miniGraphContainerStyle = style({ height: '300px' });
 
@@ -51,8 +53,11 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
 
   render() {
     const graphCardActions = [
-      <DropdownItem key="viewGraph" onClick={this.onViewGraph}>
+      <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
+      </DropdownItem>,
+      <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
+        Show node graph
       </DropdownItem>
     ];
 
@@ -142,7 +147,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     });
   };
 
-  private onViewGraph = () => {
+  private onViewFullGraph = () => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
     let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(namespace);
     let graphType: GraphType = GraphType.APP;
@@ -177,5 +182,37 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     )}`;
 
     history.push(graphUrl);
+  };
+
+  private onViewNodeGraph = () => {
+    let graphType = this.props.dataSource.fetchParameters.graphType;
+    switch (this.props.dataSource.fetchParameters.node!.nodeType) {
+      case NodeType.APP:
+        graphType = GraphType.APP;
+        break;
+      case NodeType.SERVICE:
+        graphType = GraphType.SERVICE;
+        break;
+      case NodeType.WORKLOAD:
+        graphType = GraphType.WORKLOAD;
+        break;
+    }
+
+    const urlParams: GraphUrlParams = {
+      activeNamespaces: this.props.dataSource.fetchParameters.namespaces,
+      duration: this.props.dataSource.fetchParameters.duration,
+      edgeLabelMode: this.props.dataSource.fetchParameters.edgeLabelMode,
+      graphLayout: store.getState().graph.layout,
+      graphType: graphType,
+      node: this.props.dataSource.fetchParameters.node!,
+      refreshInterval: store.getState().userSettings.refreshInterval,
+      showIdleEdges: this.props.dataSource.fetchParameters.showIdleEdges,
+      showIdleNodes: this.props.dataSource.fetchParameters.showIdleNodes,
+      showOperationNodes: this.props.dataSource.fetchParameters.showOperationNodes,
+      showServiceNodes: true
+    };
+
+    // To ensure updated components get the updated URL, update the URL first and then the state
+    history.push(makeNodeGraphUrlFromParams(urlParams));
   };
 }

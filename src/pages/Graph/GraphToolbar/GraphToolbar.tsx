@@ -146,7 +146,6 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
   };
 
   handleNamespaceReturn = () => {
-    this.props.setNode(undefined);
     if (
       !this.props.summaryData ||
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
@@ -154,6 +153,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       history.push(`/graph/namespaces`);
     }
     const selector = `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
+    this.props.setNode(undefined);
     history.push(`/graph/namespaces?focusSelector=${encodeURI(selector)}`);
   };
 
@@ -163,6 +163,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
         <GraphSecondaryMasthead
           disabled={this.props.disabled}
           graphType={this.props.graphType}
+          isNodeGraph={!!this.props.node}
           onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
           onHandleRefresh={this.handleRefresh}

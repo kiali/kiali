@@ -7,7 +7,6 @@ import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { style } from 'typestyle';
 import history from '../../app/History';
-import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { MessageType } from '../../types/MessageCenter';
 import Namespace from '../../types/Namespace';
@@ -65,7 +64,7 @@ import { JaegerThunkActions } from 'actions/JaegerThunkActions';
 import GraphTour from 'pages/Graph/GraphHelpTour';
 import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
 
-// GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
+// GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 type GraphURLPathProps = {
   aggregate: string;
   aggregateValue: string;
@@ -96,7 +95,7 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
   replayActive: boolean;
   replayQueryTime: TimeInMilliseconds;
-  setActiveNamespaces: (namespace: Namespace[]) => void;
+  setActiveNamespaces: (namespaces: Namespace[]) => void;
   setGraphDefinition: (graphDefinition: GraphDefinition) => void;
   setNode: (node?: NodeParamsType) => void;
   setTraceId: (traceId?: string) => void;
@@ -250,12 +249,15 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       return true;
     }
     if (prevNode && node) {
+      const nodeAggregateHasChanged =
+        prevNode.aggregate !== node.aggregate || prevNode.aggregateValue !== node.aggregateValue;
       const nodeAppHasChanged = prevNode.app !== node.app;
       const nodeServiceHasChanged = prevNode.service !== node.service;
       const nodeVersionHasChanged = prevNode.version !== node.version;
       const nodeTypeHasChanged = prevNode.nodeType !== node.nodeType;
       const nodeWorkloadHasChanged = prevNode.workload !== node.workload;
       return (
+        nodeAggregateHasChanged ||
         nodeAppHasChanged ||
         nodeServiceHasChanged ||
         nodeVersionHasChanged ||
@@ -271,16 +273,6 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     this.errorBoundaryRef = React.createRef();
     this.cytoscapeGraphRef = React.createRef();
     this.focusSelector = getFocusSelector();
-    // Let URL override current redux state at construction time
-    // Note that state updates will not be posted until after the first render
-    const urlNode = GraphPage.getNodeParamsFromProps(props);
-    if (GraphPage.isNodeChanged(urlNode, props.node)) {
-      props.setNode(urlNode);
-    }
-    const urlTrace = getTraceId();
-    if (urlTrace !== props.trace?.traceID) {
-      props.setTraceId(urlTrace);
-    }
 
     this.graphDataSource = new GraphDataSource();
 
@@ -316,14 +308,25 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     this.graphDataSource.on('fetchSuccess', this.handleGraphDataSourceSuccess);
     this.graphDataSource.on('emptyNamespaces', this.handleGraphDataSourceEmpty);
 
-    // This is a special bookmarking case. If the initial URL is for a node graph then
-    // defer the graph fetch until the first component update, when the node is set.
-    // (note: to avoid direct store access we could parse the URL again, perhaps that
-    // is preferable?  We could also move the logic from the constructor, but that
-    // would break our pattern of redux/url handling in the components).
-    if (!store.getState().graph.node) {
-      this.loadGraphDataFromBackend();
+    // Let URL override current redux state at mount time.  We usually do this in
+    // the constructor but it seems to work better here when the initial URL
+    // is for a node graph.  When setting the node here it is available for the
+    // loadGraphFromBackend() call.
+    const urlNode = GraphPage.getNodeParamsFromProps(this.props);
+    if (GraphPage.isNodeChanged(urlNode, this.props.node)) {
+      // add the node namespace if necessary, but don't lose previously selected namespaces
+      if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
+        this.props.setActiveNamespaces([urlNode.namespace, ...this.props.activeNamespaces]);
+      }
+      this.props.setNode(urlNode);
     }
+    const urlTrace = getTraceId();
+    if (urlTrace !== this.props.trace?.traceID) {
+      this.props.setTraceId(urlTrace);
+    }
+
+    // start the initial graph generation
+    this.loadGraphDataFromBackend();
   }
 
   componentDidUpdate(prev: GraphPageProps) {

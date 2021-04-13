@@ -12,6 +12,7 @@ import TimeDurationContainer from '../../../components/Time/TimeDurationComponen
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
   graphType: GraphType;
+  isNodeGraph: boolean;
 
   onToggleHelp: () => void;
   onGraphTypeChange: (graphType: GraphType) => void;
@@ -52,7 +53,7 @@ export default class GraphSecondaryMasthead extends React.PureComponent<GraphSec
     return (
       <SecondaryMasthead title={false}>
         <div className={mastheadStyle}>
-          <NamespaceDropdownContainer disabled={false} />
+          <NamespaceDropdownContainer disabled={this.props.isNodeGraph} />
           <span className={vrStyle} />
           <TourStopContainer info={GraphTourStops.GraphType}>
             <span className={leftSpacerStyle}>
