@@ -295,7 +295,7 @@ export class GraphStyles {
           appBoxStyle += `font-size: ${NodeTextFontSize};`;
           break;
         case BoxByType.CLUSTER:
-          letter = 'C';
+          letter = 'CL';
           break;
         case BoxByType.NAMESPACE:
           letter = 'NS';

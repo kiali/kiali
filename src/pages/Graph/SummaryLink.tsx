@@ -32,7 +32,7 @@ const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
         case BoxByType.CLUSTER:
           return (
             <Tooltip position={TooltipPosition.auto} content={<>Cluster</>}>
-              <Badge className="virtualitem_badge_definition">C</Badge>
+              <Badge className="virtualitem_badge_definition">CL</Badge>
             </Tooltip>
           );
         case BoxByType.NAMESPACE:

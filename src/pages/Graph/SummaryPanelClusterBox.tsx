@@ -193,7 +193,7 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
         <span>
           <Tooltip position={TooltipPosition.auto} content={<>Cluster</>}>
             <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
-              C
+              CL
             </Badge>
           </Tooltip>
           {cluster}{' '}

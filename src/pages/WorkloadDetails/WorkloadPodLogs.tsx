@@ -6,28 +6,38 @@ import {
   CardBody,
   Grid,
   GridItem,
-  Switch,
   TextInput,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip
+  Tooltip,
+  TooltipPosition,
+  Badge,
+  Form,
+  FormGroup,
+  Dropdown,
+  DropdownItem,
+  KebabToggle
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { Pod, PodLogs, LogEntry } from '../../types/IstioObjects';
-import { getPodLogs, Response } from '../../services/Api';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import { Pod, LogEntry, AccessLog } from '../../types/IstioObjects';
+import { getPodLogs } from '../../services/Api';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import Splitter from 'm-react-splitters';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
 import screenfull, { Screenfull } from 'screenfull';
 import { serverConfig } from 'config';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
+import { PFColors, PFColorVal } from 'components/Pf/PfColors';
+import AccessLogModal from 'components/Envoy/AccessLogModal';
+
+const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.LightBlue400, PFColors.Purple100];
+const proxyContainerColor = PFColors.Gold400;
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -36,62 +46,56 @@ export interface WorkloadPodLogsProps {
   lastRefreshAt: TimeInMilliseconds;
 }
 
-const NoAppContainer = 'n/a';
-
-interface ContainerInfo {
-  container: string;
-  containerOptions: { [key: string]: string };
+interface Container {
+  color: PFColorVal;
+  displayName: string;
+  isProxy: boolean;
+  isSelected: boolean;
+  name: string;
 }
 
-type TextAreaPosition = 'left' | 'right' | 'top' | 'bottom';
-
 interface WorkloadPodLogsState {
-  containerInfo?: ContainerInfo;
-  filteredAppLogs: LogEntry[];
-  filteredProxyLogs: LogEntry[];
+  accessLogModals: Map<string, AccessLog>;
+  containers?: Container[];
+  filteredLogs: LogEntry[];
+  fullscreen: boolean;
   hideError?: string;
   hideLogValue: string;
-  loadingAppLogs: boolean;
-  loadingAppLogsError?: string;
-  loadingProxyLogs: boolean;
-  loadingProxyLogsError?: string;
+  kebabOpen: boolean;
+  loadingLogs: boolean;
+  loadingLogsError?: string;
   logWindowSelections: any[];
   podValue?: number;
-  rawAppLogs: LogEntry[];
-  rawProxyLogs: LogEntry[];
+  rawLogs: LogEntry[];
   showClearHideLogButton: boolean;
   showClearShowLogButton: boolean;
   showError?: string;
   showLogValue: string;
   showTimestamps: boolean;
-  sideBySideOrientation: boolean;
+  showToolbar: boolean;
   tailLines: number;
   useRegex: boolean;
 }
 
 const RETURN_KEY_CODE = 13;
-const NoAppLogsFoundMessage = 'No application container logs found for the time period.';
-const NoProxyLogsFoundMessage = 'No istio-proxy for the pod, or proxy logs for the time period.';
+const NoLogsFoundMessage = 'No container logs found for the time period.';
 
 const TailLinesDefault = 100;
 const TailLinesOptions = {
   '-1': 'All lines',
-  '10': 'Last 10 lines',
-  '50': 'Last 50 lines',
-  '100': 'Last 100 lines',
-  '300': 'Last 300 lines',
-  '500': 'Last 500 lines',
-  '1000': 'Last 1000 lines',
-  '5000': 'Last 5000 lines'
+  '10': '10 lines',
+  '50': '50 lines',
+  '100': '100 lines',
+  '300': '300 lines',
+  '500': '500 lines',
+  '1000': '1000 lines',
+  '5000': '5000 lines'
 };
 
-const appLogsDivHorizontal = style({
-  height: '100%',
-  marginRight: '5px'
-});
-
-const appLogsDivVertical = style({
-  height: 'calc(100% + 3px)'
+const alInfoIcon = style({
+  display: 'inline-block',
+  margin: '0px 5px 0px 0px',
+  width: '10px'
 });
 
 const displayFlex = style({
@@ -101,21 +105,6 @@ const displayFlex = style({
 const infoIcons = style({
   marginLeft: '0.5em',
   width: '24px'
-});
-
-const fullscreenTitleBackground = (isFullscreen: boolean) => ({ color: isFullscreen ? 'white' : 'black' });
-
-const logsTitle = (isFullscreen: boolean) =>
-  style(fullscreenTitleBackground(isFullscreen), {
-    fontWeight: 'bold'
-  });
-
-const proxyLogsDiv = style({
-  height: '100%'
-});
-
-const splitter = style({
-  height: 'calc(100% - 80px)' // 80px compensates for toolbar height
 });
 
 const toolbar = style({
@@ -134,62 +123,65 @@ const toolbarTail = style({
   marginTop: '2px'
 });
 
-const toolbarTitle = (position: TextAreaPosition = 'top') =>
-  style({
-    height: '36px',
-    margin: `${position === 'right' ? '0 0 0 10px' : '0 10px 0 0'}`
-  });
+const logsToolbar = style({
+  height: '40px',
+  margin: '0 10px 0 0'
+});
 
-const logTextAreaBackground = (enabled = true) => ({ backgroundColor: enabled ? '#003145' : 'gray' });
+const logsDiv = style({
+  marginRight: '5px'
+});
 
-const logsTextarea = (enabled = true, position: TextAreaPosition = 'top', hasTitle = true) =>
-  style(logTextAreaBackground(enabled), {
-    width: `${['top', 'bottom'].includes(position) ? '100%' : 'calc(100% - 10px)'}`,
-    height: `calc(100% - ${position === 'top' ? '20px' : '0px'} - ${hasTitle ? '36px' : '0px'})`,
-    overflow: 'auto',
-    resize: 'none',
-    color: '#fff',
-    fontFamily: 'monospace',
-    fontSize: '11pt',
-    margin: `${position === 'right' ? '0 0 0 10px' : 0}`,
-    padding: '10px',
-    whiteSpace: 'pre'
-  });
+const logsDisplay = style({
+  fontFamily: 'monospace',
+  margin: 0,
+  overflow: 'auto',
+  padding: '10px',
+  resize: 'none',
+  whiteSpace: 'pre',
+  width: '100%'
+});
+
+const logsBackground = (enabled: boolean) => ({ backgroundColor: enabled ? PFColors.Black1000 : 'gray' });
+const logsHeight = (showToolbar: boolean, fullscreen: boolean) => {
+  const toolbarHeight = showToolbar ? '0px' : '49px';
+  return {
+    height: fullscreen
+      ? `calc(100vh - 130px + ${toolbarHeight})`
+      : `calc(var(--kiali-details-pages-tab-content-height) - 155px + ${toolbarHeight})`
+  };
+};
 
 class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
-  private loadProxyLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
-  private loadAppLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
+  private promises: PromisesRegistry = new PromisesRegistry();
   private podOptions: string[] = [];
-  private readonly appLogsRef: React.RefObject<any>;
-  private readonly proxyLogsRef: React.RefObject<any>;
+  private readonly logsRef: React.RefObject<any>;
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
-    this.appLogsRef = React.createRef();
-    this.proxyLogsRef = React.createRef();
+    this.logsRef = React.createRef();
 
     const defaultState = {
-      filteredAppLogs: [],
-      filteredProxyLogs: [],
+      accessLogModals: new Map<string, AccessLog>(),
+      filteredLogs: [],
+      fullscreen: false,
       hideLogValue: '',
-      loadingAppLogs: false,
-      loadingProxyLogs: false,
+      kebabOpen: false,
+      loadingLogs: false,
       logWindowSelections: [],
-      rawAppLogs: [],
-      rawProxyLogs: [],
+      rawLogs: [],
       showClearHideLogButton: false,
       showClearShowLogButton: false,
       showLogValue: '',
       showTimestamps: false,
-      sideBySideOrientation: false,
+      showToolbar: true,
       tailLines: TailLinesDefault,
       useRegex: false
     };
     if (this.props.pods.length < 1) {
       this.state = {
         ...defaultState,
-        loadingAppLogsError: 'There are no logs to display because no pods are available.',
-        loadingProxyLogsError: 'There are no logs to display because no container logs are available.'
+        loadingLogsError: 'There are no logs to display because no pods are available.'
       };
       return;
     }
@@ -202,46 +194,51 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
 
     const podValue = 0;
     const pod = this.props.pods[podValue];
-    const containerInfo = this.getContainerInfo(pod);
+    const containers = this.getContainers(pod);
 
     this.state = {
       ...defaultState,
-      containerInfo: containerInfo,
+      containers: containers,
       podValue: podValue
     };
   }
 
   componentDidMount() {
-    if (this.state.containerInfo) {
+    const screenFullAlias = screenfull as Screenfull;
+    screenFullAlias.onchange(() => this.setState({ fullscreen: !this.state.fullscreen }));
+
+    if (this.state.containers) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(
-        this.props.namespace,
-        pod.name,
-        this.state.containerInfo.container,
-        this.state.tailLines,
-        this.props.timeRange
-      );
+      this.fetchLogs(this.props.namespace, pod.name, this.state.containers, this.state.tailLines, this.props.timeRange);
     }
   }
 
   componentDidUpdate(prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
-    const prevContainer = prevState.containerInfo ? prevState.containerInfo.container : undefined;
-    const newContainer = this.state.containerInfo ? this.state.containerInfo.container : undefined;
-    const updateContainerInfo = this.state.containerInfo && this.state.containerInfo !== prevState.containerInfo;
-    const updateContainer = newContainer && newContainer !== prevContainer;
+    const prevContainers = prevState.containers ? prevState.containers : undefined;
+    const newContainers = this.state.containers ? this.state.containers : undefined;
+    const updateContainerInfo = this.state.containers && this.state.containers !== prevState.containers;
+    const updateContainer = newContainers && newContainers !== prevContainers;
     const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
     if (updateContainerInfo || updateContainer || updateTailLines || lastRefreshChanged || timeRangeChanged) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.props.timeRange);
+      this.fetchLogs(this.props.namespace, pod.name, newContainers!, this.state.tailLines, this.props.timeRange);
     }
-    this.proxyLogsRef.current.scrollTop = this.proxyLogsRef.current.scrollHeight;
-    this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
 
     if (prevState.useRegex !== this.state.useRegex) {
       this.doShowAndHide();
     }
+
+    // if we just loaded log entries, and we are scrolled to the top, position the user automatically
+    // to the bottom/most recent.
+    if (prevState.loadingLogs && !this.state.loadingLogs && this.logsRef.current.scrollTop === 0) {
+      this.logsRef.current.scrollTop = this.logsRef.current.scrollHeight;
+    }
+  }
+
+  componentWillUnmount() {
+    this.promises.cancelAll();
   }
 
   renderItem = object => {
@@ -251,194 +248,182 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
   render() {
     return (
       <>
-        <RenderComponentScroll key={this.state.sideBySideOrientation ? 'vertical' : 'horizontal'}>
-          {this.state.containerInfo && (
-            <Grid style={{ height: '100%' }}>
+        <RenderComponentScroll>
+          {this.state.containers && (
+            <Grid key="logs" id="logs" style={{ height: '100%' }}>
               <GridItem span={12}>
                 <Card style={{ height: '100%' }}>
                   <CardBody>
-                    <Toolbar className={toolbar}>
-                      <ToolbarGroup>
-                        <ToolbarItem className={displayFlex}>
-                          <ToolbarDropdown
-                            id={'wpl_pods'}
-                            nameDropdown="Pod"
-                            tooltip="Display logs for the selected pod"
-                            handleSelect={key => this.setPod(key)}
-                            value={this.state.podValue}
-                            label={this.props.pods[this.state.podValue!].name}
-                            options={this.podOptions!}
-                          />
-                        </ToolbarItem>
-                        <ToolbarItem className={`${displayFlex} ${toolbarSpace}`}>
-                          <ToolbarDropdown
-                            id={'wpl_containers'}
-                            nameDropdown="Container"
-                            tooltip="Choose container for selected pod"
-                            handleSelect={key => this.setContainer(key)}
-                            value={this.state.containerInfo.container}
-                            label={this.state.containerInfo.container}
-                            options={this.state.containerInfo.containerOptions!}
-                          />
-                        </ToolbarItem>
-                      </ToolbarGroup>
-                      <ToolbarGroup className={toolbarRight}>
-                        <ToolbarItem className={displayFlex}>
-                          <ToolbarDropdown
-                            id={'wpl_tailLines'}
-                            handleSelect={key => this.setTailLines(Number(key))}
-                            value={this.state.tailLines}
-                            label={TailLinesOptions[this.state.tailLines]}
-                            options={TailLinesOptions}
-                            tooltip={'Show up to last N log lines'}
-                            classNameSelect={toolbarTail}
-                          />
-                        </ToolbarItem>
-                      </ToolbarGroup>
-                    </Toolbar>
-                    <Toolbar className={toolbar}>
-                      <ToolbarGroup>
-                        <ToolbarItem>
-                          <Switch
-                            id="orientation-switch"
-                            label="Side by Side"
-                            isChecked={this.state.sideBySideOrientation}
-                            onChange={this.handleOrientationChange}
-                          />
-                        </ToolbarItem>
-                        <ToolbarItem className={toolbarSpace}>
-                          <Switch
-                            id="timestamps-switch"
-                            label="Timestamps"
-                            isChecked={this.state.showTimestamps}
-                            onChange={this.handleTimestampsChange}
-                          />
-                        </ToolbarItem>
-                      </ToolbarGroup>
-                      <ToolbarGroup className={toolbarRight}>
-                        <ToolbarItem>
-                          <TextInput
-                            id="log_show"
-                            name="log_show"
-                            style={{ width: '10em' }}
-                            isValid={!this.state.showError}
-                            autoComplete="on"
-                            type="text"
-                            onKeyPress={this.checkSubmitShow}
-                            onChange={this.updateShow}
-                            defaultValue={this.state.showLogValue}
-                            aria-label="show log text"
-                            placeholder="Show..."
-                          />
-                          {this.state.showClearShowLogButton && (
-                            <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
-                              <Button variant={ButtonVariant.control} onClick={this.clearShow}>
-                                <KialiIcon.Close />
-                              </Button>
-                            </Tooltip>
-                          )}
-                          <TextInput
-                            id="log_hide"
-                            name="log_hide"
-                            style={{ width: '10em' }}
-                            isValid={!this.state.hideError}
-                            autoComplete="on"
-                            type="text"
-                            onKeyPress={this.checkSubmitHide}
-                            onChange={this.updateHide}
-                            defaultValue={this.state.hideLogValue}
-                            aria-label="hide log text"
-                            placeholder="Hide..."
-                          />
-                          {this.state.showClearHideLogButton && (
-                            <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
-                              <Button variant={ButtonVariant.control} onClick={this.clearHide}>
-                                <KialiIcon.Close />
-                              </Button>
-                            </Tooltip>
-                          )}
-                          {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
-                          {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-                        </ToolbarItem>
-                        <ToolbarItem>
-                          <Tooltip
-                            key="show_hide_log_help"
-                            position="top"
-                            content="Show only lines containing a substring. Hide all lines containing a substring. Case sensitive."
-                          >
-                            <KialiIcon.Info className={infoIcons} />
+                    {this.state.showToolbar && (
+                      <Toolbar className={toolbar}>
+                        <ToolbarGroup>
+                          <Tooltip position={TooltipPosition.top} content={<>Pod</>}>
+                            <Badge className="virtualitem_badge_definition">P</Badge>
                           </Tooltip>
-                        </ToolbarItem>
-                        <ToolbarItem className={toolbarSpace}>
-                          <Switch
-                            id="regex-switch"
-                            label="Activate Regex"
-                            isChecked={this.state.useRegex}
-                            onChange={this.handleRegexChange}
-                          />
-                          <Tooltip
-                            key="show_log_regex_help"
-                            position="top"
-                            content="Use Regex instead of substring for more advanced use"
-                          >
-                            <KialiIcon.Info className={infoIcons} />
-                          </Tooltip>
-                        </ToolbarItem>
-                      </ToolbarGroup>
-                    </Toolbar>
-                    <div className={splitter}>{this.getSplitter()}</div>
+                          <ToolbarItem className={displayFlex}>
+                            <ToolbarDropdown
+                              id={'wpl_pods'}
+                              tooltip="Display logs for the selected pod"
+                              handleSelect={key => this.setPod(key)}
+                              value={this.state.podValue}
+                              label={this.props.pods[this.state.podValue!].name}
+                              options={this.podOptions!}
+                            />
+                          </ToolbarItem>
+                        </ToolbarGroup>
+                        <ToolbarGroup>
+                          <ToolbarItem>
+                            <TextInput
+                              id="log_show"
+                              name="log_show"
+                              style={{ width: '8em' }}
+                              isValid={!this.state.showError}
+                              autoComplete="on"
+                              type="text"
+                              onKeyPress={this.checkSubmitShow}
+                              onChange={this.updateShow}
+                              defaultValue={this.state.showLogValue}
+                              aria-label="show log text"
+                              placeholder="Show..."
+                            />
+                            {this.state.showClearShowLogButton && (
+                              <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
+                                <Button variant={ButtonVariant.control} onClick={this.clearShow}>
+                                  <KialiIcon.Close />
+                                </Button>
+                              </Tooltip>
+                            )}
+                            <TextInput
+                              id="log_hide"
+                              name="log_hide"
+                              style={{ width: '8em' }}
+                              isValid={!this.state.hideError}
+                              autoComplete="on"
+                              type="text"
+                              onKeyPress={this.checkSubmitHide}
+                              onChange={this.updateHide}
+                              defaultValue={this.state.hideLogValue}
+                              aria-label="hide log text"
+                              placeholder="Hide..."
+                            />
+                            {this.state.showClearHideLogButton && (
+                              <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
+                                <Button variant={ButtonVariant.control} onClick={this.clearHide}>
+                                  <KialiIcon.Close />
+                                </Button>
+                              </Tooltip>
+                            )}
+                            {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
+                            {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
+                          </ToolbarItem>
+                          <ToolbarItem>
+                            <Tooltip
+                              key="show_hide_log_help"
+                              position="top"
+                              content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
+                            >
+                              <KialiIcon.Info className={infoIcons} />
+                            </Tooltip>
+                          </ToolbarItem>
+                        </ToolbarGroup>
+                        <ToolbarGroup className={toolbarRight}>
+                          <ToolbarItem className={displayFlex}>
+                            <ToolbarDropdown
+                              id={'wpl_tailLines'}
+                              handleSelect={key => this.setTailLines(Number(key))}
+                              value={this.state.tailLines}
+                              label={TailLinesOptions[this.state.tailLines]}
+                              options={TailLinesOptions}
+                              tooltip={'Show up to last N log lines'}
+                              classNameSelect={toolbarTail}
+                            />
+                          </ToolbarItem>
+                        </ToolbarGroup>
+                      </Toolbar>
+                    )}
+                    {this.getLogsDiv()}
+                    {this.getAccessLogModals()}
                   </CardBody>
                 </Card>
               </GridItem>
             </Grid>
           )}
-          {this.state.loadingAppLogsError && <div>{this.state.loadingAppLogsError}</div>}
+          {this.state.loadingLogsError && <div>{this.state.loadingLogsError}</div>}
         </RenderComponentScroll>
       </>
     );
   }
 
-  private getSplitter = () => {
-    return this.state.sideBySideOrientation ? (
-      <Splitter
-        position="vertical"
-        primaryPaneMaxWidth="80%"
-        primaryPaneMinWidth="15%"
-        primaryPaneWidth="50%"
-        dispatchResize={true}
-        postPoned={true}
-      >
-        {this.getAppDiv()}
-        {this.getProxyDiv()}
-      </Splitter>
-    ) : (
-      <Splitter
-        position="horizontal"
-        primaryPaneMaxHeight="80%"
-        primaryPaneMinHeight="15%"
-        primaryPaneHeight="50%"
-        dispatchResize={true}
-        postPoned={true}
-      >
-        {this.getAppDiv()}
-        {this.getProxyDiv()}
-      </Splitter>
+  private getContainerLegend = () => {
+    return (
+      <Form>
+        <FormGroup fieldId="container-log-selection" isInline>
+          <Tooltip position={TooltipPosition.top} content={<>Containers</>}>
+            <Badge className="virtualitem_badge_definition" style={{ marginRight: '10px' }}>
+              C
+            </Badge>
+          </Tooltip>
+          {this.state.containers!.map((c, i) => {
+            return (
+              <div key={`c-d-${i}`} className="pf-c-check">
+                <input
+                  key={`c-i-${i}`}
+                  id={`container-${i}`}
+                  className="pf-c-check__input"
+                  style={{ marginBottom: '3px' }}
+                  type="checkbox"
+                  checked={c.isSelected}
+                  onChange={() => this.toggleSelected(c)}
+                />
+                <label
+                  key={`c-l-${i}`}
+                  htmlFor={`container-${i}`}
+                  className="pf-c-check__label"
+                  style={{
+                    backgroundColor: PFColors.Black1000,
+                    color: c.color,
+                    paddingLeft: '5px',
+                    paddingRight: '5px'
+                  }}
+                >
+                  {c.displayName}
+                </label>
+              </div>
+            );
+          })}
+        </FormGroup>
+      </Form>
     );
   };
 
-  private getAppDiv = () => {
-    const appLogs = this.hasEntries(this.state.filteredAppLogs)
-      ? this.entriesToString(this.state.filteredAppLogs)
-      : NoAppLogsFoundMessage;
-    const title = this.state.containerInfo!.containerOptions[this.state.containerInfo!.container];
+  private toggleSelected = (c: Container) => {
+    c.isSelected = !c.isSelected;
+    this.setState({ containers: [...this.state.containers!] });
+  };
+
+  private getLogsDiv = () => {
+    const kebabActions = [
+      <DropdownItem key="toggleToolbar" onClick={this.toggleToolbar}>
+        {`${this.state.showToolbar ? 'Collapse' : 'Expand'} Toolbar`}
+      </DropdownItem>,
+      <DropdownItem key="toggleRegex" onClick={this.toggleUseRegex}>
+        {`Match via ${this.state.useRegex ? 'Substring' : 'Regex'}`}
+      </DropdownItem>,
+      <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
+        {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
+      </DropdownItem>
+    ];
+
     return (
-      <div id="appLogDiv" className={this.state.sideBySideOrientation ? appLogsDivHorizontal : appLogsDivVertical}>
-        <Toolbar className={toolbarTitle()}>
-          <ToolbarItem className={logsTitle(this.isFullscreen())}>{title}</ToolbarItem>
+      <div key="logsDiv" id="logsDiv" className={logsDiv}>
+        <Toolbar className={logsToolbar}>
+          <ToolbarGroup>
+            <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
+          </ToolbarGroup>
           <ToolbarGroup className={toolbarRight}>
             <ToolbarItem>
-              <Tooltip key="copy_app_logs" position="top" content="Copy app logs to clipboard">
-                <CopyToClipboard onCopy={this.copyAppLogCallback} text={appLogs}>
+              <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
+                <CopyToClipboard text={this.entriesToString(this.state.filteredLogs)}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy className={defaultIconStyle} />
                   </Button>
@@ -446,120 +431,187 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
               </Tooltip>
             </ToolbarItem>
             <ToolbarItem className={toolbarSpace}>
-              <Tooltip key="expand_app_logs" position="top" content="Expand App logs full screen">
+              <Tooltip key="fullscreen_logs" position="top" content="Expand logs full screen">
                 <Button
                   variant={ButtonVariant.link}
-                  onClick={this.openAppFullScreenLog}
-                  isDisabled={!this.hasEntries(this.state.filteredAppLogs)}
+                  onClick={this.toggleFullscreen}
+                  isDisabled={!this.hasEntries(this.state.filteredLogs)}
                   isInline
                 >
                   <KialiIcon.Expand className={defaultIconStyle} />
                 </Button>
               </Tooltip>
             </ToolbarItem>
+            <ToolbarItem>
+              <Dropdown
+                style={{ width: '20px' }}
+                toggle={<KebabToggle onToggle={this.setKebabOpen} />}
+                dropdownItems={kebabActions}
+                isPlain
+                isOpen={this.state.kebabOpen}
+                position={'right'}
+              />
+            </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
 
-        <textarea
-          id="appLogTextArea"
-          className={logsTextarea(
-            this.hasEntries(this.state.filteredAppLogs),
-            this.state.sideBySideOrientation ? 'left' : 'top'
-          )}
-          ref={this.appLogsRef}
-          readOnly={true}
-          value={appLogs}
-        />
+        <div
+          key="logsText"
+          id="logsText"
+          className={logsDisplay}
+          // note - for some reason the callable typescript needs to be applied as "style" and
+          // not as a "className".  Otherwise the initial scroillHeight is incorrectly set
+          // (to max) and when we try to assign scrollTop to scrollHeight (above),it stays at 0
+          // and we fail to set the scroll correctly. So, don't change this!
+          style={{
+            ...logsHeight(this.state.showToolbar, this.state.fullscreen),
+            ...logsBackground(this.hasEntries(this.state.filteredLogs))
+          }}
+          ref={this.logsRef}
+        >
+          {this.hasEntries(this.state.filteredLogs)
+            ? this.state.filteredLogs.map((le, i) => {
+                /*
+              if (!le.accessLog && le.message.startsWith('[2021')) {
+                le.accessLog = {
+                  authority: 'foo',
+                  bytes_received: 'foo',
+                  bytes_sent: 'foo',
+                  duration: 'foo',
+                  forwarded_for: 'foo',
+                  method: 'foo',
+                  protocol: 'foo',
+                  request_id: 'foo',
+                  response_flags: 'foo',
+                  status_code: 'foo',
+                  tcp_service_time: 'foo',
+                  timestamp: 'foo',
+                  upstream_service: 'foo',
+                  upstream_service_time: 'foo',
+                  upstream_cluster: 'foo',
+                  upstream_local: 'foo',
+                  downstream_local: 'foo',
+                  downstream_remote: 'foo',
+                  requested_server: 'foo',
+                  route_name: 'foo',
+                  upstream_failure_reason: 'foo',
+                  uri_param: 'foo',
+                  uri_path: 'foo',
+                  user_agent: 'foo'
+                };
+              }
+              */
+                return !le.accessLog ? (
+                  <>
+                    <p key={`le-${i}`} style={{ color: le.color!, fontSize: '12px' }}>
+                      {this.entryToString(le)}
+                    </p>
+                  </>
+                ) : (
+                  <div key={`al-${i}`} style={{ height: '22px', lineHeight: '22px' }}>
+                    {this.state.showTimestamps && (
+                      <span key={`al-s-${i}`} style={{ color: le.color!, fontSize: '12px', marginRight: '5px' }}>
+                        {le.timestamp}
+                      </span>
+                    )}
+                    <Tooltip
+                      key={`al-tt-${i}`}
+                      position={TooltipPosition.auto}
+                      entryDelay={2000}
+                      content="Click for Envoy Access Log details"
+                    >
+                      <Button
+                        key={`al-b-${i}`}
+                        variant={ButtonVariant.plain}
+                        style={{
+                          paddingLeft: '6px',
+                          width: '10px',
+                          height: '10px',
+                          fontFamily: 'monospace',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => {
+                          this.addAccessLogModal(le.message, le.accessLog!);
+                        }}
+                      >
+                        <KialiIcon.Info key={`al-i-${i}`} className={alInfoIcon} color={PFColors.Gold400} />
+                      </Button>
+                    </Tooltip>
+                    <p
+                      key={`al-p-${i}`}
+                      style={{ color: le.color!, fontSize: '12px', verticalAlign: 'center', display: 'inline-block' }}
+                    >
+                      {le.message}
+                    </p>
+                  </div>
+                );
+              })
+            : NoLogsFoundMessage}
+        </div>
       </div>
     );
   };
 
-  private getProxyDiv = () => {
-    const proxyLogs = this.hasEntries(this.state.filteredProxyLogs)
-      ? this.entriesToString(this.state.filteredProxyLogs)
-      : NoProxyLogsFoundMessage;
-    return (
-      <div id="proxyLogDiv" className={proxyLogsDiv}>
-        <Toolbar className={toolbarTitle(this.state.sideBySideOrientation ? 'right' : 'bottom')}>
-          <ToolbarItem className={logsTitle(this.isFullscreen())}>Istio proxy (sidecar)</ToolbarItem>
-          <ToolbarGroup className={toolbarRight}>
-            <ToolbarItem>
-              <Tooltip key="copy_proxy_logs" position="top" content="Copy Istio proxy logs to clipboard">
-                <CopyToClipboard onCopy={this.copyProxyLogCallback} text={proxyLogs}>
-                  <Button variant={ButtonVariant.link} isInline>
-                    <KialiIcon.Copy className={defaultIconStyle} />
-                  </Button>
-                </CopyToClipboard>
-              </Tooltip>
-            </ToolbarItem>
-            <ToolbarItem className={toolbarSpace} disabled={true}>
-              <Tooltip key="expand_proxy_logs" position="top" content="Expand Istio proxy logs full screen">
-                <Button
-                  variant={ButtonVariant.link}
-                  onClick={this.openProxyFullScreenLog}
-                  isInline
-                  isDisabled={!this.hasEntries(this.state.filteredProxyLogs)}
-                >
-                  <KialiIcon.Expand className={defaultIconStyle} />
-                </Button>
-              </Tooltip>
-            </ToolbarItem>
-          </ToolbarGroup>
-        </Toolbar>
-        <textarea
-          id="proxyLogTextArea"
-          className={logsTextarea(
-            this.hasEntries(this.state.filteredProxyLogs),
-            this.state.sideBySideOrientation ? 'right' : 'bottom'
-          )}
-          ref={this.proxyLogsRef}
-          readOnly={true}
-          value={proxyLogs}
+  private getAccessLogModals = (): React.ReactFragment[] => {
+    const modals: React.ReactFragment[] = [];
+    let i = 0;
+
+    this.state.accessLogModals.forEach((v, k) => {
+      modals.push(
+        <AccessLogModal
+          key={`alm-${i++}`}
+          accessLog={v}
+          accessLogMessage={k}
+          onClose={() => this.removeAccessLogModal(k)}
         />
-      </div>
-    );
+      );
+    });
+
+    return modals;
   };
 
   private setPod = (podValue: string) => {
     const pod = this.props.pods[Number(podValue)];
-    const containerInfo = this.getContainerInfo(pod);
-    this.setState({ containerInfo: containerInfo, podValue: Number(podValue) });
-  };
-
-  private setContainer = (container: string) => {
-    this.setState({
-      containerInfo: { container: container, containerOptions: this.state.containerInfo!.containerOptions }
-    });
+    const containerNames = this.getContainers(pod);
+    this.setState({ containers: containerNames, podValue: Number(podValue) });
   };
 
   private setTailLines = (tailLines: number) => {
     this.setState({ tailLines: tailLines });
   };
 
-  private handleOrientationChange = (isChecked: boolean) => {
-    this.setState({ sideBySideOrientation: isChecked });
+  private setKebabOpen = (kebabOpen: boolean) => {
+    this.setState({ kebabOpen: kebabOpen });
   };
 
-  private handleTimestampsChange = (isChecked: boolean) => {
-    this.setState({ showTimestamps: isChecked });
+  private addAccessLogModal = (k: string, v: AccessLog) => {
+    const accessLogModals = new Map<string, AccessLog>(this.state.accessLogModals);
+    accessLogModals.set(k, v);
+    this.setState({ accessLogModals: accessLogModals });
   };
 
-  private handleRegexChange = () => {
-    this.setState({
-      useRegex: !this.state.useRegex
-    });
+  private removeAccessLogModal = (k: string) => {
+    this.state.accessLogModals.delete(k);
+    const accessLogModals = new Map<string, AccessLog>(this.state.accessLogModals);
+    this.setState({ accessLogModals: accessLogModals });
+  };
+
+  private toggleShowTimestamps = () => {
+    this.setState({ showTimestamps: !this.state.showTimestamps, kebabOpen: false });
+  };
+
+  private toggleToolbar = () => {
+    this.setState({ showToolbar: !this.state.showToolbar, kebabOpen: false });
+  };
+
+  private toggleUseRegex = () => {
+    this.setState({ useRegex: !this.state.useRegex, kebabOpen: false });
   };
 
   private doShowAndHide = () => {
-    const filteredAppLogs = this.filterLogs(this.state.rawAppLogs, this.state.showLogValue, this.state.hideLogValue);
-    const filteredProxyLogs = this.filterLogs(
-      this.state.rawProxyLogs,
-      this.state.showLogValue,
-      this.state.hideLogValue
-    );
+    const filteredLogs = this.filterLogs(this.state.rawLogs, this.state.showLogValue, this.state.hideLogValue);
     this.setState({
-      filteredAppLogs: filteredAppLogs,
-      filteredProxyLogs: filteredProxyLogs,
+      filteredLogs: filteredLogs,
       showClearShowLogButton: !!this.state.showLogValue,
       showClearHideLogButton: !!this.state.hideLogValue
     });
@@ -614,6 +666,7 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
         filteredLogs = filteredLogs.filter(le => !le.message.includes(hideValue));
       }
     }
+
     return filteredLogs;
   };
 
@@ -629,8 +682,7 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
       showError: undefined,
       showLogValue: '',
       showClearShowLogButton: false,
-      filteredAppLogs: this.filterLogs(this.state.rawAppLogs, '', this.state.hideLogValue),
-      filteredProxyLogs: this.filterLogs(this.state.rawProxyLogs, '', this.state.hideLogValue)
+      filteredLogs: this.filterLogs(this.state.rawLogs, '', this.state.hideLogValue)
     });
   };
 
@@ -662,75 +714,53 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
       hideError: undefined,
       hideLogValue: '',
       showClearHideLogButton: false,
-      filteredAppLogs: this.filterLogs(this.state.rawAppLogs, this.state.showLogValue, ''),
-      filteredProxyLogs: this.filterLogs(this.state.rawProxyLogs, this.state.showLogValue, '')
+      filteredLogs: this.filterLogs(this.state.rawLogs, this.state.showLogValue, '')
     });
   };
 
-  private copyAppLogCallback = (_text: string, _result: boolean) => {
-    this.appLogsRef.current.select();
-  };
-
-  private copyProxyLogCallback = (_text: string, _result: boolean) => {
-    this.proxyLogsRef.current.select();
-  };
-
-  private makeElementFullScreen = (elementId: string) => {
-    const screenFullAlias = screenfull as Screenfull; // this casting was necessary
-    const element = document.getElementById(elementId);
-    if (screenFullAlias.isEnabled) {
-      if (element) {
-        screenFullAlias.request(element);
-      }
-    }
-  };
-
-  private isFullscreen = () => {
-    const screenFullAlias = screenfull as Screenfull; // this casting was necessary
-    return screenFullAlias.isFullscreen;
-  };
-
-  private toggleFullscreen = (elementId: string) => {
+  private toggleFullscreen = () => {
     const screenFullAlias = screenfull as Screenfull; // this casting was necessary
     if (screenFullAlias.isFullscreen) {
       screenFullAlias.exit();
     } else {
-      this.makeElementFullScreen(elementId);
+      const element = document.getElementById('logs');
+      if (screenFullAlias.isEnabled) {
+        if (element) {
+          screenFullAlias.request(element);
+        }
+      }
     }
   };
 
-  private openAppFullScreenLog = () => {
-    this.toggleFullscreen('appLogDiv');
-  };
+  private getContainers = (pod: Pod): Container[] => {
+    // consistently position the proxy container first, if it (they?) exist.
+    let podContainers = pod.istioContainers || [];
+    let containers = podContainers.map(c => {
+      const name = c.name;
+      const displayName = c.name;
 
-  private openProxyFullScreenLog = () => {
-    this.toggleFullscreen('proxyLogDiv');
-  };
-
-  private getContainerInfo = (pod: Pod): ContainerInfo => {
-    let containers = pod.containers ? pod.containers : [];
-    containers.push(...(pod.istioContainers ? pod.istioContainers : []));
-    containers = containers.filter(c => c.name !== 'istio-proxy');
-    const options: { [key: string]: string } = {};
-
-    if (containers.length === 0) {
-      options[NoAppContainer] = NoAppContainer;
-      return { container: NoAppContainer, containerOptions: options };
-    }
-
-    const containerNames = containers.map(c => c.name);
-    containerNames.forEach(n => {
-      const version = pod.appLabel && pod.labels ? pod.labels[serverConfig.istioLabels.versionLabelName] : undefined;
-      options[n] = !!version ? `${n}-${version}` : n;
+      return { color: proxyContainerColor, displayName: displayName, isProxy: true, isSelected: true, name: name };
     });
 
-    return { container: containerNames[0], containerOptions: options };
+    podContainers = pod.containers || [];
+    containers.push(
+      ...podContainers.map((c, i) => {
+        const name = c.name;
+        const version = pod.appLabel && pod.labels ? pod.labels[serverConfig.istioLabels.versionLabelName] : undefined;
+        const displayName = !version ? name : `${name}-${version}`;
+        const color = appContainerColors[i % appContainerColors.length];
+
+        return { color: color, isProxy: false, isSelected: true, displayName: displayName, name: name };
+      })
+    );
+
+    return containers;
   };
 
   private fetchLogs = (
     namespace: string,
     podName: string,
-    container: string,
+    containers: Container[],
     tailLines: number,
     timeRange: TimeRange
   ) => {
@@ -743,45 +773,51 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
     if (endTime < now) {
       duration = Math.floor(timeRangeDates[1].getTime() / 1000) - sinceTime;
     }
-    const appPromise: Promise<Response<PodLogs>> =
-      container !== NoAppContainer
-        ? getPodLogs(namespace, podName, container, tailLines, sinceTime, duration)
-        : Promise.resolve({ data: { entries: [] } });
-    const proxyPromise: Promise<Response<PodLogs>> = getPodLogs(
-      namespace,
-      podName,
-      'istio-proxy',
-      tailLines,
-      sinceTime,
-      duration
-    );
 
-    this.loadAppLogsPromise = makeCancelablePromise(Promise.all([appPromise]));
-    this.loadProxyLogsPromise = makeCancelablePromise(Promise.all([proxyPromise]));
+    const selectedContainers = containers.filter(c => c.isSelected);
+    const containerPromises = selectedContainers.map(c => {
+      return getPodLogs(namespace, podName, c.name, tailLines, sinceTime, duration, c.isProxy);
+    });
 
-    this.loadAppLogsPromise.promise
-      .then(response => {
-        const rawAppLogs = response[0].data.entries;
-        const filteredAppLogs = this.filterLogs(rawAppLogs, this.state.showLogValue, this.state.hideLogValue);
+    this.promises
+      .registerAll('logs', containerPromises)
+      .then(responses => {
+        let rawLogs: LogEntry[] = [];
+
+        for (let i = 0; i < responses.length; i++) {
+          const response = responses[i];
+          const containerRawLogs = response.data.entries as LogEntry[];
+          if (!containerRawLogs) {
+            continue;
+          }
+          const color = selectedContainers[i].color;
+          containerRawLogs.forEach(le => (le.color = color));
+          rawLogs.push(...containerRawLogs);
+        }
+
+        const filteredLogs = this.filterLogs(rawLogs, this.state.showLogValue, this.state.hideLogValue);
+        const sortedFilteredLogs = filteredLogs.sort((a, b) => {
+          return a.timestampUnix - b.timestampUnix;
+        });
 
         this.setState({
-          loadingAppLogs: false,
-          rawAppLogs: rawAppLogs,
-          filteredAppLogs: filteredAppLogs
+          loadingLogs: false,
+          rawLogs: rawLogs,
+          filteredLogs: sortedFilteredLogs
         });
-        this.appLogsRef.current.scrollTop = this.appLogsRef.current.scrollHeight;
+
         return;
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.debug('AppLogs: Ignore fetch error (canceled).');
-          this.setState({ loadingAppLogs: false });
+          console.debug('Logs: Ignore fetch error (canceled).');
+          this.setState({ loadingLogs: false });
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
         this.setState({
-          loadingAppLogs: false,
-          rawAppLogs: [
+          loadingLogs: false,
+          rawLogs: [
             {
               severity: 'Error',
               timestamp: Date.toString(),
@@ -792,49 +828,18 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
         });
       });
 
-    this.loadProxyLogsPromise.promise
-      .then(response => {
-        const rawProxyLogs = response[0].data.entries;
-        const filteredProxyLogs = this.filterLogs(rawProxyLogs, this.state.showLogValue, this.state.hideLogValue);
-
-        this.setState({
-          loadingProxyLogs: false,
-          rawProxyLogs: rawProxyLogs,
-          filteredProxyLogs: filteredProxyLogs
-        });
-        this.proxyLogsRef.current.scrollTop = this.proxyLogsRef.current.scrollHeight;
-        return;
-      })
-      .catch(error => {
-        if (error.isCanceled) {
-          console.debug('ProxyLogs: Ignore fetch error (canceled).');
-          this.setState({ loadingProxyLogs: false });
-          return;
-        }
-        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
-        this.setState({
-          loadingProxyLogs: false,
-          rawProxyLogs: [
-            {
-              severity: 'Error',
-              timestamp: Date.toString(),
-              timestampUnix: Date.now(),
-              message: `Failed to fetch proxy logs: ${errorMsg}`
-            }
-          ]
-        });
-      });
-
     this.setState({
-      loadingAppLogs: true,
-      loadingProxyLogs: true,
-      rawAppLogs: [],
-      rawProxyLogs: []
+      loadingLogs: true,
+      rawLogs: []
     });
   };
 
   private entriesToString = (entries: LogEntry[]): string => {
-    return entries.map(le => (this.state.showTimestamps ? `${le.timestamp} ${le.message}` : le.message)).join('\n');
+    return entries.map(le => this.entryToString(le)).join('\n');
+  };
+
+  private entryToString = (le: LogEntry): string => {
+    return this.state.showTimestamps ? `${le.timestamp} ${le.message}` : le.message;
   };
 
   private hasEntries = (entries: LogEntry[]): boolean => !!entries && entries.length > 0;

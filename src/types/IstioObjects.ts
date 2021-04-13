@@ -3,6 +3,7 @@ import { ResourcePermissions } from './Permissions';
 import { ServicePort } from './ServiceInfo';
 import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
+import { PFColorVal } from 'components/Pf/PfColors';
 
 // Common types
 
@@ -140,7 +141,69 @@ export interface Pod {
   proxyStatus?: ProxyStatus;
 }
 
+// models Engarde Istio proxy AccessLog
+export type AccessLog = {
+  // Authority is the request authority header %REQ(:AUTHORITY)%
+  authority: string;
+  // BytesReceived in response to the request %BYTES_RECEIVED%
+  bytes_received: string;
+  // BytesSent as part of the request body %BYTES_SENT%
+  bytes_sent: string;
+  // Duration of the request %DURATION%
+  duration: string;
+  // ForwardedFor is the X-Forwarded-For header value %REQ(FORWARDED-FOR)%
+  forwarded_for: string;
+  // Method is the HTTP method %REQ(:METHOD)%
+  method: string;
+  // Protocol can either be HTTP or TCP %PROTOCOL%
+  protocol: string;
+  // RequestId is the envoy generated X-REQUEST-ID header "%REQ(X-REQUEST-ID)%"
+  request_id: string;
+  // ResponseFlags provide any additional details about the response or connection, if any. %RESPONSE_FLAGS%
+  response_flags: string;
+  // StatusCode is the response status code %RESPONSE_CODE%
+  status_code: string;
+  // TcpServiceTime is the time the tcp request took
+  tcp_service_time: string;
+  // Timestamp is the Start Time %START_TIME%
+  timestamp: string;
+  // UpstreamService is the upstream host the request is intended for %UPSTREAM_HOST%
+  upstream_service: string;
+  // UpstreamServiceTime is the time taken to reach target host %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%
+  upstream_service_time: string;
+  // UpstreamCluster is the upstream envoy cluster being reached %UPSTREAM_CLUSTER%
+  upstream_cluster: string;
+  // UpstreamLocal is the local address of the upstream connection %UPSTREAM_LOCAL_ADDRESS%
+  upstream_local: string;
+  // DownstreamLocal is the local address of the downstream connection %DOWNSTREAM_LOCAL_ADDRESS%
+  downstream_local: string;
+  // DownstreamRemote is the remote address of the downstream connection %DOWNSTREAM_REMOTE_ADDRESS%
+  downstream_remote: string;
+  // RequestedServer is the String value set on ssl connection socket for Server Name Indication (SNI) %REQUESTED_SERVER_NAME%
+  requested_server: string;
+  // RouteName is the name of the VirtualService route which matched this request %ROUTE_NAME%
+  route_name: string;
+  // UpstreamFailureReason is the upstream transport failure reason %UPSTREAM_TRANSPORT_FAILURE_REASON%
+  upstream_failure_reason: string;
+  // UriParam is the params field of the request path
+  uri_param: string;
+  // UriPath is the base request path
+  uri_path: string;
+  // UserAgent is the request User Agent field %REQ(USER-AGENT)%"
+  user_agent: string;
+  // The following fields are unused/ignored
+  //
+  // MixerStatus is the dynamic metadata information for the mixer status %DYNAMIC_METADATA(mixer:status)%
+  // mixer_status: string;
+  // OriginalMessage is the original raw log line.
+  // original_message: string;
+  // ParseError provides a string value if a parse error occured.
+  // parse_error: string;
+};
+
 export type LogEntry = {
+  accessLog?: AccessLog;
+  color?: PFColorVal;
   message: string;
   severity: string;
   timestamp: string;

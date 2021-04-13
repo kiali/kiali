@@ -489,7 +489,8 @@ export const getPodLogs = (
   container?: string,
   tailLines?: number,
   sinceTime?: number,
-  duration?: DurationInSeconds
+  duration?: DurationInSeconds,
+  isProxy?: boolean
 ) => {
   const params: any = {};
   if (container) {
@@ -504,6 +505,8 @@ export const getPodLogs = (
   if (duration && duration > 0) {
     params.duration = `${duration}s`;
   }
+  params.isProxy = !!isProxy;
+
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };
 
