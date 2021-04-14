@@ -297,7 +297,7 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// The token has been validated via k8s TokenReview, extract the subject for the ui to display
 	// from either the subject (via the TokenReview) or the impersonation header
-	tokenSubject := "token" // Set a default value
+	var tokenSubject string
 
 	if authInfo.Impersonate == "" {
 		tokenSubject = subjectFromToken
