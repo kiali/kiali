@@ -47,6 +47,7 @@ type PrometheusConfig struct {
 // help them interact with the system.
 type PublicConfig struct {
 	ClusterInfo              ClusterInfo                     `json:"clusterInfo,omitempty"`
+	Clusters                 map[string]business.Cluster     `json:"clusters,omitempty"`
 	Extensions               Extensions                      `json:"extensions,omitempty"`
 	HealthConfig             config.HealthConfig             `json:"healthConfig,omitempty"`
 	InstallationTag          string                          `json:"installationTag,omitempty"`
@@ -70,6 +71,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	promConfig := getPrometheusConfig()
 	config := config.Get()
 	publicConfig := PublicConfig{
+		Clusters: make(map[string]business.Cluster),
 		Extensions: Extensions{
 			Iter8: Iter8Config{
 				Enabled:   config.Extensions.Iter8.Enabled,
@@ -103,6 +105,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		if getLayerErr == nil {
 			isMeshIdSet, mcErr := layer.Mesh.IsMeshConfigured()
 			if isMeshIdSet {
+				// Resolve home cluster
 				cluster, resolveClusterErr := layer.Mesh.ResolveKialiControlPlaneCluster(nil)
 				if cluster != nil {
 					publicConfig.ClusterInfo = ClusterInfo{
@@ -113,6 +116,16 @@ func Config(w http.ResponseWriter, r *http.Request) {
 					log.Warningf("Failure while resolving cluster info: %s", resolveClusterErr.Error())
 				} else {
 					log.Info("Cluster ID couldn't be resolved. Most likely, no Cluster ID is set in the service mesh control plane configuration.")
+				}
+
+				// Fetch the list of all clusters in the mesh
+				// One usage of this data is to cross-link Kiali instances, when possible.
+				clusters, resolveAllClustersErr := layer.Mesh.GetClusters(r)
+				for _, c := range clusters {
+					publicConfig.Clusters[c.Name] = c
+				}
+				if resolveAllClustersErr != nil {
+					log.Warningf("Failure while listing clusters in the mesh: %s", resolveAllClustersErr.Error())
 				}
 			} else if mcErr != nil {
 				log.Warningf("Failure when checking if mesh-id is configured: %s", mcErr.Error())
