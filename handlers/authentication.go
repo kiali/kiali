@@ -244,7 +244,7 @@ func performOpenIdAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// Now that we know that the OpenId token is valid, build our session cookie
 	// and send it to the browser.
-	tokenClaims := business.BuildOpenIdJwtClaims(openIdParams)
+	tokenClaims := business.BuildOpenIdJwtClaims(openIdParams, false)
 	tokenString, err := config.GetSignedTokenString(tokenClaims)
 	if err != nil {
 		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
@@ -297,13 +297,11 @@ func performHeaderAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 	// The token has been validated via k8s TokenReview, extract the subject for the ui to display
 	// from either the subject (via the TokenReview) or the impersonation header
-	tokenSubject := "token" // Set a default value
+	var tokenSubject string
 
 	if authInfo.Impersonate == "" {
-		if err == nil {
-			tokenSubject = subjectFromToken
-			tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
-		}
+		tokenSubject = subjectFromToken
+		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
 	} else {
 		tokenSubject = authInfo.Impersonate
 	}
@@ -509,18 +507,26 @@ func checkOpenIdSession(w http.ResponseWriter, r *http.Request) (int, string) {
 		return http.StatusInternalServerError, ""
 	}
 
-	// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
-	parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
-	if err != nil {
-		log.Warningf("Cannot parse sid claim of the Kiali token!: %v", err)
-		return http.StatusInternalServerError, ""
-	}
-	if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
-		log.Warning("Kiali token rejected because of subject claim mismatch")
-		return http.StatusUnauthorized, ""
+	conf := config.Get()
+
+	// If the id_token is being used to make calls to the cluster API, it's known that
+	// this token is a JWT and some of its structure; so, it's possible to do some sanity
+	// checks on the token. However, if the access_token is being used, this token is opaque
+	// and these sanity checks must be skipped.
+	if conf.Auth.OpenId.ApiToken != "access_token" {
+		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
+		parsedIdToken, _, err := new(jwt.Parser).ParseUnverified(claims.SessionId, jwt.MapClaims{})
+		if err != nil {
+			log.Warningf("Cannot parse sid claim of the Kiali token!: %v", err)
+			return http.StatusInternalServerError, ""
+		}
+		if userClaim, ok := parsedIdToken.Claims.(jwt.MapClaims)[config.Get().Auth.OpenId.UsernameClaim]; ok && claims.Subject != userClaim {
+			log.Warning("Kiali token rejected because of subject claim mismatch")
+			return http.StatusUnauthorized, ""
+		}
 	}
 
-	if !config.Get().Auth.OpenId.DisableRBAC {
+	if !conf.Auth.OpenId.DisableRBAC {
 		// If RBAC is ENABLED, check that the user has privilges on the cluster.
 		_, err = business.Namespace.GetNamespaces()
 		if err != nil {
@@ -798,6 +804,15 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
 		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
 	)
+
+	if len(conf.Auth.OpenId.AdditionalRequestParams) > 0 {
+		urlParams := make([]string, 0, len(conf.Auth.OpenId.AdditionalRequestParams))
+		for k, v := range conf.Auth.OpenId.AdditionalRequestParams {
+			urlParams = append(urlParams, fmt.Sprintf("%s=%s", url.QueryEscape(k), url.QueryEscape(v)))
+		}
+		redirectUri = fmt.Sprintf("%s&%s", redirectUri, strings.Join(urlParams, "&"))
+	}
+
 	http.Redirect(w, r, redirectUri, http.StatusFound)
 }
 
@@ -843,6 +858,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
+	useAccessToken := false
 	if conf.Auth.OpenId.DisableRBAC {
 		// When RBAC is on, we delegate some validations to the Kubernetes cluster. However, if RBAC is off
 		// the token must be fully validated, as we no longer pass the OpenId token to the cluster API server.
@@ -856,7 +872,12 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		// Check if user trying to login has enough privileges to login. This check is only done if
 		// config indicates that RBAC is on. For cases where RBAC is off, we simply assume that the
 		// Kiali ServiceAccount token should have enough privileges and skip this privilege check.
-		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(openIdParams.IdToken)
+		apiToken := openIdParams.IdToken
+		if conf.Auth.OpenId.ApiToken == "access_token" {
+			apiToken = openIdParams.AccessToken
+			useAccessToken = true
+		}
+		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(apiToken)
 		if detailedError != nil {
 			RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
 			return true
@@ -876,7 +897,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	// set a cookie with the ciphered string. Yet, we use the
 	// "IanaClaims" type just for convenience to avoid creating new types and
 	// to bring some type convergence on types for the auth source code.
-	sessionData := business.BuildOpenIdJwtClaims(openIdParams)
+	sessionData := business.BuildOpenIdJwtClaims(openIdParams, useAccessToken)
 	sessionDataJson, err := json.Marshal(sessionData)
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to marshal json", err.Error())

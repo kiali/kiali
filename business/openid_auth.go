@@ -44,6 +44,7 @@ type OpenIdMetadata struct {
 }
 
 type OpenIdCallbackParams struct {
+	AccessToken   string
 	Code          string
 	ExpiresOn     time.Time
 	IdToken       string
@@ -58,9 +59,14 @@ var cachedOpenIdKeySet *jose.JSONWebKeySet
 var cachedOpenIdMetadata *OpenIdMetadata
 var openIdFlightGroup singleflight.Group
 
-func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams) *config.IanaClaims {
+func BuildOpenIdJwtClaims(openIdParams *OpenIdCallbackParams, useAccessToken bool) *config.IanaClaims {
+	sessionId := openIdParams.IdToken
+	if useAccessToken {
+		sessionId = openIdParams.AccessToken
+	}
+
 	return &config.IanaClaims{
-		SessionId: openIdParams.IdToken,
+		SessionId: sessionId,
 		StandardClaims: jwt.StandardClaims{
 			Subject:   openIdParams.Subject,
 			ExpiresAt: openIdParams.ExpiresOn.Unix(),
@@ -226,6 +232,7 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 	authCookie, err := r.Cookie(config.TokenCookieName + "-aes")
 	if err != nil {
 		if err == http.ErrNoCookie {
+			log.Debugf("The AES cookie is mising.")
 			return nil, nil
 		}
 		return nil, err
@@ -499,7 +506,8 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 
 	// Parse token response
 	var tokenResponse struct {
-		IdToken string `json:"id_token"`
+		IdToken     string `json:"id_token"`
+		AccessToken string `json:"access_token"`
 	}
 
 	err = json.Unmarshal(rawTokenResponse, &tokenResponse)
@@ -512,6 +520,7 @@ func RequestOpenIdToken(openIdParams *OpenIdCallbackParams, redirect_uri string)
 	}
 
 	openIdParams.IdToken = tokenResponse.IdToken
+	openIdParams.AccessToken = tokenResponse.AccessToken
 	return nil
 }
 

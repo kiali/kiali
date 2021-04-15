@@ -60,9 +60,8 @@ const (
 )
 
 const (
-	DashboardsDiscoveryEnabled  = "true"
-	DashboardsDiscoveryDisabled = "false"
-	DashboardsDiscoveryAuto     = "auto"
+	DashboardsDiscoveryEnabled = "true"
+	DashboardsDiscoveryAuto    = "auto"
 )
 
 // Global configuration for the application.
@@ -279,19 +278,21 @@ type OpenShiftConfig struct {
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
-	ApiProxy              string   `yaml:"api_proxy,omitempty"`
-	ApiProxyCAData        string   `yaml:"api_proxy_ca_data,omitempty"`
-	AuthenticationTimeout int      `yaml:"authentication_timeout,omitempty"`
-	AuthorizationEndpoint string   `yaml:"authorization_endpoint,omitempty"`
-	ClientId              string   `yaml:"client_id,omitempty"`
-	ClientSecret          string   `yaml:"client_secret,omitempty"`
-	DisableRBAC           bool     `yaml:"disable_rbac,omitempty"`
-	HTTPProxy             string   `yaml:"http_proxy,omitempty"`
-	HTTPSProxy            string   `yaml:"https_proxy,omitempty"`
-	InsecureSkipVerifyTLS bool     `yaml:"insecure_skip_verify_tls,omitempty"`
-	IssuerUri             string   `yaml:"issuer_uri,omitempty"`
-	Scopes                []string `yaml:"scopes,omitempty"`
-	UsernameClaim         string   `yaml:"username_claim,omitempty"`
+	AdditionalRequestParams map[string]string `yaml:"additional_request_params,omitempty"`
+	ApiProxy                string            `yaml:"api_proxy,omitempty"`
+	ApiProxyCAData          string            `yaml:"api_proxy_ca_data,omitempty"`
+	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
+	ApiToken                string            `yaml:"api_token,omitempty"`
+	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
+	ClientId                string            `yaml:"client_id,omitempty"`
+	ClientSecret            string            `yaml:"client_secret,omitempty"`
+	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
+	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
+	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
+	InsecureSkipVerifyTLS   bool              `yaml:"insecure_skip_verify_tls,omitempty"`
+	IssuerUri               string            `yaml:"issuer_uri,omitempty"`
+	Scopes                  []string          `yaml:"scopes,omitempty"`
+	UsernameClaim           string            `yaml:"username_claim,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -379,17 +380,19 @@ func NewConfig() (c *Config) {
 		Auth: AuthConfig{
 			Strategy: "token",
 			OpenId: OpenIdConfig{
-				ApiProxy:              "",
-				ApiProxyCAData:        "",
-				AuthenticationTimeout: 300,
-				AuthorizationEndpoint: "",
-				ClientId:              "",
-				ClientSecret:          "",
-				DisableRBAC:           false,
-				InsecureSkipVerifyTLS: false,
-				IssuerUri:             "",
-				Scopes:                []string{"openid", "profile", "email"},
-				UsernameClaim:         "sub",
+				AdditionalRequestParams: map[string]string{},
+				ApiProxy:                "",
+				ApiProxyCAData:          "",
+				AuthenticationTimeout:   300,
+				ApiToken:                "id_token",
+				AuthorizationEndpoint:   "",
+				ClientId:                "",
+				ClientSecret:            "",
+				DisableRBAC:             false,
+				InsecureSkipVerifyTLS:   false,
+				IssuerUri:               "",
+				Scopes:                  []string{"openid", "profile", "email"},
+				UsernameClaim:           "sub",
 			},
 			OpenShift: OpenShiftConfig{
 				ClientIdPrefix: "kiali",
@@ -695,24 +698,6 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	log.Debugf("Writing YAML config to [%s]", filename)
 	err = ioutil.WriteFile(filename, []byte(fileContent), 0640)
 	return
-}
-
-// GetIstioNamespaces returns all Istio namespaces, less the exclusions
-func GetIstioNamespaces(exclude []string) []string {
-	excludeMap := map[string]bool{}
-	for _, e := range exclude {
-		excludeMap[e] = true
-	}
-	result := []string{}
-	if _, found := excludeMap[configuration.IstioNamespace]; !found {
-		result = append(result, configuration.IstioNamespace)
-	}
-	for _, ns := range configuration.IstioComponentNamespaces {
-		if _, found := excludeMap[ns]; !found {
-			result = append(result, ns)
-		}
-	}
-	return result
 }
 
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
