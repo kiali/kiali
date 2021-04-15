@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { NodeContextMenuProps } from '../CytoscapeContextMenu';
-import { Paths } from '../../../config';
-import { style } from 'typestyle';
-import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
-import { JaegerInfo } from 'types/JaegerInfo';
+import { style } from 'typestyle';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+
 import history from 'app/History';
+import { NodeType, DecoratedGraphNodeData, UNKNOWN } from 'types/Graph';
+import { JaegerInfo } from 'types/JaegerInfo';
+import { KialiAppState } from 'store/Store';
+import { Paths, serverConfig } from 'config';
+import { NodeContextMenuProps } from '../CytoscapeContextMenu';
 
 type ReduxProps = {
   jaegerInfo?: JaegerInfo;
@@ -49,10 +51,11 @@ const graphContextMenuItemLinkStyle = style({
 });
 
 type Props = NodeContextMenuProps & ReduxProps;
-type LinkParams = { namespace: string; name: string; type: string };
+type LinkParams = { cluster: string; namespace: string; name: string; type: string };
 
 export class NodeContextMenu extends React.PureComponent<Props> {
   static derivedValuesFromProps(node: DecoratedGraphNodeData): LinkParams | undefined {
+    const cluster: string = node.cluster;
     const namespace: string = node.namespace;
     let name: string | undefined = undefined;
     let type: string | undefined = undefined;
@@ -78,7 +81,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
         break;
     }
 
-    return type && name ? { namespace, type, name } : undefined;
+    return type && name ? { cluster, namespace, type, name } : undefined;
   }
 
   createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
@@ -89,13 +92,22 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       target
     };
 
+    let item: any;
+    if (external) {
+      // Linter is not taking care that 'title' is passed as a property
+      // eslint-disable-next-line
+      item = (
+        <a href={href} rel="noreferrer noopener" {...commonLinkProps}>
+          {commonLinkProps.children} <ExternalLinkAltIcon/>
+        </a>
+      );
+    } else {
+      item = (<Link to={href} {...commonLinkProps} />);
+    }
+
     return (
-      <div className={graphContextMenuItemStyle}>
-        {
-          // Linter is not taking care that 'title' is passed as a property
-          // eslint-disable-next-line
-          external ? <a href={href} {...commonLinkProps} /> : <Link to={href} {...commonLinkProps} />
-        }
+      <div key={title} className={graphContextMenuItemStyle}>
+        {item}
       </div>
     );
   }
@@ -109,15 +121,40 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       return null;
     }
 
-    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
+    let buildMenu = false;
+    let menuOptions: React.ReactNode = null;
+    if (linkParams.cluster === UNKNOWN || linkParams.cluster.length === 0 || linkParams.cluster === serverConfig.clusterInfo?.name) {
+      // Node is for "home" cluster. Build menu entries as usual.
+      buildMenu = true;
+    } else {
+      // Node represents a resource in a remote cluster.
+      // Check if there is a reachable remote Kiali. If so, build the menu; else, put a note.
+      const cluster = serverConfig.clusters[linkParams.cluster];
+      if (cluster && cluster.kialiInstances?.some(instance => instance.url.length !== 0)) {
+        buildMenu = true;
+      } else {
+        menuOptions = (
+          <p>No remote links, Kiali is not available on the <strong>{linkParams.cluster}</strong> cluster.</p>
+        );
+      }
+    }
+
+    if (buildMenu) {
+      const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
+      menuOptions = (
+        <>
+          <div className={graphContextMenuSubTitleStyle}>Show</div>
+          {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
+        </>
+      );
+    }
 
     return (
       <div className={graphContextMenuContainerStyle}>
         <div className={graphContextMenuTitleStyle}>
           <strong>{linkParams.name}</strong>
         </div>
-        <div className={graphContextMenuSubTitleStyle}>Show</div>
-        {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
+        {menuOptions}
       </div>
     );
   }
@@ -155,8 +192,8 @@ export const getOptions = (node: DecoratedGraphNodeData, jaegerInfo?: JaegerInfo
 };
 
 const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInfo): ContextMenuOption[] => {
-  const options: ContextMenuOption[] = [];
-  const { namespace, type, name } = linkParams;
+  let options: ContextMenuOption[] = [];
+  const { namespace, type, name, cluster } = linkParams;
   const detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
 
   options.push({ text: 'Details', url: detailsPageUrl });
@@ -182,6 +219,24 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
           external: true,
           target: '_blank'
         });
+      }
+    }
+  }
+
+  if (cluster.length !== 0 && cluster !== serverConfig.clusterInfo?.name) {
+    const externalClusterInfo = serverConfig.clusters[cluster];
+    const kialiInfo = externalClusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
+    if (kialiInfo === undefined) {
+      options = options.filter(o => o.target === '_blank');
+    } else {
+      const externalKialiUrl = kialiInfo.url.replace(/\/$/g, '') + '/console';
+
+      for (let idx = 0; idx < options.length; idx++) {
+        if (options[idx].target !== '_blank') {
+          options[idx].external = true;
+          options[idx].target = '_blank';
+          options[idx].url = externalKialiUrl + options[idx].url;
+        }
       }
     }
   }

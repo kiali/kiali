@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
-import { NodeType, GraphNodeData, DestService, BoxByType } from '../../types/Graph';
-import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { KialiIcon } from 'config/KialiIcon';
 import { Tooltip, Badge, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
-import { Health } from 'types/Health';
+import { CyNode, decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
+import KialiPageLink from 'components/Link/KialiPageLink';
+import { KialiIcon } from 'config/KialiIcon';
+import { NodeType, GraphNodeData, DestService, BoxByType } from 'types/Graph';
+import { Health } from 'types/Health';
 
 const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   switch (nodeType || nodeData.nodeType) {
@@ -136,33 +136,13 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
 
   if (link && !nodeData.isInaccessible) {
     return (
-      <Link key={key} to={link}>
+      <KialiPageLink key={key} href={link} cluster={cluster}>
         {displayName}
-      </Link>
-    );
+      </KialiPageLink>
+    )
   }
 
   return <span key={key}>{displayName}</span>;
-};
-
-type RenderLinkProps = {
-  nodeData: GraphNodeData;
-  nodeType?: NodeType;
-};
-
-export const RenderLink = (props: RenderLinkProps) => {
-  const link = getLink(props.nodeData, props.nodeType);
-
-  return (
-    <>
-      {link}
-      {props.nodeData.isInaccessible && (
-        <span style={{ paddingLeft: '2px' }}>
-          <KialiIcon.MtlsLock />
-        </span>
-      )}
-    </>
-  );
 };
 
 export const renderBadgedHost = (host: string) => {

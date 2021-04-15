@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -109,7 +110,7 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const options = getOptions(nodeData).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text}
+          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon/>}
         </DropdownItem>
       );
     });

@@ -1,4 +1,5 @@
 import { DurationInSeconds } from './Common';
+import { MeshCluster } from './Mesh';
 
 export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName';
 
@@ -62,6 +63,7 @@ export interface ToleranceConfig {
 
 export interface ServerConfig {
   clusterInfo?: ClusterInfo;
+  clusters: { [key: string]: MeshCluster };
   extensions?: Extensions;
   healthConfig: HealthConfig;
   installationTag?: string;

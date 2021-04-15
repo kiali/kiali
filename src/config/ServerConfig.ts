@@ -49,6 +49,8 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // Set some defaults. Mainly used in tests, because
 // these will be overwritten on user login.
 let serverConfig: ComputedServerConfig = {
+  clusters: {},
+  durations: {},
   healthConfig: {
     rate: []
   },
@@ -70,8 +72,7 @@ let serverConfig: ComputedServerConfig = {
   prometheus: {
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
-  },
-  durations: {}
+  }
 };
 computeValidDurations(serverConfig);
 export { serverConfig };

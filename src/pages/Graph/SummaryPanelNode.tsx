@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { renderDestServicesLinks, renderBadgedLink, renderHealth, renderBadgedHost } from './SummaryLink';
 import { NodeType, SummaryPanelPropType, DecoratedGraphNodeData, DestService } from '../../types/Graph';
 import { summaryHeader, summaryPanel, summaryBodyTabs, summaryFont } from './SummaryPanelCommon';
@@ -67,7 +68,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const options = getOptions(nodeData, this.props.jaegerState.info).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text}
+          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon/>}
         </DropdownItem>
       );
     });
@@ -178,9 +179,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     }
 
     destServices.forEach(ds => {
-      const service = ds.name;
-      const displayName = service;
-      entries.push(renderBadgedHost(displayName));
+      entries.push(renderBadgedHost(ds.name));
     });
 
     return entries;

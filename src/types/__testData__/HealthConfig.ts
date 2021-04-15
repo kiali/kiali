@@ -1,6 +1,7 @@
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
+  clusters: {},
   kialiFeatureFlags: {
     istioInjectionAction: true
   },

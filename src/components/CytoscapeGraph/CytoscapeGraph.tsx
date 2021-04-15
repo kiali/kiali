@@ -1,12 +1,11 @@
 import * as Cy from 'cytoscape';
+import { Core } from 'cytoscape';
+import { EdgeSingular } from 'cytoscape';
+import { NodeSingular } from 'cytoscape';
 import * as React from 'react';
 import ReactResizeDetector from 'react-resize-detector';
-import Namespace from '../../types/Namespace';
-import { GraphHighlighter } from './graphs/GraphHighlighter';
-import EmptyGraphLayout from './EmptyGraphLayout';
-import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
-import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
+import { GraphData } from 'pages/Graph/GraphPage';
+import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import {
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
@@ -20,18 +19,19 @@ import {
   NodeType,
   UNKNOWN
 } from '../../types/Graph';
-import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
-import FocusAnimation from './FocusAnimation';
-import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
-import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
-import { NodeSingular } from 'cytoscape';
-import { EdgeSingular } from 'cytoscape';
-import { Core } from 'cytoscape';
-import { GraphData } from 'pages/Graph/GraphPage';
 import { JaegerTrace } from 'types/JaegerInfo';
-import { showTrace, hideTrace } from './CytoscapeTrace';
-import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
+import Namespace from '../../types/Namespace';
 import { addInfo } from 'utils/AlertUtils';
+import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
+import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
+import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
+import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
+import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
+import { showTrace, hideTrace } from './CytoscapeTrace';
+import EmptyGraphLayout from './EmptyGraphLayout';
+import FocusAnimation from './FocusAnimation';
+import { GraphHighlighter } from './graphs/GraphHighlighter';
+import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
 
 type CytoscapeGraphProps = {
   boxByCluster: boolean;

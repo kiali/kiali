@@ -67,6 +67,7 @@ export const generateRequestHealth = (
 };
 
 export const serverRateConfig = {
+  clusters: {},
   kialiFeatureFlags: {
     istioInjectionAction: true
   },
