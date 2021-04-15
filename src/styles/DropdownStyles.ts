@@ -11,9 +11,8 @@ export const menuStyle = style({
   fontSize: '14px'
 });
 
-// this emulates Select component .pf-c-select__menu
+// this emulates Select component .pf-c-select__menu but w/o cursor manipulation
 export const menuEntryStyle = style({
-  cursor: 'not-allowed',
   display: 'inline-block',
   width: '15.5em'
 });

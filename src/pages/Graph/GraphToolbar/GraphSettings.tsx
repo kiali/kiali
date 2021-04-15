@@ -379,7 +379,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
           ))}
           <div className={titleStyle}>Show</div>
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} style={{ display: 'inline-block' }}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
@@ -398,7 +398,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
           ))}
           <div className={titleStyle}>Show Badges</div>
           {badgeOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+            <div key={item.id} style={{ display: 'inline-block' }}>
               <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
               </label>
