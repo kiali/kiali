@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +28,12 @@ import (
 
 const (
 	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
+
+	// Maximum size of session cookies. This is 3.5K.
+	// Major browsers limit cookie size to 4K, but this includes
+	// metadata like expiration date, the cookie name, etc. So
+	// use 3.5K for cookie data and leave 0.5K for metadata.
+	SessionCookieMaxSize = 3584
 )
 
 type OpenIdMetadata struct {
@@ -238,7 +245,49 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 		return nil, err
 	}
 
-	cipherSessionData, err := base64.StdEncoding.DecodeString(authCookie.Value)
+	// Initially, take the value of the "-aes" cookie as the session data.
+	// This helps a smoother transition from a previous version of Kiali where
+	// no support for multiple cookies existed and no "-chunks" cookie was set.
+	// With this, we tolerate the absence of the "-chunks" cookie to not force
+	// users to re-authenticate if somebody was already logged into Kiali.
+	base64SessionData := authCookie.Value
+
+	// Check if session data is broken in chunks. If it is, read all chunks
+	numChunksCookie, chunksCookieErr := r.Cookie(config.TokenCookieName + "-chunks")
+	if chunksCookieErr == nil {
+		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
+		if convErr != nil {
+			return nil, convErr
+		}
+
+		// It's known that major browsers have a limit of 180 cookies per domain.
+		if numChunks <= 0 || numChunks > 180 {
+			return nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
+		}
+
+		// Read session data chunks and save into a buffer
+		var sessionDataBuffer strings.Builder
+		sessionDataBuffer.Grow(numChunks * SessionCookieMaxSize)
+		sessionDataBuffer.WriteString(base64SessionData)
+
+		for i := 1; i < numChunks; i++ {
+			cookieName := fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i)
+			authChunkCookie, chunkErr := r.Cookie(cookieName)
+			if chunkErr != nil {
+				return nil, chunkErr
+			}
+
+			sessionDataBuffer.WriteString(authChunkCookie.Value)
+		}
+
+		// Get the concatenated session data
+		base64SessionData = sessionDataBuffer.String()
+	} else if chunksCookieErr != http.ErrNoCookie {
+		// Tolerate a "no cookie" error, but if error is something else, throw up the error.
+		return nil, chunksCookieErr
+	}
+
+	cipherSessionData, err := base64.StdEncoding.DecodeString(base64SessionData)
 	if err != nil {
 		return nil, err
 	}
@@ -559,8 +608,6 @@ func ValidateOpenTokenInHouse(openIdParams *OpenIdCallbackParams) error {
 	if err != nil {
 		return err
 	}
-
-	log.Debugf("Raw token to validate: %s", openIdParams.IdToken)
 
 	idTokenClaims := openIdParams.ParsedIdToken.Claims.(jwt.MapClaims)
 
