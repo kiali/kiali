@@ -37,7 +37,7 @@ For large changes it is probably good to first discuss them on the [Kiali-dev](h
 
 ### Developing
 
-The [README for the server](README#building) and the [README for the UI](https://github.com/kiali/kiali-ui#developing) have a pretty exhausting guide on building Kiali server and UI. 
+The [README for the server](./README.adoc#building) and the [README for the UI](https://github.com/kiali/kiali-ui#developing) have a pretty exhausting guide on building Kiali server and UI. 
 
 ### Code Style Guide
 
