@@ -977,18 +977,20 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		http.SetCookie(w, &authCookie)
 	}
 
-	// Set a cookie with the number of chunks of the session data.
-	// This is to protect against reading spurious chunks of data if there is
-	// any failure when killing the session or logging out.
-	chunksCookie := http.Cookie{
-		Name:     config.TokenCookieName + "-chunks",
-		Value:    strconv.Itoa(len(sessionDataChunks)),
-		Expires:  openIdParams.ExpiresOn,
-		HttpOnly: true,
-		Path:     conf.Server.WebRoot,
-		SameSite: http.SameSiteStrictMode,
+	if len(sessionDataChunks) > 1 {
+		// Set a cookie with the number of chunks of the session data.
+		// This is to protect against reading spurious chunks of data if there is
+		// any failure when killing the session or logging out.
+		chunksCookie := http.Cookie{
+			Name:     config.TokenCookieName + "-chunks",
+			Value:    strconv.Itoa(len(sessionDataChunks)),
+			Expires:  openIdParams.ExpiresOn,
+			HttpOnly: true,
+			Path:     conf.Server.WebRoot,
+			SameSite: http.SameSiteStrictMode,
+		}
+		http.SetCookie(w, &chunksCookie)
 	}
-	http.SetCookie(w, &chunksCookie)
 
 	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
 	webRoot := conf.Server.WebRoot
@@ -1000,10 +1002,27 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 
 func deleteTokenCookies(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()
-	cookiesToDrop := []string{
-		config.TokenCookieName,
-		config.TokenCookieName + "-aes",
+	var cookiesToDrop []string
+
+	numChunksCookie, chunksCookieErr := r.Cookie(config.TokenCookieName + "-chunks")
+	if chunksCookieErr == nil {
+		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
+		if convErr == nil && numChunks > 1 && numChunks <= 180 {
+			cookiesToDrop = make([]string, 0, numChunks+2)
+			for i := 1; i < numChunks; i++ {
+				cookiesToDrop = append(cookiesToDrop, fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i))
+			}
+		} else {
+			cookiesToDrop = make([]string, 0, 3)
+		}
+	} else {
+		cookiesToDrop = make([]string, 0, 3)
 	}
+
+	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName)
+	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName+"-aes")
+	cookiesToDrop = append(cookiesToDrop, config.TokenCookieName+"-chunks")
+
 	for _, cookieName := range cookiesToDrop {
 		_, err := r.Cookie(cookieName)
 		if err != http.ErrNoCookie {

@@ -30,7 +30,7 @@ const (
 	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
 
 	// Maximum size of session cookies. This is 3.5K.
-	// RFCs tell that the max cookie size is 4K, but this includes
+	// Major browsers limit cookie size to 4K, but this includes
 	// metadata like expiration date, the cookie name, etc. So
 	// use 3.5K for cookie data and leave 0.5K for metadata.
 	SessionCookieMaxSize = 3584
@@ -261,7 +261,7 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 		}
 
 		// It's known that major browsers have a limit of 180 cookies per domain.
-		if numChunks > 180 {
+		if numChunks <= 0 || numChunks > 180 {
 			return nil, fmt.Errorf("number of session cookies is %d, but limit is 180", numChunks)
 		}
 
