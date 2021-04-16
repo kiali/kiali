@@ -71,6 +71,27 @@ type TokenResponse struct {
 	ExpiresOn string `json:"expiresOn"`
 }
 
+// Acknowledgement to rinat.io user of SO.
+// Taken from https://stackoverflow.com/a/48479355 with a few modifications
+func chunkString(s string, chunkSize int) []string {
+	if len(s) <= chunkSize {
+		return []string{s}
+	}
+
+	numChunks := len(s)/chunkSize + 1
+	chunks := make([]string, 0, numChunks)
+	runes := []rune(s)
+
+	for i := 0; i < len(runes); i += chunkSize {
+		nn := i + chunkSize
+		if nn > len(runes) {
+			nn = len(runes)
+		}
+		chunks = append(chunks, string(runes[i:nn]))
+	}
+	return chunks
+}
+
 func getTokenStringFromRequest(r *http.Request) string {
 	tokenString := "" // Default to no token.
 
@@ -696,7 +717,11 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 	token := getTokenStringFromRequest(r)
 	claims, _ := config.GetTokenClaimsIfValid(token)
 	if claims == nil && conf.Auth.Strategy == config.AuthStrategyOpenId {
-		claims, _ = business.GetOpenIdAesSession(r)
+		var aes error
+		claims, aes = business.GetOpenIdAesSession(r)
+		if aes != nil {
+			log.Warningf("Apparently, there is no AES session: %s ", aes.Error())
+		}
 	}
 
 	if claims != nil {
@@ -904,7 +929,7 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	// Cipher the session data
+	// Cipher the session data and encode to base64
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
 		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create cipher", err.Error())
@@ -924,15 +949,46 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	cipherSessionData := aesGcm.Seal(aesGcmNonce, aesGcmNonce, sessionDataJson, nil)
-	authCookie := http.Cookie{
-		Name:     config.TokenCookieName + "-aes",
-		Value:    base64.StdEncoding.EncodeToString(cipherSessionData),
+	base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
+
+	// If resulting session data is large, it may not fit in one cookie. So, the resulting
+	// session data is broken in chunks and multiple cookies are used, as is needed.
+	sessionDataChunks := chunkString(base64SessionData, business.SessionCookieMaxSize)
+	for i, chunk := range sessionDataChunks {
+		var cookieName string
+		if i == 0 {
+			// Set a cookie with the regular cookie name with the first chunk of session data.
+			// This is for backwards compatibility
+			cookieName = config.TokenCookieName + "-aes"
+		} else {
+			// If there are more chunks of session data (usually because of larger tokens from the IdP),
+			// store the remainder data to numbered cookies.
+			cookieName = fmt.Sprintf("%s-aes-%d", config.TokenCookieName, i)
+		}
+
+		authCookie := http.Cookie{
+			Name:     cookieName,
+			Value:    chunk,
+			Expires:  openIdParams.ExpiresOn,
+			HttpOnly: true,
+			Path:     conf.Server.WebRoot,
+			SameSite: http.SameSiteStrictMode,
+		}
+		http.SetCookie(w, &authCookie)
+	}
+
+	// Set a cookie with the number of chunks of the session data.
+	// This is to protect against reading spurious chunks of data if there is
+	// any failure when killing the session or logging out.
+	chunksCookie := http.Cookie{
+		Name:     config.TokenCookieName + "-chunks",
+		Value:    strconv.Itoa(len(sessionDataChunks)),
 		Expires:  openIdParams.ExpiresOn,
 		HttpOnly: true,
 		Path:     conf.Server.WebRoot,
 		SameSite: http.SameSiteStrictMode,
 	}
-	http.SetCookie(w, &authCookie)
+	http.SetCookie(w, &chunksCookie)
 
 	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
 	webRoot := conf.Server.WebRoot
