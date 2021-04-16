@@ -111,7 +111,9 @@ type PrometheusConfig struct {
 	// Enable cache for Prometheus queries
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Global cache expiration expressed in seconds
-	CacheExpiration int    `yaml:"cache_expiration:omitempty"`
+	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
+	HealthCheckUrl  string `yaml:"health_check_url,omitempty"`
+	IsCore          bool   `yaml:"is_core,omitempty"`
 	URL             string `yaml:"url,omitempty"`
 }
 
@@ -120,19 +122,20 @@ type CustomDashboardsConfig struct {
 	DiscoveryEnabled       string           `yaml:"discovery_enabled,omitempty"`
 	DiscoveryAutoThreshold int              `yaml:"discovery_auto_threshold,omitempty"`
 	Enabled                bool             `yaml:"enabled,omitempty"`
-	IsCoreComponent        bool             `yaml:"is_core_component,omitempty"`
+	IsCore                 bool             `yaml:"is_core,omitempty"`
 	NamespaceLabel         string           `yaml:"namespace_label,omitempty"`
 	Prometheus             PrometheusConfig `yaml:"prometheus,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth            Auth                     `yaml:"auth"`
-	Dashboards      []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled         bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	InClusterURL    string                   `yaml:"in_cluster_url"`
-	IsCoreComponent bool                     `yaml:"is_core_component"`
-	URL             string                   `yaml:"url"`
+	Auth           Auth                     `yaml:"auth"`
+	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled        bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
+	InClusterURL   string                   `yaml:"in_cluster_url"`
+	IsCore         bool                     `yaml:"is_core,omitempty"`
+	URL            string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -152,8 +155,9 @@ type GrafanaVariablesConfig struct {
 type TracingConfig struct {
 	Auth                 Auth     `yaml:"auth"`
 	Enabled              bool     `yaml:"enabled"` // Enable Jaeger in Kiali
+	HealthCheckUrl       string   `yaml:"health_check_url,omitempty"`
 	InClusterURL         string   `yaml:"in_cluster_url"`
-	IsCoreComponent      bool     `yaml:"is_core_component"`
+	IsCore               bool     `yaml:"is_core,omitempty"`
 	NamespaceSelector    bool     `yaml:"namespace_selector"`
 	URL                  string   `yaml:"url"`
 	UseGRPC              bool     `yaml:"use_grpc"`
@@ -413,14 +417,15 @@ func NewConfig() (c *Config) {
 				DiscoveryEnabled:       DashboardsDiscoveryAuto,
 				DiscoveryAutoThreshold: 10,
 				Enabled:                true,
+				IsCore:                 false,
 				NamespaceLabel:         "kubernetes_namespace",
 			},
 			Grafana: GrafanaConfig{
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:         true,
-				IsCoreComponent: false,
+				Enabled: true,
+				IsCore:  false,
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
@@ -463,10 +468,10 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				IsCoreComponent:      false,
 				Enabled:              true,
 				NamespaceSelector:    true,
 				InClusterURL:         "http://tracing.istio-system/jaeger",
+				IsCore:               false,
 				URL:                  "",
 				UseGRPC:              false,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},

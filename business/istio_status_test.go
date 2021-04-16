@@ -99,7 +99,7 @@ func TestComponentNamespaces(t *testing.T) {
 	a.Len(nss, 4)
 }
 
-func mockAddOnsCalls(ds []apps_v1.Deployment, pods []v1.Pod, isIstioReachable bool) (*kubetest.K8SClientMock, *httptest.Server, *int, *int, *int) {
+func mockAddOnsCalls(ds []apps_v1.Deployment, pods []v1.Pod, isIstioReachable bool, overrideAddonURLs bool) (*kubetest.K8SClientMock, *httptest.Server, *int, *int, *int) {
 	// Prepare the Call counts for each Addon
 	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
 
@@ -109,13 +109,13 @@ func mockAddOnsCalls(ds []apps_v1.Deployment, pods []v1.Pod, isIstioReachable bo
 	httpServer := mockServer(routes)
 
 	// Adapt the AddOns URLs to the mock Server
-	conf := addonAddMockUrls(httpServer.URL, config.NewConfig())
+	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), overrideAddonURLs)
 	config.Set(conf)
 
 	return k8s, httpServer, &jaegerCalls, &grafanaCalls, &prometheusCalls
 }
 
-func sampleIstioComponent() ([]apps_v1.Deployment, []v1.Pod, bool) {
+func sampleIstioComponent() ([]apps_v1.Deployment, []v1.Pod, bool, bool) {
 	return []apps_v1.Deployment{
 		fakeDeploymentWithStatus(
 			"istio-egressgateway",
@@ -125,7 +125,7 @@ func sampleIstioComponent() ([]apps_v1.Deployment, []v1.Pod, bool) {
 				AvailableReplicas:   2,
 				UnavailableReplicas: 0,
 			}),
-	}, healthyIstiods(), true
+	}, healthyIstiods(), true, false
 }
 
 func healthyIstiods() []v1.Pod {
@@ -208,7 +208,8 @@ func TestGrafanaDisabled(t *testing.T) {
 func TestGrafanaNotWorking(t *testing.T) {
 	assert := assert.New(t)
 	jaegerCalls, grafanaCalls, prometheusCalls := 0, 0, 0
-	k8s := mockDeploymentCall(sampleIstioComponent())
+	dps, pods, istiodReachable, _ := sampleIstioComponent()
+	k8s := mockDeploymentCall(dps, pods, istiodReachable)
 	addOnsStetup := defaultAddOnCalls(&jaegerCalls, &grafanaCalls, &prometheusCalls)
 	addOnsStetup["grafana"] = addOnsSetup{
 		Url:        "/grafana/mock",
@@ -220,7 +221,7 @@ func TestGrafanaNotWorking(t *testing.T) {
 	defer httpServer.Close()
 
 	// Adapt the AddOns URLs to the mock Server
-	conf := addonAddMockUrls(httpServer.URL, config.NewConfig())
+	conf := addonAddMockUrls(httpServer.URL, config.NewConfig(), false)
 	config.Set(conf)
 
 	iss := IstioStatusService{k8s: k8s}
@@ -236,6 +237,28 @@ func TestGrafanaNotWorking(t *testing.T) {
 	assert.Equal(1, prometheusCalls)
 
 	assertComponent(assert, icsl, "grafana", Unreachable, false)
+	assertNotPresent(assert, icsl, "prometheus")
+	assertNotPresent(assert, icsl, "jaeger")
+	assertNotPresent(assert, icsl, "custom dashboards")
+}
+
+func TestOverriddenUrls(t *testing.T) {
+	assert := assert.New(t)
+
+	dps, pods, idReachable, _ := sampleIstioComponent()
+	k8s, httpServ, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(dps, pods, idReachable, true)
+	defer httpServ.Close()
+
+	iss := IstioStatusService{k8s: k8s}
+	icsl, error := iss.GetStatus()
+	assert.NoError(error)
+
+	// Requests to AddOns have to be 1
+	assert.Equal(1, *grafanaCalls)
+	assert.Equal(1, *jaegerCalls)
+	assert.Equal(1, *promCalls)
+
+	assertNotPresent(assert, icsl, "grafana")
 	assertNotPresent(assert, icsl, "prometheus")
 	assertNotPresent(assert, icsl, "jaeger")
 	assertNotPresent(assert, icsl, "custom dashboards")
@@ -270,7 +293,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 func TestNoIstioComponentFoundError(t *testing.T) {
 	assert := assert.New(t)
 
-	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{}, []v1.Pod{}, true)
+	k8s, httpServ, _, _, _ := mockAddOnsCalls([]apps_v1.Deployment{}, []v1.Pod{}, true, false)
 	defer httpServ.Close()
 
 	iss := IstioStatusService{k8s: k8s}
@@ -286,7 +309,7 @@ func TestDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depl, healthyIstiods(), true)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depl, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	iss := IstioStatusService{k8s: k8s}
@@ -316,7 +339,7 @@ func TestNonDefaults(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), true)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -359,7 +382,7 @@ func TestIstiodNotReady(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, notReadyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -406,7 +429,7 @@ func TestIstiodUnreachable(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(pods, healthyIstiods(), false, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -454,7 +477,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
-	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, healthyIstiods(), true)
+	k8s, httpServer, jaegerCalls, grafanaCalls, promCalls := mockAddOnsCalls(depls, healthyIstiods(), true, false)
 	defer httpServer.Close()
 
 	c := config.Get()
@@ -614,19 +637,34 @@ func defaultAddOnCalls(jaeger, grafana, prom *int) map[string]addOnsSetup {
 	}
 }
 
-func addonAddMockUrls(baseUrl string, conf *config.Config) *config.Config {
+func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.IsCoreComponent = false
 	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
+	conf.ExternalServices.Grafana.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.IsCoreComponent = false
 	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/mock"
+	conf.ExternalServices.Tracing.IsCore = false
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
 
 	conf.ExternalServices.CustomDashboards.Enabled = true
-	conf.ExternalServices.CustomDashboards.IsCoreComponent = false
 	conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus-dashboards/mock"
+	conf.ExternalServices.CustomDashboards.IsCore = false
+
+	if overrideUrl {
+		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
+		conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/wrong"
+
+		conf.ExternalServices.Tracing.HealthCheckUrl = conf.ExternalServices.Tracing.InClusterURL
+		conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/jaeger/wrong"
+
+		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
+		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"
+
+		conf.ExternalServices.CustomDashboards.Prometheus.HealthCheckUrl = conf.ExternalServices.CustomDashboards.Prometheus.URL
+		conf.ExternalServices.CustomDashboards.Prometheus.URL = baseUrl + "/prometheus/wrong"
+
+	}
 	return conf
 }
