@@ -262,7 +262,7 @@ func GetOpenIdAesSession(r *http.Request) (*config.IanaClaims, error) {
 
 		// It's known that major browsers have a limit of 180 cookies per domain.
 		if numChunks <= 0 || numChunks > 180 {
-			return nil, fmt.Errorf("number of session cookies is %d, but limit is 180", numChunks)
+			return nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
 		}
 
 		// Read session data chunks and save into a buffer
