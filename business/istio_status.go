@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -18,7 +17,8 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
-	k8s kubernetes.ClientInterface
+	k8s           kubernetes.ClientInterface
+	businessLayer *Layer
 }
 
 type ComponentStatus struct {
@@ -71,12 +71,12 @@ func (iss *IstioStatusService) GetStatus() (IstioComponentStatus, error) {
 
 func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	ds, err := iss.getComponentNamespacesWorkloads()
+	workloads, err := iss.getComponentNamespacesWorkloads()
 	if err != nil {
 		return IstioComponentStatus{}, err
 	}
 
-	deploymentStatus, err := iss.getStatusOf(ds)
+	deploymentStatus, err := iss.getStatusOf(workloads)
 	if err != nil {
 		return IstioComponentStatus{}, err
 	}
@@ -89,15 +89,15 @@ func (iss *IstioStatusService) getIstioComponentStatus() (IstioComponentStatus, 
 	return deploymentStatus.merge(istiodStatus), nil
 }
 
-func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Deployment, error) {
+func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]*models.Workload, error) {
 	var wg sync.WaitGroup
 
 	nss := map[string]bool{}
-	deps := make([]apps_v1.Deployment, 0)
+	wls := make([]*models.Workload, 0)
 
 	comNs := getComponentNamespaces()
 
-	depsChan := make(chan []apps_v1.Deployment, len(comNs))
+	wlChan := make(chan []*models.Workload, len(comNs))
 	errChan := make(chan error, len(comNs))
 
 	for _, n := range comNs {
@@ -105,28 +105,20 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 			wg.Add(1)
 			nss[n] = true
 
-			go func(n string, depsChan chan []apps_v1.Deployment, errChan chan error) {
+			go func(n string, wliChan chan []*models.Workload, errChan chan error) {
 				defer wg.Done()
-				var ds []apps_v1.Deployment
+				var wls models.Workloads
 				var err error
-				if IsNamespaceCached(n) {
-					ds, err = kialiCache.GetDeployments(n)
-				} else {
-					// Adding a warning to enable cache for fetching Istio Status.
-					// It should use cache, as it's an intensive operation but we won't fail otherwise
-					// If user doesn't have access to istio namespace AND it doesn't have enabled cache it won't get the Istio status
-					log.Warningf("Kiali has not [%s] namespace cached. It is required to fetch Istio Status correctly", n)
-					ds, err = iss.k8s.GetDeployments(n)
-				}
-				depsChan <- ds
+				wls, err = fetchWorkloads(iss.businessLayer, n, "")
+				wliChan <- wls
 				errChan <- err
-			}(n, depsChan, errChan)
+			}(n, wlChan, errChan)
 		}
 	}
 
 	wg.Wait()
 
-	close(depsChan)
+	close(wlChan)
 	close(errChan)
 	for err := range errChan {
 		if err != nil {
@@ -134,13 +126,13 @@ func (iss *IstioStatusService) getComponentNamespacesWorkloads() ([]apps_v1.Depl
 		}
 	}
 
-	for dep := range depsChan {
-		if dep != nil {
-			deps = append(deps, dep...)
+	for wl := range wlChan {
+		if wl != nil {
+			wls = append(wls, wl...)
 		}
 	}
 
-	return deps, nil
+	return wls, nil
 }
 
 func getComponentNamespaces() []string {
@@ -169,14 +161,14 @@ func istioCoreComponents() map[string]bool {
 	return components
 }
 
-func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioComponentStatus, error) {
+func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (IstioComponentStatus, error) {
 	statusComponents := istioCoreComponents()
 	isc := IstioComponentStatus{}
 	cf := map[string]bool{}
 
 	// Map workloads there by app name
-	for _, d := range ds {
-		appLabel := labels.Set(d.Spec.Template.Labels).Get("app")
+	for _, workload := range workloads {
+		appLabel := labels.Set(workload.Labels).Get("app")
 		if appLabel == "" {
 			continue
 		}
@@ -189,10 +181,10 @@ func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioCompon
 		// Component found
 		cf[appLabel] = true
 
-		if status := GetDeploymentStatus(d); status != Healthy {
+		if status := GetWorkloadStatus(*workload); status != Healthy {
 			// Check status
 			isc = append(isc, ComponentStatus{
-				Name:   d.Name,
+				Name:   workload.Name,
 				Status: status,
 				IsCore: isCore,
 			},
@@ -224,10 +216,9 @@ func (iss *IstioStatusService) getStatusOf(ds []apps_v1.Deployment) (IstioCompon
 	return isc, nil
 }
 
-func GetDeploymentStatus(d apps_v1.Deployment) string {
+func GetWorkloadStatus(wl models.Workload) string {
 	status := Unhealthy
-	wl := &models.Workload{}
-	wl.ParseDeployment(&d)
+
 	if wl.DesiredReplicas == 0 {
 		status = NotReady
 	} else if wl.DesiredReplicas == wl.AvailableReplicas && wl.DesiredReplicas == wl.CurrentReplicas {
