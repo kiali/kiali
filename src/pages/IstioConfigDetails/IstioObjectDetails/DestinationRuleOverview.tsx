@@ -12,7 +12,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
-import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { checkForPath } from '../../../types/ServiceInfo';
 import ValidationList from '../../../components/Validations/ValidationList';
 import Labels from '../../../components/Label/Labels';
@@ -26,15 +25,6 @@ interface DestinationRuleProps {
 }
 
 class DestinationRuleOverview extends React.Component<DestinationRuleProps> {
-  globalStatus() {
-    const validation = this.props.validation;
-    if (validation && !validation.valid) {
-      return <GlobalValidation validation={validation} />;
-    } else {
-      return undefined;
-    }
-  }
-
   subsetValidation(subsetIndex: number) {
     const checks = checkForPath(this.props.validation, 'spec/subsets[' + subsetIndex + ']');
     return <ValidationList checks={checks} tooltipPosition={TooltipPosition.right} />;
@@ -98,8 +88,7 @@ class DestinationRuleOverview extends React.Component<DestinationRuleProps> {
 
   render() {
     const destinationRule = this.props.destinationRule;
-    const globalStatus = this.globalStatus();
-    const isValid = !globalStatus;
+    const isValid = !!this.props.validation && this.props.validation.checks.length === 0;
     return (
       <>
         <Title headingLevel={TitleLevel.h3} size={TitleSize.xl}>
