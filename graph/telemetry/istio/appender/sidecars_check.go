@@ -85,7 +85,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 
 // namespaceOk returns true if the namespace in question is the current appender namespace or any of the graph namespaces
 func (a *SidecarsCheckAppender) namespaceOK(namespace string, namespaceInfo *graph.AppenderNamespaceInfo) bool {
-	if namespace != namespaceInfo.Namespace {
+	if namespace == namespaceInfo.Namespace {
 		return true
 	}
 	for ns := range a.AccessibleNamespaces {

@@ -61,6 +61,26 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	}
 }
 
+func TestInaccessibleWorkload(t *testing.T) {
+	config.Set(config.NewConfig())
+	trafficMap := buildInaccessibleWorkloadTrafficMap()
+	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := SidecarsCheckAppender{
+		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	for _, node := range trafficMap {
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
+		assert.False(t, ok)
+	}
+}
+
 func TestAppNoPodsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
@@ -145,6 +165,15 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
 	node := graph.NewNode(graph.Unknown, "testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	trafficMap[node.ID] = &node
+
+	return trafficMap
+}
+
+func buildInaccessibleWorkloadTrafficMap() graph.TrafficMap {
+	trafficMap := graph.NewTrafficMap()
+
+	node := graph.NewNode(graph.Unknown, "inaccessibleNamespace", "", "inaccessibleNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
