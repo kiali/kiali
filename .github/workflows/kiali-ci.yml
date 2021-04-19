@@ -34,14 +34,14 @@ jobs:
           echo "Done gofmt"
 
       - name: Verify code linting
-        run: make lint
+        run: make -e IS_MAISTRA=false lint
 
       - name: Verify swagger file
         run: make swagger-ci
 
       - name: Build
-        run: make clean build
+        run: make -e IS_MAISTRA=false clean build
 
       - name: Test
-        run: make test-race
+        run: make -e IS_MAISTRA=false test-race
 
