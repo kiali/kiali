@@ -218,11 +218,21 @@ func (lt *LoginToken) Obfuscate() {
 	lt.SigningKey = "xxx"
 }
 
+type LabelKeyRegex map[string]string
+type LabelValidation struct {
+	Namespace   string        `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Kind        string        `yaml:"kind,omitempty" json:"kind,omitempty"`
+	Name        string        `yaml:"name,omitempty" json:"name,omitempty"`
+	Presence    []string      `yaml:"presence,omitempty" json:"presence"`
+	FilterLabel LabelKeyRegex `yaml:"filter_label,omitempty" json:"filterLabel"`
+}
+
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
-	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AppLabelName       string            `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName string            `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	VersionLabelName   string            `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	LabelValidation    []LabelValidation `yaml:"label_validation,omitempty" json:"labelValidation"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
