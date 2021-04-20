@@ -59,6 +59,7 @@ type PublicConfig struct {
 	IstioLabels              config.IstioLabels              `json:"istioLabels,omitempty"`
 	IstioConfigMap           string                          `json:"istioConfigMap"`
 	KialiFeatureFlags        config.KialiFeatureFlags        `json:"kialiFeatureFlags,omitempty"`
+	LabelValidation          []config.LabelValidation        `json:"labelValidation"`
 	Prometheus               PrometheusConfig                `json:"prometheus,omitempty"`
 }
 
@@ -90,6 +91,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 		IstioLabels:              config.IstioLabels,
 		IstioConfigMap:           config.ExternalServices.Istio.ConfigMapName,
 		KialiFeatureFlags:        config.KialiFeatureFlags,
+		LabelValidation:          config.LabelValidation,
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,

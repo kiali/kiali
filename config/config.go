@@ -229,10 +229,9 @@ type LabelValidation struct {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName       string            `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName string            `yaml:"injection_label,omitempty" json:"injectionLabelName"`
-	VersionLabelName   string            `yaml:"version_label_name,omitempty" json:"versionLabelName"`
-	LabelValidation    []LabelValidation `yaml:"label_validation,omitempty" json:"labelValidation"`
+	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -371,6 +370,7 @@ type Config struct {
 	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags        `yaml:"kiali_feature_flags,omitempty"`
 	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
+	LabelValidation          []LabelValidation        `yaml:"label_validation,omitempty" json:"labelValidation"`
 	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
 	Server                   Server                   `yaml:",omitempty"`
 }
