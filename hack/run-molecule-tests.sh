@@ -272,15 +272,15 @@ fi
 
 # we have to explicitly tell the makefile about the DORP value
 if [ -z "${DORP}" ]; then
-  if ! which docker > /dev/null 2>&1; then
-    if which podman > /dev/null 2>&1; then
-      DORP="podman"
+  if ! which podman > /dev/null 2>&1; then
+    if which docker > /dev/null 2>&1; then
+      DORP="docker"
     else
       echo "You do not have 'docker' or 'podman' in PATH - aborting."
       exit 1
     fi
   else
-    DORP="docker"
+    DORP="podman"
   fi
 fi
 export DORP

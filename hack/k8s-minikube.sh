@@ -28,7 +28,7 @@ DEFAULT_DEX_USER_NAMESPACES="bookinfo"
 DEFAULT_INSECURE_REGISTRY_IP="192.168.99.100"
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
-DEFAULT_K8S_DRIVER="virtualbox"
+DEFAULT_K8S_DRIVER="kvm2"
 DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
@@ -75,6 +75,10 @@ print_all_gateway_urls() {
 }
 
 check_insecure_registry() {
+  if which podman > /dev/null 2>&1; then
+    # looks like this machine is using podman - ignore this check
+    return
+  fi
   local _registry="$(${MINIKUBE_EXEC_WITH_PROFILE} ip):5000"
   pgrep -a dockerd | grep "[-]-insecure-registry.*${_registry}" > /dev/null 2>&1
   if [ "$?" != "0" ]; then

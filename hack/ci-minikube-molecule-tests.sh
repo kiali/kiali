@@ -25,7 +25,7 @@ if [ "$(kubectl config current-context)" != "${minikube_profile}" ]; then
 fi
 
 if ! ${minikube_sh} status; then
-  ${minikube_sh} start --dex-enabled true -kv 1.18.0
+  ${minikube_sh} start --dex-enabled true -kv 1.18.0 -kdr kvm2
   if ! ${minikube_sh} status; then
     echo "Failed to install the minikube cluster."
     exit 1
