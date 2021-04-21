@@ -80,7 +80,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetSecrets", conf.IstioNamespace, "istio/multiCluster=true").Return([]core_v1.Secret{}, nil)
 	k8s.On("GetDeployment", conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName).Return(&istioDeploymentMock, nil)
-	k8s.On("GetConfigMap", conf.IstioNamespace, conf.ExternalServices.Istio.IstioInjectorName).Return(&sidecarConfigMapMock, nil)
+	k8s.On("GetConfigMap", conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(&sidecarConfigMapMock, nil)
 
 	k8s.On("GetNamespace", "foo").Return(&kialiNs, nil)
 	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
@@ -318,7 +318,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	var nilNamespace *core_v1.Namespace
 
 	k8s.On("GetDeployment", "foo", "bar").Return(&istioDeploymentMock, nil)
-	k8s.On("GetConfigMap", "foo", conf.ExternalServices.Istio.IstioInjectorName).Return(nilConfigMap, &notFoundErr)
+	k8s.On("GetConfigMap", "foo", conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(nilConfigMap, &notFoundErr)
 	k8s.On("GetNamespace", "foo").Return(nilNamespace, &notFoundErr)
 
 	// Create a MeshService and invoke IsMeshConfigured
