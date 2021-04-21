@@ -8,15 +8,15 @@ interface KialiPageLinkProps {
   href: string;
 }
 
-const KialiPageLink: React.FC<KialiPageLinkProps> = (props) => {
+const KialiPageLink: React.FC<KialiPageLinkProps> = props => {
   // Without a cluster, simply render a local link
   if (props.cluster === undefined) {
-    return (<Link to={props.href}>{props.children}</Link>);
+    return <Link to={props.href}>{props.children}</Link>;
   }
 
   // If cluster is specified, and it's the home cluster, render a local link.
-  if (serverConfig.clusterInfo?.name === props.cluster) {
-    return (<Link to={props.href}>{props.children}</Link>);
+  if (!serverConfig.clusterInfo?.name || props.cluster === serverConfig.clusterInfo.name) {
+    return <Link to={props.href}>{props.children}</Link>;
   }
 
   // If it's a remote cluster, check if there is an accessible Kiali on that cluster.
@@ -34,6 +34,6 @@ const KialiPageLink: React.FC<KialiPageLinkProps> = (props) => {
       </a>
     );
   }
-}
+};
 
 export default KialiPageLink;

@@ -46,9 +46,9 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
   cfg.durations = toDurations(filtered);
 };
 
-// Set some defaults. Mainly used in tests, because
-// these will be overwritten on user login.
-let serverConfig: ComputedServerConfig = {
+// Set some reasonable defaults. Initial values should be valid for fields
+// than may not be providedby/set on the server.
+const defaultServerConfig: ComputedServerConfig = {
   clusters: {},
   durations: {},
   healthConfig: {
@@ -74,6 +74,9 @@ let serverConfig: ComputedServerConfig = {
     storageTsdbRetention: 21600
   }
 };
+
+// Overwritten with real server config on user login. Also used for tests.
+let serverConfig = defaultServerConfig;
 computeValidDurations(serverConfig);
 export { serverConfig };
 
@@ -93,8 +96,8 @@ export const toValidDuration = (duration: number): number => {
 
 export const setServerConfig = (cfg: ServerConfig) => {
   serverConfig = {
-    ...cfg,
-    durations: {}
+    ...defaultServerConfig,
+    ...cfg
   };
   serverConfig.healthConfig = cfg.healthConfig ? parseHealthConfig(cfg.healthConfig) : serverConfig.healthConfig;
 

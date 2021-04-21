@@ -25,7 +25,7 @@ class Masthead extends React.Component {
           <PfSpinner />
         </ToolbarGroup>
         <ToolbarGroup>
-          {serverConfig.clusterInfo?.name && (
+          {!!serverConfig.clusterInfo?.name && (
             <ToolbarItem>
               <div style={{ paddingRight: '1em' }}>
                 <Tooltip

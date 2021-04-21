@@ -5,7 +5,7 @@ import { style } from 'typestyle';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import history from 'app/History';
-import { NodeType, DecoratedGraphNodeData, UNKNOWN } from 'types/Graph';
+import { NodeType, DecoratedGraphNodeData } from 'types/Graph';
 import { JaegerInfo } from 'types/JaegerInfo';
 import { KialiAppState } from 'store/Store';
 import { Paths, serverConfig } from 'config';
@@ -98,11 +98,11 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       // eslint-disable-next-line
       item = (
         <a href={href} rel="noreferrer noopener" {...commonLinkProps}>
-          {commonLinkProps.children} <ExternalLinkAltIcon/>
+          {commonLinkProps.children} <ExternalLinkAltIcon />
         </a>
       );
     } else {
-      item = (<Link to={href} {...commonLinkProps} />);
+      item = <Link to={href} {...commonLinkProps} />;
     }
 
     return (
@@ -123,18 +123,19 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 
     let buildMenu = false;
     let menuOptions: React.ReactNode = null;
-    if (linkParams.cluster === UNKNOWN || linkParams.cluster.length === 0 || linkParams.cluster === serverConfig.clusterInfo?.name) {
-      // Node is for "home" cluster. Build menu entries as usual.
+    // use local links if this is the home cluster, or if there is no configured home cluster
+    if (!serverConfig.clusterInfo?.name || linkParams.cluster === serverConfig.clusterInfo.name) {
       buildMenu = true;
     } else {
-      // Node represents a resource in a remote cluster.
-      // Check if there is a reachable remote Kiali. If so, build the menu; else, put a note.
+      // Check if the remote Kiali is configured with a url. If so, build the menu; else, put a note.
       const cluster = serverConfig.clusters[linkParams.cluster];
       if (cluster && cluster.kialiInstances?.some(instance => instance.url.length !== 0)) {
         buildMenu = true;
       } else {
         menuOptions = (
-          <p>No remote links, Kiali is not available on the <strong>{linkParams.cluster}</strong> cluster.</p>
+          <p>
+            No remote links, Kiali is not available on the <strong>{linkParams.cluster}</strong> cluster.
+          </p>
         );
       }
     }
@@ -223,7 +224,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, jaegerInfo?: JaegerInf
     }
   }
 
-  if (cluster.length !== 0 && cluster !== serverConfig.clusterInfo?.name) {
+  if (serverConfig.clusterInfo?.name && cluster !== serverConfig.clusterInfo.name) {
     const externalClusterInfo = serverConfig.clusters[cluster];
     const kialiInfo = externalClusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
     if (kialiInfo === undefined) {

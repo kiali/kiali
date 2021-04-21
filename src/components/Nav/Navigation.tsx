@@ -57,7 +57,7 @@ export class Navigation extends React.Component<PropsType, NavigationState> {
 
   componentDidMount() {
     let pageTitle = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali';
-    if (serverConfig.clusterInfo?.name) {
+    if (!!serverConfig.clusterInfo?.name) {
       pageTitle += ` [${serverConfig.clusterInfo.name}]`;
     }
 
