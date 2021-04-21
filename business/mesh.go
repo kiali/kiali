@@ -137,6 +137,9 @@ func (in *MeshService) IsMeshConfigured() (bool, error) {
 
 	istioConfig, err := in.k8s.GetConfigMap(cfg.IstioNamespace, cfg.ExternalServices.Istio.ConfigMapName)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			err = fmt.Errorf("%w in namespace \"%s\"", err, cfg.IstioNamespace)
+		}
 		return false, err
 	}
 
