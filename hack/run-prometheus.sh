@@ -3,12 +3,12 @@
 ##############################################################################
 # run-prometheus.sh
 #
-# Runs a local Prometheus in docker and scrapes the Kiali server and operator.
+# Runs a local Prometheus and scrapes the Kiali server and operator.
 # This lets you examine Kiali's own metric data in your dev environment.
 # There must be exposed OpenShift routes for this to work. If you do not,
 # this script will output the commands you need to perform.
 #
-# You must have "docker" in your PATH as well as one of kubectl, oc.
+# You must have docker or podman in your PATH as well as one of kubectl, oc.
 #
 ##############################################################################
 
@@ -17,9 +17,17 @@ KIALI_NAMESPACE="${KIALI_NAMESPACE:-istio-system}"
 
 # Make sure we have everything we need
 
-if ! which docker > /dev/null ; then
-  echo "You must have docker in your PATH"
-  exit 1
+if [ -z "${DORP}" ]; then
+  if ! which podman > /dev/null 2>&1; then
+    if which docker > /dev/null 2>&1; then
+      DORP="docker"
+    else
+      echo "You do not have 'docker' or 'podman' in PATH - aborting."
+      exit 1
+    fi
+  else
+    DORP="podman"
+  fi
 fi
 
 for exe in oc kubectl ; do
@@ -85,10 +93,10 @@ EOF
 KIALI_HOST_ENT="${KIALI_ROUTE}:$(getent hosts ${KIALI_ROUTE} | head -n1 | awk '{print $1}')"
 KIALI_OPERATOR_HOST_ENT="${KIALI_OPERATOR_ROUTE}:$(getent hosts ${KIALI_OPERATOR_ROUTE} | head -n1 | awk '{print $1}')"
 
-docker run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml prom/prometheus &
+${DORP} run -p 9090:9090 --add-host="${KIALI_HOST_ENT}" --add-host="${KIALI_OPERATOR_HOST_ENT}" -v /tmp/prometheus-kiali.yaml:/etc/prometheus/prometheus.yml quay.io/prometheus/prometheus &
 DOCKER_PID=$!
 
-echo "Docker started (pid: ${DOCKER_PID})"
+echo "Prometheus started in a container (pid: ${DOCKER_PID})"
 
 # Point the user's browser to Prometheus
 

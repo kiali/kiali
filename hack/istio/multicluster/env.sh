@@ -49,7 +49,7 @@ CLIENT_EXE_NAME="kubectl"
 ISTIO_DIR=""
 
 # If the scripts need image registry client, this is it (docker or podman)
-DORP="docker"
+DORP="${DORP:-docker}"
 
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="istio-system"
@@ -104,7 +104,7 @@ MANAGE_MINIKUBE="true"
 MANAGE_KIND="false"
 
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
-MINIKUBE_DRIVER="virtualbox"
+MINIKUBE_DRIVER="kvm2"
 MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
