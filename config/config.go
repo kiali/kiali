@@ -171,6 +171,7 @@ type IstioConfig struct {
 	EnvoyAdminLocalPort      int               `yaml:"envoy_admin_local_port,omitempty"`
 	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
+	IstioInjectorName        string            `yaml:"istio_injector_name,omitempty"`
 	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
 	IstiodDeploymentName     string            `yaml:"istiod_deployment_name,omitempty"`
 	UrlServiceVersion        string            `yaml:"url_service_version"`
@@ -449,6 +450,7 @@ func NewConfig() (c *Config) {
 				EnvoyAdminLocalPort:      15000,
 				IstioIdentityDomain:      "svc.cluster.local",
 				IstioInjectionAnnotation: "sidecar.istio.io/inject",
+				IstioInjectorName:        "istio-sidecar-injector",
 				IstioSidecarAnnotation:   "sidecar.istio.io/status",
 				IstiodDeploymentName:     "istiod",
 				UrlServiceVersion:        "http://istiod:15014/version",

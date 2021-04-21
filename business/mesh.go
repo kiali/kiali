@@ -341,7 +341,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 func (in *MeshService) resolveKialiNetwork() (string, error) {
 	conf := config.Get()
 
-	istioSidecarConfig, err := in.k8s.GetConfigMap(conf.IstioNamespace, "istio-sidecar-injector")
+	istioSidecarConfig, err := in.k8s.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.IstioInjectorName)
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
