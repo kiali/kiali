@@ -21,6 +21,7 @@
 
 set -u
 
+DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DEX_ENABLED="false"
 DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
 DEFAULT_DEX_VERSION="v2.24.0"
@@ -32,7 +33,7 @@ DEFAULT_K8S_DRIVER="kvm2"
 DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
-DEFAULT_MINIKUBE_EXEC="minikube"
+DEFAULT_MINIKUBE_EXE="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 DEFAULT_MINIKUBE_START_FLAGS=""
 DEFAULT_OUTPUT_PATH="/tmp/k8s-minikube-tmpdir"
@@ -388,6 +389,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     resetclock) _CMD="resetclock"; shift ;;
+    -ce|--client-exe) CLIENT_EXE="$2"; shift;shift ;;
     -de|--dex-enabled) DEX_ENABLED="$2"; shift;shift ;;
     -dr|--dex-repo) DEX_REPO="$2"; shift;shift ;;
     -dun|--dex-user-namespaces) DEX_USER_NAMESPACES="$2"; shift;shift ;;
@@ -399,7 +401,7 @@ while [[ $# -gt 0 ]]; do
     -km|--kubernetes-memory) K8S_MEMORY="$2"; shift;shift ;;
     -kv|--kubernetes-version) K8S_VERSION="$2"; shift;shift ;;
     -lba|--load-balancer-addrs) LB_ADDRESSES="$2"; shift;shift ;;
-    -me|--minikube-exec) MINIKUBE_EXEC="$2"; shift;shift ;;
+    -me|--minikube-exe) MINIKUBE_EXE="$2"; shift;shift ;;
     -mf|--minikube-flags) MINIKUBE_START_FLAGS="$2"; shift;shift ;;
     -mp|--minikube-profile) MINIKUBE_PROFILE="$2"; shift;shift ;;
     -op|--output-path) OUTPUT_PATH="$2"; shift;shift ;;
@@ -410,6 +412,10 @@ while [[ $# -gt 0 ]]; do
 $0 [option...] command
 
 Valid options:
+  -ce|--client-exe
+      The kubectl client to use.
+      Only used for needing to install Istio or the Bookinfo demo. The "minikube kubectl" command will be used instead when possible.
+      Default: ${DEFAULT_CLIENT_EXE}
   -de|--dex-enabled
       If true, install and configure Dex. This provides an OpenID Connect implementation.
       Only used for the 'start' command.
@@ -469,9 +475,9 @@ Valid options:
       the "minikube ip" is 192.168.99.100, the load balancer addrs will be "192.168.99.70-192.168.99.84".
       Only used for the 'start' command.
       Default: ${DEFAULT_LB_ADDRESSES}
-  -me|--minikube-exec
+  -me|--minikube-exe
       The minikube executable.
-      Default: ${DEFAULT_MINIKUBE_EXEC}
+      Default: ${DEFAULT_MINIKUBE_EXE}
   -mf|--minikube-flags
       Additional flags to pass to the 'minikube start' command.
       Only used for the 'start' command.
@@ -514,6 +520,7 @@ HELPMSG
 done
 
 # Prepare some env vars
+: ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
 : ${DEX_ENABLED:=${DEFAULT_DEX_ENABLED}}
 : ${DEX_REPO:=${DEFAULT_DEX_REPO}}
 : ${DEX_USER_NAMESPACES:=${DEFAULT_DEX_USER_NAMESPACES}}
@@ -525,13 +532,14 @@ done
 : ${K8S_VERSION:=${DEFAULT_K8S_VERSION}}
 : ${K8S_MEMORY:=${DEFAULT_K8S_MEMORY}}
 : ${LB_ADDRESSES:=${DEFAULT_LB_ADDRESSES}}
-: ${MINIKUBE_EXEC:=${DEFAULT_MINIKUBE_EXEC}}
+: ${MINIKUBE_EXE:=${DEFAULT_MINIKUBE_EXE}}
 : ${MINIKUBE_START_FLAGS:=${DEFAULT_MINIKUBE_START_FLAGS}}
 : ${MINIKUBE_PROFILE:=${DEFAULT_MINIKUBE_PROFILE}}
 : ${OUTPUT_PATH:=${DEFAULT_OUTPUT_PATH}}
 
-MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXEC} -p ${MINIKUBE_PROFILE}"
+MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXE} -p ${MINIKUBE_PROFILE}"
 
+debug "CLIENT_EXE=$CLIENT_EXE"
 debug "DEX_ENABLED=$DEX_ENABLED"
 debug "DEX_REPO=$DEX_REPO"
 debug "DEX_USER_NAMESPACES=$DEX_USER_NAMESPACES"
@@ -543,19 +551,19 @@ debug "K8S_DRIVER=$K8S_DRIVER"
 debug "K8S_MEMORY=$K8S_MEMORY"
 debug "K8S_VERSION=$K8S_VERSION"
 debug "LB_ADDRESSES=$LB_ADDRESSES"
-debug "MINIKUBE_EXEC=$MINIKUBE_EXEC"
+debug "MINIKUBE_EXE=$MINIKUBE_EXE"
 debug "MINIKUBE_START_FLAGS=$MINIKUBE_START_FLAGS"
 debug "MINIKUBE_PROFILE=$MINIKUBE_PROFILE"
 debug "OUTPUT_PATH=$OUTPUT_PATH"
 
 # If minikube executable is not found, abort.
-if ! which ${MINIKUBE_EXEC} > /dev/null 2>&1 ; then
-  echo 'You do not have minikube installed [${MINIKUBE_EXEC}]. Aborting.'
+if ! which ${MINIKUBE_EXE} > /dev/null 2>&1 ; then
+  echo "You do not have minikube installed [${MINIKUBE_EXE}]. Aborting."
   exit 1
 fi
 
 debug "This script is located at $(pwd)"
-debug "minikube is located at $(which ${MINIKUBE_EXEC})"
+debug "minikube is located at $(which ${MINIKUBE_EXE})"
 
 if [ "$_CMD" = "start" ]; then
   echo 'Starting minikube...'
@@ -628,12 +636,12 @@ elif [ "$_CMD" = "ingress" ]; then
 elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
-  ./istio/install-istio-via-istioctl.sh -c kubectl
+  ./istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
 
 elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
   echo 'Installing Bookinfo'
-  ./istio/install-bookinfo-demo.sh --mongo -tg -c kubectl
+  ./istio/install-bookinfo-demo.sh --mongo -tg -c ${CLIENT_EXE}
   get_gateway_url http2
   echo 'To access the Bookinfo application, access this URL:'
   echo "http://${GATEWAY_URL}/productpage"

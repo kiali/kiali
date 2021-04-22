@@ -35,6 +35,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_SRC_HOME="$2"
       shift;shift
       ;;
+    -me|--minikube-exe)
+      MINIKUBE_EXE="$2"
+      shift;shift
+      ;;
     -mp|--minikube-profile)
       MINIKUBE_PROFILE="$2"
       shift;shift
@@ -82,6 +86,7 @@ $0 [option...] command
 -dorp|--docker-or-podman What should be used - "docker" or "podman"
 -hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
 -ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-me|--minikube-exe       If cluster type is 'minikube' you can specify the minikube executable that should be used.
 -mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
 -nd|--never-destroy      Do not have the molecule framework destroy the test scaffolding. Setting this to true
                          will help test failures by allowing you to examine the operator logs after a test finished.
@@ -182,6 +187,7 @@ echo MOLECULE_OPERATOR_PROFILER_ENABLED="$MOLECULE_OPERATOR_PROFILER_ENABLED"
 echo TEST_LOGS_DIR="$TEST_LOGS_DIR"
 echo TEST_CLIENT_EXE="$TEST_CLIENT_EXE"
 echo COLOR="$COLOR"
+echo MINIKUBE_EXE="$MINIKUBE_EXE"
 echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
 echo "=============================="
@@ -287,6 +293,10 @@ export DORP
 
 # the user may have specified a specific minikube profile to use - export this so make knows about it
 export MINIKUBE_PROFILE
+
+if [ ! -z "${MINIKUBE_EXE}" ]; then
+  export MINIKUBE="${MINIKUBE_EXE}"
+fi
 
 # build the latest Helm Chart
 echo
