@@ -166,14 +166,15 @@ type TracingConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses        ComponentStatuses `yaml:"component_status,omitempty"`
-	ConfigMapName            string            `yaml:"config_map_name,omitempty"`
-	EnvoyAdminLocalPort      int               `yaml:"envoy_admin_local_port,omitempty"`
-	IstioIdentityDomain      string            `yaml:"istio_identity_domain,omitempty"`
-	IstioInjectionAnnotation string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarAnnotation   string            `yaml:"istio_sidecar_annotation,omitempty"`
-	IstiodDeploymentName     string            `yaml:"istiod_deployment_name,omitempty"`
-	UrlServiceVersion        string            `yaml:"url_service_version"`
+	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
+	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
+	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
+	UrlServiceVersion                 string            `yaml:"url_service_version"`
 }
 
 type ComponentStatuses struct {
@@ -445,13 +446,14 @@ func NewConfig() (c *Config) {
 						},
 					},
 				},
-				ConfigMapName:            "istio",
-				EnvoyAdminLocalPort:      15000,
-				IstioIdentityDomain:      "svc.cluster.local",
-				IstioInjectionAnnotation: "sidecar.istio.io/inject",
-				IstioSidecarAnnotation:   "sidecar.istio.io/status",
-				IstiodDeploymentName:     "istiod",
-				UrlServiceVersion:        "http://istiod:15014/version",
+				ConfigMapName:                     "istio",
+				EnvoyAdminLocalPort:               15000,
+				IstioIdentityDomain:               "svc.cluster.local",
+				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
+				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
+				IstioSidecarAnnotation:            "sidecar.istio.io/status",
+				IstiodDeploymentName:              "istiod",
+				UrlServiceVersion:                 "http://istiod:15014/version",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
