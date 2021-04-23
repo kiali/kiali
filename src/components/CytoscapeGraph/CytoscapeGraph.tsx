@@ -32,10 +32,9 @@ import EmptyGraphLayout from './EmptyGraphLayout';
 import FocusAnimation from './FocusAnimation';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRenderer from './TrafficAnimation/TrafficRenderer';
+import { serverConfig } from 'config';
 
 type CytoscapeGraphProps = {
-  boxByCluster: boolean;
-  boxByNamespace: boolean;
   compressOnHide: boolean;
   containerClassName?: string;
   contextMenuEdgeComponent?: EdgeContextMenuType;
@@ -603,9 +602,8 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     const globalScratchData: CytoscapeGlobalScratchData = {
       activeNamespaces: this.props.graphData.fetchParams.namespaces,
-      boxByCluster: this.props.boxByCluster,
-      boxByNamespace: this.props.boxByNamespace,
       edgeLabelMode: this.props.edgeLabelMode,
+      homeCluster: serverConfig.clusterInfo ? serverConfig.clusterInfo.name : UNKNOWN,
       graphType: this.props.graphData.fetchParams.graphType,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,

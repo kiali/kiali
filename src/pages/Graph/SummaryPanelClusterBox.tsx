@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Tab, Tooltip, TooltipPosition, Badge } from '@patternfly/react-core';
+import { Tab } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { summaryFont, summaryHeader, summaryBodyTabs } from './SummaryPanelCommon';
 import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -10,6 +10,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelPropType, NodeType } from 'types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from 'utils/TrafficRate';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -191,12 +192,10 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     return (
       <React.Fragment key={cluster}>
         <span>
-          <Tooltip position={TooltipPosition.auto} content={<>Cluster</>}>
-            <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
-              CL
-            </Badge>
-          </Tooltip>
-          <KialiPageLink href="/" cluster={cluster}>{cluster}</KialiPageLink>{' '}
+          <PFBadge badge={PFBadges.Cluster} style={{ marginBottom: '2px' }} />
+          <KialiPageLink href="/" cluster={cluster}>
+            {cluster}
+          </KialiPageLink>{' '}
         </span>
         <br />
       </React.Fragment>

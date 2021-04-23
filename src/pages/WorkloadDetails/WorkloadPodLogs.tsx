@@ -12,7 +12,6 @@ import {
   ToolbarItem,
   Tooltip,
   TooltipPosition,
-  Badge,
   Form,
   FormGroup,
   Dropdown,
@@ -35,6 +34,7 @@ import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
 import { PFColors, PFColorVal } from 'components/Pf/PfColors';
 import AccessLogModal from 'components/Envoy/AccessLogModal';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 const appContainerColors = [PFColors.White, PFColors.LightGreen400, PFColors.LightBlue400, PFColors.Purple100];
 const proxyContainerColor = PFColors.Gold400;
@@ -257,9 +257,7 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
                     {this.state.showToolbar && (
                       <Toolbar className={toolbar}>
                         <ToolbarGroup>
-                          <Tooltip position={TooltipPosition.top} content={<>Pod</>}>
-                            <Badge className="virtualitem_badge_definition">P</Badge>
-                          </Tooltip>
+                          <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                           <ToolbarItem className={displayFlex}>
                             <ToolbarDropdown
                               id={'wpl_pods'}
@@ -358,11 +356,11 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
     return (
       <Form>
         <FormGroup fieldId="container-log-selection" isInline>
-          <Tooltip position={TooltipPosition.top} content={<>Containers</>}>
-            <Badge className="virtualitem_badge_definition" style={{ marginRight: '10px' }}>
-              C
-            </Badge>
-          </Tooltip>
+          <PFBadge
+            badge={{ badge: PFBadges.Container.badge, tt: 'Containers' }}
+            style={{ marginRight: '10px' }}
+            position={TooltipPosition.top}
+          />
           {this.state.containers!.map((c, i) => {
             return (
               <div key={`c-d-${i}`} className="pf-c-check">

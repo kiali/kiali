@@ -17,6 +17,7 @@ import { decoratedEdgeData, decoratedNodeData, CyNode } from '../CytoscapeGraphU
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
 import { getEdgeHealth } from '../../../types/ErrorRate';
+import { PFBadges } from 'components/Pf/PfBadges';
 export const DimClass = 'mousedim';
 export const HighlightClass = 'mousehighlight';
 export const HoveredClass = 'mousehover';
@@ -68,11 +69,11 @@ const NodeTextFontSizeHover = '11px';
 const NodeTextFontSizeHoverBox = '13px';
 const NodeWidth = NodeHeight;
 
-const badgeMargin = style({
+const iconMargin = style({
   marginLeft: '1px'
 });
 
-const badgesDefault = style({
+const iconsDefault = style({
   alignItems: 'center',
   backgroundColor: NodeBadgeBackgroundColor,
   borderTopLeftRadius: '3px',
@@ -176,35 +177,44 @@ export class GraphStyles {
     };
 
     const cyGlobal = getCyGlobalData(ele);
-    const data = decoratedNodeData(ele);
-    const app = data.app || '';
-    const isBox = data.isBox;
-    const isBoxed = data.parent;
-    const isBoxedBy = isBoxed ? ele.parent()[0].data().isBox : undefined;
+    const node = decoratedNodeData(ele);
+    const app = node.app || '';
+    const cluster = node.cluster;
+    const namespace = node.namespace;
+    const nodeType = node.nodeType;
+    const service = node.service || '';
+    const version = node.version || '';
+    const workload = node.workload || '';
+    const isBox = node.isBox;
+    const isBoxed = node.parent;
+    const box1 = isBoxed ? ele.parent()[0] : undefined;
+    const box1Type = box1 ? box1.data().isBox : undefined;
+    const box2 = box1 && box1.parent() ? box1.parent()[0] : undefined;
+    const box2Type = box2 ? box2.data().isBox : undefined;
+    // const box3 = box2 && box2.parent() ? box2.parent()[0] : undefined;
+    // const box3Type = box3 ? box3.data().isBox : undefined;
+    const isAppBoxed = box1Type === BoxByType.APP;
+    const isNamespaceBoxed = box1Type === BoxByType.NAMESPACE || box2Type === BoxByType.NAMESPACE;
+    // const isClusterBoxed = box1Type === BoxByType.CLUSTER || box2Type === BoxByType.CLUSTER || box3Type === BoxByType.CLUSTER;
     const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
-    const isOutside = data.isOutside;
-    const namespace = data.namespace;
-    const nodeType = data.nodeType;
-    const service = data.service || '';
-    const version = data.version || '';
-    const workload = data.workload || '';
+    const isOutside = node.isOutside;
 
-    let badges = '';
-    if (data.isRoot) {
-      badges = `<span class="${NodeIconRoot} ${badgeMargin}"></span> ${badges}`;
+    let icons = '';
+    if (node.isRoot) {
+      icons = `<span class="${NodeIconRoot} ${iconMargin}"></span> ${icons}`;
     }
-    if (cyGlobal.showMissingSidecars && data.hasMissingSC) {
-      badges = `<span class="${NodeIconMS} ${badgeMargin}"></span> ${badges}`;
+    if (cyGlobal.showMissingSidecars && node.hasMissingSC) {
+      icons = `<span class="${NodeIconMS} ${iconMargin}"></span> ${icons}`;
     }
-    if (cyGlobal.showCircuitBreakers && data.hasCB) {
-      badges = `<span class="${NodeIconCB} ${badgeMargin}"></span> ${badges}`;
+    if (cyGlobal.showCircuitBreakers && node.hasCB) {
+      icons = `<span class="${NodeIconCB} ${iconMargin}"></span> ${icons}`;
     }
-    if (cyGlobal.showVirtualServices && data.hasVS) {
-      badges = `<span class="${NodeIconVS} ${badgeMargin}"></span> ${badges}`;
+    if (cyGlobal.showVirtualServices && node.hasVS) {
+      icons = `<span class="${NodeIconVS} ${iconMargin}"></span> ${icons}`;
     }
-    const hasBadge = badges.length > 0;
-    if (hasBadge) {
-      badges = `<div class=${badgesDefault}>${badges}</div>`;
+    const hasIcon = icons.length > 0;
+    if (hasIcon) {
+      icons = `<div class=${iconsDefault}>${icons}</div>`;
     }
 
     let labelStyle = '';
@@ -222,23 +232,36 @@ export class GraphStyles {
     }
 
     const content: string[] = [];
+
+    // append namespace if necessary
     if (
       (isMultiNamespace || isOutside) &&
-      !cyGlobal.boxByNamespace &&
+      !!namespace &&
       namespace !== UNKNOWN &&
-      nodeType !== NodeType.UNKNOWN &&
-      isBox !== BoxByType.CLUSTER &&
+      !isAppBoxed &&
+      !isNamespaceBoxed &&
       isBox !== BoxByType.NAMESPACE
     ) {
       content.push(`(${namespace})`);
     }
 
+    // append cluster if necessary
+    if (
+      !!cluster &&
+      cluster !== UNKNOWN &&
+      cluster !== cyGlobal.homeCluster &&
+      !isBoxed &&
+      isBox !== BoxByType.CLUSTER
+    ) {
+      content.push(`(${cluster})`);
+    }
+
     switch (nodeType) {
       case NodeType.AGGREGATE:
-        content.unshift(data.aggregateValue!);
+        content.unshift(node.aggregateValue!);
         break;
       case NodeType.APP:
-        if (isBoxed && isBoxedBy === BoxByType.APP) {
+        if (isAppBoxed) {
           if (cyGlobal.graphType === GraphType.APP) {
             content.unshift(app);
           } else if (version && version !== UNKNOWN) {
@@ -261,13 +284,10 @@ export class GraphStyles {
             content.unshift(app);
             break;
           case BoxByType.CLUSTER:
-            content.unshift(data.cluster);
+            content.unshift(node.cluster);
             break;
           case BoxByType.NAMESPACE:
-            content.unshift(data.namespace);
-            if (!cyGlobal.boxByCluster && data.cluster !== UNKNOWN) {
-              content.push(`(${data.cluster})`);
-            }
+            content.unshift(node.namespace);
             break;
         }
         break;
@@ -285,31 +305,31 @@ export class GraphStyles {
     }
 
     const contentText = content.join('<br/>');
-    const contentClasses = hasBadge ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
+    const contentClasses = hasIcon ? `${contentDefault} ${contentWithBadges}` : `${contentDefault}`;
     let appBoxStyle = '';
     if (isBox) {
-      let letter = '';
+      let badge = '';
       switch (isBox) {
         case BoxByType.APP:
-          letter = 'A';
+          badge = PFBadges.App.badge;
           appBoxStyle += `font-size: ${NodeTextFontSize};`;
           break;
         case BoxByType.CLUSTER:
-          letter = 'CL';
+          badge = PFBadges.Cluster.badge;
           break;
         case BoxByType.NAMESPACE:
-          letter = 'NS';
+          badge = PFBadges.Namespace.badge;
           break;
         default:
           console.warn(`GraphSyles: Unexpected box [${isBox}] `);
       }
-      const contentBadge = `<span class="pf-c-badge pf-m-unread ${contentBoxPfBadge}" style="${appBoxStyle}">${letter}</span>`;
+      const contentBadge = `<span class="pf-c-badge pf-m-unread ${contentBoxPfBadge}" style="${appBoxStyle}">${badge}</span>`;
       const contentSpan = `<span class="${contentClasses} ${contentBox}" style=" ${appBoxStyle}${contentStyle}">${contentBadge}${contentText}</span>`;
-      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${badges}${contentSpan}</div>`;
+      return `<div class="${labelDefault} ${labelBox}" style="${labelStyle}">${icons}${contentSpan}</div>`;
     }
 
     const contentSpan = `<div class="${contentClasses}" style="${contentStyle}">${contentText}</div>`;
-    return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
+    return `<div class="${labelDefault}" style="${labelStyle}">${icons}${contentSpan}</div>`;
   }
 
   static htmlNodeLabels(cy: Cy.Core) {

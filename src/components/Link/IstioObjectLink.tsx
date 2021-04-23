@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Paths } from '../../config';
 import { Link } from 'react-router-dom';
-import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { IstioTypes } from '../VirtualList/Config';
+import { PFBadge } from 'components/Pf/PfBadges';
+import { TooltipPosition } from '@patternfly/react-core';
 
 interface Props {
   name: string;
@@ -32,9 +33,7 @@ export class ReferenceIstioObjectLink extends React.Component<Props> {
 
     return (
       <>
-        <Tooltip position={TooltipPosition.top} content={<>{istioType.name}</>}>
-          <Badge className={'virtualitem_badge_definition'}>{istioType.icon}</Badge>
-        </Tooltip>
+        <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
         <IstioObjectLink name={name} namespace={namespace} type={type} subType={subType}>
           {namespace}/{name}
         </IstioObjectLink>

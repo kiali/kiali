@@ -1,84 +1,61 @@
 import * as React from 'react';
-import { Tooltip, Badge, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
-import { CyNode, decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
-import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
-import KialiPageLink from 'components/Link/KialiPageLink';
+import { NodeType, GraphNodeData, DestService, BoxByType } from '../../types/Graph';
+import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { NodeType, GraphNodeData, DestService, BoxByType } from 'types/Graph';
+import { Badge, PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
+import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
+import { getPFBadge, PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import KialiPageLink from 'components/Link/KialiPageLink';
+import { serverConfig } from 'config';
+
+const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): React.ReactFragment => {
+  const addNamespace = nodeData.isBox !== BoxByType.NAMESPACE;
+  const addCluster =
+    nodeData.isBox !== BoxByType.CLUSTER &&
+    (!serverConfig.clusterInfo || serverConfig.clusterInfo.name !== nodeData.cluster);
+  return (
+    <div style={{ textAlign: 'left' }}>
+      <span>{tooltip}</span>
+      {addNamespace && <div>{`Namespace: ${nodeData.namespace}`}</div>}
+      {addCluster && <div>{`Cluster: ${nodeData.cluster}`}</div>}
+    </div>
+  );
+};
 
 const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType) => {
   switch (nodeType || nodeData.nodeType) {
     case NodeType.AGGREGATE:
-      return (
-        <Tooltip position={TooltipPosition.auto} content={<>Operation: {nodeData.aggregate!}</>}>
-          <Badge className="virtualitem_badge_definition">O</Badge>
-        </Tooltip>
-      );
+      return getPFBadge(PFBadges.Operation.badge, getTooltip(`Operation: ${nodeData.aggregate!}`, nodeData));
     case NodeType.APP:
-      return (
-        <Tooltip position={TooltipPosition.auto} content={<>Application</>}>
-          <Badge className="virtualitem_badge_definition">A</Badge>
-        </Tooltip>
-      );
+      return getPFBadge(PFBadges.App.badge, getTooltip(PFBadges.App.tt!, nodeData));
     case NodeType.BOX:
       switch (nodeData.isBox) {
         case BoxByType.APP:
-          return (
-            <Tooltip position={TooltipPosition.auto} content={<>Application</>}>
-              <Badge className="virtualitem_badge_definition">A</Badge>
-            </Tooltip>
-          );
+          return getPFBadge(PFBadges.App.badge, getTooltip(PFBadges.App.tt!, nodeData));
         case BoxByType.CLUSTER:
-          return (
-            <Tooltip position={TooltipPosition.auto} content={<>Cluster</>}>
-              <Badge className="virtualitem_badge_definition">CL</Badge>
-            </Tooltip>
-          );
+          return getPFBadge(PFBadges.Cluster.badge, getTooltip(PFBadges.Cluster.tt!, nodeData));
         case BoxByType.NAMESPACE:
-          return (
-            <Tooltip position={TooltipPosition.auto} content={<>Namespace</>}>
-              <Badge className="virtualitem_badge_definition">NS</Badge>
-            </Tooltip>
-          );
+          return getPFBadge(PFBadges.Namespace.badge, getTooltip(PFBadges.Namespace.tt!, nodeData));
         default:
-          return (
-            <Tooltip position={TooltipPosition.auto} content={<>Unknown</>}>
-              <Badge className="virtualitem_badge_definition">U</Badge>
-            </Tooltip>
-          );
+          return <PFBadge badge={PFBadges.Unknown} />;
       }
     case NodeType.SERVICE:
-      return !!nodeData.isServiceEntry ? (
-        <Tooltip
-          position={TooltipPosition.auto}
-          content={
-            <>
-              {nodeData.isServiceEntry.location === 'MESH_EXTERNAL'
+      return !!nodeData.isServiceEntry
+        ? getPFBadge(
+            PFBadges.ServiceEntry.badge,
+            getTooltip(
+              nodeData.isServiceEntry.location === 'MESH_EXTERNAL'
                 ? 'External Service Entry'
-                : 'Internal Service Entry'}
-            </>
-          }
-        >
-          <Badge className="virtualitem_badge_definition">SE</Badge>
-        </Tooltip>
-      ) : (
-        <Tooltip position={TooltipPosition.auto} content={<>Service</>}>
-          <Badge className="virtualitem_badge_definition">S</Badge>
-        </Tooltip>
-      );
+                : 'Internal Service Entry',
+              nodeData
+            )
+          )
+        : getPFBadge(PFBadges.Service.badge, getTooltip(PFBadges.Service.tt!, nodeData));
     case NodeType.WORKLOAD:
-      return (
-        <Tooltip position={TooltipPosition.auto} content={<>Workload</>}>
-          <Badge className="virtualitem_badge_definition">W</Badge>
-        </Tooltip>
-      );
+      return getPFBadge(PFBadges.Workload.badge, getTooltip(PFBadges.Workload.tt!, nodeData));
     default:
-      return (
-        <Tooltip position={TooltipPosition.auto} content={<>Unknown</>}>
-          <Badge className="virtualitem_badge_definition">U</Badge>
-        </Tooltip>
-      );
+      return <PFBadge badge={PFBadges.Unknown} />;
   }
 };
 
@@ -139,7 +116,7 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
       <KialiPageLink key={key} href={link} cluster={cluster}>
         {displayName}
       </KialiPageLink>
-    )
+    );
   }
 
   return <span key={key}>{displayName}</span>;
@@ -148,9 +125,7 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
 export const renderBadgedHost = (host: string) => {
   return (
     <span>
-      <Tooltip content={<>Host</>}>
-        <Badge className="virtualitem_badge_definition">H</Badge>
-      </Tooltip>
+      <PFBadge badge={PFBadges.Host} />
       {host}
     </span>
   );

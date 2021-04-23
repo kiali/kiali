@@ -38,7 +38,7 @@ export enum PFColors {
   // semantic kiali colors
   Active = 'var(--pf-global--active-color--400)',
   ActiveText = 'var(--pf-global--primary-color--200)',
-  Badge = 'var(--pf-global--palette--blue-200)', // UX-assigned badge background. also, see dep in _VirtualList.scss
+  Badge = 'var(--pf-global--palette--blue-200)', // UX-assigned badge background
   Replay = 'var(--pf-global--active-color--300)', // also, see dep in _Time.scss
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors

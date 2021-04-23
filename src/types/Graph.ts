@@ -79,8 +79,7 @@ export interface NodeParamsType {
 export const CytoscapeGlobalScratchNamespace = '_global';
 export type CytoscapeGlobalScratchData = {
   activeNamespaces: Namespace[];
-  boxByCluster: boolean;
-  boxByNamespace: boolean;
+  homeCluster: string;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   showCircuitBreakers: boolean;

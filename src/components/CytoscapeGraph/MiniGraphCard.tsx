@@ -82,8 +82,6 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
         <CardBody>
           <div style={{ height: '100%' }}>
             <CytoscapeGraph
-              boxByCluster={false}
-              boxByNamespace={false}
               compressOnHide={true}
               containerClassName={miniGraphContainerStyle}
               graphData={{

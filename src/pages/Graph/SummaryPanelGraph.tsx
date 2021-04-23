@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Badge, Tab, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tab } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
@@ -28,6 +28,7 @@ import Namespace from 'types/Namespace';
 import ValidationSummary from 'components/Validations/ValidationSummary';
 import { PFColors } from '../../components/Pf/PfColors';
 import ValidationSummaryLink from '../../components/Link/ValidationSummaryLink';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 type SummaryPanelGraphMetricsState = {
   reqRates: Datapoint[];
@@ -301,11 +302,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <React.Fragment key={ns}>
         <span>
-          <Tooltip position={TooltipPosition.auto} content={<>Namespace</>}>
-            <Badge className="virtualitem_badge_definition" style={{ marginBottom: '2px' }}>
-              NS
-            </Badge>
-          </Tooltip>
+          <PFBadge badge={PFBadges.Namespace} style={{ marginBottom: '2px' }} />
           {ns} {this.renderValidations(ns)}
         </span>
         <br />

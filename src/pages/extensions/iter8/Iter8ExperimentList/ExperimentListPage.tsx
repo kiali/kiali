@@ -24,7 +24,6 @@ import { FilterSelected, StatefulFilters } from '../../../../components/Filters/
 import { namespaceEquals } from '../../../../utils/Common';
 import history from '../../../../app/History';
 import {
-  Badge,
   Dropdown,
   DropdownItem,
   DropdownPosition,
@@ -49,6 +48,7 @@ import { activeNamespacesSelector, durationSelector } from '../../../../store/Se
 import { connect } from 'react-redux';
 import DefaultSecondaryMasthead from '../../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import RefreshContainer from '../../../../components/Refresh/Refresh';
+import { PFBadges, PFBadge } from 'components/Pf/PfBadges';
 
 // Style constants
 const containerPadding = style({ padding: '20px 20px 20px 20px' });
@@ -432,7 +432,7 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
       let linkTo = '/namespaces/' + namespace + '/workloads/' + name;
       return (
         <>
-          <Badge className={'virtualitem_badge_definition'}>W</Badge>
+          <PFBadge badge={{ badge: 'W' }} />
           <Link to={linkTo}>{name}</Link>
         </>
       );
@@ -441,7 +441,7 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
         let linkTo = '/namespaces/' + namespace + '/services/' + name;
         return (
           <>
-            <Badge className={'virtualitem_badge_definition'}>S</Badge>
+            <PFBadge badge={{ badge: 'S' }} />
             <Link to={linkTo}>{name}</Link>
           </>
         );
@@ -462,14 +462,12 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
       return {
         cells: [
           <>
-            <Tooltip
-              key={'TooltipExtensionIter8Name_' + h.name}
+            <PFBadge
+              key={`TooltipExtensionIter8Name_${h.name}`}
+              badge={PFBadges.Iter8}
               position={TooltipPosition.top}
-              content={<>Iter8 Experiment</>}
-            >
-              <Badge className={'virtualitem_badge_definition'}>IT8</Badge>
-            </Tooltip>
-            <Badge className={'virtualitem_badge_definition'}>{h.experimentKind}</Badge>
+            />
+            <PFBadge badge={{ badge: h.experimentKind }} />
             <Link
               to={`/extensions/namespaces/${h.namespace}/iter8/${h.name}?target=${h.targetService}&startTime=${h.startTime}&endTime=${h.endTime}&baseline=${h.baseline.name}&candidates=${candidates}`}
               key={'Experiment_' + h.namespace + '_' + h.namespace}
@@ -478,13 +476,11 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
             </Link>
           </>,
           <>
-            <Tooltip
-              key={'TooltipExtensionNamespace_' + h.namespace}
+            <PFBadge
+              key={`TooltipExtensionNamespace_${h.namespace}`}
+              badge={PFBadges.Namespace}
               position={TooltipPosition.top}
-              content={<>Namespace</>}
-            >
-              <Badge className={'virtualitem_badge_definition'}>NS</Badge>
-            </Tooltip>
+            />
             {h.namespace}
           </>,
           <>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Badge, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { IRow, sortable, SortByDirection, Table, TableBody, TableHeader, cellWidth } from '@patternfly/react-table';
 import { Link } from 'react-router-dom';
@@ -12,11 +12,12 @@ import history, { URLParam } from 'app/History';
 import { createIcon } from 'components/Health/Helper';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
+import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
   healthStatus: ThresholdStatus;
-  icon: string;
+  badge: PFBadgeType;
   node: TrafficNode;
   protocol: string;
   trafficRate: string;
@@ -151,20 +152,20 @@ class TrafficListComponent extends FilterComponent.Component<
 
   trafficToListItems(trafficItems: TrafficItem[]) {
     const listItems = trafficItems.map(ti => {
-      let icon: string;
+      let badge: PFBadgeType;
       switch (ti.node.type) {
         case NodeType.APP:
-          icon = 'A';
+          badge = PFBadges.App;
           break;
         case NodeType.SERVICE:
-          icon = 'S';
+          badge = PFBadges.Service;
           break;
         default:
-          icon = 'W';
+          badge = PFBadges.Workload;
       }
       const item: TrafficListItem = {
         direction: ti.direction,
-        icon: icon,
+        badge: badge,
         node: ti.node,
         protocol: (ti.traffic.protocol || 'N/A').toUpperCase(),
         healthStatus: this.getHealthStatus(ti),
@@ -231,15 +232,9 @@ class TrafficListComponent extends FilterComponent.Component<
               </Tooltip>
             </>,
             <>
-              <Tooltip
-                key={`tt_badge_${i}`}
-                position={TooltipPosition.top}
-                content={<>{this.nodeTypeToType(item.node.type)}</>}
-              >
-                <Badge className={'virtualitem_badge_definition'}>{item.icon}</Badge>
-              </Tooltip>
+              <PFBadge badge={item.badge} position={TooltipPosition.top} key={`tt_badge_${i}`} />
               {!!links.detail ? (
-                <Link key={`link_d_${item.icon}_${name}`} to={links.detail} className={'virtualitem_definition_link'}>
+                <Link key={`link_d_${item.badge}_${name}`} to={links.detail} className={'virtualitem_definition_link'}>
                   {name}
                 </Link>
               ) : (
@@ -251,7 +246,7 @@ class TrafficListComponent extends FilterComponent.Component<
             <>{item.protocol}</>,
             <>
               {!!links.metrics && (
-                <Link key={`link_m_${item.icon}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
+                <Link key={`link_m_${item.badge}_${name}`} to={links.metrics} className={'virtualitem_definition_link'}>
                   View metrics
                 </Link>
               )}
