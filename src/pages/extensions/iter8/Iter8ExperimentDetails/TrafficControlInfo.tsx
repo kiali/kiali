@@ -226,7 +226,7 @@ class TrafficControlInfo extends React.Component<TrafficControlInfoProps, State>
                       position={PopoverPosition.auto}
                       content={
                         <>
-                          Match rules used to filter out incoming traffic. With protocol name as a key, its value is an
+                          Match rules used to filter out inbound traffic. With protocol name as a key, its value is an
                           array of Istio matching clauses. Currently, only http is supported
                         </>
                       }

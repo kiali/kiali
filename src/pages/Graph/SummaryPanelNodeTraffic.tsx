@@ -135,13 +135,13 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     let promiseOut: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
     let promiseIn: Promise<Response<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
-    // Ignore outgoing traffic if it is a non-root outsider (because they have no outgoing edges) or a
-    // service node or aggregate node (because they don't have "real" outgoing edges).
+    // Ignore outbound traffic if it is a non-root outsider (because they have no outbound edges) or a
+    // service node or aggregate node (because they don't have "real" outbound edges).
     if (
       !([NodeType.SERVICE, NodeType.AGGREGATE].includes(nodeData.nodeType) || (nodeData.isOutside && !nodeData.isRoot))
     ) {
       const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
-      // use source metrics for outgoing, except for:
+      // use source metrics for outbound, except for:
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
       const reporter: Reporter = nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio ? 'destination' : 'source';
@@ -162,10 +162,10 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
       );
     }
 
-    // set incoming unless it is a root (because they have no incoming edges)
+    // set inbound unless it is a root (because they have no inbound edges)
     if (!nodeData.isRoot) {
       const filtersRps = ['request_count', 'request_error_count'];
-      // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
+      // use dest metrics for inbound, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
@@ -324,42 +324,42 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   private renderGrpcRates = node => {
-    const incoming = getTrafficRateGrpc(node);
-    const outgoing = getAccumulatedTrafficRateGrpc(this.props.data.summaryTarget.edgesTo('*'));
+    const inbound = getTrafficRateGrpc(node);
+    const outbound = getAccumulatedTrafficRateGrpc(this.props.data.summaryTarget.edgesTo('*'));
 
     return (
       <>
         <InOutRateTableGrpc
           title="GRPC Traffic (requests per second):"
-          inRate={incoming.rate}
-          inRateGrpcErr={incoming.rateGrpcErr}
-          inRateNR={incoming.rateNoResponse}
-          outRate={outgoing.rate}
-          outRateGrpcErr={outgoing.rateGrpcErr}
-          outRateNR={outgoing.rateNoResponse}
+          inRate={inbound.rate}
+          inRateGrpcErr={inbound.rateGrpcErr}
+          inRateNR={inbound.rateNoResponse}
+          outRate={outbound.rate}
+          outRateGrpcErr={outbound.rateGrpcErr}
+          outRateNR={outbound.rateNoResponse}
         />
       </>
     );
   };
 
   private renderHttpRates = node => {
-    const incoming = getTrafficRateHttp(node);
-    const outgoing = getAccumulatedTrafficRateHttp(this.props.data.summaryTarget.edgesTo('*'));
+    const inbound = getTrafficRateHttp(node);
+    const outbound = getAccumulatedTrafficRateHttp(this.props.data.summaryTarget.edgesTo('*'));
 
     return (
       <>
         <InOutRateTableHttp
           title="HTTP (requests per second):"
-          inRate={incoming.rate}
-          inRate3xx={incoming.rate3xx}
-          inRate4xx={incoming.rate4xx}
-          inRate5xx={incoming.rate5xx}
-          inRateNR={incoming.rateNoResponse}
-          outRate={outgoing.rate}
-          outRate3xx={outgoing.rate3xx}
-          outRate4xx={outgoing.rate4xx}
-          outRate5xx={outgoing.rate5xx}
-          outRateNR={outgoing.rateNoResponse}
+          inRate={inbound.rate}
+          inRate3xx={inbound.rate3xx}
+          inRate4xx={inbound.rate4xx}
+          inRate5xx={inbound.rate5xx}
+          inRateNR={inbound.rateNoResponse}
+          outRate={outbound.rate}
+          outRate3xx={outbound.rate3xx}
+          outRate4xx={outbound.rate4xx}
+          outRate5xx={outbound.rate5xx}
+          outRateNR={outbound.rateNoResponse}
         />
       </>
     );
@@ -441,7 +441,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
             dataErrors={this.state.grpcErrorCountOut}
             hide={isInOutSameNode}
           />
-          {this.isIstioOutgoingCornerCase(node) && (
+          {this.isIstioOutboundCornerCase(node) && (
             <>
               <div>
                 <KialiIcon.Info /> Traffic to Istio namespaces not included. Use edge for details.
@@ -473,7 +473,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
             dataErrors={this.state.httpErrorCountOut}
             hide={isInOutSameNode}
           />
-          {this.isIstioOutgoingCornerCase(node) && (
+          {this.isIstioOutboundCornerCase(node) && (
             <>
               <div>
                 <KialiIcon.Info />" Traffic to Istio namespaces not included. Use edge for details.
@@ -521,9 +521,9 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     );
   };
 
-  // We need to handle the special case of a non-istio, non-unknown node with outgoing traffic to istio.
+  // We need to handle the special case of a non-istio, non-unknown node with outbound traffic to istio.
   // The traffic is lost because it is dest-only and we use source-reporting.
-  private isIstioOutgoingCornerCase = (node): boolean => {
+  private isIstioOutboundCornerCase = (node): boolean => {
     const nodeData = decoratedNodeData(node);
     if (nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio) {
       return false;

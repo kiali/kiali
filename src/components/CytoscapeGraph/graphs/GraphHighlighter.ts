@@ -85,7 +85,7 @@ export class GraphHighlighter {
 
   // Returns the nodes to highlight. Highlighting for a hovered element
   // is limited to its neighborhood.  Highlighting for a selected element
-  // is extended to full incoming and outgoing paths.
+  // is extended to full inbound and outbound paths.
   getHighlighted(): { toHighlight: any; dimOthers: boolean } {
     const isHover = this.selected.summaryType === 'graph';
     const event = isHover ? this.hovered : this.selected;

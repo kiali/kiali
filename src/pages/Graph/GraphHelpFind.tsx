@@ -166,12 +166,12 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['app startswith product', `nodes with app label starting with 'product'`],
       ['app != details and version=v1', `nodes with app label not equal to 'details' and with version equal to 'v1'`],
       ['!sc', `nodes without a sidecar`],
-      ['httpin > 0.5', `nodes with incoming http rate > 0.5 rps`],
-      ['tcpout >= 1000', `nodes with outgoing tcp rates >= 1000 bps`],
+      ['httpin > 0.5', `nodes with inbound http rate > 0.5 rps`],
+      ['tcpout >= 1000', `nodes with outbound tcp rates >= 1000 bps`],
       ['!traffic', 'edges with no traffic'],
       ['http > 0.5', `edges with http rate > 0.5 rps`],
       ['rt > 500', `edges with response time > 500ms. (requires response time edge labels)`],
-      ['%httptraffic >= 50.0', `edges with >= 50% of the outgoing http request traffic of the parent`],
+      ['%httptraffic >= 50.0', `edges with >= 50% of the outbound http request traffic of the parent`],
       ['node = svc and svc startswith det or !traffic', 'service node starting with "det" or edges with no traffic']
     ];
   };
@@ -201,7 +201,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['outside', 'is outside of requested namespaces'],
       ['sidecar'],
       ['serviceentry'],
-      ['trafficsource', `has only outgoing edges`],
+      ['trafficsource', `has only outbound edges`],
       ['virtualservice']
     ];
   };

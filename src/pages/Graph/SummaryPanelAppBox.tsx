@@ -191,7 +191,7 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const reporter: Reporter = nodeData.isIstio ? 'destination' : 'source';
 
     const promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter);
-    // use dest metrics for incoming
+    // use dest metrics for inbound
     const promiseIn = getNodeMetrics(nodeMetricType, target, props, filters, 'inbound', 'destination');
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
 
@@ -262,19 +262,19 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
-    const incoming = getAccumulatedTrafficRateGrpc(validChildren.incomers('edge'));
-    const outgoing = getAccumulatedTrafficRateGrpc(validChildren.edgesTo('*'));
+    const inbound = getAccumulatedTrafficRateGrpc(validChildren.incomers('edge'));
+    const outbound = getAccumulatedTrafficRateGrpc(validChildren.edgesTo('*'));
 
     return (
       <>
         <InOutRateTableGrpc
           title="GRPC Traffic (requests per second):"
-          inRate={incoming.rate}
-          inRateGrpcErr={incoming.rateGrpcErr}
-          inRateNR={incoming.rateNoResponse}
-          outRate={outgoing.rate}
-          outRateGrpcErr={outgoing.rateGrpcErr}
-          outRateNR={outgoing.rateNoResponse}
+          inRate={inbound.rate}
+          inRateGrpcErr={inbound.rateGrpcErr}
+          inRateNR={inbound.rateNoResponse}
+          outRate={outbound.rate}
+          outRateGrpcErr={outbound.rateGrpcErr}
+          outRateNR={outbound.rateNoResponse}
         />
       </>
     );
@@ -285,23 +285,23 @@ export default class SummaryPanelAppBox extends React.Component<SummaryPanelProp
     const validChildren = appBox.children(
       `node[nodeType != "${NodeType.SERVICE}"][nodeType != "${NodeType.AGGREGATE}"]`
     );
-    const incoming = getAccumulatedTrafficRateHttp(validChildren.incomers('edge'));
-    const outgoing = getAccumulatedTrafficRateHttp(validChildren.edgesTo('*'));
+    const inbound = getAccumulatedTrafficRateHttp(validChildren.incomers('edge'));
+    const outbound = getAccumulatedTrafficRateHttp(validChildren.edgesTo('*'));
 
     return (
       <>
         <InOutRateTableHttp
           title="HTTP (requests per second):"
-          inRate={incoming.rate}
-          inRate3xx={incoming.rate3xx}
-          inRate4xx={incoming.rate4xx}
-          inRate5xx={incoming.rate5xx}
-          inRateNR={incoming.rateNoResponse}
-          outRate={outgoing.rate}
-          outRate3xx={outgoing.rate3xx}
-          outRate4xx={outgoing.rate4xx}
-          outRate5xx={outgoing.rate5xx}
-          outRateNR={outgoing.rateNoResponse}
+          inRate={inbound.rate}
+          inRate3xx={inbound.rate3xx}
+          inRate4xx={inbound.rate4xx}
+          inRate5xx={inbound.rate5xx}
+          inRateNR={inbound.rateNoResponse}
+          outRate={outbound.rate}
+          outRate3xx={outbound.rate3xx}
+          outRate4xx={outbound.rate4xx}
+          outRate5xx={outbound.rate5xx}
+          outRateNR={outbound.rateNoResponse}
         />
       </>
     );

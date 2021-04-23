@@ -53,19 +53,18 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
     const numWorkloads = boxed.filter(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
     const { numApps, numVersions } = this.countApps(boxed);
     const numEdges = boxed.connectedEdges().size();
-    // incoming edges are from a different cluster, or from a local root node
-    let incomingEdges = clusterBox.cy().nodes(`[${CyNode.cluster} != "${cluster}"]`).edgesTo(boxed);
-    incomingEdges = incomingEdges.add(boxed.filter(`[?${CyNode.isRoot}]`).edgesTo('*'));
-    // outgoing edges are to a different cluster
-    const outgoingEdges = boxed.edgesTo(`[${CyNode.cluster} != "${cluster}"]`);
-    // total edges are incoming + edges from boxed workload/app/root nodes (i.e. not injected service nodes or box nodes)
-    const totalEdges = incomingEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
+    // inbound edges are from a different cluster
+    const inboundEdges = clusterBox.cy().nodes(`[${CyNode.cluster} != "${cluster}"]`).edgesTo(boxed);
+    // outbound edges are to a different cluster
+    const outboundEdges = boxed.edgesTo(`[${CyNode.cluster} != "${cluster}"]`);
+    // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
+    const totalEdges = inboundEdges.add(boxed.filter(`[?${CyNode.workload}]`).edgesTo('*'));
     const totalRateGrpc = getAccumulatedTrafficRateGrpc(totalEdges);
     const totalRateHttp = getAccumulatedTrafficRateHttp(totalEdges);
-    const incomingRateGrpc = getAccumulatedTrafficRateGrpc(incomingEdges);
-    const incomingRateHttp = getAccumulatedTrafficRateHttp(incomingEdges);
-    const outgoingRateGrpc = getAccumulatedTrafficRateGrpc(outgoingEdges);
-    const outgoingRateHttp = getAccumulatedTrafficRateHttp(outgoingEdges);
+    const inboundRateGrpc = getAccumulatedTrafficRateGrpc(inboundEdges);
+    const inboundRateHttp = getAccumulatedTrafficRateHttp(inboundEdges);
+    const outboundRateGrpc = getAccumulatedTrafficRateGrpc(outboundEdges);
+    const outboundRateHttp = getAccumulatedTrafficRateHttp(outboundEdges);
     return (
       <div className="panel panel-default" style={SummaryPanelClusterBox.panelStyle}>
         <div className="panel-heading" style={summaryHeader}>
@@ -74,29 +73,29 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
         </div>
         <div className={summaryBodyTabs}>
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '10px' }}>
-            <Tab style={summaryFont} title="Incoming" eventKey={0}>
+            <Tab style={summaryFont} title="Inbound" eventKey={0}>
               <div style={summaryFont}>
-                {incomingRateGrpc.rate === 0 && incomingRateHttp.rate === 0 && (
+                {inboundRateGrpc.rate === 0 && inboundRateHttp.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> No incoming traffic.
+                    <KialiIcon.Info /> No inbound traffic.
                   </>
                 )}
-                {incomingRateGrpc.rate > 0 && (
+                {inboundRateGrpc.rate > 0 && (
                   <RateTableGrpc
                     title="GRPC Traffic (requests per second):"
-                    rate={incomingRateGrpc.rate}
-                    rateGrpcErr={incomingRateGrpc.rateGrpcErr}
-                    rateNR={incomingRateGrpc.rateNoResponse}
+                    rate={inboundRateGrpc.rate}
+                    rateGrpcErr={inboundRateGrpc.rateGrpcErr}
+                    rateNR={inboundRateGrpc.rateNoResponse}
                   />
                 )}
-                {incomingRateHttp.rate > 0 && (
+                {inboundRateHttp.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
-                    rate={incomingRateHttp.rate}
-                    rate3xx={incomingRateHttp.rate3xx}
-                    rate4xx={incomingRateHttp.rate4xx}
-                    rate5xx={incomingRateHttp.rate5xx}
-                    rateNR={incomingRateHttp.rateNoResponse}
+                    rate={inboundRateHttp.rate}
+                    rate3xx={inboundRateHttp.rate3xx}
+                    rate4xx={inboundRateHttp.rate4xx}
+                    rate5xx={inboundRateHttp.rate5xx}
+                    rateNR={inboundRateHttp.rateNoResponse}
                   />
                 )}
                 {
@@ -105,29 +104,29 @@ export default class SummaryPanelClusterBox extends React.Component<SummaryPanel
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outgoing" eventKey={1}>
+            <Tab style={summaryFont} title="Outbound" eventKey={1}>
               <div style={summaryFont}>
-                {outgoingRateGrpc.rate === 0 && outgoingRateHttp.rate === 0 && (
+                {outboundRateGrpc.rate === 0 && outboundRateHttp.rate === 0 && (
                   <>
-                    <KialiIcon.Info /> No outgoing traffic.
+                    <KialiIcon.Info /> No outbound traffic.
                   </>
                 )}
-                {outgoingRateGrpc.rate > 0 && (
+                {outboundRateGrpc.rate > 0 && (
                   <RateTableGrpc
                     title="GRPC Traffic (requests per second):"
-                    rate={outgoingRateGrpc.rate}
-                    rateGrpcErr={outgoingRateGrpc.rateGrpcErr}
-                    rateNR={outgoingRateGrpc.rateNoResponse}
+                    rate={outboundRateGrpc.rate}
+                    rateGrpcErr={outboundRateGrpc.rateGrpcErr}
+                    rateNR={outboundRateGrpc.rateNoResponse}
                   />
                 )}
-                {outgoingRateHttp.rate > 0 && (
+                {outboundRateHttp.rate > 0 && (
                   <RateTableHttp
                     title="HTTP (requests per second):"
-                    rate={outgoingRateHttp.rate}
-                    rate3xx={outgoingRateHttp.rate3xx}
-                    rate4xx={outgoingRateHttp.rate4xx}
-                    rate5xx={outgoingRateHttp.rate5xx}
-                    rateNR={outgoingRateHttp.rateNoResponse}
+                    rate={outboundRateHttp.rate}
+                    rate3xx={outboundRateHttp.rate3xx}
+                    rate4xx={outboundRateHttp.rate4xx}
+                    rate5xx={outboundRateHttp.rate5xx}
+                    rateNR={outboundRateHttp.rateNoResponse}
                   />
                 )}
                 {

@@ -68,8 +68,8 @@ const showSpanSubtrace = (cy: Cy.Core, graphType: GraphType, span: Span) => {
   }
 
   // Inbound service entry
-  const seSelectionIncoming = getInboundServiceEntry(span, cy);
-  lastSelection = nextHop(span, seSelectionIncoming, lastSelection);
+  const seSelectionInbound = getInboundServiceEntry(span, cy);
+  lastSelection = nextHop(span, seSelectionInbound, lastSelection);
 
   // Main service
   const nsSelector = split.length > 1 ? `[${CyNode.namespace}="${split[1]}"]` : '';

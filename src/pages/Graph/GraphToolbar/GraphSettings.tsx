@@ -177,8 +177,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         isChecked: edgeLabelMode === EdgeLabelMode.REQUEST_DISTRIBUTION,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP and GRPC Edges display the percentage of outgoing requests for that edge. For a source node, the sum
-            for outgoing edges should be equal to or near 100%, given rounding. TCP edges are not included in the
+            HTTP and GRPC Edges display the percentage of outbound requests for that edge. For a source node, the sum
+            for outbound edges should be equal to or near 100%, given rounding. TCP edges are not included in the
             distribution because their rates reflect bytes sent, not requests sent.
           </div>
         )

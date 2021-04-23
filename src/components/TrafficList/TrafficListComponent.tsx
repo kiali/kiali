@@ -301,7 +301,7 @@ class TrafficListComponent extends FilterComponent.Component<
         // No filters available for workloads. Context switch is mandatory.
 
         // Since this will switch context (i.e. will redirect the user to the workload details page),
-        // user is redirected to the "opposite" metrics. When looking at certain item, if traffic is *incoming*
+        // user is redirected to the "opposite" metrics. When looking at certain item, if traffic is *inbound*
         // from a certain workload, that traffic is reflected in the *outbound* metrics of the workload (and vice-versa).
         const inverseMetricsDirection = item.direction === 'inbound' ? 'out_metrics' : 'in_metrics';
         metrics = `${detail}?tab=${inverseMetricsDirection}`;
