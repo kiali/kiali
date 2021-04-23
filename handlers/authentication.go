@@ -843,11 +843,14 @@ func OpenIdRedirect(w http.ResponseWriter, r *http.Request) {
 
 func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	conf := config.Get()
+	webRoot := conf.Server.WebRoot
+	webRootWithSlash := webRoot + "/"
 
 	// Read received HTTP params and check for data completeness
 	openIdParams, err := business.ExtractOpenIdCallbackParams(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		log.Errorf("Error when reading URL parameters passed by the OpenID provider: %s", err.Error())
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape("Error when reading URL parameters passed by the OpenID provider")), http.StatusFound)
 		return true // Return true to mark request as handled (because an error is already being sent back)
 	}
 
@@ -861,25 +864,31 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 
 	// CSRF mitigation
 	if stateError := business.ValidateOpenIdState(openIdParams); len(stateError) > 0 {
-		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Request rejected: %s", stateError))
+		log.Errorf("OpenID authentication rejected: %s", stateError)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape("Request rejected: invalid state")), http.StatusFound)
 		return true
 	}
 
 	// Exchange the received code for a token
 	if err := business.RequestOpenIdToken(openIdParams, httputil.GuessKialiURL(r)); err != nil {
-		RespondWithDetailedError(w, http.StatusForbidden, "failure when retrieving user identity", err.Error())
+		msg := fmt.Sprintf("Failure when retrieving user identity: %s", err.Error())
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
 	if err := business.ParseOpenIdToken(openIdParams); err != nil {
 		deleteTokenCookies(w, r)
-		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		log.Errorf("Error when parsing the OpenId token: %s", err.Error())
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
 		return true
 	}
 
 	// Replay attack mitigation
 	if nonceError := business.ValidateOpenIdNonceCode(openIdParams); len(nonceError) > 0 {
-		RespondWithError(w, http.StatusForbidden, fmt.Sprintf("OpenId token rejected: %s", nonceError))
+		msg := fmt.Sprintf("OpenId token rejected: %s", nonceError)
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
@@ -890,7 +899,9 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		// Since the configuration indicates RBAC is off, we do the validations:
 		err = business.ValidateOpenTokenInHouse(openIdParams)
 		if err != nil {
-			RespondWithDetailedError(w, http.StatusForbidden, "the OpenID token was rejected", err.Error())
+			msg := fmt.Sprintf("the OpenID token was rejected: %s", err.Error())
+			log.Error(msg)
+			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 			return true
 		}
 	} else {
@@ -904,10 +915,13 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 		}
 		httpStatus, errMsg, detailedError := business.VerifyOpenIdUserAccess(apiToken)
 		if detailedError != nil {
-			RespondWithDetailedError(w, httpStatus, errMsg, detailedError.Error())
+			msg := fmt.Sprintf("%s: %s", errMsg, detailedError.Error())
+			log.Errorf("Error when verifying user privileges: %s", msg)
+			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 			return true
 		} else if httpStatus != http.StatusOK {
-			RespondWithError(w, httpStatus, errMsg)
+			log.Errorf("Error when verifying user privileges: %s", errMsg)
+			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(errMsg)), http.StatusFound)
 			return true
 		}
 	}
@@ -925,26 +939,34 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	sessionData := business.BuildOpenIdJwtClaims(openIdParams, useAccessToken)
 	sessionDataJson, err := json.Marshal(sessionData)
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to marshal json", err.Error())
+		msg := fmt.Sprintf("Error when creating credentials - failed to marshal json: %s", err.Error())
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
 	// Cipher the session data and encode to base64
 	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create cipher", err.Error())
+		msg := fmt.Sprintf("Error when creating credentials - failed to create cipher: %s", err.Error())
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
 	aesGcm, err := cipher.NewGCM(block)
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to create gcm", err.Error())
+		msg := fmt.Sprintf("Error when creating credentials - failed to create gcm: %s", err.Error())
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
 	aesGcmNonce, err := util.CryptoRandomBytes(aesGcm.NonceSize())
 	if err != nil {
-		RespondWithDetailedError(w, http.StatusInternalServerError, "Error when creating credentials - failed to generate random bytes", err.Error())
+		msg := fmt.Sprintf("Error when creating credentials - failed to generate random bytes: %s", err.Error())
+		log.Error(msg)
+		http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(msg)), http.StatusFound)
 		return true
 	}
 
@@ -993,8 +1015,6 @@ func OpenIdCodeFlowHandler(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	// Let's redirect (remove the openid params) to let the Kiali-UI to boot
-	webRoot := conf.Server.WebRoot
-	webRootWithSlash := webRoot + "/"
 	http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 
 	return true
