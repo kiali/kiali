@@ -54,8 +54,8 @@ minikube_profile="ci"
 minikube_sh="${hack_dir}/k8s-minikube.sh --minikube-profile ${minikube_profile} --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE}"
 
 # make sure we switch contexts if we can so we are pointing to the current cluster
-if [ "$(kubectl config current-context)" != "${minikube_profile}" ]; then
-  if ! kubectl config use-context ${minikube_profile}; then
+if [ "$(${CLIENT_EXE} config current-context)" != "${minikube_profile}" ]; then
+  if ! ${CLIENT_EXE} config use-context ${minikube_profile}; then
     echo "There is no kubectl context named [${minikube_profile}]. This likely means we will start one next."
   fi
 fi
