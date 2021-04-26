@@ -34,7 +34,7 @@ GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
 GO_VERSION_KIALI = 1.16.2
 
-SWAGGER_VERSION ?= 0.22.0
+SWAGGER_VERSION ?= 0.27.0
 
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
