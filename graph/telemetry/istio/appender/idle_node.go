@@ -31,7 +31,14 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 
 	services := []models.ServiceDetails{}
 	workloads := []models.WorkloadListItem{}
-	clusterName := globalInfo.HomeCluster // This can be empty if another appender hasn't populated this yet.
+	if globalInfo.HomeCluster == "" {
+		globalInfo.HomeCluster = "unknown"
+		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
+		graph.CheckError(err)
+		if c != nil {
+			globalInfo.HomeCluster = c.Name
+		}
+	}
 
 	if a.GraphType != graph.GraphTypeService {
 		workloads = getWorkloadList(namespaceInfo.Namespace, globalInfo).Workloads
@@ -41,17 +48,7 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		services = getServiceDefinitionList(namespaceInfo.Namespace, globalInfo).ServiceDefinitions
 	}
 
-	isMeshConfigured, err := globalInfo.Business.Mesh.IsMeshConfigured()
-	graph.CheckError(err)
-	if isMeshConfigured && clusterName == "" {
-		cluster, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
-		graph.CheckError(err)
-		if cluster != nil {
-			clusterName = cluster.Name
-		}
-	}
-
-	a.addIdleNodes(trafficMap, clusterName, namespaceInfo.Namespace, services, workloads)
+	a.addIdleNodes(trafficMap, globalInfo.HomeCluster, namespaceInfo.Namespace, services, workloads)
 }
 
 func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
