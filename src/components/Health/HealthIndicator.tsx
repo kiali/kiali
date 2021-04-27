@@ -1,20 +1,13 @@
 import * as React from 'react';
-import { PopoverPosition, Text, TextContent, TextVariants, Tooltip } from '@patternfly/react-core';
+import { PopoverPosition, Tooltip } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 import './Health.css';
-import { PFColors } from '../Pf/PfColors';
-
-export enum DisplayMode {
-  LARGE,
-  SMALL
-}
 
 interface Props {
   id: string;
   health?: H.Health;
-  mode: DisplayMode;
   tooltipPlacement?: PopoverPosition;
 }
 
@@ -36,58 +29,24 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
 
   render() {
     if (this.props.health) {
-      if (this.props.mode === DisplayMode.SMALL) {
-        return this.renderSmall(this.props.health);
-      } else {
-        return this.renderLarge(this.props.health);
-      }
+      // HealthIndicator will render always in SMALL mode
+      const icon = createIcon(this.state.globalStatus, 'sm');
+      return (
+        <Tooltip
+          aria-label={'Health indicator'}
+          content={
+            <div>
+              <strong>{this.state.globalStatus.name}</strong>
+              <HealthDetails health={this.props.health} />
+            </div>
+          }
+          position={PopoverPosition.auto}
+          className={'health_indicator'}
+        >
+          <>{icon}</>
+        </Tooltip>
+      );
     }
     return <span />;
-  }
-
-  renderSmall(health: H.Health) {
-    return this.renderPopover(health, createIcon(this.state.globalStatus, 'sm'));
-  }
-
-  renderLarge(health: H.Health) {
-    const spanStyle: React.CSSProperties = {
-      color: this.state.globalStatus.color,
-      fontWeight: 'bold',
-      position: 'relative',
-      top: -9,
-      left: 10
-    };
-    return (
-      <>
-        {createIcon(this.state.globalStatus, 'lg')}
-        <span style={spanStyle}>{this.state.globalStatus.name}</span>
-        <br />
-        <br />
-        <HealthDetails health={health} />
-      </>
-    );
-  }
-  renderHealthTooltip(health: H.Health) {
-    return (
-      <TextContent style={{ color: PFColors.White }}>
-        <Text component={TextVariants.h2}>{this.state.globalStatus.name}</Text>
-        <HealthDetails health={health} tooltip={true} />
-      </TextContent>
-    );
-  }
-
-  renderPopover(health: H.Health, icon: JSX.Element) {
-    return health.getGlobalStatus() === H.HEALTHY ? (
-      icon
-    ) : (
-      <Tooltip
-        aria-label={'Health indicator'}
-        content={this.renderHealthTooltip(health)}
-        position={PopoverPosition.auto}
-        className={'health_indicator'}
-      >
-        <>{icon}</>
-      </Tooltip>
-    );
   }
 }

@@ -2,26 +2,33 @@ import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import AppDescription from './AppInfo/AppDescription';
+import AppDescription from './AppDescription';
 import { App } from '../../types/App';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import './AppInfo.css';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
 import GraphDataSource from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { durationSelector } from '../../store/Selectors';
+import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
+import { style } from 'typestyle';
+import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
 
 type AppInfoProps = {
   app?: App;
   duration: DurationInSeconds;
   lastRefreshAt: TimeInMilliseconds;
+  mtlsEnabled: boolean;
 };
 
 type AppInfoState = {
   health?: AppHealth;
+  tabHeight?: number;
 };
+
+const fullHeightStyle = style({
+  height: '100%'
+});
 
 class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
   private graphDataSource = new GraphDataSource();
@@ -36,7 +43,11 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
   }
 
   componentDidUpdate(prev: AppInfoProps) {
-    if (this.props.duration !== prev.duration || this.props.lastRefreshAt !== prev.lastRefreshAt) {
+    if (
+      this.props.duration !== prev.duration ||
+      this.props.lastRefreshAt !== prev.lastRefreshAt ||
+      this.props.app?.name !== prev.app?.name
+    ) {
       this.fetchBackend();
     }
   }
@@ -53,27 +64,34 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
   };
 
   render() {
+    // RenderComponentScroll handles height to provide an inner scroll combined with tabs
+    // This height needs to be propagated to minigraph to proper resize in height
+    // Graph resizes correctly on width
+    const height = this.state.tabHeight ? this.state.tabHeight - 115 : 300;
+    const graphContainerStyle = style({ width: '100%', height: height });
     return (
-      <>
-        <RenderComponentScroll>
-          <Grid gutter={'md'}>
-            <GridItem span={12}>
-              <AppDescription
-                app={this.props.app}
-                miniGraphDataSource={this.graphDataSource}
-                health={this.state.health}
-              />
-            </GridItem>
-          </Grid>
-        </RenderComponentScroll>
-      </>
+      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+        <Grid gutter={'md'} className={fullHeightStyle}>
+          <GridItem span={4}>
+            <AppDescription app={this.props.app} health={this.state.health} />
+          </GridItem>
+          <GridItem span={8}>
+            <MiniGraphCard
+              dataSource={this.graphDataSource}
+              mtlsEnabled={this.props.mtlsEnabled}
+              graphContainerStyle={graphContainerStyle}
+            />
+          </GridItem>
+        </Grid>
+      </RenderComponentScroll>
     );
   }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  lastRefreshAt: state.globalState.lastRefreshAt
+  lastRefreshAt: state.globalState.lastRefreshAt,
+  mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
 const AppInfoContainer = connect(mapStateToProps)(AppInfo);

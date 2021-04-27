@@ -4,7 +4,7 @@ import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/Cytos
 import { KialiIcon } from 'config/KialiIcon';
 import { Badge, PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
-import { HealthIndicator, DisplayMode } from 'components/Health/HealthIndicator';
+import { HealthIndicator } from 'components/Health/HealthIndicator';
 import { getPFBadge, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import KialiPageLink from 'components/Link/KialiPageLink';
 import { serverConfig } from 'config';
@@ -156,12 +156,7 @@ export const renderHealth = (health?: Health) => {
       <Badge style={{ fontWeight: 'normal', marginTop: '4px', marginBottom: '4px' }} isRead={true}>
         <span style={{ margin: '3px 3px 1px 0' }}>
           {health ? (
-            <HealthIndicator
-              id="graph-health-indicator"
-              mode={DisplayMode.SMALL}
-              health={health}
-              tooltipPlacement={PopoverPosition.left}
-            />
+            <HealthIndicator id="graph-health-indicator" health={health} tooltipPlacement={PopoverPosition.left} />
           ) : (
             'n/a'
           )}

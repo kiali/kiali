@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ProxyStatusList from '../ProxyStatusList';
-import { ProxyStatus } from '../../../../types/Health';
+import { ProxyStatus } from '../../../types/Health';
 import { Stack, StackItem } from '@patternfly/react-core';
 import { shallowToJson } from 'enzyme-to-json';
 

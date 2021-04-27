@@ -33,7 +33,7 @@ export interface HealthItemConfig {
   threshold?: ToleranceConfig;
 }
 
-interface HealthSubItem {
+export interface HealthSubItem {
   status: Status;
   text: string;
   value?: number;
@@ -131,7 +131,7 @@ export interface ThresholdStatus {
   violation?: string;
 }
 
-const POD_STATUS = 'Pod Status';
+export const POD_STATUS = 'Pod Status';
 
 // Use -1 rather than NaN to allow straigthforward comparison
 export const RATIO_NA = -1;
@@ -287,6 +287,26 @@ export abstract class Health {
     }
     // Otherwise return the threshold configuration that kiali used to calculate the status
     return this.health.statusConfig?.threshold;
+  }
+
+  getTrafficStatus(): HealthItem | undefined {
+    for (let i = 0; i < this.health.items.length; i++) {
+      const item = this.health.items[i];
+      if (item.title.startsWith(TRAFFICSTATUS)) {
+        return item;
+      }
+    }
+    return undefined;
+  }
+
+  getWorkloadStatus(): HealthItem | undefined {
+    for (let i = 0; i < this.health.items.length; i++) {
+      const item = this.health.items[i];
+      if (item.title.startsWith(POD_STATUS)) {
+        return item;
+      }
+    }
+    return undefined;
   }
 }
 

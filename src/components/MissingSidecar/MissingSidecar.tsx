@@ -4,7 +4,7 @@ import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { icons } from 'config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { infoStyle } from '../../styles/DropdownStyles';
+import { style } from 'typestyle';
 
 type MissingSidecarProps = {
   text: string;
@@ -15,6 +15,11 @@ type MissingSidecarProps = {
   namespace: string;
   style?: React.CSSProperties;
 };
+
+const infoStyle = style({
+  margin: '0px 5px 2px 4px',
+  verticalAlign: '-5px !important'
+});
 
 class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
   static defaultProps = {
@@ -31,9 +36,9 @@ class MissingSidecar extends React.Component<MissingSidecarProps, {}> {
 
     const iconComponent = (
       <span style={style} {...otherProps}>
-        {React.createElement(icon, { style: { color: color } })}
+        {React.createElement(icon, { style: { color: color, verticalAlign: '-2px' } })}
         {!tooltip && (
-          <span style={{ marginLeft: '5px' }}>
+          <span style={{ marginLeft: '8px' }}>
             {text}
             <Tooltip
               key={`tooltip_missing_sidecar`}

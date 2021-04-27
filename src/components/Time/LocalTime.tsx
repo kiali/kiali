@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { Tooltip } from '@patternfly/react-core';
-import { KialiIcon } from '../../config/KialiIcon';
 import { toString } from './Utils';
 
 interface TimeProps {
@@ -17,12 +15,6 @@ export default class LocalTime extends React.Component<TimeProps> {
       renderedTime = '-';
     }
 
-    return (
-      <Tooltip content={<>{this.props.time}</>}>
-        <span>
-          {KialiIcon.LocalTime({})} {renderedTime}
-        </span>
-      </Tooltip>
-    );
+    return <>{renderedTime}</>;
   }
 }

@@ -245,12 +245,13 @@ export default class GraphDataSource {
 
   public fetchForApp = (duration: DurationInSeconds, namespace: string, app: string) => {
     const params = this.fetchForAppParams(duration, namespace, app);
+    params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
   public fetchForAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
-    params.graphType = GraphType.APP;
+    params.graphType = GraphType.VERSIONED_APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
     return params;
@@ -258,6 +259,7 @@ export default class GraphDataSource {
 
   public fetchForWorkload = (duration: DurationInSeconds, namespace: string, workload: string) => {
     const params = this.fetchForWorkloadParams(duration, namespace, workload);
+    params.showSecurity = true;
     this.fetchGraphData(params);
   };
 
@@ -271,6 +273,7 @@ export default class GraphDataSource {
 
   public fetchForService = (duration: DurationInSeconds, namespace: string, service: string) => {
     const params = this.fetchForServiceParams(duration, namespace, service);
+    params.showSecurity = true;
     this.fetchGraphData(params);
   };
 

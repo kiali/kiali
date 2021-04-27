@@ -1,12 +1,15 @@
 import * as React from 'react';
 import Label from './Label';
-import { Button } from '@patternfly/react-core';
+import { Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { style } from 'typestyle';
+import { KialiIcon } from '../../config/KialiIcon';
 
 const SHOW_MORE_TRESHOLD = 2;
 
 interface Props {
   labels?: { [key: string]: string };
+  tooltipMessage?: string;
+  expanded?: boolean;
 }
 
 interface State {
@@ -20,11 +23,20 @@ const linkStyle = style({
   fontSize: '0.8rem'
 });
 
+const infoStyle = style({
+  margin: '0px 4px 2px 10px',
+  verticalAlign: '-9px !important'
+});
+
+const labelsContainerStyle = style({
+  overflow: 'hidden'
+});
+
 class Labels extends React.Component<Props, State> {
   constructor(props: Props, state: State) {
     super(props, state);
     this.state = {
-      expanded: false
+      expanded: props.expanded ? props.expanded : false
     };
   }
 
@@ -75,11 +87,21 @@ class Labels extends React.Component<Props, State> {
   }
 
   render() {
-    if (this.hasLabels()) {
-      return [this.renderLabels(), this.renderMoreLabelsLink()];
-    } else {
-      return this.renderEmptyLabels();
-    }
+    const tooltip = this.props.tooltipMessage ? (
+      <Tooltip
+        key={`tooltip_missing_sidecar`}
+        position={TooltipPosition.auto}
+        content={<div style={{ textAlign: 'left' }}>{this.props.tooltipMessage}</div>}
+      >
+        <KialiIcon.Info className={infoStyle} />
+      </Tooltip>
+    ) : undefined;
+    return (
+      <div className={labelsContainerStyle}>
+        {this.hasLabels() ? [this.renderLabels(), this.renderMoreLabelsLink()] : this.renderEmptyLabels()}
+        {tooltip}
+      </div>
+    );
   }
 }
 

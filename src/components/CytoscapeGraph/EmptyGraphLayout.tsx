@@ -139,7 +139,7 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
           <Title headingLevel="h5" size="lg">
             Empty Graph
           </Title>
-          <EmptyStateBody>Not enough data to generate a graph.</EmptyStateBody>
+          <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>
         </EmptyState>
       );
     }

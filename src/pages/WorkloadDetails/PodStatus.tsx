@@ -1,21 +1,20 @@
 import React from 'react';
-import { ObjectCheck, ValidationTypes } from '../../../types/IstioObjects';
-import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../../types/Health';
+import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
+import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../types/Health';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { createIcon } from '../../../components/Health/Helper';
+import { createIcon } from '../../components/Health/Helper';
 import ProxyStatusList from './ProxyStatusList';
-import { highestSeverity, validationToHealth } from '../../../types/ServiceInfo';
-import ValidationStack from '../../../components/Validations/ValidationStack';
-import './PodStatus.css';
+import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
+import ValidationStack from '../../components/Validations/ValidationStack';
 
 type Props = {
   checks?: ObjectCheck[];
-  status?: ProxyStatus;
+  proxyStatus?: ProxyStatus;
 };
 
 class PodStatus extends React.Component<Props> {
   proxyStatusSeverity = (): Status => {
-    return this.props.status && !isProxyStatusSynced(this.props.status) ? DEGRADED : HEALTHY;
+    return this.props.proxyStatus && !isProxyStatusSynced(this.props.proxyStatus) ? DEGRADED : HEALTHY;
   };
 
   severityIcon = () => {
@@ -32,10 +31,10 @@ class PodStatus extends React.Component<Props> {
 
   content = () => {
     return (
-      <div className="pod-status-tooltip">
-        <ProxyStatusList status={this.props.status} />
+      <>
+        <ProxyStatusList status={this.props.proxyStatus} />
         <ValidationStack checks={this.props.checks} />
-      </div>
+      </>
     );
   };
 

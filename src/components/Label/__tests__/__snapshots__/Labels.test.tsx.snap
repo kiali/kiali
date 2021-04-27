@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
-Array [
+<div
+  className="faowcuh"
+>
   <div
     key="label_0"
   >
@@ -10,7 +12,7 @@ Array [
       name="app"
       value="bookinfo"
     />
-  </div>,
+  </div>
   <div
     key="label_1"
   >
@@ -19,9 +21,7 @@ Array [
       name="version"
       value="v1"
     />
-  </div>,
-  "",
-  "",
+  </div>
   <Component
     className="firjkjj"
     key="label_more"
@@ -29,12 +29,14 @@ Array [
     variant="link"
   >
     More labels...
-  </Component>,
-]
+  </Component>
+</div>
 `;
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
-Array [
+<div
+  className="faowcuh"
+>
   <div
     key="label_0"
   >
@@ -43,7 +45,7 @@ Array [
       name="app"
       value="bookinfo"
     />
-  </div>,
+  </div>
   <div
     key="label_1"
   >
@@ -52,7 +54,6 @@ Array [
       name="version"
       value="v1"
     />
-  </div>,
-  "",
-]
+  </div>
+</div>
 `;

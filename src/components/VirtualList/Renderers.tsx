@@ -6,7 +6,7 @@ import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/Fil
 
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
 import { hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
-import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
+import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { WorkloadListItem } from '../../types/Workload';
 import { IstioConfigItem } from '../../types/IstioConfigList';
@@ -277,7 +277,7 @@ export const health: Renderer<TResource> = (item: TResource, __: Resource, _: PF
       key={'VirtuaItem_Health_' + item.namespace + '_' + item.name}
       style={{ verticalAlign: 'middle' }}
     >
-      {health && <HealthIndicator id={item.name} health={health} mode={DisplayMode.SMALL} />}
+      {health && <HealthIndicator id={item.name} health={health} />}
     </td>
   );
 };

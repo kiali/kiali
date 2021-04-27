@@ -2,10 +2,9 @@ import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 import { shallowToJson } from 'enzyme-to-json';
 
-import { HealthIndicator, DisplayMode } from '../HealthIndicator';
+import { HealthIndicator } from '../HealthIndicator';
 import { createIcon } from '../../../components/Health/Helper';
 import { AppHealth, DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../../types/Health';
-import { PFColors } from 'components/Pf/PfColors';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
 
@@ -15,11 +14,11 @@ describe('HealthIndicator', () => {
   });
   it('renders when empty', () => {
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.SMALL} />);
+    let wrapper = shallow(<HealthIndicator id="svc" />);
     expect(wrapper.html()).not.toContain('pficon');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.LARGE} />);
+    wrapper = shallow(<HealthIndicator id="svc" />);
     expect(wrapper.html()).not.toContain('pficon');
   });
 
@@ -35,16 +34,10 @@ describe('HealthIndicator', () => {
       { rateInterval: 600, hasSidecar: true }
     );
 
-    // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain(shallow(createIcon(HEALTHY, 'sm')).html());
-
-    // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-    html = wrapper.html();
-    expect(html).toContain(PFColors.Success);
   });
 
   it('renders workloads degraded', () => {
@@ -59,16 +52,9 @@ describe('HealthIndicator', () => {
       { rateInterval: 600, hasSidecar: true }
     );
 
-    // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
     expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
-
-    // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-    html = wrapper.html();
-    expect(html).toContain(PFColors.Warning);
-    expect(html).toContain('1 / 10');
   });
 
   it('renders some scaled down workload', () => {
@@ -83,16 +69,9 @@ describe('HealthIndicator', () => {
       { rateInterval: 600, hasSidecar: true }
     );
 
-    // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
     expect(html).toContain(shallow(createIcon(NOT_READY, 'sm')).html());
-
-    // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-    html = wrapper.html();
-    expect(html).toContain(PFColors.InfoBackground);
-    expect(html).toContain('0 / 0');
   });
 
   it('renders all workloads down', () => {
@@ -107,15 +86,9 @@ describe('HealthIndicator', () => {
       { rateInterval: 600, hasSidecar: true }
     );
 
-    // SMALL
-    let wrapper = mount(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+    let wrapper = mount(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
     expect(html).toContain(mount(createIcon(NOT_READY, 'sm')).html());
-
-    // LARGE
-    wrapper = mount(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-    html = wrapper.html();
-    expect(html).toContain(PFColors.InfoBackground);
   });
 
   it('renders error rate failure', () => {
@@ -131,17 +104,9 @@ describe('HealthIndicator', () => {
       { rateInterval: 600, hasSidecar: true }
     );
 
-    // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
     let html = wrapper.html();
     expect(html).toContain(shallow(createIcon(FAILURE, 'sm')).html());
-
-    // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-    html = wrapper.html();
-    expect(html).toContain(PFColors.Danger);
-    expect(html).toContain('Outbound: 16.67%');
-    expect(html).toContain('Inbound: 50.00%');
   });
 
   describe('proxy status section', () => {
@@ -162,17 +127,9 @@ describe('HealthIndicator', () => {
         { rateInterval: 600, hasSidecar: true }
       );
 
-      // SMALL
-      let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
+      let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
       let html = wrapper.html();
       expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-
-      // LARGE
-      wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
-      html = wrapper.html();
-      expect(html).toContain(shallow(createIcon(DEGRADED, 'sm')).html());
-      expect(html).toContain('A: 2 / 2 (1 proxy unsynced)');
       expect(shallowToJson(wrapper)).toMatchSnapshot();
     });
   });

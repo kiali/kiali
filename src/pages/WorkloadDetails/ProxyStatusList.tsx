@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { isProxyStatusComponentSynced, isProxyStatusSynced, ProxyStatus } from '../../../types/Health';
+import { isProxyStatusComponentSynced, isProxyStatusSynced, ProxyStatus } from '../../types/Health';
 import { Stack, StackItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { PFColors } from '../../../components/Pf/PfColors';
+import { PFColors } from '../../components/Pf/PfColors';
 
 type Props = {
   status?: ProxyStatus;
