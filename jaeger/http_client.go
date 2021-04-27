@@ -57,10 +57,10 @@ func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
 	// https://github.com/kiali/kiali/issues/3939
 	if u.Query().Get("minDuration") != "" {
 		query := u.Query()
-		query.Set("minDuration", u.Query().Get("minDuration") + "ms")
+		query.Set("minDuration", u.Query().Get("minDuration")+"ms")
 		u.RawQuery = query.Encode()
 	}
- 	resp, code, reqError := makeRequest(client, u.String(), nil)
+	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("Jaeger query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &JaegerResponse{}, reqError
