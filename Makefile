@@ -95,7 +95,7 @@ KIND_NAME ?= kind
 
 # Determine if the OC is operational or not. Useful for other commands that might timeout if the OC exists but is not responding.
 ifeq ($(CLUSTER_TYPE),minikube)
-OC_READY ?= $(shell if minikube -p ${MINIKUBE_PROFILE} status &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+OC_READY ?= $(shell if ${MINIKUBE} -p ${MINIKUBE_PROFILE} status &>/dev/null ; then echo "true" ; else echo "false" ; fi)
 else ifeq ($(CLUSTER_TYPE),kind)
 OC_READY ?= $(shell if ${OC} cluster-info --context=kind-${KIND_NAME} --request-timeout=1s &>/dev/null ; then echo "true" ; else echo "false" ; fi)
 else
