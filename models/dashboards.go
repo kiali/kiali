@@ -36,6 +36,7 @@ type Chart struct {
 	Name           string   `json:"name"`
 	Unit           string   `json:"unit"`
 	Spans          int      `json:"spans"`
+	RowSpans       int      `json:"rowSpans,omitempty"`
 	StartCollapsed bool     `json:"startCollapsed"`
 	ChartType      *string  `json:"chartType,omitempty"`
 	Min            *int     `json:"min,omitempty"`
