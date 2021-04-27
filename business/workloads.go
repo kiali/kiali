@@ -1302,7 +1302,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 		cnFound := true
 		switch ctype {
 		case kubernetes.DeploymentType:
-			if dep.Name == workloadName {
+			if dep != nil && dep.Name == workloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDeployment(dep)
@@ -1347,7 +1347,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.DeploymentConfigType:
-			if depcon.Name == workloadName {
+			if depcon != nil && depcon.Name == workloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDeploymentConfig(depcon)
@@ -1356,7 +1356,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.StatefulSetType:
-			if fulset.Name == workloadName {
+			if fulset != nil && fulset.Name == workloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseStatefulSet(fulset)
@@ -1418,7 +1418,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 				cnFound = false
 			}
 		case kubernetes.DaemonSetType:
-			if ds.Name == workloadName {
+			if ds != nil && ds.Name == workloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 				w.ParseDaemonSet(ds)
