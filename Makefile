@@ -93,6 +93,15 @@ MINIKUBE_PROFILE ?= minikube
 KIND ?= $(shell which kind 2>/dev/null || echo "MISSING-KIND-FROM-PATH")
 KIND_NAME ?= kind
 
+# Determine if the OC is operational or not. Useful for other commands that might timeout if the OC exists but is not responding.
+ifeq ($(CLUSTER_TYPE),minikube)
+OC_READY ?= $(shell if minikube -p ${MINIKUBE_PROFILE} status &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+else ifeq ($(CLUSTER_TYPE),kind)
+OC_READY ?= $(shell if ${OC} cluster-info --context=kind-${KIND_NAME} --request-timeout=1s &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+else
+OC_READY ?= $(shell if ${OC} status --request-timeout=1s &>/dev/null ; then echo "true" ; else echo "false" ; fi)
+endif
+
 # Details about the Kiali operator image used when deploying to remote cluster
 ifeq ($(CLUSTER_TYPE),kind)
 OPERATOR_IMAGE_PULL_POLICY ?= IfNotPresent
@@ -129,7 +138,11 @@ SERVICE_TYPE ?= ClusterIP
 KIALI_CR_SPEC_VERSION ?= default
 
 # Determine if Maistra/ServiceMesh is deployed. If not, assume we are working with upstream Istio.
+ifeq ($(OC_READY),true)
 IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
+else
+IS_MAISTRA ?= false
+endif
 
 # Path to Kiali CR file which is different based on what Istio implementation is deployed (upstream or Maistra)
 # This is used when deploying Kiali via make
