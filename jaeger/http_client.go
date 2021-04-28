@@ -13,6 +13,7 @@ import (
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"strings"
 )
 
 func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {
@@ -55,9 +56,10 @@ func getTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (
 func queryTracesHTTP(client http.Client, u *url.URL) (*JaegerResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
-	if u.Query().Get("minDuration") != "" {
+	minDuration := u.Query().Get("minDuration")
+	if minDuration != "" && !strings.HasSuffix(minDuration, "ms") {
 		query := u.Query()
-		query.Set("minDuration", u.Query().Get("minDuration")+"ms")
+		query.Set("minDuration", minDuration+"ms")
 		u.RawQuery = query.Encode()
 	}
 	resp, code, reqError := makeRequest(client, u.String(), nil)
