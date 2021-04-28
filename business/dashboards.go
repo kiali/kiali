@@ -442,7 +442,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Request volume",
 				Unit:  "ops",
-				Spans: 6,
+				Spans: 4,
 			},
 			refName: "request_count",
 		},
@@ -450,7 +450,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Request duration",
 				Unit:  "seconds",
-				Spans: 6,
+				Spans: 4,
 			},
 			refName: "request_duration_millis",
 			scale:   0.001,
@@ -459,7 +459,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Request throughput",
 				Unit:  "bitrate",
-				Spans: 12,
+				Spans: 4,
 			},
 			refName: "request_throughput",
 			scale:   8, // Bps to bps
@@ -468,7 +468,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Request size",
 				Unit:  "bytes",
-				Spans: 12,
+				Spans: 4,
 			},
 			refName: "request_size",
 		},
@@ -476,7 +476,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Response throughput",
 				Unit:  "bitrate",
-				Spans: 12,
+				Spans: 4,
 			},
 			refName: "response_throughput",
 			scale:   8, // Bps to bps
@@ -485,7 +485,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Response size",
 				Unit:  "bytes",
-				Spans: 12,
+				Spans: 4,
 			},
 			refName: "response_size",
 		},
