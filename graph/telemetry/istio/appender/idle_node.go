@@ -31,7 +31,14 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 
 	services := []models.ServiceDetails{}
 	workloads := []models.WorkloadListItem{}
-	clusterName := graph.Unknown
+	if globalInfo.HomeCluster == "" {
+		globalInfo.HomeCluster = "unknown"
+		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
+		graph.CheckError(err)
+		if c != nil {
+			globalInfo.HomeCluster = c.Name
+		}
+	}
 
 	if a.GraphType != graph.GraphTypeService {
 		workloads = getWorkloadList(namespaceInfo.Namespace, globalInfo).Workloads
@@ -41,17 +48,7 @@ func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		services = getServiceDefinitionList(namespaceInfo.Namespace, globalInfo).ServiceDefinitions
 	}
 
-	isMeshConfigured, err := globalInfo.Business.Mesh.IsMeshConfigured()
-	graph.CheckError(err)
-	if isMeshConfigured {
-		cluster, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
-		graph.CheckError(err)
-		if cluster != nil {
-			clusterName = cluster.Name
-		}
-	}
-
-	a.addIdleNodes(trafficMap, clusterName, namespaceInfo.Namespace, services, workloads)
+	a.addIdleNodes(trafficMap, globalInfo.HomeCluster, namespaceInfo.Namespace, services, workloads)
 }
 
 func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, cluster, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
@@ -71,7 +68,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, c
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for service [%s]", s.Service.Name)
-				node := graph.NewNodeExplicit(id, graph.Unknown, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
+				node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
 				idleNodeTrafficMap[id] = &node
@@ -96,7 +93,7 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, c
 		if _, found := trafficMap[id]; !found {
 			if _, found = idleNodeTrafficMap[id]; !found {
 				log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
-				node := graph.NewNodeExplicit(id, graph.Unknown, namespace, w.Name, app, version, "", nodeType, a.GraphType)
+				node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
 				idleNodeTrafficMap[id] = &node
