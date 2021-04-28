@@ -136,6 +136,29 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (this.props.postLoginErrorMsg) {
       messages.push(this.renderMessage(this.props.postLoginErrorMsg, undefined, 'postLoginError'));
     }
+
+    // Get error messages passed on the URL
+    const pageParams = window.location.search;
+    const urlParams = new URLSearchParams(pageParams);
+
+    // When using OpenId auth, the IdP can redirect back with `error` and `error_description`
+    // as url parameters. If these params are set, show them as errors.
+    // Reference: https://openid.net/specs/openid-connect-core-1_0-final.html#AuthError
+    if (urlParams.get('error')) {
+      if (urlParams.get('error_description')) {
+        messages.push(this.renderMessage(`Authentication error: ${urlParams.get('error_description')}`, 'danger', 'idp-err'));
+      } else {
+        messages.push(this.renderMessage(`The OpenID provider returned the following error code: ${urlParams.get('error')}`, 'danger', 'idp-err'));
+      }
+    }
+
+    // Also, when using OpenId auth, the IdP can return with success. However, in the "authorization code" flow,
+    // the Kiali backend still needs to do some extra negotiation with the IdP, which can fail.
+    // The backend will set an "openid_error" url parameter when there is some failure.
+    if (urlParams.get('openid_error')) {
+      messages.push(this.renderMessage(`Authentication failed: ${urlParams.get('openid_error')}`, 'danger', 'openid-err'));
+    }
+
     return messages;
   };
 
