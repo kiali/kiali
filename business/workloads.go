@@ -1298,9 +1298,15 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			AdditionalDetails: []models.AdditionalItem{},
 		}
 		ctype := controllers[workloadName]
+		// Cornercase -> a controller is found but API is forcing a different workload type
+		// https://github.com/kiali/kiali/issues/3830
+		controllerType := ctype
+		if workloadType != "" && ctype != workloadType {
+			controllerType = workloadType
+		}
 		// Flag to add a controller if it is found
 		cnFound := true
-		switch ctype {
+		switch controllerType {
 		case kubernetes.DeploymentType:
 			if dep != nil && dep.Name == workloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
@@ -1428,6 +1434,8 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string, workload
 			}
 		default:
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
+			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
+			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
 			childType := ctype
 			if _, unknownType := controllerOrder[ctype]; !unknownType {
 				childType = kubernetes.ReplicaSetType
