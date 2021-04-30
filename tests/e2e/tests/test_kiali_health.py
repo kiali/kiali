@@ -142,7 +142,7 @@ def test_namespace_health_workload_invalid_rateinterval_negative(kiali_client):
 def test_workload_health_invalid_replicaset_negative(kiali_client):
     workload_type = 'ReplicaSet'
     workload_name = 'details-v1'
-    response = common_utils.get_response(kiali_client, method_name='workloadHealth', path={'namespace':bookinfo_namespace, 'workload':workload_name}, params={'type':workload_type, 'rateInterval':'60s'},status_code_expected=502)
+    response = common_utils.get_response(kiali_client, method_name='workloadHealth', path={'namespace':bookinfo_namespace, 'workload':workload_name}, params={'type':workload_type, 'rateInterval':'60s'},status_code_expected=404)
 
 def test_workload_health_deployment_invalid_namespace_negative(kiali_client):
 
@@ -151,10 +151,6 @@ def test_workload_health_deployment_invalid_namespace_negative(kiali_client):
 def test_workload_health_deployment_invalid_workload_negative(kiali_client):
 
     response = common_utils.get_response(kiali_client, method_name='workloadHealth', path=INVALID_WORKLOAD_HEALTH_DEPLOYMENT_WORKLOAD, params=VALID_PARAM_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=404)
-
-def test_workload_health_deployment_invalid_type_negative(kiali_client):
-
-    response = common_utils.get_response(kiali_client, method_name='workloadHealth', path=VALID_PATH_WORKLOAD_HEALTH_DEPLOYMENT, params=INVALID_TYPE_WORKLOAD_HEALTH_DEPLOYMENT,status_code_expected=502)
 
 def test_workload_health_deployment_invalid_rateinterval_negative(kiali_client):
 
