@@ -4,19 +4,15 @@ import * as React from 'react';
 import {
   Button,
   ButtonVariant,
-  Card,
   EmptyState,
   EmptyStateIcon,
   EmptyStateVariant,
-  GutterSize,
   Modal,
   Spinner,
-  Stack,
-  StackItem,
+  Tab,
+  Tabs,
   Title,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem
+  TooltipPosition
 } from '@patternfly/react-core';
 import { Workload } from '../../types/Workload';
 import { EnvoyProxyDump, Pod } from '../../types/IstioObjects';
@@ -32,19 +28,12 @@ import Namespace from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
 import { namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
+import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
 
-const resources: string[] = ['all', 'bootstrap', 'clusters', 'listeners', 'routes'];
-
-const displayFlex = style({
-  display: 'flex'
-});
-
-const toolbarSpace = style({
-  marginLeft: '1em'
-});
+const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'all'];
 
 type ReduxProps = {
   namespaces: Namespace[];
@@ -63,6 +52,7 @@ type EnvoyDetailState = {
   pod: Pod;
   resource: string;
   tableSortBy: ResourceSorts;
+  envoyTabKey: number;
 };
 
 export type ResourceSorts = { [resource: string]: ISortBy };
@@ -76,6 +66,11 @@ export const Loading = () => (
   </EmptyState>
 );
 
+const iconStyle = style({
+  display: 'inline-block',
+  paddingTop: '5px'
+});
+
 class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailState> {
   aceEditorRef: React.RefObject<AceEditor>;
 
@@ -86,7 +81,7 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
       config: {},
       fetch: false,
       pod: this.sortedPods()[0],
-      resource: 'all',
+      resource: 'clusters',
       tableSortBy: {
         clusters: {
           index: 0,
@@ -100,7 +95,8 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
           index: 0,
           direction: 'asc'
         }
-      }
+      },
+      envoyTabKey: 0
     };
   }
 
@@ -117,6 +113,19 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
     }
   }
 
+  envoyHandleTabClick = (_event, tabIndex) => {
+    const resourceIdx: number = +tabIndex;
+    const targetResource: string = resources[resourceIdx];
+    if (targetResource !== this.state.resource) {
+      this.setState({
+        config: {},
+        fetch: true,
+        resource: targetResource,
+        envoyTabKey: tabIndex
+      });
+    }
+  };
+
   sortedPods = (): Pod[] => {
     return this.props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
@@ -129,18 +138,6 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
         config: {},
         fetch: true,
         pod: targetPod
-      });
-    }
-  };
-
-  setResource = (resource: string) => {
-    const resourceIdx: number = +resource;
-    const targetResource: string = resources[resourceIdx];
-    if (targetResource !== this.state.resource) {
-      this.setState({
-        config: {},
-        fetch: true,
-        resource: targetResource
       });
     }
   };
@@ -223,6 +220,63 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
 
+    const innerTabContent = this.isLoadingConfig() ? (
+      <Loading />
+    ) : this.showEditor() ? (
+      <div>
+        <div style={{ marginBottom: '20px' }}>
+          <div key="service-icon" className={iconStyle}>
+            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+          </div>
+          <ToolbarDropdown
+            id="envoy_pods_list"
+            tooltip="Display envoy config for the selected pod"
+            handleSelect={key => this.setPod(key)}
+            value={this.state.pod.name}
+            label={this.state.pod.name}
+            options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
+          />
+          <span style={{ float: 'right' }}>
+            <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
+              <Button variant={ButtonVariant.link} isInline>
+                <KialiIcon.Copy className={defaultIconStyle} />
+              </Button>
+            </CopyToClipboard>
+          </span>
+        </div>
+        <AceEditor
+          ref={this.aceEditorRef}
+          mode="yaml"
+          theme="eclipse"
+          width={'100%'}
+          className={'istio-ace-editor'}
+          wrapEnabled={true}
+          readOnly={true}
+          setOptions={aceOptions || { foldStyle: 'markbegin' }}
+          value={this.editorContent()}
+        />
+      </div>
+    ) : (
+      <SummaryWriterComp
+        writer={summaryWriter}
+        sortBy={this.state.tableSortBy[this.state.resource]}
+        onSort={this.onSort}
+        pod={this.state.pod.name}
+        pods={this.props.workload.pods.map(pod => pod.name)}
+        setPod={this.setPod}
+      />
+    );
+    const tabContent = <div style={{ marginTop: '20px' }}>{innerTabContent}</div>;
+
+    const tabs = resources.map((value, index) => {
+      const title = value === 'all' ? 'Full Config Dump' : value.charAt(0).toUpperCase() + value.slice(1);
+      return (
+        <Tab key={'tab_' + title} eventKey={index} title={title}>
+          {tabContent}
+        </Tab>
+      );
+    });
+
     return (
       <Modal
         width={'75%'}
@@ -235,73 +289,9 @@ class EnvoyDetailsModal extends React.Component<EnvoyDetailProps, EnvoyDetailSta
           </Button>
         ]}
       >
-        <Stack gutter={GutterSize.sm}>
-          <StackItem>
-            <Toolbar key="envoy-toolbar">
-              <ToolbarGroup>
-                <ToolbarItem className={displayFlex}>
-                  <ToolbarDropdown
-                    id="envoy_pods_list"
-                    nameDropdown={'Pod'}
-                    tooltip="Display envoy config for the selected pod"
-                    handleSelect={key => this.setPod(key)}
-                    value={this.state.pod.name}
-                    label={this.state.pod.name}
-                    options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
-                  />
-                </ToolbarItem>
-                <ToolbarItem className={[displayFlex, toolbarSpace].join(' ')}>
-                  <ToolbarDropdown
-                    id="envoy_xds_list"
-                    nameDropdown={'Resources'}
-                    tooltip="Display the selected resources from the Envoy config"
-                    handleSelect={key => this.setResource(key)}
-                    value={this.state.resource}
-                    label={this.state.resource}
-                    options={resources}
-                  />
-                </ToolbarItem>
-              </ToolbarGroup>
-              <ToolbarGroup style={{ marginLeft: 'auto' }}>
-                <ToolbarItem>
-                  {this.showEditor() ? (
-                    <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
-                      <Button variant={ButtonVariant.link} isInline>
-                        <KialiIcon.Copy className={defaultIconStyle} />
-                      </Button>
-                    </CopyToClipboard>
-                  ) : undefined}
-                </ToolbarItem>
-              </ToolbarGroup>
-            </Toolbar>
-          </StackItem>
-          <StackItem>
-            <Card style={{ height: '600px' }}>
-              {this.isLoadingConfig() ? (
-                <Loading />
-              ) : this.showEditor() ? (
-                <AceEditor
-                  ref={this.aceEditorRef}
-                  mode="yaml"
-                  theme="eclipse"
-                  height={'600px'}
-                  width={'100%'}
-                  className={'istio-ace-editor'}
-                  wrapEnabled={true}
-                  readOnly={true}
-                  setOptions={aceOptions || { foldStyle: 'markbegin' }}
-                  value={this.editorContent()}
-                />
-              ) : (
-                <SummaryWriterComp
-                  writer={summaryWriter}
-                  sortBy={this.state.tableSortBy[this.state.resource]}
-                  onSort={this.onSort}
-                />
-              )}
-            </Card>
-          </StackItem>
-        </Stack>
+        <Tabs isFilled={true} activeKey={this.state.envoyTabKey} onSelect={this.envoyHandleTabClick}>
+          {tabs}
+        </Tabs>
       </Modal>
     );
   }

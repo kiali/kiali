@@ -43,6 +43,7 @@ export interface StatefulFiltersProps {
   onFilterChange: (active: ActiveFiltersInfo) => void;
   initialFilters: FilterType[];
   ref?: React.RefObject<StatefulFilters>;
+  childrenFirst?: boolean;
 }
 
 export interface StatefulFiltersState {
@@ -87,7 +88,7 @@ export class FilterSelected {
   };
 }
 
-const filterWithChildrenStyle = style({ borderRight: '1px solid #d1d1d1;', paddingRight: '10px', display: 'inherit' });
+const filterWithChildrenStyle = style({ paddingRight: '10px', display: 'inherit' });
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
 const paddingStyle = style({ padding: '10px' });
 
@@ -322,7 +323,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   renderChildren = () => {
     return (
       this.props.children && (
-        <ToolbarGroup>
+        <ToolbarGroup style={{ marginRight: '10px' }}>
           {Array.isArray(this.props.children) ? (
             (this.props.children as Array<any>).map(
               (child, index) =>
@@ -358,6 +359,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       <>
         <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
           <ToolbarSection aria-label="ToolbarSection">
+            {this.props.childrenFirst && this.renderChildren()}
             <ToolbarGroup style={{ marginRight: '0px' }}>
               <ToolbarItem className={classNames(this.props.children ? filterWithChildrenStyle : '', 'pf-u-mr-xl')}>
                 <FormSelect
@@ -373,7 +375,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                 {this.renderInput()}
               </ToolbarItem>
             </ToolbarGroup>
-            {this.renderChildren()}
+            {!this.props.childrenFirst && this.renderChildren()}
             {(this.state.activeFilters.filters.filter(f => f.id === labelFilter.id).length > 0 ||
               this.state.currentFilterType.filterType === FilterTypes.label) && (
               <ToolbarGroup>

@@ -9,6 +9,10 @@ import { FilterSelected, StatefulFilters } from '../../Filters/StatefulFilters';
 import { setFiltersToURL } from '../../FilterList/FilterHelper';
 import { ResourceSorts } from '../EnvoyModal';
 import Namespace from '../../../types/Namespace';
+import ToolbarDropdown from '../../ToolbarDropdown/ToolbarDropdown';
+import { PFBadge, PFBadges } from '../../Pf/PfBadges';
+import { TooltipPosition } from '@patternfly/react-core';
+import { style } from 'typestyle';
 
 export interface SummaryTable {
   head: () => ICell[];
@@ -19,11 +23,19 @@ export interface SummaryTable {
   availableFilters: () => FilterType[];
 }
 
+const iconStyle = style({
+  display: 'inline-block',
+  verticalAlign: '2px !important'
+});
+
 export function SummaryTableRenderer<T extends SummaryTable>() {
   interface SummaryTableProps<T> {
     writer: T;
     sortBy: ISortBy;
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
+    pod: string;
+    pods: string[];
+    setPod: (pod: string) => void;
   }
 
   type SummaryTableState = {
@@ -53,7 +65,22 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
           <StatefulFilters
             initialFilters={this.props.writer.availableFilters()}
             onFilterChange={this.onFilterApplied}
-          />
+            childrenFirst={true}
+          >
+            <span>
+              <div key="service-icon" className={iconStyle}>
+                <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+              </div>
+              <ToolbarDropdown
+                id="envoy_pods_list"
+                tooltip="Display envoy config for the selected pod"
+                handleSelect={key => this.props.setPod(key)}
+                value={this.props.pod}
+                label={this.props.pod}
+                options={this.props.pods.sort()}
+              />
+            </span>
+          </StatefulFilters>
           <Table
             aria-label="Sortable Table"
             cells={this.props.writer.head()}
