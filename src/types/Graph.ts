@@ -60,6 +60,7 @@ export enum NodeType {
   WORKLOAD = 'workload'
 }
 
+export const CLUSTER_DEFAULT = 'Kubernetes'; // Istio default cluster, typically indicates a single-cluster env
 export const UNKNOWN = 'unknown';
 
 export interface NodeParamsType {

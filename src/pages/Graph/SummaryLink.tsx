@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NodeType, GraphNodeData, DestService, BoxByType } from '../../types/Graph';
+import { NodeType, GraphNodeData, DestService, BoxByType, CLUSTER_DEFAULT } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { Badge, PopoverPosition } from '@patternfly/react-core';
@@ -13,7 +13,8 @@ const getTooltip = (tooltip: React.ReactFragment, nodeData: GraphNodeData): Reac
   const addNamespace = nodeData.isBox !== BoxByType.NAMESPACE;
   const addCluster =
     nodeData.isBox !== BoxByType.CLUSTER &&
-    (!serverConfig.clusterInfo || serverConfig.clusterInfo.name !== nodeData.cluster);
+    nodeData.cluster !== CLUSTER_DEFAULT &&
+    serverConfig?.clusterInfo?.name !== nodeData.cluster;
   return (
     <div style={{ textAlign: 'left' }}>
       <span>{tooltip}</span>

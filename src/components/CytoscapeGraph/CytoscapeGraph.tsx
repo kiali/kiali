@@ -7,6 +7,7 @@ import ReactResizeDetector from 'react-resize-detector';
 import { GraphData } from 'pages/Graph/GraphPage';
 import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import {
+  CLUSTER_DEFAULT,
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
   CytoscapeGlobalScratchData,
@@ -603,7 +604,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     const globalScratchData: CytoscapeGlobalScratchData = {
       activeNamespaces: this.props.graphData.fetchParams.namespaces,
       edgeLabelMode: this.props.edgeLabelMode,
-      homeCluster: serverConfig.clusterInfo ? serverConfig.clusterInfo.name : UNKNOWN,
+      homeCluster: serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT,
       graphType: this.props.graphData.fetchParams.graphType,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,

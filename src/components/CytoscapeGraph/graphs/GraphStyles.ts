@@ -171,7 +171,7 @@ export class GraphStyles {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
   }
 
-  static htmlLabelForNode(ele: Cy.NodeSingular) {
+  static getNodeLabel(ele: Cy.NodeSingular) {
     const getCyGlobalData = (ele: Cy.NodeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
@@ -340,7 +340,7 @@ export class GraphStyles {
         valign: 'bottom',
         halignBox: 'center',
         valignBox: 'bottom',
-        tpl: (data: any) => this.htmlLabelForNode(cy.$id(data.id))
+        tpl: (data: any) => this.getNodeLabel(cy.$id(data.id))
       }
     ];
   }
