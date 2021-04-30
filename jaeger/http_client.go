@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"strings"
 )
 
 func getAppTracesHTTP(client http.Client, baseURL *url.URL, namespace, app string, q models.TracingQuery) (response *JaegerResponse, err error) {

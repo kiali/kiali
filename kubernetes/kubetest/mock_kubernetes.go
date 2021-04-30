@@ -10,6 +10,11 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+func (o *K8SClientMock) GetAllServicesByLabels(labelsSelector string) ([]core_v1.Service, error) {
+	args := o.Called(labelsSelector)
+	return args.Get(0).([]core_v1.Service), args.Error(1)
+}
+
 func (o *K8SClientMock) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {
 	args := o.Called(namespace, name)
 	return args.Get(0).(*core_v1.ConfigMap), args.Error(1)

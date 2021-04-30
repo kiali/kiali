@@ -189,18 +189,10 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 			},
 		}
 
-		getNsErr := errors.StatusError{
-			ErrStatus: v1.Status{
-				Reason: v1.StatusReasonNotFound,
-			},
-		}
-		var nilNs *core_v1.Namespace
-
 		os.Setenv("ACTIVE_NAMESPACE", "foo")
 
 		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
-		remoteClient.On("GetNamespace", "foo").Return(nilNs, &getNsErr)
-		remoteClient.On("GetServicesByLabels", conf.IstioNamespace, "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
+		remoteClient.On("GetAllServicesByLabels", "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
 
 		return remoteClient, nil
 	}
