@@ -27,6 +27,7 @@ import (
 )
 
 type K8SClientInterface interface {
+	GetAllServicesByLabels(labelsSelector string) ([]core_v1.Service, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDaemonSet(namespace string, name string) (*apps_v1.DaemonSet, error)
@@ -63,6 +64,19 @@ type OSClientInterface interface {
 	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
 	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
 	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
+}
+
+// GetAllServicesByLabels fetches and returns all services in the whole cluster
+// that match the optional labelSelector. This is using the cluster-wide call
+// to fetch the services. The client will need to be created with an account that
+// has cluster-wide privileges to list services.
+func (in *K8SClient) GetAllServicesByLabels(labelsSelector string) ([]core_v1.Service, error) {
+	selector := meta_v1.ListOptions{LabelSelector: labelsSelector}
+	if allServicesList, err := in.k8s.CoreV1().Services("").List(in.ctx, selector); err == nil {
+		return allServicesList.Items, nil
+	} else {
+		return []core_v1.Service{}, err
+	}
 }
 
 // GetConfigMap fetches and returns the specified ConfigMap definition
