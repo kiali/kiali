@@ -275,7 +275,7 @@ func findKialiInNamespace(namespace string, clusterName string, clientSet kubern
 	if kialiNs != nil {
 		// The operator and the helm charts set this fixed label. It's also
 		// present in the Istio addon manifest of Kiali.
-		services, getSvcErr := clientSet.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/name=kiali")
+		services, getSvcErr := clientSet.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
 		if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the service in [%s] namespace: %s", clusterName, namespace, getSvcErr.Error())
 			return
@@ -312,12 +312,12 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 	}
 
 	// - The operator and the helm charts set this well
-	//   known "app.kubernetes.io/name=kiali" label. It's also present in the
+	//   known "app.kubernetes.io/part-of=kiali" label. It's also present in the
 	//   Istio addon manifest of Kiali.
 	// - We are using the "istio-reader-service-account" to connect to the
 	//   remote cluster. A typical Istio installation gives privileges to
 	//   this SA to list services in a cluster-wide way.
-	services, getSvcErr := clientSet.GetAllServicesByLabels("app.kubernetes.io/name=kiali")
+	services, getSvcErr := clientSet.GetAllServicesByLabels("app.kubernetes.io/part-of=kiali")
 	if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the Kiali service: %s", clusterName, getSvcErr.Error())
 		return

@@ -83,7 +83,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	k8s.On("GetConfigMap", conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(&sidecarConfigMapMock, nil)
 
 	k8s.On("GetNamespace", "foo").Return(&kialiNs, nil)
-	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
+	k8s.On("GetServicesByLabels", "foo", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.2")
 	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
@@ -192,7 +192,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		os.Setenv("ACTIVE_NAMESPACE", "foo")
 
 		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
-		remoteClient.On("GetAllServicesByLabels", "app.kubernetes.io/name=kiali").Return(kialiSvc, nil)
+		remoteClient.On("GetAllServicesByLabels", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 		return remoteClient, nil
 	}
