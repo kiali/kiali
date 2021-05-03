@@ -100,7 +100,8 @@ class DetailDescription extends React.PureComponent<Props> {
     let workload: AppWorkload | undefined = undefined;
     if (this.props.workloads && this.props.workloads.length > 0) {
       for (let i = 0; i < this.props.workloads.length; i++) {
-        if (sub.text.startsWith(this.props.workloads[i].workloadName)) {
+        const hWorkload = sub.text.substr(0, sub.text.indexOf(':'));
+        if (hWorkload === this.props.workloads[i].workloadName) {
           workload = this.props.workloads[i];
           break;
         }
