@@ -53,6 +53,15 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
+	if globalInfo.HomeCluster == "" {
+		globalInfo.HomeCluster = "unknown"
+		c, err := globalInfo.Business.Mesh.ResolveKialiControlPlaneCluster(nil)
+		graph.CheckError(err)
+		if c != nil {
+			globalInfo.HomeCluster = c.Name
+		}
+	}
+
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
@@ -91,7 +100,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
 	for se, seServiceNodes := range seMap {
-		serviceEntryNode := graph.NewNode(graph.Unknown, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		serviceEntryNode := graph.NewNode(globalInfo.HomeCluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
 			Location: se.location,
 			Hosts:    se.hosts,
