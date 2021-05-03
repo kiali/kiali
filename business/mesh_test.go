@@ -192,7 +192,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		os.Setenv("ACTIVE_NAMESPACE", "foo")
 
 		remoteClient.On("GetNamespace", conf.IstioNamespace).Return(remoteNs, nil)
-		remoteClient.On("GetAllServicesByLabels", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
+		remoteClient.On("GetClusterServicesByLabels", "app.kubernetes.io/part-of=kiali").Return(kialiSvc, nil)
 
 		return remoteClient, nil
 	}

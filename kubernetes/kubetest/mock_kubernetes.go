@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func (o *K8SClientMock) GetAllServicesByLabels(labelsSelector string) ([]core_v1.Service, error) {
+func (o *K8SClientMock) GetClusterServicesByLabels(labelsSelector string) ([]core_v1.Service, error) {
 	args := o.Called(labelsSelector)
 	return args.Get(0).([]core_v1.Service), args.Error(1)
 }

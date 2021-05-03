@@ -250,9 +250,9 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	return kialiControlPlaneCluster, nil
 }
 
-// convertSvcToKialiInstance converts a svc Service data structure of the
+// convertKialiServiceToInstance converts a svc Service data structure of the
 // Kubernetes client to a KialiInstance data structure.
-func convertSvcToKialiInstance(svc *core_v1.Service) KialiInstance {
+func convertKialiServiceToInstance(svc *core_v1.Service) KialiInstance {
 	return KialiInstance{
 		ServiceName:      svc.Name,
 		Namespace:        svc.Namespace,
@@ -284,7 +284,7 @@ func findKialiInNamespace(namespace string, clusterName string, clientSet kubern
 		if len(services) > 0 {
 			instances = make([]KialiInstance, 0, len(services))
 			for _, d := range services {
-				instances = append(instances, convertSvcToKialiInstance(&d))
+				instances = append(instances, convertKialiServiceToInstance(&d))
 			}
 		}
 	}
@@ -305,7 +305,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := in.newRemoteClient(restConfig)
+	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return nil
@@ -317,7 +317,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 	// - We are using the "istio-reader-service-account" to connect to the
 	//   remote cluster. A typical Istio installation gives privileges to
 	//   this SA to list services in a cluster-wide way.
-	services, getSvcErr := clientSet.GetAllServicesByLabels("app.kubernetes.io/part-of=kiali")
+	services, getSvcErr := remoteClientSet.GetClusterServicesByLabels("app.kubernetes.io/part-of=kiali")
 	if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the Kiali service: %s", clusterName, getSvcErr.Error())
 		return
@@ -326,7 +326,7 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 	if len(services) > 0 {
 		kialiInstances = make([]KialiInstance, 0, len(services))
 		for _, d := range services {
-			kialiInstances = append(kialiInstances, convertSvcToKialiInstance(&d))
+			kialiInstances = append(kialiInstances, convertKialiServiceToInstance(&d))
 		}
 	}
 
@@ -477,14 +477,14 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := in.newRemoteClient(restConfig)
+	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return ""
 	}
 
 	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-	istioNamespace, getNsErr := clientSet.GetNamespace(conf.IstioNamespace)
+	istioNamespace, getNsErr := remoteClientSet.GetNamespace(conf.IstioNamespace)
 	if getNsErr != nil {
 		log.Warningf("Cannot describe the '%s' namespace on cluster '%s': %v", conf.IstioNamespace, clusterName, getNsErr)
 		return ""
