@@ -158,8 +158,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	additionalDetails := models.GetAdditionalDetails(conf, svc.ObjectMeta.Annotations)
 
 	wg := sync.WaitGroup{}
-	wg.Add(6)
-	errChan := make(chan error, 6)
+	wg.Add(5)
+	errChan := make(chan error, 5)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
@@ -243,15 +243,19 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	}()
 
 	var vsCreate, vsUpdate, vsDelete bool
-	go func() {
-		defer wg.Done()
-		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, kubernetes.VirtualServices)
-	}()
-
 	var drCreate, drUpdate, drDelete bool
 	go func() {
 		defer wg.Done()
-		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, kubernetes.DestinationRules)
+		/*
+			We can safely assume that permissions for VirtualServices will be similar as DestinationRules.
+
+			Synced with:
+			https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+		*/
+		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, kubernetes.VirtualServices)
+		drCreate = vsCreate
+		drUpdate = vsUpdate
+		drDelete = vsDelete
 	}()
 
 	wg.Wait()
