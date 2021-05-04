@@ -24,6 +24,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
 	conf.InCluster = false
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	// As we are not interested in caches in this test, make sure
@@ -89,7 +90,8 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	os.Setenv("KUBERNETES_SERVICE_PORT", "9443")
 	os.Setenv("ACTIVE_NAMESPACE", "foo")
 
-	meshSvc := NewMeshService(k8s, nil)
+	layer := NewWithBackends(k8s, nil, nil)
+	meshSvc := layer.Mesh
 
 	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
 	a, err := meshSvc.GetClusters(r)
@@ -117,6 +119,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
 	conf.InCluster = false
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	// As we are not interested in caches in this test, make sure
@@ -197,7 +200,9 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 		return remoteClient, nil
 	}
 
-	meshSvc := NewMeshService(k8s, newRemoteClient)
+	layer := NewWithBackends(k8s, nil, nil)
+	meshSvc := layer.Mesh
+	meshSvc.newRemoteClient = newRemoteClient
 
 	a, err := meshSvc.GetClusters(nil)
 	check.Nil(err, "GetClusters returned error: %v", err)
@@ -235,6 +240,7 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	conf.InCluster = false
 	conf.IstioNamespace = "foo"
 	conf.ExternalServices.Istio.ConfigMapName = "bar"
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	istioConfigMapMock := core_v1.ConfigMap{
@@ -243,10 +249,12 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 		},
 	}
 
+	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetConfigMap", "foo", "bar").Return(&istioConfigMapMock, nil)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	meshSvc := NewMeshService(k8s, nil)
+	layer := NewWithBackends(k8s, nil, nil)
+	meshSvc := layer.Mesh
 	result, err := meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
 	check.True(result)
@@ -254,7 +262,10 @@ func TestIsMeshConfiguredIsCached(t *testing.T) {
 	// Create a new MeshService with an empty mock. If cached value is properly used, the
 	// empty mock should never be called and we still should get a value.
 	k8s = new(kubetest.K8SClientMock)
-	meshSvc = NewMeshService(k8s, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer = NewWithBackends(k8s, nil, nil)
+	meshSvc = layer.Mesh
 	result, err = meshSvc.IsMeshConfigured()
 	check.Nil(err, "IsMeshConfigured failed: %s", err)
 	check.True(result)
@@ -277,6 +288,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	conf.InCluster = false
 	conf.IstioNamespace = "foo"
 	conf.ExternalServices.Istio.IstiodDeploymentName = "bar"
+	conf.KubernetesConfig.CacheEnabled = false
 	config.Set(conf)
 
 	os.Setenv("ACTIVE_NAMESPACE", "foo")
@@ -309,12 +321,14 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	var nilConfigMap *core_v1.ConfigMap
 	var nilNamespace *core_v1.Namespace
 
+	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetDeployment", "foo", "bar").Return(&istioDeploymentMock, nil)
 	k8s.On("GetConfigMap", "foo", conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName).Return(nilConfigMap, &notFoundErr)
 	k8s.On("GetNamespace", "foo").Return(nilNamespace, &notFoundErr)
 
 	// Create a MeshService and invoke IsMeshConfigured
-	meshSvc := NewMeshService(k8s, nil)
+	layer := NewWithBackends(k8s, nil, nil)
+	meshSvc := layer.Mesh
 	result, err := meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
 	check.NotNil(result)
@@ -323,7 +337,10 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	// Create a new MeshService with an empty mock. If cached value is properly used, the
 	// empty mock should never be called and we still should get a value.
 	k8s = new(kubetest.K8SClientMock)
-	meshSvc = NewMeshService(k8s, nil)
+	k8s.On("IsOpenShift").Return(false)
+
+	layer = NewWithBackends(k8s, nil, nil)
+	meshSvc = layer.Mesh
 	result, err = meshSvc.ResolveKialiControlPlaneCluster(nil)
 	check.Nil(err, "ResolveKialiControlPlaneCluster failed: %s", err)
 	check.NotNil(result)
