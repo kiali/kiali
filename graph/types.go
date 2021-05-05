@@ -64,8 +64,9 @@ type ServiceName struct {
 
 // SEInfo provides static information about the service entry
 type SEInfo struct {
-	Location string   `json:"location"` // e.g. MESH_EXTERNAL, MESH_INTERNAL
-	Hosts    []string `json:"hosts"`    // configured list of hosts
+	Hosts     []string `json:"hosts"`     // configured list of hosts
+	Location  string   `json:"location"`  // e.g. MESH_EXTERNAL, MESH_INTERNAL
+	Namespace string   `json:"namespace"` // the definition namespace
 }
 
 func (s *ServiceName) Key() string {

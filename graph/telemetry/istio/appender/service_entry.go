@@ -18,9 +18,10 @@ const ServiceEntryAppenderName = "serviceEntry"
 //   For Each "se-service" node
 //      if necessary, create an aggregate serviceEntry node ("se-aggregate")
 //        -- an "se-aggregate" is a service node with isServiceEntry set in the metadata
-//        -- an "se-aggregate" is namespace-specific. This can lead to mutiple serviceEntry nodes
-//           in a multi-namespace graph. This makes some sense because serviceEntries are "exported"
-//           to individual namespaces.
+//        -- an "se-aggregate" is namespace-specific and so one service entry definition can result in multiple
+//           service entry nodes in the graph. An Istio service entry is defined in a particular namespace, but
+//           it can be "exported" to many (all namespaces by default).  So, think as if the service entry
+//           definition is duplicated in each exported namespace, and therefore you can get an se-aggregate in each.
 //      aggregate the "se-service" node into the "se-aggregate" node
 //        -- incoming edges
 //        -- outgoing edges (unusual but can have outgoing edge to egress gateway)
@@ -102,8 +103,9 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 	for se, seServiceNodes := range seMap {
 		serviceEntryNode := graph.NewNode(globalInfo.HomeCluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = &graph.SEInfo{
-			Location: se.location,
-			Hosts:    se.hosts,
+			Hosts:     se.hosts,
+			Location:  se.location,
+			Namespace: se.namespace,
 		}
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
 		for _, doomedSeServiceNode := range seServiceNodes {
