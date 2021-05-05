@@ -103,13 +103,21 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			Name:  c.Name,
 			Image: c.Image,
 		}
-		pod.Containers = append(pod.Containers, &container)
+		if isIstioProxy(p, &c, conf) {
+			pod.IstioContainers = append(pod.IstioContainers, &container)
+		} else {
+			pod.Containers = append(pod.Containers, &container)
+		}
 	}
 	pod.Status = string(p.Status.Phase)
 	pod.StatusMessage = string(p.Status.Message)
 	pod.StatusReason = string(p.Status.Reason)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
+}
+
+func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
+	return pod.Namespace == conf.IstioNamespace && (pod.Name == "istio-ingressgateway" || pod.Name == "istio-egressgateway" || container.Name == "istio-proxy")
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
