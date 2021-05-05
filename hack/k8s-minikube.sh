@@ -26,7 +26,7 @@ DEFAULT_DEX_ENABLED="false"
 DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
 DEFAULT_DEX_VERSION="v2.24.0"
 DEFAULT_DEX_USER_NAMESPACES="bookinfo"
-DEFAULT_INSECURE_REGISTRY_IP="192.168.99.100"
+DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
 DEFAULT_K8S_DRIVER="kvm2"
@@ -138,6 +138,7 @@ install_dex() {
 ---
 > DNS.1 = ${KUBE_HOSTNAME}
 EOF
+    [ "$?" != "0" ] && echo "ERROR: Failed to patch gencert.sh" && exit 1
 
     $(cd ${DEX_VERSION_PATH}/examples/k8s/; bash ./kiali.gencert.sh)
     mv ${DEX_VERSION_PATH}/examples/k8s/ssl ${CERTS_PATH}
@@ -204,8 +205,9 @@ EOF
 ---
 >   namespace: dex      # The namespace dex is running in
 EOF
+    [ "$?" != "0" ] && echo "ERROR: Failed to patch dex file" && exit 1
 
-/bin/cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+    cat <<EOF > ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -293,14 +295,16 @@ EOF
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create namespace dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create secret tls dex.example.com.tls --cert=${CERTS_PATH}/cert.pem --key=${CERTS_PATH}/key.pem -n dex
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -n dex -f ${DEX_VERSION_PATH}/examples/k8s/dex.kiali.yaml
+  [ "$?" != "0" ] && echo "ERROR: Failed to install dex" && exit 1
   echo "Deploying oauth2 proxy..."
   ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- create -f ${DEX_VERSION_PATH}/examples/k8s/oauth2.proxy
+  [ "$?" != "0" ] && echo "ERROR: Failed to deploy oauth2 proxy" && exit 1
   # Restart minikube
   echo "Restarting minikube with proper flags for API server and the autodetected registry IP..."
   ${MINIKUBE_EXEC_WITH_PROFILE} stop
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
-    --insecure-registry ${INSECURE_REGISTRY_IP}:5000 \
+    ${INSECURE_REGISTRY_START_ARG} \
     --insecure-registry ${MINIKUBE_IP}:5000 \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
@@ -312,6 +316,7 @@ EOF
     --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/ca.pem \
     --extra-config=apiserver.oidc-client-id=kiali-app \
     --extra-config=apiserver.oidc-groups-claim=groups
+  [ "$?" != "0" ] && echo "ERROR: Failed to restart minikube in preparation for dex" && exit 1
 
   echo "Minikube should now be configured with OpenID connect. Just wait for all pods to start."
   cat <<EOF
@@ -539,12 +544,19 @@ done
 
 MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXE} -p ${MINIKUBE_PROFILE}"
 
+if [ ! -z "${INSECURE_REGISTRY_IP}" ]; then
+  INSECURE_REGISTRY_START_ARG="--insecure-registry ${INSECURE_REGISTRY_IP}:5000"
+else
+  INSECURE_REGISTRY_START_ARG=""
+fi
+
 debug "CLIENT_EXE=$CLIENT_EXE"
 debug "DEX_ENABLED=$DEX_ENABLED"
 debug "DEX_REPO=$DEX_REPO"
 debug "DEX_USER_NAMESPACES=$DEX_USER_NAMESPACES"
 debug "DEX_VERSION=$DEX_VERSION"
 debug "INSECURE_REGISTRY_IP=$INSECURE_REGISTRY_IP"
+debug "INSECURE_REGISTRY_START_ARG=$INSECURE_REGISTRY_START_ARG"
 debug "K8S_CPU=$K8S_CPU"
 debug "K8S_DISK=$K8S_DISK"
 debug "K8S_DRIVER=$K8S_DRIVER"
@@ -569,19 +581,23 @@ if [ "$_CMD" = "start" ]; then
   echo 'Starting minikube...'
   ${MINIKUBE_EXEC_WITH_PROFILE} start \
     ${MINIKUBE_START_FLAGS} \
-    --insecure-registry ${INSECURE_REGISTRY_IP}:5000 \
+    ${INSECURE_REGISTRY_START_ARG} \
     --cpus=${K8S_CPU} \
     --memory=${K8S_MEMORY} \
     --disk-size=${K8S_DISK} \
     --driver=${K8S_DRIVER} \
     --kubernetes-version=${K8S_VERSION}
+  [ "$?" != "0" ] && echo "ERROR: Failed to start minikube" && exit 1
   echo 'Enabling the ingress addon'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable ingress
+  [ "$?" != "0" ] && echo "ERROR: Failed to enable ingress addon" && exit 1
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
+  [ "$?" != "0" ] && echo "ERROR: Failed to enable registry addon" && exit 1
   if [ ! -z "${LB_ADDRESSES}" ]; then
     echo 'Enabling the metallb load balancer'
     ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metallb
+    [ "$?" != "0" ] && echo "ERROR: Failed to enable metallb addon" && exit 1
     determine_full_lb_range
     cat <<LBCONFIGMAP | ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- apply -f -
 apiVersion: v1
@@ -596,6 +612,7 @@ data:
       protocol: layer2
       addresses: [${LB_ADDRESSES}]
 LBCONFIGMAP
+    [ "$?" != "0" ] && echo "ERROR: Failed to configure metallb addon" && exit 1
   fi
 
   if [ "${DEX_ENABLED}" == "true" ]; then
