@@ -66,13 +66,18 @@ func (icc IstioConfigCriteria) Include(resource string) bool {
 }
 
 // IstioConfig types used in the IstioConfig New Page Form
-var newIstioConfigTypes = []string{
-	kubernetes.AuthorizationPolicies,
+// networking.istio.io
+var newNetworkingConfigTypes = []string{
 	kubernetes.Sidecars,
 	kubernetes.Gateways,
+	kubernetes.ServiceEntries,
+}
+
+// security.istio.io
+var newSecurityConfigTypes = []string{
+	kubernetes.AuthorizationPolicies,
 	kubernetes.PeerAuthentications,
 	kubernetes.RequestAuthentications,
-	kubernetes.ServiceEntries,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -606,33 +611,79 @@ func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) mod
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 	if len(namespaces) > 0 {
+		networkingPermissions := make(models.IstioConfigPermissions, len(namespaces))
+		securityPermissions := make(models.IstioConfigPermissions, len(namespaces))
+
 		wg := sync.WaitGroup{}
-		wg.Add(len(namespaces) * len(newIstioConfigTypes))
+		// We will query 2 times per namespace (networking.istio.io and security.istio.io)
+		wg.Add(len(namespaces) * 2)
 		for _, ns := range namespaces {
-			resourcePermissions := make(models.ResourcesPermissions, len(newIstioConfigTypes))
-			for _, rs := range newIstioConfigTypes {
-				resourcePermissions[rs] = &models.ResourcePermissions{
-					Create: false,
-					Update: false,
-					Delete: false,
+			networkingRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes))
+			securityRP := make(models.ResourcesPermissions, len(newSecurityConfigTypes))
+			networkingPermissions[ns] = &networkingRP
+			securityPermissions[ns] = &securityRP
+			/*
+				We can optimize this logic.
+				Instead of query all editable objects of networking.istio.io and security.istio.io we can query
+				only one per API, that will save several queries to the backend.
+
+				Synced with:
+				https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+			*/
+			go func(namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
+				defer wg.Done()
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.NetworkingGroupVersion.Group)
+				for _, rs := range newNetworkingConfigTypes {
+					networkingRP[rs] = &models.ResourcePermissions{
+						Create: canCreate,
+						Update: canUpdate,
+						Delete: canDelete,
+					}
 				}
-				go func(namespace, resource string, permissions *models.ResourcePermissions, wg *sync.WaitGroup) {
-					defer wg.Done()
-					permissions.Create, permissions.Update, permissions.Delete = getPermissions(in.k8s, namespace, resource)
-				}(ns, rs, resourcePermissions[rs], &wg)
-			}
-			istioConfigPermissions[ns] = &resourcePermissions
+			}(ns, &wg, &networkingRP)
+
+			go func(namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
+				defer wg.Done()
+				canCreate, canUpdate, canDelete := getPermissionsApi(in.k8s, namespace, kubernetes.SecurityGroupVersion.Group)
+				for _, rs := range newSecurityConfigTypes {
+					securityRP[rs] = &models.ResourcePermissions{
+						Create: canCreate,
+						Update: canUpdate,
+						Delete: canDelete,
+					}
+				}
+			}(ns, &wg, &securityRP)
 		}
 		wg.Wait()
+
+		// Join networking and security permissions into a single result
+		for _, ns := range namespaces {
+			allRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes)+len(newSecurityConfigTypes))
+			istioConfigPermissions[ns] = &allRP
+			for resource, permissions := range *networkingPermissions[ns] {
+				(*istioConfigPermissions[ns])[resource] = permissions
+			}
+			for resource, permissions := range *securityPermissions[ns] {
+				(*istioConfigPermissions[ns])[resource] = permissions
+			}
+		}
 	}
 	return istioConfigPermissions
 }
 
 func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string) (bool, bool, bool) {
-	var canCreate, canPatch, canUpdate, canDelete bool
+	var canCreate, canPatch, canDelete bool
 	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "update", "delete"})
+		/*
+			Kiali only uses create,patch,delete as WRITE permissions
+
+			"update" creates an extra call to the API that we know that it will always fail, introducing extra latency
+
+			Synced with:
+			https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+		*/
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "delete"})
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
@@ -641,8 +692,6 @@ func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string
 						canCreate = ssar.Status.Allowed
 					case "patch":
 						canPatch = ssar.Status.Allowed
-					case "update":
-						canUpdate = ssar.Status.Allowed
 					case "delete":
 						canDelete = ssar.Status.Allowed
 					}
@@ -652,7 +701,38 @@ func getPermissions(k8s kubernetes.ClientInterface, namespace, objectType string
 			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
-	return canCreate, (canUpdate || canPatch), canDelete
+	return canCreate, canPatch, canDelete
+}
+
+func getPermissionsApi(k8s kubernetes.ClientInterface, namespace, api string) (bool, bool, bool) {
+	var canCreate, canPatch, canDelete bool
+	/*
+		Kiali only uses create,patch,delete as WRITE permissions
+
+		"update" creates an extra call to the API that we know that it will always fail, introducing extra latency
+
+		Synced with:
+		https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+	*/
+	allResources := "*"
+	ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, allResources, []string{"create", "patch", "delete"})
+	if permErr == nil {
+		for _, ssar := range ssars {
+			if ssar.Spec.ResourceAttributes != nil {
+				switch ssar.Spec.ResourceAttributes.Verb {
+				case "create":
+					canCreate = ssar.Status.Allowed
+				case "patch":
+					canPatch = ssar.Status.Allowed
+				case "delete":
+					canDelete = ssar.Status.Allowed
+				}
+			}
+		}
+	} else {
+		log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
+	}
+	return canCreate, canPatch, canDelete
 }
 
 func checkType(types []string, name string) bool {
