@@ -8564,6 +8564,7 @@ True means allowed.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Hosts | []string| `[]string` |  | |  |  |
 | Location | string| `string` |  | |  |  |
+| Namespace | string| `string` |  | |  |  |
 
 
 
