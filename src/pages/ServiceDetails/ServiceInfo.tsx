@@ -51,7 +51,11 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
   }
 
   componentDidUpdate(prev: Props) {
-    if (prev.duration !== this.props.duration || prev.lastRefreshAt !== this.props.lastRefreshAt) {
+    if (
+      prev.duration !== this.props.duration ||
+      prev.lastRefreshAt !== this.props.lastRefreshAt ||
+      prev.serviceDetails?.service.name !== this.props.serviceDetails?.service.name
+    ) {
       this.fetchBackend();
     }
   }

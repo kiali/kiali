@@ -69,7 +69,11 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
   componentDidUpdate(prev: WorkloadInfoProps) {
     // Fetch WorkloadInfo backend on duration changes or WorkloadDetailsPage update
-    if (prev.duration !== this.props.duration || prev.lastRefreshAt !== this.props.lastRefreshAt) {
+    if (
+      prev.duration !== this.props.duration ||
+      prev.lastRefreshAt !== this.props.lastRefreshAt ||
+      this.props.workload?.name !== prev.workload?.name
+    ) {
       this.fetchBackend();
     }
   }

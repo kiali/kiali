@@ -251,6 +251,20 @@ export default class GraphDataSource {
 
   public fetchForAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
+    params.graphType = GraphType.APP;
+    params.node!.nodeType = NodeType.APP;
+    params.node!.app = app;
+    return params;
+  };
+
+  public fetchForVersionedApp = (duration: DurationInSeconds, namespace: string, app: string) => {
+    const params = this.fetchForVersionedAppParams(duration, namespace, app);
+    params.showSecurity = true;
+    this.fetchGraphData(params);
+  };
+
+  public fetchForVersionedAppParams = (duration: DurationInSeconds, namespace: string, app: string): FetchParams => {
+    const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.VERSIONED_APP;
     params.node!.nodeType = NodeType.APP;
     params.node!.app = app;
