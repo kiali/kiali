@@ -65,7 +65,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
     <td
       role="gridcell"
       key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}
-      style={{ verticalAlign: 'middle' }}
+      style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >
       <ul>
         {hasMissingSC && (
@@ -75,12 +75,12 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         )}
         {isWorkload && hasMissingApp && (
           <li>
-            Missing <PFBadge badge={{ badge: 'app' }} isRead={true} /> label
+            Missing <PFBadge badge={{ badge: 'app' }} isRead={true} style={{ marginRight: '0px' }} /> label
           </li>
         )}
         {isWorkload && hasMissingVersion && (
           <li>
-            Missing <PFBadge badge={{ badge: 'version' }} isRead={true} /> label
+            Missing <PFBadge badge={{ badge: 'version' }} isRead={true} style={{ marginRight: '0px' }} /> label
           </li>
         )}
         {spacer && ' '}
@@ -232,7 +232,8 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               isRead={true}
               style={{
                 backgroundColor: labelAct ? PFColors.Badge : undefined,
-                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed'
+                cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap'
               }}
               onClick={() =>
                 statefulFilter

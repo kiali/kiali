@@ -72,7 +72,7 @@ const nsItem: ResourceType<NamespaceInfo> = {
   name: 'Namespace',
   param: 'ns',
   column: 'Namespace',
-  transforms: [sortable, cellWidth(15)],
+  transforms: [sortable],
   renderer: Renderers.nsItem
 };
 // General
@@ -81,7 +81,7 @@ const item: ResourceType<TResource> = {
   name: 'Item',
   param: 'wn',
   column: 'Name',
-  transforms: [sortable, cellWidth(15)],
+  transforms: [sortable],
   renderer: Renderers.item
 };
 
@@ -113,7 +113,7 @@ const labels: ResourceType<RenderResource> = {
   name: 'Labels',
   param: 'lb',
   column: 'Labels',
-  transforms: [cellWidth(30)],
+  transforms: [cellWidth(20)],
   renderer: Renderers.labels
 };
 
@@ -121,7 +121,7 @@ const health: ResourceType<TResource> = {
   name: 'Health',
   param: 'he',
   column: 'Health',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.health
 };
 
@@ -129,7 +129,7 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
   name: 'Details',
   param: 'is',
   column: 'Details',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.details
 };
 
@@ -137,7 +137,7 @@ const configuration: ResourceType<ServiceListItem | IstioConfigItem> = {
   name: 'Configuration',
   param: 'cv',
   column: 'Configuration',
-  transforms: [sortable],
+  transforms: [sortable, cellWidth(10)],
   renderer: Renderers.configuration
 };
 
@@ -231,19 +231,19 @@ const namespaces: Resource = {
 
 const workloads: Resource = {
   name: 'workloads',
-  columns: [item, namespace, workloadType, labels, health, details],
+  columns: [health, item, namespace, workloadType, labels, details],
   badge: PFBadges.Workload
 };
 
 const applications: Resource = {
   name: 'applications',
-  columns: [item, namespace, labels, health, details],
+  columns: [health, item, namespace, labels, details],
   badge: PFBadges.App
 };
 
 const services: Resource = {
   name: 'services',
-  columns: [serviceItem, namespace, labels, health, configuration, details],
+  columns: [health, serviceItem, namespace, labels, configuration, details],
   badge: PFBadges.Service
 };
 
