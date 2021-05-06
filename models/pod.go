@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 
@@ -117,7 +118,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 }
 
 func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
-	return pod.Namespace == conf.IstioNamespace && (pod.Name == "istio-ingressgateway" || pod.Name == "istio-egressgateway" || container.Name == "istio-proxy")
+	return pod.Namespace == conf.IstioNamespace && (container.Name == "istio-proxy" || strings.HasPrefix(pod.Name, "istio-ingressgateway") || strings.HasPrefix(pod.Name,"istio-egressgateway")
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
