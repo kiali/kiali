@@ -107,10 +107,6 @@ https://github.com/kiali/kiali[kiali/kiali GitHub repository].
 
 === Making the release
 
-. Make a release of the front-end, if needed
-** Please, follow the https://github.com/kiali/kiali-ui/blob/master/RELEASING.adoc[releasing guide for the front-end]
-** You can omit this step if there is no need to release the front-end. Kiali
-   will be released using the specified version of the front-end.
 . Login to Quay.io
 ** `docker login quay.io`
 . Checkout the code that you want to release:
@@ -123,17 +119,7 @@ https://github.com/kiali/kiali[kiali/kiali GitHub repository].
 ** Optional: If a token is not provided, a branch is created in your
    fork of the code, if needed. Then, you can place the PR manually.
 . Run the release process:
-** `CONSOLE_VERSION="{ui-version}" make -f deploy/jenkins-ci/Makefile release`
-
-In the last step, you can omit the CONSOLE_VERSION variable. However, it is
-_**very** highly_ recommended that you specify the version of the UI to package.
-If you released kiali-ui (step 1), you should specify the version you just released.
-Else, you should specify whatever version you need packaged. If you don't specify
-a kiali-ui version, the console version specified in the main `Makefile`
-will be downloaded from NPM and packaged in the release. If the main `Makefile`
-specifies `latest` as the console version, the latest version *published* in NPM
-will be used, which is not necessarily the latest _released_ version
-(most likely it will be a snapshot).
+** `CONSOLE_LOCAL_DIR="path_to_ui_source_code" make -f deploy/jenkins-ci/Makefile release`
 
 By default, it's assumed that you are doing a _minor_ release.
 If want to do another type of release, you can run the release process specifying

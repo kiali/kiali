@@ -13,14 +13,10 @@ TARGET_ARCHS ?= amd64 arm64 s390x ppc64le
 VERSION ?= v1.34.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
-# Indicates which version of the UI console is to be embedded
-# in the container image. If "local" the CONSOLE_LOCAL_DIR is
-# where the UI project has been git cloned and has its
-# content built in its build/ subdirectory.
-# WARNING: If you have previously build a container image but
-# later want to change the CONSOLE_VERSION then you must run
-# the 'clean' target first before re-building the container image.
-CONSOLE_VERSION ?= latest
+# The path where the UI project has been git cloned. The UI should
+# have been built before trying to create a kiali server container
+# image. The UI project is configured to place its build
+# output in the $UI_SRC_ROOT/build/ subdirectory.
 CONSOLE_LOCAL_DIR ?= ${ROOTDIR}/../../../../../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
@@ -155,6 +151,13 @@ endif
 # When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
 # If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.
 HELM_CHARTS_REPO_PULL ?= true
+
+.PHONY: default_target
+default_target:
+	@echo
+	@echo "Apparently, you didn't specify a target."
+	@echo "This Makefile requires you to explicitly call a target."
+	@echo "Run '$(MAKE) help' to learn about the available targets."
 
 include make/Makefile.build.mk
 include make/Makefile.container.mk

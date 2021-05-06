@@ -4,7 +4,7 @@
 #
 
 .prepare-kiali-image-files:
-	@CONSOLE_VERSION=${CONSOLE_VERSION} CONSOLE_LOCAL_DIR=${CONSOLE_LOCAL_DIR} deploy/get-console.sh
+	@CONSOLE_LOCAL_DIR=${CONSOLE_LOCAL_DIR} deploy/get-console.sh
 	@echo Preparing container image files
 	@mkdir -p ${OUTDIR}/docker
 	@cp -r deploy/docker/* ${OUTDIR}/docker
