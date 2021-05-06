@@ -151,7 +151,9 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
     ) {
       history.push(`/graph/namespaces`);
+      return;
     }
+
     const selector = `node[id = "${this.props.summaryData!.summaryTarget.data(CyNode.id)}"]`;
     this.props.setNode(undefined);
     history.push(`/graph/namespaces?focusSelector=${encodeURI(selector)}`);
