@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -290,12 +291,8 @@ func findKialiInNamespace(namespace string, clusterName string, layer *Layer) (i
 			var tmpSvc []core_v1.Service
 			tmpSvc, getSvcErr = kialiCache.GetServices(kialiNs.Name, nil)
 			if getSvcErr == nil {
-				services = make([]core_v1.Service, 0, 1) // Because it's expected only one Kiali instance, set capacity to one.
-				for _, svc := range tmpSvc {
-					if kialiLabel, ok := svc.Labels["app.kubernetes.io/part-of"]; ok && kialiLabel == "kiali" {
-						services = append(services, svc)
-					}
-				}
+				selector := (labels.Set{"app.kubernetes.io/part-of": "kiali"}).AsSelector()
+				services = kubernetes.FilterServicesByLabels(selector, tmpSvc)
 			}
 		} else {
 			services, getSvcErr = layer.k8s.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
