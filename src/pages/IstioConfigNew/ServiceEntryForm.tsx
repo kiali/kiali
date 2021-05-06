@@ -41,7 +41,7 @@ const headerCells: ICell[] = [
     props: {}
   },
   {
-    title: 'Target Protocol',
+    title: 'Target Port',
     transforms: [cellWidth(20) as any],
     props: {}
   },
