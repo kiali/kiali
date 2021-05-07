@@ -86,7 +86,6 @@ DEFAULT_LOCAL_REMOTE_PORTS_PROMETHEUS="9091:9090"
 DEFAULT_LOCAL_REMOTE_PORTS_TRACING="16686:16686"
 DEFAULT_LOG_LEVEL="info"
 DEFAULT_REBOOTABLE="true"
-DEFAULT_UI_CONSOLE_DOWNLOAD_VERSION="latest"
 
 # Process command line options
 
@@ -112,7 +111,6 @@ while [[ $# -gt 0 ]]; do
     -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
     -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
     -ucd|--ui-console-dir)       UI_CONSOLE_DIR="$2";                shift;shift ;;
-    -ucv|--ui-console-version)   UI_CONSOLE_DOWNLOAD_VERSION="$2";   shift;shift ;;
     -h|--help )
       cat <<HELPMSG
 $0 [option...]
@@ -215,18 +213,11 @@ Valid options:
       A directory on the local machine containing the UI console code.
       If not specified, an attempt to find it on the local machine will be made. A search up the
       directory tree is made, looking for any directory called "kiali-ui" that has a "build" directory under it.
-      If one is not found, you will be asked if you want to download a copy via npm to the ${TMP_DIR} directory.
-      If you want to download it without being asked, set this value to "download".
-      The version of the UI console that will be downloaded is specified via --ui-console-version.
-      Note that in order to download the UI console, you must have "npm" in your PATH.
-      In order to set this to something other than "download', you must first build the UI
-      and set this option to the build directory. For details, see: https://github.com/kiali/kiali-ui
-      Default: <either a local build that is auto-discovered or the latest UI that will be downloaded via npm>
-  -ucv|--ui-console-version
-      If you elect to download the UI Console from npm, this is the version it will download.
-      Make sure this version is compatible with the server you are going to run.
-      Note that this value is ignored if you do not elect to download the UI Console.
-      Default: ${DEFAULT_UI_CONSOLE_DOWNLOAD_VERSION}
+      The "build" directory of the kiali-ui is generated after you run "yarn build" to
+      generate the distributable package. So, make sure that you build the kiali-ui before
+      using this script and then set this option to the generated build directory.
+      For details, see: https://github.com/kiali/kiali-ui
+      Default: <a local build that is auto-discovered>
 HELPMSG
       exit 1
       ;;
@@ -439,7 +430,7 @@ if [ -z "${KUBERNETES_API_HOST:-}" -o -z "${KUBERNETES_API_PORT:-}" ]; then
   fi
 fi
 
-# If the user didn't tell us what ui console directory to use, try to determine it or download it
+# If the user didn't tell us what ui console directory to use, try to determine it
 
 if [ -z "${UI_CONSOLE_DIR:-}" ]; then
   infomsg "Attempting to find the UI Console directory..."
@@ -460,23 +451,11 @@ if [ -z "${UI_CONSOLE_DIR:-}" ]; then
     cur_path="$(readlink -f "${cur_path}"/..)"
   done
   if [ -z "${UI_CONSOLE_DIR:-}" ]; then
-    warnmsg "Could not find a local directory containing the UI Console. You can either specify it via --ui-console-dir or download a copy."
-    questionchar; read -p "Do you want to download a copy now from npm into the ${TMP_DIR} directory? ('y' or 'n'): " yn
-    case $yn in
-      [Yy]*) infomsg "OK, attempting to download it..."; UI_CONSOLE_DIR="download";;
-      *) errormsg "Aborting. You need to specify the UI Console directory via --ui-console-dir"; exit 1;;
-    esac
+    errormsg "Could not find a local directory containing the UI Console."
+    errormsg "You need to specify the UI Console directory via --ui-console-dir."
+    errormsg "Aborting."
+    exit 1
   fi
-fi
-
-if [ "${UI_CONSOLE_DIR}" == "download" ]; then
-  UI_CONSOLE_DIR="${TMP_DIR}/console"
-  UI_CONSOLE_DOWNLOAD_VERSION="${UI_CONSOLE_DOWNLOAD_VERSION:-${DEFAULT_UI_CONSOLE_DOWNLOAD_VERSION}}"
-  infomsg "Attempting to download UI Console version [${UI_CONSOLE_DOWNLOAD_VERSION}] to: ${UI_CONSOLE_DIR}";
-  rm -rf ${TMP_DIR}/console
-  mkdir -p "${UI_CONSOLE_DIR}"
-  curl -s $(npm view @kiali/kiali-ui@${UI_CONSOLE_DOWNLOAD_VERSION} dist.tarball) \
-    | tar zxf - --strip-components=2 --directory ${UI_CONSOLE_DIR} package/build || warnmsg "Failed to download UI Console"
 fi
 
 # Kiali will log the version of the UI based on version.txt - create a dummy one to avoid a warning message at startup
@@ -506,7 +485,6 @@ echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
 echo "TRACING_URL=$TRACING_URL"
 echo "UI_CONSOLE_DIR=$UI_CONSOLE_DIR"
-echo "UI_CONSOLE_DOWNLOAD_VERSION=${UI_CONSOLE_DOWNLOAD_VERSION:-<unused>}"
 
 # Validate the settings
 
