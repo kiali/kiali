@@ -118,7 +118,18 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 }
 
 func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
-	return pod.Namespace == conf.IstioNamespace && (container.Name == "istio-proxy" || strings.HasPrefix(pod.Name, "istio-ingressgateway") || strings.HasPrefix(pod.Name, "istio-egressgateway"))
+	if pod.Namespace != conf.IstioNamespace {
+		return false
+	}
+	if container.Name == "istio-proxy" {
+		return true
+	}
+	for _, c := range conf.ExternalServices.Istio.ComponentStatuses.Components {
+		if c.IsProxy && strings.HasPrefix(pod.Name, c.AppLabel) {
+			return true
+		}
+	}
+	return false
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {
