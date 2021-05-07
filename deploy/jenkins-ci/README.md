@@ -36,10 +36,6 @@ more in _[The Pipelines](#the-pipelines)_ section
 
 The `kiali-release` pipeline uses some support files:
 
-* The [bin/determine-release-type.sh](bin/determine-release-type.sh)
-  is used to automatically resolve what kind of release needs to be
-  build, assuming the Pipeline runs weekly. Read the script
-  to learn more about how it works.
 * The [bin/jq](https://stedolan.github.io/jq/) v1.6 and
   [bin/semver](https://github.com/fsaintjacques/semver-tool) v2.1.0
   are tools used to properly set version strings when building releases.
@@ -160,30 +156,6 @@ Note that the Helm release always builds and pushes to the "master" branch
 because that is the branch that GitHub Pages gets the content for the Helm
 Chart Repository HTTP server.
 
-### Building a patch release omitting the front-end
-
-First, make sure that all fixes are properly committed to the
-back-end repository (don't change version numbers).
-
-In the current Kiali project workflow, patch releases are built off
-from a version branch rather than the `master` branch.
-
-Set the Pipeline parameters as follows:
-
-* RELEASE_TYPE: Use `patch`.
-* RELEASING_BRANCHES: The branch name of the repositories to
-  generate the release from; e.g. `refs/heads/v0.20`. The build
-  assumes that all repositories have a branch with this name.
-* SKIP_UI_RELEASE: Set to `y`.
-
-The front-end that will be bundled in the container image will be the version
-specified in the main Makefile
-(e.g: https://github.com/kiali/kiali/blob/v0.20.0/Makefile#L16). The front-end
-will be downloaded from the NPM registry. If you want to bundle a different
-front-end version, use the UI_VERSION parameter; for example.
-
-* UI_VERSION: `0.19.0`
-
 ### Building a major release
 
 In the current Kiali project workflow, major releases are built off
@@ -233,8 +205,7 @@ repositories.
 There is a set of _SKIP\_*\_RELEASE_ parameters that allow individual control
 about what should and should not be built:
 
-* SKIP_BACKEND_RELEASE: Forces to omit the back-end build.
-* SKIP_UI_RELEASE: Forces to omit the front-end build.
+* SKIP_SERVER_RELEASE: Forces to omit the server build (front-end and back-end).
 * SKIP_OPERATOR_RELEASE: Forces to omit the operator build.
 * SKIP_HELM_RELEASE: Forces to omit the helm charts build.
 * SKIP_SITE_RELEASE: Forces to omit the website build.
@@ -267,30 +238,22 @@ first check if the `kiali-release` pipeline finished successfully. If it
 didn't, pass through the following checks (in order) to know how to proceed
 to recover the build. Do the suggested action of the first check that is not OK:
 
-1. Is the front-end release properly
-   [published in NPM](https://www.npmjs.com/package/@kiali/kiali-ui?activeTab=versions)?
-   If not:
-   * Retry the build. No special handling required.
 1. Is the front-end version properly tagged in the repository?
    (see https://github.com/kiali/kiali-ui/tags). If not:
    * Manually create the tag setting the version in package.json
      to the published one.
    * For builds other than snapshots, manually update the package.json file 
      of the master/version branch to prepare it for the next release.
-   * Retry the build but set parameters SKIP_UI_RELEASE to `y` and UI_VERSION
-     to the version of the front-end that got published in NPM.
 1. In the front-end repository, is the package.json correctly updated and
    prepared for the next version? If not:
    * This check does not apply for snapshot builds.
    * Manually update the package.json file of the master/version branch to
      prepare it for the next release.
-   * Retry the build but set parameters SKIP_UI_RELEASE to `y` and UI_VERSION
-     to the version of the front-end that got published in NPM.
+   * Retry the build (TODO: how?).
 1. Are the container images present in Quay.io?
    Is the back-end version properly tagged (see https://github.com/kiali/kiali/tags)?
    If not to any of these questions:
-   * Retry the build but set parameters SKIP_UI_RELEASE to `y` and UI_VERSION
-     to the version of the front-end that got published in NPM.
+   * Retry the build (TODO: how?).
 1. Is the back-end release properly created in https://github.com/kiali/kiali/releases?
    * Don't retry the build. 
    * Manually [create the version entry in GitHub](https://github.com/kiali/kiali/releases/new).
@@ -337,7 +300,6 @@ When running the build, set the following parameters:
   e.g. `quay.io/edgarhz/kiali`.
 * QUAY_OPERATOR_NAME: Use your own Quay.io repository for the operator;
   e.g. `quay.io/edgarhz/kiali-operator`.
-* NPM_DRY_RUN: Set to `y`.
 
 Once you run the first test build, if you need to run more test builds,
 you may want to use the _Rebuild_ option to avoid setting these
