@@ -7,6 +7,7 @@ import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Grap
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
 import history from '../../app/History';
+import { getOptions } from './ContextMenu/NodeContextMenu';
 
 type Props = {
   groupContextMenuContent?: NodeContextMenuType;
@@ -95,7 +96,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
           contextMenuComponentType = this.props.edgeContextMenuContent;
         }
 
-        if (contextMenuComponentType) {
+        if (contextMenuComponentType && getOptions({ ...event.target.data() }).length > 0) {
           this.makeContextMenu(contextMenuComponentType, event.target);
         }
       }

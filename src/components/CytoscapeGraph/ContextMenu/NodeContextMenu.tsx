@@ -121,34 +121,18 @@ export class NodeContextMenu extends React.PureComponent<Props> {
       return null;
     }
 
-    let buildMenu = false;
-    let menuOptions: React.ReactNode = null;
-    // use local links if this is the home cluster, or if there is no configured home cluster
-    if (!serverConfig.clusterInfo?.name || linkParams.cluster === serverConfig.clusterInfo.name) {
-      buildMenu = true;
-    } else {
-      // Check if the remote Kiali is configured with a url. If so, build the menu; else, put a note.
-      const cluster = serverConfig.clusters[linkParams.cluster];
-      if (cluster && cluster.kialiInstances?.some(instance => instance.url.length !== 0)) {
-        buildMenu = true;
-      } else {
-        menuOptions = (
-          <p>
-            No remote links, Kiali is not available on the <strong>{linkParams.cluster}</strong> cluster.
-          </p>
-        );
-      }
-    }
-
-    if (buildMenu) {
-      const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
-      menuOptions = (
-        <>
-          <div className={graphContextMenuSubTitleStyle}>Show</div>
-          {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
-        </>
-      );
-    }
+    // The getOptionsFromLinkParams function can potentially return a blank list if the
+    // node associated to the context menu is for a remote cluster with no accessible Kialis.
+    // That would lead to an empty menu. Here, we assume that whoever is the host/parent component,
+    // that component won't render this context menu in case this menu would be blank. So, here
+    // it's simply assumed that the context menu will look good.
+    const options: ContextMenuOption[] = getOptionsFromLinkParams(linkParams, this.props.jaegerInfo);
+    const menuOptions = (
+      <>
+        <div className={graphContextMenuSubTitleStyle}>Show</div>
+        {options.map(o => this.createMenuItem(o.url, o.text, o.target, o.external))}
+      </>
+    );
 
     return (
       <div className={graphContextMenuContainerStyle}>
