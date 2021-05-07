@@ -38,8 +38,9 @@ type Reference struct {
 
 // ContainerInfo holds container name and image
 type ContainerInfo struct {
-	Name  string `json:"name"`
-	Image string `json:"image"`
+	Name    string `json:"name"`
+	Image   string `json:"image"`
+	IsProxy bool   `json:"isProxy"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -82,15 +83,19 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		if err == nil {
 			for _, name := range scs.InitContainers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.InitContainers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.InitContainers),
+					IsProxy: false,
+				}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
 				istioContainerNames[name] = true
 			}
 			for _, name := range scs.Containers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.Containers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.Containers),
+					IsProxy: true,
+				}
 				pod.IstioContainers = append(pod.IstioContainers, &container)
 				istioContainerNames[name] = true
 			}
@@ -101,14 +106,11 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			continue
 		}
 		container := ContainerInfo{
-			Name:  c.Name,
-			Image: c.Image,
+			Name:    c.Name,
+			Image:   c.Image,
+			IsProxy: isIstioProxy(p, &c, conf),
 		}
-		if isIstioProxy(p, &c, conf) {
-			pod.IstioContainers = append(pod.IstioContainers, &container)
-		} else {
-			pod.Containers = append(pod.Containers, &container)
-		}
+		pod.Containers = append(pod.Containers, &container)
 	}
 	pod.Status = string(p.Status.Phase)
 	pod.StatusMessage = string(p.Status.Message)
