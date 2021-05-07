@@ -6579,6 +6579,7 @@ part of the mesh.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Image | string| `string` |  | |  |  |
+| IsProxy | boolean| `bool` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 
 
