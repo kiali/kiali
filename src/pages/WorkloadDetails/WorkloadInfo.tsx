@@ -69,47 +69,44 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
   componentDidUpdate(prev: WorkloadInfoProps) {
     // Fetch WorkloadInfo backend on duration changes or WorkloadDetailsPage update
-    if (
-      prev.duration !== this.props.duration ||
-      prev.lastRefreshAt !== this.props.lastRefreshAt ||
-      this.props.workload?.name !== prev.workload?.name
-    ) {
+    if (prev.duration !== this.props.duration || this.props.workload !== prev.workload) {
       this.fetchBackend();
     }
   }
 
   private fetchBackend = () => {
-    if (this.props.workload) {
-      this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
-      this.setState({
-        validations: this.workloadValidations(this.props.workload)
-      });
-      const labels = this.props.workload.labels;
-      const wkLabels: string[] = [];
-      Object.keys(labels).forEach(key => {
-        const label = key + (labels[key] ? '=' + labels[key] : '');
-        wkLabels.push(label);
-      });
-      const workloadSelector = wkLabels.join(',');
-
-      Promise.all([
-        API.getWorkloadHealth(
-          this.props.namespace,
-          this.props.workload.name,
-          this.props.workload ? this.props.workload.type : '',
-          this.props.duration,
-          this.props.workload ? this.props.workload.istioSidecar : false
-        ),
-        API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
-      ])
-        .then(results => {
-          this.setState({
-            health: results[0],
-            workloadIstioConfig: results[1].data
-          });
-        })
-        .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+    if (!this.props.workload) {
+      return;
     }
+    this.graphDataSource.fetchForWorkload(this.props.duration, this.props.namespace, this.props.workload.name);
+    this.setState({
+      validations: this.workloadValidations(this.props.workload)
+    });
+    const labels = this.props.workload.labels;
+    const wkLabels: string[] = [];
+    Object.keys(labels).forEach(key => {
+      const label = key + (labels[key] ? '=' + labels[key] : '');
+      wkLabels.push(label);
+    });
+    const workloadSelector = wkLabels.join(',');
+
+    Promise.all([
+      API.getWorkloadHealth(
+        this.props.namespace,
+        this.props.workload.name,
+        this.props.workload ? this.props.workload.type : '',
+        this.props.duration,
+        this.props.workload ? this.props.workload.istioSidecar : false
+      ),
+      API.getIstioConfig(this.props.namespace, workloadIstioResources, true, '', workloadSelector)
+    ])
+      .then(results => {
+        this.setState({
+          health: results[0],
+          workloadIstioConfig: results[1].data
+        });
+      })
+      .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
   };
 
   // All information for validations is fetched in the workload, no need to add another call

@@ -74,11 +74,11 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   private fetchWorkload = () => {
     API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload)
-      .then(details =>
+      .then(details => {
         this.setState({
           workload: details.data
-        })
-      )
+        });
+      })
       .catch(error => AlertUtils.addError('Could not fetch Workload.', error));
   };
 
