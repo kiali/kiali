@@ -265,8 +265,14 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
     if (backendConfigs.clusters) {
       const clustersWithoutKialis = [] as string[];
       for (let cluster in backendConfigs.clusters) {
+        // skip home cluster, it's always reachable
+        if (cluster === backendConfigs.clusterInfo?.name) {
+          continue;
+        }
         if (backendConfigs.clusters.hasOwnProperty(cluster)) {
-          const kialiInstance = backendConfigs.clusters[cluster].kialiInstances?.find(instance => instance.url.length !== 0);
+          const kialiInstance = backendConfigs.clusters[cluster].kialiInstances?.find(
+            instance => instance.url.length !== 0
+          );
           if (!kialiInstance) {
             clustersWithoutKialis.push(cluster);
           }
@@ -275,9 +281,10 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
 
       if (clustersWithoutKialis.length > 0) {
         AlertUtils.addWarning(
-          "Not all remote clusters have reachable Kiali instances.",
-          undefined, undefined,
-          "Context menus are disabled for remote cluster nodes if a Kiali instance is not discovered, or if the remote Kiali is not configured with an external URL."
+          'Not all remote clusters have reachable Kiali instances.',
+          undefined,
+          undefined,
+          'Context menus are disabled for remote cluster nodes if a Kiali instance is not discovered, or if the remote Kiali is not configured with an external URL.'
         );
       }
     }
