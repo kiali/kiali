@@ -260,7 +260,7 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
     fi
 
     echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts:${NAMESPACE}
   else
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
       ${CLIENT_EXE} create namespace ${NAMESPACE}
