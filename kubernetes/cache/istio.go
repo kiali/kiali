@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
@@ -110,7 +111,11 @@ func (c *kialiCacheImpl) GetIstioObjects(namespace string, resourceType string, 
 			iResources := make([]kubernetes.IstioObject, lenResources)
 			for i, r := range resources {
 				iResources[i] = (r.(*kubernetes.GenericIstioObject)).DeepCopyIstioObject()
-				// TODO iResource[i].SetTypeMeta(typeMeta) is missing/needed ??
+				typeMeta := meta_v1.TypeMeta{
+					Kind:       kubernetes.PluralType[resourceType],
+					APIVersion: kubernetes.ApiToVersion[kubernetes.ResourceTypesToAPI[resourceType]],
+				}
+				iResources[i].SetTypeMeta(typeMeta)
 			}
 			if labelSelector != "" {
 				if selector, err := labels.Parse(labelSelector); err == nil {
