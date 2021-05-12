@@ -151,7 +151,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             isRemoved: true
           });
           AlertUtils.addError(
-            'Could not fetch ' + props.objectType + ':' + props.object + '. Has it been removed ?',
+            `Could not fetch ${props.objectType}: ${props.object} in namespace: ${props.namespace}. Has it been removed?`,
             error
           );
         });
@@ -179,7 +179,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           isRemoved: true
         });
         AlertUtils.addError(
-          'Could not fetch Istio object type [' + props.objectType + '] name [' + props.object + '].',
+          `Could not fetch Istio object type [${props.objectType}] name [${props.object}] in namespace [${props.namespace}].`,
           error
         );
       });
