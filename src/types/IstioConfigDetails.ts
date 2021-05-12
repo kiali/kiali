@@ -40,7 +40,8 @@ export interface IstioConfigDetails {
 
 export const aceOptions: AceOptions = {
   showPrintMargin: false,
-  autoScrollEditorIntoView: true
+  autoScrollEditorIntoView: true,
+  fontSize: '16px'
 };
 
 export const safeDumpOptions = {
