@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -21,7 +24,8 @@ import (
 // when Istio is installed with multi-cluster enabled. Prefer initializing this
 // type via the NewMeshService function.
 type MeshService struct {
-	k8s kubernetes.ClientInterface
+	k8s   kubernetes.ClientInterface
+	layer *Layer
 
 	// newRemoteClient is a helper variable holding a function that should return an
 	// initialized kubernetes client using the specified config argument. This was created,
@@ -83,7 +87,7 @@ type meshIdConfig struct {
 // NewMeshService initializes a new MeshService structure with the given k8s client and
 // newRemoteClientFunc arguments (see the MeshService struct for details). The newRemoteClientFunc
 // can be passed a nil value and a default function will be used.
-func NewMeshService(k8s kubernetes.ClientInterface, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
+func NewMeshService(k8s kubernetes.ClientInterface, layer *Layer, newRemoteClientFunc func(config *rest.Config) (kubernetes.ClientInterface, error)) MeshService {
 	if newRemoteClientFunc == nil {
 		newRemoteClientFunc = func(config *rest.Config) (kubernetes.ClientInterface, error) {
 			return kubernetes.NewClientFromConfig(config)
@@ -92,6 +96,7 @@ func NewMeshService(k8s kubernetes.ClientInterface, newRemoteClientFunc func(con
 
 	return MeshService{
 		k8s:             k8s,
+		layer:           layer,
 		newRemoteClient: newRemoteClientFunc,
 	}
 }
@@ -183,7 +188,13 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
-	istioDeployment, err := in.k8s.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
+	var istioDeployment *v1.Deployment
+	var err error
+	if IsNamespaceCached(conf.IstioNamespace) {
+		istioDeployment, err = kialiCache.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
+	} else {
+		istioDeployment, err = in.k8s.GetDeployment(conf.IstioNamespace, conf.ExternalServices.Istio.IstiodDeploymentName)
+	}
 	if err != nil && !errors.IsNotFound(err) {
 		return nil, err
 	}
@@ -226,7 +237,7 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	}
 
 	// Discover ourselves
-	kialiInstances := findKialiInNamespace(os.Getenv("ACTIVE_NAMESPACE"), myClusterName, in.k8s)
+	kialiInstances := findKialiInNamespace(os.Getenv("ACTIVE_NAMESPACE"), myClusterName, in.layer)
 	if len(kialiInstances) > 0 && r != nil {
 		for i := range kialiInstances {
 			// If URL is already populated (because of an annotation), trust that because it's user configuration.
@@ -249,12 +260,24 @@ func (in *MeshService) ResolveKialiControlPlaneCluster(r *http.Request) (*Cluste
 	return kialiControlPlaneCluster, nil
 }
 
+// convertKialiServiceToInstance converts a svc Service data structure of the
+// Kubernetes client to a KialiInstance data structure.
+func convertKialiServiceToInstance(svc *core_v1.Service) KialiInstance {
+	return KialiInstance{
+		ServiceName:      svc.Name,
+		Namespace:        svc.Namespace,
+		OperatorResource: svc.Annotations["operator-sdk/primary-resource"],
+		Version:          svc.Labels["app.kubernetes.io/version"],
+		Url:              svc.Annotations["kiali.io/external-url"],
+	}
+}
+
 // findKialiInNamespace tries to find a Kiali installation certain namespace of a cluster.
 // The clientSet argument should be an already initialized REST client to the API server of the
 // cluster. The namespace argument specifies the namespace where a Kiali instance will be looked for.
 // The clusterName argument is for logging purposes only.
-func findKialiInNamespace(namespace string, clusterName string, clientSet kubernetes.ClientInterface) (instances []KialiInstance) {
-	kialiNs, getNsErr := clientSet.GetNamespace(namespace)
+func findKialiInNamespace(namespace string, clusterName string, layer *Layer) (instances []KialiInstance) {
+	kialiNs, getNsErr := layer.Namespace.GetNamespace(namespace)
 	if getNsErr != nil && !errors.IsNotFound(getNsErr) {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, getNsErr.Error())
 		return
@@ -262,20 +285,27 @@ func findKialiInNamespace(namespace string, clusterName string, clientSet kubern
 	if kialiNs != nil {
 		// The operator and the helm charts set this fixed label. It's also
 		// present in the Istio addon manifest of Kiali.
-		services, getSvcErr := clientSet.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/name=kiali")
+		var services []core_v1.Service
+		var getSvcErr error
+		if IsNamespaceCached(kialiNs.Name) {
+			var tmpSvc []core_v1.Service
+			tmpSvc, getSvcErr = kialiCache.GetServices(kialiNs.Name, nil)
+			if getSvcErr == nil {
+				selector := (labels.Set{"app.kubernetes.io/part-of": "kiali"}).AsSelector()
+				services = kubernetes.FilterServicesByLabels(selector, tmpSvc)
+			}
+		} else {
+			services, getSvcErr = layer.k8s.GetServicesByLabels(kialiNs.Name, "app.kubernetes.io/part-of=kiali")
+		}
 		if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
 			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the service in [%s] namespace: %s", clusterName, namespace, getSvcErr.Error())
 			return
 		}
 
 		if len(services) > 0 {
-			instances = make([]KialiInstance, len(services))
-			for i, d := range services {
-				instances[i].ServiceName = d.Name
-				instances[i].Namespace = d.Namespace
-				instances[i].OperatorResource = d.Annotations["operator-sdk/primary-resource"]
-				instances[i].Version = d.Labels["app.kubernetes.io/version"]
-				instances[i].Url = d.Annotations["kiali.io/external-url"]
+			instances = make([]KialiInstance, 0, len(services))
+			for _, d := range services {
+				instances = append(instances, convertKialiServiceToInstance(&d))
 			}
 		}
 	}
@@ -288,8 +318,6 @@ func findKialiInNamespace(namespace string, clusterName string, clientSet kubern
 // This kubeconfig file is assumed to be generated by using the `istioctl x create-remote-secret` command.
 // The clusterName argument is only for logging purposes.
 func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernetes.RemoteSecret) (kialiInstances []KialiInstance) {
-	conf := config.Get()
-
 	restConfig, restConfigErr := kubernetes.UseRemoteCreds(kubeconfig)
 	if restConfigErr != nil {
 		log.Errorf("Error using remote creds: %v", restConfigErr)
@@ -298,40 +326,28 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := in.newRemoteClient(restConfig)
+	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return nil
 	}
 
-	// First try: find a remote Kiali in a namespace with the same name
-	// as the one where "this" Kiali is installed. This is under the assumption that
-	// admins will prefer similar configurations across clusters.
-	if len(os.Getenv("ACTIVE_NAMESPACE")) > 0 {
-		kialiInstances = findKialiInNamespace(os.Getenv("ACTIVE_NAMESPACE"), clusterName, clientSet)
+	// - The operator and the helm charts set this well
+	//   known "app.kubernetes.io/part-of=kiali" label. It's also present in the
+	//   Istio addon manifest of Kiali.
+	// - We are using the "istio-reader-service-account" to connect to the
+	//   remote cluster. A typical Istio installation gives privileges to
+	//   this SA to list services in a cluster-wide way.
+	services, getSvcErr := remoteClientSet.GetClusterServicesByLabels("app.kubernetes.io/part-of=kiali")
+	if getSvcErr != nil && !errors.IsNotFound(getSvcErr) {
+		log.Warningf("Discovery for Kiali instances in cluster [%s] failed when finding the Kiali service: %s", clusterName, getSvcErr.Error())
+		return
 	}
 
-	// Second try: find a remote Kiali in a namespace with the same name
-	// as the local istio-namespace. This is under the assumption that
-	// Kiali may be installed as an add-on.
-	if kialiInstances == nil && conf.IstioNamespace != os.Getenv("ACTIVE_NAMESPACE") {
-		kialiInstances = findKialiInNamespace(conf.IstioNamespace, clusterName, clientSet)
-	}
-
-	// Third try: Get the full list of namespaces in the remote cluster and try to find a Kiali
-	// instance in them. First namespace with an instance stops the lookup.
-	if kialiInstances == nil {
-		nsList, getNsErr := clientSet.GetNamespaces("")
-		if getNsErr != nil {
-			log.Warningf("Discovery for Kiali instances in cluster [%s] failed when fetching namespaces list: %s", clusterName, getNsErr.Error())
-		}
-		for _, ns := range nsList {
-			if ns.Name != os.Getenv("ACTIVE_NAMESPACE") && ns.Name != conf.IstioNamespace {
-				kialiInstances = findKialiInNamespace(ns.Name, clusterName, clientSet)
-				if kialiInstances != nil {
-					return
-				}
-			}
+	if len(services) > 0 {
+		kialiInstances = make([]KialiInstance, 0, len(services))
+		for _, d := range services {
+			kialiInstances = append(kialiInstances, convertKialiServiceToInstance(&d))
 		}
 	}
 
@@ -344,7 +360,13 @@ func (in *MeshService) findRemoteKiali(clusterName string, kubeconfig *kubernete
 func (in *MeshService) resolveKialiNetwork() (string, error) {
 	conf := config.Get()
 
-	istioSidecarConfig, err := in.k8s.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+	var istioSidecarConfig *core_v1.ConfigMap
+	var err error
+	if IsNamespaceCached(conf.IstioNamespace) {
+		istioSidecarConfig, err = kialiCache.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+	} else {
+		istioSidecarConfig, err = in.k8s.GetConfigMap(conf.IstioNamespace, conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+	}
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
@@ -482,14 +504,14 @@ func (in *MeshService) resolveNetwork(clusterName string, kubeconfig *kubernetes
 
 	restConfig.Timeout = 15 * time.Second
 	restConfig.BearerToken = kubeconfig.Users[0].User.Token
-	clientSet, clientSetErr := in.newRemoteClient(restConfig)
+	remoteClientSet, clientSetErr := in.newRemoteClient(restConfig)
 	if clientSetErr != nil {
 		log.Errorf("Error creating client set: %v", clientSetErr)
 		return ""
 	}
 
 	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-	istioNamespace, getNsErr := clientSet.GetNamespace(conf.IstioNamespace)
+	istioNamespace, getNsErr := remoteClientSet.GetNamespace(conf.IstioNamespace)
 	if getNsErr != nil {
 		log.Warningf("Cannot describe the '%s' namespace on cluster '%s': %v", conf.IstioNamespace, clusterName, getNsErr)
 		return ""
