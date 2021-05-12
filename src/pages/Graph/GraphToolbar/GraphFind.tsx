@@ -72,6 +72,7 @@ const operands: string[] = [
   '%httptraffic',
   'app',
   'circuitbreaker',
+  'destprincipal',
   'grpc',
   'grpcerr',
   'grpcin',
@@ -92,6 +93,7 @@ const operands: string[] = [
   'service',
   'serviceentry',
   'sidecar',
+  'sourceprincipal',
   'tcp',
   'traffic',
   'trafficsource',
@@ -633,6 +635,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       //
       // edges..
       //
+      case 'destprincipal':
+        if (!this.props.showSecurity) {
+          AlertUtils.addSuccess('Enabling "security" display option for graph find/hide expression');
+          this.props.toggleGraphSecurity();
+        }
+        return { target: 'edge', selector: `[${CyEdge.destPrincipal} ${op} "${val}"]` };
       case 'grpc': {
         const s = this.getNumericSelector(CyEdge.grpc, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
@@ -671,6 +679,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
+      case 'sourceprincipal':
+        if (!this.props.showSecurity) {
+          AlertUtils.addSuccess('Enabling "security" display option for graph find/hide expression');
+          this.props.toggleGraphSecurity();
+        }
+        return { target: 'edge', selector: `[${CyEdge.sourcePrincipal} ${op} "${val}"]` };
       case 'tcp': {
         const s = this.getNumericSelector(CyEdge.tcp, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;

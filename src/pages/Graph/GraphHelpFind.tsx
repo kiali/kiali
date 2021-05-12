@@ -142,6 +142,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   };
   private edgeRows = (): string[][] => {
     return [
+      ['destprincipal <op> <principal>'],
       ['grpc <op> <number>', 'unit: requests per second'],
       ['%grpcerr <op> <number>', 'range: [0..100]'],
       ['%grpctraffic <op> <number>', 'range: [0..100]'],
@@ -150,6 +151,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['%httptraffic <op> <number>', 'range: [0..100]'],
       ['protocol <op> <protocol>', 'grpc, http, tcp, etc..'],
       ['responsetime <op> <number>', `unit: millis, will auto-enable 'response time' edge labels`],
+      ['sourceprincipal <op> <principal>'],
       ['tcp <op> <number>', 'unit: requests per second'],
       ['mtls', `will auto-enable 'security' display option`],
       ['traffic', 'any traffic for any protocol']
@@ -221,7 +223,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'],
       ['Hiding nodes will automatically hide connected edges.'],
       ['Hiding edges will automatically hide nodes left with no visible edges.'],
-      ['Hiding "healthy"ss nodes may still leave valid, healthy edges in the graph.']
+      ['Hiding "healthy" nodes may still leave valid, healthy edges in the graph.']
     ];
   };
 

@@ -101,6 +101,8 @@ describe('Parse find value test', () => {
 
     // check coverage of edge operands
     // @ts-ignore
+    expect(instance.parseValue('destprincipal contains spiffe')).toEqual('edge[destPrincipal *= "spiffe"]');
+    // @ts-ignore
     expect(instance.parseValue('grpc > 5.0')).toEqual('edge[grpc > 5.0]');
     // @ts-ignore
     expect(instance.parseValue('%grpcerror > 50')).toEqual('edge[grpcPercentErr > 50]');
@@ -117,9 +119,13 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('%httptraffic > 50')).toEqual('edge[httpPercentReq > 50]');
     // @ts-ignore
+    expect(instance.parseValue('protocol = http')).toEqual('edge[protocol = "http"]');
+    // @ts-ignore
     expect(instance.parseValue('responseTime > 5.0')).toEqual('edge[responseTime > 5.0]');
     // @ts-ignore
     expect(instance.parseValue('rt > 5.0')).toEqual('edge[responseTime > 5.0]');
+    // @ts-ignore
+    expect(instance.parseValue('sourceprincipal contains spiffe')).toEqual('edge[sourcePrincipal *= "spiffe"]');
     // @ts-ignore
     expect(instance.parseValue('tcp > 5.0')).toEqual('edge[tcp > 5.0]');
 
