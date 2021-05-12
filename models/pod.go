@@ -85,7 +85,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 				container := ContainerInfo{
 					Name:    name,
 					Image:   lookupImage(name, p.Spec.InitContainers),
-					IsProxy: false,
+					IsProxy: true,
 				}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
 				istioContainerNames[name] = true
