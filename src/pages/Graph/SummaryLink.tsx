@@ -95,7 +95,9 @@ const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
       break;
     case NodeType.SERVICE:
       if (nodeData.isServiceEntry) {
-        link = `/namespaces/${encodeURIComponent(namespace)}/istio/serviceentries/${encodeURIComponent(service!)}`;
+        link = `/namespaces/${encodeURIComponent(
+          nodeData.isServiceEntry.namespace
+        )}/istio/serviceentries/${encodeURIComponent(service!)}`;
       } else {
         link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service!)}`;
       }
@@ -186,7 +188,7 @@ export const renderDestServicesLinks = (node: any) => {
       isOutside: nodeData.isOutside,
       isRoot: nodeData.isRoot,
       isServiceEntry: nodeData.isServiceEntry,
-      namespace: ds.namespace,
+      namespace: nodeData.isServiceEntry ? nodeData.isServiceEntry.namespace : nodeData.namespace,
       nodeType: NodeType.SERVICE,
       service: ds.name,
       version: '',

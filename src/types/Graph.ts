@@ -166,8 +166,9 @@ export interface DestService {
 }
 
 export interface SEInfo {
-  location: string;
   hosts: string[];
+  location: string;
+  namespace: string; // namespace represents where the ServiceEntry object is defined and not necessarily the namespace of the node.
 }
 
 // Node data expected from server

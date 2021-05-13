@@ -56,7 +56,7 @@ type LinkParams = { cluster: string; namespace: string; name: string; type: stri
 export class NodeContextMenu extends React.PureComponent<Props> {
   static derivedValuesFromProps(node: DecoratedGraphNodeData): LinkParams | undefined {
     const cluster: string = node.cluster;
-    const namespace: string = node.namespace;
+    const namespace: string = node.isServiceEntry ? node.isServiceEntry.namespace : node.namespace;
     let name: string | undefined = undefined;
     let type: string | undefined = undefined;
     switch (node.nodeType) {
