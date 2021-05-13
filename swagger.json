@@ -6293,6 +6293,10 @@
         "location": {
           "type": "string",
           "x-go-name": "Location"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph"

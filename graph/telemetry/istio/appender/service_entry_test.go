@@ -680,7 +680,8 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 
 	remoteSE := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "externalSE",
+			Name:      "externalSE",
+			Namespace: "testNamespace",
 		},
 		Spec: map[string]interface{}{
 			"hosts": []interface{}{
@@ -742,6 +743,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		if n.Service == "externalSE" {
 			numMatches++
 			assert.Equal("MESH_INTERNAL", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+			assert.Equal("testNamespace", n.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
 		}
 	}
 	assert.Equal(1, numMatches)
@@ -878,6 +880,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	assert.Equal(true, found2)
 	assert.Equal(0, len(SE2Node.Edges))
 	assert.Equal("MESH_EXTERNAL", SE2Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal("testNamespace", SE2Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
 	assert.Equal(2, len(SE2Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
 
@@ -1007,6 +1010,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(true, found2)
 	assert.Equal(0, len(SE1Node.Edges))
 	assert.Equal("MESH_EXTERNAL", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal("fooNamespace", SE1Node.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Namespace)
 	assert.Equal(1, len(SE1Node.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 
 	notSEHost2ServiceID, _ = graph.Id(testCluster, "testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
