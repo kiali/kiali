@@ -44,8 +44,12 @@ else
 	podman push ${QUAY_TAG}
 endif
 
+## container-push-operator-quay: Pushes the operator image to quay.
+container-push-operator-quay:
+	$(MAKE) -C "${ROOTDIR}/operator" -e "OPERATOR_QUAY_TAG=${OPERATOR_QUAY_TAG}" push
+
 ## container-push: Pushes all container images to quay
-container-push: container-push-kiali-quay
+container-push: container-push-kiali-quay container-push-operator-quay
 
 # Ensure "docker buildx" is available and enabled. For more details, see: https://github.com/docker/buildx/blob/master/README.md
 # This does a few things:
