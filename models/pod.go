@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 
@@ -37,8 +38,9 @@ type Reference struct {
 
 // ContainerInfo holds container name and image
 type ContainerInfo struct {
-	Name  string `json:"name"`
-	Image string `json:"image"`
+	Name    string `json:"name"`
+	Image   string `json:"image"`
+	IsProxy bool   `json:"isProxy"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -81,15 +83,19 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		if err == nil {
 			for _, name := range scs.InitContainers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.InitContainers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.InitContainers),
+					IsProxy: true,
+				}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
 				istioContainerNames[name] = true
 			}
 			for _, name := range scs.Containers {
 				container := ContainerInfo{
-					Name:  name,
-					Image: lookupImage(name, p.Spec.Containers)}
+					Name:    name,
+					Image:   lookupImage(name, p.Spec.Containers),
+					IsProxy: true,
+				}
 				pod.IstioContainers = append(pod.IstioContainers, &container)
 				istioContainerNames[name] = true
 			}
@@ -100,8 +106,9 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			continue
 		}
 		container := ContainerInfo{
-			Name:  c.Name,
-			Image: c.Image,
+			Name:    c.Name,
+			Image:   c.Image,
+			IsProxy: isIstioProxy(p, &c, conf),
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
@@ -110,6 +117,21 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.StatusReason = string(p.Status.Reason)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
+}
+
+func isIstioProxy(pod *core_v1.Pod, container *core_v1.Container, conf *config.Config) bool {
+	if pod.Namespace != conf.IstioNamespace {
+		return false
+	}
+	if container.Name == "istio-proxy" {
+		return true
+	}
+	for _, c := range conf.ExternalServices.Istio.ComponentStatuses.Components {
+		if c.IsProxy && strings.HasPrefix(pod.Name, c.AppLabel) {
+			return true
+		}
+	}
+	return false
 }
 
 func lookupImage(containerName string, containers []core_v1.Container) string {

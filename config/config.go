@@ -185,6 +185,7 @@ type ComponentStatuses struct {
 type ComponentStatus struct {
 	AppLabel  string `yaml:"app_label,omitempty"`
 	IsCore    bool   `yaml:"is_core,omitempty"`
+	IsProxy   bool   `yaml:"is_proxy,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
@@ -435,14 +436,17 @@ func NewConfig() (c *Config) {
 						{
 							AppLabel: "istio-egressgateway",
 							IsCore:   false,
+							IsProxy:  true,
 						},
 						{
 							AppLabel: "istio-ingressgateway",
 							IsCore:   true,
+							IsProxy:  true,
 						},
 						{
 							AppLabel: "istiod",
 							IsCore:   true,
+							IsProxy:  false,
 						},
 					},
 				},

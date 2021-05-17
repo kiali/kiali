@@ -4298,6 +4298,10 @@
           "type": "string",
           "x-go-name": "Image"
         },
+        "isProxy": {
+          "type": "boolean",
+          "x-go-name": "IsProxy"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
