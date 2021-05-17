@@ -507,26 +507,26 @@ func NewConfig() (c *Config) {
 				Graph: GraphUIDefaults{
 					FindOptions: []GraphFindOption{
 						{
-							Expression:  "rt > 1000",
 							Description: "Find: slow edges (> 1s)",
+							Expression:  "rt > 1000",
 						},
 						{
-							Expression:  "! healthy",
 							Description: "Find: unhealthy nodes",
+							Expression:  "! healthy",
 						},
 						{
-							Expression:  "name = unknown",
 							Description: "Find: unknown nodes",
+							Expression:  "name = unknown",
 						},
 					},
 					HideOptions: []GraphFindOption{
 						{
-							Expression:  "healthy",
 							Description: "Hide: healthy nodes",
+							Expression:  "healthy",
 						},
 						{
-							Expression:  "name = unknown",
 							Description: "Hide: unknown nodes",
+							Expression:  "name = unknown",
 						},
 					},
 				},
