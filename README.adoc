@@ -74,7 +74,6 @@ ln -s $KIALI_SOURCES/kiali-operator kiali/operator
 # Build the back-end and run the tests
 cd $KIALI_SOURCES/kiali
 make build test
-make build test
 
 # Build the front-end and run the tests
 cd $KIALI_SOURCES/kiali-ui
