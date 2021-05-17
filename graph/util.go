@@ -9,7 +9,7 @@ type Response struct {
 	Code    int
 }
 
-// Error panics with InternalServerError and the provided message
+// Error panics with InternalServerError (500) and the provided message
 func Error(message string) {
 	Panic(message, nethttp.StatusInternalServerError)
 }
@@ -36,6 +36,13 @@ func Panic(message string, code int) Response {
 func CheckError(err error) {
 	if err != nil {
 		panic(err.Error)
+	}
+}
+
+// CheckUnavailable panics with StatusServiceUnavailable (503) and the supplied error if it is non-nil
+func CheckUnavailable(err error) {
+	if err != nil {
+		Panic(err.Error(), nethttp.StatusServiceUnavailable)
 	}
 }
 
