@@ -5,18 +5,18 @@
     + [Support files](#support-files)
     + [Development helper files](#development-helper-files)
     + [README files](#readme-files)
-* [Using the Pipeline](#using-the-pipeline)
+* [The Pipelines](#the-pipelines)
+* [Using the main Kiali Pipeline](#using-the-main-kiali-pipeline)
     + [Automatically determine the release type and build it](#automatically-determine-the-release-type-and-build-it)
     + [Building a minor release](#building-a-minor-release)
     + [Building a patch release](#building-a-patch-release)
-    + [Building a patch release (back-end only)](#building-a-patch-release-back-end-only)
     + [Building a major release](#building-a-major-release)
     + [Building a snapshot release](#building-a-snapshot-release)
     + [Building an edge/daily release](#building-an-edgedaily-release)
+    + [Omitting artifacts](#omitting-artifacts)
 * [Recovering and troubleshooting a build](#recovering-and-troubleshooting-a-build)
 * [Making test builds](#making-test-builds)
 * [Developer setup](#developer-setup)
-    + [Building the Jenkins image](#building-the-jenkins-image)
     + [Setup Jenkins credentials](#setup-jenkins-credentials)
     + [Re-configure the Pipeline](#re-configure-the-pipeline)
 
@@ -180,6 +180,11 @@ Note that the Helm release always builds and pushes to the "master" branch
 because that is the branch that GitHub Pages gets the content for the Helm
 Chart Repository HTTP server.
 
+**Note:** Although support for doing `major` releases was incorporated to
+the Pipeline scripts some time ago, this kind of release has never been run.
+Since then, the scripts have suffered several changes and the `major` release
+flow hasn't been tested after every change. So, be warned that a major release may fail.
+
 ### Building a snapshot release
 
 Set the RELEASE_TYPE parameter of the Pipeline to _snapshot.X_ value, where
@@ -234,45 +239,18 @@ something needs to be fixed manually (code, tests, credentials, etc.).
 Fix the cause of the failure and proceed to recover the build.
 
 For `edge` releases, you can just retry the build. For other kind of releases,
-first check if the `kiali-release` pipeline finished successfully. If it
-didn't, pass through the following checks (in order) to know how to proceed
-to recover the build. Do the suggested action of the first check that is not OK:
+you will need some manual action to fix the builds.
 
-1. Is the front-end version properly tagged in the repository?
-   (see https://github.com/kiali/kiali-ui/tags). If not:
-   * Manually create the tag setting the version in package.json
-     to the published one.
-   * For builds other than snapshots, manually update the package.json file 
-     of the master/version branch to prepare it for the next release.
-1. In the front-end repository, is the package.json correctly updated and
-   prepared for the next version? If not:
-   * This check does not apply for snapshot builds.
-   * Manually update the package.json file of the master/version branch to
-     prepare it for the next release.
-   * Retry the build (TODO: how?).
-1. Are the container images present in Quay.io?
-   Is the back-end version properly tagged (see https://github.com/kiali/kiali/tags)?
-   If not to any of these questions:
-   * Retry the build (TODO: how?).
-1. Is the back-end release properly created in https://github.com/kiali/kiali/releases?
-   * Don't retry the build. 
-   * Manually [create the version entry in GitHub](https://github.com/kiali/kiali/releases/new).
-   * For builds other than snapshots, manually update the Makefile of
-     the back-end repository to prepare it for the next version.
-1. In the back-end repository, is the Makefile correctly updated and
-   prepared for the next version? If not:
-   * For snapshot releases this check doesn't apply.
-   * Don't retry the build. Just update the Makefile manually.
-1. If all previous checks are OK, then the build failed at a post-build stage.
-   Most likely, you don't need to re-run the `kiali-release` pipeline, but other
-   pipelines may need to be run again. 
-   
-If the `kiali-release` pipeline looks good, then check the other pipelines:
-`kiali-oerator-release`, `kiali-helm-release` and `kiali-website-release`.
-If any of these failed, you need to check first if the associated repository
-was affected. If it wasn't affected, you should be able to, simply, re-run
-the pipeline to retry. If it was affected, you will need to fix the build
-manually.
+In general, check if the associated artifacts of the failed pipeline were
+correctly published. For example, if the `kiali-operator-release` pipeline
+is the one that failed, check if the kiali-operator container image was
+correctly published to the corresponding Quay.io repository. If the artifact
+is not there, simply re-run the failed pipeline with the original parameters.
+If the artifact is there, then the pipeline failed to update the GitHub
+repositories. You can either:
+
+* manually do the missing changes to the GitHub repositories,
+* or revert any partial changes to the GitHub repositories and re-run the failed pipeline.
    
 ## Making test builds
 
@@ -388,7 +366,7 @@ at the left to add these five credentials:
   * Kind: Secret text
   * ID: kiali-bot-gh-token
   * Secret: A valid GitHub token
-* **NPM token**: This is already pre-configured with a random string.
+* **NPM token**: Deprecated. This is pre-configured with a random string.
 * **Quay credentials:** Used to push the Kiali image and the
   Kiali operator image to Quay.io. For development, use your
   Quay.io account (it will be safer if you use an account

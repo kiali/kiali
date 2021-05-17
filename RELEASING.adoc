@@ -1,150 +1,82 @@
 = Releasing Kiali
 
 Kiali is released weekly on Fridays: a minor release every three weeks,
-and snapshots on the other weeks. A Jenkins instance is used to
-automate the releases.
+and snapshots on the other weeks.
 
-If you need to make an extraordinary release, please ask
-to a member of the QE team to trigger the release for you.
-Alternatively, ask the QE team for access to the Jenkins instance
-and trigger the release by yourself.
+Sometimes, there are extraordinary releases which usually are z-stream
+releases (a.k.a. patch releases). Thought, in some cases there have
+been some minor releases out of schedule, which tend to be created to
+go with an upcoming Istio release.
 
-If you don't have access to Jenkins, or want to test the release locally,
-<<run-locally,you can run it on your machine>>.
+The artifacts that are released are the following:
 
-Currently, the Pipeline supports _major_, _minor_, _snapshot (end-of-week)_
-and patch releases. _Minor_ and _snapshot_ releases will release the
-back-end and the front-end together. _Patch_ releases have the
-option to omit releasing the UI and, instead, use the latest UI in
-the final package.
-
-Edge-snapshots (or snapshots after merged PRs) are also handled in the Pipeline.
-
-== Finished product
-
-When the release process is complete, a new container image will be available in the
+* The Kiali server container image, which is published to the
 link:https://quay.io/repository/kiali/kiali?tab=tags[Kiali Quay.io repository].
+* The Kiali operator container image, which is published to the
+link:https://quay.io/repository/kiali/kiali?tab=tags[Kiali Operator Quay.io repository].
+* Helm charts for deploying the Kiali operator or the Kiali server via the Helm CLI.
+Charts are published to https://kiali.org/helm-charts/.
+* The versioned documentation in the website that is published
+on https://kiali.io/documentation/.
 
-== Actions before creating a release
+Tags and branches are also created in the Kiali's GitHub repositories, as a reference
+for rebuilds (if needed) or as a base for z-stream releases.
 
-These actions are not performed by the release process. Please, do
-these actions manually before running the release process.
+== How releases are generated?
 
-=== Updating Docs
+link:https://www.jenkins.io/[Jenkins] is used to automate the releases.
 
-Make sure that the https://www.kiali.io/gettingstarted/[_Getting Started_ document]
-of the website is up to date and works with the new version.
+At high level, the kiali back-end and front-end are built and packaged into a
+container image that is published to link:https://quay.io/repository/kiali/kiali?tab=tags[Quay.io].
+If this process fails, the release does not go forward. Once the kiali server image is published,
+then the Kiali operator, the helm charts and the website are built and published (these three artifacts
+are built in parallel).
 
-The doc sources are in the link:https://github.com/kiali/kiali.io[kiali/kiali.io repository].
-Update the document, and create a PR.
-
-== Actions after creating a release
-
-These actions are not performed by the release process. Please, do
-these actions manually after the release process finishes successfully.
-
-=== Send out notifications
-
-Finally, we just need to send the notifications to create awareness of the new
-release:
-
-* Post an email about the release on our
-link:https://groups.google.com/forum/#!search/kiali-dev[Mailing List]. This is done
-automatically if you are doing a minor or major release.
-* Send a message on our channel at Freenode, #kiali.
-* Post a message on our twitter,
-link:https://www.twitter.com/KialiProject[@KialiProject]. If you don't know
-who's responsible for the account, ask on IRC.
-
-== Release process of the Jenkins Pipeline
-
-The Pipeline uses the Jenkinsfile located at
-link:deploy/jenkins-ci/Jenkinsfile[deploy/jenkins-ci/Jenkinsfile]
-in the https://github.com/kiali/kiali/[kiali/kiali] repository.
-
-The Pipeline performs the following actions to do the release:
-
-* Checkouts the code of, both, the back-end and the front-end
-* Builds the back-end and the front-end
-* Run tests for back-end and front-end
-* If all tests pass:
-** The front-end is released to NPM
-** A container image integrating the back-end and the front-end is built
-   and pushed to Quay.io
-** Tags for the new releases are created
-** If a _minor_ release was done, _master_ branches are prepared for the
-    next version and a version branches named of the form _vX.Y_ are created
-** If a _patch_ release was done, _vX.Y_ branches are prepared for the next version
-** If a _major_ release was done, versions in _vX.Y_ branches are promoted
-    (-snapshot suffix is removed)
+If you want to learn the details of the process, you can read the release scripts and
+its documentation. Start at the link:deploy/jenkins-ci/[deploy/jenkins-ci/] directory of this
+repository. There is a link:deploy/jenkins-ci/README.md[README.md]
 
 == [[run-locally]]Running the release process locally
 
-If you don't have access to the Jenkins instance or the release process
-through Jenkins doesn't suit your needs, you may want to run the release
+If you don't have access to the Jenkins instance, or the release process
+through Jenkins doesn't suit your needs, you could try to run the release
 process _locally_.
 
-=== Requirements
+Honestly, because of the automated releases, this hasn't been done for a while and
+it's not recommended to directly try a manual release without first testing on alternate
+repositories. It's unknown if the release scripts still work properly to release locally.
+What is known, is that you would need a working development setup (read the
+link:README.adoc[main README.adoc] of this repository). For the release, Docker is
+required (podman does not work). Once you have a working development environment, these
+commands are supposed to generate a release of the Kiali server:
 
-You must have write permissions to the https://github.com/kiali/kiali[kiali public GitHub repository] in
-order to be able to push the tags. You will also need an DockerHub account that
-is able to publish to the
-https://hub.docker.com/r/kiali/kiali/[DockerHub kiali/kiali repository].
+[source,shell]
+----
+# RELEASE_TYPE can be: major, minor, patch, edge, snapshot.0, snapshot.1, snapshot.2, etc.
+export RELEASE_TYPE="snapshot.1"
+export GH_TOKEN={your_github_api_token}
 
-You will need a working dev environment (git, golang, docker, make, etc).
-You will also need the following tools available in your $PATH:
+# You must provide credentials with privileges to push to
+# the kiali repositories.
+docker login quay.io
 
-* https://github.com/fsaintjacques/semver-tool[semver] shell utility - used
-  to update version numbers
-* https://www.npmjs.com/[npm] - to download and package kiali-ui
-* curl - because the release process places PRs using the GitHub API
+cd $KIALI_SOURCES/kiali-ui
+make -f Makefile.jenkins release
 
-If the release process can't update the kiali repositories,
-a PR is automatically created if you provide a GitHub Token for your account.
+cd $KIALI_SOURCES/kiali
+make -f deploy/jenkins-ci/Makefile release
+----
 
-It's assumed that you are running the release process in you fork of the
-https://github.com/kiali/kiali[kiali/kiali GitHub repository].
+These special Makefiles are helpers that were created in the past to assist in manually
+creating a release. That was useful when the only artifact that was being released was
+the Kiali server container image. But nowadays we also generate the the kiali operator,
+the helm charts and the website, and there is no equivalent helper Makefiles to assist in
+creating a release of these artifacts. You will need to manually replay these Jenkins scripts:
 
-=== Making the release
+* link:https://github.com/kiali/kiali-operator/blob/master/Jenkinsfile[The Jenkins script to release the kiali-operator.]
+* link:https://github.com/kiali/kiali.io/blob/master/Jenkinsfile[The Jenkins script to release the Kiali helm charts.]
+* link:https://github.com/kiali/helm-charts/blob/master/Jenkinsfile[The Jenkins script to release the Kiali website.]
 
-. Login to Quay.io
-** `docker login quay.io`
-. Checkout the code that you want to release:
-** `git checkout branch_to_release` (usually, you should release "master")
-** Be advised that the release process will commit changes locally.
-** PATCH RELEASES: you need to check out the minor branch (vX.Y) and cherry-pick all commits that need to go into the patch release. You should then push these new commits to the vX.Y branch. At this point, you can continue the release build.
-. The release process may need to create a PR to prepare the code for the next
-  version. A GitHub token is required to create the PR:
-** `export GH_TOKEN={your_github_token}`
-** Optional: If a token is not provided, a branch is created in your
-   fork of the code, if needed. Then, you can place the PR manually.
-. Run the release process:
-** `CONSOLE_LOCAL_DIR="path_to_ui_source_code" make -f deploy/jenkins-ci/Makefile release`
-
-By default, it's assumed that you are doing a _minor_ release.
-If want to do another type of release, you can run the release process specifying
-the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" and
-"snapshot._X_". For example:
-
-* `RELEASE_TYPE="snapshot.1" make -f deploy/jenkins-ci/Makefile release`
-
-*Note*: The process will adjust the version string as needed, according to
-the type of release. Please, don't try to adjust the version string (i.e.
-don't change the version in the `Makefile`).
-
-=== Available options
-
-* The generated container image is published to kiali/kiali Quay.io repository.
-  If you want to publish to another repository:
-** `QUAY_NAME="{repository}" make -f deploy/jenkins-ci/Makefile release``
-* In _major_, _minor_ or _patch_ mode, the release process updates or creates
-  a version branch in the kiali-ui repository (the branch name is like
-  "vMAJOR.MINOR"). You can omit the creation of this branch:
-** `OMIT_VERSION_BRANCH=y make -f deploy/jenkins-ci/Makefile release`
-* In _major_, _minor_ or _patch_ mode, the release
-  process may create a branch in your fork of the repository with
-  the required changes to prepare the code for the next release. The branch is
-  created if it isn't possible to push to the kiali-ui repository. By default,
-  the name of the branch is _prepare_next_version_. If you want to customize the
-  name of the branch:
-** `BUMP_BRANCH_ID={branch_name} make -f deploy/jenkins-ci/Makefile release`
+Since this manual process is unknown to work, and it also involves manually replaying commands,
+it's probably better to set up a development environment for the Jenkins pipeline and run the
+release from it. Read the link:deploy/jenkins-ci/README.md[deploy/jenkins-ci/README.md] to learn how.
