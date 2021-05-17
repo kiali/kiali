@@ -504,6 +504,32 @@ func NewConfig() (c *Config) {
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
 			UIDefaults: UIDefaults{
+				Graph: GraphUIDefaults{
+					FindOptions: []GraphFindOption{
+						{
+							Expression:  "rt > 1000",
+							Description: "Find: slow edges (> 1s)",
+						},
+						{
+							Expression:  "! healthy",
+							Description: "Find: unhealthy nodes",
+						},
+						{
+							Expression:  "name = unknown",
+							Description: "Find: unknown nodes",
+						},
+					},
+					HideOptions: []GraphFindOption{
+						{
+							Expression:  "healthy",
+							Description: "Hide: healthy nodes",
+						},
+						{
+							Expression:  "name = unknown",
+							Description: "Hide: unknown nodes",
+						},
+					},
+				},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
