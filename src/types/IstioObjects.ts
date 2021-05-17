@@ -115,6 +115,7 @@ export interface ValidationStatus {
 export interface ContainerInfo {
   name: string;
   image: string;
+  isProxy: boolean;
 }
 
 // 1.6

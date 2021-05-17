@@ -28,7 +28,6 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon, defaultIconStyle } from '../../config/KialiIcon';
 import screenfull, { Screenfull } from 'screenfull';
-import { serverConfig } from 'config';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
@@ -469,36 +468,6 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
         >
           {this.hasEntries(this.state.filteredLogs)
             ? this.state.filteredLogs.map((le, i) => {
-                /*
-              if (!le.accessLog && le.message.startsWith('[2021')) {
-                le.accessLog = {
-                  authority: 'foo',
-                  bytes_received: 'foo',
-                  bytes_sent: 'foo',
-                  duration: 'foo',
-                  forwarded_for: 'foo',
-                  method: 'foo',
-                  protocol: 'foo',
-                  request_id: 'foo',
-                  response_flags: 'foo',
-                  status_code: 'foo',
-                  tcp_service_time: 'foo',
-                  timestamp: 'foo',
-                  upstream_service: 'foo',
-                  upstream_service_time: 'foo',
-                  upstream_cluster: 'foo',
-                  upstream_local: 'foo',
-                  downstream_local: 'foo',
-                  downstream_remote: 'foo',
-                  requested_server: 'foo',
-                  route_name: 'foo',
-                  upstream_failure_reason: 'foo',
-                  uri_param: 'foo',
-                  uri_path: 'foo',
-                  user_agent: 'foo'
-                };
-              }
-              */
                 return !le.accessLog ? (
                   <>
                     <p key={`le-${i}`} style={{ color: le.color!, fontSize: '12px' }}>
@@ -731,26 +700,25 @@ class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodL
   };
 
   private getContainers = (pod: Pod): Container[] => {
-    // consistently position the proxy container first, if it (they?) exist.
+    // sort containers by name, consistently positioning proxy container first.
     let podContainers = pod.istioContainers || [];
+    podContainers.push(...(pod.containers || []));
+    podContainers = podContainers.sort((c1, c2) => {
+      if (c1.isProxy !== c2.isProxy) {
+        return c1.isProxy ? 0 : 1;
+      }
+      return c1.name < c2.name ? 0 : 1;
+    });
+    let appContainers = 0;
     let containers = podContainers.map(c => {
       const name = c.name;
-      const displayName = c.name;
+      if (c.isProxy) {
+        return { color: proxyContainerColor, displayName: name, isProxy: true, isSelected: true, name: name };
+      }
 
-      return { color: proxyContainerColor, displayName: displayName, isProxy: true, isSelected: true, name: name };
+      const color = appContainerColors[appContainers++ % appContainerColors.length];
+      return { color: color, displayName: name, isProxy: false, isSelected: true, name: name };
     });
-
-    podContainers = pod.containers || [];
-    containers.push(
-      ...podContainers.map((c, i) => {
-        const name = c.name;
-        const version = pod.appLabel && pod.labels ? pod.labels[serverConfig.istioLabels.versionLabelName] : undefined;
-        const displayName = !version ? name : `${name}-${version}`;
-        const color = appContainerColors[i % appContainerColors.length];
-
-        return { color: color, isProxy: false, isSelected: true, displayName: displayName, name: name };
-      })
-    );
 
     return containers;
   };
