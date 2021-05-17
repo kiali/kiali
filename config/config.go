@@ -313,8 +313,8 @@ type IstioComponentNamespaces map[string]string
 
 // GraphFindOption defines a single Graph Find/Hide Option
 type GraphFindOption struct {
-	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
 }
 
 // GraphUIDefaults defines UI Defaults specific to the UI Graph
