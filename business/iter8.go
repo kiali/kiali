@@ -2,6 +2,7 @@ package business
 
 import (
 	"encoding/json"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -35,6 +36,17 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 
 	// It will be considered enabled if the extension is present in the Kiali configuration and the CRD is enabled on the cluster
 	if conf.Extensions.Iter8.Enabled && in.k8s.IsIter8Api() {
+		kialiNs, getNsErr := in.k8s.GetNamespace(conf.Extensions.Iter8.Namespace)
+		if (getNsErr != nil && errors.IsNotFound(getNsErr)) || kialiNs == nil {
+
+			return models.Iter8Info{
+				Enabled:                false,
+				SupportedVersion:       false,
+				ControllerImageVersion: controllerImgVersion,
+				AnalyticsImageVersion:  analyticsImgVersion,
+				Namespace:              conf.Extensions.Iter8.Namespace,
+			}
+		}
 		if IsNamespaceCached(conf.Extensions.Iter8.Namespace) {
 			ps, err = kialiCache.GetPods(conf.Extensions.Iter8.Namespace, "")
 		} else {
@@ -61,11 +73,14 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 				SupportedVersion:       false,
 				ControllerImageVersion: controllerImgVersion,
 				AnalyticsImageVersion:  analyticsImgVersion,
+				Namespace:              conf.Extensions.Iter8.Namespace,
 			}
 		}
 
 		supportedVersion := true
-		if controllerImgVersion != "" && analyticsImgVersion != "" {
+		if controllerImgVersion == "" || analyticsImgVersion == "" {
+			supportedVersion = false
+		} else {
 			if !status.IsIter8Supported(analyticsImgVersion) {
 				supportedVersion = false
 			}
@@ -80,6 +95,7 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 			SupportedVersion:       supportedVersion,
 			ControllerImageVersion: controllerImgVersion,
 			AnalyticsImageVersion:  analyticsImgVersion,
+			Namespace:              conf.Extensions.Iter8.Namespace,
 		}
 	}
 	return models.Iter8Info{
@@ -87,6 +103,7 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 		SupportedVersion:       false,
 		ControllerImageVersion: controllerImgVersion,
 		AnalyticsImageVersion:  analyticsImgVersion,
+		Namespace:              conf.Extensions.Iter8.Namespace,
 	}
 }
 

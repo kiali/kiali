@@ -11,6 +11,7 @@ type Iter8Info struct {
 	SupportedVersion       bool   `json:"supportedVersion"`
 	ControllerImageVersion string `json:"controllerImgVersion"`
 	AnalyticsImageVersion  string `json:"analyticsImgVersion"`
+	Namespace              string `json:"namespace"`
 }
 
 type Iter8CandidateStatus struct {
