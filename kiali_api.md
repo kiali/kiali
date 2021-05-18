@@ -7105,6 +7105,7 @@ It is false for service.namespace format and service entries. |  |
 | validation | [IstioValidation](#istio-validation)| `IstioValidation` |  | |  |  |
 | virtualService | [VirtualService](#virtual-service)| `VirtualService` |  | |  |  |
 | workloadEntry | [WorkloadEntry](#workload-entry)| `WorkloadEntry` |  | |  |  |
+| workloadGroup | [WorkloadGroup](#workload-group)| `WorkloadGroup` |  | |  |  |
 
 
 
@@ -7134,6 +7135,7 @@ It is false for service.namespace format and service entries. |  |
 | validations | [IstioValidations](#istio-validations)| `IstioValidations` |  | |  |  |
 | virtualServices | [VirtualServices](#virtual-services)| `VirtualServices` |  | |  |  |
 | workloadEntries | [WorkloadEntries](#workload-entries)| `WorkloadEntries` |  | |  |  |
+| workloadGroups | [WorkloadGroups](#workload-groups)| `WorkloadGroups` |  | |  |  |
 
 
 
@@ -9196,6 +9198,67 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | Weight | [interface{}](#interface)| `interface{}` |  | |  |  |
 
 
+
+### <span id="workload-group"></span> WorkloadGroup
+
+
+> This is used for returning a WorkloadGroup
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| APIVersion | string| `string` |  | | APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
++optional |  |
+| Kind | string| `string` |  | | Kind is a string value representing the REST resource this object represents.
+Servers may infer this from the endpoint the client submits requests to.
+Cannot be updated.
+In CamelCase.
+More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
++optional |  |
+| Status | map of any | `map[string]interface{}` |  | |  |  |
+| metadata | [ObjectMeta](#object-meta)| `ObjectMeta` |  | |  |  |
+| spec | [Spec](#spec)| `Spec` |  | |  |  |
+
+
+
+#### Inlined models
+
+**<span id="spec"></span> Spec**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Metadata | [interface{}](#interface)| `interface{}` |  | | This is not an error, the WorkloadGroup has a Metadata inside the Spec
+https://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup |  |
+| Probe | [interface{}](#interface)| `interface{}` |  | |  |  |
+| Template | [interface{}](#interface)| `interface{}` |  | |  |  |
+
+
+
+### <span id="workload-groups"></span> WorkloadGroups
+
+
+> This is used for returning an array of WorkloadGroup
+  
+
+
+
+[][WorkloadGroup](#workload-group)
 
 ### <span id="workload-health"></span> WorkloadHealth
 
