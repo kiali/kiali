@@ -87,10 +87,10 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	defer config.Set(oldConfig)
 
 	oldWd, _ := os.Getwd()
-	defer os.Chdir(oldWd)
-	os.Chdir(os.TempDir())
-	os.MkdirAll("./console", 0777)
-	os.Create("./console/index.html")
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(os.TempDir())
+	_ = os.MkdirAll("./console", 0777)
+	_, _ = os.Create("./console/index.html")
 
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
