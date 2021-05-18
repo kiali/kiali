@@ -34,6 +34,7 @@ type MetricsType struct {
 	GoFunctionProcessingTime *prometheus.HistogramVec
 	GoFunctionFailures       *prometheus.CounterVec
 	KubernetesClients        *prometheus.GaugeVec
+	APIFailures              *prometheus.CounterVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -103,6 +104,13 @@ var Metrics = MetricsType{
 		},
 		[]string{},
 	),
+	APIFailures: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_api_failures_total",
+			Help: "Counts the total number of failures encountered by a particular API handler.",
+		},
+		[]string{labelRoute},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -160,6 +168,7 @@ func RegisterInternalMetrics() {
 		Metrics.GoFunctionProcessingTime,
 		Metrics.GoFunctionFailures,
 		Metrics.KubernetesClients,
+		Metrics.APIFailures,
 	)
 }
 
@@ -275,6 +284,12 @@ func GetGoFunctionMetric(goPkg string, goType string, goFunc string) SuccessOrFa
 			labelFunction: goFunc,
 		}),
 	}
+}
+
+func GetAPIFailureMetric(route string) prometheus.Counter {
+	return Metrics.APIFailures.With(prometheus.Labels{
+		labelRoute: route,
+	})
 }
 
 // SetKubernetesClients sets the kubernetes client count

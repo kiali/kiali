@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
@@ -101,11 +102,38 @@ func NewRouter() *mux.Router {
 	return rootRouter
 }
 
+// statusResponseWriter contains a ResponseWriter and a StatusCode to read in the metrics middleware
+type statusResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+// WriteHeader will be called by any function that needs to set an status code, in this function the StatusCode is also set
+func (srw *statusResponseWriter) WriteHeader(code int) {
+	srw.ResponseWriter.WriteHeader(code)
+	srw.StatusCode = code
+}
+
+// updateMetric evaluates the StatusCode, if there is an error, increase the API failure counter, otherwise save the duration
+func updateMetric(route string, srw *statusResponseWriter, timer *prometheus.Timer) {
+	// Increase the error counter on 500 and 503 errors
+	if srw.StatusCode == http.StatusInternalServerError || srw.StatusCode == http.StatusServiceUnavailable {
+		internalmetrics.GetAPIFailureMetric(route).Inc()
+	}
+	// Always measure the duration even if the API call ended in an error
+	timer.ObserveDuration()
+}
+
 func metricHandler(next http.Handler, route Route) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// By default, if there is no call to WriteHeader, an 200 will be
+		srw := &statusResponseWriter{
+			ResponseWriter: w,
+			StatusCode:     http.StatusOK,
+		}
 		promtimer := internalmetrics.GetAPIProcessingTimePrometheusTimer(route.Name)
-		defer promtimer.ObserveDuration()
-		next.ServeHTTP(w, r)
+		defer updateMetric(route.Name, srw, promtimer)
+		next.ServeHTTP(srw, r)
 	})
 }
 
