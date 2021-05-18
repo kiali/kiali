@@ -194,7 +194,7 @@ var (
 		Gateways:               NetworkingGroupVersion.Group,
 		Sidecars:               NetworkingGroupVersion.Group,
 		WorkloadEntries:        NetworkingGroupVersion.Group,
-		WorkloadGroups: 		NetworkingGroupVersion.Group,
+		WorkloadGroups:         NetworkingGroupVersion.Group,
 		EnvoyFilters:           NetworkingGroupVersion.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,

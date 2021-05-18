@@ -23,9 +23,9 @@ type WorkloadGroup struct {
 	Spec struct {
 		// This is not an error, the WorkloadGroup has a Metadata inside the Spec
 		// https://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup
-		Metadata interface{}     		`json:"metadata"`
-		Template interface{}          	`json:"template"`
-		Probe interface{}               `json:"probe"`
+		Metadata interface{} `json:"metadata"`
+		Template interface{} `json:"template"`
+		Probe    interface{} `json:"probe"`
 	} `json:"spec"`
 }
 
