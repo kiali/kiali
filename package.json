@@ -25,6 +25,7 @@
   "license": "Apache-2.0",
   "author": "Red Hat",
   "main": "index.js",
+  "private": true,
   "publishConfig": {
     "access": "public"
   },

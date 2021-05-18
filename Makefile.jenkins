@@ -18,7 +18,6 @@ UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.[[:digit:]
 # BUILD_TAG is an environment variable from Jenkins
 BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
-NPM_DRY_RUN ?= n
 
 # For minors and majors, the version currently stored in package.json
 # is the version to publish. All other kind of releases require
@@ -30,11 +29,6 @@ endif
 # Block edge releases on github
 ifneq ($(RELEASE_TYPE),edge)
   PUSH_GITHUB_TAG = y
-endif
-
-# Block edge releases on npm
-ifneq ($(RELEASE_TYPE),edge)
-  PUSH_TO_NPM = y
 endif
 
 # For "minor" releases, the "master" branch must be
@@ -65,7 +59,7 @@ endif
 
 # Start definition of the recipes
 
-.PHONY: all ui-build ui-test ui-npm-publish
+.PHONY: all ui-build ui-test
 .PHONY: ui-push-version-tag ui-prepare-next-version release
 .PHONY: ui-fix-version ui-check-clean-workspace
 .PHONY: ui-prepare-next-patch-version ui-prepare-master-next-version
@@ -99,22 +93,6 @@ ui-build:
 
 ui-test:
 	CI=true yarn test --maxWorkers=4
-
-ui-npm-publish:
-ifeq ($(PUSH_TO_NPM), y)
-ifdef NPM_TOKEN
-	@echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
-endif
-ifeq ($(NPM_DRY_RUN), y)
-	npm publish --dry-run
-else
-	# To publish, use always the NPM registry
-	npm publish --registry https://registry.npmjs.org
-endif
-ifdef NPM_TOKEN
-	rm .npmrc
-endif
-endif
 
 ui-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
@@ -177,4 +155,4 @@ endif
 ui-prepare-next-version: ui-prepare-next-patch-version ui-prepare-master-next-version
 
 release: ui-check-clean-workspace ui-fix-version ui-build ui-test
-release: ui-npm-publish ui-push-version-tag ui-prepare-next-version
+release: ui-push-version-tag ui-prepare-next-version

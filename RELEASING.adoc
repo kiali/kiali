@@ -1,101 +1,12 @@
 = Releasing Kiali UI
 
-Kiali is released using a Jenkins Pipeline. The main document covering
-the release process can be found
-link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[here].
+Since Kiali v1.35, the kiali-ui is no longer released to NPM. The UI is now
+only being packaged together with the back-end in a container image that
+is published in link:https://quay.io/repository/kiali/kiali?tab=tags[Kiali's Quay.io repository].
 
-== Versioning scheme
+Packaging the front-end and the back-end together has been the way to release
+Kiali for a long time. It's only the NPM artifact that is no longer being published.
 
-The versioning scheme that we are following is similar to
-link:http://semver.org[semver], but not as strict, given both that we are not
-1.0 yet and that we are the end product, in the sense that nothing should
-depend on us to do anything. For now, and that might change in the future, our
-API is private and we make no guarantees that compatibility is going to be
-maintaned.
-
-For our versioning scheme, the `major` part means a major release, and that's
-decided in advance by the team. The `minor` means new features are included
-with the release, and the `patch` version covers only bugfixes.
-
-The UI and the core might be out of sync in `patch` versions, but they should
-be in sync for `minor`. That means that, if the UI is 0.5.10, then any core
-version on 0.5.X should work with it, but that are no guarantees that it will
-work with core 0.4.X or core 0.6.X.
-
-Of course, that's a soft limitation, and your mileage may vary. Sometimes it
-might work just fine, we just don't give any guarantees that it will.
-
-== Running the release process locally
-
-If you don't have access to the Jenkins instance or the release process
-through Jenkins doesn't suit your needs, you may want to run the release
-process _locally_.
-
-This guide covers releasing only kiali-ui.
-
-=== Requirements
-
-You must have write permissions to the kiali-ui public GitHub repository in
-order to be able to push the tags. You will also need an NPM account that
-is able to publish to the NPM @kiali organization.
-
-You will need a working dev environment for kiali-ui (git, npm, yarn, etc).
-You will also need the following tools available in your $PATH:
-
-* https://stedolan.github.io/jq/[jq] - a JSON processor used to update the
-  package.json file
-* https://github.com/fsaintjacques/semver-tool[semver] shell utility - used
-  to update version numbers
-* make - to run the release process
-* curl - because the release process places PRs using the GitHub API
-
-If you want the release process to push a PR for you to prepare the code for
-the next release, you will need a GitHub Token for your account.
-
-It's assumed that you are running the release process in your fork of the
-kiali-ui repository.
-
-=== Making the release
-
-. Login to NPM using the user with write access to the NPM @kiali organization:
-** `npm login`
-. Checkout the code that you want to release:
-** `git checkout branch_to_release` (usually, you should release "master")
-** Be advised that the release process will commit changes locally.
-. The release process may need to create a PR to prepare the code for the next
-  version. A GitHub token is required to create the PR:
-** `export GH_TOKEN={your_github_token}`
-** This is optional. If a token is not provided, a branch is created in your
-   fork of the code, if needed. Then, you can place the PR manually.
-. Run the release process:
-** `make -f Makefile.jenkins release`
-
-By default, it's assumed that you are doing a _minor_ release.
-If want to do another type of release, you can run the release process specifying
-the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" and
-"snapshot._X_". For example:
-
-* `RELEASE_TYPE="snapshot.1" make -f Makefile.jenkins release`
-
-*Note*: The process will adjust the version string as needed, according to
-the type of release. Please, don't try to adjust the version string (i.e.
-don't change the version in `package.json`).
-
-=== Available options
-
-* If you want to make a "dry-run" of the release:
-** `NPM_DRY_RUN=y make -f Makefile.jenkins release`
-* In _minor_ or _patch_ mode, the release process updates or creates
-  a version branch in the kiali-ui repository (the branch name is like
-  "vMAJOR.MINOR"). You can omit this:
-** `OMIT_VERSION_BRANCH=y make -f Makefile.jenkins release`
-* In _minor_ or _patch_ mode, the release
-  process may create a branch in your fork of the repository with
-  the required changes to prepare the code for the next release. The branch is
-  created if it isn't possible to push to the kiali-ui repository. By default, the
-  name of the branch is _prepare_next_version_. If you want to customize the
-  name of the branch:
-** `BUMP_BRANCH_ID={branch_name} make -f Makefile.jenkins release`
-* If your NPM account don't have write privileges to the @kiali organization but
-  you have a token with the required privileges, you can use that token:
-** `NPM_TOKEN="{your_token}" make -f Makefile.jenkins release`
+If you want to learn more, See the
+link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[RELEASING.adoc document
+in the back-end repository].

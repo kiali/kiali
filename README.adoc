@@ -8,15 +8,20 @@ toc::[]
 
 A UI for the Kiali Istio Observability Project
 
-== Technologies
-* React.js
-* Redux
-
 == Quick Start
 [source,shell]
 ----
+# Get the kiali-ui sources
+git clone https://github.com/kiali/kiali-ui.git
+cd kiali-ui
+
+# Install Yarn
 npm install -g yarn
+
+# Install kiali-ui dependencies
 yarn
+
+# Start a development server
 yarn start
 ----
 
@@ -24,8 +29,8 @@ yarn start
 On some platforms, `yarn start` may fail with an error like `Error: ENOSPC: System limit for number of file watchers reached`. To fix this, you need to increase the limit of file watchers on your system. The command may vary depending on the platform, please refer to link:https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers[these instructions].
 
 A new browser window should automatically open.
-But, if it doesn't then use:
-`http://localhost:3000`
+But, if it doesn't then use: `http://localhost:3000`
+(or whatever address is told by the `yarn start` command).
 
 This launches a development environment that instantly
 reloads any changes to the browser for rapid development.
@@ -37,19 +42,22 @@ reloads any changes to the browser for rapid development.
 * `src/actions`:  Redux actions
 * `src/app`: React top level component
 * `src/assets`: Images and other assets
-* `src/config`: Configuration
-* `src/containers`: [.line-through]#Redux connected containers# _Deprecated_
 * `src/components`: React Components
+* `src/config`: Configuration
 * `src/fonts`:  Fonts
-* `src/images`:  Patternfly Images
+* `src/helpers`:  Utility functions and components
+* `src/img`:  Patternfly Images
 * `src/pages`: Top level pages and nested components
 * `src/reducers`: Redux reducers
 * `src/services`: Api services
 * `src/store`:  Redux store definitions
+* `src/styles`:  Application wide styles
 * `src/types`: Typescript definitions for all kinds of types
 * `src/utils`: Various Utilities
 
 == Developing
+
+The Kiali UI is a React application written in Typescript.
 
 We use `yarn` as the package manager, if adding dependencies to `package.json`
 make sure you install them with `yarn` and commit the `yarn.lock` file.
@@ -106,21 +114,6 @@ yarn build-css
 
 Note:
 Only static assets which are `import` 'ed into your application will be included in your resulting build output.
-
-=== RCUE Styling
-To use the https://redhat-rcue.github.io/[RCUE] styled css instead of normal Patternfly
-
-For development run:
-[source,shell]
-----
-env REACT_APP_RCUE=true yarn start
-----
-
-For production build run:
-[source,shell]
-----
-env REACT_APP_RCUE=true yarn build
-----
 
 === Style Code Guide
 
