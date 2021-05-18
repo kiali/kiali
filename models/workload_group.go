@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/kiali/kiali/kubernetes"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // WorkloadGroups workloadGroups
@@ -22,8 +21,10 @@ type WorkloadGroups []WorkloadGroup
 type WorkloadGroup struct {
 	IstioBase
 	Spec struct {
-		Metadata meta_v1.ObjectMeta     `json:"metadata"`
-		Template WorkloadEntry          `json:"template"`
+		// This is not an error, the WorkloadGroup has a Metadata inside the Spec
+		// https://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup
+		Metadata interface{}     		`json:"metadata"`
+		Template interface{}          	`json:"template"`
 		Probe interface{}               `json:"probe"`
 	} `json:"spec"`
 }
@@ -38,5 +39,7 @@ func (wgs *WorkloadGroups) Parse(workloadGroups []kubernetes.IstioObject) {
 
 func (wg *WorkloadGroup) Parse(workloadGroup kubernetes.IstioObject) {
 	wg.IstioBase.Parse(workloadGroup)
-	workloadGroup.SetSpec(workloadGroup.GetSpec())
+	wg.Spec.Metadata = workloadGroup.GetSpec()["metadata"]
+	wg.Spec.Template = workloadGroup.GetSpec()["template"]
+	wg.Spec.Probe = workloadGroup.GetSpec()["probe"]
 }
