@@ -103,6 +103,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		AuthorizationPolicies:  models.AuthorizationPolicies{},
 		PeerAuthentications:    models.PeerAuthentications{},
 		WorkloadEntries:        models.WorkloadEntries{},
+		WorkloadGroups:         models.WorkloadGroups{},
 		RequestAuthentications: models.RequestAuthentications{},
 		EnvoyFilters:           models.EnvoyFilters{},
 	}
