@@ -107,7 +107,7 @@ You can also use link:https://kind.sigs.k8s.io/[kind], however we don't have a s
 Depending on the type of cluster you are using, you should define the `CLUSTER_TYPE` environment variable on your shell to `openshift` (this is the default if not set), `minikube` or `kind` value so that the Makefiles can assist in other operations. If you are not using any of these clusters, you should set the environment variable to `CLUSTER_TYPE=local`.
 
 [NOTE]
-If you are using `minikube` it's recommended that you enable the `registry` and `ingress` add-ond. The `k8s-minikube.sh` script should do this for you.
+If you are using `minikube` it's recommended that you enable the `registry` and `ingress` add-on. The `k8s-minikube.sh` script should do this for you.
 
 [NOTE]
 If you are using `docker` and using minikube's registry add-on or any custom non-secure registry, make sure the link:https://docs.docker.com/registry/insecure/[Docker daemon is properly configured to use your registry].
