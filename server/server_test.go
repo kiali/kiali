@@ -75,12 +75,12 @@ func TestRootContextPath(t *testing.T) {
 	checkHTTPReady(httpClient, serverURL)
 
 	// we should be able to get to our custom web root
-	if _, err = getRequestResults(t, httpClient, serverURL+testCustomRoot, noCredentials); err != nil && err.Error() != "Bad status: 500" {
+	if _, err = getRequestResults(t, httpClient, serverURL+testCustomRoot, noCredentials); err != nil {
 		t.Fatalf("Failed: Shouldn't have failed going to the web root: %v", err)
 	}
 
 	// we should be able to get to "/" root - this just forwards to our custom web root
-	if _, err = getRequestResults(t, httpClient, serverURL, noCredentials); err != nil && err.Error() != "Bad status: 500" {
+	if _, err = getRequestResults(t, httpClient, serverURL, noCredentials); err != nil {
 		t.Fatalf("Failed: Shouldn't have failed going to / root: %v", err)
 	}
 
