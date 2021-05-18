@@ -5170,6 +5170,10 @@
           "type": "boolean",
           "x-go-name": "Enabled"
         },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
         "supportedVersion": {
           "type": "boolean",
           "x-go-name": "SupportedVersion"
