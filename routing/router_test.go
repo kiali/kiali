@@ -104,14 +104,14 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 		t.Fatal(err)
 	}
 	body, _ := ioutil.ReadAll(resp.Body)
-	assert.Equal(t, 200, resp.StatusCode, "Response should not redirect")
+	assert.Equal(t, 500, resp.StatusCode, "Response should not redirect")
 
 	resp, err = client.Get(ts.URL + "/test/")
 	if err != nil {
 		t.Fatal(err)
 	}
 	body2, _ := ioutil.ReadAll(resp.Body)
-	assert.Equal(t, 200, resp.StatusCode, string(body2))
+	assert.Equal(t, 500, resp.StatusCode, string(body2))
 
 	assert.Equal(t, string(body), string(body2), "Response with and without the trailing slash on the webroot are not the same")
 }
