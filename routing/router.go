@@ -1,12 +1,18 @@
 package routing
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -45,6 +51,16 @@ func NewRouter() *mux.Router {
 		webRootWithSlash = "/"
 	}
 
+	fileServerHandler := func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI == webRootWithSlash || r.RequestURI == webRoot || r.RequestURI == webRootWithSlash+"index.html" {
+			serveIndexFile(w)
+		} else if r.RequestURI == webRootWithSlash+"env.js" {
+			serveEnvJsFile(w)
+		} else {
+			staticFileServer.ServeHTTP(w, r)
+		}
+	}
+
 	appRouter = appRouter.StrictSlash(true)
 
 	// Build our API server routes and install them.
@@ -67,7 +83,7 @@ func NewRouter() *mux.Router {
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.
 	appRouter.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, conf.Server.StaticContentRootDirectory+"/index.html")
+		serveIndexFile(w)
 	})
 
 	if conf.Auth.Strategy == config.AuthStrategyOpenId {
@@ -75,12 +91,12 @@ func NewRouter() *mux.Router {
 			if !handlers.OpenIdCodeFlowHandler(w, r) {
 				// If the OpenID handler does not handle the request, pass the
 				// request to the file server.
-				staticFileServer.ServeHTTP(w, r)
+				fileServerHandler(w, r)
 			}
 		})
 	}
 
-	rootRouter.PathPrefix(webRootWithSlash).Handler(staticFileServer)
+	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)
 
 	return rootRouter
 }
@@ -91,4 +107,54 @@ func metricHandler(next http.Handler, route Route) http.Handler {
 		defer promtimer.ObserveDuration()
 		next.ServeHTTP(w, r)
 	})
+}
+
+// serveEnvJsFile generates the env.js file needed by the UI from Kiali configs. The
+// generated file is sent to the HTTP response.
+func serveEnvJsFile(w http.ResponseWriter) {
+	conf := config.Get()
+	var body string
+	if len(conf.Server.WebHistoryMode) > 0 {
+		body += fmt.Sprintf("window.HISTORY_MODE='%s';", conf.Server.WebHistoryMode)
+	}
+
+	if webRoot := strings.TrimSuffix(config.Get().Server.WebRoot, "/"); len(webRoot) > 0 {
+		body += fmt.Sprintf("window.WEB_ROOT='%s';", webRoot)
+	}
+
+	w.Header().Set("content-type", "text/javascript")
+	_, err := io.WriteString(w, body)
+	if err != nil {
+		log.Errorf("HTTP I/O error [%v]", err.Error())
+	}
+}
+
+// serveIndexFile takes UI's index.html as a template to generate a modified index file that takes
+// into account the web_root path configured in the Kiali CR. The result is sent to the HTTP response.
+func serveIndexFile(w http.ResponseWriter) {
+	webRootPath := config.Get().Server.WebRoot
+	webRootPath = strings.TrimSuffix(webRootPath, "/")
+
+	path, _ := filepath.Abs("./console/index.html")
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Errorf("File I/O error [%v]", err.Error())
+		handlers.RespondWithDetailedError(w, http.StatusInternalServerError, "Unable to read index.html template file", err.Error())
+		return
+	}
+
+	html := string(b)
+	newHTML := html
+
+	if len(webRootPath) != 0 {
+		searchStr := `<base href="/"`
+		newStr := `<base href="` + webRootPath + `/"`
+		newHTML = strings.Replace(html, searchStr, newStr, -1)
+	}
+
+	w.Header().Set("content-type", "text/html")
+	_, err = io.WriteString(w, newHTML)
+	if err != nil {
+		log.Errorf("HTTP I/O error [%v]", err.Error())
+	}
 }

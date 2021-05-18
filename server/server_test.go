@@ -30,6 +30,12 @@ const (
 var tmpDir = os.TempDir()
 
 func TestRootContextPath(t *testing.T) {
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(os.TempDir())
+	_ = os.MkdirAll("./console", 0777)
+	_, _ = os.Create("./console/index.html")
+
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
 		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)

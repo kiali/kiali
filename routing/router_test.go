@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -84,6 +85,12 @@ func TestSimpleRoute(t *testing.T) {
 func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	oldConfig := config.Get()
 	defer config.Set(oldConfig)
+
+	oldWd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(oldWd) }()
+	_ = os.Chdir(os.TempDir())
+	_ = os.MkdirAll("./console", 0777)
+	_, _ = os.Create("./console/index.html")
 
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
