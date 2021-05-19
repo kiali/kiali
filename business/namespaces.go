@@ -224,7 +224,7 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 
 func (in *NamespaceService) UpdateNamespace(namespace string, jsonPatch string) (*models.Namespace, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateNamespace")
 	defer promtimer.ObserveNow(&err)
 
 	// A first check to run the accessible/excluded logic and not run the Update operation on filtered namespaces

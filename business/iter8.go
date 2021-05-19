@@ -152,7 +152,7 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 }
 func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (kubernetes.Iter8ExperimentCRD, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8ExperimentYaml")
 	defer promtimer.ObserveNow(&err)
 	Iter8ExperimentCRD := kubernetes.Iter8ExperimentCRD{}
 	iter8ExperimentObject, gErr := in.k8s.GetIter8Experiment(namespace, name)

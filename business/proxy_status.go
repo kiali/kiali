@@ -93,7 +93,11 @@ func (in *ProxyStatusService) GetConfigDump(namespace, pod string) (models.Envoy
 
 func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
 	var err error
+<<<<<<< HEAD
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatusService", "GetConfigDump")
+=======
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDumpResourceEntries")
+>>>>>>> 3072defe (fixing wrong function name in some business metrics)
 	defer promtimer.ObserveNow(&err)
 
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
