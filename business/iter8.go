@@ -226,6 +226,9 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 		return iter8ExperimentDetail, err
 	}
 	experiment, err := in.GetIter8Experiment(namespace, name)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	newExperimentSpec.Parse(experiment)
 	m := make(map[string]int32)
@@ -244,6 +247,9 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 
 	var newObject []byte
 	newObject, err = json.Marshal(newExperimentSpec)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
 	jsonByte, err := in.ParseJsonForCreate(newObject)
 	if err != nil {
 		return iter8ExperimentDetail, err
