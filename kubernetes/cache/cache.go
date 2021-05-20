@@ -35,6 +35,7 @@ type (
 		IstioCache
 		NamespacesCache
 		ProxyStatusCache
+		RegistryStatusCache
 	}
 
 	// This map will store Informers per specific types
@@ -70,6 +71,9 @@ type (
 		proxyStatusLock        sync.RWMutex
 		proxyStatusCreated     *time.Time
 		proxyStatusNamespaces  map[string]map[string]podProxyStatus
+		registryStatusLock     sync.RWMutex
+		registryStatusCreated  *time.Time
+		registryStatus         []*kubernetes.RegistryStatus
 	}
 )
 

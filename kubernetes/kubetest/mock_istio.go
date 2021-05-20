@@ -38,3 +38,9 @@ func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*kubern
 	args := o.Called(namespace, podName)
 	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
 }
+
+func (o *K8SClientMock) GetRegistryStatus() ([]*kubernetes.RegistryStatus, error) {
+	args := o.Called()
+	return args.Get(0).([]*kubernetes.RegistryStatus), args.Error(1)
+}
+
