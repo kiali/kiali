@@ -5,7 +5,6 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type ProxyStatusService struct {
@@ -83,23 +82,11 @@ func xdsStatus(sent, acked string) string {
 }
 
 func (in *ProxyStatusService) GetConfigDump(namespace, pod string) (models.EnvoyProxyDump, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatusService", "GetConfigDump")
-	defer promtimer.ObserveNow(&err)
-
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
 	return models.EnvoyProxyDump{ConfigDump: dump}, err
 }
 
 func (in *ProxyStatusService) GetConfigDumpResourceEntries(namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
-	var err error
-<<<<<<< HEAD
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatusService", "GetConfigDump")
-=======
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "ProxyStatus", "GetConfigDumpResourceEntries")
->>>>>>> 3072defe (fixing wrong function name in some business metrics)
-	defer promtimer.ObserveNow(&err)
-
 	dump, err := in.k8s.GetConfigDump(namespace, pod)
 	if err != nil {
 		return nil, err

@@ -24,7 +24,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // WorkloadService deals with fetching istio/kubernetes workloads related content and convert to kiali model
@@ -77,10 +76,6 @@ func isWorkloadIncluded(workload string) bool {
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkloadList")
-	defer promtimer.ObserveNow(&err)
-
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
@@ -102,10 +97,6 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, workloadType string, includeServices bool) (*models.Workload, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkload")
-	defer promtimer.ObserveNow(&err)
-
 	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName, workloadType)
 	if err != nil {
 		return nil, err
@@ -147,12 +138,8 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, wo
 }
 
 func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string) (*models.Workload, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "UpdateWorkload")
-	defer promtimer.ObserveNow(&err)
-
 	// Identify controller and apply patch to workload
-	err = updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
+	err := updateWorkload(in.businessLayer, namespace, workloadName, workloadType, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -168,9 +155,6 @@ func (in *WorkloadService) UpdateWorkload(namespace string, workloadName string,
 
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPods")
-	defer promtimer.ObserveNow(&err)
-
 	var ps []core_v1.Pod
 	// Check if namespace is cached
 	if IsNamespaceCached(namespace) {
@@ -191,10 +175,6 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 }
 
 func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPod")
-	defer promtimer.ObserveNow(&err)
-
 	p, err := in.k8s.GetPod(namespace, name)
 	if err != nil {
 		return nil, err

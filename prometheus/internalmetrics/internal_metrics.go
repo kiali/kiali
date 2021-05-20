@@ -18,9 +18,6 @@ const (
 	labelAppender         = "appender"
 	labelRoute            = "route"
 	labelQueryGroup       = "query_group"
-	labelPackage          = "package"
-	labelType             = "type"
-	labelFunction         = "function"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -31,8 +28,6 @@ type MetricsType struct {
 	GraphMarshalTime         *prometheus.HistogramVec
 	APIProcessingTime        *prometheus.HistogramVec
 	PrometheusProcessingTime *prometheus.HistogramVec
-	GoFunctionProcessingTime *prometheus.HistogramVec
-	GoFunctionFailures       *prometheus.CounterVec
 	KubernetesClients        *prometheus.GaugeVec
 	APIFailures              *prometheus.CounterVec
 }
@@ -82,20 +77,6 @@ var Metrics = MetricsType{
 			Help: "The time required to execute a Prometheus query.",
 		},
 		[]string{labelQueryGroup},
-	),
-	GoFunctionProcessingTime: prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name: "kiali_go_function_processing_duration_seconds",
-			Help: "The time required to execute a particular Go function.",
-		},
-		[]string{labelPackage, labelType, labelFunction},
-	),
-	GoFunctionFailures: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "kiali_go_function_failures_total",
-			Help: "Counts the total number of failures encountered by a particular Go function.",
-		},
-		[]string{labelPackage, labelType, labelFunction},
 	),
 	KubernetesClients: prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -165,8 +146,6 @@ func RegisterInternalMetrics() {
 		Metrics.GraphMarshalTime,
 		Metrics.APIProcessingTime,
 		Metrics.PrometheusProcessingTime,
-		Metrics.GoFunctionProcessingTime,
-		Metrics.GoFunctionFailures,
 		Metrics.KubernetesClients,
 		Metrics.APIFailures,
 	)
@@ -263,27 +242,6 @@ func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.T
 		labelQueryGroup: queryGroup,
 	}))
 	return timer
-}
-
-// GetGoFunctionMetric returns a SuccessOrFailureMetricType object that can be used to store
-// a duration value for the Go Function processing time metric when the function is successful,
-// or increments the failure counter if not successful.
-// If the Go Function is not on a type (i.e. is a global function), pass in an empty string for goType.
-// The timer is ticking immediately when this function returns.
-// See the comments for SuccessOrFailureMetricType for documentation on how to use the returned object.
-func GetGoFunctionMetric(goPkg string, goType string, goFunc string) SuccessOrFailureMetricType {
-	return SuccessOrFailureMetricType{
-		prometheus.NewTimer(Metrics.GoFunctionProcessingTime.With(prometheus.Labels{
-			labelPackage:  goPkg,
-			labelType:     goType,
-			labelFunction: goFunc,
-		})),
-		Metrics.GoFunctionFailures.With(prometheus.Labels{
-			labelPackage:  goPkg,
-			labelType:     goType,
-			labelFunction: goFunc,
-		}),
-	}
 }
 
 func GetAPIFailureMetric(route string) prometheus.Counter {

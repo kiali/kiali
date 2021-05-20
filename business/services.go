@@ -16,7 +16,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -28,14 +27,10 @@ type SvcService struct {
 
 // GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceList")
-	defer promtimer.ObserveNow(&err)
-
 	var svcs []core_v1.Service
 	var pods []core_v1.Pod
 	var deployments []apps_v1.Deployment
-
+	var err error
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
@@ -133,13 +128,9 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 
 // GetService returns a single service and associated data using the interval and queryTime
 func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
-	defer promtimer.ObserveNow(&err)
-
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
 		return nil, err
 	}
 
@@ -281,12 +272,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 }
 
 func (in *SvcService) UpdateService(namespace, service string, interval string, queryTime time.Time, jsonPatch string) (*models.ServiceDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
-	defer promtimer.ObserveNow(&err)
-
 	// Identify controller and apply patch to workload
-	err = updateService(in.businessLayer, namespace, service, jsonPatch)
+	err := updateService(in.businessLayer, namespace, service, jsonPatch)
 	if err != nil {
 		return nil, err
 	}
@@ -302,10 +289,6 @@ func (in *SvcService) UpdateService(namespace, service string, interval string, 
 
 // GetServiceDefinition returns a single service definition (the service object and endpoints), no istio or runtime information
 func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.ServiceDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceDefinition")
-	defer promtimer.ObserveNow(&err)
-
 	svc, eps, err := in.getServiceDefinition(namespace, service)
 	if err != nil {
 		return nil, err
@@ -376,9 +359,6 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 // GetServiceDefinitionList returns service definitions for the namespace (the service object only), no istio or runtime information
 func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.ServiceDefinitionList, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceDefinitionList")
-	defer promtimer.ObserveNow(&err)
-
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
