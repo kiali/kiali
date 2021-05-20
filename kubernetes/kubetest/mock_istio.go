@@ -43,4 +43,3 @@ func (o *K8SClientMock) GetRegistryStatus() ([]*kubernetes.RegistryStatus, error
 	args := o.Called()
 	return args.Get(0).([]*kubernetes.RegistryStatus), args.Error(1)
 }
-

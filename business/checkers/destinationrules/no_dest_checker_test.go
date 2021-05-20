@@ -354,7 +354,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	validations, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
@@ -366,7 +366,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	validations, valid = NoDestinationChecker{
 		Namespace:       "test",
 		DestinationRule: dr,
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.False(valid)

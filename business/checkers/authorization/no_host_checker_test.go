@@ -249,7 +249,7 @@ func TestValidServiceRegistry(t *testing.T) {
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
@@ -262,7 +262,7 @@ func TestValidServiceRegistry(t *testing.T) {
 		AuthorizationPolicy: authPolicyWithHost([]interface{}{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespace:           "bookinfo",
 		Namespaces:          models.Namespaces{models.Namespace{Name: "outside"}, models.Namespace{Name: "bookinfo"}},
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:      []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.False(valid)
