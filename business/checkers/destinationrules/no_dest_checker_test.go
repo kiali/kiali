@@ -331,3 +331,44 @@ func TestNoLabelsInSubset(t *testing.T) {
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 
 }
+
+func TestValidServiceRegistry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
+
+	validations, valid := NoDestinationChecker{
+		Namespace:       "test",
+		DestinationRule: dr,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+
+	registryService := kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings.mesh2-bookinfo.svc.mesh1-imports.local"
+
+	validations, valid = NoDestinationChecker{
+		Namespace:       "test",
+		DestinationRule: dr,
+		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+
+	registryService = kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
+
+	validations, valid = NoDestinationChecker{
+		Namespace:       "test",
+		DestinationRule: dr,
+		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+}

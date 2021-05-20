@@ -18,6 +18,7 @@ type NoHostChecker struct {
 	ServiceEntries      map[string][]string
 	Services            []core_v1.Service
 	VirtualServices     []kubernetes.IstioObject
+	RegistryStatus      []*kubernetes.RegistryStatus
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -118,6 +119,19 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 		return true
 	}
 
-	// Otherwise, check VirtualServices
-	return kubernetes.HasMatchingVirtualServices(host, n.VirtualServices)
+	// Check VirtualServices
+	if kubernetes.HasMatchingVirtualServices(host, n.VirtualServices) {
+		return true
+	}
+
+	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// i.e. Multi-cluster or Federation validations
+	for _, rStatus := range n.RegistryStatus {
+		// We assume that on these cases the host.Service is provided in FQDN
+		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
+		if kubernetes.FilterByRegistryStatus(host.Service, rStatus) {
+			return true
+		}
+	}
+	return false
 }

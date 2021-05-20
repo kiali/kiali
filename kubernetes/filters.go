@@ -276,3 +276,10 @@ func FilterIstioObjectsForWorkloadSelector(workloadSelector string, allObjects [
 	}
 	return istioObjects
 }
+
+func FilterByRegistryStatus(hostname string, registryStatus *RegistryStatus) bool {
+	// Basic filter using Hostname
+	// TODO use the ExportTo, Namespace, ServiceRegistry and other attributes to refine the match
+	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
+	return hostname == registryStatus.Hostname
+}

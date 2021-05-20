@@ -18,6 +18,7 @@ type NoDestinationChecker struct {
 	DestinationRule kubernetes.IstioObject
 	ServiceEntries  map[string][]string
 	Services        []core_v1.Service
+	RegistryStatus  []*kubernetes.RegistryStatus
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -139,6 +140,19 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		}
 	}
 
-	// Otherwise Check ServiceEntries
-	return kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries)
+	// Check ServiceEntries
+	if kubernetes.HasMatchingServiceEntries(host.Service, n.ServiceEntries) {
+		return true
+	}
+
+	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// i.e. Multi-cluster or Federation validations
+	for _, rStatus := range n.RegistryStatus {
+		// We assume that on these cases the host.Service is provided in FQDN
+		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
+		if kubernetes.FilterByRegistryStatus(host.Service, rStatus) {
+			return true
+		}
+	}
+	return false
 }
