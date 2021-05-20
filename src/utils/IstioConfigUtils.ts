@@ -32,6 +32,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails) => {
       istioObject = istioObjectDetails.serviceEntry;
     } else if (istioObjectDetails.workloadEntry) {
       istioObject = istioObjectDetails.workloadEntry;
+    } else if (istioObjectDetails.workloadGroup) {
+      istioObject = istioObjectDetails.workloadGroup;
     } else if (istioObjectDetails.envoyFilter) {
       istioObject = istioObjectDetails.envoyFilter;
     } else if (istioObjectDetails.authorizationPolicy) {

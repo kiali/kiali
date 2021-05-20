@@ -208,6 +208,7 @@ export const IstioTypes = {
     badge: PFBadges.RequestAuthentication
   } as istioConfigType,
   workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry } as istioConfigType,
+  workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup } as istioConfigType,
   envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter } as istioConfigType,
   attributemanifest: {
     name: 'AttributeManifest',

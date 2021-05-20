@@ -30,7 +30,7 @@ import {
   TLSRoute,
   VirtualService,
   VirtualServices,
-  WorkloadEntrySelector
+  WorkloadMatchSelector
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
 import { GatewaySelectorState } from './GatewaySelector';
@@ -1319,7 +1319,7 @@ export const buildRequestAuthentication = (
   };
 
   if (state.workloadSelector.length > 0) {
-    const workloadSelector: WorkloadEntrySelector = {
+    const workloadSelector: WorkloadMatchSelector = {
       matchLabels: {}
     };
     state.workloadSelector.split(',').forEach(label => {

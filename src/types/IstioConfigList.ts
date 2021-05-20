@@ -13,7 +13,8 @@ import {
   Validations,
   VirtualService,
   VirtualServices,
-  WorkloadEntry
+  WorkloadEntry,
+  WorkloadGroup
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -32,6 +33,7 @@ export interface IstioConfigItem {
   peerAuthentication?: PeerAuthentication;
   requestAuthentication?: RequestAuthentication;
   workloadEntry?: WorkloadEntry;
+  workloadGroup?: WorkloadGroup;
   envoyFilter?: EnvoyFilter;
   validation?: ObjectValidation;
 }
@@ -43,6 +45,7 @@ export interface IstioConfigList {
   destinationRules: DestinationRules;
   serviceEntries: ServiceEntry[];
   workloadEntries: WorkloadEntry[];
+  workloadGroups: WorkloadGroup[];
   envoyFilters: EnvoyFilter[];
   authorizationPolicies: AuthorizationPolicy[];
   sidecars: Sidecar[];
@@ -62,6 +65,7 @@ export const dicIstioType = {
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   WorkloadEntry: 'workloadentries',
+  WorkloadGroup: 'workloadgroups',
   EnvoyFilter: 'envoyfilters',
 
   gateways: 'Gateway',
@@ -73,6 +77,7 @@ export const dicIstioType = {
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
   workloadentries: 'WorkloadEntry',
+  workloadgroups: 'WorkloadGroup',
   envoyfilters: 'EnvoyFilter',
 
   gateway: 'Gateway',
@@ -84,6 +89,7 @@ export const dicIstioType = {
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   workloadentry: 'WorkloadEntry',
+  workloadgroup: 'WorkloadGroup',
   envoyfilter: 'EnvoyFilter'
 };
 
@@ -117,6 +123,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     peerAuthentications: unfiltered.peerAuthentications.filter(pa => includeName(pa.metadata.name, names)),
     requestAuthentications: unfiltered.requestAuthentications.filter(ra => includeName(ra.metadata.name, names)),
     workloadEntries: unfiltered.workloadEntries.filter(we => includeName(we.metadata.name, names)),
+    workloadGroups: unfiltered.workloadGroups.filter(wg => includeName(wg.metadata.name, names)),
     envoyFilters: unfiltered.envoyFilters.filter(ef => includeName(ef.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions

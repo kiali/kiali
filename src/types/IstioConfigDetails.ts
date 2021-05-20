@@ -12,7 +12,8 @@ import {
   PeerAuthentication,
   RequestAuthentication,
   WorkloadEntry,
-  EnvoyFilter
+  EnvoyFilter,
+  WorkloadGroup
 } from './IstioObjects';
 import { AceOptions } from 'react-ace/types';
 
@@ -30,6 +31,7 @@ export interface IstioConfigDetails {
   serviceEntry: ServiceEntry;
   sidecar: Sidecar;
   workloadEntry: WorkloadEntry;
+  workloadGroup: WorkloadGroup;
   envoyFilter: EnvoyFilter;
   authorizationPolicy: AuthorizationPolicy;
   peerAuthentication: PeerAuthentication;

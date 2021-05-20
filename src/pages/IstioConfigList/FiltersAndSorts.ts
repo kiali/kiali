@@ -118,6 +118,10 @@ export const istioTypeFilter: FilterType = {
     {
       id: 'WorkloadEntry',
       title: 'WorkloadEntry'
+    },
+    {
+      id: 'WorkloadGroup',
+      title: 'WorkloadGroup'
     }
   ]
 };

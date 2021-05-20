@@ -43,7 +43,8 @@ export const PFBadges = Object.freeze({
   Unknown: { badge: 'U', tt: 'Unknown' } as PFBadgeType,
   VirtualService: { badge: 'VS', tt: 'Virtual Service' } as PFBadgeType,
   Workload: { badge: 'W', tt: 'Workload' } as PFBadgeType,
-  WorkloadEntry: { badge: 'WE', tt: 'Workload Entry' } as PFBadgeType
+  WorkloadEntry: { badge: 'WE', tt: 'Workload Entry' } as PFBadgeType,
+  WorkloadGroup: { badge: 'WG', tt: 'Workload Group' } as PFBadgeType
 });
 
 export const kialiBadge = style({

@@ -16,6 +16,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     peerAuthentications: [],
     requestAuthentications: [],
     workloadEntries: [],
+    workloadGroups: [],
     envoyFilters: [],
     validations: {},
     permissions: {}
