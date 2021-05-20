@@ -116,12 +116,12 @@ func (srw *statusResponseWriter) WriteHeader(code int) {
 
 // updateMetric evaluates the StatusCode, if there is an error, increase the API failure counter, otherwise save the duration
 func updateMetric(route string, srw *statusResponseWriter, timer *prometheus.Timer) {
+	// Always measure the duration even if the API call ended in an error
+	timer.ObserveDuration()
 	// Increase the error counter on 500 and 503 errors
 	if srw.StatusCode == http.StatusInternalServerError || srw.StatusCode == http.StatusServiceUnavailable {
 		internalmetrics.GetAPIFailureMetric(route).Inc()
 	}
-	// Always measure the duration even if the API call ended in an error
-	timer.ObserveDuration()
 }
 
 func metricHandler(next http.Handler, route Route) http.Handler {
