@@ -113,10 +113,11 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
 
   render() {
     const { isDropdownOpen } = this.state;
-    const isAnonymous = authenticationConfig.strategy === AuthStrategy.anonymous;
+    const canLogout = authenticationConfig.strategy !== AuthStrategy.anonymous &&
+      authenticationConfig.strategy !== AuthStrategy.header;
 
     const userDropdownItems = (
-      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={isAnonymous}>
+      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
         Logout
       </DropdownItem>
     );
@@ -129,7 +130,10 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
           show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
-        {this.props.session && (
+        {this.props.session && !canLogout && (
+          <>{this.props.session.username}</>
+        )}
+        {this.props.session && canLogout && (
           <Dropdown
             isPlain={true}
             position="right"
