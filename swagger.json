@@ -4697,6 +4697,9 @@
         },
         "workloadEntry": {
           "$ref": "#/definitions/workloadEntry"
+        },
+        "workloadGroup": {
+          "$ref": "#/definitions/workloadGroup"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4744,6 +4747,9 @@
         },
         "workloadEntries": {
           "$ref": "#/definitions/workloadEntries"
+        },
+        "workloadGroups": {
+          "$ref": "#/definitions/workloadGroups"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -7682,6 +7688,64 @@
         }
       },
       "x-go-name": "WorkloadEntry",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadGroup": {
+      "description": "This is used for returning a WorkloadGroup",
+      "type": "object",
+      "title": "WorkloadGroup workloadGroup",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "description": "This is not an error, the WorkloadGroup has a Metadata inside the Spec\nhttps://istio.io/latest/docs/reference/config/networking/workload-group/#WorkloadGroup",
+              "type": "object",
+              "x-go-name": "Metadata"
+            },
+            "probe": {
+              "type": "object",
+              "x-go-name": "Probe"
+            },
+            "template": {
+              "type": "object",
+              "x-go-name": "Template"
+            }
+          },
+          "x-go-name": "Spec"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "WorkloadGroup",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "workloadGroups": {
+      "description": "This is used for returning an array of WorkloadGroup",
+      "type": "array",
+      "title": "WorkloadGroups workloadGroups",
+      "items": {
+        "$ref": "#/definitions/workloadGroup"
+      },
+      "x-go-name": "WorkloadGroups",
       "x-go-package": "github.com/kiali/kiali/models"
     }
   },

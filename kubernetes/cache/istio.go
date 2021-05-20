@@ -43,6 +43,15 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	if c.CheckIstioResource(kubernetes.Sidecars) {
 		(*informer)[kubernetes.Sidecars] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Sidecars, c.refreshDuration, namespace)
 	}
+	if c.CheckIstioResource(kubernetes.WorkloadEntries) {
+		(*informer)[kubernetes.WorkloadEntries] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.WorkloadEntries, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.WorkloadGroups) {
+		(*informer)[kubernetes.WorkloadGroups] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.WorkloadGroups, c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource(kubernetes.EnvoyFilters) {
+		(*informer)[kubernetes.EnvoyFilters] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.EnvoyFilters, c.refreshDuration, namespace)
+	}
 	if c.CheckIstioResource(kubernetes.PeerAuthentications) {
 		(*informer)[kubernetes.PeerAuthentications] = createIstioIndexInformer(c.istioSecurityGetter, kubernetes.PeerAuthentications, c.refreshDuration, namespace)
 	}

@@ -193,6 +193,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		objectCheckers = []ObjectChecker{peerAuthnChecker}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
+	case kubernetes.WorkloadGroups:
+		// Validation on WorkloadGroups are not yet in place
 	case kubernetes.RequestAuthentications:
 		// Validation on RequestAuthentications are not yet in place
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{RequestAuthentications: istioDetails.RequestAuthentications, WorkloadList: workloads}

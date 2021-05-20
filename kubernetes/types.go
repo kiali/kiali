@@ -53,6 +53,10 @@ const (
 	WorkloadEntryType     = "WorkloadEntry"
 	WorkloadEntryTypeList = "WorkloadEntryList"
 
+	WorkloadGroups        = "workloadgroups"
+	WorkloadGroupType     = "WorkloadGroup"
+	WorkloadGroupTypeList = "WorkloadGroupList"
+
 	// Authorization PeerAuthentications
 	AuthorizationPolicies         = "authorizationpolicies"
 	AuthorizationPoliciesType     = "AuthorizationPolicy"
@@ -125,6 +129,10 @@ var (
 			collectionKind: WorkloadEntryTypeList,
 		},
 		{
+			objectKind:     WorkloadGroupType,
+			collectionKind: WorkloadGroupTypeList,
+		},
+		{
 			objectKind:     EnvoyFilterType,
 			collectionKind: EnvoyFilterTypeList,
 		},
@@ -167,6 +175,7 @@ var (
 		ServiceEntries:   ServiceEntryType,
 		Sidecars:         SidecarType,
 		WorkloadEntries:  WorkloadEntryType,
+		WorkloadGroups:   WorkloadGroupType,
 		EnvoyFilters:     EnvoyFilterType,
 
 		// Security
@@ -185,6 +194,7 @@ var (
 		Gateways:               NetworkingGroupVersion.Group,
 		Sidecars:               NetworkingGroupVersion.Group,
 		WorkloadEntries:        NetworkingGroupVersion.Group,
+		WorkloadGroups:         NetworkingGroupVersion.Group,
 		EnvoyFilters:           NetworkingGroupVersion.Group,
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,
@@ -233,15 +243,6 @@ type ServiceList struct {
 	Services    *core_v1.ServiceList
 	Pods        *core_v1.PodList
 	Deployments *apps_v1.DeploymentList
-}
-
-// ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
-// Used to fetch all details in a single operation instead to invoke individual APIs per each group.
-type ServiceDetails struct {
-	Service     *core_v1.Service        `json:"service"`
-	Endpoints   *core_v1.Endpoints      `json:"endpoints"`
-	Deployments *apps_v1.DeploymentList `json:"deployments"`
-	Pods        []core_v1.Pod           `json:"pods"`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
