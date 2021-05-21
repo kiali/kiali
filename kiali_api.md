@@ -7470,6 +7470,7 @@ It is false for service.namespace format and service entries. |  |
 | AnalyticsImageVersion | string| `string` |  | |  |  |
 | ControllerImageVersion | string| `string` |  | |  |  |
 | Enabled | boolean| `bool` |  | |  |  |
+| Namespace | string| `string` |  | |  |  |
 | SupportedVersion | boolean| `bool` |  | |  |  |
 
 
