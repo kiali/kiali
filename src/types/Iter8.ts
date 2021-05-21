@@ -3,8 +3,9 @@ import { ResourcePermissions } from './Permissions';
 export interface Iter8Info {
   enabled: boolean;
   supportedVersion: boolean;
-  controllerImageVersion: string;
-  analyticsImageVersion: string;
+  controllerImgVersion: string;
+  analyticsImgVersion: string;
+  namespace: string;
 }
 
 export interface Iter8CandidateStatus {

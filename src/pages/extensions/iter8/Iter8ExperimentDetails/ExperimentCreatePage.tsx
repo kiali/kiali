@@ -95,8 +95,9 @@ class ExperimentCreatePage extends React.Component<Props, State> {
       iter8Info: {
         enabled: false,
         supportedVersion: false,
-        analyticsImageVersion: '',
-        controllerImageVersion: ''
+        analyticsImgVersion: '',
+        controllerImgVersion: '',
+        namespace: 'iter8'
       },
       experiment: {
         name: '',

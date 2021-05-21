@@ -73,8 +73,9 @@ class ExperimentDetailsPage extends React.Component<Props, State> {
       iter8Info: {
         enabled: false,
         supportedVersion: false,
-        analyticsImageVersion: '',
-        controllerImageVersion: ''
+        analyticsImgVersion: '',
+        controllerImgVersion: '',
+        namespace: 'iter8'
       },
       experiment: emptyExperimentDetailsInfo,
       canDelete: false,

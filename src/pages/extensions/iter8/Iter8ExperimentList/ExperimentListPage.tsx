@@ -116,8 +116,9 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
       iter8Info: {
         enabled: false,
         supportedVersion: false,
-        controllerImageVersion: '',
-        analyticsImageVersion: ''
+        controllerImgVersion: '',
+        analyticsImgVersion: '',
+        namespace: 'iter8'
       },
       experimentLists: [],
       sortBy: {},
@@ -135,9 +136,18 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
         const iter8Info = result.data;
         if (iter8Info.enabled) {
           if (!iter8Info.supportedVersion) {
+            if (iter8Info.analyticsImgVersion !== '' && iter8Info.analyticsImgVersion.startsWith('2')) {
+              AlertUtils.addError(
+                'Iter8 v' +
+                  iter8Info.analyticsImgVersion +
+                  ' is not supported, please use the supported version (v1.x).'
+              );
+              return;
+            }
             AlertUtils.addError(
-              'You are running an unsupported Iter8 vresion, please upgrade to supported version  (v0.2+) to take advantage of the full features of Iter8 .'
+              'You are running an unsupported Iter8 version, please upgrade to supported version  (v0.2+) to take advantage of the full features of Iter8 .'
             );
+            return;
           }
           if (namespaces.length > 0) {
             API.getExperiments(namespaces)
@@ -155,7 +165,10 @@ class ExperimentListPageComponent extends React.Component<Props, State> {
               });
           }
         } else {
-          AlertUtils.addError('Kiali has Iter8 extension enabled but it is not detected in the cluster');
+          AlertUtils.addError(
+            'Kiali has Iter8 extension enabled but it is not detected in the cluster under namespace ' +
+              iter8Info.namespace
+          );
         }
       })
       .catch(error => {
