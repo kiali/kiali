@@ -37,15 +37,16 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       color: '#fff',
       backgroundColor: '#003145',
       width: contentWidth,
-      height: '71px',
+      height: '80px',
       padding: '5px',
       resize: 'none',
       overflowY: 'hidden'
     });
     const preface =
       'You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts ' +
-      'expressions using the language described below. Hide takes precedence when using Find and Hide ' +
-      'together. Uncheck the "Compress Hidden" display option for hidden elements to retain their space.';
+      'expressions using the language described below. Preset expressions are available via the dropdown. ' +
+      'Hide takes precedence when using Find and Hide together. Uncheck the "Compressed Hide" Display ' +
+      'option for hidden elements to retain their space.';
 
     return (
       <>
@@ -72,29 +73,18 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
             <>
               <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
               <SimpleTabs id="graph_find_help_tabs" defaultTab={0} style={{ width: contentWidth }}>
-                <Tab style={tabFont} eventKey={0} title="Usage Notes">
+                <Tab style={tabFont} eventKey={0} title="Examples">
                   <Table
                     header={<></>}
                     variant={TableVariant.compact}
-                    cells={this.noteColumns()}
-                    rows={this.noteRows()}
+                    cells={this.exampleColumns()}
+                    rows={this.exampleRows()}
                   >
                     <TableHeader />
                     <TableBody />
                   </Table>
                 </Tab>
-                <Tab style={tabFont} eventKey={1} title="Operators">
-                  <Table
-                    header={<></>}
-                    variant={TableVariant.compact}
-                    cells={this.operatorColumns()}
-                    rows={this.operatorRows()}
-                  >
-                    <TableHeader />
-                    <TableBody />
-                  </Table>
-                </Tab>
-                <Tab style={tabFont} eventKey={2} title="Nodes">
+                <Tab style={tabFont} eventKey={1} title="Nodes">
                   <Table
                     header={<></>}
                     variant={TableVariant.compact}
@@ -105,7 +95,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     <TableBody />
                   </Table>
                 </Tab>
-                <Tab style={tabFont} eventKey={3} title="Edges">
+                <Tab style={tabFont} eventKey={2} title="Edges">
                   <Table
                     header={<></>}
                     variant={TableVariant.compact}
@@ -116,12 +106,23 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     <TableBody />
                   </Table>
                 </Tab>
-                <Tab style={tabFont} eventKey={4} title="Examples">
+                <Tab style={tabFont} eventKey={3} title="Operators">
                   <Table
                     header={<></>}
                     variant={TableVariant.compact}
-                    cells={this.exampleColumns()}
-                    rows={this.exampleRows()}
+                    cells={this.operatorColumns()}
+                    rows={this.operatorRows()}
+                  >
+                    <TableHeader />
+                    <TableBody />
+                  </Table>
+                </Tab>
+                <Tab style={tabFont} eventKey={4} title="Usage Notes">
+                  <Table
+                    header={<></>}
+                    variant={TableVariant.compact}
+                    cells={this.noteColumns()}
+                    rows={this.noteRows()}
                   >
                     <TableHeader />
                     <TableBody />
@@ -188,6 +189,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['httpin <op> <number>', 'unit: requests per second'],
       ['httpout <op> <number>', 'unit: requests per second'],
       ['app <op> <appName>'],
+      ['cluster <op> <clusterName>'],
       ['name <op> <string>', 'tests against app label, operation, service and workload names'],
       ['namespace <op> <namespaceName>'],
       ['node <op> <nodeType>', 'nodeType: app | operation | service | workload | unknown'],

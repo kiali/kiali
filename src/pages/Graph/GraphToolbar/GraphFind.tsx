@@ -18,7 +18,8 @@ import TourStopContainer from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TimeInMilliseconds } from 'types/Common';
 import { AutoComplete } from 'utils/AutoComplete';
-import { HEALTHY } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
+import { GraphFindOptions } from './GraphFindOptions';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -56,7 +57,7 @@ type ParsedExpression = {
 };
 
 const inputWidth = {
-  width: '10em'
+  width: 'var(--graph-find-input--width)'
 };
 
 // reduce toolbar padding from 20px to 10px to save space
@@ -72,6 +73,7 @@ const operands: string[] = [
   '%httptraffic',
   'app',
   'circuitbreaker',
+  'cluster',
   'destprincipal',
   'grpc',
   'grpcerr',
@@ -195,9 +197,14 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               onKeyDownCapture={this.checkSpecialKeyFind}
               placeholder="Find..."
             />
+            <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
             {this.props.findValue && (
               <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
-                <Button variant={ButtonVariant.control} onClick={this.clearFind}>
+                <Button
+                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom: '1px' }}
+                  variant={ButtonVariant.control}
+                  onClick={() => this.setFind('')}
+                >
                   <KialiIcon.Close />
                 </Button>
               </Tooltip>
@@ -217,9 +224,14 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
               onKeyDownCapture={this.checkSpecialKeyHide}
               placeholder="Hide..."
             />
+            <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
             {this.props.hideValue && (
               <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
-                <Button variant={ButtonVariant.control} onClick={this.clearHide}>
+                <Button
+                  style={{ minWidth: '20px', width: '20px', paddingLeft: '5px', paddingRight: '5px', bottom: '1px' }}
+                  variant={ButtonVariant.control}
+                  onClick={() => this.setHide('')}
+                >
                   <KialiIcon.Close />
                 </Button>
               </Tooltip>
@@ -249,34 +261,6 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     this.props.toggleFindHelp();
   };
 
-  private updateFind = val => {
-    if ('' === val) {
-      this.clearFind();
-    } else {
-      const diff = Math.abs(val.length - this.state.findInputValue.length);
-      this.findAutoComplete.setInput(val, [' ', '!']);
-      this.setState({ findInputValue: val, findError: undefined });
-      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
-      if (diff > 1) {
-        this.props.setFindValue(val);
-      }
-    }
-  };
-
-  private updateHide = val => {
-    if ('' === val) {
-      this.clearHide();
-    } else {
-      const diff = Math.abs(val.length - this.state.hideInputValue.length);
-      this.hideAutoComplete.setInput(val, [' ', '!']);
-      this.setState({ hideInputValue: val, hideError: undefined });
-      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
-      if (diff > 1) {
-        this.props.setHideValue(val);
-      }
-    }
-  };
-
   private checkSpecialKeyFind = event => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
@@ -295,6 +279,42 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         break;
       default:
         break;
+    }
+  };
+
+  private updateFindOption = key => {
+    this.setFind(key);
+  };
+
+  private updateFind = val => {
+    if ('' === val) {
+      this.setFind('');
+    } else {
+      const diff = Math.abs(val.length - this.state.findInputValue.length);
+      this.findAutoComplete.setInput(val, [' ', '!']);
+      this.setState({ findInputValue: val, findError: undefined });
+      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
+      if (diff > 1) {
+        this.props.setFindValue(val);
+      }
+    }
+  };
+
+  private setFind = val => {
+    // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
+    this.findInputRef.value = val;
+    const htmlInputElement: HTMLInputElement = document.getElementById('graph_find') as HTMLInputElement;
+    if (htmlInputElement !== null) {
+      htmlInputElement.value = val;
+    }
+    this.findAutoComplete.setInput(val);
+    this.setState({ findInputValue: val, findError: undefined });
+    this.props.setFindValue(val);
+  };
+
+  private submitFind = () => {
+    if (this.props.findValue !== this.state.findInputValue) {
+      this.props.setFindValue(this.state.findInputValue);
     }
   };
 
@@ -319,9 +339,21 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     }
   };
 
-  private submitFind = () => {
-    if (this.props.findValue !== this.state.findInputValue) {
-      this.props.setFindValue(this.state.findInputValue);
+  private updateHideOption = key => {
+    this.setHide(key);
+  };
+
+  private updateHide = val => {
+    if ('' === val) {
+      this.setHide('');
+    } else {
+      const diff = Math.abs(val.length - this.state.hideInputValue.length);
+      this.hideAutoComplete.setInput(val, [' ', '!']);
+      this.setState({ hideInputValue: val, hideError: undefined });
+      // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
+      if (diff > 1) {
+        this.props.setHideValue(val);
+      }
     }
   };
 
@@ -331,28 +363,16 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
     }
   };
 
-  private clearFind = () => {
+  private setHide = val => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
-    this.findInputRef.value = '';
-    const htmlInputElement: HTMLInputElement = document.getElementById('graph_find') as HTMLInputElement;
-    if (htmlInputElement !== null) {
-      htmlInputElement.value = '';
-    }
-    this.findAutoComplete.setInput('');
-    this.setState({ findInputValue: '', findError: undefined });
-    this.props.setFindValue('');
-  };
-
-  private clearHide = () => {
-    // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
-    this.hideInputRef.value = '';
+    this.hideInputRef.value = val;
     const htmlInputElement: HTMLInputElement = document.getElementById('graph_hide') as HTMLInputElement;
     if (htmlInputElement !== null) {
-      htmlInputElement.value = '';
+      htmlInputElement.value = val;
     }
-    this.hideAutoComplete.setInput('');
-    this.setState({ hideInputValue: '', hideError: undefined });
-    this.props.setHideValue('');
+    this.hideAutoComplete.setInput(val);
+    this.setState({ hideInputValue: val, hideError: undefined });
+    this.props.setHideValue(val);
   };
 
   private handleHide = (cy: any, hideChanged: boolean, graphChanged: boolean, compressOnHideChanged: boolean) => {
@@ -553,6 +573,8 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       //
       case 'app':
         return { target: 'node', selector: `[${CyNode.app} ${op} "${val}"]` };
+      case 'cluster':
+        return { target: 'node', selector: `[${CyNode.cluster} ${op} "${val}"]` };
       case 'grpcin': {
         const s = this.getNumericSelector(CyNode.grpcIn, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
@@ -707,7 +729,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case '>=':
       case '<=':
         if (isNaN(val)) {
-          return this.setError(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`, isFind);
+          return this.setError(`Invalid value [${val}]. Expected a numeric value (use '.' for decimals)`, isFind);
         }
         return `[${field} ${op} ${val}]`;
       case '=':
@@ -741,7 +763,7 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         return {
           target: 'node',
           selector: isNegation
-            ? `[${CyNode.healthStatus} != "${HEALTHY.name}"]`
+            ? `[${CyNode.healthStatus} = "${FAILURE.name}"],[${CyNode.healthStatus} = "${DEGRADED.name}"]`
             : `[${CyNode.healthStatus} = "${HEALTHY.name}"]`
         };
       case 'idle':

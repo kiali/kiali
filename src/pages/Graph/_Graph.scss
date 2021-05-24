@@ -1,19 +1,13 @@
 :root {
+  --graph-find-input--width: 10em;
   --graph-side-panel--font-size: 12px;
   --graph-side-panel--font-size-px: 12;
 }
 
-#summary-graph-actions .pf-c-dropdown__toggle {
+#summary-appbox-actions .pf-c-dropdown__toggle {
   font-size: var(--graph-side-panel--font-size);
 }
-#summary-graph-actions .pf-c-dropdown__menu-item {
-  font-size: var(--graph-side-panel--font-size);
-}
-
-#summary-group-actions .pf-c-dropdown__toggle {
-  font-size: var(--graph-side-panel--font-size);
-}
-#summary-group-actions .pf-c-dropdown__menu-item {
+#summary-appbox-actions .pf-c-dropdown__menu-item {
   font-size: var(--graph-side-panel--font-size);
 }
 
@@ -50,4 +44,10 @@
   border-bottom: 1px solid transparent;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+// Override to Dropdown's internal style for Find/Hide presets
+
+#graph-findhide-presets .pf-c-dropdown__menu {
+  left: calc(-1 * var(--graph-find-input--width));
 }

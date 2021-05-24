@@ -16,7 +16,8 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   },
   Find: {
     name: 'Find and Hide',
-    description: 'Highlight or Hide graph elements via typed expressions. Click the Find/Hide help icon for details.',
+    description:
+      'Highlight or Hide graph elements via typed expressions. Click the dropdown for preset Find or Hide expressions. Click the Find/Hide help icon for details on the expression language.',
     position: PopoverPosition.bottom
   },
   Graph: {

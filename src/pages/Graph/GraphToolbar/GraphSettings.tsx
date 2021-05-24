@@ -105,15 +105,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
   }
 
   render() {
-    const { isOpen } = this.state;
     return (
       <Dropdown
         toggle={
-          <DropdownToggle id={'display-settings'} onToggle={this.onToggle}>
+          <DropdownToggle id="display-settings" onToggle={this.onToggle}>
             Display
           </DropdownToggle>
         }
-        isOpen={isOpen}
+        isOpen={this.state.isOpen}
       >
         {this.getPopoverContent()}
       </Dropdown>
