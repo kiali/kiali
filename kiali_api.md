@@ -7917,7 +7917,12 @@ This type is used to describe a set of objects.
 | Cluster | string| `string` |  | |  |  |
 | DestServices | [][ServiceName](#service-name)| `[]*ServiceName` |  | |  |  |
 | HasCB | boolean| `bool` |  | |  |  |
+| HasFaultInjection | boolean| `bool` |  | |  |  |
 | HasMissingSC | boolean| `bool` |  | |  |  |
+| HasRequestRouting | boolean| `bool` |  | |  |  |
+| HasRequestTimeout | boolean| `bool` |  | |  |  |
+| HasTCPTrafficShifting | boolean| `bool` |  | |  |  |
+| HasTrafficShifting | boolean| `bool` |  | |  |  |
 | HasVS | boolean| `bool` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
 | IsBox | string| `string` |  | |  |  |

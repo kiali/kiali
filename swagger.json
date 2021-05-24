@@ -5726,12 +5726,32 @@
           "type": "boolean",
           "x-go-name": "HasCB"
         },
+        "hasFaultInjection": {
+          "type": "boolean",
+          "x-go-name": "HasFaultInjection"
+        },
         "hasHealthConfig": {
           "$ref": "#/definitions/HealthConfig"
         },
         "hasMissingSC": {
           "type": "boolean",
           "x-go-name": "HasMissingSC"
+        },
+        "hasRequestRouting": {
+          "type": "boolean",
+          "x-go-name": "HasRequestRouting"
+        },
+        "hasRequestTimeout": {
+          "type": "boolean",
+          "x-go-name": "HasRequestTimeout"
+        },
+        "hasTCPTrafficShifting": {
+          "type": "boolean",
+          "x-go-name": "HasTCPTrafficShifting"
+        },
+        "hasTrafficShifting": {
+          "type": "boolean",
+          "x-go-name": "HasTrafficShifting"
         },
         "hasVS": {
           "type": "boolean",
