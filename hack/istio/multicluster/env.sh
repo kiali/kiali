@@ -104,7 +104,7 @@ MANAGE_MINIKUBE="true"
 MANAGE_KIND="false"
 
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
-MINIKUBE_DRIVER="kvm2"
+MINIKUBE_DRIVER="virtualbox"
 MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
