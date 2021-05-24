@@ -311,11 +311,24 @@ type DeploymentConfig struct {
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
+// GraphFindOption defines a single Graph Find/Hide Option
+type GraphFindOption struct {
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Expression  string `yaml:"expression,omitempty" json:"expression,omitempty"`
+}
+
+// GraphUIDefaults defines UI Defaults specific to the UI Graph
+type GraphUIDefaults struct {
+	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
+	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+}
+
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
-	MetricsPerRefresh string   `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
-	Namespaces        []string `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
-	RefreshInterval   string   `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
+	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
+	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
+	Namespaces        []string        `yaml:"namespaces,omitempty" json:"namespaces,omitempty"`
+	RefreshInterval   string          `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 }
 
 // KialiFeatureFlags available from the CR
@@ -491,6 +504,32 @@ func NewConfig() (c *Config) {
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
 			UIDefaults: UIDefaults{
+				Graph: GraphUIDefaults{
+					FindOptions: []GraphFindOption{
+						{
+							Description: "Find: slow edges (> 1s)",
+							Expression:  "rt > 1000",
+						},
+						{
+							Description: "Find: unhealthy nodes",
+							Expression:  "! healthy",
+						},
+						{
+							Description: "Find: unknown nodes",
+							Expression:  "name = unknown",
+						},
+					},
+					HideOptions: []GraphFindOption{
+						{
+							Description: "Hide: healthy nodes",
+							Expression:  "healthy",
+						},
+						{
+							Description: "Hide: unknown nodes",
+							Expression:  "name = unknown",
+						},
+					},
+				},
 				MetricsPerRefresh: "1m",
 				Namespaces:        make([]string, 0),
 				RefreshInterval:   "15s",
