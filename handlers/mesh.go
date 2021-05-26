@@ -15,7 +15,7 @@ func GetClusters(w http.ResponseWriter, r *http.Request) {
 
 	meshClusters, err := business.Mesh.GetClusters(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Cannot fetch mesh clusters: "+err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, "Cannot fetch mesh clusters: "+err.Error())
 		return
 	}
 

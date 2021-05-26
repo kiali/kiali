@@ -118,7 +118,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 
 	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
 	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
@@ -146,7 +146,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 
 	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
 	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
@@ -174,7 +174,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 
 	metrics, err := metricsService.GetMetrics(params, business.GetIstioScaler())
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
 	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)

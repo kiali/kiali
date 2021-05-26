@@ -8,6 +8,7 @@ import (
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -56,7 +57,7 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 			log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 		}
 		if err != nil {
-			return nil, err
+			return nil, errors.NewServiceUnavailable(err.Error())
 		}
 		histogram[k] = result.(model.Vector)
 	}
@@ -181,7 +182,7 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 		log.Warningf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
 	if err != nil {
-		return model.Vector{}, err
+		return model.Vector{}, errors.NewServiceUnavailable(err.Error())
 	}
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 	return result.(model.Vector), nil

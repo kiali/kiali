@@ -26,7 +26,7 @@ func promQuery(query string, queryTime time.Time, ctx context.Context, api prom_
 	if warnings != nil && len(warnings) > 0 {
 		log.Warningf("promQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 	}
-	graph.CheckError(err)
+	graph.CheckUnavailable(err)
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {

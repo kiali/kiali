@@ -12,7 +12,6 @@ import (
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
-
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
