@@ -14,6 +14,7 @@ type NoHostChecker struct {
 	ServiceNames      []string
 	VirtualService    kubernetes.IstioObject
 	ServiceEntryHosts map[string][]string
+	RegistryStatus    []*kubernetes.RegistryStatus
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -97,6 +98,16 @@ func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
 			hostKey = k[i+1:]
 		}
 		if strings.HasSuffix(sHost, hostKey) {
+			return true
+		}
+	}
+
+	// Use RegistryStatus to check destinations that may not be covered with previous check
+	// i.e. Multi-cluster or Federation validations
+	for _, rStatus := range n.RegistryStatus {
+		// We assume that on these cases the sHost is provided in FQDN
+		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
+		if kubernetes.FilterByRegistryStatus(sHost, rStatus) {
 			return true
 		}
 	}
