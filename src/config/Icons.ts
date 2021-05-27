@@ -2,13 +2,21 @@ import deepFreeze from 'deep-freeze';
 
 import solidPinIcon from '../assets/img/solid-pin.png';
 import hollowPinIcon from '../assets/img/hollow-pin.png';
-import { BlueprintIcon } from '@patternfly/react-icons';
+import { BlueprintIcon, WrenchIcon } from '@patternfly/react-icons';
 
 export { solidPinIcon, hollowPinIcon };
 
 const mutIcons = {
   istio: {
     circuitBreaker: { className: 'fa fa-bolt', type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
+    missingLabel: {
+      icon: WrenchIcon,
+      className: 'fa fa-wrench',
+      type: 'fa',
+      name: 'wrench',
+      ascii: '\uE932',
+      color: 'red'
+    },
     missingSidecar: {
       icon: BlueprintIcon,
       className: 'pf-icon pf-icon-blueprint',

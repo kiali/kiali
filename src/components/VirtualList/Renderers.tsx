@@ -28,6 +28,7 @@ import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 import ValidationSummaryLink from '../Link/ValidationSummaryLink';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import MissingLabel from '../MissingLabel/MissingLabel';
 
 // Links
 
@@ -73,15 +74,8 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <MissingSidecar namespace={item.namespace} />
           </li>
         )}
-        {isWorkload && hasMissingApp && (
-          <li>
-            Missing <PFBadge badge={{ badge: 'app' }} isRead={true} style={{ marginRight: '0px' }} /> label
-          </li>
-        )}
-        {isWorkload && hasMissingVersion && (
-          <li>
-            Missing <PFBadge badge={{ badge: 'version' }} isRead={true} style={{ marginRight: '0px' }} /> label
-          </li>
+        {isWorkload && (hasMissingApp || hasMissingVersion) && (
+          <MissingLabel missingApp={hasMissingApp} missingVersion={hasMissingVersion} tooltip={false} />
         )}
         {spacer && ' '}
         {additionalDetails && additionalDetails.icon && (
