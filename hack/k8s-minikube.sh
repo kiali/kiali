@@ -29,13 +29,15 @@ DEFAULT_DEX_USER_NAMESPACES="bookinfo"
 DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CPU="4"
 DEFAULT_K8S_DISK="40g"
-DEFAULT_K8S_DRIVER="kvm2"
+DEFAULT_K8S_DRIVER="virtualbox"
 DEFAULT_K8S_MEMORY="8g"
 DEFAULT_K8S_VERSION="stable"
 DEFAULT_LB_ADDRESSES="" # example: "'192.168.99.70-192.168.99.84'"
 DEFAULT_MINIKUBE_EXE="minikube"
 DEFAULT_MINIKUBE_PROFILE="minikube"
 DEFAULT_MINIKUBE_START_FLAGS=""
+DEFAULT_OLM_ENABLED="false"
+DEFAULT_OLM_VERSION="latest"
 DEFAULT_OUTPUT_PATH="/tmp/k8s-minikube-tmpdir"
 
 _VERBOSE="false"
@@ -409,7 +411,9 @@ while [[ $# -gt 0 ]]; do
     -me|--minikube-exe) MINIKUBE_EXE="$2"; shift;shift ;;
     -mf|--minikube-flags) MINIKUBE_START_FLAGS="$2"; shift;shift ;;
     -mp|--minikube-profile) MINIKUBE_PROFILE="$2"; shift;shift ;;
+    -oe|--olm-enabled) OLM_ENABLED="$2"; shift;shift ;;
     -op|--output-path) OUTPUT_PATH="$2"; shift;shift ;;
+    -ov|--olm-version) OLM_VERSION="$2"; shift;shift ;;
     -v|--verbose) _VERBOSE=true; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -490,11 +494,20 @@ Valid options:
   -mp|--minikube-profile
       The profile which minikube will be started with.
       Default: ${DEFAULT_MINIKUBE_PROFILE}
+  -oe|--olm-enabled
+      If true, OLM will be installed in the minikube cluster allowing you to install operators using the OLM API.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_OLM_ENABLED}
   -op|--output-path
       A path this script can use to store files it needs or generates.
       This path will be created if it does not exist, but it will
       only be created if it is needed by the script.
       Default: ${DEFAULT_OUTPUT_PATH}
+  -ov|--olm-version
+      If OLM is enabled, this is the version of OLM to install.
+      If set to "latest", github will be queried to determine the latest release, and that version will be installed.
+      Only used for the 'start' command.
+      Default: ${DEFAULT_OLM_VERSION}
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -540,6 +553,8 @@ done
 : ${MINIKUBE_EXE:=${DEFAULT_MINIKUBE_EXE}}
 : ${MINIKUBE_START_FLAGS:=${DEFAULT_MINIKUBE_START_FLAGS}}
 : ${MINIKUBE_PROFILE:=${DEFAULT_MINIKUBE_PROFILE}}
+: ${OLM_ENABLED:=${DEFAULT_OLM_ENABLED}}
+: ${OLM_VERSION:=${DEFAULT_OLM_VERSION}}
 : ${OUTPUT_PATH:=${DEFAULT_OUTPUT_PATH}}
 
 MINIKUBE_EXEC_WITH_PROFILE="${MINIKUBE_EXE} -p ${MINIKUBE_PROFILE}"
@@ -566,6 +581,8 @@ debug "LB_ADDRESSES=$LB_ADDRESSES"
 debug "MINIKUBE_EXE=$MINIKUBE_EXE"
 debug "MINIKUBE_START_FLAGS=$MINIKUBE_START_FLAGS"
 debug "MINIKUBE_PROFILE=$MINIKUBE_PROFILE"
+debug "OLM_ENABLED=$OLM_ENABLED"
+debug "OLM_VERSION=$OLM_VERSION"
 debug "OUTPUT_PATH=$OUTPUT_PATH"
 
 # If minikube executable is not found, abort.
@@ -594,6 +611,29 @@ if [ "$_CMD" = "start" ]; then
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
   [ "$?" != "0" ] && echo "ERROR: Failed to enable registry addon" && exit 1
+  if [ "${OLM_ENABLED}" == "true" ]; then
+    echo 'Installing OLM'
+    if [ "${OLM_VERSION}" == "latest" ]; then
+      OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+      if [ -z "${OLM_VERSION}" ]; then
+        echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via --olm-version."
+        exit 1
+      else
+        echo "Github reports the latest OLM version is: ${OLM_VERSION}"
+      fi
+    fi
+
+    # force the install.sh script to go through minikube kubectl when it executes kubectl commands
+    kubectl() {
+      ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
+    }
+    export MINIKUBE_EXEC_WITH_PROFILE
+    export -f kubectl
+    # TODO when https://github.com/operator-framework/operator-lifecycle-manager/pull/2211 is fixed, we can remove the "sed" here
+    curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | sed 's/set -e//g' | bash -s ${OLM_VERSION}
+    [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
+    unset -f kubectl
+  fi
   if [ ! -z "${LB_ADDRESSES}" ]; then
     echo 'Enabling the metallb load balancer'
     ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metallb
@@ -618,6 +658,8 @@ LBCONFIGMAP
   if [ "${DEX_ENABLED}" == "true" ]; then
     install_dex
   fi
+
+  echo 'Minikube has started.'
 
 elif [ "$_CMD" = "stop" ]; then
   ensure_minikube_is_running
