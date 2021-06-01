@@ -144,7 +144,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 		),
 		Services:        fakeServicesReview(),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
@@ -267,7 +267,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 		Services: fakeServicesReview(),
 		// Intentionally using the same serviceName, but different NS. This shouldn't fail to match the above workloads
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
-		RegistryStatus: []*kubernetes.RegistryStatus{&registryService},
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
