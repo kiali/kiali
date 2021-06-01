@@ -129,7 +129,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	for _, rStatus := range n.RegistryStatus {
 		// We assume that on these cases the host.Service is provided in FQDN
 		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if kubernetes.FilterByRegistryStatus(host.Service, rStatus) {
+		if kubernetes.FilterByRegistryStatus(host.String(), rStatus) {
 			return true
 		}
 	}
