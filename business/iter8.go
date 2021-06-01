@@ -15,7 +15,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/status"
 )
 
@@ -29,8 +28,6 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 	var ps []core_v1.Pod
 	var controllerImgVersion string
 	var analyticsImgVersion string
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Info")
-	defer promtimer.ObserveNow(&err)
 
 	conf := config.Get()
 
@@ -108,10 +105,6 @@ func (in *Iter8Service) GetIter8Info() models.Iter8Info {
 }
 
 func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (models.Iter8ExperimentDetail, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Experiment")
-	defer promtimer.ObserveNow(&err)
-
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
 
 	errChan := make(chan error, 2)
@@ -140,8 +133,7 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err = <-errChan
-		return iter8ExperimentDetail, err
+		return iter8ExperimentDetail, <-errChan
 	}
 
 	iter8ExperimentDetail.Permissions.Create = canCreate
@@ -151,9 +143,6 @@ func (in *Iter8Service) GetIter8Experiment(namespace string, name string) (model
 	return iter8ExperimentDetail, nil
 }
 func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (kubernetes.Iter8ExperimentCRD, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
-	defer promtimer.ObserveNow(&err)
 	Iter8ExperimentCRD := kubernetes.Iter8ExperimentCRD{}
 	iter8ExperimentObject, gErr := in.k8s.GetIter8Experiment(namespace, name)
 	if gErr == nil {
@@ -175,18 +164,10 @@ func (in *Iter8Service) GetIter8ExperimentYaml(namespace string, name string) (k
 }
 
 func (in *Iter8Service) GetIter8ExperimentsByNamespace(namespace string) ([]models.Iter8ExperimentItem, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8ExperimentsByNamespace")
-	defer promtimer.ObserveNow(&err)
-
 	return in.fetchIter8Experiments(namespace)
 }
 
 func (in *Iter8Service) GetIter8Experiments(namespaces []string) ([]models.Iter8ExperimentItem, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Experiments")
-	defer promtimer.ObserveNow(&err)
-
 	experiments := make([]models.Iter8ExperimentItem, 0)
 	if len(namespaces) == 0 {
 		allNamespaces, _ := in.businessLayer.Namespace.GetNamespaces()
@@ -218,14 +199,11 @@ func (in *Iter8Service) fetchIter8Experiments(namespace string) ([]models.Iter8E
 }
 
 func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte, jsonBody bool) (models.Iter8ExperimentDetail, error) {
-	var err error
 	var jsonByte string
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "CreateIter8Experiment")
-	defer promtimer.ObserveNow(&err)
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
 
 	if !jsonBody {
-		jsonByte, err = in.ParseJsonForCreate(body)
+		jsonByte, _ = in.ParseJsonForCreate(body)
 	} else {
 		jsonByte = string(body)
 	}
@@ -241,9 +219,6 @@ func (in *Iter8Service) CreateIter8Experiment(namespace string, body []byte, jso
 
 func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, body []byte) (models.Iter8ExperimentDetail, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "UpdateIter8Experiment")
-	defer promtimer.ObserveNow(&err)
-
 	iter8ExperimentDetail := models.Iter8ExperimentDetail{}
 	action := models.Iter8ExperimentAction{}
 	err = json.Unmarshal(body, &action)
@@ -251,6 +226,9 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 		return iter8ExperimentDetail, err
 	}
 	experiment, err := in.GetIter8Experiment(namespace, name)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
 	newExperimentSpec := models.Iter8ExperimentSpec{}
 	newExperimentSpec.Parse(experiment)
 	m := make(map[string]int32)
@@ -269,6 +247,9 @@ func (in *Iter8Service) UpdateIter8Experiment(namespace string, name string, bod
 
 	var newObject []byte
 	newObject, err = json.Marshal(newExperimentSpec)
+	if err != nil {
+		return iter8ExperimentDetail, err
+	}
 	jsonByte, err := in.ParseJsonForCreate(newObject)
 	if err != nil {
 		return iter8ExperimentDetail, err
@@ -414,17 +395,11 @@ func (in *Iter8Service) ParseMatchRule(http []models.HTTPMatchRequest) []*kubern
 }
 
 func (in *Iter8Service) DeleteIter8Experiment(namespace string, name string) (err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "DeleteIter8Experiment")
-	defer promtimer.ObserveNow(&err)
-
 	err = in.k8s.DeleteIter8Experiment(namespace, name)
 	return err
 }
 
 func (in *Iter8Service) GetIter8Metrics() (metricNames []string, err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Iter8Service", "GetIter8Metrics")
-	defer promtimer.ObserveNow(&err)
-
 	metricNames, err = in.k8s.Iter8MetricMap()
 	return metricNames, err
 }

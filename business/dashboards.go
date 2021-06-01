@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 const defaultNamespaceLabel = "namespace"
@@ -555,10 +554,6 @@ func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version stri
 		// Custom dashboards are disabled or the app label is not configured
 		return []models.Runtime{}
 	}
-
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "DashboardsService", "GetCustomDashboardRefs")
-	defer promtimer.ObserveNow(&err)
 
 	// A better way to do?
 	var podsCast []models.Pod

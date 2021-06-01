@@ -13,7 +13,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type IstioValidationsService struct {
@@ -28,13 +27,9 @@ type ObjectChecker interface {
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 func (in *IstioValidationsService) GetValidations(namespace, service string) (models.IstioValidations, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioValidationsService", "GetValidations")
-	defer promtimer.ObserveNow(&err)
-
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
 		return nil, err
 	}
 
@@ -128,10 +123,6 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 }
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioValidationsService", "GetIstioObjectValidations")
-	defer promtimer.ObserveNow(&err)
-
 	var istioDetails kubernetes.IstioDetails
 	var namespaces models.Namespaces
 	var services []core_v1.Service
@@ -141,7 +132,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
 	var registryStatus []*kubernetes.RegistryStatus
-
+	var err error
 	var objectCheckers []ObjectChecker
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or

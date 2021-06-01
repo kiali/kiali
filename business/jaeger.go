@@ -10,7 +10,6 @@ import (
 	"github.com/kiali/kiali/jaeger"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type JaegerLoader = func() (jaeger.ClientInterface, error)
@@ -58,18 +57,10 @@ func mergeResponses(dest *jaeger.JaegerResponse, src *jaeger.JaegerResponse) {
 }
 
 func (in *JaegerService) GetAppSpans(ns, app string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetAppSpans")
-	defer promtimer.ObserveNow(&err)
-
 	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
 }
 
 func (in *JaegerService) GetServiceSpans(ns, service string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetServiceSpans")
-	defer promtimer.ObserveNow(&err)
-
 	app, err := in.businessLayer.Svc.GetServiceAppName(ns, service)
 	if err != nil {
 		return nil, err
@@ -92,10 +83,6 @@ func operationSpanFilter(ns, service string) SpanFilter {
 }
 
 func (in *JaegerService) GetWorkloadSpans(ns, workload string, query models.TracingQuery) ([]jaeger.JaegerSpan, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetWorkloadSpans")
-	defer promtimer.ObserveNow(&err)
-
 	app, err := in.businessLayer.Workload.GetWorkloadAppName(ns, workload)
 	if err != nil {
 		return nil, err
@@ -111,10 +98,6 @@ func wkdSpanFilter(ns, workload string) SpanFilter {
 }
 
 func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetAppTraces")
-	defer promtimer.ObserveNow(&err)
-
 	client, err := in.client()
 	if err != nil {
 		return nil, err
@@ -139,10 +122,6 @@ func (in *JaegerService) GetAppTraces(ns, app string, query models.TracingQuery)
 }
 
 func (in *JaegerService) GetServiceTraces(ns, service string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetServiceTraces")
-	defer promtimer.ObserveNow(&err)
-
 	app, err := in.businessLayer.Svc.GetServiceAppName(ns, service)
 	if err != nil {
 		return nil, err
@@ -174,10 +153,6 @@ func (in *JaegerService) GetServiceTraces(ns, service string, query models.Traci
 }
 
 func (in *JaegerService) GetWorkloadTraces(ns, workload string, query models.TracingQuery) (*jaeger.JaegerResponse, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetWorkloadTraces")
-	defer promtimer.ObserveNow(&err)
-
 	app, err := in.businessLayer.Workload.GetWorkloadAppName(ns, workload)
 	if err != nil {
 		return nil, err
@@ -249,9 +224,6 @@ func (in *JaegerService) getAppTracesSlicedInterval(ns, app string, query models
 }
 
 func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.JaegerSingleTrace, err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetJaegerTraceDetail")
-	defer promtimer.ObserveNow(&err)
-
 	client, err := in.client()
 	if err != nil {
 		return nil, err
@@ -260,9 +232,6 @@ func (in *JaegerService) GetJaegerTraceDetail(traceID string) (trace *jaeger.Jae
 }
 
 func (in *JaegerService) GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "Jaeger", "GetErrorTraces")
-	defer promtimer.ObserveNow(&err)
-
 	client, err := in.client()
 	if err != nil {
 		return 0, err

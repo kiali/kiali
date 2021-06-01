@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 func TestDrawPathProperly(t *testing.T) {
@@ -121,4 +123,50 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode, string(body2))
 
 	assert.Equal(t, string(body), string(body2), "Response with and without the trailing slash on the webroot are not the same")
+}
+
+func TestMetricHandlerAPIFailures(t *testing.T) {
+	var errcodes = []struct {
+		Name string
+		Code int
+	}{
+		{Name: "InternalServerError", Code: http.StatusInternalServerError},
+		{Name: "StatusServiceUnavailable", Code: http.StatusServiceUnavailable},
+	}
+
+	for _, errcode := range errcodes {
+		t.Run(errcode.Name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", "/error", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := metricHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(errcode.Code)
+			}), Route{Name: "error"})
+
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusInternalServerError && status != http.StatusServiceUnavailable {
+				t.Errorf("handler returned wrong status code: got %v want %v",
+					status, errcode.Code)
+			}
+		})
+	}
+
+	registry := prometheus.NewRegistry()
+	prometheus.DefaultRegisterer = registry
+	internalmetrics.RegisterInternalMetrics()
+
+	metrics, err := registry.Gather()
+	assert.Nil(t, err)
+
+	for _, m := range metrics {
+		if m.GetName() == "kiali_api_failures_total" {
+			if m.GetMetric()[0].Counter.GetValue() != 2 {
+				t.Errorf("Failure counter metric should have a value of 2: %+v", m)
+			}
+		}
+	}
 }

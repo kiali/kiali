@@ -12,7 +12,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
 )
 
@@ -86,10 +85,6 @@ var newSecurityConfigTypes = []string{
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigList")
-	defer promtimer.ObserveNow(&err)
-
 	if criteria.Namespace == "" {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
@@ -350,7 +345,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	close(errChan)
 	for e := range errChan {
 		if e != nil { // Check that default value wasn't returned
-			err = e // To update the Kiali metric
+			err := e // To update the Kiali metric
 			return models.IstioConfigList{}, err
 		}
 	}
@@ -365,8 +360,6 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 // - "object":			name of the configuration
 func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, object string) (models.IstioConfigDetails, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigDetails")
-	defer promtimer.ObserveNow(&err)
 
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
@@ -553,9 +546,6 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType string, body []byt
 
 // DeleteIstioConfigDetail deletes the given Istio resource
 func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) (err error) {
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
@@ -566,10 +556,6 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceType, name, jsonPatch string) (models.IstioConfigDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, name, jsonPatch, false)
 }
 
@@ -638,10 +624,6 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType string, body []byte) (models.IstioConfigDetails, error) {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
-	defer promtimer.ObserveNow(&err)
-
 	json, err := in.ParseJsonForCreate(resourceType, body)
 	if err != nil {
 		return models.IstioConfigDetails{}, errors2.NewBadRequest(err.Error())
@@ -650,10 +632,6 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(namespaces []string) models.IstioConfigPermissions {
-	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigPermissions")
-	defer promtimer.ObserveNow(&err)
-
 	istioConfigPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 	if len(namespaces) > 0 {
