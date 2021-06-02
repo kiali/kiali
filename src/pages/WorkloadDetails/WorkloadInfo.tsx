@@ -127,6 +127,21 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
     const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
     const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
+    const failingPodContainer: ObjectCheck = {
+      message: 'Pod has failing container',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const failingPodIstioContainer: ObjectCheck = {
+      message: 'Pod has failing Istio container',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const failingPodAppContainer: ObjectCheck = {
+      message: 'Pod has failing app container',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
 
     const validations: Validations = {};
     if (workload.pods.length > 0) {
@@ -141,6 +156,21 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         if (!isIstioNamespace(this.props.namespace)) {
           if (!pod.istioContainers || pod.istioContainers.length === 0) {
             validations.pod[pod.name].checks.push(noIstiosidecar);
+          } else {
+            pod.istioContainers.forEach(c => {
+              if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodIstioContainer) === -1) {
+                validations.pod[pod.name].checks.push(failingPodIstioContainer);
+              }
+            });
+          }
+          if (!pod.containers || pod.containers.length === 0) {
+            validations.pod[pod.name].checks.push(failingPodContainer);
+          } else {
+            pod.containers.forEach(c => {
+              if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodAppContainer) === -1) {
+                validations.pod[pod.name].checks.push(failingPodAppContainer);
+              }
+            });
           }
           if (!pod.labels) {
             validations.pod[pod.name].checks.push(noAppLabel);

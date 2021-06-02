@@ -116,6 +116,7 @@ export interface ContainerInfo {
   name: string;
   image: string;
   isProxy: boolean;
+  isReady: boolean;
 }
 
 // 1.6
