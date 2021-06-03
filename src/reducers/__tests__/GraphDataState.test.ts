@@ -19,7 +19,6 @@ describe('GraphDataState', () => {
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',
-        showCircuitBreakers: true,
         showFindHelp: false,
         showLegend: false,
         showIdleEdges: false,

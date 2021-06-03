@@ -46,7 +46,6 @@ export interface GraphToolbarState {
   boxByCluster: boolean;
   boxByNamespace: boolean;
   compressOnHide: boolean;
-  showCircuitBreakers: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;

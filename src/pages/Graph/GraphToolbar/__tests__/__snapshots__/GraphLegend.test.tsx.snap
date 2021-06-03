@@ -443,6 +443,22 @@ exports[`GraphLegend test should render correctly 1`] = `
           </div>
           <div
             className="f1n8a700"
+            key="node-badge-fault-injection.svg"
+          >
+            <span>
+              <img
+                alt="Fault Injection"
+                src="node-badge-fault-injection.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Fault Injection
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
             key="node-badge-missing-sidecar.svg"
           >
             <span>
@@ -455,6 +471,38 @@ exports[`GraphLegend test should render correctly 1`] = `
               className="f1hob5wc"
             >
               Missing Sidecar
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-badge-request-timeout.svg"
+          >
+            <span>
+              <img
+                alt="Request Timeout"
+                src="node-badge-request-timeout.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Request Timeout
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-badge-traffic-shifting.svg"
+          >
+            <span>
+              <img
+                alt="Traffic Shifting/TCP Traffic Shifting"
+                src="node-badge-traffic-shifting.svg"
+              />
+            </span>
+            <span
+              className="f1hob5wc"
+            >
+              Traffic Shifting/TCP Traffic Shifting
             </span>
           </div>
           <div
@@ -479,14 +527,14 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="Virtual Service"
+                alt="Virtual Service/Request Routing"
                 src="node-badge-virtual-services.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Virtual Service
+              Virtual Service/Request Routing
             </span>
           </div>
         </div>

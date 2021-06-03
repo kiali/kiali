@@ -20,7 +20,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
     hideValue: '',
-    showCircuitBreakers: true,
     showFindHelp: false,
     showIdleEdges: false,
     showIdleNodes: false,
@@ -124,12 +123,6 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showFindHelp: !state.toolbarState.showFindHelp
-        })
-      });
-    case getType(GraphToolbarActions.toggleGraphCircuitBreakers):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showCircuitBreakers: !state.toolbarState.showCircuitBreakers
         })
       });
     case getType(GraphToolbarActions.toggleGraphVirtualServices):

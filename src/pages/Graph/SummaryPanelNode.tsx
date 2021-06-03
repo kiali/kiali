@@ -68,7 +68,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
     const options = getOptions(nodeData, this.props.jaegerState.info).map(o => {
       return (
         <DropdownItem key={o.text} onClick={() => clickHandler(o)}>
-          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon/>}
+          {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
         </DropdownItem>
       );
     });
@@ -94,7 +94,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
           </div>
           <div>{renderHealth(nodeData.health)}</div>
           <div>
-            {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
+            {this.renderBadgeSummary(nodeData)}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
@@ -137,7 +137,20 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
   };
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
-  private renderBadgeSummary = (hasCB?: boolean, hasVS?: boolean, hasMissingSC?: boolean, isDead?: boolean) => {
+  private renderBadgeSummary = (nodeData: DecoratedGraphNodeData) => {
+    const {
+      hasCB,
+      hasFaultInjection,
+      hasMissingSC,
+      hasRequestRouting,
+      hasRequestTimeout,
+      hasTCPTrafficShifting,
+      hasTrafficShifting,
+      hasVS,
+      isDead
+    } = nodeData;
+    const hasTrafficScenario =
+      hasRequestRouting || hasFaultInjection || hasTrafficShifting || hasTCPTrafficShifting || hasRequestTimeout;
     return (
       <div style={{ marginTop: '10px', marginBottom: '10px' }}>
         {hasCB && (
@@ -146,7 +159,7 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
-        {hasVS && (
+        {hasVS && !hasTrafficScenario && (
           <div>
             <KialiIcon.VirtualService />
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
@@ -164,6 +177,36 @@ export class SummaryPanelNode extends React.Component<SummaryPanelNodeProps, Sum
               <KialiIcon.Info />
             </span>
             <span style={{ paddingLeft: '4px' }}>Has No Running Pods</span>
+          </div>
+        )}
+        {hasRequestRouting && (
+          <div>
+            <KialiIcon.RequestRouting />
+            <span style={{ paddingLeft: '4px' }}>Has Request Routing</span>
+          </div>
+        )}
+        {hasFaultInjection && (
+          <div>
+            <KialiIcon.FaultInjection />
+            <span style={{ paddingLeft: '4px' }}>Has Fault Injection</span>
+          </div>
+        )}
+        {hasTrafficShifting && (
+          <div>
+            <KialiIcon.TrafficShifting />
+            <span style={{ paddingLeft: '4px' }}>Has Traffic Shifting</span>
+          </div>
+        )}
+        {hasTCPTrafficShifting && (
+          <div>
+            <KialiIcon.TrafficShifting />
+            <span style={{ paddingLeft: '4px' }}>Has TCP Traffic Shifting</span>
+          </div>
+        )}
+        {hasRequestTimeout && (
+          <div>
+            <KialiIcon.RequestTimeout />
+            <span style={{ paddingLeft: '4px' }}>Has Request Timeout</span>
           </div>
         )}
       </div>

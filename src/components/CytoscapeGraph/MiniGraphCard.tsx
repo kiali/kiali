@@ -113,7 +113,6 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               onNodeTap={this.handleNodeTap}
               ref={refInstance => this.setCytoscapeGraph(refInstance)}
               refreshInterval={0}
-              showCircuitBreakers={true}
               showIdleEdges={false}
               showMissingSidecars={true}
               showOperationNodes={false}

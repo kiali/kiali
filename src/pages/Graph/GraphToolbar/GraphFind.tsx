@@ -75,6 +75,7 @@ const operands: string[] = [
   'circuitbreaker',
   'cluster',
   'destprincipal',
+  'faultinjection',
   'grpc',
   'grpcerr',
   'grpcin',
@@ -91,15 +92,20 @@ const operands: string[] = [
   'operation',
   'outside',
   'protocol',
+  'requestrouting',
+  'requesttimeout',
   'responsetime',
   'service',
   'serviceentry',
   'sidecar',
   'sourceprincipal',
   'tcp',
+  'tcptrafficshifting',
   'traffic',
+  'trafficshifting',
   'trafficsource',
   'version',
+  'virtualservice',
   'tcpin',
   'tcpout',
   'workload'
@@ -757,6 +763,12 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
         return { target: 'node', selector: isNegation ? `[^${CyNode.hasCB}]` : `[?${CyNode.hasCB}]` };
       case 'dead':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isDead}]` : `[?${CyNode.isDead}]` };
+      case 'fi':
+      case 'faultinjection':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasFaultInjection}]` : `[?${CyNode.hasFaultInjection}]`
+        };
       case 'inaccessible':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isInaccessible}]` : `[?${CyNode.isInaccessible}]` };
       case 'healthy':
@@ -775,12 +787,36 @@ export class GraphFind extends React.Component<GraphFindProps, GraphFindState> {
       case 'outside':
       case 'outsider':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isOutside}]` : `[?${CyNode.isOutside}]` };
+      case 'rr':
+      case 'requestrouting':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasRequestRouting}]` : `[?${CyNode.hasRequestRouting}]`
+        };
+      case 'rto':
+      case 'requesttimeout':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasRequestTimeout}]` : `[?${CyNode.hasRequestTimeout}]`
+        };
       case 'se':
       case 'serviceentry':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isServiceEntry}]` : `[?${CyNode.isServiceEntry}]` };
       case 'sc':
       case 'sidecar':
         return { target: 'node', selector: isNegation ? `[?${CyNode.hasMissingSC}]` : `[^${CyNode.hasMissingSC}]` };
+      case 'tcpts':
+      case 'tcptrafficshifting':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasTCPTrafficShifting}]` : `[?${CyNode.hasTCPTrafficShifting}]`
+        };
+      case 'ts':
+      case 'trafficshifting':
+        return {
+          target: 'node',
+          selector: isNegation ? `[^${CyNode.hasTrafficShifting}]` : `[?${CyNode.hasTrafficShifting}]`
+        };
       case 'trafficsource':
       case 'root':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isRoot}]` : `[?${CyNode.isRoot}]` };

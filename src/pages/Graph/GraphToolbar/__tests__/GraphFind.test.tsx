@@ -83,15 +83,35 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('cb')).toEqual('node[?hasCB]');
     // @ts-ignore
-    expect(instance.parseValue('sidecar')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('faultinjection')).toEqual('node[?hasFaultInjection]');
     // @ts-ignore
-    expect(instance.parseValue('sc')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('fi')).toEqual('node[?hasFaultInjection]');
     // @ts-ignore
     expect(instance.parseValue('outside')).toEqual('node[?isOutside]');
     // @ts-ignore
     expect(instance.parseValue('outsider')).toEqual('node[?isOutside]');
     // @ts-ignore
+    expect(instance.parseValue('requestrouting')).toEqual('node[?hasRequestRouting]');
+    // @ts-ignore
+    expect(instance.parseValue('rr')).toEqual('node[?hasRequestRouting]');
+    // @ts-ignore
+    expect(instance.parseValue('requesttimeout')).toEqual('node[?hasRequestTimeout]');
+    // @ts-ignore
+    expect(instance.parseValue('rto')).toEqual('node[?hasRequestTimeout]');
+    // @ts-ignore
     expect(instance.parseValue('root')).toEqual('node[?isRoot]');
+    // @ts-ignore
+    expect(instance.parseValue('sidecar')).toEqual('node[^hasMissingSC]');
+    // @ts-ignore
+    expect(instance.parseValue('sc')).toEqual('node[^hasMissingSC]');
+    // @ts-ignore
+    expect(instance.parseValue('tcptrafficshifting')).toEqual('node[?hasTCPTrafficShifting]');
+    // @ts-ignore
+    expect(instance.parseValue('tcpts')).toEqual('node[?hasTCPTrafficShifting]');
+    // @ts-ignore
+    expect(instance.parseValue('trafficshifting')).toEqual('node[?hasTrafficShifting]');
+    // @ts-ignore
+    expect(instance.parseValue('ts')).toEqual('node[?hasTrafficShifting]');
     // @ts-ignore
     expect(instance.parseValue('trafficsource')).toEqual('node[?isRoot]');
     // @ts-ignore

@@ -52,9 +52,13 @@ let NodeColorFillHoverDegraded: PFColorVal;
 let NodeColorFillHoverFailure: PFColorVal;
 const NodeHeight = '25px';
 const NodeIconCB = icons.istio.circuitBreaker.className; // bolt
+const NodeIconFaultInjection = icons.istio.faultInjection.className; // ban
 const NodeIconMS = icons.istio.missingSidecar.className; // exclamation
 const NodeIconRoot = icons.istio.root.className; // alt-arrow-circle-right
 const NodeIconVS = icons.istio.virtualService.className; // code-branch
+const NodeIconRequestRouting = icons.istio.requestRouting.className; // code-branch
+const NodeIconRequestTimeout = icons.istio.requestTimeout.className; // clock
+const NodeIconTrafficShifting = icons.istio.trafficShifting.className; // share-alt
 const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.White;
 const NodeTextBackgroundColor = PFColors.White;
@@ -69,9 +73,9 @@ const NodeTextFontSizeHover = '11px';
 const NodeTextFontSizeHoverBox = '13px';
 const NodeWidth = NodeHeight;
 
-const iconMargin = style({
-  marginLeft: '1px'
-});
+// Puts a little more space between icons when a badge has multiple icons
+const iconMargin = (existingIcons: string) =>
+  existingIcons === '' ? style({ marginLeft: '1px' }) : style({ marginRight: '2px' });
 
 const iconsDefault = style({
   alignItems: 'center',
@@ -200,18 +204,43 @@ export class GraphStyles {
     const isOutside = node.isOutside;
 
     let icons = '';
-    if (node.isRoot) {
-      icons = `<span class="${NodeIconRoot} ${iconMargin}"></span> ${icons}`;
-    }
     if (cyGlobal.showMissingSidecars && node.hasMissingSC) {
-      icons = `<span class="${NodeIconMS} ${iconMargin}"></span> ${icons}`;
-    }
-    if (cyGlobal.showCircuitBreakers && node.hasCB) {
-      icons = `<span class="${NodeIconCB} ${iconMargin}"></span> ${icons}`;
+      icons = `<span class="${NodeIconMS} ${iconMargin(icons)}"></span> ${icons}`;
     }
     if (cyGlobal.showVirtualServices && node.hasVS) {
-      icons = `<span class="${NodeIconVS} ${iconMargin}"></span> ${icons}`;
+      // If there's an additional traffic scenario present then it's assumed
+      // that there is a VS present so the VS badge is omitted.
+      const hasKialiScenario =
+        node.hasCB ||
+        node.hasFaultInjection ||
+        node.hasRequestRouting ||
+        node.hasRequestTimeout ||
+        node.hasTCPTrafficShifting ||
+        node.hasTrafficShifting;
+      if (!hasKialiScenario) {
+        icons = `<span class="${NodeIconVS} ${iconMargin(icons)}"></span> ${icons}`;
+      } else {
+        if (node.hasRequestRouting) {
+          icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
+        }
+        if (node.hasFaultInjection) {
+          icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
+        }
+        if (node.hasTrafficShifting || node.hasTCPTrafficShifting) {
+          icons = `<span class="${NodeIconTrafficShifting} ${iconMargin(icons)}"></span> ${icons}`;
+        }
+        if (node.hasRequestTimeout) {
+          icons = `<span class="${NodeIconRequestTimeout} ${iconMargin(icons)}"></span> ${icons}`;
+        }
+        if (node.hasCB) {
+          icons = `<span class="${NodeIconCB} ${iconMargin(icons)}"></span> ${icons}`;
+        }
+      }
     }
+    if (node.isRoot) {
+      icons = `<span class="${NodeIconRoot} ${iconMargin(icons)}"></span> ${icons}`;
+    }
+
     const hasIcon = icons.length > 0;
     if (hasIcon) {
       icons = `<div class=${iconsDefault}>${icons}</div>`;

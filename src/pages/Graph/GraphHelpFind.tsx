@@ -200,11 +200,16 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['tcpout <op> <number>', 'unit: bytes per second'],
       ['workload <op> <workloadName>'],
       ['circuitbreaker'],
+      ['faultinjection'],
       ['healthy', 'is not degraded or failing.'],
       ['idle', `will auto-enable 'idle nodes' display option`],
       ['outside', 'is outside of requested namespaces'],
+      ['requestrouting'],
+      ['requesttimeout'],
       ['sidecar'],
       ['serviceentry'],
+      ['tcptrafficshifting'],
+      ['trafficshifting'],
       ['trafficsource', `has only outbound edges`],
       ['virtualservice']
     ];
@@ -221,8 +226,9 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'],
       [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`],
       ['The "name" operand expands internally to an "OR" expression (an "AND" when negated).'],
-      ['Abbrevations: namespace|ns, service|svc, workload|wl operation|op'],
-      ['Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'],
+      ['Abbreviate: ns|namespace, svc|service, se|serviceentry, wl|workload, op|operation'],
+      ['Abbreviate: rt|responsetime, sc|sidecar, vs|virtualservice'],
+      ['Abbreviate: cb|circuitbreaker, fi|faultinjection, rr|requestrouting, rto|requesttimeout, ts|trafficshifting'],
       ['Hiding nodes will automatically hide connected edges.'],
       ['Hiding edges will automatically hide nodes left with no visible edges.'],
       ['Hiding "healthy" nodes may still leave valid, healthy edges in the graph.']

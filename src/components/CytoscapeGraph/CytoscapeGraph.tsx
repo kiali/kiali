@@ -57,7 +57,6 @@ type CytoscapeGraphProps = {
   setNode?: (node?: NodeParamsType) => void;
   setTraceId?: (traceId?: string) => void;
   setUpdateTime?: (val: TimeInMilliseconds) => void;
-  showCircuitBreakers: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showMissingSidecars: boolean;
@@ -145,7 +144,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       this.props.graphData.elements !== nextProps.graphData.elements ||
       this.props.layout !== nextProps.layout ||
       this.props.compressOnHide !== nextProps.compressOnHide ||
-      this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
@@ -618,7 +616,6 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
       edgeLabelMode: this.props.edgeLabelMode,
       homeCluster: serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT,
       graphType: this.props.graphData.fetchParams.graphType,
-      showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,
       showSecurity: this.props.showSecurity,
       showVirtualServices: this.props.showVirtualServices
