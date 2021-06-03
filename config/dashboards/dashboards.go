@@ -194,7 +194,6 @@ const DEFAULT_DASHBOARDS_YAML = `
       spans: 4
       metricName: "jvm_classes_loaded"
       dataType: "raw"
-
   - chart:
       name: "Memory used"
       unit: "bytes"
@@ -266,7 +265,6 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "Area"
       - label: "id"
         displayName: "Space"
-
   - chart:
       name: "Total live threads"
       spans: 4
@@ -476,7 +474,6 @@ const DEFAULT_DASHBOARDS_YAML = `
       spans: 4
       metricName: "tomcat_sessions_rejected_total"
       dataType: "raw"
-
   - chart:
       name: "Bytes sent"
       unit: "bitrate"
@@ -495,7 +492,6 @@ const DEFAULT_DASHBOARDS_YAML = `
       aggregations:
       - label: "name"
         displayName: "Name"
-
   - chart:
       name: "Global errors"
       spans: 6
