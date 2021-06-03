@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	defaultAggregate = "request_operation"
-	defaultQuantile  = 0.95
+	defaultAggregate      = "request_operation"
+	defaultQuantile       = 0.95
+	defaultThroughputType = "response"
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
@@ -91,6 +92,24 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
+		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[ThroughputAppenderName]; ok || o.Appenders.All {
+		throughputType := o.Params.Get("throughputType")
+		if throughputType != "" {
+			if throughputType != "request" && throughputType != "response" {
+				graph.BadRequest(fmt.Sprintf("Invalid throughputType, expecting one of (request, response). [%s]", throughputTypeString))
+			}
+		} else {
+			throughputType = defaultThroughputType
+		}
+		a := ThroughputAppender{
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
+			ThroughputType:     throughputType,
 		}
 		appenders = append(appenders, a)
 	}
