@@ -63,27 +63,32 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	NodeType        string              `json:"nodeType"`
-	Cluster         string              `json:"cluster"`
-	Namespace       string              `json:"namespace"`
-	Workload        string              `json:"workload,omitempty"`
-	App             string              `json:"app,omitempty"`
-	Version         string              `json:"version,omitempty"`
-	Service         string              `json:"service,omitempty"`         // requested service for NodeTypeService
-	Aggregate       string              `json:"aggregate,omitempty"`       // set like "<aggregate>=<aggregateVal>"
-	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
-	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
-	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
-	HasHealthConfig HealthConfig        `json:"hasHealthConfig,omitempty"` // set to the health config override
-	HasMissingSC    bool                `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
-	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
-	IsBox           string              `json:"isBox,omitempty"`           // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
-	IsDead          bool                `json:"isDead,omitempty"`          // true (has no pods) | false
-	IsIdle          bool                `json:"isIdle,omitempty"`          // true | false
-	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
-	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
-	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
-	IsServiceEntry  *graph.SEInfo       `json:"isServiceEntry,omitempty"`  // set static service entry information
+	NodeType              string              `json:"nodeType"`
+	Cluster               string              `json:"cluster"`
+	Namespace             string              `json:"namespace"`
+	Workload              string              `json:"workload,omitempty"`
+	App                   string              `json:"app,omitempty"`
+	Version               string              `json:"version,omitempty"`
+	Service               string              `json:"service,omitempty"`               // requested service for NodeTypeService
+	Aggregate             string              `json:"aggregate,omitempty"`             // set like "<aggregate>=<aggregateVal>"
+	DestServices          []graph.ServiceName `json:"destServices,omitempty"`          // requested services for [dest] node
+	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
+	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
+	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
+	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`       // set to the health config override
+	HasMissingSC          bool                `json:"hasMissingSC,omitempty"`          // true (has missing sidecar) | false
+	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
+	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
+	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
+	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
+	HasVS                 bool                `json:"hasVS,omitempty"`                 // true (has route rule) | false
+	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
+	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
+	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
+	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
+	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
+	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
+	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
 }
 
 type EdgeData struct {
@@ -260,6 +265,26 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is on another namespace
 		if val, ok := n.Metadata[graph.IsOutside]; ok {
 			nd.IsOutside = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasRequestRouting]; ok {
+			nd.HasRequestRouting = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasFaultInjection]; ok {
+			nd.HasFaultInjection = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasTrafficShifting]; ok {
+			nd.HasTrafficShifting = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasTCPTrafficShifting]; ok {
+			nd.HasTCPTrafficShifting = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.HasRequestTimeout]; ok {
+			nd.HasRequestTimeout = val.(bool)
 		}
 
 		// node may have destination service info
