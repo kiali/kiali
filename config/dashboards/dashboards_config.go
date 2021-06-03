@@ -100,12 +100,12 @@ func (in *MonitoringDashboardChart) GetMetrics() []MonitoringDashboardMetric {
 // If a name of a new dashboard already exists in orig, it replaces the original.
 // Note that the returns list is also stripped of dashboards that should be disabled.
 // A dashboard is disabled if "DiscoverOn" is an empty string and "Items" is an empty list.
-func AddMonitoringDashboards(orig *MonitoringDashboardsList, additional *MonitoringDashboardsList) *MonitoringDashboardsList {
+func AddMonitoringDashboards(orig MonitoringDashboardsList, additional MonitoringDashboardsList) MonitoringDashboardsList {
 	if additional == nil || orig == nil {
 		return nil
 	}
 	allDashboardsMap := orig.organizeByName()
-	for _, a := range *additional {
+	for _, a := range additional {
 		allDashboardsMap[a.Name] = *((&a).deepCopy())
 	}
 
@@ -115,16 +115,16 @@ func AddMonitoringDashboards(orig *MonitoringDashboardsList, additional *Monitor
 			newList = append(newList, val)
 		}
 	}
-	return (*MonitoringDashboardsList)(&newList)
+	return MonitoringDashboardsList(newList)
 }
 
-func GetBuiltInMonitoringDashboards() *MonitoringDashboardsList {
+func GetBuiltInMonitoringDashboards() MonitoringDashboardsList {
 	if v, err := unmarshal(DEFAULT_DASHBOARDS_YAML); err == nil {
-		return v
+		return MonitoringDashboardsList(v)
 	} else {
 		log.Errorf("Failed to unmarshal built-in dashboard yaml - this is a bug, please report it. err=%v", err)
 		empty := make([]MonitoringDashboard, 0)
-		return (*MonitoringDashboardsList)(&empty)
+		return MonitoringDashboardsList(empty)
 	}
 }
 
@@ -138,13 +138,13 @@ func (in *MonitoringDashboardsList) organizeByName() map[string]MonitoringDashbo
 }
 
 // Unmarshal parses the given YAML string and returns its MonitoringDashboardsList object representation.
-func unmarshal(yamlString string) (list *MonitoringDashboardsList, err error) {
-	list = new(MonitoringDashboardsList)
+func unmarshal(yamlString string) (out MonitoringDashboardsList, err error) {
+	list := new(MonitoringDashboardsList)
 	err = yaml.Unmarshal([]byte(yamlString), &list)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse monitoring dashboard yaml data. error=%v", err)
 	}
-	return list, nil
+	return *list, nil
 }
 
 func (in *MonitoringDashboard) deepCopyInto(out *MonitoringDashboard) {

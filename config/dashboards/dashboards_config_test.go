@@ -10,9 +10,9 @@ func TestAddMonitoringDashboards(t *testing.T) {
 	builtInListSize := 20
 
 	list := GetBuiltInMonitoringDashboards()
-	assert.Equal(t, builtInListSize, len(*list))
+	assert.Equal(t, builtInListSize, len(list))
 
-	additional := &MonitoringDashboardsList{
+	additional := MonitoringDashboardsList{
 		MonitoringDashboard{
 			Name:       "foo",
 			Title:      "Foo",
@@ -25,14 +25,14 @@ func TestAddMonitoringDashboards(t *testing.T) {
 		},
 	}
 	list = AddMonitoringDashboards(list, additional)
-	assert.Equal(t, builtInListSize+2, len(*list))
+	assert.Equal(t, builtInListSize+2, len(list))
 
 	listMap := list.organizeByName()
 	assert.Equal(t, "Foo", listMap["foo"].Title)
 	assert.Equal(t, "Bar", listMap["bar"].Title)
 
 	// add dashboard with a name that already exists, but test that it overwrites the original
-	additional = &MonitoringDashboardsList{
+	additional = MonitoringDashboardsList{
 		MonitoringDashboard{
 			Name:       "foo",
 			Title:      "NewFoo",
@@ -40,21 +40,21 @@ func TestAddMonitoringDashboards(t *testing.T) {
 		},
 	}
 	list = AddMonitoringDashboards(list, additional)
-	assert.Equal(t, builtInListSize+2, len(*list))
+	assert.Equal(t, builtInListSize+2, len(list))
 
 	listMap = list.organizeByName()
 	assert.Equal(t, "NewFoo", listMap["foo"].Title)
 
 	// add dashboard definition that effectively disables (removes) the existing dashboard.
 	// You can turn off or disable built-in dashboards this way.
-	additional = &MonitoringDashboardsList{
+	additional = MonitoringDashboardsList{
 		MonitoringDashboard{
 			Name:       "foo",
 			DiscoverOn: "",
 		},
 	}
 	list = AddMonitoringDashboards(list, additional)
-	assert.Equal(t, builtInListSize+1, len(*list))
+	assert.Equal(t, builtInListSize+1, len(list))
 
 	listMap = list.organizeByName()
 	_, exists := listMap["foo"]
@@ -65,7 +65,7 @@ func TestGetBuiltInMonitoringDashboards(t *testing.T) {
 	builtInListSize := 20
 
 	list := GetBuiltInMonitoringDashboards()
-	assert.Equal(t, builtInListSize, len(*list))
+	assert.Equal(t, builtInListSize, len(list))
 
 	listMap := list.organizeByName()
 
@@ -85,7 +85,15 @@ func TestGetBuiltInMonitoringDashboards(t *testing.T) {
 func TestDeepCopy(t *testing.T) {
 	list := GetBuiltInMonitoringDashboards()
 	dup := list.DeepCopy()
-	assert.Same(t, list, list)
-	assert.Same(t, dup, dup)
-	assert.NotSame(t, list, dup)
+	assert.Same(t, &list, &list)
+	assert.Same(t, &dup, &dup)
+	assert.Same(t, &(list[0].Items), &(list[0].Items))
+	assert.NotSame(t, &list, &dup)
+	assert.NotSame(t, &(list[0].Items), &((*dup)[0].Items))
+
+	// just make sure some of the copied data is the same
+	assert.Equal(t, list[0].Name, (*dup)[0].Name)
+	assert.Equal(t, list[0].Title, (*dup)[0].Title)
+	assert.Equal(t, len(list[0].Items), len((*dup)[0].Items))
+	assert.Equal(t, list[0].Items[0].Chart.Name, (*dup)[0].Items[0].Chart.Name)
 }

@@ -364,24 +364,24 @@ type HealthConfig struct {
 
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem          `yaml:"additional_display_details,omitempty"`
-	API                      ApiConfig                        `yaml:"api,omitempty"`
-	Auth                     AuthConfig                       `yaml:"auth,omitempty"`
-	CustomDashboards         []dashboards.MonitoringDashboard `yaml:"custom_dashboards,omitempty"`
-	Deployment               DeploymentConfig                 `yaml:"deployment,omitempty"`
-	Extensions               Extensions                       `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices                 `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig                     `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
-	Identity                 security.Identity                `yaml:",omitempty"`
-	InCluster                bool                             `yaml:"in_cluster,omitempty"`
-	InstallationTag          string                           `yaml:"installation_tag,omitempty"`
-	IstioComponentNamespaces IstioComponentNamespaces         `yaml:"istio_component_namespaces,omitempty"`
-	IstioLabels              IstioLabels                      `yaml:"istio_labels,omitempty"`
-	IstioNamespace           string                           `yaml:"istio_namespace,omitempty"` // default component namespace
-	KialiFeatureFlags        KialiFeatureFlags                `yaml:"kiali_feature_flags,omitempty"`
-	KubernetesConfig         KubernetesConfig                 `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken                       `yaml:"login_token,omitempty"`
-	Server                   Server                           `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
+	API                      ApiConfig                           `yaml:"api,omitempty"`
+	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
+	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions               Extensions                          `yaml:"extensions,omitempty"`
+	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
+	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
+	Identity                 security.Identity                   `yaml:",omitempty"`
+	InCluster                bool                                `yaml:"in_cluster,omitempty"`
+	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
+	IstioComponentNamespaces IstioComponentNamespaces            `yaml:"istio_component_namespaces,omitempty"`
+	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
+	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
+	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
+	Server                   Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -421,7 +421,7 @@ func NewConfig() (c *Config) {
 				ClientIdPrefix: "kiali",
 			},
 		},
-		CustomDashboards: *(dashboards.GetBuiltInMonitoringDashboards()),
+		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
 			AccessibleNamespaces: []string{"**"},
 			Namespace:            "istio-system",
@@ -652,7 +652,7 @@ func (conf *Config) prepareDashboards() {
 	// If the user defined their own dashboards, we still want the built-in dashboards as a fallback.
 	// But the user-defined dashboards take precedence - if they gave us dashboards with the same name
 	// as one of the built-in dashboards, the user-defined dashboard "wins".
-	conf.CustomDashboards = ([]dashboards.MonitoringDashboard)(*dashboards.AddMonitoringDashboards(dashboards.GetBuiltInMonitoringDashboards(), (*dashboards.MonitoringDashboardsList)(&conf.CustomDashboards)))
+	conf.CustomDashboards = dashboards.AddMonitoringDashboards(dashboards.GetBuiltInMonitoringDashboards(), conf.CustomDashboards)
 
 	// to assist in debugging problems, log the number of dashboards and their names
 	if log.IsDebug() {
