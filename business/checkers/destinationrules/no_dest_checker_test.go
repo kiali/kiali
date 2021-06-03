@@ -128,6 +128,10 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 
 	assert := assert.New(t)
 
+	// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
+	registryService := kubernetes.RegistryStatus{}
+	registryService.Hostname = "reviews.outside-ns.svc.cluster.local"
+
 	validations, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		Namespaces: models.Namespaces{
@@ -139,14 +143,12 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
 		Services:        fakeServicesReview(),
-		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns"),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
-	assert.Equal("spec/host", validations[0].Path)
+	assert.Empty(validations)
 }
 
 func TestNoValidHost(t *testing.T) {
@@ -252,6 +254,10 @@ func fakeServicesReview() []core_v1.Service {
 func TestFailCrossNamespaceHost(t *testing.T) {
 	assert := assert.New(t)
 
+	// Note that a cross-namespace service should be visible in the registry, otherwise won't be visible
+	registryService := kubernetes.RegistryStatus{}
+	registryService.Hostname = "reviews.different-ns.svc.cluster.local"
+
 	validations, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
@@ -261,13 +267,11 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 		Services: fakeServicesReview(),
 		// Intentionally using the same serviceName, but different NS. This shouldn't fail to match the above workloads
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.Unknown, validations[0].Severity)
-	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
-	assert.Equal("spec/host", validations[0].Path)
+	assert.Empty(validations)
 }
 
 func TestSNIProxyExample(t *testing.T) {
@@ -362,6 +366,32 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	registryService = kubernetes.RegistryStatus{}
 	registryService.Hostname = "ratings2.mesh2-bookinfo.svc.mesh1-imports.local"
+
+	validations, valid = NoDestinationChecker{
+		Namespace:       "test",
+		DestinationRule: dr,
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+
+	registryService = kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings.bookinfo.svc.cluster.local"
+
+	dr = data.CreateEmptyDestinationRule("test", "test-exported", "ratings.bookinfo.svc.cluster.local")
+
+	validations, valid = NoDestinationChecker{
+		Namespace:       "test",
+		DestinationRule: dr,
+		RegistryStatus:  []*kubernetes.RegistryStatus{&registryService},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+
+	registryService = kubernetes.RegistryStatus{}
+	registryService.Hostname = "ratings2.bookinfo.svc.cluster.local"
 
 	validations, valid = NoDestinationChecker{
 		Namespace:       "test",

@@ -29,16 +29,11 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := kubernetes.GetHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
+			// Testing Kubernetes Services + Istio ServiceEntries + Istio Runtime Registry (cross namespace)
 			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
-				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace && fqdn.Namespace != "" {
-					validation := models.Build("validation.unable.cross-namespace", "spec/host")
-					valid = true
-					validations = append(validations, &validation)
-				} else {
-					validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
-					valid = false
-					validations = append(validations, &validation)
-				}
+				validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
+				valid = false
+				validations = append(validations, &validation)
 			} else if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					// Check that each subset has a matching workload somewhere..
@@ -150,7 +145,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 	for _, rStatus := range n.RegistryStatus {
 		// We assume that on these cases the host.Service is provided in FQDN
 		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if kubernetes.FilterByRegistryStatus(host.Service, rStatus) {
+		if kubernetes.FilterByRegistryStatus(host.String(), rStatus) {
 			return true
 		}
 	}
