@@ -649,10 +649,15 @@ func (conf Config) String() (str string) {
 
 // prepareDashboards will ensure conf.CustomDashboards contains only the dashboards that are enabled
 func (conf *Config) prepareDashboards() {
-	// If the user defined their own dashboards, we still want the built-in dashboards as a fallback.
-	// But the user-defined dashboards take precedence - if they gave us dashboards with the same name
-	// as one of the built-in dashboards, the user-defined dashboard "wins".
-	conf.CustomDashboards = dashboards.AddMonitoringDashboards(dashboards.GetBuiltInMonitoringDashboards(), conf.CustomDashboards)
+	if conf.ExternalServices.CustomDashboards.Enabled {
+		// If the user defined their own dashboards, we still want the built-in dashboards as a fallback.
+		// But the user-defined dashboards take precedence - if they gave us dashboards with the same name
+		// as one of the built-in dashboards, the user-defined dashboard "wins".
+		conf.CustomDashboards = dashboards.AddMonitoringDashboards(dashboards.GetBuiltInMonitoringDashboards(), conf.CustomDashboards)
+	} else {
+		// The user has disabled the custom dashboards, empty out the list completely
+		conf.CustomDashboards = dashboards.MonitoringDashboardsList(make([]dashboards.MonitoringDashboard, 0))
+	}
 
 	// to assist in debugging problems, log the number of dashboards and their names
 	if log.IsDebug() {

@@ -27,7 +27,7 @@ func TestAddMonitoringDashboards(t *testing.T) {
 	list = AddMonitoringDashboards(list, additional)
 	assert.Equal(t, builtInListSize+2, len(list))
 
-	listMap := list.organizeByName()
+	listMap := list.OrganizeByName()
 	assert.Equal(t, "Foo", listMap["foo"].Title)
 	assert.Equal(t, "Bar", listMap["bar"].Title)
 
@@ -42,7 +42,7 @@ func TestAddMonitoringDashboards(t *testing.T) {
 	list = AddMonitoringDashboards(list, additional)
 	assert.Equal(t, builtInListSize+2, len(list))
 
-	listMap = list.organizeByName()
+	listMap = list.OrganizeByName()
 	assert.Equal(t, "NewFoo", listMap["foo"].Title)
 
 	// add dashboard definition that effectively disables (removes) the existing dashboard.
@@ -56,7 +56,7 @@ func TestAddMonitoringDashboards(t *testing.T) {
 	list = AddMonitoringDashboards(list, additional)
 	assert.Equal(t, builtInListSize+1, len(list))
 
-	listMap = list.organizeByName()
+	listMap = list.OrganizeByName()
 	_, exists := listMap["foo"]
 	assert.False(t, exists)
 }
@@ -67,7 +67,7 @@ func TestGetBuiltInMonitoringDashboards(t *testing.T) {
 	list := GetBuiltInMonitoringDashboards()
 	assert.Equal(t, builtInListSize, len(list))
 
-	listMap := list.organizeByName()
+	listMap := list.OrganizeByName()
 
 	// see that one of the dashboards was unmarshalled successfully
 	d := listMap["go"]

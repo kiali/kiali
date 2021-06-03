@@ -104,7 +104,7 @@ func AddMonitoringDashboards(orig MonitoringDashboardsList, additional Monitorin
 	if additional == nil || orig == nil {
 		return nil
 	}
-	allDashboardsMap := orig.organizeByName()
+	allDashboardsMap := orig.OrganizeByName()
 	for _, a := range additional {
 		allDashboardsMap[a.Name] = *((&a).deepCopy())
 	}
@@ -128,8 +128,8 @@ func GetBuiltInMonitoringDashboards() MonitoringDashboardsList {
 	}
 }
 
-// organizeByName returns a dictionary with the key being the names of the dashboards; values are the dashboards themselves
-func (in *MonitoringDashboardsList) organizeByName() map[string]MonitoringDashboard {
+// OrganizeByName returns a map with the key being the names of the dashboards; values are the dashboards themselves
+func (in *MonitoringDashboardsList) OrganizeByName() map[string]MonitoringDashboard {
 	out := make(map[string]MonitoringDashboard, len(*in))
 	for _, i := range *in {
 		out[i.Name] = i

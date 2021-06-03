@@ -3979,7 +3979,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Aggregation": {
-      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard k8s resource",
+      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "displayName": {
@@ -4125,7 +4125,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Chart": {
-      "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
+      "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "chartType": {
@@ -5635,7 +5635,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "MonitoringDashboard": {
-      "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource",
+      "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard config resource",
       "type": "object",
       "properties": {
         "aggregations": {
@@ -5659,6 +5659,10 @@
           },
           "x-go-name": "ExternalLinks"
         },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
@@ -5669,28 +5673,23 @@
     "MonitoringDashboardExternalLinkVariables": {
       "type": "object",
       "properties": {
-        "app": {
-          "type": "string",
-          "x-go-name": "App"
+        "App": {
+          "type": "string"
         },
-        "namespace": {
-          "type": "string",
-          "x-go-name": "Namespace"
+        "Namespace": {
+          "type": "string"
         },
-        "service": {
-          "type": "string",
-          "x-go-name": "Service"
+        "Service": {
+          "type": "string"
         },
-        "version": {
-          "type": "string",
-          "x-go-name": "Version"
+        "Version": {
+          "type": "string"
         },
-        "workload": {
-          "type": "string",
-          "x-go-name": "Workload"
+        "Workload": {
+          "type": "string"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/kubernetes/monitoringdashboards/v1alpha1"
+      "x-go-package": "github.com/kiali/kiali/config/dashboards"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
