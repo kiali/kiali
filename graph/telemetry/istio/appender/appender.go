@@ -99,7 +99,7 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 		throughputType := o.Params.Get("throughputType")
 		if throughputType != "" {
 			if throughputType != "request" && throughputType != "response" {
-				graph.BadRequest(fmt.Sprintf("Invalid throughputType, expecting one of (request, response). [%s]", throughputTypeString))
+				graph.BadRequest(fmt.Sprintf("Invalid throughputType, expecting one of (request, response). [%s]", throughputType))
 			}
 		} else {
 			throughputType = defaultThroughputType

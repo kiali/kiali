@@ -3,7 +3,6 @@ package appender
 import (
 	"fmt"
 	"math"
-	"regexp"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -17,10 +16,6 @@ import (
 const (
 	// ThroughputAppenderName uniquely identifies the appender: responseTime
 	ThroughputAppenderName = "throughput"
-)
-
-var (
-	regexpHTTPFailure, _ = regexp.Compile(`^0$|^[4|5]\d\d$`) // include 0, Istio's flag for no response received
 )
 
 // ThroughputAppender is responsible for adding throughput information to the graph. Throughput
@@ -59,50 +54,55 @@ func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
 	log.Tracef("Generating [%s] throughput; namespace = %v", a.ThroughputType, namespace)
 
-	// create map to quickly look up responseTime
-	responseTimeMap := make(map[string]float64)
+	// create map to quickly look up throughput
+	throughputMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for the responseTime info in four queries:
-	groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_code,grpc_response_status"
+	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
+	metric := fmt.Sprintf("istio_%s_bytes_sum", a.ThroughputType)
+	reporter := "destination"
+	if a.ThroughputType == "request" {
+		reporter = "source"
+	}
 
-	// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
-	// note - the query order is important as both queries may have overlapping results for edges within
-	//        the namespace.  This query uses destination proxy and so must come first.
-	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
-		quantile,
-		"istio_request_duration_milliseconds_bucket",
+	// query prometheus for throughput rates in two queries:
+	// 1) query for requests originating from a workload outside the namespace.
+	query := fmt.Sprintf(`sum(rate(%s{reporter="%s",source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
+		metric,
+		reporter,
+		namespace,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+	a.populateThroughputMap(throughputMap, &vector)
 
-	// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
-		quantile,
-		"istio_request_duration_milliseconds_bucket",
+	// 2) query for requests originating from a workload inside of the namespace
+	query = fmt.Sprintf(`sum(rate(%s{reporter="%s",source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
+		metric,
+		reporter,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+	a.populateThroughputMap(throughputMap, &vector)
 
-	applyResponseTime(trafficMap, responseTimeMap)
+	applyThroughput(trafficMap, throughputMap)
 }
 
-func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]float64) {
+func applyThroughput(trafficMap graph.TrafficMap, throughputMap map[string]float64) {
 	for _, n := range trafficMap {
 		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
-			if val, ok := responseTimeMap[key]; ok {
+			if val, ok := throughputMap[key]; ok {
 				e.Metadata[graph.ResponseTime] = val
 			}
 		}
 	}
 }
 
-func (a ThroughputAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
+func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float64, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
@@ -118,11 +118,9 @@ func (a ThroughputAppender) populateResponseTimeMap(responseTimeMap map[string]f
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_canonical_service"]
 		lDestVer, destVerOk := m["destination_canonical_revision"]
-		lResponseCode, responseCodeOk := m["response_code"]
-		lGrpcResponseStatus, grpcReponseStatusOk := m["grpc_response_status"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !responseCodeOk {
-			log.Warningf("Skipping %v, missing expected labels", m.String())
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
+			log.Warningf("populateThroughputMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 
@@ -131,24 +129,11 @@ func (a ThroughputAppender) populateResponseTimeMap(responseTimeMap map[string]f
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
-		responseCode := string(lResponseCode)
 
 		// handle clusters
 		sourceCluster, destCluster := util.HandleClusters(lSourceCluster, sourceClusterOk, lDestCluster, destClusterOk)
 
 		if util.IsBadSourceTelemetry(sourceCluster, sourceClusterOk, sourceWlNs, sourceWl, sourceApp) {
-			continue
-		}
-
-		// This was added in istio 1.5, handle in a backward compatible way
-		grpcReponseStatus := "0"
-		if grpcReponseStatusOk {
-			grpcReponseStatus = string(lGrpcResponseStatus)
-		}
-
-		// Only valid requests contribute to response time so as not to skew RT when a failed request returns immediately
-		// TODO: Maybe we should control this behavior with a queryParam?
-		if grpcReponseStatus != "0" || regexpHTTPFailure.MatchString(responseCode) {
 			continue
 		}
 
@@ -161,7 +146,7 @@ func (a ThroughputAppender) populateResponseTimeMap(responseTimeMap map[string]f
 			continue
 		}
 
-		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it
+		// Should not happen but if NaN for any reason, Just skip it
 		if math.IsNaN(val) {
 			continue
 		}
@@ -174,22 +159,23 @@ func (a ThroughputAppender) populateResponseTimeMap(responseTimeMap map[string]f
 		}
 
 		if inject {
-			// Do not set response time on the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
-			a.addResponseTime(responseTimeMap, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			// Only set throughput on the outgoing edge. On the incoming edge, we can't validly aggregate thoughputs of the outgoing edges
+			// - analogous to https://issues.redhat.com/browse/KIALI-2297, we can't assume even distribution
+			a.addThroughput(throughputMap, val, destCluster, destSvcNs, destSvcName, "", "", "", destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addResponseTime(responseTimeMap, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
+			a.addThroughput(throughputMap, val, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
 
-func (a ThroughputAppender) addResponseTime(responseTimeMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
+func (a ThroughputAppender) addThroughput(throughputMap map[string]float64, val float64, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
 	sourceID, _ := graph.Id(sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
 	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	key := fmt.Sprintf("%s %s", sourceID, destID)
 
 	// For edges within the namespace we may get a responseTime reported from both the incoming and outgoing
 	// traffic queries.  We assume here the first reported value is preferred (i.e. defer to query order)
-	if _, found := responseTimeMap[key]; !found {
-		responseTimeMap[key] = val
+	if _, found := throughputMap[key]; !found {
+		throughputMap[key] = val
 	}
 }

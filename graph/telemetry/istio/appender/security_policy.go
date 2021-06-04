@@ -114,7 +114,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lCsp, cspOk := m["connection_security_policy"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !sourcePrincipalOk || !destPrincipalOk || !cspOk {
-			log.Warningf("Skipping %v, missing expected labels", m.String())
+			log.Warningf("populateSecurityPolicyMap: Skipping %s, missing expected labels", m.String())
 			continue
 		}
 

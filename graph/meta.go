@@ -37,6 +37,7 @@ const (
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
+	Throughput            MetadataKey = "throughput"
 )
 
 // DestServicesMetadata key=Service.Key()
