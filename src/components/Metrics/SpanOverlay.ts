@@ -28,6 +28,10 @@ export class SpanOverlay {
     this.spans = [];
   }
 
+  setSpans(spans: Span[]) {
+    this.spans = spans;
+  }
+
   fetch(opts: FetchOptions) {
     const boundsMillis = guardTimeRange(opts.range, durationToBounds, b => b);
     const defaultFrom = new Date().getTime() - defaultMetricsDuration * 1000;

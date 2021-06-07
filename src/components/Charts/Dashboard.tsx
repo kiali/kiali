@@ -1,21 +1,16 @@
 import * as React from 'react';
-import { style } from 'typestyle';
 import { Grid, GridItem } from '@patternfly/react-core';
-import { getTheme, ChartThemeColor, ChartThemeVariant } from '@patternfly/react-charts';
+import { ChartThemeColor, ChartThemeVariant, getTheme } from '@patternfly/react-charts';
 
 import { AllPromLabelsValues } from 'types/Metrics';
-import { DashboardModel, ChartModel } from 'types/Dashboards';
+import { ChartModel, DashboardModel, SpanValue } from 'types/Dashboards';
 import { getDataSupplier } from 'utils/VictoryChartsUtils';
 import { Overlay } from 'types/Overlay';
 import KChart from './KChart';
-import { RawOrBucket, LineInfo } from 'types/VictoryChartInfo';
+import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
 import { BrushHandlers } from './Container';
 
-const expandedChartContainerStyle = style({
-  height: 'calc(100vh - 248px)'
-});
-
-type Props<T extends LineInfo> = {
+export type Props<T extends LineInfo> = {
   colors?: string[];
   dashboard: DashboardModel;
   maximizedChart?: string;
@@ -24,6 +19,10 @@ type Props<T extends LineInfo> = {
   labelPrettifier?: (key: string, value: string) => string;
   onClick?: (chart: ChartModel, datum: RawOrBucket<T>) => void;
   brushHandlers?: BrushHandlers;
+  template?: string;
+  chartHeight: number;
+  showSpans: boolean;
+  customMetric?: boolean;
   overlay?: Overlay<T>;
   timeWindow?: [Date, Date];
 };
@@ -40,13 +39,41 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     };
   }
 
-  render() {
-    if (this.state.maximizedChart) {
-      const chart = this.props.dashboard.charts.find(c => c.name === this.state.maximizedChart);
-      if (chart) {
-        return <div className={expandedChartContainerStyle}>{this.renderChart(chart)}</div>;
+  renderCharts(charts: ChartModel[], spans?: SpanValue) {
+    return (
+      <Grid gutter={'md'}>
+        {charts.map(c => {
+          return (
+            <GridItem span={spans || c.spans} key={c.name}>
+              {this.renderChart(c)}
+            </GridItem>
+          );
+        })}
+      </Grid>
+    );
+  }
+
+  renderCustom() {
+    if (this.props.template && this.props.template === 'envoy') {
+      const chartsLength = this.props.dashboard.charts.length;
+      var nRows = 2;
+      var chartbyRow = ~~(chartsLength / nRows);
+      var extraChart = chartsLength % nRows === 0 ? 0 : 1;
+      var pos = 0;
+      var GridItems: JSX.Element[] = [];
+
+      for (var i = 0; i < nRows; i++) {
+        var to = pos + (i === 0 && extraChart ? chartbyRow + 1 : chartbyRow);
+        GridItems.push(
+          <GridItem span={12}>
+            {this.renderCharts(this.props.dashboard.charts.slice(pos, to), ~~(12 / (to - pos)) as SpanValue)}
+          </GridItem>
+        );
+        pos = to;
       }
+      return <Grid>{GridItems}</Grid>;
     }
+
     return (
       <Grid>
         {this.props.dashboard.charts.map(c => {
@@ -59,6 +86,40 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
       </Grid>
     );
   }
+
+  render() {
+    if (this.state.maximizedChart) {
+      const chart = this.props.dashboard.charts.find(c => c.name === this.state.maximizedChart);
+      if (chart) {
+        return this.renderChart(chart);
+      }
+    }
+    const requestCharts = this.props.dashboard.charts.filter(c => c.name.includes('Request'));
+    const responseCharts = this.props.dashboard.charts.filter(c => c.name.includes('Response'));
+    const tcpCharts = this.props.dashboard.charts.filter(c => c.name.includes('TCP'));
+
+    return this.props.customMetric ? (
+      this.renderCustom()
+    ) : (
+      <Grid>
+        <GridItem span={12}>{this.renderCharts(requestCharts, ~~(12 / requestCharts.length) as SpanValue)}</GridItem>
+        <GridItem span={6}>{this.renderCharts(responseCharts, ~~(12 / responseCharts.length) as SpanValue)}</GridItem>
+        <GridItem span={6}>{this.renderCharts(tcpCharts, ~~(12 / tcpCharts.length) as SpanValue)}</GridItem>
+      </Grid>
+    );
+  }
+
+  private getHeight = (): number => {
+    var gridheight = this.props.chartHeight;
+    var title = 30;
+    if (this.state.maximizedChart) {
+      return gridheight - title - 30;
+    }
+    if (this.props.template && this.props.template === 'envoy') {
+      return (gridheight - title * 3) / 2;
+    }
+    return (gridheight - title * 2) / 2;
+  };
 
   private renderChart(chart: ChartModel) {
     const colors = this.props.colors || getTheme(ChartThemeColor.multi, ChartThemeVariant.default).chart.colorScale;
@@ -74,7 +135,9 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     return (
       <KChart
         key={chart.name}
+        chartHeight={this.getHeight()}
         chart={chart}
+        showSpans={this.props.showSpans}
         data={dataSupplier()}
         onToggleMaximized={() => this.onToggleMaximized(chart.name)}
         isMaximized={this.state.maximizedChart !== undefined}

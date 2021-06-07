@@ -20,7 +20,7 @@ export type BrushHandlers = {
 const formatValue = (label: string, datum: RichDataPoint, value: number) => {
   // Formats a value based on unit and scale factor.
   // Scale factor is usually undefined, except when a second axis is in use (then it's the ratio between first axis and second axis maxs)
-  return label + ': ' + getFormatter(d3Format, datum.unit!)(value / (datum.scaleFactor || 1));
+  return label + ': ' + getFormatter(d3Format, datum.unit!, true)(value / (datum.scaleFactor || 1));
 };
 
 export const newBrushVoronoiContainer = (

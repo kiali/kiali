@@ -50,7 +50,8 @@
     "snyk": "snyk test",
     "analyze": "source-map-explorer build/static/js/main.*",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
-    "snyk-protect": "snyk protect"
+    "snyk-protect": "snyk protect",
+    "storybook": "start-storybook -p 6006 -s public"
   },
   "dependencies": {
     "@patternfly/patternfly": "2.71.6",
@@ -100,6 +101,12 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^6.2.9",
+    "@storybook/addon-essentials": "^6.2.9",
+    "@storybook/addon-links": "^6.2.9",
+    "@storybook/node-logger": "^6.2.9",
+    "@storybook/preset-create-react-app": "^3.1.7",
+    "@storybook/react": "^6.2.9",
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
@@ -128,6 +135,7 @@
   },
   "resolutions": {
     "ajv": "6.12.3",
+    "babel-loader": "8.1.0",
     "dot-prop": "4.2.1",
     "elliptic": "6.5.4",
     "handlebars": "4.7.7",
@@ -158,5 +166,17 @@
     "last 2 versions",
     "not ie <= 11"
   ],
-  "snyk": true
+  "snyk": true,
+  "eslintConfig": {
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
+    ]
+  }
 }

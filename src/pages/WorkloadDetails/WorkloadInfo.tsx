@@ -19,6 +19,8 @@ import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selec
 import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
 import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import WorkloadPods from './WorkloadPods';
+import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
+import history, { URLParam } from '../../app/History';
 
 type WorkloadInfoProps = {
   namespace: string;
@@ -179,6 +181,20 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     return validations;
   }
 
+  goToMetrics = (e: GraphEdgeTapEvent) => {
+    if (e.source !== e.target && this.props.workload) {
+      const direction = e.source === this.props.workload.name ? 'outbound' : 'inbound';
+      const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
+      const urlParams = new URLSearchParams(history.location.search);
+      urlParams.set('tab', direction === 'inbound' ? 'in_metrics' : 'out_metrics');
+      urlParams.set(
+        URLParam.BY_LABELS,
+        destination + '=' + (e.source === this.props.workload.name ? e.target : e.source)
+      );
+      history.replace(history.location.pathname + '?' + urlParams.toString());
+    }
+  };
+
   render() {
     const workload = this.props.workload;
     const pods = workload?.pods || [];
@@ -241,6 +257,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             </GridItem>
             <GridItem span={8}>
               <MiniGraphCard
+                onEdgeTap={this.goToMetrics}
                 dataSource={this.graphDataSource}
                 mtlsEnabled={this.props.mtlsEnabled}
                 graphContainerStyle={graphContainerStyle}

@@ -113,7 +113,7 @@ describe('Metrics for a service', () => {
         <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} />
       )
       .run(done, wrapper => {
-        expect(wrapper.find('GridItem')).toHaveLength(1);
+        expect(wrapper.find('GridItem')).toHaveLength(3);
       });
   });
 
@@ -135,7 +135,7 @@ describe('Metrics for a service', () => {
         <IstioMetrics namespace="ns" object="svc" objectType={MetricsObjectTypes.SERVICE} direction={'inbound'} />
       )
       .run(done, wrapper => {
-        expect(wrapper.find('GridItem')).toHaveLength(5);
+        expect(wrapper.find('GridItem')).toHaveLength(3);
       });
   }, 10000); // Increase timeout for this test
 });
@@ -168,7 +168,7 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} />
       )
       .run(done, wrapper => {
-        expect(wrapper.find('GridItem')).toHaveLength(1);
+        expect(wrapper.find('GridItem')).toHaveLength(3);
       });
   });
 
@@ -190,7 +190,7 @@ describe('Inbound Metrics for a workload', () => {
         <IstioMetrics namespace="ns" object="wkd" objectType={MetricsObjectTypes.WORKLOAD} direction={'inbound'} />
       )
       .run(done, wrapper => {
-        expect(wrapper.find('GridItem')).toHaveLength(5);
+        expect(wrapper.find('GridItem')).toHaveLength(3);
       });
   }, 10000); // Increase timeout for this test
 });

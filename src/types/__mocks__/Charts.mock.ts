@@ -28,12 +28,14 @@ export const generateRandomMetricChart = (
   title: string,
   names: string[],
   spans: SpanValue,
+  rowSpans?: SpanValue | undefined,
   seed?: string
 ): ChartModel => {
   return generateRandomMetricChartWithLabels(
     title,
     names.map(n => ({ name: n })),
     spans,
+    rowSpans,
     seed
   );
 };
@@ -42,6 +44,7 @@ export const generateRandomScatterChart = (
   title: string,
   names: string[],
   spans: SpanValue,
+  rowSpans?: SpanValue | undefined,
   seed?: string
 ): ChartModel => {
   if (seed) {
@@ -51,7 +54,8 @@ export const generateRandomScatterChart = (
     name: title,
     unit: 'seconds',
     chartType: 'scatter',
-    spans: spans,
+    spans,
+    rowSpans,
     metrics: genSeries(names.map(n => ({ name: n }))),
     startCollapsed: false
   };
@@ -61,6 +65,7 @@ export const generateRandomMetricChartWithLabels = (
   title: string,
   defs: Def[],
   spans: SpanValue,
+  rowSpans?: SpanValue | undefined,
   seed?: string
 ): ChartModel => {
   if (seed) {
@@ -69,13 +74,19 @@ export const generateRandomMetricChartWithLabels = (
   return {
     name: title,
     unit: 'bytes',
-    spans: spans,
+    spans,
+    rowSpans,
     metrics: genSeries(defs),
     startCollapsed: false
   };
 };
 
-export const generateRandomHistogramChart = (title: string, spans: SpanValue, seed?: string): ChartModel => {
+export const generateRandomHistogramChart = (
+  title: string,
+  spans: SpanValue,
+  rowSpans?: SpanValue | undefined,
+  seed?: string
+): ChartModel => {
   if (seed) {
     seedrandom(seed, { global: true });
   }
@@ -108,7 +119,8 @@ export const generateRandomHistogramChart = (title: string, spans: SpanValue, se
   return {
     name: title,
     unit: 'bitrate',
-    spans: spans,
+    spans,
+    rowSpans,
     metrics: histo,
     startCollapsed: false
   };

@@ -16,6 +16,8 @@ import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selec
 import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
 import IstioConfigCard from '../../components/IstioConfigCard/IstioConfigCard';
 import ServiceNetwork from './ServiceNetwork';
+import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
+import history, { URLParam } from '../../app/History';
 
 interface Props extends ServiceId {
   duration: DurationInSeconds;
@@ -55,6 +57,17 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
       this.fetchBackend();
     }
   }
+
+  goToMetrics = (e: GraphEdgeTapEvent) => {
+    if (e.source !== e.target) {
+      const direction = e.source === this.props.service ? 'outbound' : 'inbound';
+      const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
+      const urlParams = new URLSearchParams(history.location.search);
+      urlParams.set('tab', 'metrics');
+      urlParams.set(URLParam.BY_LABELS, destination + '=' + (e.source === this.props.service ? e.target : e.source));
+      history.replace(history.location.pathname + '?' + urlParams.toString());
+    }
+  };
 
   private fetchBackend = () => {
     if (!this.props.serviceDetails) {
@@ -111,6 +124,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
               <MiniGraphCard
                 dataSource={this.graphDataSource}
                 mtlsEnabled={this.props.mtlsEnabled}
+                onEdgeTap={this.goToMetrics}
                 graphContainerStyle={graphContainerStyle}
               />
             </GridItem>

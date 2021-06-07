@@ -41,6 +41,7 @@ export enum URLParam {
   REFRESH_INTERVAL = 'refresh',
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
+  SHOW_SPANS = 'spans',
   SORT = 'sort',
   TO = 'to',
   EXPERIMENTAL_FLAGS = 'xflags'

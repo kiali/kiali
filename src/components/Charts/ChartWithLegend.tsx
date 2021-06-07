@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Chart, ChartGroup, ChartAxis, ChartScatter, ChartProps, ChartTooltipProps } from '@patternfly/react-charts';
-import { VictoryLegend, VictoryPortal, VictoryLabel, VictoryBoxPlot } from 'victory';
+import { Chart, ChartGroup, ChartScatter, ChartProps, ChartTooltipProps } from '@patternfly/react-charts';
+import { VictoryAxis, VictoryBoxPlot, VictoryLabel, VictoryLegend, VictoryPortal, VictoryTheme } from 'victory';
 import { format as d3Format } from 'd3-format';
-
-import { getFormatter } from 'utils/Formatter';
+import './Charts.css';
+import { getFormatter, getUnit } from 'utils/Formatter';
 import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
 import { Overlay } from 'types/Overlay';
 import { newBrushVoronoiContainer, BrushHandlers } from './Container';
@@ -20,6 +20,8 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   overrideSeriesComponentStyle?: boolean;
   stroke?: boolean;
   fill?: boolean;
+  showSpans?: boolean;
+  isMaximized?: boolean;
   groupOffset?: number;
   sizeRatio?: number;
   moreChartProps?: ChartProps;
@@ -41,6 +43,17 @@ type Padding = { top: number; left: number; right: number; bottom: number };
 
 const overlayName = 'overlay';
 
+const AxisStyle = {
+  tickLabels: { fontSize: 12, padding: 2 },
+  grid: {
+    fill: 'none',
+    stroke: '#ECEFF1',
+    strokeDasharray: '10, 5',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    pointerEvents: 'painted'
+  }
+};
 class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
@@ -78,12 +91,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
   render() {
     const scaleInfo = this.scaledAxisInfo(this.props.data);
     const legendData = this.buildLegendData();
-    const legend = buildLegendInfo(legendData, this.state.width);
+    const chartHeight = this.props.chartHeight || 300;
+    const legend = buildLegendInfo(legendData, this.state.width, chartHeight);
     const overlayIdx = this.props.data.length;
-    const showOverlay = (this.props.overlay && !this.state.hiddenSeries.has(overlayName)) || false;
-    const overlayRightPadding = showOverlay ? 30 : 0;
-
-    const height = (this.props.chartHeight || 300) + legend.height;
+    const showOverlay = (this.props.overlay && this.props.showSpans) || false;
+    const overlayRightPadding = showOverlay ? 15 : 0;
     const padding: Padding = { top: 10, bottom: 20, left: 40, right: 10 + overlayRightPadding };
     padding.bottom += legend.height;
 
@@ -105,11 +117,11 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
     let overlayFactor = 1.0;
+    const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
     if (this.props.overlay) {
       this.registerEvents(events, overlayIdx, overlayName, overlayName);
       // Normalization for y-axis display to match y-axis domain of the main data
       // (see https://formidable.com/open-source/victory/gallery/multiple-dependent-axes/)
-      const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
       const overlayMax = Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y));
       if (overlayMax !== 0) {
         overlayFactor = mainMax / overlayMax;
@@ -138,13 +150,14 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
       <CustomTooltip showTime={true} {...tooltipHooks} />
     );
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
+
     return (
-      <div ref={this.containerRef}>
+      <div ref={this.containerRef} style={{ marginTop: '10px', height: chartHeight }}>
         <Chart
-          height={height}
           width={this.state.width}
           padding={padding}
           events={events}
+          height={chartHeight}
           containerComponent={newBrushVoronoiContainer(
             labelComponent,
             this.props.brushHandlers,
@@ -155,6 +168,54 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
           domainPadding={{ y: 1, x: this.props.xAxis === 'series' ? 50 : undefined }}
           {...this.props.moreChartProps}
         >
+          {this.props.xAxis === 'series' ? (
+            <VictoryAxis
+              domain={[0, filteredData.length + 1]}
+              style={AxisStyle}
+              tickValues={filteredData.map(s => s.legendItem.name)}
+              theme={VictoryTheme.material}
+              tickFormat={() => ''}
+            />
+          ) : (
+            <VictoryAxis
+              tickCount={scaleInfo.count}
+              style={AxisStyle}
+              theme={VictoryTheme.material}
+              domain={this.props.timeWindow}
+            />
+          )}
+          <VictoryAxis
+            tickLabelComponent={
+              <VictoryPortal>
+                <VictoryLabel />
+              </VictoryPortal>
+            }
+            dependentAxis={true}
+            tickFormat={getFormatter(d3Format, this.props.unit)}
+            label={getUnit(d3Format, this.props.unit, mainMax)}
+            axisLabelComponent={<VictoryLabel y={5} x={20} angle={0} renderInPortal={true} />}
+            theme={VictoryTheme.material}
+            style={AxisStyle}
+          />
+          {useSecondAxis && this.props.overlay && (
+            <VictoryAxis
+              dependentAxis={true}
+              offsetX={this.state.width - overlayRightPadding}
+              style={AxisStyle}
+              tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
+              tickLabelComponent={<VictoryLabel dx={15} textAnchor={'start'} />}
+              theme={VictoryTheme.material}
+              label={getUnit(
+                d3Format,
+                this.props.overlay?.info.lineInfo.unit || '',
+                Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
+              )}
+              axisLabelComponent={
+                <VictoryLabel y={5} x={this.state.width - overlayRightPadding} angle={0} renderInPortal={true} />
+              }
+            />
+          )}
+          {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries(chartHeight - legend.height)}
           {showOverlay &&
             (this.props.overlay!.info.buckets ? (
               <VictoryBoxPlot
@@ -178,55 +239,19 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
                 style={{ data: this.props.overlay!.info.dataStyle }}
               />
             ))}
-          {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries()}
-          {this.props.xAxis === 'series' ? (
-            <ChartAxis
-              domain={[0, filteredData.length + 1]}
-              style={{ tickLabels: { fontSize: 12, padding: 2 } }}
-              tickValues={filteredData.map(s => s.legendItem.name)}
-              tickFormat={() => ''}
-            />
-          ) : (
-            <ChartAxis
-              tickCount={scaleInfo.count}
-              style={{ tickLabels: { fontSize: 12, padding: 2 } }}
-              domain={this.props.timeWindow}
-            />
-          )}
-          <ChartAxis
-            tickLabelComponent={
-              <VictoryPortal>
-                <VictoryLabel />
-              </VictoryPortal>
-            }
-            dependentAxis={true}
-            tickFormat={getFormatter(d3Format, this.props.unit)}
-            style={{ tickLabels: { fontSize: 12, padding: 2 } }}
-          />
-          {useSecondAxis && (
-            <ChartAxis
-              dependentAxis={true}
-              offsetX={this.state.width - overlayRightPadding}
-              style={{
-                axisLabel: { padding: -25 }
-              }}
-              tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit || '')(t / overlayFactor)}
-              label={this.props.overlay!.info.lineInfo.name}
-            />
-          )}
           <VictoryLegend
             name={'serie-legend'}
             data={legendData}
-            x={50}
-            y={height - legend.height}
+            x={10}
+            y={chartHeight - legend.height}
             height={legend.height}
             width={this.state.width}
             itemsPerRow={legend.itemsPerRow}
             style={{
               data: { cursor: 'pointer' },
-              labels: { cursor: 'pointer' }
+              labels: { cursor: 'pointer', fontSize: legend.fontSizeLabels }
             }}
-            borderPadding={{ top: 10 }}
+            borderPadding={{ top: 5 }}
             symbolSpacer={5}
           />
         </Chart>
@@ -234,10 +259,10 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
     );
   }
 
-  private renderTimeSeries = () => {
+  private renderTimeSeries = (height: number) => {
     const groupOffset = this.props.groupOffset || 0;
     return (
-      <ChartGroup offset={groupOffset}>
+      <ChartGroup offset={groupOffset} height={height}>
         {this.props.data.map((serie, idx) => {
           if (this.state.hiddenSeries.has(serie.legendItem.name)) {
             return undefined;
@@ -299,20 +324,14 @@ class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React
   };
 
   private buildLegendData(): LegendItem[] {
-    const items = this.props.data.map(s => {
+    const truncate = this.props.data.length > 4;
+    return this.props.data.map(s => {
+      const name = truncate ? s.legendItem.name.slice(0, 8) : s.legendItem.name;
       if (this.state.hiddenSeries.has(s.legendItem.name)) {
-        return { ...s.legendItem, symbol: { ...s.legendItem.symbol, fill: '#72767b' } };
+        return { name, symbol: { ...s.legendItem.symbol, fill: '#72767b' } };
       }
-      return s.legendItem;
+      return { ...s.legendItem, name };
     });
-    if (this.props.overlay) {
-      let item = this.props.overlay.vcLine.legendItem;
-      if (this.state.hiddenSeries.has(overlayName)) {
-        item = { ...item, symbol: { ...item.symbol, fill: '#72767b' } };
-      }
-      items.push(item);
-    }
-    return items;
   }
 
   private registerEvents(events: VCEvent[], idx: number, serieID: string, serieName: string) {

@@ -1,7 +1,7 @@
 import React from 'react';
 
 // TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 76 + 118;
+export const TOP_PADDING = 76 + 118;
 
 interface Props {
   className?: any;

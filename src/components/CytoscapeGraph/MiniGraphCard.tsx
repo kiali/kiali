@@ -13,7 +13,7 @@ import {
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeLabelMode, GraphType, NodeType } from '../../types/Graph';
-import CytoscapeGraph, { GraphNodeTapEvent } from './CytoscapeGraph';
+import CytoscapeGraph, { GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { DagreGraph } from './graphs/DagreGraph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -26,6 +26,7 @@ const initGraphContainerStyle = style({ width: '100%', height: '100%' });
 
 type MiniGraphCardProps = {
   dataSource: GraphDataSource;
+  onEdgeTap?: (e: GraphEdgeTapEvent) => void;
   mtlsEnabled: boolean;
   graphContainerStyle?: string;
 };
@@ -109,6 +110,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
               edgeLabelMode={EdgeLabelMode.REQUEST_RATE}
               isMTLSEnabled={this.props.mtlsEnabled}
               isMiniGraph={true}
+              onEdgeTap={this.props.onEdgeTap}
               layout={DagreGraph.getLayout()}
               onNodeTap={this.handleNodeTap}
               ref={refInstance => this.setCytoscapeGraph(refInstance)}

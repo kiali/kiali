@@ -6,7 +6,6 @@ import responseFlags from 'utils/ResponseFlags';
 import { AggregationModel, DashboardModel } from 'types/Dashboards';
 import { AllPromLabelsValues, Metric, PromLabel, SingleLabelValues } from 'types/Metrics';
 import { MetricsQuery } from 'types/MetricsOptions';
-
 // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
 export const defaultMetricsDuration: DurationInSeconds = 600;
 
@@ -148,13 +147,18 @@ export const timeRangeToOptions = (range: TimeRange, opts: MetricsQuery) => {
 export const retrieveMetricsSettings = (): MetricsSettings => {
   const urlParams = new URLSearchParams(history.location.search);
   const settings: MetricsSettings = {
+    showSpans: false,
     showAverage: true,
-    showQuantiles: ['0.5', '0.99'],
+    showQuantiles: [],
     labelsSettings: new Map()
   };
   const avg = urlParams.get(URLParam.SHOW_AVERAGE);
   if (avg !== null) {
     settings.showAverage = avg === 'true';
+  }
+  const spans = urlParams.get(URLParam.SHOW_SPANS);
+  if (spans !== null) {
+    settings.showSpans = spans === 'true';
   }
   const quantiles = urlParams.get(URLParam.QUANTILES);
   if (quantiles !== null) {

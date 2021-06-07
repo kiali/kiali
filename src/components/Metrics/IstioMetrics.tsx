@@ -3,16 +3,14 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
-
-import { RenderComponentScroll } from 'components/Nav/Page';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from 'types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
 import * as AlertUtils from 'utils/AlertUtils';
-
+import { RenderComponentScroll } from 'components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
@@ -30,12 +28,15 @@ import { Dashboard } from 'components/Charts/Dashboard';
 import { timeRangeSelector } from 'store/Selectors';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
+import { maximizeButtonStyle } from '../Charts/KChart';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay<JaegerLineInfo>;
+  tabHeight: number;
+  showSpans: boolean;
 };
 
 type ObjectId = {
@@ -61,6 +62,10 @@ const displayFlex = style({
   display: 'flex'
 });
 
+const fullHeightStyle = style({
+  height: '100%'
+});
+
 class IstioMetrics extends React.Component<Props, MetricsState> {
   options: IstioMetricsOptions;
   spanOverlay: SpanOverlay;
@@ -71,7 +76,12 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
+    this.state = {
+      labelsSettings: settings.labelsSettings,
+      grafanaLinks: [],
+      tabHeight: 300,
+      showSpans: settings.showSpans
+    };
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
@@ -230,39 +240,45 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
+    // SPACE : Padding article (40 bottom and top) , 51 toolbar more 15 padding
+    const toolbarSpace = 40 + 51 + 40;
+    const dashboardHeight = this.state.tabHeight - toolbarSpace;
     return (
-      <>
-        <RenderComponentScroll>
-          <Grid>
-            <GridItem span={12}>
-              <Card>
-                <CardBody>
-                  {this.renderOptionsBar()}
-                  {this.state.dashboard && (
-                    <Dashboard
-                      dashboard={this.state.dashboard}
-                      labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                      maximizedChart={expandedChart}
-                      expandHandler={this.expandHandler}
-                      onClick={this.onClickDataPoint}
-                      labelPrettifier={MetricsHelper.prettyLabelValues}
-                      overlay={this.state.spanOverlay}
-                      timeWindow={evalTimeRange(this.props.timeRange)}
-                      brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                    />
-                  )}
-                </CardBody>
-              </Card>
-            </GridItem>
-          </Grid>
-        </RenderComponentScroll>
-      </>
+      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+        <Card className={fullHeightStyle}>
+          <CardBody>
+            {this.renderOptionsBar()}
+            {this.state.dashboard && (
+              <Dashboard
+                dashboard={this.state.dashboard}
+                labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                maximizedChart={expandedChart}
+                expandHandler={this.expandHandler}
+                onClick={this.onClickDataPoint}
+                labelPrettifier={MetricsHelper.prettyLabelValues}
+                overlay={this.state.spanOverlay}
+                showSpans={this.state.showSpans}
+                chartHeight={dashboardHeight}
+                timeWindow={evalTimeRange(this.props.timeRange)}
+                brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+              />
+            )}
+          </CardBody>
+        </Card>
+      </RenderComponentScroll>
     );
   }
 
+  private onSpans = (checked: boolean) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParam.SHOW_SPANS, String(checked));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
+    this.setState({ showSpans: !this.state.showSpans });
+  };
+
   private renderOptionsBar() {
     return (
-      <Toolbar style={{ paddingBottom: 8 }}>
+      <Toolbar style={{ paddingBottom: 15 }}>
         <ToolbarGroup>
           <ToolbarItem>
             <MetricsSettingsDropdown
@@ -276,6 +292,30 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
         <ToolbarGroup>
           <ToolbarItem className={displayFlex}>
             <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <ToolbarItem className={displayFlex}>
+            <div style={maximizeButtonStyle} className="pf-c-check">
+              <input
+                key={`spans-show-chart`}
+                id={`spans-show-`}
+                className="pf-c-check__input"
+                style={{ marginBottom: '3px' }}
+                type="checkbox"
+                checked={this.state.showSpans}
+                onChange={event => this.onSpans(event.target.checked)}
+              />
+              <label
+                className="pf-c-check__label"
+                style={{
+                  paddingLeft: '5px',
+                  paddingRight: '5px'
+                }}
+              >
+                Spans
+              </label>
+            </div>
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>

@@ -15,6 +15,7 @@ export interface ChartModel {
   name: string;
   unit: string;
   spans: SpanValue;
+  rowSpans?: SpanValue;
   chartType?: ChartType;
   min?: number;
   max?: number;

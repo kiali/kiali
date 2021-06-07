@@ -1,6 +1,7 @@
 export interface LegendInfo {
   height: number;
   itemsPerRow: number;
+  fontSizeLabels: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -8,7 +8,7 @@ describe('Custom metrics', () => {
       .addMock('getCustomDashboard', { title: 'foo', aggregations: [], charts: [], externalLinks: [] })
       .mountWithStore(<CustomMetrics namespace="ns" app="test" template="vertx" />)
       .run(done, wrapper => {
-        expect(wrapper.find('GridItem')).toHaveLength(1);
+        expect(wrapper.find('GridItem')).toHaveLength(0);
       });
   });
 });

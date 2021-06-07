@@ -15,5 +15,6 @@ export type LabelsSettings = Map<PromLabel, LabelSettings>;
 export interface MetricsSettings {
   labelsSettings: LabelsSettings;
   showAverage: boolean;
+  showSpans: boolean;
   showQuantiles: Quantiles[];
 }

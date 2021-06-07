@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarGroup, ToolbarItem, Grid, GridItem, Card, CardBody } from '@patternfly/react-core';
+import { Toolbar, ToolbarGroup, ToolbarItem, Card, CardBody } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
@@ -34,6 +34,8 @@ type MetricsState = {
   labelsSettings: LabelsSettings;
   grafanaLinks: ExternalLink[];
   spanOverlay?: Overlay<JaegerLineInfo>;
+  tabHeight: number;
+  showSpans: boolean;
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -56,6 +58,10 @@ const displayFlex = style({
   display: 'flex'
 });
 
+const fullHeightStyle = style({
+  height: '100%'
+});
+
 class CustomMetrics extends React.Component<Props, MetricsState> {
   options: DashboardQuery;
   spanOverlay: SpanOverlay;
@@ -66,7 +72,12 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
+    this.state = {
+      labelsSettings: settings.labelsSettings,
+      grafanaLinks: [],
+      tabHeight: 300,
+      showSpans: settings.showSpans
+    };
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
@@ -175,40 +186,51 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
+    // SPACE : Padding article (40 bottom and top) , 51 toolbar more 15 padding
+    const toolbarSpace = 40 + 51 + 15;
+    const dashboardHeight = this.state.tabHeight - toolbarSpace;
+
     return (
       <>
-        <RenderComponentScroll>
-          <Grid style={{ padding: '10px' }}>
-            <GridItem span={12}>
-              <Card>
-                <CardBody>
-                  {this.renderOptionsBar()}
-                  {this.state.dashboard && (
-                    <Dashboard
-                      dashboard={this.state.dashboard}
-                      labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                      maximizedChart={expandedChart}
-                      expandHandler={this.expandHandler}
-                      onClick={this.onClickDataPoint}
-                      overlay={this.state.spanOverlay}
-                      timeWindow={evalTimeRange(this.props.timeRange)}
-                      brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                    />
-                  )}
-                </CardBody>
-              </Card>
-            </GridItem>
-          </Grid>
+        <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+          <Card className={fullHeightStyle}>
+            <CardBody>
+              {this.renderOptionsBar()}
+              {this.state.dashboard && (
+                <Dashboard
+                  dashboard={this.state.dashboard}
+                  customMetric={true}
+                  template={this.props.template}
+                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                  maximizedChart={expandedChart}
+                  expandHandler={this.expandHandler}
+                  onClick={this.onClickDataPoint}
+                  showSpans={this.state.showSpans}
+                  chartHeight={dashboardHeight}
+                  overlay={this.state.spanOverlay}
+                  timeWindow={evalTimeRange(this.props.timeRange)}
+                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                />
+              )}
+            </CardBody>
+          </Card>
         </RenderComponentScroll>
       </>
     );
   }
 
+  private onSpans = (checked: boolean) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParam.SHOW_SPANS, String(checked));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
+    this.setState({ showSpans: !this.state.showSpans });
+  };
+
   private renderOptionsBar() {
     const hasHistograms =
       this.state.dashboard !== undefined && this.state.dashboard.charts.some(chart => chart.metrics.some(m => m.stat));
     return (
-      <Toolbar style={{ paddingBottom: 8 }}>
+      <Toolbar style={{ paddingBottom: 15 }}>
         <ToolbarGroup>
           <ToolbarItem>
             <MetricsSettingsDropdown
@@ -222,6 +244,30 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
         <ToolbarGroup>
           <ToolbarItem className={displayFlex}>
             <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <ToolbarItem className={displayFlex}>
+            <div className="pf-c-check">
+              <input
+                key={`spans-show-chart`}
+                id={`spans-show-`}
+                className="pf-c-check__input"
+                style={{ marginBottom: '3px' }}
+                type="checkbox"
+                checked={this.state.showSpans}
+                onChange={event => this.onSpans(event.target.checked)}
+              />
+              <label
+                className="pf-c-check__label"
+                style={{
+                  paddingLeft: '5px',
+                  paddingRight: '5px'
+                }}
+              >
+                Spans
+              </label>
+            </div>
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>

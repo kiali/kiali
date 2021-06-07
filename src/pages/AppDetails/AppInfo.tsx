@@ -13,6 +13,8 @@ import { connect } from 'react-redux';
 import { durationSelector, meshWideMTLSEnabledSelector } from '../../store/Selectors';
 import { style } from 'typestyle';
 import MiniGraphCard from '../../components/CytoscapeGraph/MiniGraphCard';
+import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
+import history, { URLParam } from '../../app/History';
 
 type AppInfoProps = {
   app?: App;
@@ -59,6 +61,17 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
       .catch(error => AlertUtils.addError('Could not fetch Health.', error));
   };
 
+  goToMetrics = (e: GraphEdgeTapEvent) => {
+    if (e.source !== e.target && this.props.app) {
+      const direction = e.source === this.props.app.name ? 'outbound' : 'inbound';
+      const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
+      const urlParams = new URLSearchParams(history.location.search);
+      urlParams.set('tab', direction === 'inbound' ? 'in_metrics' : 'out_metrics');
+      urlParams.set(URLParam.BY_LABELS, destination + '=' + (e.source === this.props.app.name ? e.target : e.source));
+      history.replace(history.location.pathname + '?' + urlParams.toString());
+    }
+  };
+
   render() {
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
@@ -73,6 +86,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           </GridItem>
           <GridItem span={8}>
             <MiniGraphCard
+              onEdgeTap={this.goToMetrics}
               dataSource={this.graphDataSource}
               mtlsEnabled={this.props.mtlsEnabled}
               graphContainerStyle={graphContainerStyle}
