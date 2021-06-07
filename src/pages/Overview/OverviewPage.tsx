@@ -302,7 +302,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       });
   }
 
-  fetchHealthChunk(chunk: NamespaceInfo[], duration: number, type: OverviewType) {
+  fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType) {
     const apiFunc = switchType(
       type,
       API.getNamespaceAppHealth,

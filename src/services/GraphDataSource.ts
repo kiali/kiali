@@ -423,7 +423,8 @@ export default class GraphDataSource {
       return;
     }
 
-    const duration = this.fetchParameters.duration;
+    const duration = this.graphDuration;
+    const queryTime = this.graphTimestamp;
     const appNamespacePromises = new Map<string, Promise<NamespaceAppHealth>>();
     const serviceNamespacePromises = new Map<string, Promise<NamespaceServiceHealth>>();
     const workloadNamespacePromises = new Map<string, Promise<NamespaceWorkloadHealth>>();
@@ -448,7 +449,7 @@ export default class GraphDataSource {
         let promise = workloadNamespacePromises.get(namespace);
         const nodeHealth = { node: node, key: node.data.workload! };
         if (!promise) {
-          promise = API.getNamespaceWorkloadHealth(namespace, duration);
+          promise = API.getNamespaceWorkloadHealth(namespace, duration, queryTime);
           workloadNamespacePromises.set(namespace, promise);
           promiseToNode.set(promise, [nodeHealth]);
         } else {
@@ -461,7 +462,7 @@ export default class GraphDataSource {
             let promise = appNamespacePromises.get(namespace);
             const nodeHealth = { node: node, key: node.data.app! };
             if (!promise) {
-              promise = API.getNamespaceAppHealth(namespace, duration);
+              promise = API.getNamespaceAppHealth(namespace, duration, queryTime);
               appNamespacePromises.set(namespace, promise);
               promiseToNode.set(promise, [nodeHealth]);
             } else {
@@ -475,7 +476,7 @@ export default class GraphDataSource {
               let promise = appNamespacePromises.get(namespace);
               const nodeHealth = { node: node, key: node.data.app! };
               if (!promise) {
-                promise = API.getNamespaceAppHealth(namespace, duration);
+                promise = API.getNamespaceAppHealth(namespace, duration, queryTime);
                 appNamespacePromises.set(namespace, promise);
                 promiseToNode.set(promise, [nodeHealth]);
               } else {
@@ -489,7 +490,7 @@ export default class GraphDataSource {
             let promise = serviceNamespacePromises.get(namespace);
             const nodeHealth = { node: node, key: node.data.service! };
             if (!promise) {
-              promise = API.getNamespaceServiceHealth(namespace, duration);
+              promise = API.getNamespaceServiceHealth(namespace, duration, queryTime);
               serviceNamespacePromises.set(namespace, promise);
               promiseToNode.set(promise, [nodeHealth]);
             } else {

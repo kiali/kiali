@@ -6,7 +6,7 @@ import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
-import { DurationInSeconds, HTTP_VERBS, Password, UserName } from '../types/Common';
+import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
 import { GraphDefinition, NodeParamsType, NodeType } from '../types/Graph';
@@ -255,24 +255,24 @@ export const getCustomDashboard = (ns: string, tpl: string, params: DashboardQue
 export const getServiceHealth = (
   namespace: string,
   service: string,
-  durationSec: number,
+  duration: DurationInSeconds,
   hasSidecar: boolean
 ): Promise<ServiceHealth> => {
-  const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
+  const params = duration ? { rateInterval: String(duration) + 's' } : {};
   return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}).then(response =>
-    ServiceHealth.fromJson(namespace, service, response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
+    ServiceHealth.fromJson(namespace, service, response.data, { rateInterval: duration, hasSidecar: hasSidecar })
   );
 };
 
 export const getAppHealth = (
   namespace: string,
   app: string,
-  durationSec: number,
+  duration: DurationInSeconds,
   hasSidecar: boolean
 ): Promise<AppHealth> => {
-  const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
+  const params = duration ? { rateInterval: String(duration) + 's' } : {};
   return newRequest(HTTP_VERBS.GET, urls.appHealth(namespace, app), params, {}).then(response =>
-    AppHealth.fromJson(namespace, app, response.data, { rateInterval: durationSec, hasSidecar: hasSidecar })
+    AppHealth.fromJson(namespace, app, response.data, { rateInterval: duration, hasSidecar: hasSidecar })
   );
 };
 
@@ -290,35 +290,49 @@ export const getWorkloadHealth = (
   );
 };
 
-export const getNamespaceAppHealth = (namespace: string, durationSec: number): Promise<NamespaceAppHealth> => {
+export const getNamespaceAppHealth = (
+  namespace: string,
+  duration: DurationInSeconds,
+  queryTime?: TimeInSeconds
+): Promise<NamespaceAppHealth> => {
   const params: any = {
     type: 'app'
   };
-  if (durationSec) {
-    params.rateInterval = String(durationSec) + 's';
+  if (duration) {
+    params.rateInterval = String(duration) + 's';
+  }
+  if (queryTime) {
+    params.queryTime = String(queryTime);
   }
   return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
-      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], { rateInterval: durationSec, hasSidecar: true });
+      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], { rateInterval: duration, hasSidecar: true });
     });
     return ret;
   });
 };
 
-export const getNamespaceServiceHealth = (namespace: string, durationSec: number): Promise<NamespaceServiceHealth> => {
+export const getNamespaceServiceHealth = (
+  namespace: string,
+  duration: DurationInSeconds,
+  queryTime?: TimeInSeconds
+): Promise<NamespaceServiceHealth> => {
   const params: any = {
     type: 'service'
   };
-  if (durationSec) {
-    params.rateInterval = String(durationSec) + 's';
+  if (duration) {
+    params.rateInterval = String(duration) + 's';
+  }
+  if (queryTime) {
+    params.queryTime = String(queryTime);
   }
   return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
       const ret: NamespaceServiceHealth = {};
       Object.keys(response.data).forEach(k => {
         ret[k] = ServiceHealth.fromJson(namespace, k, response.data[k], {
-          rateInterval: durationSec,
+          rateInterval: duration,
           hasSidecar: true
         });
       });
@@ -329,20 +343,24 @@ export const getNamespaceServiceHealth = (namespace: string, durationSec: number
 
 export const getNamespaceWorkloadHealth = (
   namespace: string,
-  durationSec: number
+  duration: DurationInSeconds,
+  queryTime?: TimeInSeconds
 ): Promise<NamespaceWorkloadHealth> => {
   const params: any = {
     type: 'workload'
   };
-  if (durationSec) {
-    params.rateInterval = String(durationSec) + 's';
+  if (duration) {
+    params.rateInterval = String(duration) + 's';
+  }
+  if (queryTime) {
+    params.queryTime = String(queryTime);
   }
   return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
     response => {
       const ret: NamespaceWorkloadHealth = {};
       Object.keys(response.data).forEach(k => {
         ret[k] = WorkloadHealth.fromJson(namespace, k, response.data[k], {
-          rateInterval: durationSec,
+          rateInterval: duration,
           hasSidecar: true
         });
       });
