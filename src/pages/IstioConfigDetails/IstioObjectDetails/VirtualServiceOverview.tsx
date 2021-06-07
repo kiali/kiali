@@ -2,16 +2,33 @@ import * as React from 'react';
 import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
 import { Host, HTTPRoute, ObjectValidation, TCPRoute, TLSRoute, VirtualService } from '../../../types/IstioObjects';
 import VirtualServiceRoute from './VirtualServiceRoute';
-import { Stack, StackItem, Text, TextVariants, Title, TitleLevel, TitleSize } from '@patternfly/react-core';
+import {
+  Stack,
+  StackItem,
+  Text,
+  TextVariants,
+  Title,
+  TitleLevel,
+  TitleSize,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import IstioObjectLink from '../../../components/Link/IstioObjectLink';
 import ServiceLink from './ServiceLink';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
 
 interface VirtualServiceProps {
   namespace: string;
   virtualService: VirtualService;
   validation?: ObjectValidation;
 }
+
+const infoStyle = style({
+  margin: '0px 0px 2px 10px',
+  verticalAlign: '-5px !important'
+});
 
 class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
   validation(): ObjectValidation | undefined {
@@ -65,8 +82,22 @@ class VirtualServiceOverview extends React.Component<VirtualServiceProps> {
       const host = this.parseHost(gateways[key]);
       childrenList.push(
         <li key={'gateway_' + host.service + '_' + j}>
-          {host.service === 'mesh' || !isValid ? (
+          {!isValid ? (
             host.service
+          ) : host.service === 'mesh' ? (
+            <div>
+              {host.service}
+              <Tooltip
+                position={TooltipPosition.right}
+                content={
+                  <div style={{ textAlign: 'left' }}>
+                    The reserved word, "mesh", implies all of the sidecars in the mesh
+                  </div>
+                }
+              >
+                <KialiIcon.Info className={infoStyle} />
+              </Tooltip>
+            </div>
           ) : (
             <IstioObjectLink name={host.service} namespace={host.namespace} type={'gateway'}>
               {gateways[key]}
