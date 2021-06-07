@@ -4302,6 +4302,10 @@
           "type": "boolean",
           "x-go-name": "IsProxy"
         },
+        "isReady": {
+          "type": "boolean",
+          "x-go-name": "IsReady"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
