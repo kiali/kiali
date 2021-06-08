@@ -658,7 +658,7 @@ elif [ "$_CMD" = "istio" ]; then
 elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
   echo 'Installing Bookinfo'
-  ./istio/install-bookinfo-demo.sh --mongo -tg -c ${CLIENT_EXE}
+  ./istio/install-bookinfo-demo.sh --mongo -tg -c ${CLIENT_EXE} -mp ${MINIKUBE_PROFILE}
   get_gateway_url http2
   echo 'To access the Bookinfo application, access this URL:'
   echo "http://${GATEWAY_URL}/productpage"
