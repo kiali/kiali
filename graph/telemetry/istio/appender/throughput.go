@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// ThroughputAppenderName uniquely identifies the appender: responseTime
+	// ThroughputAppenderName uniquely identifies the appender: throughput
 	ThroughputAppenderName = "throughput"
 )
 
@@ -22,7 +22,7 @@ const (
 // is represented as bytes/sec.  Throughput may be for request bytes or response bytes depending
 // on the options.  Request throughput will be reported using source telemetry, response throughput
 // using destination telemetry.
-// Name: responseTime
+// Name: throughput
 type ThroughputAppender struct {
 	GraphType          string
 	InjectServiceNodes bool
@@ -58,7 +58,7 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 	throughputMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
 
-	// query prometheus for the responseTime info in four queries:
+	// query prometheus for throughput info in two queries:
 	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
 	metric := fmt.Sprintf("istio_%s_bytes_sum", a.ThroughputType)
 	reporter := "destination"
@@ -96,7 +96,7 @@ func applyThroughput(trafficMap graph.TrafficMap, throughputMap map[string]float
 		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			if val, ok := throughputMap[key]; ok {
-				e.Metadata[graph.ResponseTime] = val
+				e.Metadata[graph.Throughput] = val
 			}
 		}
 	}
@@ -173,9 +173,5 @@ func (a ThroughputAppender) addThroughput(throughputMap map[string]float64, val 
 	destID, _ := graph.Id(destCluster, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
 	key := fmt.Sprintf("%s %s", sourceID, destID)
 
-	// For edges within the namespace we may get a responseTime reported from both the incoming and outgoing
-	// traffic queries.  We assume here the first reported value is preferred (i.e. defer to query order)
-	if _, found := throughputMap[key]; !found {
-		throughputMap[key] = val
-	}
+	throughputMap[key] += val
 }
