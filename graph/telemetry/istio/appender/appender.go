@@ -40,6 +40,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[ServiceEntryAppenderName] = true
 			case SidecarsCheckAppenderName:
 				requestedAppenders[SidecarsCheckAppenderName] = true
+			case ThroughputAppenderName:
+				requestedAppenders[ThroughputAppenderName] = true
 			case "":
 				// skip
 			default:
