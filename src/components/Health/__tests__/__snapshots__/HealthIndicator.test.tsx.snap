@@ -122,13 +122,15 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
   trigger="mouseenter focus"
   zIndex={9999}
 >
-  <ExclamationTriangleIcon
-    className="icon-degraded"
-    color="var(--pf-global--warning-color--100)"
-    noVerticalAlign={false}
-    size="sm"
-    title={null}
-  />
+  <span>
+    <ExclamationTriangleIcon
+      className="icon-degraded"
+      color="var(--pf-global--warning-color--100)"
+      noVerticalAlign={false}
+      size="sm"
+      title={null}
+    />
+  </span>
 </Tooltip>
 `;
 
@@ -264,12 +266,14 @@ exports[`HealthIndicator renders healthy 1`] = `
   trigger="mouseenter focus"
   zIndex={9999}
 >
-  <CheckCircleIcon
-    className="icon-healthy"
-    color="#3e8635"
-    noVerticalAlign={false}
-    size="sm"
-    title={null}
-  />
+  <span>
+    <CheckCircleIcon
+      className="icon-healthy"
+      color="#3e8635"
+      noVerticalAlign={false}
+      size="sm"
+      title={null}
+    />
+  </span>
 </Tooltip>
 `;

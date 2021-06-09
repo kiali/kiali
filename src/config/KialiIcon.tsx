@@ -120,3 +120,10 @@ Object.keys(KialiIcon).forEach(key => {
     className: iconStyle
   };
 });
+
+// createTooltipIcon wraps the icon in a span element. Tooltip child elements that are
+// SVGs (icons) need to be wrapped in something to avoid the tooltip from disappearing on refresh.
+// See: https://github.com/kiali/kiali/issues/3583 for more details.
+export function createTooltipIcon(icon: any) {
+  return <span>{icon}</span>;
+}

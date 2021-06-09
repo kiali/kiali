@@ -3,6 +3,7 @@ import { PopoverPosition, Tooltip } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
+import { createTooltipIcon } from '../../config/KialiIcon';
 import './Health.css';
 
 interface Props {
@@ -43,7 +44,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
           position={PopoverPosition.auto}
           className={'health_indicator'}
         >
-          <>{icon}</>
+          {createTooltipIcon(icon)}
         </Tooltip>
       );
     }

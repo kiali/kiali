@@ -13,6 +13,7 @@ import { createIcon } from 'components/Health/Helper';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { createTooltipIcon } from 'config/KialiIcon';
 
 export interface TrafficListItem {
   direction: TrafficDirection;
@@ -228,7 +229,7 @@ class TrafficListComponent extends FilterComponent.Component<
                 position={TooltipPosition.top}
                 content={<>Traffic Status: {item.healthStatus.status.name}</>}
               >
-                {createIcon(item.healthStatus.status, 'sm')}
+                {createTooltipIcon(createIcon(item.healthStatus.status, 'sm'))}
               </Tooltip>
             </>,
             <>
