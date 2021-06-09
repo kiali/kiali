@@ -6287,7 +6287,7 @@ Status: Internal Server Error
 ### <span id="aggregation"></span> Aggregation
 
 
-> Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard k8s resource
+> Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard config resource
   
 
 
@@ -6456,7 +6456,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 ### <span id="chart"></span> Chart
 
 
-> Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource
+> Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard config resource
   
 
 
@@ -7834,7 +7834,7 @@ There is currently only one possible value: "FieldsV1" |  |
 ### <span id="monitoring-dashboard"></span> MonitoringDashboard
 
 
-> MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource
+> MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard config resource
   
 
 
@@ -7848,6 +7848,7 @@ There is currently only one possible value: "FieldsV1" |  |
 | Aggregations | [][Aggregation](#aggregation)| `[]*Aggregation` |  | |  |  |
 | Charts | [][Chart](#chart)| `[]*Chart` |  | |  |  |
 | ExternalLinks | [][ExternalLink](#external-link)| `[]*ExternalLink` |  | |  |  |
+| Name | string| `string` |  | |  |  |
 | Title | string| `string` |  | |  |  |
 
 
