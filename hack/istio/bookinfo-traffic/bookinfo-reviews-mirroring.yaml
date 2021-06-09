@@ -1,0 +1,37 @@
+# Real traffic is sent only to reviews:v1 with mirrored traffic going to reviews:v2.
+# Note that if you comment out the two mirror/mirrorPercentage fields, you will only see traffic to reviews:v1.
+#
+# last tested on Istio 1.10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews-mirroring-vs
+spec:
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: reviews-mirroring-dr-v1
+      weight: 100
+    mirror:
+      host: reviews
+      subset: reviews-mirroring-dr-v2
+    mirrorPercentage:
+      value: 100.0
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reviews-mirroring-dr
+spec:
+  host: reviews
+  subsets:
+  - name: reviews-mirroring-dr-v1
+    labels:
+      version: v1
+  - name: reviews-mirroring-dr-v2
+    labels:
+      version: v2

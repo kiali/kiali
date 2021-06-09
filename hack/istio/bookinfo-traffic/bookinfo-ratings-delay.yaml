@@ -1,0 +1,33 @@
+# All requests to ratings:v1 will be delayed.
+#
+# last tested on Istio 1.10
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ratings-delay-vs
+spec:
+  hosts:
+  - ratings
+  http:
+  - route:
+    - destination:
+        host: ratings
+        subset: ratings-delay-dr-subset-v1
+      weight: 100
+    fault:
+      delay:
+        fixedDelay: 1s
+        percentage:
+          value: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ratings-delay-dr
+spec:
+  host: ratings
+  subsets:
+  - name: ratings-delay-dr-subset-v1
+    labels:
+      version: v1
