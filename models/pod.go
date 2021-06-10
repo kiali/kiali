@@ -41,6 +41,7 @@ type ContainerInfo struct {
 	Name    string `json:"name"`
 	Image   string `json:"image"`
 	IsProxy bool   `json:"isProxy"`
+	IsReady bool   `json:"isReady"`
 }
 
 // Parse extracts desired information from k8s []Pod info
@@ -86,6 +87,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 					Name:    name,
 					Image:   lookupImage(name, p.Spec.InitContainers),
 					IsProxy: true,
+					IsReady: lookupReady(name, p.Status.InitContainerStatuses),
 				}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
 				istioContainerNames[name] = true
@@ -95,6 +97,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 					Name:    name,
 					Image:   lookupImage(name, p.Spec.Containers),
 					IsProxy: true,
+					IsReady: lookupReady(name, p.Status.ContainerStatuses),
 				}
 				pod.IstioContainers = append(pod.IstioContainers, &container)
 				istioContainerNames[name] = true
@@ -109,6 +112,7 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 			Name:    c.Name,
 			Image:   c.Image,
 			IsProxy: isIstioProxy(p, &c, conf),
+			IsReady: lookupReady(c.Name, p.Status.ContainerStatuses),
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
@@ -141,6 +145,15 @@ func lookupImage(containerName string, containers []core_v1.Container) string {
 		}
 	}
 	return ""
+}
+
+func lookupReady(containerName string, statuses []core_v1.ContainerStatus) bool {
+	for _, s := range statuses {
+		if s.Name == containerName {
+			return s.Ready
+		}
+	}
+	return false
 }
 
 // HasIstioSidecar returns true if there are no pods or all pods have a sidecar
