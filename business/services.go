@@ -109,7 +109,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		/** Check if Service has istioSidecar deployed */
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
-		hasSidecar := mPods.HasIstioSidecar()
+		hasSidecar := mPods.HasAnyIstioSidecar()
 		/** Check if Service has the label app required by Istio */
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		/** Check if Service has additional item icon */
@@ -265,6 +265,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls, AdditionalDetails: additionalDetails}
 	s.SetService(svc)
 	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
+	s.SetIstioSidecar(wo)
 	s.SetEndpoints(eps)
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)

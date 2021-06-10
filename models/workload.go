@@ -365,6 +365,18 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
+// HasIstioSidecar returns true if there is at least one workload which has a sidecar
+func (workloads WorkloadOverviews) HasIstioSidecar() bool {
+	if len(workloads) > 0 {
+		for _, w := range workloads {
+			if w.IstioSidecar {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (wl WorkloadList) GetLabels() []labels.Set {
 	wLabels := make([]labels.Set, 0, len(wl.Workloads))
 	for _, w := range wl.Workloads {
