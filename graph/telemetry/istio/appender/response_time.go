@@ -55,41 +55,73 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 }
 
 func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
-	quantile := a.Quantile
-	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
-		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, defaultQuantile)
-		quantile = defaultQuantile
-	}
-	log.Tracef("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
-
 	// create map to quickly look up responseTime
 	responseTimeMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
 
-	// query prometheus for the responseTime info in four queries:
-	groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
+	quantile := a.Quantile
+	if a.Quantile == 0.0 {
+		log.Tracef("Generating average responseTime; namespace = %v", namespace)
 
-	// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
-	// note - the query order is important as both queries may have overlapping results for edges within
-	//        the namespace.  This query uses destination proxy and so must come first.
-	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
-		quantile,
-		"istio_request_duration_milliseconds_bucket",
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+		// query prometheus for the responseTime info in two queries:
+		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
 
-	// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
-		quantile,
-		"istio_request_duration_milliseconds_bucket",
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
+		// note - the query order is important as both queries may have overlapping results for edges within
+		//        the namespace.  This query uses destination proxy and so must come first.
+		query := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
+			"istio_request_duration_milliseconds_sum",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy,
+			"istio_request_duration_milliseconds_count",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy)
+		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+
+		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
+		query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
+			"istio_request_duration_milliseconds_sum",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy,
+			"istio_request_duration_milliseconds_count",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy)
+		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+
+	} else {
+		log.Tracef("Generating responseTime for quantile [%.2f]; namespace = %v", quantile, namespace)
+
+		// query prometheus for the responseTime info in two queries:
+		groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
+
+		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
+		// note - the query order is important as both queries may have overlapping results for edges within
+		//        the namespace.  This query uses destination proxy and so must come first.
+		query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
+			quantile,
+			"istio_request_duration_milliseconds_bucket",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy)
+		incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+
+		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
+		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
+			quantile,
+			"istio_request_duration_milliseconds_bucket",
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy)
+		outgoingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		a.populateResponseTimeMap(responseTimeMap, &outgoingVector)
+	}
 
 	applyResponseTime(trafficMap, responseTimeMap)
 }

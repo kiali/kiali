@@ -2,7 +2,6 @@ package appender
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -72,11 +71,19 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {
 		quantile := defaultQuantile
-		quantileString := o.Params.Get("responseTimeQuantile")
-		if quantileString != "" {
-			var err error
-			if quantile, err = strconv.ParseFloat(quantileString, 64); err != nil {
-				graph.BadRequest(fmt.Sprintf("Invalid quantile, expecting float between 0.0 and 100.0 [%s]", quantileString))
+		responseTimeString := o.Params.Get("responseTime")
+		if responseTimeString != "" {
+			switch responseTimeString {
+			case "avg":
+				quantile = 0.0
+			case "50":
+				quantile = 0.5
+			case "95":
+				quantile = 0.95
+			case "99":
+				quantile = 0.99
+			default:
+				graph.BadRequest(fmt.Sprintf(`Invalid responseTime, must be one of: avg | 50 | 95 | 99: [%s]`, responseTimeString))
 			}
 		}
 		a := ResponseTimeAppender{

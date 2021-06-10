@@ -12,7 +12,7 @@ package istio
 //
 // Supports three vendor-specific query parameters:
 //   aggregate: Must be a valid metric attribute (default: request_operation)
-//   responseTimeQuantile: Must be a valid quantile (default: 0.95)
+//   responseTime: Must be one of: avg | 50 | 95 | 99
 //   throughputType: request | response (default: response)
 //
 import (

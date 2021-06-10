@@ -575,8 +575,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -593,14 +601,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -633,6 +633,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -1021,8 +1037,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1039,14 +1063,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1071,6 +1087,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -1137,8 +1169,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1155,14 +1195,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -1187,6 +1219,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -2738,8 +2786,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -2760,18 +2816,26 @@
           },
           {
             "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "now",
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -3463,8 +3527,16 @@
             "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].",
             "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
+            "name": "boxBy",
             "in": "query"
           },
           {
@@ -3481,14 +3553,6 @@
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].",
-            "name": "boxBy",
             "in": "query"
           },
           {
@@ -3513,6 +3577,22 @@
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "95",
+            "x-go-name": "Name",
+            "description": "Used only with responseTime appender. One of: avg | 50 | 95 | 99.",
+            "name": "responseTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "request",
+            "x-go-name": "Name",
+            "description": "Used only with throughput appender. One of: request | response.",
+            "name": "throughput",
             "in": "query"
           }
         ],
@@ -4396,6 +4476,10 @@
         "target": {
           "type": "string",
           "x-go-name": "Target"
+        },
+        "throughput": {
+          "type": "string",
+          "x-go-name": "Throughput"
         },
         "traffic": {
           "$ref": "#/definitions/ProtocolTraffic"
