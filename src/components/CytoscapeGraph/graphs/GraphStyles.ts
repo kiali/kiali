@@ -207,33 +207,34 @@ export class GraphStyles {
     if (cyGlobal.showMissingSidecars && node.hasMissingSC) {
       icons = `<span class="${NodeIconMS} ${iconMargin(icons)}"></span> ${icons}`;
     }
-    if (cyGlobal.showVirtualServices && node.hasVS) {
+    if (cyGlobal.showVirtualServices) {
+      if (node.hasCB) {
+        icons = `<span class="${NodeIconCB} ${iconMargin(icons)}"></span> ${icons}`;
+      }
       // If there's an additional traffic scenario present then it's assumed
       // that there is a VS present so the VS badge is omitted.
-      const hasKialiScenario =
-        node.hasCB ||
-        node.hasFaultInjection ||
-        node.hasRequestRouting ||
-        node.hasRequestTimeout ||
-        node.hasTCPTrafficShifting ||
-        node.hasTrafficShifting;
-      if (!hasKialiScenario) {
-        icons = `<span class="${NodeIconVS} ${iconMargin(icons)}"></span> ${icons}`;
-      } else {
-        if (node.hasRequestRouting) {
-          icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
-        }
-        if (node.hasFaultInjection) {
-          icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
-        }
-        if (node.hasTrafficShifting || node.hasTCPTrafficShifting) {
-          icons = `<span class="${NodeIconTrafficShifting} ${iconMargin(icons)}"></span> ${icons}`;
-        }
-        if (node.hasRequestTimeout) {
-          icons = `<span class="${NodeIconRequestTimeout} ${iconMargin(icons)}"></span> ${icons}`;
-        }
-        if (node.hasCB) {
-          icons = `<span class="${NodeIconCB} ${iconMargin(icons)}"></span> ${icons}`;
+      if (node.hasVS) {
+        const hasKialiScenario =
+          node.hasFaultInjection ||
+          node.hasRequestRouting ||
+          node.hasRequestTimeout ||
+          node.hasTCPTrafficShifting ||
+          node.hasTrafficShifting;
+        if (!hasKialiScenario) {
+          icons = `<span class="${NodeIconVS} ${iconMargin(icons)}"></span> ${icons}`;
+        } else {
+          if (node.hasRequestRouting) {
+            icons = `<span class="${NodeIconRequestRouting} ${iconMargin(icons)}"></span> ${icons}`;
+          }
+          if (node.hasFaultInjection) {
+            icons = `<span class="${NodeIconFaultInjection} ${iconMargin(icons)}"></span> ${icons}`;
+          }
+          if (node.hasTrafficShifting || node.hasTCPTrafficShifting) {
+            icons = `<span class="${NodeIconTrafficShifting} ${iconMargin(icons)}"></span> ${icons}`;
+          }
+          if (node.hasRequestTimeout) {
+            icons = `<span class="${NodeIconRequestTimeout} ${iconMargin(icons)}"></span> ${icons}`;
+          }
         }
       }
     }

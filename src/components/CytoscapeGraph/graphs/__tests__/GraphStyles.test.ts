@@ -14,7 +14,7 @@ const nodeData = {
   nodeType: NodeType.APP
 };
 
-function setupNode(nodeData: any) {
+function setupNode(nodeData: any, cyData?: any) {
   const data = cytoscape({
     elements: {
       nodes: [{ data: nodeData }],
@@ -24,7 +24,8 @@ function setupNode(nodeData: any) {
   const node = data.nodes()[0];
   node.cy().scratch(CytoscapeGlobalScratchNamespace, {
     activeNamespaces: ['TEST'],
-    showVirtualServices: true
+    showVirtualServices: true,
+    ...cyData
   });
   return node;
 }
@@ -42,6 +43,20 @@ describe('GraphStyles test', () => {
     const node = setupNode(data);
     const label = GraphStyles.getNodeLabel(node);
     expect(label).toContain(icons.istio.circuitBreaker.className);
+  });
+
+  it('has icon for circuit breaker even when no VS', () => {
+    const data = { ...nodeData, hasCB: true };
+    const node = setupNode(data);
+    const label = GraphStyles.getNodeLabel(node);
+    expect(label).toContain(icons.istio.circuitBreaker.className);
+  });
+
+  it('hides circuit breaker icon when showVirtualServices is false', () => {
+    const data = { ...nodeData, hasVS: true, hasCB: true };
+    const node = setupNode(data, { showVirtualServices: false });
+    const label = GraphStyles.getNodeLabel(node);
+    expect(label.includes(icons.istio.circuitBreaker.className)).toBe(false);
   });
 
   it('has icon for fault injection', () => {
