@@ -10,7 +10,10 @@ APP_PARAMS           = {'graphType': 'app', 'duration': DURATION, 'injectService
 
 CB_BADGE = 'hasCB'
 VS_BADGE = "hasVS"
-
+TF_BADGE = 'hasTrafficShifting'
+TCP_TF_BADGE = 'hasTCPTrafficShifting'
+RT_BADGE = 'hasRequestTimeout'
+FI_BADGE = 'hasFaultInjection'
 def test_kiali_circuit_breakers_versioned_app(kiali_client):
     assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.CIRCUIT_BREAKER_FILE, CB_BADGE)
 
@@ -26,6 +29,42 @@ def test_kiali_virtual_service_workload(kiali_client):
 def test_kiali_virtual_service_app(kiali_client):
     assert do_test(kiali_client, APP_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
+def test_kiali_traffic_shifting_versioned_app(kiali_client):
+    assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.TRAFFIC_SHIFTING_FILE, TF_BADGE)
+
+def test_kiali_tcp_traffic_shifting_versioned_app(kiali_client):
+    assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE)
+
+def test_kiali_request_timeouts_versioned_app(kiali_client):
+    assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.REQUEST_ROUTING_FILE, RT_BADGE)
+
+def test_kiali_fault_injection_versioned_app(kiali_client):
+    assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.FAULT_INJECTION_FILE, FI_BADGE)
+
+def test_kiali_traffic_shifting_workload(kiali_client):
+    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.TRAFFIC_SHIFTING_FILE, TF_BADGE)
+
+def test_kiali_tcp_traffic_shifting_workload(kiali_client):
+    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE)
+
+def test_kiali_request_timeouts_workload(kiali_client):
+    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.REQUEST_ROUTING_FILE, RT_BADGE)
+
+def test_kiali_fault_injection_workload(kiali_client):
+    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.FAULT_INJECTION_FILE, FI_BADGE)
+
+def test_kiali_traffic_shifting_app(kiali_client):
+    assert do_test(kiali_client, APP_PARAMS, conftest.TRAFFIC_SHIFTING_FILE, TF_BADGE)
+
+def test_kiali_tcp_traffic_shifting_app(kiali_client):
+    assert do_test(kiali_client, APP_PARAMS, conftest.TCP_TRAFFIC_SHIFTING_FILE, TCP_TF_BADGE)
+
+def test_kiali_request_timeouts_app(kiali_client):
+    assert do_test(kiali_client, APP_PARAMS, conftest.REQUEST_ROUTING_FILE, RT_BADGE)
+
+def test_kiali_fault_injection_app(kiali_client):
+    assert do_test(kiali_client, APP_PARAMS, conftest.FAULT_INJECTION_FILE, FI_BADGE)
+        
 def do_test(kiali_client, graph_params, yaml_file, badge):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
     graph_params["namespaces"] = bookinfo_namespace
