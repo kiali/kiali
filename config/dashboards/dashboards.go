@@ -7,42 +7,42 @@ const DEFAULT_DASHBOARDS_YAML = `
   items:
   - chart:
       name: "Pods uptime"
-      spans: 4
+      spans: 3
       metricName: "envoy_server_uptime"
       dataType: "raw"
   - chart:
       name: "Allocated memory"
       unit: "bytes"
-      spans: 4
+      spans: 3
       metricName: "envoy_server_memory_allocated"
       dataType: "raw"
       min: 0
   - chart:
       name: "Heap size"
       unit: "bytes"
-      spans: 4
+      spans: 3
       metricName: "envoy_server_memory_heap_size"
       dataType: "raw"
       min: 0
   - chart:
       name: "Upstream active connections"
-      spans: 6
+      spans: 3
       metricName: "envoy_cluster_upstream_cx_active"
       dataType: "raw"
   - chart:
       name: "Upstream total requests"
-      spans: 6
+      spans: 3
       metricName: "envoy_cluster_upstream_rq_total"
       unit: "rps"
       dataType: "rate"
   - chart:
       name: "Downstream active connections"
-      spans: 6
+      spans: 3
       metricName: "envoy_listener_downstream_cx_active"
       dataType: "raw"
   - chart:
       name: "Downstream HTTP requests"
-      spans: 6
+      spans: 3
       metricName: "envoy_listener_http_downstream_rq"
       unit: "rps"
       dataType: "rate"
@@ -53,7 +53,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   items:
   - chart:
       name: "CPU ratio"
-      spans: 6
+      spans: 4
       metricName: "process_cpu_seconds_total"
       dataType: "rate"
       aggregations:
@@ -62,7 +62,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "RSS Memory"
       unit: "bytes"
-      spans: 6
+      spans: 4
       metricName: "process_resident_memory_bytes"
       dataType: "raw"
       aggregations:
@@ -70,7 +70,7 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "Pod"
   - chart:
       name: "Goroutines"
-      spans: 6
+      spans: 4
       metricName: "go_goroutines"
       dataType: "raw"
       aggregations:
@@ -79,7 +79,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Heap allocation rate"
       unit: "bytes/s"
-      spans: 6
+      spans: 4
       metricName: "go_memstats_alloc_bytes_total"
       dataType: "rate"
       aggregations:
@@ -87,7 +87,7 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "Pod"
   - chart:
       name: "GC rate"
-      spans: 6
+      spans: 4
       metricName: "go_gc_duration_seconds_count"
       dataType: "rate"
       aggregations:
@@ -96,7 +96,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Next GC"
       unit: "bytes"
-      spans: 6
+      spans: 4
       metricName: "go_memstats_next_gc_bytes"
       dataType: "raw"
       aggregations:
@@ -125,7 +125,7 @@ const DEFAULT_DASHBOARDS_YAML = `
         displayName: "API route"
   - chart:
       name: "API Failures"
-      spans: 12
+      spans: 6
       metricName: "kiali_api_failures_total"
       dataType: "raw"
       aggregations:
@@ -134,7 +134,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Graph generation duration"
       unit: "seconds"
-      spans: 12
+      spans: 6
       metricName: "kiali_graph_generation_duration_seconds"
       dataType: "histogram"
       aggregations:
@@ -290,45 +290,45 @@ const DEFAULT_DASHBOARDS_YAML = `
   items:
   - chart:
       name: "Current loaded classes"
-      spans: 6
+      spans: 3
       metricName: "base:classloader_current_loaded_class_count"
       dataType: "raw"
   - chart:
       name: "Unloaded classes"
-      spans: 6
+      spans: 3
       metricName: "base:classloader_total_unloaded_class_count"
       dataType: "raw"
   - chart:
       name: "Thread count"
-      spans: 4
+      spans: 3
       metricName: "base:thread_count"
       dataType: "raw"
   - chart:
       name: "Thread max count"
-      spans: 4
+      spans: 3
       metricName: "base:thread_max_count"
       dataType: "raw"
   - chart:
       name: "Thread daemon count"
-      spans: 4
+      spans: 3
       metricName: "base:thread_daemon_count"
       dataType: "raw"
   - chart:
       name: "Committed heap"
       unit: "bytes"
-      spans: 4
+      spans: 3
       metricName: "base:memory_committed_heap_bytes"
       dataType: "raw"
   - chart:
       name: "Max heap"
       unit: "bytes"
-      spans: 4
+      spans: 3
       metricName: "base:memory_max_heap_bytes"
       dataType: "raw"
   - chart:
       name: "Used heap"
       unit: "bytes"
-      spans: 4
+      spans: 3
       metricName: "base:memory_used_heap_bytes"
       dataType: "raw"
 - name: microprofile-x.y
@@ -382,7 +382,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Total heap size"
       unit: "bytes"
-      spans: 12
+      spans: 4
       metricName: "nodejs_heap_space_size_total_bytes"
       dataType: "raw"
       aggregations:
@@ -391,7 +391,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Used heap size"
       unit: "bytes"
-      spans: 6
+      spans: 4
       metricName: "nodejs_heap_space_size_used_bytes"
       dataType: "raw"
       aggregations:
@@ -400,7 +400,7 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Available heap size"
       unit: "bytes"
-      spans: 6
+      spans: 4
       metricName: "nodejs_heap_space_size_available_bytes"
       dataType: "raw"
       aggregations:
