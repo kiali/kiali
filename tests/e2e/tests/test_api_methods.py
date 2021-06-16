@@ -304,18 +304,28 @@ def test_workload_spans_list(kiali_client):
     common_utils.get_response(kiali_client, method_name='workloadSpans', path={'namespace': 'bookinfo', 'workload':'details-v1'}, params={'startMicros': calendar.timegm(gmt()) })
 
 
-def test_negative_400(kiali_client):
-
-    INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'invalid', 'object': 'promtcp'}
-
+def test_invalid_versioned_app_graphnamespaces_negative_400(kiali_client):
+    
     INVALID_VERSIONED_APP_DURATION_GRAPHNAMESPACES  =   {'graphType': 'versionedApp', 'duration': 'invalid',  'namespaces':'bookinfo'}
     INVALID_VERSIONED_APP_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'versionedApp', 'duration': '60s',  'namespaces':'invalid'} 
     INVALID_VERSIONED_APP_DURATION_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'versionedApp', 'duration': 'invalid',  'namespaces':'invalid'} 
 
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_DURATION_GRAPHNAMESPACES, status_code_expected=400)
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_DURATION_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
+    
+def test_invalid_app_graphnamespaces_negative_400(kiali_client):
+    
     INVALID_APP_DURATION_GRAPHNAMESPACES  =   {'graphType': 'app', 'duration': 'invalid',  'namespaces':'bookinfo'}
     INVALID_APP_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'app', 'duration': '60s',  'namespaces':'invalid'} 
     INVALID_APP_DURATION_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'app', 'duration': 'invalid',  'namespaces':'invalid'} 
 
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_DURATION_GRAPHNAMESPACES, status_code_expected=400)
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
+    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_DURATION_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
+
+def test_invalid_service_graphnamespaces_negative_400(kiali_client):
+    
     INVALID_SERVICE_DURATION_GRAPHNAMESPACES  =   {'graphType': 'service', 'duration': 'invalid',  'namespaces':'bookinfo'}
     INVALID_SERVICE_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'service', 'duration': '60s',  'namespaces':'invalid'} 
     INVALID_SERVICE_DURATION_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'service', 'duration': 'invalid',  'namespaces':'invalid'} 
@@ -323,17 +333,8 @@ def test_negative_400(kiali_client):
     INVALID_GRAPHTYPE_GRAPHNAMESPACES =      {'graphType': 'invalid', 'duration': '60s', 'namespaces':'bookinfo'}
     INVALID_GRAPHTYPE_DURATION_GRAPHNAMESPACES  =   {'graphType': 'invalid', 'duration': 'invalid', 'namespaces':'bookinfo'}
     INVALID_GRAPHTYPE_NAMESPACE_GRAPHNAMESPACES =   {'graphType': 'invalid', 'duration': '60s', 'namespaces':'invalid'}
+    INVALID_GRAPHNAMESPACES =   {'graphType': 'invalid', 'duration': 'invalid', 'namespaces':'invalid'}
 
-    INVALID_GRAPHNAMESPACES =               {'graphType': 'invalid', 'duration': 'invalid', 'namespaces':'invalid'}
-
-
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_DURATION_GRAPHNAMESPACES, status_code_expected=400)
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_VERSIONED_APP_DURATION_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
-    
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_DURATION_GRAPHNAMESPACES, status_code_expected=400)
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
-    common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_APP_DURATION_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
 
     common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_SERVICE_DURATION_GRAPHNAMESPACES, status_code_expected=400)
     common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_SERVICE_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
@@ -343,6 +344,11 @@ def test_negative_400(kiali_client):
     common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_GRAPHTYPE_DURATION_GRAPHNAMESPACES, status_code_expected=400)
     common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_GRAPHTYPE_NAMESPACE_GRAPHNAMESPACES, status_code_expected=400)
     common_utils.get_response(kiali_client, method_name='graphNamespaces', path=INVALID_GRAPHNAMESPACES, status_code_expected=400)
+
+
+def test_negative_400(kiali_client):
+    
+    INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'invalid', 'object': 'promtcp'}
 
     common_utils.get_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=400)
 
