@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab, Title } from '@patternfly/react-core';
-
 import * as API from '../../services/Api';
 import { Workload, WorkloadId } from '../../types/Workload';
 import WorkloadInfo from './WorkloadInfo';
@@ -21,6 +20,7 @@ import { JaegerInfo } from 'types/JaegerInfo';
 import TrafficDetails from 'components/TrafficList/TrafficDetails';
 import WorkloadWizardDropdown from '../../components/IstioWizards/WorkloadWizardDropdown';
 import TimeControl from '../../components/Time/TimeControl';
+import EnvoyDetailsContainer from 'components/Envoy/EnvoyDetails';
 
 type WorkloadDetailsState = {
   workload?: Workload;
@@ -43,7 +43,7 @@ const paramToTab: { [key: string]: number } = {
   out_metrics: 4,
   traces: 5
 };
-const nextTabIndex = 6;
+var nextTabIndex = 6;
 
 class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
   constructor(props: WorkloadDetailsPageProps) {
@@ -63,7 +63,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       currentTab !== this.state.currentTab
     ) {
-      if (currentTab === 'info' || currentTab === 'logs') {
+      if (currentTab === 'info' || currentTab === 'logs' || currentTab.includes('envoy_')) {
         this.fetchWorkload();
       }
       if (currentTab !== this.state.currentTab) {
@@ -84,6 +84,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   private staticTabs() {
     const hasPods = this.state.workload?.pods.length;
+    const tabsArray: JSX.Element[] = [];
 
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
@@ -94,6 +95,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         />
       </Tab>
     );
+    tabsArray.push(overTab);
+
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         <TrafficDetails
@@ -103,6 +106,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         />
       </Tab>
     );
+    tabsArray.push(trafficTab);
+
     const logTab = (
       <Tab title="Logs" eventKey={2} key={'Logs'}>
         {hasPods ? (
@@ -117,6 +122,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         )}
       </Tab>
     );
+    tabsArray.push(logTab);
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
@@ -128,6 +134,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         />
       </Tab>
     );
+    tabsArray.push(inTab);
 
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
@@ -139,8 +146,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         />
       </Tab>
     );
-
-    const tabsArray: JSX.Element[] = [overTab, trafficTab, logTab, inTab, outTab];
+    tabsArray.push(outTab);
 
     if (this.props.jaegerInfo && this.props.jaegerInfo.enabled && this.props.jaegerInfo.integration) {
       tabsArray.push(
@@ -154,7 +160,36 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       );
     }
 
+    if (this.state.workload && this.hasIstioSidecars(this.state.workload)) {
+      const envoyTab = (
+        <Tab title="Envoy" eventKey={10} key={'Envoy'}>
+          {this.state.workload && (
+            <EnvoyDetailsContainer namespace={this.props.match.params.namespace} workload={this.state.workload} />
+          )}
+        </Tab>
+      );
+      tabsArray.push(envoyTab);
+      paramToTab['envoy'] = 10;
+    }
+
+    // Used by the runtimes tabs
+    nextTabIndex = tabsArray.length + 1;
+
     return tabsArray;
+  }
+
+  private hasIstioSidecars(workload: Workload): boolean {
+    var hasIstioSidecars: boolean = false;
+
+    if (workload.pods.length > 0) {
+      workload.pods.forEach(pod => {
+        if (pod.istioContainers && pod.istioContainers.length > 0) {
+          hasIstioSidecars = true;
+        }
+      });
+    }
+
+    return hasIstioSidecars;
   }
 
   private runtimeTabs() {
@@ -168,21 +203,23 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
         let tabOffset = 0;
         this.state.workload.runtimes.forEach(runtime => {
           runtime.dashboardRefs.forEach(dashboard => {
-            const tabKey = tabOffset + nextTabIndex;
-            paramToTab[dashboard.template] = tabKey;
-            const tab = (
-              <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
-                <CustomMetricsContainer
-                  namespace={this.props.match.params.namespace}
-                  app={app}
-                  version={version}
-                  workload={this.state.workload!.name}
-                  template={dashboard.template}
-                />
-              </Tab>
-            );
-            tabs.push(tab);
-            tabOffset++;
+            if (dashboard.template !== 'envoy') {
+              const tabKey = tabOffset + nextTabIndex;
+              paramToTab[dashboard.template] = tabKey;
+              const tab = (
+                <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
+                  <CustomMetricsContainer
+                    namespace={this.props.match.params.namespace}
+                    app={app}
+                    version={version}
+                    workload={this.state.workload!.name}
+                    template={dashboard.template}
+                  />
+                </Tab>
+              );
+              tabs.push(tab);
+              tabOffset++;
+            }
           });
         });
       }

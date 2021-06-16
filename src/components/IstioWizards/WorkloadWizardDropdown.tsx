@@ -12,7 +12,6 @@ import {
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
-import EnvoyDetailsModal from '../Envoy/EnvoyModal';
 
 interface Props {
   namespace: string;
@@ -125,17 +124,6 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         </DropdownItem>
       );
 
-      const envoyAction = (
-        <DropdownItem
-          key="envoy-details"
-          component="button"
-          onClick={() => this.onWizardToggle(true)}
-          isDisabled={!this.props.workload.istioSidecar}
-        >
-          Show Envoy Details
-        </DropdownItem>
-      );
-
       if (this.props.workload.istioInjectionAnnotation !== undefined && this.props.workload.istioInjectionAnnotation) {
         items.push(disableAction);
         items.push(removeAction);
@@ -149,8 +137,6 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
         // If sidecar is present, we offer first the disable action
         items.push(this.props.workload.istioSidecar ? disableAction : enableAction);
       }
-
-      items.push(envoyAction);
     }
     return items;
   };
@@ -174,19 +160,7 @@ class WorkloadWizardDropdown extends React.Component<Props, State> {
       />
     );
     // TODO WorkloadWizard component contains only 3scale actions but in the future we may need to bring it back
-    return (
-      <>
-        {dropdown}
-        {this.state.showWizard ? (
-          <EnvoyDetailsModal
-            namespace={this.props.namespace}
-            workload={this.props.workload}
-            show={this.state.showWizard}
-            onClose={this.onClose}
-          />
-        ) : undefined}
-      </>
-    );
+    return <>{dropdown}</>;
   }
 }
 

@@ -7,7 +7,7 @@ import { EnvoyProxyDump } from '../../../types/IstioObjects';
 import { ActiveFiltersInfo, FilterType } from '../../../types/Filters';
 import { FilterSelected, StatefulFilters } from '../../Filters/StatefulFilters';
 import { setFiltersToURL } from '../../FilterList/FilterHelper';
-import { ResourceSorts } from '../EnvoyModal';
+import { ResourceSorts } from '../EnvoyDetails';
 import Namespace from '../../../types/Namespace';
 import ToolbarDropdown from '../../ToolbarDropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../../Pf/PfBadges';

@@ -44,6 +44,8 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   version?: string;
   workload?: string;
   template: string;
+  embedded?: boolean;
+  height?: number;
 };
 
 type Props = CustomMetricsProps & {
@@ -185,36 +187,44 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
   render() {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
-
-    // SPACE : Padding article (40 bottom and top) , 51 toolbar more 15 padding
     const toolbarSpace = 40 + 51 + 15;
-    const dashboardHeight = this.state.tabHeight - toolbarSpace;
+    const dashboardHeight = (this.props.height ? this.props.height : this.state.tabHeight) - toolbarSpace;
+
+    const dashboard = this.state.dashboard && (
+      <Dashboard
+        dashboard={this.state.dashboard}
+        customMetric={true}
+        template={this.props.template}
+        labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+        maximizedChart={expandedChart}
+        expandHandler={this.expandHandler}
+        onClick={this.onClickDataPoint}
+        showSpans={this.state.showSpans}
+        chartHeight={dashboardHeight}
+        overlay={this.state.spanOverlay}
+        timeWindow={evalTimeRange(this.props.timeRange)}
+        brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+      />
+    );
+
+    const content = (
+      <>
+        {this.renderOptionsBar()}
+        {this.state.dashboard && dashboard}
+      </>
+    );
 
     return (
       <>
-        <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Card className={fullHeightStyle}>
-            <CardBody>
-              {this.renderOptionsBar()}
-              {this.state.dashboard && (
-                <Dashboard
-                  dashboard={this.state.dashboard}
-                  customMetric={true}
-                  template={this.props.template}
-                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                  maximizedChart={expandedChart}
-                  expandHandler={this.expandHandler}
-                  onClick={this.onClickDataPoint}
-                  showSpans={this.state.showSpans}
-                  chartHeight={dashboardHeight}
-                  overlay={this.state.spanOverlay}
-                  timeWindow={evalTimeRange(this.props.timeRange)}
-                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                />
-              )}
-            </CardBody>
-          </Card>
-        </RenderComponentScroll>
+        {this.props.embedded ? (
+          <>{content}</>
+        ) : (
+          <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
+            <Card className={fullHeightStyle}>
+              <CardBody>{content}</CardBody>
+            </Card>
+          </RenderComponentScroll>
+        )}
       </>
     );
   }

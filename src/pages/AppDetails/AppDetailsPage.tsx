@@ -89,20 +89,22 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     if (this.state.app) {
       this.state.app.runtimes.forEach(runtime => {
         runtime.dashboardRefs.forEach(dashboard => {
-          const tabKey = tabOffset + nextTabIndex;
-          paramToTab['cd-' + dashboard.template] = tabKey;
+          if (dashboard.template !== 'envoy') {
+            const tabKey = tabOffset + nextTabIndex;
+            paramToTab['cd-' + dashboard.template] = tabKey;
 
-          const tab = (
-            <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
-              <CustomMetricsContainer
-                namespace={this.props.match.params.namespace}
-                app={this.props.match.params.app}
-                template={dashboard.template}
-              />
-            </Tab>
-          );
-          tabs.push(tab);
-          tabOffset++;
+            const tab = (
+              <Tab title={dashboard.title} key={'cd-' + dashboard.template} eventKey={tabKey}>
+                <CustomMetricsContainer
+                  namespace={this.props.match.params.namespace}
+                  app={this.props.match.params.app}
+                  template={dashboard.template}
+                />
+              </Tab>
+            );
+            tabs.push(tab);
+            tabOffset++;
+          }
         });
       });
     }
