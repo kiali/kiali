@@ -36,7 +36,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 									if host == "" {
 										continue
 									}
-									if !n.checkDestination(host, protocol) {
+									if !n.checkDestination(host) {
 										fqdn := kubernetes.GetHost(host, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 										path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination/host", protocol, k, i)
 										if fqdn.Namespace != n.VirtualService.GetObjectMeta().Namespace && fqdn.CompleteInput {
@@ -81,7 +81,7 @@ func parseHost(destination interface{}) string {
 	return ""
 }
 
-func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
+func (n NoHostChecker) checkDestination(sHost string) bool {
 	fqdn := kubernetes.GetHost(sHost, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName, n.Namespaces.GetNames())
 	if fqdn.Namespace == n.VirtualService.GetObjectMeta().Namespace {
 		// We need to check for namespace equivalent so that two services from different namespaces do not collide
@@ -104,12 +104,8 @@ func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
 
 	// Use RegistryStatus to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	for _, rStatus := range n.RegistryStatus {
-		// We assume that on these cases the sHost is provided in FQDN
-		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if kubernetes.FilterByRegistryStatus(sHost, rStatus) {
-			return true
-		}
+	if kubernetes.HasMatchingRegistryStatus(sHost, n.RegistryStatus) {
+		return true
 	}
 	return false
 }

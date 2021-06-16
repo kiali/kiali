@@ -214,6 +214,19 @@ func HasMatchingVirtualServices(host Host, virtualServices []IstioObject) bool {
 	return false
 }
 
+// HasMatchingRegistryStatus returns true when the FDQN of the host param matches
+// with one registry status of the registryStatus param.
+func HasMatchingRegistryStatus(host string, registryStatus []*RegistryStatus) bool {
+	for _, rStatus := range registryStatus {
+		// We assume that on these cases the host.Service is provided in FQDN
+		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
+		if FilterByRegistryStatus(host, rStatus) {
+			return true
+		}
+	}
+	return false
+}
+
 func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 	if !strings.HasPrefix(wildcardDomain, "*") {
 		return false
