@@ -293,6 +293,7 @@ type OpenIdConfig struct {
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	ApiToken                string            `yaml:"api_token,omitempty"`
 	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
+	CAFile                  string            `yaml:"ca_file,omitempty"`
 	ClientId                string            `yaml:"client_id,omitempty"`
 	ClientSecret            string            `yaml:"client_secret,omitempty"`
 	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
@@ -632,6 +633,7 @@ func (conf Config) String() (str string) {
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
+	obf.Auth.OpenId.CAFile = "xxx"
 	obf.Auth.OpenId.ClientSecret = "xxx"
 	str, err := Marshal(&obf)
 	if err != nil {

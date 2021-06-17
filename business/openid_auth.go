@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -784,9 +785,24 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 	}
 
 	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS {
+	if cfg.InsecureSkipVerifyTLS || len(cfg.CAFile) != 0 {
+		var certPool *x509.CertPool
+		if len(cfg.CAFile) != 0 {
+			certPool = x509.NewCertPool()
+			cert, caErr := ioutil.ReadFile(cfg.CAFile)
+
+			if caErr != nil {
+				return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caErr)
+			}
+
+			if ok := certPool.AppendCertsFromPEM(cert); !ok {
+				return nil, fmt.Errorf("supplied OpenId CA file cannot be parsed")
+			}
+		}
+
 		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
+			RootCAs:            certPool,
 		}
 	}
 
