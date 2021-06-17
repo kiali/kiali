@@ -777,8 +777,5 @@ func SaveToFile(filename string, conf *Config) (err error) {
 
 // IsIstioNamespace returns true if the namespace is the default istio namespace
 func IsIstioNamespace(namespace string) bool {
-	if namespace == configuration.IstioNamespace {
-		return true
-	}
-	return false
+	return namespace == configuration.IstioNamespace
 }
