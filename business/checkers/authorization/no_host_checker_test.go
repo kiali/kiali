@@ -230,14 +230,6 @@ func fakeServices(serviceNames []string) []core_v1.Service {
 	return services
 }
 
-func fakeRegistryStatus(hosts []string) []*kubernetes.RegistryStatus {
-	rss := make([]*kubernetes.RegistryStatus, 0, len(hosts))
-	for _, h := range hosts {
-		rss = append(rss, &kubernetes.RegistryStatus{RegistryService: kubernetes.RegistryService{ Hostname: h } })
-	}
-	return rss
-}
-
 func TestValidServiceRegistry(t *testing.T) {
 	assert := assert.New(t)
 

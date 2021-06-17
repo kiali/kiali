@@ -104,8 +104,5 @@ func (n NoHostChecker) checkDestination(sHost string) bool {
 
 	// Use RegistryStatus to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	if kubernetes.HasMatchingRegistryStatus(sHost, n.RegistryStatus) {
-		return true
-	}
-	return false
+	return kubernetes.HasMatchingRegistryStatus(sHost, n.RegistryStatus)
 }
