@@ -8,7 +8,7 @@ import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import {
   activeNamespacesSelector,
-  edgeLabelModeSelector,
+  edgeLabelsSelector,
   graphTypeSelector,
   showIdleNodesSelector,
   replayActiveSelector
@@ -32,7 +32,7 @@ import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   node?: NodeParamsType;
   replayActive: boolean;
@@ -40,7 +40,7 @@ type ReduxProps = {
   summaryData: SummaryData | null;
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
-  setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
+  setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   setGraphType: (graphType: GraphType) => void;
   setIdleNodes: (idleNodes: boolean) => void;
   setNode: (node?: NodeParamsType) => void;
@@ -81,13 +81,14 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
     const urlParams = new URLSearchParams(history.location.search);
-    const urlEdgeLabelMode = HistoryManager.getParam(URLParam.GRAPH_EDGES, urlParams) as EdgeLabelMode;
-    if (urlEdgeLabelMode) {
-      if (urlEdgeLabelMode !== props.edgeLabelMode) {
-        props.setEdgeLabelMode(urlEdgeLabelMode);
+    const urlEdgeLabels = HistoryManager.getParam(URLParam.GRAPH_EDGES, urlParams);
+    if (urlEdgeLabels) {
+      if (urlEdgeLabels !== props.edgeLabels.join(',')) {
+        props.setEdgeLabels(urlEdgeLabels.split(',') as EdgeLabelMode[]);
       }
     } else {
-      HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
+      const edgeLabelsString = props.edgeLabels.join(',');
+      HistoryManager.setParam(URLParam.NAMESPACES, edgeLabelsString);
     }
 
     const urlGraphType = HistoryManager.getParam(URLParam.GRAPH_TYPE, urlParams) as GraphType;
@@ -127,7 +128,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
     } else {
       HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
-    HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
+    HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabels));
     HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     HistoryManager.setParam(URLParam.GRAPH_IDLE_NODES, String(this.props.showIdleNodes));
   }
@@ -206,7 +207,7 @@ export class GraphToolbar extends React.PureComponent<GraphToolbarProps> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
-  edgeLabelMode: edgeLabelModeSelector(state),
+  edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
   node: state.graph.node,
   replayActive: replayActiveSelector(state),
@@ -217,7 +218,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
-    setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
+    setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setGraphType: bindActionCreators(GraphToolbarActions.setGraphType, dispatch),
     setIdleNodes: bindActionCreators(GraphToolbarActions.setIdleNodes, dispatch),
     setNode: bindActionCreators(GraphActions.setNode, dispatch),

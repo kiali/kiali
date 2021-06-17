@@ -38,7 +38,8 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       responses: undefined,
       responseTime: NaN,
       sourcePrincipal: undefined,
-      tcp: NaN
+      tcp: NaN,
+      throughput: NaN
     },
     nodes: {
       aggregate: undefined,
@@ -156,7 +157,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
               ...edgeProtocolDefaults[traffic.protocol],
               ...propertiesToNumber(traffic.rates),
               // Base properties that need to be cast as number.
-              ...propertiesToNumber(edgeData, ['isMtls', 'responseTime'])
+              ...propertiesToNumber(edgeData, ['isMtls', 'responseTime', 'throughput'])
             };
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };

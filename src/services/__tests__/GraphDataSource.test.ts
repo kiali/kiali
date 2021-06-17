@@ -1,7 +1,7 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import GraphDataSource, { EMPTY_GRAPH_DATA } from '../GraphDataSource';
-import { EdgeLabelMode, GraphType } from '../../types/Graph';
+import { GraphType } from '../../types/Graph';
 import MockAdapter from 'axios-mock-adapter';
 
 const GRAPH_EMPTY_RESPONSE = {
@@ -15,7 +15,7 @@ const GRAPH_EMPTY_RESPONSE = {
 };
 const FETCH_PARAMS = {
   duration: 10,
-  edgeLabelMode: EdgeLabelMode.NONE,
+  edgeLabels: [],
   graphType: GraphType.VERSIONED_APP,
   includeHealth: false,
   injectServiceNodes: false,

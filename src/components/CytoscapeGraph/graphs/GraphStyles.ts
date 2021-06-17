@@ -8,7 +8,9 @@ import {
   CytoscapeGlobalScratchNamespace,
   CytoscapeGlobalScratchData,
   UNKNOWN,
-  BoxByType
+  BoxByType,
+  Protocol,
+  numLabels
 } from '../../../types/Graph';
 import { icons } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
@@ -406,77 +408,86 @@ export class GraphStyles {
       }
     };
 
-    const getEdgeLabel = (ele: Cy.EdgeSingular, includeProtocol?: boolean): string => {
+    const getEdgeLabel = (ele: Cy.EdgeSingular, isVerbose?: boolean): string => {
       const cyGlobal = getCyGlobalData(ele);
-      const edgeLabelMode = cyGlobal.edgeLabelMode;
-      let content = '';
+      const edgeLabels = cyGlobal.edgeLabels;
       const edgeData = decoratedEdgeData(ele);
+      const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
+      let labels = [] as string[];
 
-      switch (edgeLabelMode) {
-        case EdgeLabelMode.REQUEST_RATE: {
-          let rate = 0;
-          let pErr = 0;
-          if (edgeData.http > 0) {
-            rate = edgeData.http;
-            pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
-          } else if (edgeData.grpc > 0) {
-            rate = edgeData.grpc;
-            pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
-          } else if (edgeData.tcp > 0) {
-            rate = edgeData.tcp;
-          }
+      if (edgeLabels.includes(EdgeLabelMode.REQUEST_RATE)) {
+        let rate = 0;
+        let pErr = 0;
+        if (edgeData.http > 0) {
+          rate = edgeData.http;
+          pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
+        } else if (edgeData.grpc > 0) {
+          rate = edgeData.grpc;
+          pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
+        } else if (edgeData.tcp > 0) {
+          rate = edgeData.tcp;
+        }
 
-          if (rate > 0) {
-            if (pErr > 0) {
-              let sErr = pErr.toFixed(1);
-              sErr = `${sErr.endsWith('.0') ? pErr.toFixed(0) : sErr}`;
-              content = `${rate.toFixed(2)}\n${sErr}%`;
+        if (rate > 0) {
+          if (pErr > 0) {
+            labels.push(`${toFixedRequestRate(rate, includeUnits)}\n${toFixedErrRate(pErr)}`);
+          } else {
+            if (edgeData.protocol === Protocol.TCP) {
+              labels.push(toFixedByteRate(rate, includeUnits));
             } else {
-              content = rate.toFixed(2);
+              labels.push(toFixedRequestRate(rate, includeUnits));
             }
           }
-          break;
         }
-        case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
-          // todo: remove this logging once we figure out the strangeness going on with responseTime
-          let logResponseTime = edgeData.responseTime;
-          if (!isNaN(logResponseTime) && !Number.isInteger(logResponseTime)) {
-            console.log(`Unexpected string responseTime=|${logResponseTime}|`);
-          }
-          // hack to fix responseTime is sometimes a string during runtime even though its type is number
-          const responseTimeNumber = parseInt(String(edgeData.responseTime));
-          const responseTime = responseTimeNumber > 0 ? responseTimeNumber : 0;
-          if (responseTime && responseTime > 0) {
-            content = responseTime < 1000.0 ? `${responseTime.toFixed(0)}ms` : `${(responseTime / 1000.0).toFixed(2)}s`;
-          }
-          break;
-        }
-        case EdgeLabelMode.REQUEST_DISTRIBUTION: {
-          let pReq;
-          if (edgeData.httpPercentReq > 0) {
-            pReq = edgeData.httpPercentReq;
-          } else if (edgeData.grpcPercentReq > 0) {
-            pReq = edgeData.grpcPercentReq;
-          }
-          if (pReq > 0) {
-            const sReq = pReq.toFixed(1);
-            content = `${sReq.endsWith('.0') ? pReq.toFixed(0) : sReq}%`;
-          }
-          break;
-        }
-        default:
-          content = '';
       }
 
-      if (includeProtocol) {
+      if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
+        // todo: remove this logging once we figure out the strangeness going on with responseTime
+        let logResponseTime = edgeData.responseTime;
+        if (!isNaN(logResponseTime) && !Number.isInteger(logResponseTime)) {
+          console.log(`Unexpected string responseTime=|${logResponseTime}|`);
+        }
+        // hack to fix responseTime is sometimes a string during runtime even though its type is number
+        const responseTimeNumber = parseInt(String(edgeData.responseTime));
+        const responseTime = responseTimeNumber > 0 ? responseTimeNumber : 0;
+        if (responseTime && responseTime > 0) {
+          labels.push(toFixedDuration(responseTime));
+        }
+      }
+
+      if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
+        let rate = edgeData.throughput;
+
+        if (rate > 0) {
+          labels.push(toFixedByteRate(rate, includeUnits));
+        }
+      }
+
+      if (edgeLabels.includes(EdgeLabelMode.REQUEST_DISTRIBUTION)) {
+        let pReq;
+        if (edgeData.httpPercentReq > 0) {
+          pReq = edgeData.httpPercentReq;
+        } else if (edgeData.grpcPercentReq > 0) {
+          pReq = edgeData.grpcPercentReq;
+        }
+        if (pReq > 0 && pReq < 100) {
+          labels.push(toFixedPercent(pReq));
+        }
+      }
+
+      let label = labels.join('\n');
+
+      if (isVerbose) {
         const protocol = edgeData.protocol;
-        content = protocol ? `${protocol} ${content}` : content;
+        label = protocol ? `${protocol}\n${label}` : label;
       }
 
       const mtlsPercentage = edgeData.isMTLS;
+      let lockIcon = false;
       if (cyGlobal.showSecurity && edgeData.hasTraffic) {
         if (mtlsPercentage && mtlsPercentage > 0) {
-          content = `${EdgeIconMTLS} ${content}`;
+          lockIcon = true;
+          label = `${EdgeIconMTLS}\n${label}`;
         }
       }
 
@@ -489,14 +500,53 @@ export class GraphStyles {
             // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
             // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
             if (responses[code]['UO'] || responses[code]['UH']) {
-              content = `${NodeIconCB} ${content}`;
+              label = lockIcon ? `${NodeIconCB} ${label}` : `${NodeIconCB}\n${label}`;
               break;
             }
           }
         }
       }
 
-      return content;
+      return label;
+    };
+
+    const trimFixed = (fixed: string): string => {
+      if (!fixed.includes('.')) {
+        return fixed;
+      }
+      while (fixed.endsWith('0')) {
+        fixed = fixed.slice(0, -1);
+      }
+      return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+    };
+
+    const toFixedRequestRate = (num: number, includeUnits: boolean): string => {
+      const rate = trimFixed(num.toFixed(2));
+      return includeUnits ? `${rate} rps` : rate;
+    };
+
+    const toFixedErrRate = (num: number): string => {
+      return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}% err`;
+    };
+
+    const toFixedByteRate = (num: number, includeUnits: boolean): string => {
+      if (num < 1024.0) {
+        const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
+        return includeUnits ? `${rate} bps` : rate;
+      }
+      const rate = trimFixed((num / 1024.0).toFixed(2));
+      return includeUnits ? `${rate} kps` : rate;
+    };
+
+    const toFixedPercent = (num: number): string => {
+      return `${trimFixed(num.toFixed(1))}%`;
+    };
+
+    const toFixedDuration = (num: number): string => {
+      if (num < 1000) {
+        return `${num.toFixed(0)}ms`;
+      }
+      return `${trimFixed((num / 1000.0).toFixed(2))}s`;
     };
 
     const getNodeBackgroundImage = (ele: Cy.NodeSingular): string => {

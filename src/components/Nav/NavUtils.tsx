@@ -7,7 +7,7 @@ import { isKioskMode } from '../../utils/SearchParamUtils';
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   graphLayout: Layout;
   graphType: GraphType;
   node?: NodeParamsType;
@@ -19,7 +19,7 @@ export type GraphUrlParams = {
 };
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
-  let q = `&${URLParam.GRAPH_EDGES}=${params.edgeLabelMode}`;
+  let q = `&${URLParam.GRAPH_EDGES}=${params.edgeLabels}`;
   q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
   q += `&${URLParam.GRAPH_IDLE_EDGES}=${params.showIdleEdges}`;
   q += `&${URLParam.GRAPH_IDLE_NODES}=${params.showIdleNodes}`;

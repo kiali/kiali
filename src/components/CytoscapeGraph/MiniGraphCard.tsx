@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import history from '../../app/History';
 import GraphDataSource from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeLabelMode, GraphType, NodeType } from '../../types/Graph';
+import { DecoratedGraphElements, GraphType, NodeType } from '../../types/Graph';
 import CytoscapeGraph, { GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
 import { CytoscapeGraphSelectorBuilder } from './CytoscapeGraphSelector';
 import { DagreGraph } from './graphs/DagreGraph';
@@ -107,7 +107,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
                 timestamp: this.props.dataSource.graphTimestamp
               }}
               toggleIdleNodes={() => undefined}
-              edgeLabelMode={EdgeLabelMode.REQUEST_RATE}
+              edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
               isMTLSEnabled={this.props.mtlsEnabled}
               isMiniGraph={true}
               onEdgeTap={this.props.onEdgeTap}
@@ -226,7 +226,7 @@ export default class MiniGraphCard extends React.Component<MiniGraphCardProps, M
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.props.dataSource.fetchParameters.namespaces,
       duration: this.props.dataSource.fetchParameters.duration,
-      edgeLabelMode: this.props.dataSource.fetchParameters.edgeLabelMode,
+      edgeLabels: this.props.dataSource.fetchParameters.edgeLabels,
       graphLayout: store.getState().graph.layout,
       graphType: graphType,
       node: this.props.dataSource.fetchParameters.node!,

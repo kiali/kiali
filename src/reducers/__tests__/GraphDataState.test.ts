@@ -1,7 +1,7 @@
 import graphDataState from '../GraphDataState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { EdgeLabelMode, GraphType } from '../../types/Graph';
+import { GraphType } from '../../types/Graph';
 import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 
 describe('GraphDataState', () => {
@@ -15,7 +15,7 @@ describe('GraphDataState', () => {
         boxByCluster: false,
         boxByNamespace: false,
         compressOnHide: true,
-        edgeLabelMode: EdgeLabelMode.NONE,
+        edgeLabels: [],
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',

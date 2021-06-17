@@ -23,7 +23,8 @@ export const CyEdge = {
   responses: 'responses',
   responseTime: 'responseTime',
   sourcePrincipal: 'sourcePrincipal',
-  tcp: 'tcp'
+  tcp: 'tcp',
+  throughput: 'throughput'
 };
 
 export const CyEdgeResponses = {

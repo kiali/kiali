@@ -27,7 +27,7 @@ const testSetHandler = () => {
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', done => {
     const myLayout: Layout = { name: 'breadthfirst' };
-    const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.NONE;
+    const myEdgeLabelMode: EdgeLabelMode[] = [];
 
     const dataSource = new GraphDataSource();
     dataSource.fetchGraphData({
@@ -36,7 +36,7 @@ describe('CytoscapeGraph component test', () => {
       graphType: GraphType.VERSIONED_APP,
       namespaces: [{ name: testNamespace }],
       duration: 60,
-      edgeLabelMode: myEdgeLabelMode,
+      edgeLabels: myEdgeLabelMode,
       queryTime: 0,
       showIdleEdges: false,
       showIdleNodes: false,
@@ -48,7 +48,7 @@ describe('CytoscapeGraph component test', () => {
       const wrapper = shallow(
         <CytoscapeGraph
           compressOnHide={true}
-          edgeLabelMode={myEdgeLabelMode}
+          edgeLabels={myEdgeLabelMode}
           graphData={{
             elements: dataSource.graphData,
             isLoading: false,
@@ -58,7 +58,7 @@ describe('CytoscapeGraph component test', () => {
               graphType: GraphType.VERSIONED_APP,
               namespaces: [{ name: testNamespace }],
               duration: 60,
-              edgeLabelMode: myEdgeLabelMode,
+              edgeLabels: myEdgeLabelMode,
               queryTime: 0,
               showIdleEdges: false,
               showIdleNodes: false,

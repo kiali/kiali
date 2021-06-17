@@ -150,11 +150,12 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
       ['http <op> <number>', 'unit: requests per second'],
       ['%httperr <op> <number>', 'range: [0..100]'],
       ['%httptraffic <op> <number>', 'range: [0..100]'],
-      ['protocol <op> <protocol>', 'grpc, http, tcp, etc..'],
-      ['responsetime <op> <number>', `unit: millis, will auto-enable 'response time' edge labels`],
-      ['sourceprincipal <op> <principal>'],
-      ['tcp <op> <number>', 'unit: requests per second'],
       ['mtls', `will auto-enable 'security' display option`],
+      ['protocol <op> <protocol>', 'grpc, http, tcp, etc..'],
+      ['responsetime <op> <number>', `unit: millis, will auto-enable 'P95 response time' edge labels`],
+      ['sourceprincipal <op> <principal>'],
+      ['tcp <op> <number>', 'unit: bytes per second'],
+      ['throughput <op> <number>', `unit: bytes per second, will auto-enable 'request throughput' edge labels`],
       ['traffic', 'any traffic for any protocol']
     ];
   };

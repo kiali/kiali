@@ -6,10 +6,10 @@ import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
 import { GraphToolbarState, KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { GraphType, EdgeLabelMode } from '../../../types/Graph';
+import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode } from '../../../types/Graph';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import * as _ from 'lodash';
-import { edgeLabelModeSelector } from 'store/Selectors';
+import { edgeLabelsSelector } from 'store/Selectors';
 import {
   BoundingClientAwareComponent,
   PropertyType
@@ -26,7 +26,8 @@ import {
 } from 'styles/DropdownStyles';
 
 type ReduxProps = {
-  setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
+  edgeLabels: EdgeLabelMode[];
+  setEdgeLabels: (edgeLabels: EdgeLabelMode[]) => void;
   toggleBoxByCluster(): void;
   toggleBoxByNamespace(): void;
   toggleCompressOnHide(): void;
@@ -43,7 +44,7 @@ type ReduxProps = {
 type GraphSettingsProps = ReduxProps &
   Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'>;
 
-type GraphSettingsState = { isOpen: boolean };
+type GraphSettingsState = { edgeLabelThroughputChecked: boolean; isOpen: boolean };
 
 interface DisplayOptionType {
   id: string;
@@ -60,6 +61,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
   constructor(props: GraphSettingsProps) {
     super(props);
     this.state = {
+      edgeLabelThroughputChecked: false,
       isOpen: false
     };
 
@@ -124,7 +126,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       boxByCluster,
       boxByNamespace,
       compressOnHide,
-      edgeLabelMode,
+      edgeLabels,
       showIdleEdges,
       showIdleNodes,
       showMissingSidecars,
@@ -152,48 +154,113 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
 
     const edgeLabelOptions: DisplayOptionType[] = [
       {
-        id: EdgeLabelMode.NONE,
-        labelText: _.startCase(EdgeLabelMode.NONE),
-        isChecked: edgeLabelMode === EdgeLabelMode.NONE
-      },
-      {
         id: EdgeLabelMode.REQUEST_RATE,
         labelText: _.startCase(EdgeLabelMode.REQUEST_RATE),
-        isChecked: edgeLabelMode === EdgeLabelMode.REQUEST_RATE,
+        isChecked: edgeLabels.includes(EdgeLabelMode.REQUEST_RATE),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP and GRPC rates are in requests-per-second. The percentage of error responses is shown below the rate,
-            when non-zero. TCP rates are in bytes-sent-per-second. Rates are rounded to 2 significant digits.
+            HTTP and gRPC rates are in requests-per-second (rps). When non-zero, the percentage of error responses is
+            shown below the rate. TCP rates are sent-bytes. The unit is bytes-per-second (bps) when less than 1024,
+            otherwise kilobytes-per-second (kps). Rates are rounded to 2 significant digits.
+          </div>
+        )
+      },
+      {
+        id: EdgeLabelMode.RESPONSE_TIME_GROUP,
+        labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_GROUP),
+        isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>
+              Displays the requested response time. The unit is milliseconds (ms) when less than 1000, otherwise seconds
+              (s). Default: 95th Percentile.
+            </div>
+            <div>
+              The following edges do not offer a response time label but the information is available in the side panel
+              when selecting the edge:
+            </div>
+            <div>- edges into service nodes</div>
+            <div>- edges into or out of operation nodes.</div>
+          </div>
+        )
+      },
+      {
+        id: EdgeLabelMode.THROUGHPUT_GROUP,
+        labelText: _.startCase(EdgeLabelMode.THROUGHPUT_GROUP),
+        isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>
+              Displays the requested HTTP Throughput. The unit is bytes-per-second (bps) when less than 1024, otherwise
+              kilobytes-per-second (kps). Default: Request Throughput
+            </div>
+            <div>The following edges do not offer a throughput label:</div>
+            <div>- edges into service nodes</div>
+            <div>- edges into or out of operation nodes.</div>
           </div>
         )
       },
       {
         id: EdgeLabelMode.REQUEST_DISTRIBUTION,
         labelText: _.startCase(EdgeLabelMode.REQUEST_DISTRIBUTION),
-        isChecked: edgeLabelMode === EdgeLabelMode.REQUEST_DISTRIBUTION,
+        isChecked: edgeLabels.includes(EdgeLabelMode.REQUEST_DISTRIBUTION),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            HTTP and GRPC Edges display the percentage of outbound requests for that edge. For a source node, the sum
-            for outbound edges should be equal to or near 100%, given rounding. TCP edges are not included in the
-            distribution because their rates reflect bytes sent, not requests sent.
+            HTTP and gRPC Edges display the percentage of outbound requests for that edge, when less than 100%. For a
+            source node, the sum for outbound edges (per protocol) should be equal to or near 100%, given rounding. TCP
+            edges are not included in the distribution because their rates reflect bytes sent, not requests sent.
+          </div>
+        )
+      }
+    ];
+
+    const throughputOptions: DisplayOptionType[] = [
+      {
+        id: EdgeLabelMode.THROUGHPUT_REQUEST,
+        labelText: 'Request',
+        isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_REQUEST),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            HTTP request data in bytes-per-second (bps) or kilobytes-per-second (kps)
           </div>
         )
       },
       {
-        id: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
-        labelText: _.startCase(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE),
-        isChecked: edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
+        id: EdgeLabelMode.THROUGHPUT_RESPONSE,
+        labelText: 'Response',
+        isChecked: edgeLabels.includes(EdgeLabelMode.THROUGHPUT_RESPONSE),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            <div>Displays the 95th Percentile.</div>
-            <div>
-              To see other response time percentiles select the desired edge and see the side panel. The following edges
-              do not offer a response time label but the information is availabe in the side panel:
-            </div>
-            <div>- edges into service nodes</div>
-            <div>- edges into or out of operation nodes.</div>
+            HTTP response data in bytes per second (bps) or kilobytes-per-second (kps)
           </div>
         )
+      }
+    ];
+
+    const responseTimeOptions: DisplayOptionType[] = [
+      {
+        id: EdgeLabelMode.RESPONSE_TIME_AVERAGE,
+        labelText: 'Average',
+        isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_AVERAGE),
+        tooltip: <div style={{ textAlign: 'left' }}>Average request response time</div>
+      },
+      {
+        id: EdgeLabelMode.RESPONSE_TIME_P50,
+        labelText: 'Median',
+        isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P50),
+        tooltip: <div style={{ textAlign: 'left' }}>Median request response time (50th Percentile)</div>
+      },
+      {
+        id: EdgeLabelMode.RESPONSE_TIME_P95,
+        labelText: '95th Percentile',
+        isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P95),
+        tooltip: <div style={{ textAlign: 'left' }}>Max response time for 95% of requests (95th Percentile)</div>
+      },
+      {
+        id: EdgeLabelMode.RESPONSE_TIME_P99,
+        labelText: '99th Percentile',
+        isChecked: edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_P99),
+        tooltip: <div style={{ textAlign: 'left' }}>Max response time for 99% of requests (99th Percentile)</div>
       }
     ];
 
@@ -203,11 +270,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         labelText: 'Cluster Boxes',
         isChecked: boxByCluster,
         onChange: toggleBoxByCluster,
-        tooltip: (
-          <div style={{ textAlign: 'left' }}>
-            <strong>Experimental:</strong> When enabled the graph will box nodes in the same cluster.
-          </div>
-        )
+        tooltip: <div style={{ textAlign: 'left' }}>When enabled the graph will box nodes in the same cluster.</div>
       },
       {
         id: 'boxByNamespace',
@@ -318,20 +381,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         onChange: toggleGraphMissingSidecars
       },
       {
-        id: 'filterVS',
-        labelText: 'Virtual Services',
-        isChecked: showVirtualServices,
-        onChange: toggleGraphVirtualServices,
-        tooltip: (
-          <div style={{ textAlign: 'left' }}>
-            <div>
-              Show virtual service related icons. Additional icons are displayed if a circuit breaker is present on the
-              virtual service or if the virtual service was created through one of the Kiali service wizards.
-            </div>
-          </div>
-        )
-      },
-      {
         id: 'filterSecurity',
         labelText: 'Security',
         isChecked: showSecurity,
@@ -346,6 +395,20 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
             </div>
           </div>
         )
+      },
+      {
+        id: 'filterVS',
+        labelText: 'Virtual Services',
+        isChecked: showVirtualServices,
+        onChange: toggleGraphVirtualServices,
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            <div>
+              Show virtual service related icons. Additional icons are displayed if a circuit breaker is present on the
+              virtual service or if the virtual service was created through one of the Kiali service wizards.
+            </div>
+          </div>
+        )
       }
     ];
 
@@ -355,23 +418,112 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
         <div id="graph-display-menu" className={menuStyle}>
-          <div className={titleStyle}>Show Edge Labels</div>
-          {edgeLabelOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
-                <Radio
-                  id={item.id}
-                  name="edgeLabels"
-                  isChecked={item.isChecked}
-                  label={item.labelText}
-                  onChange={this.setEdgeLabelMode}
-                  value={item.id}
+          <div style={{ marginTop: '10px' }}>
+            <span className={titleStyle} style={{ position: 'relative', bottom: '3px', paddingRight: 0 }}>
+              Show Edge Labels
+            </span>
+            <Tooltip
+              key="tooltip_show_edge_labels"
+              position={TooltipPosition.right}
+              content={
+                <div style={{ textAlign: 'left' }}>
+                  <div>
+                    Values for multiple label selections are stacked in the same order as the options below. Hover or
+                    selection will always show units, an additionally show protocol.
+                  </div>
+                </div>
+              }
+            >
+              <KialiIcon.Info className={infoStyle} />
+            </Tooltip>
+          </div>
+          {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
+            <div key={edgeLabelOption.id} className={menuEntryStyle}>
+              <label
+                key={edgeLabelOption.id}
+                className={!!edgeLabelOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+              >
+                <Checkbox
+                  id={edgeLabelOption.id}
+                  name="edgeLabelOptions"
+                  isChecked={edgeLabelOption.isChecked}
+                  label={edgeLabelOption.labelText}
+                  onChange={this.toggleEdgeLabelMode}
+                  value={edgeLabelOption.id}
                 />
               </label>
-              {!!item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+              {!!edgeLabelOption.tooltip && (
+                <Tooltip
+                  key={`tooltip_${edgeLabelOption.id}`}
+                  position={TooltipPosition.right}
+                  content={edgeLabelOption.tooltip}
+                >
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
+              )}
+              {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP && responseTimeOptions.some(o => o.isChecked) && (
+                <div>
+                  {responseTimeOptions.map((rtOption: DisplayOptionType) => (
+                    <div key={rtOption.id} className={menuEntryStyle}>
+                      <label
+                        key={rtOption.id}
+                        className={!!rtOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        style={{ paddingLeft: '35px' }}
+                      >
+                        <Radio
+                          id={rtOption.id}
+                          style={{ paddingLeft: '5px' }}
+                          name="rtOptions"
+                          isChecked={rtOption.isChecked}
+                          label={rtOption.labelText}
+                          onChange={this.toggleEdgeLabelResponseTimeMode}
+                          value={rtOption.id}
+                        />
+                      </label>
+                      {!!rtOption.tooltip && (
+                        <Tooltip
+                          key={`tooltip_${rtOption.id}`}
+                          position={TooltipPosition.right}
+                          content={rtOption.tooltip}
+                        >
+                          <KialiIcon.Info className={infoStyle} />
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {edgeLabelOption.id === EdgeLabelMode.THROUGHPUT_GROUP && throughputOptions.some(o => o.isChecked) && (
+                <div>
+                  {throughputOptions.map((throughputOption: DisplayOptionType) => (
+                    <div key={throughputOption.id} className={menuEntryStyle}>
+                      <label
+                        key={throughputOption.id}
+                        className={!!throughputOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        style={{ paddingLeft: '35px' }}
+                      >
+                        <Radio
+                          id={throughputOption.id}
+                          style={{ paddingLeft: '5px' }}
+                          name="throughputOptions"
+                          isChecked={throughputOption.isChecked}
+                          label={throughputOption.labelText}
+                          onChange={this.toggleEdgeLabelThroughputMode}
+                          value={throughputOption.id}
+                        />
+                      </label>
+                      {!!throughputOption.tooltip && (
+                        <Tooltip
+                          key={`tooltip_${throughputOption.id}`}
+                          position={TooltipPosition.right}
+                          content={throughputOption.tooltip}
+                        >
+                          <KialiIcon.Info className={infoStyle} />
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           ))}
@@ -388,7 +540,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
                 />
               </label>
               {!!item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
@@ -401,7 +553,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
                 <Checkbox id={item.id} isChecked={item.isChecked} label={item.labelText} onChange={item.onChange} />
               </label>
               {!!item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.top} content={item.tooltip}>
+                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
               )}
@@ -412,11 +564,45 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
     );
   }
 
-  private setEdgeLabelMode = (_, event) => {
+  private toggleEdgeLabelMode = (_, event) => {
     const mode = event.target.value as EdgeLabelMode;
-    if (this.props.edgeLabelMode !== mode) {
-      this.props.setEdgeLabelMode(mode);
+    if (this.props.edgeLabels.includes(mode)) {
+      let newEdgeLabels;
+      switch (mode) {
+        case EdgeLabelMode.RESPONSE_TIME_GROUP:
+          newEdgeLabels = this.props.edgeLabels.filter(l => !isResponseTimeMode(l));
+          break;
+        case EdgeLabelMode.THROUGHPUT_GROUP:
+          newEdgeLabels = this.props.edgeLabels.filter(l => !isThroughputMode(l));
+          break;
+        default:
+          newEdgeLabels = this.props.edgeLabels.filter(l => l !== mode);
+      }
+      this.props.setEdgeLabels(newEdgeLabels);
+    } else {
+      switch (mode) {
+        case EdgeLabelMode.RESPONSE_TIME_GROUP:
+          this.props.setEdgeLabels([...this.props.edgeLabels, mode, EdgeLabelMode.RESPONSE_TIME_P95]);
+          break;
+        case EdgeLabelMode.THROUGHPUT_GROUP:
+          this.props.setEdgeLabels([...this.props.edgeLabels, mode, EdgeLabelMode.THROUGHPUT_REQUEST]);
+          break;
+        default:
+          this.props.setEdgeLabels([...this.props.edgeLabels, mode]);
+      }
     }
+  };
+
+  private toggleEdgeLabelResponseTimeMode = (_, event) => {
+    const mode = event.target.value as EdgeLabelMode;
+    const newEdgeLabels = this.props.edgeLabels.filter(l => !isResponseTimeMode(l));
+    this.props.setEdgeLabels([...newEdgeLabels, EdgeLabelMode.RESPONSE_TIME_GROUP, mode]);
+  };
+
+  private toggleEdgeLabelThroughputMode = (_, event) => {
+    const mode = event.target.value as EdgeLabelMode;
+    const newEdgeLabels = this.props.edgeLabels.filter(l => !isThroughputMode(l));
+    this.props.setEdgeLabels([...newEdgeLabels, EdgeLabelMode.THROUGHPUT_GROUP, mode]);
   };
 }
 
@@ -425,7 +611,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   boxByCluster: state.graph.toolbarState.boxByCluster,
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
-  edgeLabelMode: edgeLabelModeSelector(state),
+  edgeLabels: edgeLabelsSelector(state),
   showIdleEdges: state.graph.toolbarState.showIdleEdges,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showMissingSidecars: state.graph.toolbarState.showMissingSidecars,
@@ -439,7 +625,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setEdgeLabelMode: bindActionCreators(GraphToolbarActions.setEdgelLabelMode, dispatch),
+    setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     toggleBoxByCluster: bindActionCreators(GraphToolbarActions.toggleBoxByCluster, dispatch),
     toggleBoxByNamespace: bindActionCreators(GraphToolbarActions.toggleBoxByNamespace, dispatch),
     toggleCompressOnHide: bindActionCreators(GraphToolbarActions.toggleCompressOnHide, dispatch),

@@ -2,7 +2,7 @@ import { getType } from 'typesafe-actions';
 import { GraphActions } from '../actions/GraphActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
-import { EdgeLabelMode, GraphType } from '../types/Graph';
+import { GraphType } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 import { updateState } from '../utils/Reducer';
@@ -16,7 +16,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     boxByCluster: false,
     boxByNamespace: false,
     compressOnHide: true,
-    edgeLabelMode: EdgeLabelMode.NONE,
+    edgeLabels: [],
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
     hideValue: '',
@@ -64,10 +64,10 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       });
     // Filter actions
     //
-    case getType(GraphToolbarActions.setEdgelLabelMode):
+    case getType(GraphToolbarActions.setEdgeLabels):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
-          edgeLabelMode: action.payload
+          edgeLabels: action.payload
         })
       });
     case getType(GraphToolbarActions.setFindValue):

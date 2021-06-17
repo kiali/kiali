@@ -32,11 +32,39 @@ export interface SummaryPanelPropType {
 }
 
 export enum EdgeLabelMode {
-  NONE = 'noLabel',
-  REQUEST_RATE = 'requestRate',
   REQUEST_DISTRIBUTION = 'requestDistribution',
-  RESPONSE_TIME_95TH_PERCENTILE = 'responseTime'
+  REQUEST_RATE = 'requestRate',
+  RESPONSE_TIME_GROUP = 'responseTime',
+  RESPONSE_TIME_AVERAGE = 'avg',
+  RESPONSE_TIME_P50 = 'rt50',
+  RESPONSE_TIME_P95 = 'rt95',
+  RESPONSE_TIME_P99 = 'rt99',
+  THROUGHPUT_GROUP = 'throughput',
+  THROUGHPUT_REQUEST = 'throughputRequest',
+  THROUGHPUT_RESPONSE = 'throughputResponse'
 }
+
+export const isResponseTimeMode = (mode: EdgeLabelMode): boolean => {
+  return (
+    mode === EdgeLabelMode.RESPONSE_TIME_GROUP ||
+    mode === EdgeLabelMode.RESPONSE_TIME_AVERAGE ||
+    mode === EdgeLabelMode.RESPONSE_TIME_P50 ||
+    mode === EdgeLabelMode.RESPONSE_TIME_P95 ||
+    mode === EdgeLabelMode.RESPONSE_TIME_P99
+  );
+};
+
+export const isThroughputMode = (mode: EdgeLabelMode): boolean => {
+  return (
+    mode === EdgeLabelMode.THROUGHPUT_GROUP ||
+    mode === EdgeLabelMode.THROUGHPUT_REQUEST ||
+    mode === EdgeLabelMode.THROUGHPUT_RESPONSE
+  );
+};
+
+export const numLabels = (modes: EdgeLabelMode[]): number => {
+  return modes.filter(m => m !== EdgeLabelMode.RESPONSE_TIME_GROUP && m !== EdgeLabelMode.THROUGHPUT_GROUP).length;
+};
 
 export enum GraphType {
   APP = 'app',
@@ -81,7 +109,7 @@ export const CytoscapeGlobalScratchNamespace = '_global';
 export type CytoscapeGlobalScratchData = {
   activeNamespaces: Namespace[];
   homeCluster: string;
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   showMissingSidecars: boolean;
   showSecurity: boolean;
@@ -273,19 +301,19 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   httpNoResponse: number;
   httpPercentErr: number;
   httpPercentReq: number;
+  protocol: ValidProtocols;
   responses: Responses;
   tcp: number;
-  protocol: ValidProtocols;
 
   // During the decoration process, we make non-optional some number attributes (giving them a default value)
-  // Default value NaN
-  responseTime: number;
-
-  // Default value -1
-  isMTLS: number;
-
   // computed, true if traffic rate > 0
   hasTraffic?: boolean;
+  // Default value -1
+  isMTLS: number;
+  // Default value NaN
+  responseTime: number;
+  // Default value NaN
+  throughput: number;
 }
 
 export interface DecoratedGraphNodeWrapper {

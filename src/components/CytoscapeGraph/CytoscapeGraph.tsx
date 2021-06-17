@@ -43,7 +43,7 @@ type CytoscapeGraphProps = {
   contextMenuEdgeComponent?: EdgeContextMenuType;
   contextMenuGroupComponent?: NodeContextMenuType;
   contextMenuNodeComponent?: NodeContextMenuType;
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   graphData: GraphData;
   focusSelector?: string;
   isMiniGraph: boolean;
@@ -148,7 +148,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
     // affect display. Options that trigger a graph refresh will have an update when the refresh
     // completes (showIdleNodes, showSecurity, showServiceNodes, etc).
     let result =
-      this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
+      this.props.edgeLabels !== nextProps.edgeLabels ||
       this.props.graphData.isLoading !== nextProps.graphData.isLoading ||
       this.props.graphData.elements !== nextProps.graphData.elements ||
       this.props.layout !== nextProps.layout ||
@@ -632,7 +632,7 @@ export default class CytoscapeGraph extends React.Component<CytoscapeGraphProps>
 
     const globalScratchData: CytoscapeGlobalScratchData = {
       activeNamespaces: this.props.graphData.fetchParams.namespaces,
-      edgeLabelMode: this.props.edgeLabelMode,
+      edgeLabels: this.props.edgeLabels,
       homeCluster: serverConfig?.clusterInfo?.name || CLUSTER_DEFAULT,
       graphType: this.props.graphData.fetchParams.graphType,
       showMissingSidecars: this.props.showMissingSidecars,

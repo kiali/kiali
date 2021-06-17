@@ -36,7 +36,7 @@ export interface NamespaceState {
 // Various pages are described here with their various sections
 export interface GraphToolbarState {
   // dropdown props
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
   // find props
   findValue: string;

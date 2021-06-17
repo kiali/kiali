@@ -36,7 +36,7 @@ import SummaryPanel from './SummaryPanel';
 import {
   activeNamespacesSelector,
   durationSelector,
-  edgeLabelModeSelector,
+  edgeLabelsSelector,
   graphTypeSelector,
   lastRefreshAtSelector,
   meshWideMTLSEnabledSelector,
@@ -82,7 +82,7 @@ type ReduxProps = {
   boxByNamespace: boolean;
   compressOnHide: boolean;
   duration: DurationInSeconds; // current duration (dropdown) setting
-  edgeLabelMode: EdgeLabelMode;
+  edgeLabels: EdgeLabelMode[];
   endTour: () => void;
   graphType: GraphType;
   isPageVisible: boolean;
@@ -335,8 +335,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       prev.boxByCluster !== curr.boxByCluster ||
       prev.boxByNamespace !== curr.boxByNamespace ||
       prev.duration !== curr.duration ||
-      (prev.edgeLabelMode !== curr.edgeLabelMode &&
-        curr.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
+      (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
+        (curr.edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP) ||
+          curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
       prev.graphType !== curr.graphType ||
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
       prev.replayQueryTime !== curr.replayQueryTime ||
@@ -590,7 +591,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     const urlParams: GraphUrlParams = {
       activeNamespaces: this.state.graphData.fetchParams.namespaces,
       duration: this.state.graphData.fetchParams.duration,
-      edgeLabelMode: this.props.edgeLabelMode,
+      edgeLabels: this.props.edgeLabels,
       graphLayout: this.props.layout,
       graphType: this.state.graphData.fetchParams.graphType,
       node: targetNode,
@@ -650,7 +651,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       boxByCluster: this.props.boxByCluster,
       boxByNamespace: this.props.boxByNamespace,
       duration: this.props.duration,
-      edgeLabelMode: this.props.edgeLabelMode,
+      edgeLabels: this.props.edgeLabels,
       graphType: this.props.graphType,
       includeHealth: true,
       injectServiceNodes: this.props.showServiceNodes,
@@ -683,7 +684,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   boxByNamespace: state.graph.toolbarState.boxByNamespace,
   compressOnHide: state.graph.toolbarState.compressOnHide,
   duration: durationSelector(state),
-  edgeLabelMode: edgeLabelModeSelector(state),
+  edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
   isPageVisible: state.globalState.isPageVisible,
   lastRefreshAt: lastRefreshAtSelector(state),
