@@ -187,12 +187,22 @@ type WorkloadParam struct {
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type AppendersParam struct {
-	// Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck].
+	// Comma-separated list of Appenders to run. Available appenders: [aggregateNode, deadNode, healthConfig, idleNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, throughput].
 	//
 	// in: query
 	// required: false
 	// default: run all appenders
 	Name string `json:"appenders"`
+}
+
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
+type BoxByParam struct {
+	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
+	//
+	// in: query
+	// required: false
+	// default: none
+	Name string `json:"boxBy"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
@@ -213,16 +223,6 @@ type GraphTypeParam struct {
 	// required: false
 	// default: workload
 	Name string `json:"graphType"`
-}
-
-// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
-type BoxByParam struct {
-	// Comma-separated list of desired node boxing. Available boxings: [app, cluster, namespace, none].
-	//
-	// in: query
-	// required: false
-	// default: none
-	Name string `json:"boxBy"`
 }
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
@@ -262,6 +262,26 @@ type QueryTimeParam struct {
 	// required: false
 	// default: now
 	Name string `json:"queryTime"`
+}
+
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
+type ResponseTimeParam struct {
+	// Used only with responseTime appender. One of: avg | 50 | 95 | 99.
+	//
+	// in: query
+	// required: false
+	// default: 95
+	Name string `json:"responseTime"`
+}
+
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
+type ThroughputParam struct {
+	// Used only with throughput appender. One of: request | response.
+	//
+	// in: query
+	// required: false
+	// default: request
+	Name string `json:"throughput"`
 }
 
 /////////////////////

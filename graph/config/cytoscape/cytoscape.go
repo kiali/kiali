@@ -102,6 +102,7 @@ type EdgeData struct {
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
+	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
 }
 
@@ -370,6 +371,10 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 	if val, ok := e.Metadata[graph.ResponseTime]; ok {
 		responseTime := val.(float64)
 		ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
+	}
+	if val, ok := e.Metadata[graph.Throughput]; ok {
+		throughput := val.(float64)
+		ed.Throughput = fmt.Sprintf("%.0f", throughput)
 	}
 
 	// an edge represents traffic for at most one protocol

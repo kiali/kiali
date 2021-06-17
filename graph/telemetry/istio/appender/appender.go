@@ -2,7 +2,6 @@ package appender
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -10,8 +9,9 @@ import (
 )
 
 const (
-	defaultAggregate = "request_operation"
-	defaultQuantile  = 0.95
+	defaultAggregate      = "request_operation"
+	defaultQuantile       = 0.95
+	defaultThroughputType = "response"
 )
 
 // ParseAppenders determines which appenders should run for this graphing request
@@ -39,6 +39,8 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 				requestedAppenders[ServiceEntryAppenderName] = true
 			case SidecarsCheckAppenderName:
 				requestedAppenders[SidecarsCheckAppenderName] = true
+			case ThroughputAppenderName:
+				requestedAppenders[ThroughputAppenderName] = true
 			case "":
 				// skip
 			default:
@@ -69,11 +71,19 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {
 		quantile := defaultQuantile
-		quantileString := o.Params.Get("responseTimeQuantile")
-		if quantileString != "" {
-			var err error
-			if quantile, err = strconv.ParseFloat(quantileString, 64); err != nil {
-				graph.BadRequest(fmt.Sprintf("Invalid quantile, expecting float between 0.0 and 100.0 [%s]", quantileString))
+		responseTimeString := o.Params.Get("responseTime")
+		if responseTimeString != "" {
+			switch responseTimeString {
+			case "avg":
+				quantile = 0.0
+			case "50":
+				quantile = 0.5
+			case "95":
+				quantile = 0.95
+			case "99":
+				quantile = 0.99
+			default:
+				graph.BadRequest(fmt.Sprintf(`Invalid responseTime, must be one of: avg | 50 | 95 | 99: [%s]`, responseTimeString))
 			}
 		}
 		a := ResponseTimeAppender{
@@ -91,6 +101,24 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
+		}
+		appenders = append(appenders, a)
+	}
+	if _, ok := requestedAppenders[ThroughputAppenderName]; ok || o.Appenders.All {
+		throughputType := o.Params.Get("throughputType")
+		if throughputType != "" {
+			if throughputType != "request" && throughputType != "response" {
+				graph.BadRequest(fmt.Sprintf("Invalid throughputType, expecting one of (request, response). [%s]", throughputType))
+			}
+		} else {
+			throughputType = defaultThroughputType
+		}
+		a := ThroughputAppender{
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
+			ThroughputType:     throughputType,
 		}
 		appenders = append(appenders, a)
 	}
