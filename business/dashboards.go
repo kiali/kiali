@@ -405,7 +405,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Response throughput",
 				Unit:  "bitrate",
-				Spans: 6,
+				Spans: 3,
 			},
 			refName: "response_throughput",
 			scale:   8, // Bps to bps
@@ -414,7 +414,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "Response size",
 				Unit:  "bytes",
-				Spans: 6,
+				Spans: 3,
 			},
 			refName: "response_size",
 		},
@@ -422,7 +422,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "TCP received",
 				Unit:  "bitrate",
-				Spans: 6,
+				Spans: 3,
 			},
 			refName: "tcp_received",
 		},
@@ -430,7 +430,7 @@ func getIstioCharts() []istioChart {
 			Chart: models.Chart{
 				Name:  "TCP sent",
 				Unit:  "bitrate",
-				Spans: 6,
+				Spans: 3,
 			},
 			refName: "tcp_sent",
 		},
