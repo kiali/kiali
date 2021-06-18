@@ -39,6 +39,15 @@ class Menu extends React.Component<MenuProps, MenuState> {
     };
   }
 
+  componentDidUpdate(prevProps: Readonly<MenuProps>) {
+    if (prevProps.isNavOpen !== this.props.isNavOpen) {
+      // Dispatch an extra "resize" event when side menu toggle to force that metrics charts resize
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 200);
+    }
+  }
+
   renderMenuItems = () => {
     const { location } = this.props;
     const allNavItems = navItems.concat(extensionsItems);

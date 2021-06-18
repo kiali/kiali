@@ -1,22 +1,11 @@
 import * as React from 'react';
-import {
-  Card,
-  CardBody,
-  Grid,
-  GridItem,
-  Tab,
-  Tabs,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem,
-  Tooltip
-} from '@patternfly/react-core';
+import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 
 import * as API from 'services/Api';
 import * as AlertUtils from 'utils/AlertUtils';
-import { RenderComponentScroll, RenderHeader } from '../Nav/Page';
+import { RenderComponentScroll } from '../Nav/Page';
 import { KialiAppState } from 'store/Store';
 import { JaegerError, JaegerTrace } from 'types/JaegerInfo';
 import TraceDetails from './JaegerResults/TraceDetails';
@@ -236,77 +225,70 @@ class TracesComponent extends React.Component<TracesProps, TracesState> {
     return (
       <>
         <RenderComponentScroll>
-          <Grid gutter="md">
-            <GridItem span={12}>
-              <Card>
-                <CardBody>
-                  <RenderHeader>
-                    <Toolbar>
-                      <ToolbarGroup>
-                        <ToolbarItem>
-                          <TracesDisplayOptions
-                            onDisplaySettingsChanged={this.onDisplaySettingsChanged}
-                            onQuerySettingsChanged={this.onQuerySettingsChanged}
-                            percentilesPromise={this.percentilesPromise}
-                            disabled={this.state.toolbarDisabled}
-                          />
-                        </ToolbarItem>
-                      </ToolbarGroup>
-                      {jaegerURL && (
-                        <ToolbarGroup style={{ marginLeft: 'auto' }}>
-                          <ToolbarItem>
-                            <Tooltip content={<>Open Chart in Jaeger UI</>}>
-                              <a
-                                href={jaegerURL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ marginLeft: '10px' }}
-                              >
-                                View in Tracing <ExternalLinkAltIcon />
-                              </a>
-                            </Tooltip>
-                          </ToolbarItem>
-                        </ToolbarGroup>
-                      )}
-                    </Toolbar>
-                  </RenderHeader>
-                  <JaegerScatter
-                    showSpansAverage={this.state.displaySettings.showSpansAverage}
-                    traces={this.state.traces}
-                    errorFetchTraces={this.state.jaegerErrors}
-                    errorTraces={true}
+          <Card>
+            <CardBody>
+              <Toolbar>
+                <ToolbarGroup>
+                  <ToolbarItem>
+                    <TracesDisplayOptions
+                      onDisplaySettingsChanged={this.onDisplaySettingsChanged}
+                      onQuerySettingsChanged={this.onQuerySettingsChanged}
+                      percentilesPromise={this.percentilesPromise}
+                      disabled={this.state.toolbarDisabled}
+                    />
+                  </ToolbarItem>
+                </ToolbarGroup>
+                {jaegerURL && (
+                  <ToolbarGroup style={{ marginLeft: 'auto' }}>
+                    <ToolbarItem>
+                      <Tooltip content={<>Open Chart in Jaeger UI</>}>
+                        <a href={jaegerURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
+                          View in Tracing <ExternalLinkAltIcon />
+                        </a>
+                      </Tooltip>
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                )}
+              </Toolbar>
+              <JaegerScatter
+                showSpansAverage={this.state.displaySettings.showSpansAverage}
+                traces={this.state.traces}
+                errorFetchTraces={this.state.jaegerErrors}
+                errorTraces={true}
+              />
+            </CardBody>
+          </Card>
+          {this.props.selectedTrace && (
+            <div
+              style={{
+                marginTop: 25
+              }}
+            >
+              <Tabs
+                id="trace-details"
+                activeKey={this.state.activeTab}
+                onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
+              >
+                <Tab eventKey={traceDetailsTab} title="Trace Details">
+                  <TraceDetails
+                    namespace={this.props.namespace}
+                    target={this.props.target}
+                    targetKind={this.props.targetKind}
+                    jaegerURL={this.props.urlJaeger}
+                    otherTraces={this.state.traces}
                   />
-                </CardBody>
-              </Card>
-            </GridItem>
-            {this.props.selectedTrace && (
-              <GridItem span={12}>
-                <Tabs
-                  id="trace-details"
-                  activeKey={this.state.activeTab}
-                  onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
-                >
-                  <Tab eventKey={traceDetailsTab} title="Trace Details">
-                    <TraceDetails
-                      namespace={this.props.namespace}
-                      target={this.props.target}
-                      targetKind={this.props.targetKind}
-                      jaegerURL={this.props.urlJaeger}
-                      otherTraces={this.state.traces}
-                    />
-                  </Tab>
-                  <Tab eventKey={spansDetailsTab} title="Spans Details">
-                    <SpanDetails
-                      namespace={this.props.namespace}
-                      target={this.props.target}
-                      externalURL={this.props.urlJaeger}
-                      items={this.props.selectedTrace.spans}
-                    />
-                  </Tab>
-                </Tabs>
-              </GridItem>
-            )}
-          </Grid>
+                </Tab>
+                <Tab eventKey={spansDetailsTab} title="Spans Details">
+                  <SpanDetails
+                    namespace={this.props.namespace}
+                    target={this.props.target}
+                    externalURL={this.props.urlJaeger}
+                    items={this.props.selectedTrace.spans}
+                  />
+                </Tab>
+              </Tabs>
+            </div>
+          )}
         </RenderComponentScroll>
       </>
     );

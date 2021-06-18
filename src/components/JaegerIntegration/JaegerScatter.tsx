@@ -7,7 +7,6 @@ import { Title, EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfl
 import { JaegerError, JaegerTrace } from '../../types/JaegerInfo';
 import { PFColors } from '../Pf/PfColors';
 
-import jaegerIcon from '../../assets/img/jaeger-icon.svg';
 import { evalTimeRange } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { KialiAppAction } from 'actions/KialiAppAction';
@@ -18,6 +17,7 @@ import { durationSelector } from '../../store/Selectors';
 import { TraceTooltip } from './TraceTooltip';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 import { averageSpanDuration } from 'utils/tracing/TraceStats';
+import { style } from 'typestyle';
 
 interface JaegerScatterProps {
   duration: number;
@@ -36,16 +36,34 @@ const MAXIMAL_SIZE = 30;
 export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
+const jaegerChartStyle = style({
+  paddingTop: 15,
+  paddingLeft: 25,
+  paddingRight: 25,
+  paddingBottom: 15
+});
+
+const emptyStyle = style({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  overflow: 'hidden',
+  // fix height + padding
+  height: '350px',
+  textAlign: 'center'
+});
+
 class JaegerScatter extends React.Component<JaegerScatterProps> {
   renderFetchEmtpy = (title, msg) => {
     return (
-      <EmptyState variant={EmptyStateVariant.full}>
-        <img alt="Jaeger Link" src={jaegerIcon} className={'pf-c-empty-state__icon'} />
-        <Title headingLevel="h5" size="lg">
-          {title}
-        </Title>
-        <EmptyStateBody>{msg}</EmptyStateBody>
-      </EmptyState>
+      <div className={emptyStyle}>
+        <EmptyState variant={EmptyStateVariant.small}>
+          <Title headingLevel="h5" size="lg">
+            {title}
+          </Title>
+          <EmptyStateBody>{msg}</EmptyStateBody>
+        </EmptyState>
+      </div>
     );
   };
   render() {
@@ -103,14 +121,18 @@ class JaegerScatter extends React.Component<JaegerScatterProps> {
     return this.props.errorFetchTraces && this.props.errorFetchTraces.length > 0 ? (
       this.renderFetchEmtpy('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
-      <ChartWithLegend<Datapoint, JaegerLineInfo>
-        data={[successTraces, errorTraces]}
-        fill={true}
-        unit="seconds"
-        seriesComponent={<ChartScatter />}
-        onClick={dp => this.props.setTraceId(dp.trace.traceID)}
-        labelComponent={<TraceTooltip />}
-      />
+      <div className={jaegerChartStyle}>
+        <div style={{ marginTop: 20 }}>
+          <ChartWithLegend<Datapoint, JaegerLineInfo>
+            data={[successTraces, errorTraces]}
+            fill={true}
+            unit="seconds"
+            seriesComponent={<ChartScatter />}
+            onClick={dp => this.props.setTraceId(dp.trace.traceID)}
+            labelComponent={<TraceTooltip />}
+          />
+        </div>
+      </div>
     ) : (
       this.renderFetchEmtpy('No traces', 'No trace results. Try another query.')
     );

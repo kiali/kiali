@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { Button, EmptyState, EmptyStateIcon, EmptyStateBody, ButtonVariant } from '@patternfly/react-core';
+import {
+  Button,
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateBody,
+  ButtonVariant,
+  EmptyStateVariant
+} from '@patternfly/react-core';
 import { ChartArea, ChartBar, ChartScatter, ChartLine } from '@patternfly/react-charts';
 import { CubesIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
 
@@ -9,6 +16,7 @@ import { Overlay } from 'types/Overlay';
 import ChartWithLegend from './ChartWithLegend';
 import { BrushHandlers } from './Container';
 import { defaultIconStyle, KialiIcon } from '../../config/KialiIcon';
+import { style } from 'typestyle';
 
 type KChartProps<T extends LineInfo> = {
   chart: ChartModel;
@@ -24,10 +32,24 @@ type KChartProps<T extends LineInfo> = {
 };
 
 export const maximizeButtonStyle: React.CSSProperties = {
-  marginRight: '0.8em',
   position: 'relative',
   float: 'right'
 };
+
+const emptyStyle = style({
+  padding: '0 0 0 0',
+  margin: '0 0 0 0'
+});
+
+const kchartStyle = style({
+  paddingTop: 15,
+  paddingLeft: 25,
+  paddingRight: 25,
+  paddingBottom: 15
+});
+
+// 24px (title + toolbar) + 20px (margin) + 15px (padding) + 15px (padding)
+const titlePadding = 64;
 
 type State = {
   collapsed: boolean;
@@ -90,11 +112,32 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
     }
   }
 
+  private getInnerChartHeight = (): number => {
+    const chartHeight: number = this.props.chartHeight || 300;
+    const innerChartHeight = chartHeight - titlePadding;
+    return innerChartHeight;
+  };
+
   render() {
     return (
-      <>
-        <span>
-          {this.props.chart.name}
+      <div className={kchartStyle}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div
+            style={{
+              minWidth: '0px',
+              display: 'inline-block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {this.props.chart.name}
+          </div>
           {this.props.onToggleMaximized && (
             <div style={maximizeButtonStyle}>
               <Button variant={ButtonVariant.link} onClick={this.props.onToggleMaximized} isInline>
@@ -102,11 +145,11 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
               </Button>
             </div>
           )}
-        </span>
-        <div>
+        </div>
+        <div style={{ marginTop: 20 }}>
           {this.props.chart.error ? this.renderError() : this.isEmpty() ? this.renderEmpty() : this.renderChart()}
         </div>
-      </>
+      </div>
     );
   }
 
@@ -137,7 +180,7 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
     const maxDomain = this.props.chart.max === undefined ? undefined : { y: this.props.chart.max };
     return (
       <ChartWithLegend
-        chartHeight={this.props.chartHeight}
+        chartHeight={this.getInnerChartHeight()}
         data={this.props.data}
         seriesComponent={typeData.seriesComponent}
         fill={typeData.fill}
@@ -163,24 +206,48 @@ class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, State> 
 
   private renderEmpty() {
     return (
-      <EmptyState variant="full">
-        <EmptyStateIcon icon={CubesIcon} />
-        <EmptyStateBody>No data available</EmptyStateBody>
-      </EmptyState>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+          height: this.getInnerChartHeight(),
+          textAlign: 'center'
+        }}
+      >
+        <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+          {this.props.isMaximized && <EmptyStateIcon icon={CubesIcon} />}
+          <EmptyStateBody className={emptyStyle}>No data available</EmptyStateBody>
+        </EmptyState>
+      </div>
     );
   }
 
   private renderError() {
     return (
-      <EmptyState variant="full">
-        <EmptyStateIcon icon={() => <ErrorCircleOIcon style={{ color: '#cc0000' }} width={32} height={32} />} />
-        <EmptyStateBody>
-          An error occured while fetching this metric:
-          <p>
-            <i>{this.props.chart.error}</i>
-          </p>
-        </EmptyStateBody>
-      </EmptyState>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+          height: this.getInnerChartHeight(),
+          textAlign: 'center'
+        }}
+      >
+        <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+          {this.props.isMaximized && (
+            <EmptyStateIcon icon={() => <ErrorCircleOIcon style={{ color: '#cc0000' }} width={32} height={32} />} />
+          )}
+          <EmptyStateBody className={emptyStyle}>
+            An error occured while fetching this metric:
+            <p>
+              <i>{this.props.chart.error}</i>
+            </p>
+          </EmptyStateBody>
+        </EmptyState>
+      </div>
     );
   }
 }

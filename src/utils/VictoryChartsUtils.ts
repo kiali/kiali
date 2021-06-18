@@ -1,7 +1,6 @@
 import { Datapoint, Metric } from 'types/Metrics';
 import {
   VCLines,
-  LegendInfo,
   VCLine,
   LegendItem,
   VCDataPoint,
@@ -80,42 +79,6 @@ export const getDataSupplier = (
     colorsIdx = 0;
     const filtered = filterAndRenameMetric(chart.metrics, labels);
     return toVCLines(filtered, chart.unit, colors, chart.xAxis || 'time');
-  };
-};
-
-export const buildLegendInfo = (items: LegendItem[], chartWidth: number, chartHeight: number): LegendInfo => {
-  // Very arbitrary rules to try to get a good-looking legend. There's room for enhancement.
-  // Box size in pixels per item
-  // Note that it is based on longest string in characters, not pixels
-  let boxSize = 70;
-  let fontSizeLabels = 12;
-  const longest = items.map(it => it.name).reduce((a, b) => (a.length > b.length ? a : b), '').length;
-  if (longest >= 30) {
-    boxSize = 200;
-  } else if (longest >= 20) {
-    boxSize = 150;
-  } else if (longest >= 10) {
-    boxSize = 100;
-  }
-
-  let itemsPerRow = Math.max(1, Math.floor(chartWidth / boxSize));
-  let nbRows = Math.ceil(items.length / itemsPerRow);
-  let legendHeight = (fontSizeLabels + 8) * nbRows;
-
-  while (legendHeight > chartHeight / 2) {
-    fontSizeLabels -= 1;
-    legendHeight = (fontSizeLabels + 8) * nbRows;
-  }
-  if (fontSizeLabels <= 8) {
-    itemsPerRow = Math.max(3, Math.floor(chartWidth / boxSize));
-    nbRows = Math.ceil(items.length / itemsPerRow);
-    legendHeight = (fontSizeLabels + 8) * nbRows;
-  }
-
-  return {
-    height: legendHeight,
-    itemsPerRow: itemsPerRow,
-    fontSizeLabels: fontSizeLabels
   };
 };
 

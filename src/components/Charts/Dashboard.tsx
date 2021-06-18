@@ -3,7 +3,7 @@ import { Grid, GridItem } from '@patternfly/react-core';
 import { ChartThemeColor, ChartThemeVariant, getTheme } from '@patternfly/react-charts';
 
 import { AllPromLabelsValues } from 'types/Metrics';
-import { ChartModel, DashboardModel, SpanValue } from 'types/Dashboards';
+import { ChartModel, DashboardModel } from 'types/Dashboards';
 import { getDataSupplier } from 'utils/VictoryChartsUtils';
 import { Overlay } from 'types/Overlay';
 import KChart from './KChart';
@@ -20,7 +20,7 @@ export type Props<T extends LineInfo> = {
   onClick?: (chart: ChartModel, datum: RawOrBucket<T>) => void;
   brushHandlers?: BrushHandlers;
   template?: string;
-  chartHeight: number;
+  dashboardHeight: number;
   showSpans: boolean;
   customMetric?: boolean;
   overlay?: Overlay<T>;
@@ -39,39 +39,12 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     };
   }
 
-  renderCharts(charts: ChartModel[], spans?: SpanValue) {
-    return (
-      <Grid gutter={'md'}>
-        {charts.map(c => {
-          return (
-            <GridItem span={spans || c.spans} key={c.name}>
-              {this.renderChart(c)}
-            </GridItem>
-          );
-        })}
-      </Grid>
-    );
-  }
-
-  renderCustom() {
-    if (this.props.template && this.props.template === 'envoy') {
-      const chartsLength = this.props.dashboard.charts.length;
-      var nRows = 2;
-      var chartbyRow = ~~(chartsLength / nRows);
-      var extraChart = chartsLength % nRows === 0 ? 0 : 1;
-      var pos = 0;
-      var GridItems: JSX.Element[] = [];
-
-      for (var i = 0; i < nRows; i++) {
-        var to = pos + (i === 0 && extraChart ? chartbyRow + 1 : chartbyRow);
-        GridItems.push(
-          <GridItem span={12}>
-            {this.renderCharts(this.props.dashboard.charts.slice(pos, to), ~~(12 / (to - pos)) as SpanValue)}
-          </GridItem>
-        );
-        pos = to;
+  render() {
+    if (this.state.maximizedChart) {
+      const chart = this.props.dashboard.charts.find(c => c.name === this.state.maximizedChart);
+      if (chart) {
+        return this.renderChart(chart);
       }
-      return <Grid>{GridItems}</Grid>;
     }
 
     return (
@@ -87,38 +60,14 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     );
   }
 
-  render() {
+  private getChartHeight = (): number => {
     if (this.state.maximizedChart) {
-      const chart = this.props.dashboard.charts.find(c => c.name === this.state.maximizedChart);
-      if (chart) {
-        return this.renderChart(chart);
-      }
+      return this.props.dashboardHeight;
     }
-    const requestCharts = this.props.dashboard.charts.filter(c => c.name.includes('Request'));
-    const responseCharts = this.props.dashboard.charts.filter(c => c.name.includes('Response'));
-    const tcpCharts = this.props.dashboard.charts.filter(c => c.name.includes('TCP'));
-
-    return this.props.customMetric ? (
-      this.renderCustom()
-    ) : (
-      <Grid>
-        <GridItem span={12}>{this.renderCharts(requestCharts, ~~(12 / requestCharts.length) as SpanValue)}</GridItem>
-        <GridItem span={6}>{this.renderCharts(responseCharts, ~~(12 / responseCharts.length) as SpanValue)}</GridItem>
-        <GridItem span={6}>{this.renderCharts(tcpCharts, ~~(12 / tcpCharts.length) as SpanValue)}</GridItem>
-      </Grid>
-    );
-  }
-
-  private getHeight = (): number => {
-    var gridheight = this.props.chartHeight;
-    var title = 30;
-    if (this.state.maximizedChart) {
-      return gridheight - title - 30;
-    }
-    if (this.props.template && this.props.template === 'envoy') {
-      return (gridheight - title * 3) / 2;
-    }
-    return (gridheight - title * 2) / 2;
+    // Dashboards are assumed to be presented in 2 rows
+    // This is controlled/synced from the definition of the dashboard in the backend
+    // TODO: Deprecate the configuration of dashboards in the backend
+    return this.props.dashboardHeight / 2;
   };
 
   private renderChart(chart: ChartModel) {
@@ -135,7 +84,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     return (
       <KChart
         key={chart.name}
-        chartHeight={this.getHeight()}
+        chartHeight={this.getChartHeight()}
         chart={chart}
         showSpans={this.props.showSpans}
         data={dataSupplier()}

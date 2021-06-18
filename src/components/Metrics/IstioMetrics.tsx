@@ -67,12 +67,14 @@ const fullHeightStyle = style({
 });
 
 class IstioMetrics extends React.Component<Props, MetricsState> {
+  toolbarRef: React.RefObject<HTMLDivElement>;
   options: IstioMetricsOptions;
   spanOverlay: SpanOverlay;
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
   constructor(props: Props) {
     super(props);
+    this.toolbarRef = React.createRef<HTMLDivElement>();
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
@@ -240,8 +242,9 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
-    // SPACE : Padding article (40 bottom and top) , 51 toolbar more 15 padding
-    const toolbarSpace = 40 + 51 + 40;
+    // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
+    const toolbarHeight = this.toolbarRef.current ? this.toolbarRef.current.clientHeight : 51;
+    const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
     const dashboardHeight = this.state.tabHeight - toolbarSpace;
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
@@ -258,7 +261,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
                 labelPrettifier={MetricsHelper.prettyLabelValues}
                 overlay={this.state.spanOverlay}
                 showSpans={this.state.showSpans}
-                chartHeight={dashboardHeight}
+                dashboardHeight={dashboardHeight}
                 timeWindow={evalTimeRange(this.props.timeRange)}
                 brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
               />
@@ -278,55 +281,57 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
 
   private renderOptionsBar() {
     return (
-      <Toolbar style={{ paddingBottom: 15 }}>
-        <ToolbarGroup>
-          <ToolbarItem>
-            <MetricsSettingsDropdown
-              onChanged={this.onMetricsSettingsChanged}
-              onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-              labelsSettings={this.state.labelsSettings}
-              hasHistograms={true}
-            />
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarItem className={displayFlex}>
-            <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarItem className={displayFlex}>
-            <div style={maximizeButtonStyle} className="pf-c-check">
-              <input
-                key={`spans-show-chart`}
-                id={`spans-show-`}
-                className="pf-c-check__input"
-                style={{ marginBottom: '3px' }}
-                type="checkbox"
-                checked={this.state.showSpans}
-                onChange={event => this.onSpans(event.target.checked)}
+      <div ref={this.toolbarRef}>
+        <Toolbar style={{ paddingBottom: 15 }}>
+          <ToolbarGroup>
+            <ToolbarItem>
+              <MetricsSettingsDropdown
+                onChanged={this.onMetricsSettingsChanged}
+                onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+                labelsSettings={this.state.labelsSettings}
+                hasHistograms={true}
               />
-              <label
-                className="pf-c-check__label"
-                style={{
-                  paddingLeft: '5px',
-                  paddingRight: '5px'
-                }}
-              >
-                Spans
-              </label>
-            </div>
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
-          <GrafanaLinks
-            links={this.state.grafanaLinks}
-            namespace={this.props.namespace}
-            object={this.props.object}
-            objectType={this.props.objectType}
-          />
-        </ToolbarGroup>
-      </Toolbar>
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup>
+            <ToolbarItem className={displayFlex}>
+              <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup>
+            <ToolbarItem className={displayFlex}>
+              <div style={maximizeButtonStyle} className="pf-c-check">
+                <input
+                  key={`spans-show-chart`}
+                  id={`spans-show-`}
+                  className="pf-c-check__input"
+                  style={{ marginBottom: '3px' }}
+                  type="checkbox"
+                  checked={this.state.showSpans}
+                  onChange={event => this.onSpans(event.target.checked)}
+                />
+                <label
+                  className="pf-c-check__label"
+                  style={{
+                    paddingLeft: '5px',
+                    paddingRight: '5px'
+                  }}
+                >
+                  Spans
+                </label>
+              </div>
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+            <GrafanaLinks
+              links={this.state.grafanaLinks}
+              namespace={this.props.namespace}
+              object={this.props.object}
+              objectType={this.props.objectType}
+            />
+          </ToolbarGroup>
+        </Toolbar>
+      </div>
     );
   }
 

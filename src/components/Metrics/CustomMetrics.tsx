@@ -65,12 +65,13 @@ const fullHeightStyle = style({
 });
 
 class CustomMetrics extends React.Component<Props, MetricsState> {
+  toolbarRef: React.RefObject<HTMLDivElement>;
   options: DashboardQuery;
   spanOverlay: SpanOverlay;
 
   constructor(props: Props) {
     super(props);
-
+    this.toolbarRef = React.createRef<HTMLDivElement>();
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
@@ -187,7 +188,9 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
   render() {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
-    const toolbarSpace = 40 + 51 + 15;
+    // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
+    const toolbarHeight = this.toolbarRef.current ? this.toolbarRef.current.clientHeight : 51;
+    const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
     const dashboardHeight = (this.props.height ? this.props.height : this.state.tabHeight) - toolbarSpace;
 
     const dashboard = this.state.dashboard && (
@@ -200,7 +203,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
         expandHandler={this.expandHandler}
         onClick={this.onClickDataPoint}
         showSpans={this.state.showSpans}
-        chartHeight={dashboardHeight}
+        dashboardHeight={dashboardHeight}
         overlay={this.state.spanOverlay}
         timeWindow={evalTimeRange(this.props.timeRange)}
         brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
@@ -239,57 +242,62 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
   private renderOptionsBar() {
     const hasHistograms =
       this.state.dashboard !== undefined && this.state.dashboard.charts.some(chart => chart.metrics.some(m => m.stat));
+    const hasLabels = this.state.labelsSettings.size > 0;
     return (
-      <Toolbar style={{ paddingBottom: 15 }}>
-        <ToolbarGroup>
-          <ToolbarItem>
-            <MetricsSettingsDropdown
-              onChanged={this.onMetricsSettingsChanged}
-              onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-              labelsSettings={this.state.labelsSettings}
-              hasHistograms={hasHistograms}
+      <div ref={this.toolbarRef}>
+        <Toolbar style={{ paddingBottom: 15 }}>
+          {(hasHistograms || hasLabels) && (
+            <ToolbarGroup>
+              <ToolbarItem>
+                <MetricsSettingsDropdown
+                  onChanged={this.onMetricsSettingsChanged}
+                  onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+                  labelsSettings={this.state.labelsSettings}
+                  hasHistograms={hasHistograms}
+                />
+              </ToolbarItem>
+            </ToolbarGroup>
+          )}
+          <ToolbarGroup>
+            <ToolbarItem className={displayFlex}>
+              <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup>
+            <ToolbarItem className={displayFlex}>
+              <div className="pf-c-check">
+                <input
+                  key={`spans-show-chart`}
+                  id={`spans-show-`}
+                  className="pf-c-check__input"
+                  style={{ marginBottom: '3px' }}
+                  type="checkbox"
+                  checked={this.state.showSpans}
+                  onChange={event => this.onSpans(event.target.checked)}
+                />
+                <label
+                  className="pf-c-check__label"
+                  style={{
+                    paddingLeft: '5px',
+                    paddingRight: '5px'
+                  }}
+                >
+                  Spans
+                </label>
+              </div>
+            </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
+            <GrafanaLinks
+              links={this.state.grafanaLinks}
+              namespace={this.props.namespace}
+              object={this.props.app}
+              objectType={MetricsObjectTypes.APP}
+              version={this.props.version}
             />
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarItem className={displayFlex}>
-            <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup>
-          <ToolbarItem className={displayFlex}>
-            <div className="pf-c-check">
-              <input
-                key={`spans-show-chart`}
-                id={`spans-show-`}
-                className="pf-c-check__input"
-                style={{ marginBottom: '3px' }}
-                type="checkbox"
-                checked={this.state.showSpans}
-                onChange={event => this.onSpans(event.target.checked)}
-              />
-              <label
-                className="pf-c-check__label"
-                style={{
-                  paddingLeft: '5px',
-                  paddingRight: '5px'
-                }}
-              >
-                Spans
-              </label>
-            </div>
-          </ToolbarItem>
-        </ToolbarGroup>
-        <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
-          <GrafanaLinks
-            links={this.state.grafanaLinks}
-            namespace={this.props.namespace}
-            object={this.props.app}
-            objectType={MetricsObjectTypes.APP}
-            version={this.props.version}
-          />
-        </ToolbarGroup>
-      </Toolbar>
+          </ToolbarGroup>
+        </Toolbar>
+      </div>
     );
   }
 

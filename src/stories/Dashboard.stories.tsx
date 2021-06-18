@@ -29,7 +29,7 @@ Metrics.args = {
   labelValues: MetricsHelper.convertAsPromLabels(MetricsHelper.extractLabelsSettings(dashboardService, labelSettings)),
   expandHandler: () => {},
   showSpans: false,
-  chartHeight: window.innerHeight - TOP_PADDING
+  dashboardHeight: window.innerHeight - TOP_PADDING
 };
 
 export const WithAllLegends = Template.bind({});
@@ -40,7 +40,7 @@ WithAllLegends.args = {
   ),
   expandHandler: () => {},
   showSpans: false,
-  chartHeight: window.innerHeight - TOP_PADDING
+  dashboardHeight: window.innerHeight - TOP_PADDING
 };
 
 export const withSpans = Template.bind({});
@@ -50,7 +50,7 @@ withSpans.args = {
   expandHandler: () => {},
   showSpans: true,
   overlay: dashboardServiceSpans,
-  chartHeight: window.innerHeight - TOP_PADDING
+  dashboardHeight: window.innerHeight - TOP_PADDING
 };
 
 export const EnvoyMetrics = Template.bind({});
@@ -61,5 +61,5 @@ EnvoyMetrics.args = {
   showSpans: false,
   template: 'envoy',
   customMetric: true,
-  chartHeight: window.innerHeight - TOP_PADDING
+  dashboardHeight: window.innerHeight - TOP_PADDING
 };

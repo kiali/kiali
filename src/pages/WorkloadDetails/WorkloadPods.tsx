@@ -26,7 +26,7 @@ type WorkloadPodsProps = {
   validations: { [key: string]: ObjectValidation };
 };
 
-const emtpytStyle = style({
+const emptyStyle = style({
   padding: '0 0 0 0',
   margin: '0 0 0 0'
 });
@@ -63,8 +63,8 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
         cells: [
           {
             title: (
-              <EmptyState variant={EmptyStateVariant.small} className={emtpytStyle}>
-                <EmptyStateBody className={emtpytStyle}>No Pods in workload {this.props.workload}</EmptyStateBody>
+              <EmptyState variant={EmptyStateVariant.small} className={emptyStyle}>
+                <EmptyStateBody className={emptyStyle}>No Pods in workload {this.props.workload}</EmptyStateBody>
               </EmptyState>
             ),
             props: { colSpan: 2 }
