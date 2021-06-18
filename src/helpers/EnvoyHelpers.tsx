@@ -23,6 +23,30 @@ export const istioConfigLink = (halfQDN: string, objectType: string): JSX.Elemen
   return halfQDN;
 };
 
+export const routeLink = (
+  route: string,
+  namespace: string,
+  workload: string | undefined,
+  handler: () => void
+): JSX.Element | string => {
+  let re = /Route: ([a-z-.:\d]*)/;
+
+  if (workload !== undefined) {
+    const result = route.match(re);
+    if (result && result[1]) {
+      return (
+        <React.Fragment>
+          <Link onClick={handler} to={`/namespaces/${namespace}/workloads/${workload}?tab=envoy&name=${result[1]}`}>
+            {route}
+          </Link>
+        </React.Fragment>
+      );
+    }
+  }
+
+  return route;
+};
+
 export const serviceLink = (
   host: Host,
   namespaces: Namespace[] | undefined,

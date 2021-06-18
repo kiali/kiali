@@ -5,8 +5,7 @@ import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
 import { EnvoyProxyDump } from '../../../types/IstioObjects';
 import { ActiveFiltersInfo, FilterType } from '../../../types/Filters';
-import { FilterSelected, StatefulFilters } from '../../Filters/StatefulFilters';
-import { setFiltersToURL } from '../../FilterList/FilterHelper';
+import { StatefulFilters } from '../../Filters/StatefulFilters';
 import { ResourceSorts } from '../EnvoyDetails';
 import Namespace from '../../../types/Namespace';
 import ToolbarDropdown from '../../ToolbarDropdown/ToolbarDropdown';
@@ -43,11 +42,6 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
   };
 
   return class SummaryTable extends React.Component<SummaryTableProps<T>, SummaryTableState> {
-    componentWillUnmount() {
-      FilterSelected.resetFilters();
-      setFiltersToURL(this.props.writer.availableFilters(), { filters: [], op: 'and' });
-    }
-
     onSort = (_: React.MouseEvent, columnIndex: number, sortByDirection: SortByDirection) => {
       this.props.writer.setSorting(columnIndex, sortByDirection);
       this.props.onSort(this.props.writer.resource(), columnIndex, sortByDirection);
@@ -102,7 +96,9 @@ export const SummaryTableBuilder = (
   config: EnvoyProxyDump,
   sortBy: ResourceSorts,
   namespaces: Namespace[],
-  namespace: string
+  namespace: string,
+  routeLinkHandler: () => void,
+  workload?: string
 ) => {
   let writerComp, writerProps;
 
@@ -113,7 +109,14 @@ export const SummaryTableBuilder = (
       break;
     case 'listeners':
       writerComp = ListenerSummaryTable;
-      writerProps = new ListenerTable(config.listeners || [], sortBy['listeners'], namespaces);
+      writerProps = new ListenerTable(
+        config.listeners || [],
+        sortBy['listeners'],
+        namespaces,
+        namespace,
+        workload,
+        routeLinkHandler
+      );
       break;
     case 'routes':
       writerComp = RouteSummaryTable;

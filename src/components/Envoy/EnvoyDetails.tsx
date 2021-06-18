@@ -31,14 +31,26 @@ import { RenderComponentScroll } from 'components/Nav/Page';
 import { DashboardRef } from 'types/Runtimes';
 import CustomMetricsContainer from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
 
 // Enables the search box for the ACEeditor
 require('ace-builds/src-noconflict/ext-searchbox');
+
+const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
 const iconStyle = style({
   display: 'inline-block',
   paddingTop: '5px'
 });
+
+const paramToTab: { [key: string]: number } = {
+  clusters: 0,
+  listeners: 1,
+  routes: 2,
+  bootstrap: 3,
+  config: 4,
+  metrics: 5
+};
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -55,13 +67,11 @@ type EnvoyDetailsState = {
   config: EnvoyProxyDump;
   pod: Pod;
   tableSortBy: ResourceSorts;
-  resource: string;
   fetch: boolean;
-  activeKey: number;
   tabHeight: number;
+  activeKey: number;
+  resource: string;
 };
-
-const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
 const fullHeightStyle = style({
   height: '100%'
@@ -78,10 +88,10 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     this.state = {
       pod: this.sortedPods()[0],
       config: {},
-      resource: 'clusters',
-      activeKey: 0,
       tabHeight: 300,
       fetch: true,
+      activeKey: 0,
+      resource: 'clusters',
       tableSortBy: {
         clusters: {
           index: 0,
@@ -218,13 +228,27 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     return Object.keys(this.state.config).length < 1;
   };
 
+  onRouteLinkClick = () => {
+    this.setState({
+      config: {},
+      fetch: true,
+      resource: 'routes',
+      activeKey: 2 // Routes index
+    });
+
+    // Forcing to regenerate the active filters
+    FilterSelected.resetFilters();
+  };
+
   render() {
     const builder = SummaryTableBuilder(
       this.state.resource,
       this.state.config,
       this.state.tableSortBy,
       this.props.namespaces,
-      this.props.namespace
+      this.props.namespace,
+      this.onRouteLinkClick,
+      this.props.workload.name
     );
     const SummaryWriterComp = builder[0];
     const summaryWriter = builder[1];
@@ -233,7 +257,7 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
     const version = this.props.workload.labels[serverConfig.istioLabels.versionLabelName];
     const envoyMetricsDashboardRef = this.getEnvoyMetricsDashboardRef();
 
-    const tabs = resources.map((value, index) => {
+    const tabs = Object.keys(paramToTab).map((value, index) => {
       const title = value.charAt(0).toUpperCase() + value.slice(1);
       return (
         <Tab style={{ backgroundColor: 'white' }} key={'tab_' + title} eventKey={index} title={title}>

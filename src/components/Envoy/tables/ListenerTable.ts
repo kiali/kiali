@@ -4,19 +4,32 @@ import { ListenerSummary } from '../../../types/IstioObjects';
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, FilterTypes } from '../../../types/Filters';
 import { SortField } from '../../../types/SortFilters';
 import Namespace from '../../../types/Namespace';
-import { defaultFilter } from '../../../helpers/EnvoyHelpers';
+import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
 
 export class ListenerTable implements SummaryTable {
   summaries: ListenerSummary[];
   sortingIndex: number;
   sortingDirection: 'asc' | 'desc';
   namespaces: Namespace[];
+  namespace: string;
+  workload: string | undefined;
+  routeLinkHandler: () => void;
 
-  constructor(summaries: ListenerSummary[], sortBy: ISortBy, namespaces: Namespace[]) {
+  constructor(
+    summaries: ListenerSummary[],
+    sortBy: ISortBy,
+    namespaces: Namespace[],
+    namespace: string,
+    workload: string | undefined,
+    routeLinkHandler: () => void
+  ) {
     this.summaries = summaries;
     this.sortingIndex = sortBy.index || 0;
     this.sortingDirection = sortBy.direction || 'asc';
     this.namespaces = namespaces;
+    this.namespace = namespace;
+    this.workload = workload;
+    this.routeLinkHandler = routeLinkHandler;
   }
 
   availableFilters = (): FilterType[] => {
@@ -137,7 +150,7 @@ export class ListenerTable implements SummaryTable {
     };
   };
 
-  rows(): (string | number)[][] {
+  rows(): (string | number | JSX.Element)[][] {
     return this.summaries
       .filter((value: ListenerSummary) => {
         return defaultFilter(value, this.filterMethods());
@@ -149,7 +162,12 @@ export class ListenerTable implements SummaryTable {
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
       .map((summary: ListenerSummary) => {
-        return [summary.address, summary.port, summary.match, summary.destination];
+        return [
+          summary.address,
+          summary.port,
+          summary.match,
+          routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
+        ];
       });
   }
 }
