@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +30,8 @@ import (
 
 const (
 	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
+
+	OpenIdServerCAFile = "/kiali-cabundle/openid-server-ca.crt"
 
 	// Maximum size of session cookies. This is 3.5K.
 	// Major browsers limit cookie size to 4K, but this includes
@@ -784,18 +787,23 @@ func createHttpClient(toUrl string) (*http.Client, error) {
 		return nil, err
 	}
 
+	// Check if there is a user-configured custom certificate for the OpenID Server. Read it, if it exists
+	var cafile []byte
+	if _, customCaErr := os.Stat(OpenIdServerCAFile); customCaErr == nil {
+		var caReadErr error
+		if cafile, caReadErr = ioutil.ReadFile(OpenIdServerCAFile); caReadErr != nil {
+			return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caReadErr)
+		}
+	} else if !errors.Is(customCaErr, os.ErrNotExist) {
+		log.Warningf("Unable to read the provided OpenID Server CA file (%s). Ignoring...", customCaErr.Error())
+	}
+
 	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS || len(cfg.CAFile) != 0 {
+	if cfg.InsecureSkipVerifyTLS || cafile != nil {
 		var certPool *x509.CertPool
-		if len(cfg.CAFile) != 0 {
+		if cafile != nil {
 			certPool = x509.NewCertPool()
-			cert, caErr := ioutil.ReadFile(cfg.CAFile)
-
-			if caErr != nil {
-				return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caErr)
-			}
-
-			if ok := certPool.AppendCertsFromPEM(cert); !ok {
+			if ok := certPool.AppendCertsFromPEM(cafile); !ok {
 				return nil, fmt.Errorf("supplied OpenId CA file cannot be parsed")
 			}
 		}
