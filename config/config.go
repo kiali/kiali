@@ -310,10 +310,6 @@ type DeploymentConfig struct {
 	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 }
 
-// IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
-// defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
-type IstioComponentNamespaces map[string]string
-
 // GraphFindOption defines a single Graph Find/Hide Option
 type GraphFindOption struct {
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
@@ -375,7 +371,6 @@ type Config struct {
 	Identity                 security.Identity                   `yaml:",omitempty"`
 	InCluster                bool                                `yaml:"in_cluster,omitempty"`
 	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
-	IstioComponentNamespaces IstioComponentNamespaces            `yaml:"istio_component_namespaces,omitempty"`
 	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
 	IstioNamespace           string                              `yaml:"istio_namespace,omitempty"` // default component namespace
 	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
@@ -780,15 +775,7 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	return
 }
 
-// IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
+// IsIstioNamespace returns true if the namespace is the default istio namespace
 func IsIstioNamespace(namespace string) bool {
-	if namespace == configuration.IstioNamespace {
-		return true
-	}
-	for _, ns := range configuration.IstioComponentNamespaces {
-		if ns == namespace {
-			return true
-		}
-	}
-	return false
+	return namespace == configuration.IstioNamespace
 }

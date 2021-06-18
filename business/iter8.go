@@ -2,7 +2,6 @@ package business
 
 import (
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"

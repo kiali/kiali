@@ -86,7 +86,6 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.CacheEnabled = false
-	testConfig.IstioComponentNamespaces = config.IstioComponentNamespaces{"telemetry": "istio-telemetry"}
 	config.Set(testConfig)
 	k8s := new(kubetest.K8SClientMock)
 
