@@ -142,12 +142,8 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 
 	// Use RegistryStatus to check destinations that may not be covered with previous check
 	// i.e. Multi-cluster or Federation validations
-	for _, rStatus := range n.RegistryStatus {
-		// We assume that on these cases the host.Service is provided in FQDN
-		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if kubernetes.FilterByRegistryStatus(host.String(), rStatus) {
-			return true
-		}
+	if kubernetes.HasMatchingRegistryStatus(host.String(), n.RegistryStatus) {
+		return true
 	}
 	return false
 }
