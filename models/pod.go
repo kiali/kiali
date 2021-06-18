@@ -168,6 +168,18 @@ func (pods Pods) HasIstioSidecar() bool {
 	return true
 }
 
+// HasAnyIstioSidecar returns true if there are pods and any of pods have a sidecar
+func (pods Pods) HasAnyIstioSidecar() bool {
+	if len(pods) > 0 {
+		for _, p := range pods {
+			if p.HasIstioSidecar() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // HasIstioSidecar returns true if the pod has an Istio proxy sidecar
 func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0

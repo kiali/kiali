@@ -107,7 +107,10 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)
-	s.IstioSidecar = mPods.HasIstioSidecar()
+}
+
+func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
+	s.IstioSidecar = workloads.HasIstioSidecar()
 }
 
 func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
