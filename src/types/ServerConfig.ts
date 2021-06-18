@@ -81,7 +81,6 @@ export interface ServerConfig {
   istioAnnotations: IstioAnnotations;
   istioIdentityDomain: string;
   istioNamespace: string;
-  istioComponentNamespaces?: Map<string, string>;
   istioLabels: { [key in IstioLabelKey]: string };
   kialiFeatureFlags: KialiFeatureFlags;
   prometheus: {

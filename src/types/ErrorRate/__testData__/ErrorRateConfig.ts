@@ -116,7 +116,6 @@ export const serverRateConfig = {
   },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
-  istioComponentNamespaces: new Map<string, string>(),
   istioLabels: {
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',

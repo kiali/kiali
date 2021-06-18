@@ -60,7 +60,6 @@ const defaultServerConfig: ComputedServerConfig = {
   },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
-  istioComponentNamespaces: new Map<string, string>(),
   istioLabels: {
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',
@@ -108,7 +107,5 @@ export const isIstioNamespace = (namespace: string): boolean => {
   if (namespace === serverConfig.istioNamespace) {
     return true;
   }
-  return serverConfig.istioComponentNamespaces
-    ? Object.values(serverConfig.istioComponentNamespaces).includes(namespace)
-    : false;
+  return false;
 };
