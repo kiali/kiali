@@ -30,6 +30,10 @@ Options:
 -me|--minikube-exe <path to minikube>
     The 'minikube' command, if not in PATH then must be a full path.
     Default: minikube
+
+-oe|--olm-enabled <true|false>
+    If true, install OLM into the cluster and test the operator as installed by OLM
+    Default: false
 HELP
 }
 
@@ -40,6 +44,7 @@ while [[ $# -gt 0 ]]; do
     -ce|--client-exe)             CLIENT_EXE="$2";     shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";           shift;shift; ;;
     -me|--minikube-exe)           MINIKUBE_EXE="$2";   shift;shift; ;;
+    -oe|--olm-enabled)            OLM_ENABLED="$2";    shift;shift; ;;
     -h|--help)                    helpmsg; exit 1;     shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -48,6 +53,7 @@ done
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 DORP="${DORP:-docker}"
 MINIKUBE_EXE="${MINIKUBE_EXE:-minikube}"
+OLM_ENABLED="${OLM_ENABLED:-false}"
 
 # the minikube hack script command
 minikube_profile="ci"
@@ -60,15 +66,28 @@ if [ "$(${CLIENT_EXE} config current-context)" != "${minikube_profile}" ]; then
   fi
 fi
 
+if [ "${OLM_ENABLED}" == "true" ]; then
+  operator_installer_arg="--operator-installer skip"
+  olm_enabled_arg="--olm-enabled true"
+else
+  operator_installer_arg="--operator-installer helm"
+  olm_enabled_arg="--olm-enabled false"
+fi
+
 if ! ${minikube_sh} status; then
-  ${minikube_sh} start --dex-enabled true
+
+  ${minikube_sh} start --dex-enabled true ${olm_enabled_arg}
   if ! ${minikube_sh} status; then
     echo "Failed to install the minikube cluster."
     exit 1
   fi
   ${minikube_sh} istio
+
+  if [ "${OLM_ENABLED}" == "true" ]; then
+    ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
+  fi
 else
   ${minikube_sh} resetclock
 fi
 
-${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP}
+${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${minikube_profile} --color false --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE} -dorp ${DORP} ${operator_installer_arg}
