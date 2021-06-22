@@ -33,6 +33,8 @@ Options:
 
 -oe|--olm-enabled <true|false>
     If true, install OLM into the cluster and test the operator as installed by OLM
+    This has no effect if the cluster is already built. To ensure OLM is enabled,
+    you can pass in "--rebuild-cluster true" to start a new cluster with OLM.
     Default: false
 
 -rc|--rebuild-cluster <true|false>
@@ -95,9 +97,15 @@ if ! ${minikube_sh} status; then
   ${minikube_sh} istio
 
   if [ "${OLM_ENABLED}" == "true" ]; then
-    echo "Installing Kiali Operator and waiting for its CRD to be established."
+    echo "Installing Kiali Operator"
     ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
-    timeout 1h bash -c "until ${CLIENT_EXE} wait --for condition=established --timeout=60s $(${CLIENT_EXE} get crds/kialis.kiali.io -o name); do sleep 30; done"
+
+    echo -n "Waiting for Kiali CRD to be created."
+    timeout 1h bash -c "until ${CLIENT_EXE} get crd kialis.kiali.io >& /dev/null; do echo -n '.' ; sleep 3; done"
+    echo
+
+    echo "Waiting for Kiali CRD to be established."
+    ${CLIENT_EXE} wait --for condition=established --timeout=300s crd kialis.kiali.io
 
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
     operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
