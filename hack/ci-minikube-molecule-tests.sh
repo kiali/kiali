@@ -34,6 +34,10 @@ Options:
 -oe|--olm-enabled <true|false>
     If true, install OLM into the cluster and test the operator as installed by OLM
     Default: false
+
+-rc|--rebuild-cluster <true|false>
+    If true, any existing cluster will be destroyed and a new one will be rebuilt.
+    Default: false
 HELP
 }
 
@@ -41,11 +45,12 @@ HELP
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -ce|--client-exe)             CLIENT_EXE="$2";     shift;shift; ;;
-    -dorp|--docker-or-podman)     DORP="$2";           shift;shift; ;;
-    -me|--minikube-exe)           MINIKUBE_EXE="$2";   shift;shift; ;;
-    -oe|--olm-enabled)            OLM_ENABLED="$2";    shift;shift; ;;
-    -h|--help)                    helpmsg; exit 1;     shift; ;;
+    -ce|--client-exe)             CLIENT_EXE="$2";      shift;shift; ;;
+    -dorp|--docker-or-podman)     DORP="$2";            shift;shift; ;;
+    -me|--minikube-exe)           MINIKUBE_EXE="$2";    shift;shift; ;;
+    -oe|--olm-enabled)            OLM_ENABLED="$2";     shift;shift; ;;
+    -rc|--rebuild-cluster)        REBUILD_CLUSTER="$2"; shift;shift; ;;
+    -h|--help)                    helpmsg; exit 1;      shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -54,10 +59,16 @@ CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 DORP="${DORP:-docker}"
 MINIKUBE_EXE="${MINIKUBE_EXE:-minikube}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
+REBUILD_CLUSTER="${REBUILD_CLUSTER:-false}"
 
 # the minikube hack script command
 minikube_profile="ci"
 minikube_sh="${hack_dir}/k8s-minikube.sh --minikube-profile ${minikube_profile} --minikube-exe ${MINIKUBE_EXE} --client-exe ${CLIENT_EXE}"
+
+if [ "${REBUILD_CLUSTER}" == "true" ]; then
+  echo "Destroying any existing cluster to ensure a new one will be rebuilt."
+  ${minikube_sh} delete
+fi
 
 # make sure we switch contexts if we can so we are pointing to the current cluster
 if [ "$(${CLIENT_EXE} config current-context)" != "${minikube_profile}" ]; then
