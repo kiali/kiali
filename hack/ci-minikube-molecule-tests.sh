@@ -97,7 +97,7 @@ if ! ${minikube_sh} status; then
   if [ "${OLM_ENABLED}" == "true" ]; then
     echo "Installing Kiali Operator and waiting for its CRD to be established."
     ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
-    while ! ${CLIENT_EXE} wait --for condition=established --timeout=60s $(kubectl get crds/kialis.kiali.io -o name); do sleep 30; done
+    timeout 1h bash -c "until ${CLIENT_EXE} wait --for condition=established --timeout=60s $(${CLIENT_EXE} get crds/kialis.kiali.io -o name); do sleep 30; done"
 
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
     operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
