@@ -358,6 +358,33 @@ EOF
   fi
 }
 
+install_olm() {
+  echo 'Installing OLM...'
+
+  if [ "${OLM_VERSION}" == "latest" ]; then
+    OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+    if [ -z "${OLM_VERSION}" ]; then
+      echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via --olm-version."
+      exit 1
+    else
+      echo "Github reports the latest OLM version is: ${OLM_VERSION}"
+    fi
+  fi
+
+  # force the install.sh script to go through minikube kubectl when it executes kubectl commands
+  kubectl() {
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
+  }
+  export MINIKUBE_EXEC_WITH_PROFILE
+  export -f kubectl
+  # TODO when https://github.com/operator-framework/operator-lifecycle-manager/pull/2211 is fixed, we can remove the "sed" here
+  curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | sed 's/set -e//g' | bash -s ${OLM_VERSION}
+  [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
+  unset -f kubectl
+
+  echo "OLM ${OLM_VERSION} is installed."
+}
+
 determine_full_lb_range() {
   local host_ip=$(${MINIKUBE_EXEC_WITH_PROFILE} ip)
   local subnet=$(echo ${host_ip} | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1/')
@@ -611,29 +638,7 @@ if [ "$_CMD" = "start" ]; then
   echo 'Enabling the image registry'
   ${MINIKUBE_EXEC_WITH_PROFILE} addons enable registry
   [ "$?" != "0" ] && echo "ERROR: Failed to enable registry addon" && exit 1
-  if [ "${OLM_ENABLED}" == "true" ]; then
-    echo 'Installing OLM'
-    if [ "${OLM_VERSION}" == "latest" ]; then
-      OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
-      if [ -z "${OLM_VERSION}" ]; then
-        echo "Failed to obtain the latest OLM version from Github. You will need to specify an explicit version via --olm-version."
-        exit 1
-      else
-        echo "Github reports the latest OLM version is: ${OLM_VERSION}"
-      fi
-    fi
 
-    # force the install.sh script to go through minikube kubectl when it executes kubectl commands
-    kubectl() {
-      ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
-    }
-    export MINIKUBE_EXEC_WITH_PROFILE
-    export -f kubectl
-    # TODO when https://github.com/operator-framework/operator-lifecycle-manager/pull/2211 is fixed, we can remove the "sed" here
-    curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh | sed 's/set -e//g' | bash -s ${OLM_VERSION}
-    [ "$?" != "0" ] && echo "ERROR: Failed to install OLM" && exit 1
-    unset -f kubectl
-  fi
   if [ ! -z "${LB_ADDRESSES}" ]; then
     echo 'Enabling the metallb load balancer'
     ${MINIKUBE_EXEC_WITH_PROFILE} addons enable metallb
@@ -657,6 +662,10 @@ LBCONFIGMAP
 
   if [ "${DEX_ENABLED}" == "true" ]; then
     install_dex
+  fi
+
+  if [ "${OLM_ENABLED}" == "true" ]; then
+    install_olm
   fi
 
   echo 'Minikube has started.'

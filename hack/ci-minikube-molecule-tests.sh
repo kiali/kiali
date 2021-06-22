@@ -84,7 +84,18 @@ if ! ${minikube_sh} status; then
   ${minikube_sh} istio
 
   if [ "${OLM_ENABLED}" == "true" ]; then
+    echo "Installing Kiali Operator and waiting for its CRD to be established."
     ${CLIENT_EXE} create -f https://operatorhub.io/install/stable/kiali.yaml
+    while ! ${CLIENT_EXE} wait --for condition=established --timeout=60s $(kubectl get crds/kialis.kiali.io -o name); do sleep 30; done
+
+    echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces."
+    operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
+    for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE; do
+      ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
+    done
+
+    echo "Waiting for the Kiali Operator to be ready."
+    ${CLIENT_EXE} wait -n ${operator_namespace} --for=condition=ready --timeout=300s $(${CLIENT_EXE} get pod -n ${operator_namespace} -l app.kubernetes.io/name=kiali-operator -o name)
   fi
 else
   ${minikube_sh} resetclock
