@@ -169,15 +169,21 @@ type TracingConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
-	UrlServiceVersion                 string            `yaml:"url_service_version"`
+	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
+	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
+	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
+	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
+	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	UrlServiceVersion                 string              `yaml:"url_service_version"`
+}
+
+type IstioCanaryRevision struct {
+	Current string `yaml:"current,omitempty"`
+	Upgrade string `yaml:"upgrade,omitempty"`
 }
 
 type ComponentStatuses struct {
@@ -227,6 +233,7 @@ func (lt *LoginToken) Obfuscate() {
 type IstioLabels struct {
 	AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
 	InjectionLabelName string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	InjectionLabelRev  string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
 	VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
@@ -333,6 +340,7 @@ type UIDefaults struct {
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	IstioInjectionAction bool       `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction   bool       `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
 	UIDefaults           UIDefaults `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
 }
 
@@ -499,10 +507,12 @@ func NewConfig() (c *Config) {
 		IstioLabels: IstioLabels{
 			AppLabelName:       "app",
 			InjectionLabelName: "istio-injection",
+			InjectionLabelRev:  "istio.io/rev",
 			VersionLabelName:   "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			IstioInjectionAction: true,
+			IstioUpgradeAction:   false,
 			UIDefaults: UIDefaults{
 				Graph: GraphUIDefaults{
 					FindOptions: []GraphFindOption{
