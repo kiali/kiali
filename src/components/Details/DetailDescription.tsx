@@ -5,9 +5,9 @@ import { style } from 'typestyle';
 import { Link } from 'react-router-dom';
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
 import * as H from '../../types/Health';
+import { HealthSubItem } from '../../types/Health';
 import { renderTrafficStatus } from '../Health/HealthDetails';
 import { createIcon } from '../Health/Helper';
-import { HealthSubItem } from '../../types/Health';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 type Props = {
@@ -67,7 +67,9 @@ class DetailDescription extends React.PureComponent<Props> {
   private appList() {
     const applicationList =
       this.props.apps && this.props.apps.length > 0
-        ? this.props.apps.map(name => this.renderAppItem(this.props.namespace, name))
+        ? this.props.apps
+            .sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1))
+            .map(name => this.renderAppItem(this.props.namespace, name))
         : this.renderEmptyItem('applications');
 
     return [
@@ -159,9 +161,11 @@ class DetailDescription extends React.PureComponent<Props> {
           <div>
             <ul id="workload-list" style={{ listStyleType: 'none' }}>
               {this.props.workloads
-                ? this.props.workloads.map((wkd, subIdx) => {
-                    return <li key={subIdx}>{this.renderWorkloadItem(wkd)}</li>;
-                  })
+                ? this.props.workloads
+                    .sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1))
+                    .map((wkd, subIdx) => {
+                      return <li key={subIdx}>{this.renderWorkloadItem(wkd)}</li>;
+                    })
                 : undefined}
             </ul>
           </div>
@@ -178,7 +182,9 @@ class DetailDescription extends React.PureComponent<Props> {
   private serviceList() {
     const serviceList =
       this.props.services && this.props.services.length > 0
-        ? this.props.services.map(name => this.renderServiceItem(this.props.namespace, name))
+        ? this.props.services
+            .sort((s1: string, s2: string) => (s1 < s2 ? -1 : 1))
+            .map(name => this.renderServiceItem(this.props.namespace, name))
         : this.renderEmptyItem('services');
 
     return [

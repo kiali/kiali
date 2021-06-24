@@ -80,79 +80,81 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
     }
 
     let rows: IRow[] = [];
-    (this.props.pods || []).map((pod, _podIdx) => {
-      let validation: ObjectValidation = {} as ObjectValidation;
-      if (this.props.validations[pod.name]) {
-        validation = this.props.validations[pod.name];
-      }
-      const podProperties = (
-        <div key="properties-list" className={resourceListStyle}>
-          <ul style={{ listStyleType: 'none' }}>
-            <li>
-              <span>Created</span>
-              <div style={{ display: 'inline-block' }}>
-                <LocalTime time={pod.createdAt} />
-              </div>
-            </li>
-            <li>
-              <span>Created By</span>
-              <div style={{ display: 'inline-block' }}>
-                {pod.createdBy && pod.createdBy.length > 0
-                  ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
-                  : 'Not found'}
-              </div>
-            </li>
-            <li>
-              <span>Istio Init Container</span>
-              <div style={{ display: 'inline-block' }}>
-                {pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
-              </div>
-            </li>
-            <li>
-              <span>Istio Container</span>
-              <div style={{ display: 'inline-block' }}>
-                {pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
-              </div>
-            </li>
-            <li>
-              <span>Labels</span>
-              <div style={{ display: 'inline-block' }}>
-                <Labels labels={pod.labels} expanded={true} />
-              </div>
-            </li>
-          </ul>
-        </div>
-      );
-
-      rows.push({
-        cells: [
-          {
-            title: (
-              <span>
-                <div key="service-icon" className={iconStyle}>
-                  <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+    (this.props.pods || [])
+      .sort((p1: Pod, p2: Pod) => (p1.name < p2.name ? -1 : 1))
+      .map((pod, _podIdx) => {
+        let validation: ObjectValidation = {} as ObjectValidation;
+        if (this.props.validations[pod.name]) {
+          validation = this.props.validations[pod.name];
+        }
+        const podProperties = (
+          <div key="properties-list" className={resourceListStyle}>
+            <ul style={{ listStyleType: 'none' }}>
+              <li>
+                <span>Created</span>
+                <div style={{ display: 'inline-block' }}>
+                  <LocalTime time={pod.createdAt} />
                 </div>
-                {pod.name}
-                <Tooltip
-                  position={TooltipPosition.right}
-                  content={<div style={{ textAlign: 'left' }}>{podProperties}</div>}
-                >
-                  <KialiIcon.Info className={infoStyle} />
-                </Tooltip>
-              </span>
-            )
-          },
-          {
-            title: (
-              <>
-                <PodStatus proxyStatus={pod.proxyStatus} checks={validation.checks} />
-              </>
-            )
-          }
-        ]
+              </li>
+              <li>
+                <span>Created By</span>
+                <div style={{ display: 'inline-block' }}>
+                  {pod.createdBy && pod.createdBy.length > 0
+                    ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
+                    : 'Not found'}
+                </div>
+              </li>
+              <li>
+                <span>Istio Init Container</span>
+                <div style={{ display: 'inline-block' }}>
+                  {pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
+                </div>
+              </li>
+              <li>
+                <span>Istio Container</span>
+                <div style={{ display: 'inline-block' }}>
+                  {pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
+                </div>
+              </li>
+              <li>
+                <span>Labels</span>
+                <div style={{ display: 'inline-block' }}>
+                  <Labels labels={pod.labels} expanded={true} />
+                </div>
+              </li>
+            </ul>
+          </div>
+        );
+
+        rows.push({
+          cells: [
+            {
+              title: (
+                <span>
+                  <div key="service-icon" className={iconStyle}>
+                    <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
+                  </div>
+                  {pod.name}
+                  <Tooltip
+                    position={TooltipPosition.right}
+                    content={<div style={{ textAlign: 'left' }}>{podProperties}</div>}
+                  >
+                    <KialiIcon.Info className={infoStyle} />
+                  </Tooltip>
+                </span>
+              )
+            },
+            {
+              title: (
+                <>
+                  <PodStatus proxyStatus={pod.proxyStatus} checks={validation.checks} />
+                </>
+              )
+            }
+          ]
+        });
+        return rows;
       });
-      return rows;
-    });
 
     return rows;
   }

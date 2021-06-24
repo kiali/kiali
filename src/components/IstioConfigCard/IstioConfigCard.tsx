@@ -64,30 +64,40 @@ class IstioConfigCard extends React.Component<Props> {
       return this.noIstioConfig();
     }
     let rows: IRow[] = [];
-    this.props.items.map((item, itemIdx) => {
-      rows.push({
-        cells: [
-          {
-            title: (
-              <span>
-                <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
-                {this.overviewLink(item)}
-              </span>
-            )
-          },
-          {
-            title: (
-              <ValidationObjectSummary
-                id={itemIdx + '-config-validation'}
-                validations={item.validation ? [item.validation] : []}
-                style={{ verticalAlign: '-0.5em' }}
-              />
-            )
-          }
-        ]
+    this.props.items
+      .sort((a: IstioConfigItem, b: IstioConfigItem) => {
+        if (a.type < b.type) {
+          return -1;
+        } else if (a.type > b.type) {
+          return 1;
+        } else {
+          return a.name < b.name ? -1 : 1;
+        }
+      })
+      .map((item, itemIdx) => {
+        rows.push({
+          cells: [
+            {
+              title: (
+                <span>
+                  <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
+                  {this.overviewLink(item)}
+                </span>
+              )
+            },
+            {
+              title: (
+                <ValidationObjectSummary
+                  id={itemIdx + '-config-validation'}
+                  validations={item.validation ? [item.validation] : []}
+                  style={{ verticalAlign: '-0.5em' }}
+                />
+              )
+            }
+          ]
+        });
+        return rows;
       });
-      return rows;
-    });
 
     return rows;
   }

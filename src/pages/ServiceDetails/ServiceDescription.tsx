@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import DetailDescription from '../../components/Details/DetailDescription';
 import { AppWorkload } from '../../types/App';
 import { serverConfig } from '../../config';
@@ -69,18 +69,20 @@ class ServiceDescription extends React.Component<ServiceInfoDescriptionProps, St
     const workloads: AppWorkload[] = [];
     if (this.props.serviceDetails) {
       if (this.props.serviceDetails.workloads) {
-        this.props.serviceDetails.workloads.forEach(wk => {
-          if (wk.labels) {
-            const appName = wk.labels[serverConfig.istioLabels.appLabelName];
-            if (!apps.includes(appName)) {
-              apps.push(appName);
+        this.props.serviceDetails.workloads
+          .sort((w1: WorkloadOverview, w2: WorkloadOverview) => (w1.name < w2.name ? -1 : 1))
+          .forEach(wk => {
+            if (wk.labels) {
+              const appName = wk.labels[serverConfig.istioLabels.appLabelName];
+              if (!apps.includes(appName)) {
+                apps.push(appName);
+              }
             }
-          }
-          workloads.push({
-            workloadName: wk.name,
-            istioSidecar: wk.istioSidecar
+            workloads.push({
+              workloadName: wk.name,
+              istioSidecar: wk.istioSidecar
+            });
           });
-        });
       }
     }
     // We will show service labels only when there is some label that is not present in the selector
