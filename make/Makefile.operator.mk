@@ -2,13 +2,6 @@
 # Targets to deploy the operator and Kiali in a remote cluster.
 #
 
-.ensure-operator-is-running: .ensure-oc-exists
-	@${OC} get pods -l app.kubernetes.io/name=kiali-operator -n kiali-operator 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null ;\
-	RETVAL=$$?; \
-	if [ $$RETVAL -ne 0 ]; then \
-	  echo "The Operator is not running. Cannot continue."; exit 1; \
-	fi
-
 .ensure-operator-ns-does-not-exist: .ensure-oc-exists
 	@_cmd="${OC} get namespace ${OPERATOR_NAMESPACE}"; \
 	$$_cmd > /dev/null 2>&1 ; \
@@ -115,3 +108,54 @@ endif
 	ansible-galaxy collection install operator_sdk.util community.kubernetes
 	ALLOW_AD_HOC_KIALI_NAMESPACE=true ALLOW_AD_HOC_KIALI_IMAGE=true ANSIBLE_ROLES_PATH=${ROOTDIR}/operator/roles ${ANSIBLE_CALLBACK_WHITELIST_ARG} ansible-playbook -vvv ${ANSIBLE_PYTHON_INTERPRETER} -i ${ROOTDIR}/operator/dev-playbook-config/dev-hosts.yaml ${ROOTDIR}/operator/dev-playbook-config/dev-playbook.yaml
 	@echo "Remove the dummy Kiali CR"; ${OC} delete -f ${ROOTDIR}/operator/dev-playbook-config/dev-kiali-cr.yaml
+
+# Set an operator environment variable to configure features inside the operator.
+# Example values for OPERATOR_ENV_NAME [OPERATOR_ENV_VALUE] are:
+#   ALLOW_AD_HOC_KIALI_NAMESPACE [true or false]
+#   ALLOW_AD_HOC_KIALI_IMAGE [true or false]
+#   ANSIBLE_DEBUG_LOGS [true or false]
+#   ANSIBLE_VERBOSITY_KIALI_KIALI_IO [0 thru 7]
+#   ANSIBLE_CONFIG [/etc/ansible/ansible.cfg or /opt/ansible/ansible-profiler.cfg]
+.operator-set-config: .ensure-oc-exists
+	@$(eval EXISTING_OPERATOR_NAMESPACE ?= $(shell ${OC} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1))
+	@if [ -z "${EXISTING_OPERATOR_NAMESPACE}" ]; then echo "Kiali Operator does not appear to be installed yet."; exit 1; fi
+	@$(eval EXISTING_OPERATOR_CSV = $(shell ${OC} get csv -n ${EXISTING_OPERATOR_NAMESPACE} -o name >& /dev/null | grep kiali))
+	@if [ -z "${OPERATOR_ENV_NAME}" ]; then echo "OPERATOR_ENV_NAME is not set."; exit 1; fi
+	@if [ -z "${OPERATOR_ENV_VALUE}" ]; then echo "OPERATOR_ENV_VALUE is not set."; exit 1; fi
+	@if [ -z "${EXISTING_OPERATOR_CSV}" ]; then ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} set env deploy/kiali-operator "${OPERATOR_ENV_NAME}=${OPERATOR_ENV_VALUE}"; else ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} patch ${EXISTING_OPERATOR_CSV} --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${OC} -n ${EXISTING_OPERATOR_NAMESPACE} get ${EXISTING_OPERATOR_CSV} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${OPERATOR_ENV_NAME} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"${OPERATOR_ENV_VALUE}\""}]"; fi
+
+## operator-set-config-allow-ad-hoc-kiali-namespace: Tells the operator if it should allow Kiali CRs in an ad hoc namespace. Default OPERATOR_ENV_VALUE=true
+operator-set-config-allow-ad-hoc-kiali-namespace: .operator-set-env-allow-ad-hoc-kiali-namespace .operator-set-config
+.operator-set-env-allow-ad-hoc-kiali-namespace:
+	@$(eval OPERATOR_ENV_NAME = ALLOW_AD_HOC_KIALI_NAMESPACE)
+	@$(eval OPERATOR_ENV_VALUE ?= true)
+
+## operator-set-config-allow-ad-hoc-kiali-image: Tells the operator if it should allow ad hoc images. Default OPERATOR_ENV_VALUE=true
+operator-set-config-allow-ad-hoc-kiali-image: .operator-set-env-allow-ad-hoc-kiali-image .operator-set-config
+.operator-set-env-allow-ad-hoc-kiali-image:
+	@$(eval OPERATOR_ENV_NAME = ALLOW_AD_HOC_KIALI_IMAGE)
+	@$(eval OPERATOR_ENV_VALUE ?= true)
+
+## operator-set-config-ansible-debug-logs: Configures the logger within the operator. Default OPERATOR_ENV_VALUE=true
+operator-set-config-ansible-debug-logs: .operator-set-env-ansible-debug-logs .operator-set-config
+.operator-set-env-ansible-debug-logs:
+	@$(eval OPERATOR_ENV_NAME = ANSIBLE_DEBUG_LOGS)
+	@$(eval OPERATOR_ENV_VALUE ?= true)
+
+## operator-set-config-ansible-verbosity: Sets the logging verbosity within the operator. Default OPERATOR_ENV_VALUE=7
+operator-set-config-ansible-verbosity: .operator-set-env-ansible-verbosity .operator-set-config
+.operator-set-env-ansible-verbosity:
+	@$(eval OPERATOR_ENV_NAME = ANSIBLE_VERBOSITY_KIALI_KIALI_IO)
+	@$(eval OPERATOR_ENV_VALUE ?= 7)
+
+## operator-set-config-ansible-profiler-on: Turns on the profiler within the operator.
+operator-set-config-ansible-profiler-on: .operator-set-env-ansible-profiler-on .operator-set-config
+.operator-set-env-ansible-profiler-on:
+	@$(eval OPERATOR_ENV_NAME = ANSIBLE_CONFIG)
+	@$(eval OPERATOR_ENV_VALUE ?= /opt/ansible/ansible-profiler.cfg)
+
+## operator-set-config-ansible-profiler-off: Turns off the profiler within the operator.
+operator-set-config-ansible-profiler-off: .operator-set-env-ansible-profiler-off .operator-set-config
+.operator-set-env-ansible-profiler-off:
+	@$(eval OPERATOR_ENV_NAME = ANSIBLE_CONFIG)
+	@$(eval OPERATOR_ENV_VALUE ?= /etc/ansible/ansible.cfg)
