@@ -3,7 +3,8 @@ import { getExpr } from '../../config/HealthConfig';
 export const healthConfig = {
   clusters: {},
   kialiFeatureFlags: {
-    istioInjectionAction: true
+    istioInjectionAction: true,
+    istioUpgradeAction: false
   },
   healthConfig: {
     rate: [
@@ -34,11 +35,16 @@ export const healthConfig = {
   istioAnnotations: {
     istioInjectionAnnotation: ''
   },
+  istioCanaryRevision: {
+    current: '',
+    upgrade: ''
+  },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',
+    injectionLabelRev: 'istio.io/rev',
     versionLabelName: 'version'
   },
   prometheus: {

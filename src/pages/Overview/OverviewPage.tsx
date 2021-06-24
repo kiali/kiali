@@ -575,7 +575,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
     }
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
+      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true,
@@ -604,8 +604,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         };
         if (
           nsInfo.labels &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
         ) {
           namespaceActions.push(disableAction);
           namespaceActions.push(removeAction);
@@ -619,12 +620,62 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         } else {
           namespaceActions.push(enableAction);
         }
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true,
+          isDisabled: false
+        });
       }
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true,
-        isDisabled: false
-      });
+      if (
+        serverConfig.kialiFeatureFlags.istioUpgradeAction &&
+        serverConfig.istioCanaryRevision.upgrade &&
+        serverConfig.istioCanaryRevision.current
+      ) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true,
+          isDisabled: false
+        });
+        const upgradeAction = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: !canWrite,
+          title: 'Upgrade to ' + serverConfig.istioCanaryRevision.upgrade + ' revision',
+          action: (ns: string) => this.onUpgradeDowngradeIstio(ns, serverConfig.istioCanaryRevision.upgrade)
+        };
+        const downgradeAction = {
+          isGroup: false,
+          isSeparator: false,
+          isDisabled: !canWrite,
+          title: 'Downgrade to ' + serverConfig.istioCanaryRevision.current + ' revision',
+          action: (ns: string) => this.onUpgradeDowngradeIstio(ns, serverConfig.istioCanaryRevision.current)
+        };
+        if (
+          nsInfo.labels &&
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.current) ||
+            (nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+              nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
+        ) {
+          namespaceActions.push(upgradeAction);
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true,
+            isDisabled: false
+          });
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
+        ) {
+          namespaceActions.push(downgradeAction);
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true,
+            isDisabled: false
+          });
+        }
+      }
       const aps = nsInfo.istioConfig?.authorizationPolicies || [];
       const addAuthorizationAction = {
         isGroup: false,
@@ -677,7 +728,19 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   onAddRemoveAutoInjection = (ns: string, enable: boolean, remove: boolean): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(enable, remove);
+    const jsonPatch = buildNamespaceInjectionPatch(enable, remove, null);
+    API.updateNamespace(ns, jsonPatch)
+      .then(_ => {
+        AlertUtils.add('Namespace ' + ns + ' updated', 'default', MessageType.SUCCESS);
+        this.load();
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not update namespace ' + ns, error);
+      });
+  };
+
+  onUpgradeDowngradeIstio = (ns: string, revision: string): void => {
+    const jsonPatch = buildNamespaceInjectionPatch(false, false, revision);
     API.updateNamespace(ns, jsonPatch)
       .then(_ => {
         AlertUtils.add('Namespace ' + ns + ' updated', 'default', MessageType.SUCCESS);

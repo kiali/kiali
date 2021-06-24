@@ -58,15 +58,21 @@ const defaultServerConfig: ComputedServerConfig = {
   istioAnnotations: {
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
+  istioCanaryRevision: {
+    current: '',
+    upgrade: ''
+  },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
     appLabelName: 'app',
     injectionLabelName: 'istio-injection',
+    injectionLabelRev: 'istio.io/rev',
     versionLabelName: 'version'
   },
   kialiFeatureFlags: {
-    istioInjectionAction: true
+    istioInjectionAction: true,
+    istioUpgradeAction: false
   },
   prometheus: {
     globalScrapeInterval: 15,
