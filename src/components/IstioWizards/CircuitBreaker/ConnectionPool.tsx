@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { ConnectionPoolSettings } from '../../../types/IstioObjects';
+import { CONNECTION_POOL_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 type Props = {
   isConnectionPool: boolean;
@@ -20,6 +21,7 @@ class ConnectionPool extends React.Component<Props> {
             isChecked={this.props.isConnectionPool}
             onChange={() => this.props.onConnectionPool(!this.props.isConnectionPool, this.props.connectionPool)}
           />
+          <span>{wizardTooltip(CONNECTION_POOL_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isConnectionPool && (
           <FormGroup

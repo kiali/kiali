@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
+import { HTTP_TIMEOUT_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 export type RouteTimeoutProps = {
   isTimeout: boolean;
@@ -22,6 +23,7 @@ class RouteTimeout extends React.Component<RouteTimeoutProps> {
             isChecked={this.props.isTimeout}
             onChange={() => this.props.onTimeout(!this.props.isTimeout, this.props.timeout)}
           />
+          <span>{wizardTooltip(HTTP_TIMEOUT_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isTimeout && (
           <FormGroup

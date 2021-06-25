@@ -9,6 +9,7 @@ import {
   Switch,
   TextInput
 } from '@patternfly/react-core';
+import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 
 type Props = {
   serviceName: string;
@@ -136,6 +137,7 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
             isChecked={this.state.addGateway}
             onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
           />
+          <span>{wizardTooltip(GATEWAY_TOOLTIP)}</span>
         </FormGroup>
         {this.state.addGateway && (
           <>

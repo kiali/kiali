@@ -123,26 +123,28 @@ class FaultInjection extends React.Component<Props, State> {
 
   render() {
     return (
-      <Form
-        isHorizontal={true}
-        style={{
-          paddingTop: 10,
-          paddingBottom: 10
-        }}
-      >
-        <DelayFault
-          delayed={this.state.faultInjectionRoute.delayed}
-          delay={this.state.faultInjectionRoute.delay}
-          isValid={this.state.faultInjectionRoute.isValidDelay}
-          onDelay={(delayed, delay) => this.updateDelay(delayed, delay)}
-        />
-        <AbortFault
-          aborted={this.state.faultInjectionRoute.aborted}
-          abort={this.state.faultInjectionRoute.abort}
-          isValid={this.state.faultInjectionRoute.isValidAbort}
-          onAbort={(aborted, abort) => this.updateAbort(aborted, abort)}
-        />
-      </Form>
+      <>
+        <Form
+          isHorizontal={true}
+          style={{
+            paddingTop: 10,
+            paddingBottom: 10
+          }}
+        >
+          <DelayFault
+            delayed={this.state.faultInjectionRoute.delayed}
+            delay={this.state.faultInjectionRoute.delay}
+            isValid={this.state.faultInjectionRoute.isValidDelay}
+            onDelay={(delayed, delay) => this.updateDelay(delayed, delay)}
+          />
+          <AbortFault
+            aborted={this.state.faultInjectionRoute.aborted}
+            abort={this.state.faultInjectionRoute.abort}
+            isValid={this.state.faultInjectionRoute.isValidAbort}
+            onAbort={(aborted, abort) => this.updateAbort(aborted, abort)}
+          />
+        </Form>
+      </>
     );
   }
 }

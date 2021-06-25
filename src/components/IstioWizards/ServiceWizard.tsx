@@ -466,7 +466,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     return (
       <Modal
-        width={'50%'}
+        width={'75%'}
         title={
           this.props.type.length > 0
             ? this.props.update
@@ -543,7 +543,7 @@ class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardSta
             }}
           >
             <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-              <Tab eventKey={0} title={'Hosts'}>
+              <Tab eventKey={0} title={'Destination Hosts'}>
                 <div style={{ marginTop: '20px' }}>
                   <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
                 </div>

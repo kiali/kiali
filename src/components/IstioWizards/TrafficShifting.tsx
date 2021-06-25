@@ -201,7 +201,7 @@ class TrafficShifting extends React.Component<Props, State> {
     // https://github.com/patternfly/patternfly-next/issues/2373
     const workloadCells: ICell[] = [
       {
-        title: 'Workload',
+        title: 'Destination Workload',
         transforms: [cellWidth(30) as any],
         props: {}
       },

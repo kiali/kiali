@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
 import { style } from 'typestyle';
+import { MATCHING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 type Props = {
   matches: string[];
@@ -8,7 +9,7 @@ type Props = {
 };
 
 const labelContainerStyle = style({
-  marginTop: 10,
+  marginTop: 20,
   height: 40
 });
 
@@ -23,7 +24,15 @@ class Matches extends React.Component<Props> {
     ));
     return (
       <div className={labelContainerStyle}>
-        Matching selected: {matches.length > 0 ? matches : <b>Match any request</b>}
+        <span
+          style={{
+            marginRight: '32px'
+          }}
+        >
+          Matching selected
+          {wizardTooltip(MATCHING_SELECTED_TOOLTIP)}
+        </span>
+        {matches.length > 0 ? matches : <b>Match any request</b>}
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { HTTPRetry } from '../../../types/IstioObjects';
+import { HTTP_RETRY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 export type RouteRetryProps = {
   isRetry: boolean;
@@ -23,6 +24,7 @@ class RouteRetry extends React.Component<RouteRetryProps> {
             isChecked={this.props.isRetry}
             onChange={() => this.props.onRetry(!this.props.isRetry, this.props.retries)}
           />
+          <span>{wizardTooltip(HTTP_RETRY_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isRetry && (
           <>

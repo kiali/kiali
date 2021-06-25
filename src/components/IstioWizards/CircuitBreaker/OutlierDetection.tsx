@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { OutlierDetection as OutlierDetectionProps } from '../../../types/IstioObjects';
+import { OUTLIER_DETECTION_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 type Props = {
   isOutlierDetection: boolean;
@@ -20,6 +21,7 @@ class OutlierDetection extends React.Component<Props> {
             isChecked={this.props.isOutlierDetection}
             onChange={() => this.props.onOutlierDetection(!this.props.isOutlierDetection, this.props.outlierDetection)}
           />
+          <span>{wizardTooltip(OUTLIER_DETECTION_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isOutlierDetection && (
           <FormGroup

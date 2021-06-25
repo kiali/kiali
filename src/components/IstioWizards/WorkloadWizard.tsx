@@ -43,7 +43,7 @@ class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizard
     return (
       <>
         <Modal
-          width={'50%'}
+          width={'75%'}
           title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type] : ''}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, Switch, TextInput } from '@patternfly/react-core';
 import { Delay } from '../../../types/IstioObjects';
+import { HTTP_DELAY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 
 export type DelayFaultProps = {
   delayed: boolean;
@@ -23,6 +24,7 @@ class DelayFault extends React.Component<DelayFaultProps> {
             isChecked={this.props.delayed}
             onChange={() => this.props.onDelay(!this.props.delayed, this.props.delay)}
           />
+          <span>{wizardTooltip(HTTP_DELAY_TOOLTIP)}</span>
         </FormGroup>
         {this.props.delayed && (
           <FormGroup
