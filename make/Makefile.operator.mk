@@ -119,10 +119,10 @@ endif
 .operator-set-config: .ensure-oc-exists
 	@$(eval EXISTING_OPERATOR_NAMESPACE ?= $(shell ${OC} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1))
 	@if [ -z "${EXISTING_OPERATOR_NAMESPACE}" ]; then echo "Kiali Operator does not appear to be installed yet."; exit 1; fi
-	@$(eval EXISTING_OPERATOR_CSV = $(shell ${OC} get csv -n ${EXISTING_OPERATOR_NAMESPACE} -o name >& /dev/null | grep kiali))
+	@$(eval EXISTING_OPERATOR_CSV = $(shell ${OC} get csv -n ${EXISTING_OPERATOR_NAMESPACE} -o name | grep kiali))
 	@if [ -z "${OPERATOR_ENV_NAME}" ]; then echo "OPERATOR_ENV_NAME is not set."; exit 1; fi
 	@if [ -z "${OPERATOR_ENV_VALUE}" ]; then echo "OPERATOR_ENV_VALUE is not set."; exit 1; fi
-	@if [ -z "${EXISTING_OPERATOR_CSV}" ]; then ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} set env deploy/kiali-operator "${OPERATOR_ENV_NAME}=${OPERATOR_ENV_VALUE}"; else ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} patch ${EXISTING_OPERATOR_CSV} --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${OC} -n ${EXISTING_OPERATOR_NAMESPACE} get ${EXISTING_OPERATOR_CSV} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${OPERATOR_ENV_NAME} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"${OPERATOR_ENV_VALUE}\""}]"; fi
+	@if [ -z "${EXISTING_OPERATOR_CSV}" ]; then ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} set env deploy/kiali-operator "${OPERATOR_ENV_NAME}=${OPERATOR_ENV_VALUE}"; else ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} patch ${EXISTING_OPERATOR_CSV} --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(shell ${OC} -n ${EXISTING_OPERATOR_NAMESPACE} get ${EXISTING_OPERATOR_CSV} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${OPERATOR_ENV_NAME} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"${OPERATOR_ENV_VALUE}\""}]"; fi
 
 ## operator-set-config-allow-ad-hoc-kiali-namespace: Tells the operator if it should allow Kiali CRs in an ad hoc namespace. Default OPERATOR_ENV_VALUE=true
 operator-set-config-allow-ad-hoc-kiali-namespace: .operator-set-env-allow-ad-hoc-kiali-namespace .operator-set-config
