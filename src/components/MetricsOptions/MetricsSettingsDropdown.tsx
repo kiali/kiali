@@ -17,6 +17,7 @@ import { PromLabel } from 'types/Metrics';
 interface Props {
   onChanged: (state: MetricsSettings) => void;
   onLabelsFiltersChanged: (labelsFilters: LabelsSettings) => void;
+  direction: string;
   hasHistograms: boolean;
   labelsSettings: LabelsSettings;
 }
@@ -37,10 +38,22 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     this.state = { ...settings, isOpen: false };
   }
 
-  componentDidUpdate() {
-    const labelsSettings = combineLabelsSettings(this.props.labelsSettings, this.state.labelsSettings);
-    if (!isEqual(this.state.labelsSettings, labelsSettings)) {
-      this.setState({ labelsSettings: labelsSettings });
+  componentDidUpdate(prevProps: Props) {
+    // TODO Move the sync of URL and state to a global place
+    const changeDirection = prevProps.direction !== this.props.direction;
+    const settings = retrieveMetricsSettings();
+    let initLabelSettings = changeDirection ? settings.labelsSettings : new Map();
+    const stateLabelsSettings = changeDirection ? initLabelSettings : this.state.labelsSettings;
+    const labelsSettings = combineLabelsSettings(this.props.labelsSettings, stateLabelsSettings);
+    if (!isEqual(stateLabelsSettings, labelsSettings) || changeDirection) {
+      this.setState(prevState => {
+        return {
+          labelsSettings: labelsSettings,
+          showQuantiles: changeDirection ? settings.showQuantiles : prevState.showQuantiles,
+          showAverage: changeDirection ? settings.showAverage : prevState.showAverage,
+          showSpans: changeDirection ? settings.showSpans : prevState.showSpans
+        };
+      });
     }
   }
 
@@ -115,7 +128,6 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     if (!hasHistograms && !hasLabels) {
       return null;
     }
-
     return (
       <Dropdown
         toggle={<DropdownToggle onToggle={this.onToggle}>Metrics Settings</DropdownToggle>}

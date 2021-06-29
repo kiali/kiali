@@ -117,6 +117,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       if (this.props.direction !== prevProps.direction) {
         const settings = MetricsHelper.retrieveMetricsSettings();
         this.options = this.initOptions(settings);
+        this.setState({ labelsSettings: settings.labelsSettings });
       }
       this.spanOverlay.reset();
       this.refresh();
@@ -288,6 +289,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
               <MetricsSettingsDropdown
                 onChanged={this.onMetricsSettingsChanged}
                 onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+                direction={this.props.direction}
                 labelsSettings={this.state.labelsSettings}
                 hasHistograms={true}
               />

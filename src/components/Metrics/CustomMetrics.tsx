@@ -252,6 +252,7 @@ class CustomMetrics extends React.Component<Props, MetricsState> {
                 <MetricsSettingsDropdown
                   onChanged={this.onMetricsSettingsChanged}
                   onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+                  direction={this.state.dashboard?.title || 'dashboard'}
                   labelsSettings={this.state.labelsSettings}
                   hasHistograms={hasHistograms}
                 />
