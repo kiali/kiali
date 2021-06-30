@@ -27,6 +27,12 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
+	// Has VirtualService
+	VirtualService bool `json:"virtualService"`
+	// Has DestinationRule
+	DestinationRule bool `json:"destinationRule"`
+	// Kiali Wizard scenario, if any
+	KialiWizard     string `json:"kialiWizard"`
 }
 
 type ServiceList struct {
