@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dropdown, DropdownToggle, Radio } from '@patternfly/react-core';
+import { Divider, Dropdown, DropdownToggle, DropdownToggleCheckbox, Radio } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import isEqual from 'lodash/isEqual';
 
@@ -24,8 +24,10 @@ interface Props {
 
 type State = MetricsSettings & {
   isOpen: boolean;
+  allSelected: boolean;
 };
 
+const checkboxSelectAllStyle = style({ marginLeft: 10, fontWeight: 700 });
 const checkboxStyle = style({ marginLeft: 10 });
 const secondLevelStyle = style({ marginLeft: 18 });
 const spacerStyle = style({ height: '1em' });
@@ -35,8 +37,25 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     super(props);
     const settings = retrieveMetricsSettings();
     settings.labelsSettings = combineLabelsSettings(props.labelsSettings, settings.labelsSettings);
-    this.state = { ...settings, isOpen: false };
+    this.state = { ...settings, isOpen: false, allSelected: false };
   }
+
+  checkSelected = () => {
+    let allSelected = true;
+    this.state.labelsSettings.forEach(lblSetting => {
+      if (lblSetting.checked === false) {
+        allSelected = false;
+      } else {
+        Object.keys(lblSetting.values).forEach(value => {
+          if (lblSetting.values[value] === false) {
+            allSelected = false;
+          }
+        });
+      }
+    });
+
+    this.setState({ allSelected: allSelected });
+  };
 
   componentDidUpdate(prevProps: Props) {
     // TODO Move the sync of URL and state to a global place
@@ -53,8 +72,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           showAverage: changeDirection ? settings.showAverage : prevState.showAverage,
           showSpans: changeDirection ? settings.showSpans : prevState.showSpans
         };
-      });
+      }, this.checkSelected);
     }
+    console.log(this.state.allSelected);
   }
 
   private onToggle = isOpen => {
@@ -73,14 +93,20 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       {
         labelsSettings: new Map(this.state.labelsSettings)
       },
-      () => this.props.onChanged(this.state)
+      () => {
+        this.props.onChanged(this.state);
+        this.checkSelected();
+      }
     );
   };
 
   onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean) => {
     const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked, singleSelection);
     this.updateLabelsSettingsURL(newValues);
-    this.setState({ labelsSettings: newValues }, () => this.props.onLabelsFiltersChanged(newValues));
+    this.setState({ labelsSettings: newValues }, () => {
+      this.props.onLabelsFiltersChanged(newValues);
+      this.checkSelected();
+    });
   };
 
   updateLabelsSettingsURL = (labelsSettings: LabelsSettings) => {
@@ -122,6 +148,37 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     this.setState({ showQuantiles: newQuantiles }, () => this.props.onChanged(this.state));
   };
 
+  bulkUpdate = (selected: boolean): void => {
+    this.state.labelsSettings.forEach(lblSetting => {
+      lblSetting.checked = selected;
+
+      Object.keys(lblSetting.values).forEach(value => {
+        lblSetting.values[value] = selected;
+      });
+    });
+
+    this.updateLabelsSettingsURL(this.state.labelsSettings);
+
+    this.setState(
+      {
+        labelsSettings: new Map(this.state.labelsSettings)
+      },
+      () => {
+        this.props.onChanged(this.state);
+      }
+    );
+  };
+
+  onBulkAll = () => {
+    this.bulkUpdate(true);
+    this.setState({ allSelected: true });
+  };
+
+  onBulkNone = () => {
+    this.bulkUpdate(false);
+    this.setState({ allSelected: false });
+  };
+
   render() {
     const hasHistograms = this.props.hasHistograms;
     const hasLabels = this.state.labelsSettings.size > 0;
@@ -136,10 +193,33 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         {/* TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
          * https://github.com/patternfly/patternfly-react/issues/3156 */}
         <div style={{ paddingLeft: '10px', backgroundColor: PFColors.White }} className="pf-c-dropdown__menu-item">
+          {hasLabels && this.renderBulkSelector()}
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}
         </div>
       </Dropdown>
+    );
+  }
+
+  renderBulkSelector(): JSX.Element {
+    return (
+      <div>
+        <DropdownToggleCheckbox
+          id="bulk-select-id"
+          key="bulk-select-key"
+          aria-label="Select all metric/label filters"
+          isChecked={this.state.allSelected}
+          onClick={() => {
+            if (this.state.allSelected) {
+              this.onBulkNone();
+            } else {
+              this.onBulkAll();
+            }
+          }}
+        ></DropdownToggleCheckbox>
+        <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
+        <Divider style={{ paddingTop: '5px' }} />
+      </div>
     );
   }
 
