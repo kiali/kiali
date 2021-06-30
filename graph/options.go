@@ -129,6 +129,8 @@ func NewOptions(r *net_http.Request) Options {
 		for i, appenderName := range appenderNames {
 			appenderNames[i] = strings.TrimSpace(appenderName)
 		}
+		// TODO: Remove???
+		appenderNames = append(appenderNames, "gwHosts")
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
 

@@ -2,6 +2,7 @@ package graph
 
 import (
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -12,10 +13,12 @@ type AppenderVendorInfo map[string]interface{}
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type AppenderGlobalInfo struct {
-	Business    *business.Layer
-	HomeCluster string
-	PromClient  *prometheus.Client
-	Vendor      AppenderVendorInfo // telemetry vendor's global info
+	Business         *business.Layer
+	HomeCluster      string
+	GatewayCrds      models.Gateways
+	IngressWorkloads map[string][]models.WorkloadListItem // Map key is the namespace name. Value is the list of ingress workloads in that namespace.
+	PromClient       *prometheus.Client
+	Vendor           AppenderVendorInfo // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows

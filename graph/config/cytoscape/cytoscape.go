@@ -72,6 +72,7 @@ type NodeData struct {
 	Service               string              `json:"service,omitempty"`               // requested service for NodeTypeService
 	Aggregate             string              `json:"aggregate,omitempty"`             // set like "<aggregate>=<aggregateVal>"
 	DestServices          []graph.ServiceName `json:"destServices,omitempty"`          // requested services for [dest] node
+	GatewayHostnames      []string            `json:"gatewayHostnames,omitempty"`      // List of hosts being served by the associated Istio gateways.
 	Traffic               []ProtocolTraffic   `json:"traffic,omitempty"`               // traffic rates for all detected protocols
 	HasCB                 bool                `json:"hasCB,omitempty"`                 // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"`     // true (vs has fault injection) | false
@@ -86,6 +87,7 @@ type NodeData struct {
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
+	IsIngressGateway      bool                `json:"IsIngressGateway,omitempty"`      // true if the node represents an Istio ingress gateway
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
@@ -246,6 +248,17 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
+		}
+
+		// node may represent an Istio Ingress Gateway
+		if val, ok := n.Metadata[graph.IsIngressGw]; ok {
+			nd.IsIngressGateway = val.(bool)
+
+			if gwData, gwOk := n.Metadata[graph.Gateways]; gwOk {
+				for _, hosts := range gwData.(graph.GatewaysMetadata) {
+					nd.GatewayHostnames = append(nd.GatewayHostnames, hosts...)
+				}
+			}
 		}
 
 		// node may have a circuit breaker
