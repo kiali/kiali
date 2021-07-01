@@ -50,7 +50,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -93,7 +93,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -133,7 +133,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -175,7 +175,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -217,7 +217,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -259,7 +259,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	svc := setupWorkloadService(k8s)
 
 	excludedWorkloads = map[string]bool{}
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -300,7 +300,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -333,7 +333,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -366,7 +366,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	assert.Equal("Namespace", workloadList.Namespace.Name)
@@ -705,7 +705,7 @@ func TestDuplicatedControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloadList, _ := svc.GetWorkloadList("Namespace", false)
 	workloads := workloadList.Workloads
 
 	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", "", false)

@@ -39,9 +39,14 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 		return nil, err
 	}
 
+	nFetches := 3
+	if linkIstioResources {
+		nFetches = 5
+	}
+
 	wg := sync.WaitGroup{}
-	wg.Add(5)
-	errChan := make(chan error, 4)
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
 
 	go func() {
 		defer wg.Done()
@@ -91,37 +96,35 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 		}
 	}()
 
-	go func() {
-		defer wg.Done()
-		var err error
-		if linkIstioResources {
+	if linkIstioResources {
+		go func() {
+			defer wg.Done()
+			var err error
 			if IsNamespaceCached(namespace) {
 				virtualServices, err = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			} else {
 				virtualServices, err = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			}
-		}
-		if err != nil {
-			log.Errorf("Error fetching Istio VirtualServices per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
+			if err != nil {
+				log.Errorf("Error fetching Istio VirtualServices per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
+		}()
 
-	go func() {
-		defer wg.Done()
-		var err error
-		if linkIstioResources {
+		go func() {
+			defer wg.Done()
+			var err error
 			if IsNamespaceCached(namespace) {
 				destinationRules, err = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			} else {
 				destinationRules, err = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			}
-		}
-		if err != nil {
-			log.Errorf("Error fetching Istio DestinationRules per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
+			if err != nil {
+				log.Errorf("Error fetching Istio DestinationRules per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
+		}()
+	}
 
 	wg.Wait()
 	if len(errChan) != 0 {
@@ -155,15 +158,11 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		mPods.Parse(sPods)
 		hasSidecar := mPods.HasAnyIstioSidecar()
 		svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, item.Namespace, item.Name)
-		vsNames := make([]string, len(svcVirtualServices))
-		for i, vs := range svcVirtualServices {
-			vsNames[i] = vs.GetObjectMeta().Name
-		}
+		vsNames := getIstioResourcesNames(svcVirtualServices)
+
 		svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, item.Namespace, item.Name)
-		drNames := make([]string, len(svcDestinationRules))
-		for i, dr := range svcDestinationRules {
-			drNames[i] = dr.GetObjectMeta().Name
-		}
+		drNames := getIstioResourcesNames(svcDestinationRules)
+
 		kialiWizard := getKialiScenario(svcVirtualServices)
 		if kialiWizard == "" {
 			kialiWizard = getKialiScenario(svcDestinationRules)

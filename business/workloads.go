@@ -74,20 +74,170 @@ func isWorkloadIncluded(workload string) bool {
 	return !excludedWorkloads[workload]
 }
 
+func getIstioResourcesNames(istioResources []kubernetes.IstioObject) []string {
+	irNames := make([]string, len(istioResources))
+	for i, ir := range istioResources {
+		irNames[i] = ir.GetObjectMeta().Name
+	}
+	return irNames
+}
+
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
+func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
-	ws, err := fetchWorkloads(in.businessLayer, namespace, "")
-	if err != nil {
+	var ws models.Workloads
+	var err error
+
+	var gateways 			  	[]kubernetes.IstioObject
+	var authorizationPolicies 	[]kubernetes.IstioObject
+	var peerAuthentications   	[]kubernetes.IstioObject
+	var sidecars              	[]kubernetes.IstioObject
+    var requestAuthentications 	[]kubernetes.IstioObject
+	var envoyFilters			[]kubernetes.IstioObject
+
+	nFetches := 1
+	if linkIstioResources {
+		nFetches = 7
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		ws, err2 = fetchWorkloads(in.businessLayer, namespace, "")
+		if err2 != nil {
+			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
+			errChan <- err2
+		}
+	}()
+
+	if linkIstioResources {
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				gateways, err = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
+			} else {
+				gateways, err = in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio Gateways per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				authorizationPolicies, err = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+			} else {
+				authorizationPolicies, err = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio AuthorizationPolicies per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				peerAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+			} else {
+				peerAuthentications, err = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio PeerAuthentications per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				sidecars, err = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+			} else {
+				sidecars, err = in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				requestAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+			} else {
+				requestAuthentications, err = in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			if IsNamespaceCached(namespace) {
+				envoyFilters, err = kialiCache.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
+			} else {
+				envoyFilters, err = in.k8s.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
+			}
+			if err2 != nil {
+				log.Errorf("Error fetching Istio EnvoyFilters per namespace %s: %s", namespace, err2)
+				errChan <- err2
+			}
+		}()
+	}
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
 		return *workloadList, err
 	}
 
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
+		if linkIstioResources {
+			wSelector := labels.Set(wItem.Labels).AsSelector().String()
+			wGw := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, gateways)
+			gwNames := getIstioResourcesNames(wGw)
+			wItem.Gateways = gwNames
+
+			wAp := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, authorizationPolicies)
+			apNames := getIstioResourcesNames(wAp)
+			wItem.AuthorizationPolicies = apNames
+
+			wPa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, peerAuthentications)
+			paNames := getIstioResourcesNames(wPa)
+			wItem.PeerAuthentications = paNames
+
+			wSc := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, sidecars)
+			scNames := getIstioResourcesNames(wSc)
+			wItem.Sidecars = scNames
+
+			wRa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, requestAuthentications)
+			raNames := getIstioResourcesNames(wRa)
+			wItem.RequestAuthentications = raNames
+
+			wEf := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, envoyFilters)
+			efNames := getIstioResourcesNames(wEf)
+			wItem.EnvoyFilters = efNames
+		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
