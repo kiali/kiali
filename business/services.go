@@ -155,9 +155,15 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		mPods.Parse(sPods)
 		hasSidecar := mPods.HasAnyIstioSidecar()
 		svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, item.Namespace, item.Name)
+		vsNames := make([]string, len(svcVirtualServices))
+		for i, vs := range svcVirtualServices {
+			vsNames[i] = vs.GetObjectMeta().Name
+		}
 		svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, item.Namespace, item.Name)
-		hasVirtualService := len(svcVirtualServices) > 0
-		hasDestinationRule := len(svcDestinationRules) > 0
+		drNames := make([]string, len(svcDestinationRules))
+		for i, dr := range svcDestinationRules {
+			drNames[i] = dr.GetObjectMeta().Name
+		}
 		kialiWizard := getKialiScenario(svcVirtualServices)
 		if kialiWizard == "" {
 			kialiWizard = getKialiScenario(svcDestinationRules)
@@ -173,8 +179,8 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
-			VirtualService: 		hasVirtualService,
-			DestinationRule: 		hasDestinationRule,
+			VirtualServices: 		vsNames,
+			DestinationRules: 		drNames,
 			KialiWizard: 			kialiWizard,
 		}
 	}

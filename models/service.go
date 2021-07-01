@@ -28,9 +28,9 @@ type ServiceOverview struct {
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
 	// Has VirtualService
-	VirtualService bool `json:"virtualService"`
+	VirtualServices []string `json:"virtualServices"`
 	// Has DestinationRule
-	DestinationRule bool `json:"destinationRule"`
+	DestinationRules []string `json:"destinationRules"`
 	// Kiali Wizard scenario, if any
 	KialiWizard     string `json:"kialiWizard"`
 }
