@@ -4168,6 +4168,38 @@
         "istioSidecar"
       ],
       "properties": {
+        "authorizationPolicies": {
+          "description": "Has AuthorizationPolicies",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthorizationPolicies"
+        },
+        "destinationRules": {
+          "description": "Has DestinationRule",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "DestinationRules"
+        },
+        "envoyFilters": {
+          "description": "Has EnvoyFilters",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "EnvoyFilters"
+        },
+        "gateways": {
+          "description": "Has Gateways",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Gateways"
+        },
         "istioSidecar": {
           "description": "Define if all Pods related to the Workloads of this app has an IstioSidecar deployed",
           "type": "boolean",
@@ -4187,6 +4219,38 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews"
+        },
+        "peerAuthentications": {
+          "description": "Has PeerAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "PeerAuthentications"
+        },
+        "requestAuthentications": {
+          "description": "Has RequestAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RequestAuthentications"
+        },
+        "sidecars": {
+          "description": "Has Sidecars",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Sidecars"
+        },
+        "virtualServices": {
+          "description": "Has VirtualService",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "VirtualServices"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -6659,6 +6723,14 @@
           "x-go-name": "AppLabel",
           "example": true
         },
+        "destinationRules": {
+          "description": "Has DestinationRule",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "DestinationRules"
+        },
         "healthAnnotations": {
           "description": "Annotations of the service",
           "type": "object",
@@ -6673,6 +6745,11 @@
           "x-go-name": "IstioSidecar",
           "example": true
         },
+        "kialiWizard": {
+          "description": "Kiali Wizard scenario, if any",
+          "type": "string",
+          "x-go-name": "KialiWizard"
+        },
         "labels": {
           "description": "Labels for Service",
           "type": "object",
@@ -6686,6 +6763,14 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "virtualServices": {
+          "description": "Has VirtualService",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "VirtualServices"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -7019,6 +7104,14 @@
           "x-go-name": "AppLabel",
           "example": true
         },
+        "authorizationPolicies": {
+          "description": "Has AuthorizationPolicies",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthorizationPolicies"
+        },
         "availableReplicas": {
           "description": "Number of available replicas",
           "type": "integer",
@@ -7045,6 +7138,22 @@
           "format": "int32",
           "x-go-name": "DesiredReplicas",
           "example": 2
+        },
+        "envoyFilters": {
+          "description": "Has EnvoyFilters",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "EnvoyFilters"
+        },
+        "gateways": {
+          "description": "Has Gateways",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Gateways"
         },
         "healthAnnotations": {
           "description": "HealthAnnotations",
@@ -7079,6 +7188,14 @@
           "x-go-name": "Name",
           "example": "reviews-v1"
         },
+        "peerAuthentications": {
+          "description": "Has PeerAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "PeerAuthentications"
+        },
         "podCount": {
           "description": "Number of current workload pods",
           "type": "integer",
@@ -7088,6 +7205,14 @@
         },
         "pods": {
           "$ref": "#/definitions/Pods"
+        },
+        "requestAuthentications": {
+          "description": "Has RequestAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RequestAuthentications"
         },
         "resourceVersion": {
           "description": "Kubernetes ResourceVersion",
@@ -7105,6 +7230,14 @@
         },
         "services": {
           "$ref": "#/definitions/Services"
+        },
+        "sidecars": {
+          "description": "Has Sidecars",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Sidecars"
         },
         "type": {
           "description": "Type of the workload",
@@ -7200,11 +7333,35 @@
           "x-go-name": "AppLabel",
           "example": true
         },
+        "authorizationPolicies": {
+          "description": "Has AuthorizationPolicies",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthorizationPolicies"
+        },
         "createdAt": {
           "description": "Creation timestamp (in RFC3339 format)",
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "envoyFilters": {
+          "description": "Has EnvoyFilters",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "EnvoyFilters"
+        },
+        "gateways": {
+          "description": "Has Gateways",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Gateways"
         },
         "healthAnnotations": {
           "description": "HealthAnnotations",
@@ -7239,6 +7396,14 @@
           "x-go-name": "Name",
           "example": "reviews-v1"
         },
+        "peerAuthentications": {
+          "description": "Has PeerAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "PeerAuthentications"
+        },
         "podCount": {
           "description": "Number of current workload pods",
           "type": "integer",
@@ -7246,11 +7411,27 @@
           "x-go-name": "PodCount",
           "example": 1
         },
+        "requestAuthentications": {
+          "description": "Has RequestAuthentications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RequestAuthentications"
+        },
         "resourceVersion": {
           "description": "Kubernetes ResourceVersion",
           "type": "string",
           "x-go-name": "ResourceVersion",
           "example": "192892127"
+        },
+        "sidecars": {
+          "description": "Has Sidecars",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Sidecars"
         },
         "type": {
           "description": "Type of the workload",
