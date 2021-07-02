@@ -32,7 +32,7 @@ type ServiceOverview struct {
 	// Has DestinationRule
 	DestinationRules []string `json:"destinationRules"`
 	// Kiali Wizard scenario, if any
-	KialiWizard     string `json:"kialiWizard"`
+	KialiWizard string `json:"kialiWizard"`
 }
 
 type ServiceList struct {

@@ -91,12 +91,12 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	var ws models.Workloads
 	var err error
 
-	var gateways 			  	[]kubernetes.IstioObject
-	var authorizationPolicies 	[]kubernetes.IstioObject
-	var peerAuthentications   	[]kubernetes.IstioObject
-	var sidecars              	[]kubernetes.IstioObject
-    var requestAuthentications 	[]kubernetes.IstioObject
-	var envoyFilters			[]kubernetes.IstioObject
+	var gateways []kubernetes.IstioObject
+	var authorizationPolicies []kubernetes.IstioObject
+	var peerAuthentications []kubernetes.IstioObject
+	var sidecars []kubernetes.IstioObject
+	var requestAuthentications []kubernetes.IstioObject
+	var envoyFilters []kubernetes.IstioObject
 
 	nFetches := 1
 	if linkIstioResources {

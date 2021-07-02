@@ -178,9 +178,9 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
-			VirtualServices: 		vsNames,
-			DestinationRules: 		drNames,
-			KialiWizard: 			kialiWizard,
+			VirtualServices:        vsNames,
+			DestinationRules:       drNames,
+			KialiWizard:            kialiWizard,
 		}
 	}
 

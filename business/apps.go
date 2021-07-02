@@ -57,15 +57,14 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 	var err error
 	var apps namespaceApps
 
-	var virtualServices 		[]kubernetes.IstioObject
-	var destinationRules 		[]kubernetes.IstioObject
-	var gateways 			  	[]kubernetes.IstioObject
-	var authorizationPolicies 	[]kubernetes.IstioObject
-	var peerAuthentications   	[]kubernetes.IstioObject
-	var sidecars              	[]kubernetes.IstioObject
-	var requestAuthentications 	[]kubernetes.IstioObject
-	var envoyFilters			[]kubernetes.IstioObject
-
+	var virtualServices []kubernetes.IstioObject
+	var destinationRules []kubernetes.IstioObject
+	var gateways []kubernetes.IstioObject
+	var authorizationPolicies []kubernetes.IstioObject
+	var peerAuthentications []kubernetes.IstioObject
+	var sidecars []kubernetes.IstioObject
+	var requestAuthentications []kubernetes.IstioObject
+	var envoyFilters []kubernetes.IstioObject
 
 	nFetches := 1
 	if linkIstioResources {
@@ -199,7 +198,6 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 			}
 		}()
 	}
-
 
 	wg.Wait()
 	if len(errChan) != 0 {
