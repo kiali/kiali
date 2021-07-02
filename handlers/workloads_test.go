@@ -25,10 +25,10 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
