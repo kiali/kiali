@@ -122,9 +122,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				gateways, err = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
+				gateways, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
 			} else {
-				gateways, err = in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
+				gateways, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Gateways per namespace %s: %s", namespace, err2)
@@ -136,9 +136,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				authorizationPolicies, err = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+				authorizationPolicies, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
 			} else {
-				authorizationPolicies, err = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
+				authorizationPolicies, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio AuthorizationPolicies per namespace %s: %s", namespace, err2)
@@ -150,9 +150,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				peerAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+				peerAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 			} else {
-				peerAuthentications, err = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
+				peerAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio PeerAuthentications per namespace %s: %s", namespace, err2)
@@ -164,9 +164,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				sidecars, err = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+				sidecars, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 			} else {
-				sidecars, err = in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
+				sidecars, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
@@ -178,9 +178,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				requestAuthentications, err = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+				requestAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
 			} else {
-				requestAuthentications, err = in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
+				requestAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
@@ -192,9 +192,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			defer wg.Done()
 			var err2 error
 			if IsNamespaceCached(namespace) {
-				envoyFilters, err = kialiCache.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
+				envoyFilters, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
 			} else {
-				envoyFilters, err = in.k8s.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
+				envoyFilters, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
 			}
 			if err2 != nil {
 				log.Errorf("Error fetching Istio EnvoyFilters per namespace %s: %s", namespace, err2)

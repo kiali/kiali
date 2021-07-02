@@ -82,46 +82,46 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 
 	go func() {
 		defer wg.Done()
-		var err error
+		var err2 error
 		// Check if namespace is cached
 		// Namespace access is checked in the upper call
 		if IsNamespaceCached(namespace) {
-			deployments, err = kialiCache.GetDeployments(namespace)
+			deployments, err2 = kialiCache.GetDeployments(namespace)
 		} else {
-			deployments, err = in.k8s.GetDeployments(namespace)
+			deployments, err2 = in.k8s.GetDeployments(namespace)
 		}
-		if err != nil {
+		if err2 != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
-			errChan <- err
+			errChan <- err2
 		}
 	}()
 
 	if linkIstioResources {
 		go func() {
 			defer wg.Done()
-			var err error
+			var err2 error
 			if IsNamespaceCached(namespace) {
-				virtualServices, err = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+				virtualServices, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			} else {
-				virtualServices, err = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
+				virtualServices, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
 			}
-			if err != nil {
+			if err2 != nil {
 				log.Errorf("Error fetching Istio VirtualServices per namespace %s: %s", namespace, err)
-				errChan <- err
+				errChan <- err2
 			}
 		}()
 
 		go func() {
 			defer wg.Done()
-			var err error
+			var err2 error
 			if IsNamespaceCached(namespace) {
-				destinationRules, err = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+				destinationRules, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			} else {
-				destinationRules, err = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
+				destinationRules, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
 			}
-			if err != nil {
+			if err2 != nil {
 				log.Errorf("Error fetching Istio DestinationRules per namespace %s: %s", namespace, err)
-				errChan <- err
+				errChan <- err2
 			}
 		}()
 	}
