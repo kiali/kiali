@@ -31,8 +31,11 @@ func TestGetDashboard(t *testing.T) {
 	service, prom := setupService([]dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
 	expectedLabels := "{kubernetes_namespace=\"my-namespace\",APP=\"my-app\"}"
+	namespace := models.Namespace{
+		Name: "my-namespace",
+	}
 	query := models.DashboardQuery{
-		Namespace: "my-namespace",
+		Namespace: namespace.Name,
 		LabelsFilters: map[string]string{
 			"APP": "my-app",
 		},
@@ -47,7 +50,7 @@ func TestGetDashboard(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1", &namespace)
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
@@ -70,8 +73,11 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	service, prom := setupService([]dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
 	expectedLabels := "{kubernetes_namespace=\"my-namespace\",APP=\"my-app\"}"
+	namespace := models.Namespace{
+		Name: "my-namespace",
+	}
 	query := models.DashboardQuery{
-		Namespace: "my-namespace",
+		Namespace: namespace.Name,
 		LabelsFilters: map[string]string{
 			"APP": "my-app",
 		},
@@ -80,7 +86,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1", &namespace)
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)

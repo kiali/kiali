@@ -51,7 +51,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := svc.GetDashboard(authInfo, params, dashboardName)
+	dashboard, err := svc.GetDashboard(authInfo, params, dashboardName, info)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())

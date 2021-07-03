@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 const (
@@ -126,6 +127,18 @@ func GetBuiltInMonitoringDashboards() MonitoringDashboardsList {
 		empty := make([]MonitoringDashboard, 0)
 		return MonitoringDashboardsList(empty)
 	}
+}
+
+func GetNamespaceMonitoringDashboards(namespace *models.Namespace) MonitoringDashboardsList {
+	if dashboardYaml, ok := namespace.Annotations[models.DashboardTemplateAnnotation]; ok {
+		if v, err := unmarshal(dashboardYaml); err == nil {
+			return MonitoringDashboardsList(v)
+		} else {
+			log.Errorf("Failed to unmarshall namespace dashboard yaml. err=%v", err)
+		}
+	}
+	empty := make([]MonitoringDashboard, 0)
+	return MonitoringDashboardsList(empty)
 }
 
 // OrganizeByName returns a map with the key being the names of the dashboards; values are the dashboards themselves

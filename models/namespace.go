@@ -7,6 +7,10 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 )
 
+const (
+	DashboardTemplateAnnotation string = "dashboards.kiali.io/templates"
+)
+
 // A Namespace provide a scope for names
 // This type is used to describe a set of objects.
 //
@@ -27,6 +31,9 @@ type Namespace struct {
 
 	// Labels for Namespace
 	Labels map[string]string `json:"labels"`
+
+	// Specific annotations used in Kiali
+	Annotations map[string]string `json:"annotations"`
 }
 
 type Namespaces []Namespace
@@ -46,7 +53,11 @@ func CastNamespace(ns core_v1.Namespace) Namespace {
 	namespace.Name = ns.Name
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
-
+	namespace.Annotations = make(map[string]string)
+	// Parse only annotations used by Kiali
+	if da, ok := ns.Annotations[DashboardTemplateAnnotation]; ok {
+		namespace.Annotations[DashboardTemplateAnnotation] = da
+	}
 	return namespace
 }
 
