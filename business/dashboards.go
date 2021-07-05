@@ -125,7 +125,7 @@ func (in *DashboardsService) resolveReferences(dashboard *dashboards.MonitoringD
 }
 
 // GetDashboard returns a dashboard filled-in with target data
-func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.DashboardQuery, template string, namespace *models.Namespace) (*models.MonitoringDashboard, error) {
+func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
 	promClient, err := in.prom()
 	if err != nil {
 		return nil, err

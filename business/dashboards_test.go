@@ -51,7 +51,7 @@ func TestGetDashboard(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1", &namespace)
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
@@ -87,7 +87,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1", &namespace)
+	dashboard, err := service.GetDashboard(&api.AuthInfo{Token: ""}, query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
