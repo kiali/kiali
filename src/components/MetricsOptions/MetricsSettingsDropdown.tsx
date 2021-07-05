@@ -74,7 +74,6 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         };
       }, this.checkSelected);
     }
-    console.log(this.state.allSelected);
   }
 
   private onToggle = isOpen => {
