@@ -28,7 +28,7 @@ type DashboardsService struct {
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService() *DashboardsService {
+func NewDashboardsService(namespace *models.Namespace) *DashboardsService {
 	cfg := config.Get()
 	customEnabled := cfg.ExternalServices.CustomDashboards.Enabled
 	prom := cfg.ExternalServices.Prometheus
@@ -39,12 +39,20 @@ func NewDashboardsService() *DashboardsService {
 	if nsLabel == "" {
 		nsLabel = "kubernetes_namespace"
 	}
+
+	// Overwrite Custom dashboards defined at Namespace level
+	builtInDashboards := cfg.CustomDashboards.OrganizeByName()
+	nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Annotations)
+	for name, dashboard := range nsDashboards.OrganizeByName() {
+		builtInDashboards[name] = dashboard
+	}
+
 	return &DashboardsService{
 		CustomEnabled:   customEnabled,
 		promConfig:      prom,
 		globalNamespace: cfg.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
-		dashboards:      cfg.CustomDashboards.OrganizeByName(),
+		dashboards:      builtInDashboards,
 	}
 }
 
@@ -122,11 +130,7 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 	if err != nil {
 		return nil, err
 	}
-	// Overwrite Custom dashboards defined at Namespace level
-	nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace)
-	for name, dashboard := range nsDashboards.OrganizeByName() {
-		in.dashboards[name] = dashboard
-	}
+
 
 	dashboard, err := in.loadAndResolveDashboardResource(template, map[string]bool{})
 	if err != nil {

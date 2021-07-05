@@ -5,10 +5,8 @@ import (
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
-)
 
-const (
-	DashboardTemplateAnnotation string = "dashboards.kiali.io/templates"
+	"github.com/kiali/kiali/config/dashboards"
 )
 
 // A Namespace provide a scope for names
@@ -55,8 +53,8 @@ func CastNamespace(ns core_v1.Namespace) Namespace {
 	namespace.Labels = ns.Labels
 	namespace.Annotations = make(map[string]string)
 	// Parse only annotations used by Kiali
-	if da, ok := ns.Annotations[DashboardTemplateAnnotation]; ok {
-		namespace.Annotations[DashboardTemplateAnnotation] = da
+	if da, ok := ns.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
+		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
 	}
 	return namespace
 }

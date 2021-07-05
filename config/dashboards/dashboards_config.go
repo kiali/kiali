@@ -7,10 +7,11 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
 )
 
 const (
+	// Namespace annotation for dashboard templates
+	DashboardTemplateAnnotation string = "dashboards.kiali.io/templates"
 	// Raw constant for DataType
 	Raw = "raw"
 	// Rate constant for DataType
@@ -129,8 +130,8 @@ func GetBuiltInMonitoringDashboards() MonitoringDashboardsList {
 	}
 }
 
-func GetNamespaceMonitoringDashboards(namespace *models.Namespace) MonitoringDashboardsList {
-	if dashboardYaml, ok := namespace.Annotations[models.DashboardTemplateAnnotation]; ok {
+func GetNamespaceMonitoringDashboards(annotations map[string]string) MonitoringDashboardsList {
+	if dashboardYaml, ok := annotations[DashboardTemplateAnnotation]; ok {
 		if v, err := unmarshal(dashboardYaml); err == nil {
 			return MonitoringDashboardsList(v)
 		} else {

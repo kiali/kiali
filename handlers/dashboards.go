@@ -27,12 +27,6 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	svc := business.NewDashboardsService()
-	if !svc.CustomEnabled {
-		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
-		return
-	}
-
 	// Check namespace
 	layer, err := getBusiness(r)
 	if err != nil {
@@ -44,6 +38,13 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return
 	}
+
+	svc := business.NewDashboardsService(info)
+	if !svc.CustomEnabled {
+		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
+		return
+	}
+
 	params := models.DashboardQuery{Namespace: namespace}
 	err = extractDashboardQueryParams(queryParams, &params, info)
 	if err != nil {
@@ -121,7 +122,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
 
@@ -149,7 +150,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
 
@@ -177,6 +178,6 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService().BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
