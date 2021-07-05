@@ -6,7 +6,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -17,16 +16,12 @@ type GatewayHostnamesAppender struct {
 
 func (a GatewayHostnamesAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// Get ingress-gateways deployments in the namespace. Then, find if the graph is showing any of them. If so, flag the GW nodes.
-	if globalInfo.IngressWorkloads == nil {
-		getIngressGatewaysWorkloads(globalInfo)
-	}
+	ingressWorkloads := getIngressGatewaysWorkloads(globalInfo)
 	ingressNodeMapping := make(map[*models.WorkloadListItem][]*graph.Node)
-
-	log.Errorf("Found ingress GW: %d, %v", len(globalInfo.IngressWorkloads), globalInfo.IngressWorkloads)
 	istioAppLabelName := config.Get().IstioLabels.AppLabelName
 
 	gatewayInNamespace := false
-	if ingressWorkloadsList, ok := globalInfo.IngressWorkloads[namespaceInfo.Namespace]; ok {
+	if ingressWorkloadsList, ok := ingressWorkloads[namespaceInfo.Namespace]; ok {
 		for _, gw := range ingressWorkloadsList {
 			for _, node := range trafficMap {
 				if node.App == gw.Labels[istioAppLabelName] && node.Namespace == namespaceInfo.Namespace {
@@ -38,12 +33,10 @@ func (a GatewayHostnamesAppender) AppendGraph(trafficMap graph.TrafficMap, globa
 		}
 	}
 
-	log.Errorf("gatewayInNamespace for ns %s = %v", namespaceInfo.Namespace, gatewayInNamespace)
-
 	// If there is any ingress gateway node in the processing namespace, find Gateway CRDs and
 	// match them against gateways in the graph.
 	if gatewayInNamespace {
-		gatewaysCrds := getIstioGatewayResources(globalInfo, namespaceInfo)
+		gatewaysCrds := getIstioGatewayResources(globalInfo)
 
 		for _, gwCrd := range gatewaysCrds {
 			gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
@@ -82,7 +75,7 @@ func (GatewayHostnamesAppender) Name() string {
 	return GatewayHostnamesAppenderName
 }
 
-func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) {
+func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) map[string][]models.WorkloadListItem {
 	nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
 	graph.CheckError(nsErr)
 
@@ -91,11 +84,8 @@ func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) {
 		wList, err := globalInfo.Business.Workload.GetWorkloadList(namespace.Name)
 		graph.CheckError(err)
 
-		log.Errorf("getIngressGatewaysWorkloads in ns [%s] wList: %d // %v", namespace.Name, len(wList.Workloads), wList)
-
 		// Find Ingress Gateway deployments
 		for _, workload := range wList.Workloads {
-			log.Errorf("Workload %s type is %s. Labels are: ", workload.Name, workload.Type)
 			if workload.Type == "Deployment" {
 				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == "IngressGateways" {
 					ingressWorkloads[namespace.Name] = append(ingressWorkloads[namespace.Name], workload)
@@ -104,29 +94,22 @@ func getIngressGatewaysWorkloads(globalInfo *graph.AppenderGlobalInfo) {
 		}
 	}
 
-	globalInfo.IngressWorkloads = ingressWorkloads
+	return ingressWorkloads
 }
 
-func getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) models.Gateways {
+func getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) models.Gateways {
+	nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
+	graph.CheckError(nsErr)
+
 	retVal := models.Gateways{}
+	for _, namespace := range nsList {
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+			IncludeGateways: true,
+			Namespace:       namespace.Name,
+		})
+		graph.CheckError(err)
 
-	if globalInfo.GatewayCrds == nil {
-		nsList, nsErr := globalInfo.Business.Namespace.GetNamespaces()
-		graph.CheckError(nsErr)
-
-		for _, namespace := range nsList {
-			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
-				IncludeGateways: true,
-				Namespace:       namespace.Name,
-			})
-			graph.CheckError(err)
-
-			retVal = append(retVal, istioCfg.Gateways...)
-		}
-
-		globalInfo.GatewayCrds = retVal
-	} else {
-		retVal = globalInfo.GatewayCrds
+		retVal = append(retVal, istioCfg.Gateways...)
 	}
 
 	return retVal
