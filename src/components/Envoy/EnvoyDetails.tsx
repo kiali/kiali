@@ -328,7 +328,13 @@ class EnvoyDetails extends React.Component<EnvoyDetailsProps, EnvoyDetailsState>
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
         <Grid>
           <GridItem span={12}>
-            <Tabs id="envoy-details" activeKey={this.state.activeKey} onSelect={this.envoyHandleTabClick}>
+            <Tabs
+              id="envoy-details"
+              activeKey={this.state.activeKey}
+              onSelect={this.envoyHandleTabClick}
+              mountOnEnter={true}
+              unmountOnExit={true}
+            >
               {tabs}
             </Tabs>
           </GridItem>
