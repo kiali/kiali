@@ -7900,6 +7900,7 @@ This type is used to describe a set of objects.
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| Annotations | map of string| `map[string]string` |  | | Specific annotations used in Kiali |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Namespace |  |
 | Name | string| `string` | ✓ | | The id of the namespace. | `istio-system` |
 

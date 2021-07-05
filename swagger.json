@@ -7559,6 +7559,14 @@
         "name"
       ],
       "properties": {
+        "annotations": {
+          "description": "Specific annotations used in Kiali",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "labels": {
           "description": "Labels for Namespace",
           "type": "object",
