@@ -131,7 +131,6 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 		return nil, err
 	}
 
-
 	dashboard, err := in.loadAndResolveDashboardResource(template, map[string]bool{})
 	if err != nil {
 		return nil, err
