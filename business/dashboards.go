@@ -42,7 +42,7 @@ func NewDashboardsService(namespace *models.Namespace) *DashboardsService {
 
 	// Overwrite Custom dashboards defined at Namespace level
 	builtInDashboards := cfg.CustomDashboards.OrganizeByName()
-	nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Annotations)
+	nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
 	for name, dashboard := range nsDashboards.OrganizeByName() {
 		builtInDashboards[name] = dashboard
 	}

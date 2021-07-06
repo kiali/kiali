@@ -11,11 +11,11 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {
