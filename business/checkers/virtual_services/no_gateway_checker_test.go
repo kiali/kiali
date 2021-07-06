@@ -1,6 +1,7 @@
 package virtual_services
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,28 @@ func TestMissingGateway(t *testing.T) {
 		GatewayNames:   make(map[string]struct{}),
 	}
 
+	validations, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
+}
+
+func TestMissingGatewayInMatch(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", "non-existent-gateway-in-match.yaml")
+	loader := &data.YamlFixtureLoader{Filename: path}
+	err := loader.Load()
+	if err != nil {
+		t.Error("Error loading test data.")
+	}
+	virtualService := loader.GetResource("VirtualService", "test", "default")
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   map[string]struct{}{"valid-gateway": {}},
+	}
 	validations, valid := checker.Check()
 	assert.False(valid)
 	assert.NotEmpty(validations)
