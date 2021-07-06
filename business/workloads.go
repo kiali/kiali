@@ -74,14 +74,6 @@ func isWorkloadIncluded(workload string) bool {
 	return !excludedWorkloads[workload]
 }
 
-func getIstioResourcesNames(istioResources []kubernetes.IstioObject) []string {
-	irNames := make([]string, len(istioResources))
-	for i, ir := range istioResources {
-		irNames[i] = ir.GetObjectMeta().Name
-	}
-	return irNames
-}
-
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
