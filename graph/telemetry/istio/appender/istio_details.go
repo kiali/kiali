@@ -1,12 +1,13 @@
 package appender
 
 import (
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 const IstioAppenderName = "istio"
