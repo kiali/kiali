@@ -6382,17 +6382,10 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| AuthorizationPolicies | []string| `[]string` |  | | Has AuthorizationPolicies |  |
-| DestinationRules | []string| `[]string` |  | | Has DestinationRule |  |
-| EnvoyFilters | []string| `[]string` |  | | Has EnvoyFilters |  |
-| Gateways | []string| `[]string` |  | | Has Gateways |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workloads of this app has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Labels for App |  |
 | Name | string| `string` | ✓ | | Name of the application | `reviews` |
-| PeerAuthentications | []string| `[]string` |  | | Has PeerAuthentications |  |
-| RequestAuthentications | []string| `[]string` |  | | Has RequestAuthentications |  |
-| Sidecars | []string| `[]string` |  | | Has Sidecars |  |
-| VirtualServices | []string| `[]string` |  | | Has VirtualService |  |
 
 
 
@@ -8771,13 +8764,12 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AppLabel | boolean| `bool` | ✓ | | Has label app | `true` |
-| DestinationRules | []string| `[]string` |  | | Has DestinationRule |  |
 | HealthAnnotations | map of string| `map[string]string` |  | | Annotations of the service |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Service has an IstioSidecar deployed | `true` |
 | KialiWizard | string| `string` |  | | Kiali Wizard scenario, if any |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Service |  |
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
-| VirtualServices | []string| `[]string` |  | | Has VirtualService |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 
 
@@ -9145,25 +9137,20 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AdditionalDetails | [][AdditionalItem](#additional-item)| `[]*AdditionalItem` |  | | Additional details to display, such as configured annotations |  |
 | AppLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label App | `true` |
-| AuthorizationPolicies | []string| `[]string` |  | | Has AuthorizationPolicies |  |
 | AvailableReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of available replicas | `1` |
 | CreatedAt | string| `string` | ✓ | | Creation timestamp (in RFC3339 format) | `2018-07-31T12:24:17Z` |
 | CurrentReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of current replicas pods that matches controller selector labels | `2` |
 | DesiredReplicas | int32 (formatted integer)| `int32` | ✓ | | Number of desired replicas defined by the user in the controller Spec | `2` |
-| EnvoyFilters | []string| `[]string` |  | | Has EnvoyFilters |  |
-| Gateways | []string| `[]string` |  | | Has Gateways |  |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |
-| PeerAuthentications | []string| `[]string` |  | | Has PeerAuthentications |  |
 | PodCount | int64 (formatted integer)| `int64` | ✓ | | Number of current workload pods | `1` |
-| RequestAuthentications | []string| `[]string` |  | | Has RequestAuthentications |  |
 | ResourceVersion | string| `string` | ✓ | | Kubernetes ResourceVersion | `192892127` |
 | Runtimes | [][Runtime](#runtime)| `[]*Runtime` |  | | Runtimes and associated dashboards |  |
-| Sidecars | []string| `[]string` |  | | Has Sidecars |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
@@ -9363,21 +9350,16 @@ https://istio.io/latest/docs/reference/config/networking/workload-group/#Workloa
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AppLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label App | `true` |
-| AuthorizationPolicies | []string| `[]string` |  | | Has AuthorizationPolicies |  |
 | CreatedAt | string| `string` | ✓ | | Creation timestamp (in RFC3339 format) | `2018-07-31T12:24:17Z` |
-| EnvoyFilters | []string| `[]string` |  | | Has EnvoyFilters |  |
-| Gateways | []string| `[]string` |  | | Has Gateways |  |
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |
-| PeerAuthentications | []string| `[]string` |  | | Has PeerAuthentications |  |
 | PodCount | int64 (formatted integer)| `int64` | ✓ | | Number of current workload pods | `1` |
-| RequestAuthentications | []string| `[]string` |  | | Has RequestAuthentications |  |
 | ResourceVersion | string| `string` | ✓ | | Kubernetes ResourceVersion | `192892127` |
-| Sidecars | []string| `[]string` |  | | Has Sidecars |  |
 | Type | string| `string` | ✓ | | Type of the workload | `deployment` |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
