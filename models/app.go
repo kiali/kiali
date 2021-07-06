@@ -26,29 +26,8 @@ type AppListItem struct {
 	// Labels for App
 	Labels map[string]string `json:"labels"`
 
-	// Has VirtualService
-	VirtualServices []string `json:"virtualServices"`
-
-	// Has DestinationRule
-	DestinationRules []string `json:"destinationRules"`
-
-	// Has Gateways
-	Gateways []string `json:"gateways"`
-
-	// Has AuthorizationPolicies
-	AuthorizationPolicies []string `json:"authorizationPolicies"`
-
-	// Has PeerAuthentications
-	PeerAuthentications []string `json:"peerAuthentications"`
-
-	// Has Sidecars
-	Sidecars []string `json:"sidecars"`
-
-	// Has RequestAuthentications
-	RequestAuthentications []string `json:"requestAuthentications"`
-
-	// Has EnvoyFilters
-	EnvoyFilters []string `json:"envoyFilters"`
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 }
 
 type WorkloadItem struct {

@@ -83,23 +83,8 @@ type WorkloadListItem struct {
 	// required: false
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 
-	// Has Gateways
-	Gateways []string `json:"gateways"`
-
-	// Has AuthorizationPolicies
-	AuthorizationPolicies []string `json:"authorizationPolicies"`
-
-	// Has PeerAuthentications
-	PeerAuthentications []string `json:"peerAuthentications"`
-
-	// Has Sidecars
-	Sidecars []string `json:"sidecars"`
-
-	// Has RequestAuthentications
-	RequestAuthentications []string `json:"requestAuthentications"`
-
-	// Has EnvoyFilters
-	EnvoyFilters []string `json:"envoyFilters"`
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -149,12 +134,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.PodCount = len(w.Pods)
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
 	workload.HealthAnnotations = w.HealthAnnotations
-	workload.Gateways = []string{}
-	workload.AuthorizationPolicies = []string{}
-	workload.PeerAuthentications = []string{}
-	workload.Sidecars = []string{}
-	workload.RequestAuthentications = []string{}
-	workload.EnvoyFilters = []string{}
+	workload.IstioReferences = []*IstioValidationKey{}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]

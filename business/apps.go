@@ -85,118 +85,33 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 		}
 	}()
 
+	linkedResources := map[string]*[]kubernetes.IstioObject{
+		kubernetes.VirtualServices:        &virtualServices,
+		kubernetes.DestinationRules:       &destinationRules,
+		kubernetes.Gateways:               &gateways,
+		kubernetes.AuthorizationPolicies:  &authorizationPolicies,
+		kubernetes.PeerAuthentications:    &peerAuthentications,
+		kubernetes.Sidecars:               &sidecars,
+		kubernetes.RequestAuthentications: &requestAuthentications,
+		kubernetes.EnvoyFilters:           &envoyFilters,
+	}
+
 	if linkIstioResources {
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				virtualServices, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
-			} else {
-				virtualServices, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio VirtualServices per namespace %s: %s", namespace, err)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				destinationRules, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
-			} else {
-				destinationRules, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio DestinationRules per namespace %s: %s", namespace, err)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				gateways, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
-			} else {
-				gateways, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Gateways per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				authorizationPolicies, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
-			} else {
-				authorizationPolicies, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio AuthorizationPolicies per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				peerAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-			} else {
-				peerAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio PeerAuthentications per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				sidecars, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
-			} else {
-				sidecars, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				requestAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
-			} else {
-				requestAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				envoyFilters, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
-			} else {
-				envoyFilters, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio EnvoyFilters per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
+		for linkedResource, dest := range linkedResources {
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, linkedResource, dest, errChan)
+		}
 	}
 
 	wg.Wait()
@@ -211,62 +126,67 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 			IstioSidecar: true,
 		}
 		applabels := make(map[string][]string)
-		apVsNames := make([]string, 0)
-		apDrNames := make([]string, 0)
+		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
+			if linkIstioResources {
+				svcVirtualServices := kubernetes.FilterVirtualServices(*linkedResources[kubernetes.VirtualServices], srv.Namespace, srv.Name)
+				svcDestinationRules := kubernetes.FilterDestinationRules(*linkedResources[kubernetes.DestinationRules], srv.Namespace, srv.Name)
+				allFiltered := append(svcVirtualServices, svcDestinationRules...)
+				for _, a := range allFiltered {
+					ref := models.IstioValidationKey{
+						Name:       a.GetObjectMeta().Name,
+						Namespace:  a.GetObjectMeta().Namespace,
+						ObjectType: a.GetTypeMeta().Kind,
+					}
+					svcReferences = append(svcReferences, &ref)
+				}
+			}
 
-			svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, srv.Namespace, srv.Name)
-			apVsNames = append(apVsNames, getIstioResourcesNames(svcVirtualServices)...)
-
-			svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, srv.Namespace, srv.Name)
-			apDrNames = append(apDrNames, getIstioResourcesNames(svcDestinationRules)...)
 		}
-		appItem.VirtualServices = apVsNames
-		appItem.DestinationRules = apDrNames
 
-		apGwNames := make([]string, 0)
-		apApNames := make([]string, 0)
-		apPaNames := make([]string, 0)
-		apScNames := make([]string, 0)
-		apRaNames := make([]string, 0)
-		apEfNames := make([]string, 0)
+		wkdResources := []string{
+			kubernetes.Gateways,
+			kubernetes.AuthorizationPolicies,
+			kubernetes.PeerAuthentications,
+			kubernetes.Sidecars,
+			kubernetes.RequestAuthentications,
+			kubernetes.EnvoyFilters,
+		}
+		wkdReferences := make([]*models.IstioValidationKey, 0)
 		for _, wrk := range valueApp.Workloads {
 			joinMap(applabels, wrk.Labels)
-
-			wSelector := labels.Set(wrk.Labels).AsSelector().String()
-			wGw := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, gateways)
-			apGwNames = append(apGwNames, getIstioResourcesNames(wGw)...)
-
-			wAp := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, authorizationPolicies)
-			apApNames = append(apApNames, getIstioResourcesNames(wAp)...)
-
-			wPa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, peerAuthentications)
-			apPaNames = append(apPaNames, getIstioResourcesNames(wPa)...)
-
-			wSc := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, sidecars)
-			apScNames = append(apScNames, getIstioResourcesNames(wSc)...)
-
-			wRa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, requestAuthentications)
-			apRaNames = append(apRaNames, getIstioResourcesNames(wRa)...)
-
-			wEf := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, envoyFilters)
-			apEfNames = append(apEfNames, getIstioResourcesNames(wEf)...)
+			if linkIstioResources {
+				wSelector := labels.Set(wrk.Labels).AsSelector().String()
+				for _, wkdRsc := range wkdResources {
+					filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
+					for _, a := range filtered {
+						ref := models.IstioValidationKey{
+							Name:       a.GetObjectMeta().Name,
+							Namespace:  a.GetObjectMeta().Namespace,
+							ObjectType: a.GetTypeMeta().Kind,
+						}
+						exist := false
+						for _, r := range wkdReferences {
+							if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
+								exist = true
+							}
+						}
+						if !exist {
+							wkdReferences = append(wkdReferences, &ref)
+						}
+					}
+				}
+			}
 		}
 		appItem.Labels = buildFinalLabels(applabels)
-		appItem.Gateways = apGwNames
-		appItem.AuthorizationPolicies = apApNames
-		appItem.PeerAuthentications = apPaNames
-		appItem.Sidecars = apScNames
-		appItem.RequestAuthentications = apRaNames
-		appItem.EnvoyFilters = apEfNames
+		appItem.IstioReferences = append(svcReferences, wkdReferences...)
 
 		for _, w := range valueApp.Workloads {
 			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
 				break
 			}
 		}
-
 		(*appList).Apps = append((*appList).Apps, *appItem)
 	}
 

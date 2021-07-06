@@ -27,10 +27,8 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
-	// Has VirtualService
-	VirtualServices []string `json:"virtualServices"`
-	// Has DestinationRule
-	DestinationRules []string `json:"destinationRules"`
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 	// Kiali Wizard scenario, if any
 	KialiWizard string `json:"kialiWizard"`
 }

@@ -117,90 +117,31 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		}
 	}()
 
+	linkedResources := map[string]*[]kubernetes.IstioObject{
+		kubernetes.Gateways:               &gateways,
+		kubernetes.AuthorizationPolicies:  &authorizationPolicies,
+		kubernetes.PeerAuthentications:    &peerAuthentications,
+		kubernetes.Sidecars:               &sidecars,
+		kubernetes.RequestAuthentications: &requestAuthentications,
+		kubernetes.EnvoyFilters:           &envoyFilters,
+	}
+
 	if linkIstioResources {
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				gateways, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Gateways, "")
-			} else {
-				gateways, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Gateways, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Gateways per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				authorizationPolicies, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
-			} else {
-				authorizationPolicies, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.AuthorizationPolicies, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio AuthorizationPolicies per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				peerAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-			} else {
-				peerAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.PeerAuthentications, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio PeerAuthentications per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				sidecars, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.Sidecars, "")
-			} else {
-				sidecars, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.Sidecars, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				requestAuthentications, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
-			} else {
-				requestAuthentications, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.RequestAuthentications, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Sidecars per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
-
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				envoyFilters, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
-			} else {
-				envoyFilters, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.EnvoyFilters, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio EnvoyFilters per namespace %s: %s", namespace, err2)
-				errChan <- err2
-			}
-		}()
+		for linkedResource, dest := range linkedResources {
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, linkedResource, dest, errChan)
+		}
 	}
 
 	wg.Wait()
@@ -209,34 +150,40 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		return *workloadList, err
 	}
 
+	wkdResources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
 	for _, w := range ws {
+		wkdReferences := make([]*models.IstioValidationKey, 0)
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
 		if linkIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
-			wGw := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, gateways)
-			gwNames := getIstioResourcesNames(wGw)
-			wItem.Gateways = gwNames
-
-			wAp := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, authorizationPolicies)
-			apNames := getIstioResourcesNames(wAp)
-			wItem.AuthorizationPolicies = apNames
-
-			wPa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, peerAuthentications)
-			paNames := getIstioResourcesNames(wPa)
-			wItem.PeerAuthentications = paNames
-
-			wSc := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, sidecars)
-			scNames := getIstioResourcesNames(wSc)
-			wItem.Sidecars = scNames
-
-			wRa := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, requestAuthentications)
-			raNames := getIstioResourcesNames(wRa)
-			wItem.RequestAuthentications = raNames
-
-			wEf := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, envoyFilters)
-			efNames := getIstioResourcesNames(wEf)
-			wItem.EnvoyFilters = efNames
+			for _, wkdRsc := range wkdResources {
+				filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
+				for _, a := range filtered {
+					ref := models.IstioValidationKey{
+						Name:       a.GetObjectMeta().Name,
+						Namespace:  a.GetObjectMeta().Namespace,
+						ObjectType: a.GetTypeMeta().Kind,
+					}
+					exist := false
+					for _, r := range wkdReferences {
+						if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
+							exist = true
+						}
+					}
+					if !exist {
+						wkdReferences = append(wkdReferences, &ref)
+					}
+				}
+			}
+			wItem.IstioReferences = wkdReferences
 		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}

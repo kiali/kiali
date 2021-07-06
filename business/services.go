@@ -91,39 +91,32 @@ func (in *SvcService) GetServiceList(namespace string, linkIstioResources bool) 
 			deployments, err2 = in.k8s.GetDeployments(namespace)
 		}
 		if err2 != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err2)
 			errChan <- err2
 		}
 	}()
 
-	if linkIstioResources {
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				virtualServices, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
-			} else {
-				virtualServices, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.VirtualServices, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio VirtualServices per namespace %s: %s", namespace, err)
-				errChan <- err2
-			}
-		}()
+	linkedResources := map[string]*[]kubernetes.IstioObject{
+		kubernetes.VirtualServices:  &virtualServices,
+		kubernetes.DestinationRules: &destinationRules,
+	}
 
-		go func() {
-			defer wg.Done()
-			var err2 error
-			if IsNamespaceCached(namespace) {
-				destinationRules, err2 = kialiCache.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
-			} else {
-				destinationRules, err2 = in.k8s.GetIstioObjects(namespace, kubernetes.DestinationRules, "")
-			}
-			if err2 != nil {
-				log.Errorf("Error fetching Istio DestinationRules per namespace %s: %s", namespace, err)
-				errChan <- err2
-			}
-		}()
+	if linkIstioResources {
+		for linkedResource, dest := range linkedResources {
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, linkedResource, dest, errChan)
+		}
 	}
 
 	wg.Wait()
@@ -158,10 +151,25 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		mPods.Parse(sPods)
 		hasSidecar := mPods.HasAnyIstioSidecar()
 		svcVirtualServices := kubernetes.FilterVirtualServices(virtualServices, item.Namespace, item.Name)
-		vsNames := getIstioResourcesNames(svcVirtualServices)
-
 		svcDestinationRules := kubernetes.FilterDestinationRules(destinationRules, item.Namespace, item.Name)
-		drNames := getIstioResourcesNames(svcDestinationRules)
+		allFiltered := append(svcVirtualServices, svcDestinationRules...)
+		svcReferences := make([]*models.IstioValidationKey, 0)
+		for _, a := range allFiltered {
+			ref := models.IstioValidationKey{
+				Name:       a.GetObjectMeta().Name,
+				Namespace:  a.GetObjectMeta().Namespace,
+				ObjectType: a.GetTypeMeta().Kind,
+			}
+			exist := false
+			for _, r := range svcReferences {
+				if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
+					exist = true
+				}
+			}
+			if !exist {
+				svcReferences = append(svcReferences, &ref)
+			}
+		}
 
 		kialiWizard := getKialiScenario(svcVirtualServices)
 		if kialiWizard == "" {
@@ -178,8 +186,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(conf, item.ObjectMeta.Annotations),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
 			Labels:                 item.Labels,
-			VirtualServices:        vsNames,
-			DestinationRules:       drNames,
+			IstioReferences:        svcReferences,
 			KialiWizard:            kialiWizard,
 		}
 	}
