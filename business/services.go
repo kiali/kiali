@@ -155,20 +155,8 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		allFiltered := append(svcVirtualServices, svcDestinationRules...)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, a := range allFiltered {
-			ref := models.IstioValidationKey{
-				Name:       a.GetObjectMeta().Name,
-				Namespace:  a.GetObjectMeta().Namespace,
-				ObjectType: a.GetTypeMeta().Kind,
-			}
-			exist := false
-			for _, r := range svcReferences {
-				if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
-					exist = true
-				}
-			}
-			if !exist {
-				svcReferences = append(svcReferences, &ref)
-			}
+			ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+			svcReferences = append(svcReferences, &ref)
 		}
 
 		kialiWizard := getKialiScenario(svcVirtualServices)

@@ -57,15 +57,6 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 	var err error
 	var apps namespaceApps
 
-	var virtualServices []kubernetes.IstioObject
-	var destinationRules []kubernetes.IstioObject
-	var gateways []kubernetes.IstioObject
-	var authorizationPolicies []kubernetes.IstioObject
-	var peerAuthentications []kubernetes.IstioObject
-	var sidecars []kubernetes.IstioObject
-	var requestAuthentications []kubernetes.IstioObject
-	var envoyFilters []kubernetes.IstioObject
-
 	nFetches := 1
 	if linkIstioResources {
 		nFetches = 9
@@ -85,19 +76,22 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 		}
 	}()
 
-	linkedResources := map[string]*[]kubernetes.IstioObject{
-		kubernetes.VirtualServices:        &virtualServices,
-		kubernetes.DestinationRules:       &destinationRules,
-		kubernetes.Gateways:               &gateways,
-		kubernetes.AuthorizationPolicies:  &authorizationPolicies,
-		kubernetes.PeerAuthentications:    &peerAuthentications,
-		kubernetes.Sidecars:               &sidecars,
-		kubernetes.RequestAuthentications: &requestAuthentications,
-		kubernetes.EnvoyFilters:           &envoyFilters,
+	resources := []string{
+		kubernetes.VirtualServices,
+		kubernetes.DestinationRules,
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
 	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
 
 	if linkIstioResources {
-		for linkedResource, dest := range linkedResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
 			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
 				defer wg.Done()
 				var err2 error
@@ -110,7 +104,7 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
 					errChan <- err2
 				}
-			}(namespace, linkedResource, dest, errChan)
+			}(namespace, resource, &resourceObjects, errChan)
 		}
 	}
 
@@ -134,11 +128,7 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 				svcDestinationRules := kubernetes.FilterDestinationRules(*linkedResources[kubernetes.DestinationRules], srv.Namespace, srv.Name)
 				allFiltered := append(svcVirtualServices, svcDestinationRules...)
 				for _, a := range allFiltered {
-					ref := models.IstioValidationKey{
-						Name:       a.GetObjectMeta().Name,
-						Namespace:  a.GetObjectMeta().Namespace,
-						ObjectType: a.GetTypeMeta().Kind,
-					}
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Namespace, a.GetObjectMeta().Name)
 					svcReferences = append(svcReferences, &ref)
 				}
 			}
@@ -161,16 +151,10 @@ func (in *AppService) GetAppList(namespace string, linkIstioResources bool) (mod
 				for _, wkdRsc := range wkdResources {
 					filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
 					for _, a := range filtered {
-						ref := models.IstioValidationKey{
-							Name:       a.GetObjectMeta().Name,
-							Namespace:  a.GetObjectMeta().Namespace,
-							ObjectType: a.GetTypeMeta().Kind,
-						}
+						ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
 						exist := false
 						for _, r := range wkdReferences {
-							if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
-								exist = true
-							}
+							exist = exist || *r == ref
 						}
 						if !exist {
 							wkdReferences = append(wkdReferences, &ref)

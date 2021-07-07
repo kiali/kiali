@@ -159,20 +159,8 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 			for _, wkdRsc := range wkdResources {
 				filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
 				for _, a := range filtered {
-					ref := models.IstioValidationKey{
-						Name:       a.GetObjectMeta().Name,
-						Namespace:  a.GetObjectMeta().Namespace,
-						ObjectType: a.GetTypeMeta().Kind,
-					}
-					exist := false
-					for _, r := range wkdReferences {
-						if r.Name == ref.Name && r.Namespace == ref.Namespace && r.ObjectType == ref.ObjectType {
-							exist = true
-						}
-					}
-					if !exist {
-						wkdReferences = append(wkdReferences, &ref)
-					}
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+					wkdReferences = append(wkdReferences, &ref)
 				}
 			}
 			wItem.IstioReferences = wkdReferences
