@@ -83,13 +83,6 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 	var ws models.Workloads
 	var err error
 
-	var gateways []kubernetes.IstioObject
-	var authorizationPolicies []kubernetes.IstioObject
-	var peerAuthentications []kubernetes.IstioObject
-	var sidecars []kubernetes.IstioObject
-	var requestAuthentications []kubernetes.IstioObject
-	var envoyFilters []kubernetes.IstioObject
-
 	nFetches := 1
 	if linkIstioResources {
 		nFetches = 7
@@ -109,17 +102,20 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 		}
 	}()
 
-	linkedResources := map[string]*[]kubernetes.IstioObject{
-		kubernetes.Gateways:               &gateways,
-		kubernetes.AuthorizationPolicies:  &authorizationPolicies,
-		kubernetes.PeerAuthentications:    &peerAuthentications,
-		kubernetes.Sidecars:               &sidecars,
-		kubernetes.RequestAuthentications: &requestAuthentications,
-		kubernetes.EnvoyFilters:           &envoyFilters,
+	resources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
 	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
 
 	if linkIstioResources {
-		for linkedResource, dest := range linkedResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
 			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
 				defer wg.Done()
 				var err2 error
@@ -132,7 +128,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources 
 					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
 					errChan <- err2
 				}
-			}(namespace, linkedResource, dest, errChan)
+			}(namespace, resource, &resourceObjects, errChan)
 		}
 	}
 
