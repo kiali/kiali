@@ -30,26 +30,42 @@ func TestMissingGateway(t *testing.T) {
 	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
 }
 
-func TestMissingGatewayInMatch(t *testing.T) {
-	assert := assert.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
-	path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", "non-existent-gateway-in-match.yaml")
-	loader := &data.YamlFixtureLoader{Filename: path}
-	err := loader.Load()
-	if err != nil {
-		t.Error("Error loading test data.")
+func TestMissingGatewayInHTTPMatch(t *testing.T) {
+	cases := []struct {
+		name     string
+		fileName string
+	}{
+		{name: "gw-format", fileName: "non-existent-gateway-in-match.yaml"},
+		{name: "ns-gw-format", fileName: "non-existent-ns-gateway-in-match.yaml"},
 	}
-	virtualService := loader.GetResource("VirtualService", "test", "default")
-	checker := NoGatewayChecker{
-		VirtualService: virtualService,
-		GatewayNames:   map[string]struct{}{"valid-gateway": {}},
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert := assert.New(t)
+			conf := config.NewConfig()
+			config.Set(conf)
+
+			path := fmt.Sprintf("../../../tests/data/validations/virtualservices/%s", "non-existent-gateway-in-match.yaml")
+			loader := &data.YamlFixtureLoader{Filename: path}
+			err := loader.Load()
+			if err != nil {
+				t.Error("Error loading test data.")
+			}
+
+			virtualService := loader.GetResource("VirtualService", "test", "default")
+			checker := NoGatewayChecker{
+				VirtualService: virtualService,
+				GatewayNames:   map[string]struct{}{"valid-gateway": {}},
+			}
+
+			validations, valid := checker.Check()
+
+			assert.False(valid)
+			assert.NotEmpty(validations)
+			assert.Equal(models.ErrorSeverity, validations[0].Severity)
+			assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
+		})
 	}
-	validations, valid := checker.Check()
-	assert.False(valid)
-	assert.NotEmpty(validations)
-	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
 }
 
 func TestValidAndMissingGateway(t *testing.T) {
