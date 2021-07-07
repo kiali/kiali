@@ -15,6 +15,7 @@ type DashboardQuery struct {
 	LabelsFilters     map[string]string
 	AdditionalLabels  []Aggregation
 	RawDataAggregator string
+	Workload          string
 }
 
 // FillDefaults fills the struct with default parameters

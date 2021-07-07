@@ -83,6 +83,7 @@ func extractDashboardQueryParams(queryParams url.Values, q *models.DashboardQuer
 	if op == "sum" || op == "min" || op == "max" || op == "avg" || op == "stddev" || op == "stdvar" {
 		q.RawDataAggregator = op
 	}
+	q.Workload = queryParams.Get("workload")
 	return extractBaseMetricsQueryParams(queryParams, &q.RangeQuery, namespaceInfo)
 }
 
