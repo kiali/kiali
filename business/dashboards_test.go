@@ -20,7 +20,7 @@ func setupService(namespace string, dashboards []dashboards.MonitoringDashboard)
 	config.Set(cfg)
 	prom := new(pmock.PromClientMock)
 	ns := models.Namespace{Name: namespace}
-	service := NewDashboardsService(&ns)
+	service := NewDashboardsService(&ns, nil)
 	service.promClient = prom
 	return service, prom
 }
@@ -262,7 +262,7 @@ func TestBuildIstioDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	ns := models.Namespace{Name: "my-namespace"}
-	service := NewDashboardsService(&ns)
+	service := NewDashboardsService(&ns, nil)
 
 	dashboard := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 

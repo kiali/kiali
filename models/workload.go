@@ -85,6 +85,10 @@ type WorkloadListItem struct {
 
 	// Istio References
 	IstioReferences []*IstioValidationKey `json:"istioReferences"`
+
+	// Dashboard annotations
+	// required: false
+	DashboardAnnotations map[string]string `json:"dashboardAnnotations"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -166,6 +170,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	workload.ResourceVersion = meta.ResourceVersion
 	workload.AdditionalDetails = GetAdditionalDetails(conf, meta.Annotations)
 	workload.AdditionalDetailSample = GetFirstAdditionalIcon(conf, meta.Annotations)
+	workload.DashboardAnnotations = GetDashboardAnnotation(meta.Annotations)
 }
 
 func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {

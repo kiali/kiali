@@ -39,16 +39,29 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := business.NewDashboardsService(info)
-	if !svc.CustomEnabled {
-		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
-		return
-	}
-
 	params := models.DashboardQuery{Namespace: namespace}
 	err = extractDashboardQueryParams(queryParams, &params, info)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var wkd *models.Workload
+	if params.Workload != "" {
+		wkd, err = layer.Workload.GetWorkload(namespace, params.Workload, params.WorkloadType, false)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				RespondWithError(w, http.StatusNotFound, err.Error())
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+			}
+			return
+		}
+	}
+
+	svc := business.NewDashboardsService(info, wkd)
+	if !svc.CustomEnabled {
+		RespondWithError(w, http.StatusServiceUnavailable, "Custom dashboards are disabled in config")
 		return
 	}
 
@@ -123,7 +136,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
 
@@ -151,7 +164,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }
 
@@ -179,6 +192,6 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
 	}
-	dashboard := business.NewDashboardsService(namespaceInfo).BuildIstioDashboard(metrics, params.Direction)
+	dashboard := business.NewDashboardsService(namespaceInfo, nil).BuildIstioDashboard(metrics, params.Direction)
 	RespondWithJSON(w, http.StatusOK, dashboard)
 }

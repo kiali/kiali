@@ -213,7 +213,7 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 	}
-	(*appInstance).Runtimes = NewDashboardsService(ns).GetCustomDashboardRefs(namespace, appName, "", pods)
+	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(namespace, appName, "", pods)
 
 	return *appInstance, nil
 }

@@ -28,7 +28,7 @@ type DashboardsService struct {
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService(namespace *models.Namespace) *DashboardsService {
+func NewDashboardsService(namespace *models.Namespace, workload *models.Workload) *DashboardsService {
 	cfg := config.Get()
 	customEnabled := cfg.ExternalServices.CustomDashboards.Enabled
 	prom := cfg.ExternalServices.Prometheus
@@ -42,9 +42,17 @@ func NewDashboardsService(namespace *models.Namespace) *DashboardsService {
 
 	// Overwrite Custom dashboards defined at Namespace level
 	builtInDashboards := cfg.CustomDashboards.OrganizeByName()
-	nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
-	for name, dashboard := range nsDashboards.OrganizeByName() {
-		builtInDashboards[name] = dashboard
+	if namespace != nil {
+		nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
+		for name, dashboard := range nsDashboards.OrganizeByName() {
+			builtInDashboards[name] = dashboard
+		}
+	}
+	if workload != nil {
+		wkDashboards := dashboards.GetWorkloadMonitoringDashboards(namespace.Name, workload.Name, workload.DashboardAnnotations)
+		for name, dashboard := range wkDashboards.OrganizeByName() {
+			builtInDashboards[name] = dashboard
+		}
 	}
 
 	return &DashboardsService{

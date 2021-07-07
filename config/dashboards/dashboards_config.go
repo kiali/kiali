@@ -143,6 +143,19 @@ func GetNamespaceMonitoringDashboards(namespace string, annotations map[string]s
 	return MonitoringDashboardsList(empty)
 }
 
+// GetWorkloadMonitoringDashboards will examine the given namespace annotations and return any dashboard yaml found.
+func GetWorkloadMonitoringDashboards(namespace string, workload string, annotations map[string]string) MonitoringDashboardsList {
+	if dashboardYaml, ok := annotations[DashboardTemplateAnnotation]; ok {
+		if v, err := unmarshal(dashboardYaml); err == nil {
+			return MonitoringDashboardsList(v)
+		} else {
+			log.Errorf("Failed to unmarshall yaml dashboard in namespace %s and workload %s. err=%v", namespace, workload, err)
+		}
+	}
+	empty := make([]MonitoringDashboard, 0)
+	return MonitoringDashboardsList(empty)
+}
+
 // OrganizeByName returns a map with the key being the names of the dashboards; values are the dashboards themselves
 func (in *MonitoringDashboardsList) OrganizeByName() map[string]MonitoringDashboard {
 	out := make(map[string]MonitoringDashboard, len(*in))
