@@ -40,6 +40,7 @@ const (
 	ResponseTime          MetadataKey = "responseTime"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
 	Throughput            MetadataKey = "throughput"
+	VirtualServices       MetadataKey = "virtualServices"
 )
 
 // DestServicesMetadata key=Service.Key()
@@ -57,3 +58,4 @@ func (dsm DestServicesMetadata) Add(key string, service ServiceName) DestService
 }
 
 type GatewaysMetadata map[string][]string
+type VirtualServicesMetadata map[string][]string

@@ -69,6 +69,12 @@ type GWInfoIngress struct {
 	Hostnames []string `json:"hostnames,omitempty"`
 }
 
+// VSInfo contains the resolved VS configuration if the node has a VS attached.
+type VSInfo struct {
+	// Hostnames is the list of hostnames configured in the associated VSs
+	Hostnames []string `json:"hostnames,omitempty"`
+}
+
 // HealthConfig maps annotations information for health
 type HealthConfig map[string]string
 
@@ -96,7 +102,7 @@ type NodeData struct {
 	HasRequestTimeout     bool                `json:"hasRequestTimeout,omitempty"`     // true (vs has request timeout) | false
 	HasTCPTrafficShifting bool                `json:"hasTCPTrafficShifting,omitempty"` // true (vs has tcp traffic shifting) | false
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
-	HasVS                 bool                `json:"hasVS,omitempty"`                 // true (has route rule) | false
+	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -284,8 +290,17 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may have a virtual service
-		if val, ok := n.Metadata[graph.HasVS]; ok {
-			nd.HasVS = val.(bool)
+		if val, ok := n.Metadata[graph.HasVS]; ok && val.(bool) {
+			nd.HasVS = &VSInfo{}
+
+			var configuredHostnames []string
+			if vsData, vsOk := n.Metadata[graph.VirtualServices]; vsOk {
+				for _, hosts := range vsData.(graph.VirtualServicesMetadata) {
+					configuredHostnames = append(configuredHostnames, hosts...)
+				}
+			}
+
+			nd.HasVS.Hostnames = configuredHostnames
 		}
 
 		// set sidecars checks, if available

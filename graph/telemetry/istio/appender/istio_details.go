@@ -109,6 +109,16 @@ NODES:
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata[graph.HasVS] = true
+				if len(virtualService.Spec.Hosts) != 0 {
+					var vsMetadata graph.VirtualServicesMetadata
+					var vsOk bool
+					if vsMetadata, vsOk = n.Metadata[graph.VirtualServices].(graph.VirtualServicesMetadata); !vsOk {
+						vsMetadata = make(graph.VirtualServicesMetadata)
+						n.Metadata[graph.VirtualServices] = vsMetadata
+					}
+
+					vsMetadata[virtualService.Metadata.Name] = virtualService.Spec.Hosts
+				}
 
 				// Check if the VS also has one of the Kiali scenarios created by the wizard.
 				// TODO: Get this info from the VS spec in case the Istio object was not created by a wizard.
