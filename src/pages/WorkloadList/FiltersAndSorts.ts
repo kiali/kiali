@@ -21,6 +21,9 @@ import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
+import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
+import { dicIstioType } from '../../types/IstioConfigList';
+import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 
 const missingLabels = (r: WorkloadListItem): number => {
   return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
@@ -66,6 +69,15 @@ export const sortFields: SortField<WorkloadListItem>[] = [
       if (aSC !== bSC) {
         return aSC - bSC;
       }
+
+      // Second by Details
+      const iRefA = a.istioReferences;
+      const iRefB = b.istioReferences;
+      const cmpRefs = compareObjectReferences(iRefA, iRefB);
+      if (cmpRefs !== 0) {
+        return cmpRefs;
+      }
+
       // Then by additional details
       const iconA = a.additionalDetailSample && a.additionalDetailSample.icon;
       const iconB = b.additionalDetailSample && b.additionalDetailSample.icon;
@@ -251,6 +263,7 @@ export const availableFilters: FilterType[] = [
   workloadNameFilter,
   workloadTypeFilter,
   istioSidecarFilter,
+  istioTypeFilter,
   healthFilter,
   appLabelFilter,
   versionLabelFilter,
@@ -300,6 +313,12 @@ const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListI
   return items.filter(item => names.some(name => item.name.includes(name)));
 };
 
+const filterByIstioType = (items: WorkloadListItem[], istioTypes: string[]): WorkloadListItem[] => {
+  return items.filter(
+    item => item.istioReferences.filter(ref => istioTypes.includes(dicIstioType[ref.objectType])).length !== 0
+  );
+};
+
 export const filterBy = (
   items: WorkloadListItem[],
   filters: ActiveFiltersInfo
@@ -322,6 +341,11 @@ export const filterBy = (
   const healthSelected = getFilterSelectedValues(healthFilter, filters);
   if (healthSelected.length > 0) {
     return filterByHealth(ret, healthSelected);
+  }
+
+  const istioTypeSelected = getFilterSelectedValues(istioTypeFilter, filters);
+  if (istioTypeSelected.length > 0) {
+    return filterByIstioType(ret, istioTypeSelected);
   }
   return ret;
 };

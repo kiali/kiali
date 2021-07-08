@@ -19,6 +19,7 @@ import { activeNamespacesSelector, durationSelector } from '../../store/Selector
 import DefaultSecondaryMasthead from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { connect } from 'react-redux';
 import TimeDurationContainer from '../../components/Time/TimeDurationComponent';
+import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -102,7 +103,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
         healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar),
         validation: this.getServiceValidation(service.name, data.validations),
         additionalDetailSample: service.additionalDetailSample,
-        labels: service.labels || {}
+        labels: service.labels || {},
+        istioReferences: sortIstioReferences(service.istioReferences, true),
+        kialiWizard: service.kialiWizard
       }));
     }
     return [];

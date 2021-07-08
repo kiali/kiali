@@ -14,6 +14,9 @@ import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
+import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
+import { dicIstioType } from '../../types/IstioConfigList';
+import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -48,6 +51,15 @@ export const sortFields: SortField<ServiceListItem>[] = [
       if (aSC !== bSC) {
         return aSC - bSC;
       }
+
+      // Second by Details
+      const iRefA = a.istioReferences;
+      const iRefB = b.istioReferences;
+      const cmpRefs = compareObjectReferences(iRefA, iRefB);
+      if (cmpRefs !== 0) {
+        return cmpRefs;
+      }
+
       // Then by additional details
       const iconA = a.additionalDetailSample && a.additionalDetailSample.icon;
       const iconB = b.additionalDetailSample && b.additionalDetailSample.icon;
@@ -130,7 +142,13 @@ const serviceNameFilter: FilterType = {
   filterValues: []
 };
 
-export const availableFilters: FilterType[] = [serviceNameFilter, istioSidecarFilter, healthFilter, labelFilter];
+export const availableFilters: FilterType[] = [
+  serviceNameFilter,
+  istioSidecarFilter,
+  istioTypeFilter,
+  healthFilter,
+  labelFilter
+];
 
 const filterByIstioSidecar = (items: ServiceListItem[], istioSidecar: boolean): ServiceListItem[] => {
   return items.filter(item => item.istioSidecar === istioSidecar);
@@ -150,6 +168,12 @@ const filterByName = (items: ServiceListItem[], names: string[]): ServiceListIte
     }
     return serviceNameFiltered;
   });
+};
+
+const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): ServiceListItem[] => {
+  return items.filter(
+    item => item.istioReferences.filter(ref => istioTypes.includes(dicIstioType[ref.objectType])).length !== 0
+  );
 };
 
 export const filterBy = (
@@ -176,6 +200,11 @@ export const filterBy = (
   const healthSelected = getFilterSelectedValues(healthFilter, filters);
   if (healthSelected.length > 0) {
     return filterByHealth(ret, healthSelected);
+  }
+
+  const istioTypeSelected = getFilterSelectedValues(istioTypeFilter, filters);
+  if (istioTypeSelected.length > 0) {
+    return filterByIstioType(ret, istioTypeSelected);
   }
   return ret;
 };

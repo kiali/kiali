@@ -22,7 +22,7 @@ import ValidationSummary from '../Validations/ValidationSummary';
 import OverviewCardContentExpanded from '../../pages/Overview/OverviewCardContentExpanded';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { StatefulFilters } from '../Filters/StatefulFilters';
-import { GetIstioObjectUrl } from '../Link/IstioObjectLink';
+import IstioObjectLink, { GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 import ValidationSummaryLink from '../Link/ValidationSummaryLink';
@@ -62,6 +62,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   const hasMissingVersion = isWorkload && !item['versionLabel'];
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = hasMissingSC && additionalDetails && additionalDetails.icon;
+
   return (
     <td
       role="gridcell"
@@ -81,6 +82,16 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {additionalDetails && additionalDetails.icon && (
           <li>{renderAPILogo(additionalDetails.icon, additionalDetails.title, 0)}</li>
         )}
+        {item.istioReferences &&
+          item.istioReferences.length > 0 &&
+          item.istioReferences.map(ir => (
+            <li>
+              <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
+              <IstioObjectLink name={ir.name} namespace={item.namespace || ''} type={ir.objectType.toLowerCase()}>
+                {ir.name}
+              </IstioObjectLink>
+            </li>
+          ))}
       </ul>
     </td>
   );

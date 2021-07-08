@@ -14,6 +14,9 @@ import {
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
+import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
+import { dicIstioType } from '../../types/IstioConfigList';
+import { ObjectReference } from '../../types/IstioObjects';
 
 export const sortFields: SortField<AppListItem>[] = [
   {
@@ -48,6 +51,15 @@ export const sortFields: SortField<AppListItem>[] = [
       if (aSC !== bSC) {
         return aSC - bSC;
       }
+
+      // Second by Details
+      const iRefA = a.istioReferences;
+      const iRefB = b.istioReferences;
+      const cmpRefs = compareObjectReferences(iRefA, iRefB);
+      if (cmpRefs !== 0) {
+        return cmpRefs;
+      }
+
       // Finally by name
       return a.name.localeCompare(b.name);
     }
@@ -88,7 +100,13 @@ const appNameFilter: FilterType = {
   filterValues: []
 };
 
-export const availableFilters: FilterType[] = [appNameFilter, istioSidecarFilter, healthFilter, labelFilter];
+export const availableFilters: FilterType[] = [
+  appNameFilter,
+  istioSidecarFilter,
+  istioTypeFilter,
+  healthFilter,
+  labelFilter
+];
 
 /** Filter Method */
 
@@ -110,6 +128,12 @@ const filterByName = (items: AppListItem[], names: string[]): AppListItem[] => {
 
 const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppListItem[] => {
   return items.filter(item => item.istioSidecar === istioSidecar);
+};
+
+const filterByIstioType = (items: AppListItem[], istioTypes: string[]): AppListItem[] => {
+  return items.filter(
+    item => item.istioReferences.filter(ref => istioTypes.includes(dicIstioType[ref.objectType])).length !== 0
+  );
 };
 
 export const filterBy = (
@@ -138,6 +162,11 @@ export const filterBy = (
   if (healthSelected.length > 0) {
     return filterByHealth(ret, healthSelected);
   }
+
+  const istioTypeSelected = getFilterSelectedValues(istioTypeFilter, filters);
+  if (istioTypeSelected.length > 0) {
+    return filterByIstioType(ret, istioTypeSelected);
+  }
   return ret;
 };
 
@@ -160,4 +189,48 @@ export const sortAppsItems = (
   }
   const sorted = unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
   return Promise.resolve(sorted);
+};
+
+export const compareObjectReference = (a: ObjectReference, b: ObjectReference): number => {
+  const cmpObjectType = a.objectType.localeCompare(b.objectType);
+  if (cmpObjectType !== 0) {
+    return cmpObjectType;
+  }
+  const cmpName = a.name.localeCompare(b.name);
+  if (cmpName !== 0) {
+    return cmpName;
+  }
+
+  return a.namespace.localeCompare(b.namespace);
+};
+
+// It assumes that is sorted
+export const compareObjectReferences = (a: ObjectReference[], b: ObjectReference[]): number => {
+  if (a.length === 0 && b.length === 0) {
+    return 0;
+  }
+  if (a.length === 0 && b.length > 0) {
+    return -1;
+  }
+  if (a.length > 0 && b.length === 0) {
+    return 1;
+  }
+  if (a.length !== b.length) {
+    return a.length - b.length;
+  }
+  for (let i = 0; i < a.length; i++) {
+    const cmp = compareObjectReference(a[i], b[i]);
+    if (cmp !== 0) {
+      return cmp;
+    }
+  }
+  return 0;
+};
+
+// Remove duplicates and sort references
+export const sortIstioReferences = (unsorted: ObjectReference[], isAscending: boolean): ObjectReference[] => {
+  const unique = unsorted.filter((item, index) => unsorted.indexOf(item) === index);
+  return unique.sort((a, b) => {
+    return isAscending ? compareObjectReference(a, b) : compareObjectReference(b, a);
+  });
 };

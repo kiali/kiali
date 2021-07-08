@@ -1,6 +1,6 @@
 import Namespace from './Namespace';
 import { WorkloadHealth } from './Health';
-import { Pod, Service } from './IstioObjects';
+import { ObjectReference, Pod, Service } from './IstioObjects';
 
 export interface WorkloadId {
   namespace: string;
@@ -62,6 +62,7 @@ export interface WorkloadOverview {
   appLabel: boolean;
   versionLabel: boolean;
   labels: { [key: string]: string };
+  istioReferences: ObjectReference[];
 }
 
 export interface WorkloadListItem extends WorkloadOverview {

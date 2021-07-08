@@ -9,28 +9,32 @@ const appList: AppListItem[] = [
     healthPromise: new Promise(() => {}),
     name: 'ratings',
     istioSidecar: false,
-    labels: { app: 'ratings', service: 'ratings', version: 'v1' }
+    labels: { app: 'ratings', service: 'ratings', version: 'v1' },
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
     healthPromise: new Promise(() => {}),
     name: 'productpage',
     istioSidecar: false,
-    labels: { app: 'productpage', service: 'productpage', version: 'v1' }
+    labels: { app: 'productpage', service: 'productpage', version: 'v1' },
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
     healthPromise: new Promise(() => {}),
     name: 'details',
     istioSidecar: false,
-    labels: { app: 'details', service: 'details', version: 'v1' }
+    labels: { app: 'details', service: 'details', version: 'v1' },
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
     healthPromise: new Promise(() => {}),
     name: 'reviews',
     istioSidecar: false,
-    labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' }
+    labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
+    istioReferences: []
   }
 ];
 
@@ -43,7 +47,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'details', version: 'v1' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
@@ -53,7 +58,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'productpage', version: 'v1' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
@@ -63,7 +69,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'ratings', version: 'v1' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
@@ -73,7 +80,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'reviews', version: 'v1' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
@@ -83,7 +91,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'reviews', version: 'v2' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   },
   {
     namespace: 'bookinfo',
@@ -93,7 +102,8 @@ const workloadList: WorkloadListItem[] = [
     istioSidecar: false,
     labels: { app: 'reviews', version: 'v3' },
     appLabel: true,
-    versionLabel: true
+    versionLabel: true,
+    istioReferences: []
   }
 ];
 
@@ -104,7 +114,9 @@ const serviceList: ServiceListItem[] = [
     name: 'details',
     istioSidecar: false,
     labels: { app: 'details', service: 'details' },
-    validation: { name: 'details', objectType: 'service', valid: true, checks: [] }
+    validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
+    istioReferences: [],
+    kialiWizard: ''
   },
   {
     namespace: 'bookinfo',
@@ -112,7 +124,9 @@ const serviceList: ServiceListItem[] = [
     name: 'reviews',
     istioSidecar: false,
     labels: { app: 'reviews', service: 'reviews' },
-    validation: { name: 'reviews', objectType: 'service', valid: true, checks: [] }
+    validation: { name: 'reviews', objectType: 'service', valid: true, checks: [] },
+    istioReferences: [],
+    kialiWizard: ''
   },
   {
     namespace: 'bookinfo',
@@ -120,7 +134,9 @@ const serviceList: ServiceListItem[] = [
     name: 'ratings',
     istioSidecar: false,
     labels: { app: 'ratings', service: 'ratings' },
-    validation: { name: 'ratings', objectType: 'service', valid: true, checks: [] }
+    validation: { name: 'ratings', objectType: 'service', valid: true, checks: [] },
+    istioReferences: [],
+    kialiWizard: ''
   },
   {
     namespace: 'bookinfo',
@@ -128,7 +144,9 @@ const serviceList: ServiceListItem[] = [
     name: 'productpage',
     istioSidecar: false,
     labels: { app: 'productpage', service: 'productpage' },
-    validation: { name: 'productpage', objectType: 'service', valid: true, checks: [] }
+    validation: { name: 'productpage', objectType: 'service', valid: true, checks: [] },
+    istioReferences: [],
+    kialiWizard: ''
   }
 ];
 
@@ -146,7 +164,8 @@ describe('LabelFilter', () => {
         healthPromise: new Promise(() => {}),
         name: 'details',
         istioSidecar: false,
-        labels: { app: 'details', service: 'details', version: 'v1' }
+        labels: { app: 'details', service: 'details', version: 'v1' },
+        istioReferences: []
       }
     ]);
   });
@@ -159,7 +178,8 @@ describe('LabelFilter', () => {
         healthPromise: new Promise(() => {}),
         name: 'reviews',
         istioSidecar: false,
-        labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' }
+        labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
+        istioReferences: []
       }
     ]);
   });
@@ -180,7 +200,8 @@ describe('LabelFilter', () => {
         istioSidecar: false,
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
-        versionLabel: true
+        versionLabel: true,
+        istioReferences: []
       },
       {
         namespace: 'bookinfo',
@@ -190,7 +211,8 @@ describe('LabelFilter', () => {
         istioSidecar: false,
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
-        versionLabel: true
+        versionLabel: true,
+        istioReferences: []
       },
       {
         namespace: 'bookinfo',
@@ -200,7 +222,8 @@ describe('LabelFilter', () => {
         istioSidecar: false,
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
-        versionLabel: true
+        versionLabel: true,
+        istioReferences: []
       }
     ]);
   });
@@ -219,7 +242,9 @@ describe('LabelFilter', () => {
         name: 'details',
         istioSidecar: false,
         labels: { app: 'details', service: 'details' },
-        validation: { name: 'details', objectType: 'service', valid: true, checks: [] }
+        validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
+        istioReferences: [],
+        kialiWizard: ''
       }
     ]);
   });
