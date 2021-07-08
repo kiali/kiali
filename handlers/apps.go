@@ -19,7 +19,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 
 	// Fetch and build apps
-	appList, err := business.App.GetAppList(namespace)
+	appList, err := business.App.GetAppList(namespace, true)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

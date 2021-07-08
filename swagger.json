@@ -4168,6 +4168,14 @@
         "istioSidecar"
       ],
       "properties": {
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if all Pods related to the Workloads of this app has an IstioSidecar deployed",
           "type": "boolean",
@@ -6667,11 +6675,24 @@
           },
           "x-go-name": "HealthAnnotations"
         },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Service has an IstioSidecar deployed",
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
+        },
+        "kialiWizard": {
+          "description": "Kiali Wizard scenario, if any",
+          "type": "string",
+          "x-go-name": "KialiWizard"
         },
         "labels": {
           "description": "Labels for Service",
@@ -7059,6 +7080,14 @@
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
         },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
+        },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
@@ -7218,6 +7247,14 @@
           "description": "Define if Workload has an explicit Istio policy annotation\nIt's mapped as a pointer to show three values nil, true, false",
           "type": "boolean",
           "x-go-name": "IstioInjectionAnnotation"
+        },
+        "istioReferences": {
+          "description": "Istio References",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "IstioReferences"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",

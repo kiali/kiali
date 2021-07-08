@@ -6382,6 +6382,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if all Pods related to the Workloads of this app has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Labels for App |  |
 | Name | string| `string` | ✓ | | Name of the application | `reviews` |
@@ -6590,6 +6591,7 @@ part of the mesh.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Image | string| `string` |  | |  |  |
 | IsProxy | boolean| `bool` |  | |  |  |
+| IsReady | boolean| `bool` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 
 
@@ -8763,7 +8765,9 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 |------|------|---------|:--------:| ------- |-------------|---------|
 | AppLabel | boolean| `bool` | ✓ | | Has label app | `true` |
 | HealthAnnotations | map of string| `map[string]string` |  | | Annotations of the service |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Service has an IstioSidecar deployed | `true` |
+| KialiWizard | string| `string` |  | | Kiali Wizard scenario, if any |  |
 | Labels | map of string| `map[string]string` |  | | Labels for Service |  |
 | Name | string| `string` | ✓ | | Name of the Service | `reviews-v1` |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
@@ -9140,6 +9144,7 @@ More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |
@@ -9349,6 +9354,7 @@ https://istio.io/latest/docs/reference/config/networking/workload-group/#Workloa
 | HealthAnnotations | map of string| `map[string]string` |  | | HealthAnnotations |  |
 | IstioInjectionAnnotation | boolean| `bool` |  | | Define if Workload has an explicit Istio policy annotation
 It's mapped as a pointer to show three values nil, true, false |  |
+| IstioReferences | [][IstioValidationKey](#istio-validation-key)| `[]*IstioValidationKey` |  | | Istio References |  |
 | IstioSidecar | boolean| `bool` | ✓ | | Define if Pods related to this Workload has an IstioSidecar deployed | `true` |
 | Labels | map of string| `map[string]string` |  | | Workload labels |  |
 | Name | string| `string` | ✓ | | Name of the workload | `reviews-v1` |

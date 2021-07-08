@@ -27,6 +27,10 @@ type ServiceOverview struct {
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
 	// Labels for Service
 	Labels map[string]string `json:"labels"`
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
+	// Kiali Wizard scenario, if any
+	KialiWizard string `json:"kialiWizard"`
 }
 
 type ServiceList struct {

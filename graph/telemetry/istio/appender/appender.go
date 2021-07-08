@@ -255,7 +255,7 @@ func getWorkloadList(namespace string, gi *graph.AppenderGlobalInfo) *models.Wor
 		return workloadList
 	}
 
-	workloadList, err := gi.Business.Workload.GetWorkloadList(namespace)
+	workloadList, err := gi.Business.Workload.GetWorkloadList(namespace, false)
 	graph.CheckError(err)
 	workloadListMap[namespace] = &workloadList
 

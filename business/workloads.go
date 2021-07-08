@@ -75,19 +75,92 @@ func isWorkloadIncluded(workload string) bool {
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
-func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
+func (in *WorkloadService) GetWorkloadList(namespace string, linkIstioResources bool) (models.WorkloadList, error) {
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
-	ws, err := fetchWorkloads(in.businessLayer, namespace, "")
-	if err != nil {
+	var ws models.Workloads
+	var err error
+
+	nFetches := 1
+	if linkIstioResources {
+		nFetches = 7
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(nFetches)
+	errChan := make(chan error, nFetches)
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		ws, err2 = fetchWorkloads(in.businessLayer, namespace, "")
+		if err2 != nil {
+			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
+			errChan <- err2
+		}
+	}()
+
+	resources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
+	linkedResources := map[string]*[]kubernetes.IstioObject{}
+
+	if linkIstioResources {
+		for _, resource := range resources {
+			var resourceObjects []kubernetes.IstioObject
+			linkedResources[resource] = &resourceObjects
+			go func(namespace, resourceType string, dest *[]kubernetes.IstioObject, errChan chan error) {
+				defer wg.Done()
+				var err2 error
+				if IsNamespaceCached(namespace) {
+					*dest, err2 = kialiCache.GetIstioObjects(namespace, resourceType, "")
+				} else {
+					*dest, err2 = in.k8s.GetIstioObjects(namespace, resourceType, "")
+				}
+				if err2 != nil {
+					log.Errorf("Error fetching Istio %s per namespace %s: %s", resourceType, namespace, err2)
+					errChan <- err2
+				}
+			}(namespace, resource, &resourceObjects, errChan)
+		}
+	}
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
 		return *workloadList, err
 	}
 
+	wkdResources := []string{
+		kubernetes.Gateways,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.Sidecars,
+		kubernetes.RequestAuthentications,
+		kubernetes.EnvoyFilters,
+	}
 	for _, w := range ws {
+		wkdReferences := make([]*models.IstioValidationKey, 0)
 		wItem := &models.WorkloadListItem{}
 		wItem.ParseWorkload(w)
+		if linkIstioResources {
+			wSelector := labels.Set(wItem.Labels).AsSelector().String()
+			for _, wkdRsc := range wkdResources {
+				filtered := kubernetes.FilterIstioObjectsForWorkloadSelector(wSelector, *linkedResources[wkdRsc])
+				for _, a := range filtered {
+					ref := models.BuildKey(a.GetTypeMeta().Kind, a.GetObjectMeta().Name, a.GetObjectMeta().Namespace)
+					wkdReferences = append(wkdReferences, &ref)
+				}
+			}
+			wItem.IstioReferences = wkdReferences
+		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 

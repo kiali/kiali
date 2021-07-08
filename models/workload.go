@@ -82,6 +82,9 @@ type WorkloadListItem struct {
 	// HealthAnnotations
 	// required: false
 	HealthAnnotations map[string]string `json:"healthAnnotations"`
+
+	// Istio References
+	IstioReferences []*IstioValidationKey `json:"istioReferences"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -131,6 +134,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.PodCount = len(w.Pods)
 	workload.AdditionalDetailSample = w.AdditionalDetailSample
 	workload.HealthAnnotations = w.HealthAnnotations
+	workload.IstioReferences = []*IstioValidationKey{}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
