@@ -1,14 +1,21 @@
 import * as React from 'react';
-import { Card, CardBody, CardHeader, Title, Tooltip } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
-import { ObjectCheck, ObjectValidation } from '../../types/IstioObjects';
+import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import ValidationList from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
 
 type Props = {
   serviceDetails: ServiceDetailsInfo;
+  gateways: Gateway[];
   validations?: ObjectValidation;
+};
+
+type HostnameInfo = {
+  hostname: string;
+  fromType: string | undefined;
+  fromName: string | undefined;
 };
 
 const resourceListStyle = style({
@@ -40,6 +47,41 @@ class ServiceNetwork extends React.Component<Props> {
 
   hasIssue(portId: number): boolean {
     return this.getPortChecks(portId).length > 0;
+  }
+
+  getHostnames(virtualServices: VirtualService[]): HostnameInfo[] {
+    var hostnames: HostnameInfo[] = [];
+
+    virtualServices.forEach(vs => {
+      vs.spec.hosts?.forEach(host => {
+        if (host === '*') {
+          vs.spec.gateways?.forEach(vsGatewayName => {
+            const vsGateways = this.props.gateways.filter(gateway => {
+              return gateway.metadata.name === vsGatewayName;
+            });
+
+            vsGateways.forEach(vsGateway => {
+              vsGateway.spec.servers?.forEach(servers => {
+                servers.hosts.forEach(host => {
+                  hostnames.push({ hostname: host, fromType: vsGateway.kind, fromName: vsGateway.metadata.name });
+                });
+              });
+            });
+          });
+        } else {
+          hostnames.push({ hostname: host, fromType: vs.kind, fromName: vs.metadata.name });
+        }
+      });
+    });
+
+    // If there is a wildcard, then it will display only one, the first match
+    for (var hostnameInfo of hostnames) {
+      if (hostnameInfo.hostname === '*') {
+        return [hostnameInfo];
+      }
+    }
+
+    return hostnames;
   }
 
   render() {
@@ -75,10 +117,11 @@ class ServiceNetwork extends React.Component<Props> {
                       <div key={'endpoint_' + i + '_address_' + u}>
                         {address.name !== '' ? (
                           <Tooltip
+                            position={TooltipPosition.right}
                             content={
-                              <>
+                              <div style={{ textAlign: 'left' }}>
                                 {address.kind}: {address.name}
-                              </>
+                              </div>
                             }
                           >
                             <span>
@@ -108,6 +151,47 @@ class ServiceNetwork extends React.Component<Props> {
                   })}
                 </div>
               </li>
+              {this.props.serviceDetails.virtualServices.items.length > 0 && (
+                <li>
+                  <span>Hostnames</span>
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      width: '75%'
+                    }}
+                  >
+                    {this.getHostnames(this.props.serviceDetails.virtualServices.items).map((hostname, i) => {
+                      return (
+                        <div key={'hostname_' + i}>
+                          <Tooltip
+                            position={TooltipPosition.right}
+                            content={
+                              <div style={{ textAlign: 'left' }}>
+                                {hostname.fromType} {hostname.fromName}: {hostname.hostname}
+                              </div>
+                            }
+                          >
+                            <div style={{ display: 'flex' }}>
+                              <span
+                                style={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                              >
+                                {hostname.hostname}
+                              </span>
+                              <span>
+                                <KialiIcon.Info className={infoStyle} />
+                              </span>
+                            </div>
+                          </Tooltip>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </li>
+              )}
             </ul>
           </div>
         </CardBody>

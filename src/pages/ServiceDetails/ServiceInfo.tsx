@@ -4,7 +4,7 @@ import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import ServiceDescription from './ServiceDescription';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { ObjectValidation, PeerAuthentication, Validations } from '../../types/IstioObjects';
+import { Gateway, ObjectValidation, PeerAuthentication, Validations } from '../../types/IstioObjects';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
@@ -24,7 +24,7 @@ interface Props extends ServiceId {
   lastRefreshAt: TimeInMilliseconds;
   mtlsEnabled: boolean;
   serviceDetails?: ServiceDetailsInfo;
-  gateways: string[];
+  gateways: Gateway[];
   peerAuthentications: PeerAuthentication[];
   validations: Validations;
 }
@@ -112,6 +112,7 @@ class ServiceInfo extends React.Component<Props, ServiceInfoState> {
                 {this.props.serviceDetails && (
                   <ServiceNetwork
                     serviceDetails={this.props.serviceDetails}
+                    gateways={this.props.gateways}
                     validations={this.getServiceValidation()}
                   />
                 )}
