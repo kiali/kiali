@@ -15,7 +15,6 @@ import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
-import { dicIstioType } from '../../types/IstioConfigList';
 import { ObjectReference } from '../../types/IstioObjects';
 
 export const sortFields: SortField<AppListItem>[] = [
@@ -131,9 +130,7 @@ const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppL
 };
 
 const filterByIstioType = (items: AppListItem[], istioTypes: string[]): AppListItem[] => {
-  return items.filter(
-    item => item.istioReferences.filter(ref => istioTypes.includes(dicIstioType[ref.objectType])).length !== 0
-  );
+  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
 };
 
 export const filterBy = (

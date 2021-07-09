@@ -15,7 +15,6 @@ import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioTypeFilter } from '../IstioConfigList/FiltersAndSorts';
-import { dicIstioType } from '../../types/IstioConfigList';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 
 export const sortFields: SortField<ServiceListItem>[] = [
@@ -171,9 +170,7 @@ const filterByName = (items: ServiceListItem[], names: string[]): ServiceListIte
 };
 
 const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): ServiceListItem[] => {
-  return items.filter(
-    item => item.istioReferences.filter(ref => istioTypes.includes(dicIstioType[ref.objectType])).length !== 0
-  );
+  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
 };
 
 export const filterBy = (
