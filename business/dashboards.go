@@ -41,18 +41,14 @@ func NewDashboardsService(namespace *models.Namespace, workload *models.Workload
 	}
 
 	// Overwrite Custom dashboards defined at Namespace level
-	builtInDashboards := cfg.CustomDashboards.OrganizeByName()
+	builtInDashboards := cfg.CustomDashboards
 	if namespace != nil {
 		nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
-		for name, dashboard := range nsDashboards.OrganizeByName() {
-			builtInDashboards[name] = dashboard
-		}
+		builtInDashboards = dashboards.AddMonitoringDashboards(builtInDashboards, nsDashboards)
 	}
 	if workload != nil {
 		wkDashboards := dashboards.GetWorkloadMonitoringDashboards(namespace.Name, workload.Name, workload.DashboardAnnotations)
-		for name, dashboard := range wkDashboards.OrganizeByName() {
-			builtInDashboards[name] = dashboard
-		}
+		builtInDashboards = dashboards.AddMonitoringDashboards(builtInDashboards, wkDashboards)
 	}
 
 	return &DashboardsService{
@@ -60,7 +56,7 @@ func NewDashboardsService(namespace *models.Namespace, workload *models.Workload
 		promConfig:      prom,
 		globalNamespace: cfg.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
-		dashboards:      builtInDashboards,
+		dashboards:      builtInDashboards.OrganizeByName(),
 	}
 }
 
