@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -62,6 +63,7 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject)
 	enabledCheckers := []Checker{
 		virtual_services.RouteChecker{Route: virtualService},
 		virtual_services.SubsetPresenceChecker{Namespace: in.Namespace, Namespaces: in.Namespaces.GetNames(), DestinationRules: in.DestinationRules, VirtualService: virtualService},
+		common.ExportToNamespaceChecker{IstioObject: virtualService, Namespaces: in.Namespaces},
 	}
 
 	for _, checker := range enabledCheckers {

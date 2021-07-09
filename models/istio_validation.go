@@ -163,6 +163,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "KIA0302 No matching workload found for gateway selector in this namespace",
 		Severity: WarningSeverity,
 	},
+	"generic.exportto.namespacenotfound": {
+		Message:  "KIA0005 No matching namespace found or namespace is not accessible",
+		Severity: ErrorSeverity,
+	},
 	"generic.multimatch.selectorless": {
 		Message:  "KIA0002 More than one selector-less object in the same namespace",
 		Severity: ErrorSeverity,
