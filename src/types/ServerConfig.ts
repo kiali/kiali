@@ -1,7 +1,7 @@
 import { DurationInSeconds } from './Common';
 import { MeshCluster } from './Mesh';
 
-export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName';
+export type IstioLabelKey = 'appLabelName' | 'versionLabelName' | 'injectionLabelName' | 'injectionLabelRev';
 
 interface iter8Config {
   enabled: boolean;
@@ -40,7 +40,13 @@ interface UIDefaults {
 
 interface KialiFeatureFlags {
   istioInjectionAction: boolean;
+  istioUpgradeAction: boolean;
   uiDefaults?: UIDefaults;
+}
+
+interface IstioCanaryRevision {
+  current: string;
+  upgrade: string;
 }
 
 /*
@@ -79,6 +85,7 @@ export interface ServerConfig {
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;
+  istioCanaryRevision: IstioCanaryRevision;
   istioIdentityDomain: string;
   istioNamespace: string;
   istioLabels: { [key in IstioLabelKey]: string };
