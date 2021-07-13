@@ -222,12 +222,18 @@ func (in *DashboardsService) GetDashboard(authInfo *api.AuthInfo, params models.
 	}()
 
 	wg.Wait()
+	// A dashboard can define the rows used, if not defined, by default it will use 2 rows
+	rows := dashboard.Rows
+	if rows == 0 {
+		rows = 2
+	}
 	return &models.MonitoringDashboard{
 		Name:          dashboard.Name,
 		Title:         dashboard.Title,
 		Charts:        filledCharts,
 		Aggregations:  aggLabels,
 		ExternalLinks: externalLinks,
+		Rows:          rows,
 	}, nil
 }
 

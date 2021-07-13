@@ -29,6 +29,7 @@ type MonitoringDashboard struct {
 	DiscoverOn    string                            `yaml:"discoverOn"`
 	Items         []MonitoringDashboardItem         `yaml:"items"`
 	ExternalLinks []MonitoringDashboardExternalLink `yaml:"externalLinks"`
+	Rows          int                               `yaml:"rows"`
 }
 
 type MonitoringDashboardItem struct {
