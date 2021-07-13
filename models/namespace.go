@@ -73,6 +73,7 @@ func CastProject(p osproject_v1.Project) Namespace {
 	namespace.Name = p.Name
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 	namespace.Labels = p.Labels
+	namespace.Annotations = make(map[string]string)
 	// Parse only annotations used by Kiali
 	if da, ok := p.Annotations[dashboards.DashboardTemplateAnnotation]; ok {
 		namespace.Annotations[dashboards.DashboardTemplateAnnotation] = da
