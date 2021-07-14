@@ -37,6 +37,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kn|--kind-name)
       KIND_NAME="$2"
+      ;;
     -me|--minikube-exe)
       MINIKUBE_EXE="$2"
       shift;shift
