@@ -321,7 +321,11 @@ func parseRegistryServices(registries map[string][]byte) ([]*RegistryStatus, err
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
-	// Fetching the config_dump data, raw.
+	// Fetching the Config Dump from the pod's Envoy.
+	// The port 15000 is open on each Envoy Sidecar (managed by Istio) to serve the Envoy Admin  interface.
+	// This port can only be accessed by inside the pod.
+	// See the Istio's doc page about its port usage:
+	// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
 	resp, err := in.ForwardGetRequest(namespace, podName, httputil.Pool.GetFreePort(), 15000, "/config_dump")
 	if err != nil {
 		log.Errorf("Error forwarding the /config_dump request: %v", err)
